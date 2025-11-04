@@ -542,6 +542,7 @@ public final class NotificationUtil {
 
     public static JsonObject toJson(final NewPolicyViolationsSummary vo) {
         return Json.createObjectBuilder()
+                .add("scheduleIgnoreSuppressed", vo.scheduleIgnoreSuppressed())
                 .add("overview", toJson(vo.overview()))
                 .add("summary", toJson(vo.summary()))
                 .add("details", toJson(vo.details()))
@@ -624,6 +625,7 @@ public final class NotificationUtil {
 
     public static JsonObject toJson(final NewVulnerabilitiesSummary vo) {
         return Json.createObjectBuilder()
+                .add("scheduleIgnoreSuppressed", vo.scheduleIgnoreSuppressed())
                 .add("overview", toJson(vo.overview()))
                 .add("summary", toJson(vo.summary()))
                 .add("details", toJson(vo.details()))
@@ -805,6 +807,13 @@ public final class NotificationUtil {
         if (vo.overview().totalNewVulnerabilitiesCount() == 0) {
             return "No new vulnerabilities identified since %s.".formatted(DateUtil.toISO8601(vo.since()));
         } else {
+            if (vo.scheduleIgnoreSuppressed()) {
+                return "Identified %d new vulnerabilities across %d projects and %d components since %s. \nNote: Ignored all suppressed vulnerabilities.".formatted(
+                        vo.overview().totalNewVulnerabilitiesCount(),
+                        vo.overview().affectedProjectsCount(),
+                        vo.overview().affectedComponentsCount(),
+                        DateUtil.toISO8601(vo.since()));
+            }
             return "Identified %d new vulnerabilities across %d projects and %d components since %s, of which %d are suppressed.".formatted(
                     vo.overview().totalNewVulnerabilitiesCount(),
                     vo.overview().affectedProjectsCount(),
@@ -818,6 +827,13 @@ public final class NotificationUtil {
         if (vo.overview().totalNewViolationsCount() == 0) {
             return "No new policy violations identified since %s.".formatted(DateUtil.toISO8601(vo.since()));
         } else {
+            if (vo.scheduleIgnoreSuppressed()) {
+                return "Identified %d new policy violations across %d project and %d components since %s. \nNote: Ignored all suppressed violations.".formatted(
+                        vo.overview().totalNewViolationsCount(),
+                        vo.overview().affectedProjectsCount(),
+                        vo.overview().affectedComponentsCount(),
+                        DateUtil.toISO8601(vo.since()));
+            }
             return "Identified %d new policy violations across %d project and %d components since %s, of which %d are suppressed.".formatted(
                     vo.overview().totalNewViolationsCount(),
                     vo.overview().affectedProjectsCount(),
@@ -890,7 +906,8 @@ public final class NotificationUtil {
                 yield NewPolicyViolationsSummary.of(
                         Map.of(project, List.of(projectPolicyViolation)),
                         rule.getScheduleLastTriggeredAt(),
-                        rule.getId());
+                        rule.getId(),
+                        rule.isScheduleIgnoreSuppressed());
             }
             case NEW_VULNERABILITIES_SUMMARY -> {
                 final var projectFinding = new ProjectFinding(
@@ -904,7 +921,8 @@ public final class NotificationUtil {
                 yield NewVulnerabilitiesSummary.of(
                         Map.of(project, List.of(projectFinding)),
                         rule.getScheduleLastTriggeredAt(),
-                        rule.getId());
+                        rule.getId(),
+                        rule.isScheduleIgnoreSuppressed());
             }
             default -> null;
         };

@@ -201,6 +201,14 @@ public class NotificationRule implements Serializable {
             Must not be set for rules with trigger type EVENT.""")
     private Boolean scheduleSkipUnchanged;
 
+    @Persistent
+    @Column(name = "SCHEDULE_IGNORE_SUPPRESSED")
+    @Schema(description = """
+            Whether to ignore suppressed findings from scheduled notifications. \
+            If there are non-suppressed findings, only they will be included in the notification. \
+            If all findings are suppressed, new findings are empty.""")
+    private Boolean scheduleIgnoreSuppressed;
+
     @Persistent(defaultFetchGroup = "true", customValueStrategy = "uuid")
     @Unique(name = "NOTIFICATIONRULE_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
@@ -409,6 +417,17 @@ public class NotificationRule implements Serializable {
                 NotificationTriggerType.SCHEDULE,
                 "scheduleSkipUnchanged can not be set for rule with trigger type " + this.triggerType);
         this.scheduleSkipUnchanged = scheduleSkipUnchanged;
+    }
+
+    public Boolean isScheduleIgnoreSuppressed() {
+        return scheduleIgnoreSuppressed;
+    }
+
+    public void setScheduleIgnoreSuppressed(final Boolean scheduleIgnoreSuppressed) {
+        requireTriggerType(
+                NotificationTriggerType.SCHEDULE,
+                "scheduleIgnoreSuppressed can not be set for rule with trigger type " + this.triggerType);
+        this.scheduleIgnoreSuppressed = scheduleIgnoreSuppressed;
     }
 
     @NotNull

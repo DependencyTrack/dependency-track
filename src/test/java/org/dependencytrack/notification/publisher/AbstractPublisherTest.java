@@ -174,6 +174,33 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
     }
 
+
+    public final void baseTestInformWithScheduledNewVulnerabilitiesNotificationIgnoreSuppressed() {
+        final var project = createProject();
+        final var component = createComponent(project);
+        final var vuln1 = createVulnerability();
+
+        final var finding1 = new ProjectFinding(
+                component, vuln1, AnalyzerIdentity.INTERNAL_ANALYZER, Date.from(Instant.ofEpochSecond(66666, 666)),
+                "", AnalysisState.NOT_SET, Boolean.FALSE);
+
+        final var filteredFindingsByProject = Map.of(project, List.of(finding1));
+
+        final var subject = NewVulnerabilitiesSummary.of(filteredFindingsByProject, new Date(66666), 1, Boolean.TRUE);
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.NEW_VULNERABILITIES_SUMMARY)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.NEW_VULNERABILITIES_SUMMARY)
+                .content(NotificationUtil.generateNotificationContent(subject))
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+    }
+
     public final void baseTestInformWithNewVulnerabilityNotification() {
         final var project = createProject();
         final var component = createComponent(project);
@@ -276,7 +303,7 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 component, vuln, AnalyzerIdentity.INTERNAL_ANALYZER, Date.from(Instant.ofEpochSecond(66666, 666)),
                 "", AnalysisState.FALSE_POSITIVE, true)));
 
-        final var subject = NewVulnerabilitiesSummary.of(findingsByProject, new Date(66666), 666);
+        final var subject = NewVulnerabilitiesSummary.of(findingsByProject, new Date(66666), 666, Boolean.FALSE);
 
         final var notification = new Notification()
                 .scope(NotificationScope.PORTFOLIO)
@@ -303,7 +330,39 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 violation.getAnalysis().getAnalysisState(),
                 violation.getAnalysis().isSuppressed())));
 
-        final var subject = NewPolicyViolationsSummary.of(violationsByProject, new Date(66666), 666);
+        final var subject = NewPolicyViolationsSummary.of(violationsByProject, new Date(66666), 666, Boolean.FALSE);
+
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY)
+                .level(NotificationLevel.INFORMATIONAL)
+                .title(NotificationConstants.Title.NEW_POLICY_VIOLATIONS_SUMMARY)
+                .content(NotificationUtil.generateNotificationContent(subject))
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()));
+    }
+
+    public final void baseTestPublishWithScheduledNewPolicyViolationsNotificationIgnoreSuppressed() {
+        final var violation1 = createPolicyViolation();
+
+
+        final var violationsByProject = Map.of(violation1.getProject(), List.of(
+                        new ProjectPolicyViolation(
+                                UUID.fromString("924eaf86-454d-49f5-96c0-71d9008ac614"),
+                                violation1.getComponent(),
+                                violation1.getPolicyCondition(),
+                                violation1.getType(),
+                                violation1.getTimestamp(),
+                                violation1.getAnalysis().getAnalysisState(),
+                                violation1.getAnalysis().isSuppressed()
+                        )
+                )
+        );
+
+        final var subject = NewPolicyViolationsSummary.of(violationsByProject, new Date(66666), 666, Boolean.TRUE);
 
         final var notification = new Notification()
                 .scope(NotificationScope.PORTFOLIO)

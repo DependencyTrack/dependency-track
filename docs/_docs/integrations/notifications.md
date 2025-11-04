@@ -197,6 +197,7 @@ projects. This limitation exists to prevent payloads from growing too large.
     "title": "New Vulnerabilities Summary",
     "content": "Identified 1 new vulnerabilities across 1 projects and 1 components since 1970-01-01T00:01:06Z, of which 1 are suppressed.",
     "subject": {
+      "scheduleIgnoreSuppressed": false,
       "overview": {
         "affectedProjectsCount": 1,
         "affectedComponentsCount": 1,
@@ -524,6 +525,7 @@ projects. This limitation exists to prevent payloads from growing too large.
     "title": "New Policy Violations Summary",
     "content": "Identified 1 new policy violations across 1 project and 1 components since 1970-01-01T00:01:06Z, of which 0 are suppressed.",
     "subject": {
+      "scheduleIgnoreSuppressed": false,
       "overview": {
         "affectedProjectsCount": 1,
         "affectedComponentsCount": 1,
@@ -614,7 +616,7 @@ projects. This limitation exists to prevent payloads from growing too large.
       "id": "user",
       "username": "user",
       "name": "User 1",
-      "email": "user@example.com",
+      "email": "user@example.com"
       }
   }
 }
@@ -632,7 +634,7 @@ projects. This limitation exists to prevent payloads from growing too large.
     "title": "User Deleted",
     "content": "LDAP user deleted",
     "subject": {
-      "username": "user",
+      "username": "user"
     }
   }
 }
@@ -759,7 +761,8 @@ The next planned trigger is calculated based on the configured cron expression, 
 Both the last successful, and the next planned trigger timestamp can be viewed in a notification rule's configuration panel.
 
 To further reduce the noise produced by the system, users can opt into skipping the publishing of a notification,  
-if no new data has been identified since the last time it triggered.
+if no new data has been identified since the last time it triggered. Another option is to only publish unsuppressed findings. If enabled, 
+the notification will filter the suppressed findings out of its results.
 
 Certain notification groups may require the alert to be limited to specific projects.  
 This is to protect the system from generating payloads that are too resource intensive to compute,  

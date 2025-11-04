@@ -36,7 +36,8 @@ public record NewVulnerabilitiesSummary(
         Summary summary,
         Details details,
         Date since,
-        long ruleId) implements ScheduledNotificationSubject {
+        long ruleId,
+        Boolean scheduleIgnoreSuppressed) implements ScheduledNotificationSubject {
 
     /**
      * High-level overview of the contents of this summary.
@@ -159,13 +160,15 @@ public record NewVulnerabilitiesSummary(
     public static NewVulnerabilitiesSummary of(
             final Map<Project, List<ProjectFinding>> findingsByProject,
             final Date since,
-            final long ruleId) {
+            final long ruleId,
+            final Boolean scheduleIgnoreSuppressed) {
         return new NewVulnerabilitiesSummary(
                 Overview.of(findingsByProject),
                 Summary.of(findingsByProject),
                 new Details(findingsByProject),
                 since,
-                ruleId);
+                ruleId,
+                scheduleIgnoreSuppressed);
     }
 
     @Override

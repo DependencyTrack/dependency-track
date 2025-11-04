@@ -37,7 +37,8 @@ public record NewPolicyViolationsSummary(
         Summary summary,
         Details details,
         Date since,
-        long ruleId) implements ScheduledNotificationSubject {
+        long ruleId,
+        Boolean scheduleIgnoreSuppressed) implements ScheduledNotificationSubject {
 
     /**
      * High-level overview of the contents of this summary.
@@ -159,13 +160,15 @@ public record NewPolicyViolationsSummary(
     public static NewPolicyViolationsSummary of(
             final Map<Project, List<ProjectPolicyViolation>> violationsByProject,
             final Date since,
-            final long ruleId) {
+            final long ruleId,
+            final Boolean scheduleIgnoreSuppressed) {
         return new NewPolicyViolationsSummary(
                 Overview.of(violationsByProject),
                 Summary.of(violationsByProject),
                 new Details(violationsByProject),
                 since,
-                ruleId);
+                ruleId,
+                scheduleIgnoreSuppressed);
     }
 
     @Override

@@ -61,6 +61,7 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.Iterator;
 
 import static org.dependencytrack.common.MdcKeys.MDC_NOTIFICATION_RULE_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_NOTIFICATION_RULE_UUID;
@@ -166,11 +167,26 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
         }
 
         // Fetch findings that were attributed since the last notification.
-        final List<NewFinding> newFindings = getNewFindingsSince(qm, projectIds, rule.getScheduleLastTriggeredAt());
+        final List<NewFinding> newFindings = new ArrayList<>(getNewFindingsSince(qm, projectIds, rule.getScheduleLastTriggeredAt()));
         if (newFindings.isEmpty() && Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())) {
             LOGGER.info("No new findings since rule was last processed at %s".formatted(
                     DateUtil.toISO8601(rule.getScheduleLastTriggeredAt())));
             return null;
+        }
+
+        if(!newFindings.isEmpty() && Boolean.TRUE.equals(rule.isScheduleIgnoreSuppressed())) {
+            Iterator<NewFinding> iterator = newFindings.iterator();
+            while (iterator.hasNext()) {
+                NewFinding finding = iterator.next();
+                if (Boolean.TRUE.equals(finding.isSuppressed())) {
+                    iterator.remove();
+                }
+            }
+            if(newFindings.isEmpty() && Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())){
+                LOGGER.info("Only suppressed vulnerabilities since rule was last processed at %s".formatted(
+                        DateUtil.toISO8601(rule.getScheduleLastTriggeredAt())));
+                return null;
+            }
         }
 
         // Identity unique projects, components, and vulnerabilities across all findings.
@@ -230,7 +246,7 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
         }
 
         final var subject = NewVulnerabilitiesSummary.of(
-                findingsByProject, rule.getScheduleLastTriggeredAt(), rule.getId());
+                findingsByProject, rule.getScheduleLastTriggeredAt(), rule.getId(), rule.isScheduleIgnoreSuppressed());
 
         return new Notification()
                 .scope(rule.getScope())
@@ -256,12 +272,26 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
             return null;
         }
 
-        final List<NewPolicyViolation> newViolations =
-                getNewPolicyViolationsSince(qm, projectIds, rule.getScheduleLastTriggeredAt());
+        final List<NewPolicyViolation> newViolations = new ArrayList<>(getNewPolicyViolationsSince(qm, projectIds, rule.getScheduleLastTriggeredAt()));
         if (newViolations.isEmpty() && Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())) {
             LOGGER.info("No new policy violations since rule was last processed at %s".formatted(
                     DateUtil.toISO8601(rule.getScheduleLastTriggeredAt())));
             return null;
+        }
+
+        if(!newViolations.isEmpty() && Boolean.TRUE.equals(rule.isScheduleIgnoreSuppressed())) {
+            Iterator<NewPolicyViolation> iterator = newViolations.iterator();
+            while (iterator.hasNext()) {
+                NewPolicyViolation violation = iterator.next();
+                if (Boolean.TRUE.equals(violation.isSuppressed())) {
+                    iterator.remove();
+                }
+            }
+            if(newViolations.isEmpty() && Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())){
+                LOGGER.info("Only suppressed policy violations since rule was last processed at %s".formatted(
+                        DateUtil.toISO8601(rule.getScheduleLastTriggeredAt())));
+                return null;
+            }
         }
 
         // Identity unique projects, components, and policy conditions across all violations.
@@ -313,7 +343,7 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
         }
 
         final var subject = NewPolicyViolationsSummary.of(
-                violationsByProject, rule.getScheduleLastTriggeredAt(), rule.getId());
+                violationsByProject, rule.getScheduleLastTriggeredAt(), rule.getId(), rule.isScheduleIgnoreSuppressed());
 
         return new Notification()
                 .scope(rule.getScope())

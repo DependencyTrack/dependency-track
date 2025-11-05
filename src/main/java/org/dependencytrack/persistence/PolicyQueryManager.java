@@ -160,11 +160,12 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
 
     private record ViolationIdentity(
             long componentId,
+            long vulnerabilityId,
             long conditionId,
             PolicyViolation.Type type) {
 
         private ViolationIdentity(final PolicyViolation violation) {
-            this(violation.getComponent().getId(), violation.getPolicyCondition().getId(), violation.getType());
+            this(violation.getComponent().getId(), violation.getVulnerability().getId(), violation.getPolicyCondition().getId(), violation.getType());
         }
 
     }
@@ -407,8 +408,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
             query.setOrdering("timestamp desc, component.name, component.version");
         }
         if (filter != null) {
-            query.setFilter(queryFilter + " && (policyCondition.policy.name.toLowerCase().matches(:filter) || component.name.toLowerCase().matches(:filter))");
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
+            query.setFilter(queryFilter + " && (policyCondition.policy.name.toLowerCase().matches(:filter) || component.name.toLowerCase().matches(:filter) || vulnerability.vulnId.toLowerCase().matches(:filter))");            final String filterString = ".*" + filter.toLowerCase() + ".*";
             result = execute(query, project.getId(), filterString);
         } else {
             query.setFilter(queryFilter);

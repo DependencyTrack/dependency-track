@@ -20,6 +20,7 @@ package org.dependencytrack.policy;
 
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.PolicyCondition;
+import org.dependencytrack.model.Vulnerability;
 
 /**
  * Defines a violation which contains the component and the policy condition
@@ -32,10 +33,18 @@ public class PolicyConditionViolation {
 
     private final PolicyCondition policyCondition;
     private final Component component;
+    private final Vulnerability vulnerability;
 
     public PolicyConditionViolation(PolicyCondition policyCondition, Component component) {
         this.policyCondition = policyCondition;
         this.component = component;
+        this.vulnerability = null;
+    }
+
+    public PolicyConditionViolation(PolicyCondition policyCondition, Component component, Vulnerability vulnerability) {
+        this.policyCondition = policyCondition;
+        this.component = component;
+        this.vulnerability = vulnerability;
     }
 
     public PolicyCondition getPolicyCondition() {
@@ -45,4 +54,9 @@ public class PolicyConditionViolation {
     public Component getComponent() {
         return component;
     }
+    public Vulnerability getVulnerability() {
+        return vulnerability;
+    }
+
+
 }

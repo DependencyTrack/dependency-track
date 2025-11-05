@@ -811,6 +811,11 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
     }
 
+    public List<Vulnerability> getVulnerabilityByVulnIds(Map<String, Set<String>> sourceToVulnIds,
+                                                         boolean includeVulnerableSoftware) {
+        return getVulnerabilityQueryManager().getVulnerabilitiesBySourceAndVulnIds(sourceToVulnIds, includeVulnerableSoftware);
+    }
+
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {
         getVulnerabilityQueryManager().addVulnerability(vulnerability, component, analyzerIdentity);
     }
@@ -1093,7 +1098,7 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilityAliases(vulnIdAndSources);
     }
 
-    List<Analysis> getAnalyses(Project project) {
+    public List<Analysis> getAnalyses(Project project) {
         return getFindingsQueryManager().getAnalyses(project);
     }
 
@@ -1103,8 +1108,8 @@ public class QueryManager extends AlpineQueryManager {
 
     public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
                                  AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
-                                 String analysisDetails, Boolean isSuppressed) {
-        return getFindingsQueryManager().makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse, analysisDetails, isSuppressed);
+                                 String analysisDetails, Boolean isSuppressed, Long suppressionExpiration) {
+        return getFindingsQueryManager().makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse, analysisDetails, isSuppressed, suppressionExpiration);
     }
 
     public AnalysisComment makeAnalysisComment(Analysis analysis, String comment, String commenter) {
@@ -1542,10 +1547,6 @@ public class QueryManager extends AlpineQueryManager {
                 final Query<?> aclDeleteQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                         DELETE FROM "PROJECT_ACCESS_TEAMS" WHERE "PROJECT_ACCESS_TEAMS"."TEAM_ID" = ?""");
                 executeAndCloseWithArray(aclDeleteQuery, team.getId());
-
-                final Query<?> notificationRuleQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
-                    DELETE FROM "NOTIFICATIONRULE_TEAMS" WHERE "NOTIFICATIONRULE_TEAMS"."TEAM_ID" = ?""");
-                executeAndCloseWithArray(notificationRuleQuery, team.getId());
             }
 
             pm.deletePersistent(team);

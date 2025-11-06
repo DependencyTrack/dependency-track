@@ -1106,10 +1106,10 @@ public class QueryManager extends AlpineQueryManager {
         return getFindingsQueryManager().getAnalysis(component, vulnerability);
     }
 
-    public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
+    Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
                                  AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
-                                 String analysisDetails, Boolean isSuppressed, Long suppressionExpiration) {
-        return getFindingsQueryManager().makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse, analysisDetails, isSuppressed, suppressionExpiration);
+                                 String analysisDetails, Boolean isSuppressed) {
+        return getFindingsQueryManager().makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse, analysisDetails, isSuppressed);
     }
 
     public AnalysisComment makeAnalysisComment(Analysis analysis, String comment, String commenter) {

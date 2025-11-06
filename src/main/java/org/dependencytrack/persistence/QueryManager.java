@@ -1098,7 +1098,7 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilityAliases(vulnIdAndSources);
     }
 
-    public List<Analysis> getAnalyses(Project project) {
+    List<Analysis> getAnalyses(Project project) {
         return getFindingsQueryManager().getAnalyses(project);
     }
 

@@ -895,6 +895,14 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().hasAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
+    public synchronized String generateNextVulnerabilityId(final String projectName) {
+        return getVulnerabilityQueryManager().generateNextVulnerabilityId(projectName);
+    }
+
+    public boolean vulnerabilityIdExists(final String vulnerabilityId) {
+        return getVulnerabilityQueryManager().vulnerabilityIdExists(vulnerabilityId);
+    }
+
     public void synchronizeVulnerableSoftware(
             final Vulnerability persistentVuln,
             final List<VulnerableSoftware> vsList,

@@ -156,7 +156,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      * @return a List of Analysis objects, or null if not found
      */
     @SuppressWarnings("unchecked")
-    public List<Analysis> getAnalyses(Project project) {
+    List<Analysis> getAnalyses(Project project) {
         final Query<Analysis> query = pm.newQuery(Analysis.class, "project == :project");
         return (List<Analysis>) query.execute(project);
     }

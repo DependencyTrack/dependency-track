@@ -808,7 +808,7 @@ public final class NotificationUtil {
             return "No new vulnerabilities identified since %s.".formatted(DateUtil.toISO8601(vo.since()));
         } else {
             if (vo.scheduleIgnoreSuppressed()) {
-                return "Identified %d new vulnerabilities across %d projects and %d components since %s. \nNote: Ignored all suppressed vulnerabilities.".formatted(
+                return "Identified %d new vulnerabilities across %d projects and %d components since %s.\nNote: Ignored all suppressed vulnerabilities.".formatted(
                         vo.overview().totalNewVulnerabilitiesCount(),
                         vo.overview().affectedProjectsCount(),
                         vo.overview().affectedComponentsCount(),
@@ -828,7 +828,7 @@ public final class NotificationUtil {
             return "No new policy violations identified since %s.".formatted(DateUtil.toISO8601(vo.since()));
         } else {
             if (vo.scheduleIgnoreSuppressed()) {
-                return "Identified %d new policy violations across %d project and %d components since %s. \nNote: Ignored all suppressed violations.".formatted(
+                return "Identified %d new policy violations across %d project and %d components since %s.\nNote: Ignored all suppressed violations.".formatted(
                         vo.overview().totalNewViolationsCount(),
                         vo.overview().affectedProjectsCount(),
                         vo.overview().affectedComponentsCount(),

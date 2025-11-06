@@ -167,7 +167,7 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
         }
 
         // Fetch findings that were attributed since the last notification.
-        final List<NewFinding> newFindings = new ArrayList<>(getNewFindingsSince(qm, projectIds, rule.getScheduleLastTriggeredAt()));
+        final var newFindings = new ArrayList<>(getNewFindingsSince(qm, projectIds, rule.getScheduleLastTriggeredAt()));
         if (newFindings.isEmpty() && Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())) {
             LOGGER.info("No new findings since rule was last processed at %s".formatted(
                     DateUtil.toISO8601(rule.getScheduleLastTriggeredAt())));
@@ -175,9 +175,9 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
         }
 
         if(!newFindings.isEmpty() && Boolean.TRUE.equals(rule.isScheduleIgnoreSuppressed())) {
-            Iterator<NewFinding> iterator = newFindings.iterator();
+            final Iterator<NewFinding> iterator = newFindings.iterator();
             while (iterator.hasNext()) {
-                NewFinding finding = iterator.next();
+                final var finding = iterator.next();
                 if (Boolean.TRUE.equals(finding.isSuppressed())) {
                     iterator.remove();
                 }
@@ -272,7 +272,7 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
             return null;
         }
 
-        final List<NewPolicyViolation> newViolations = new ArrayList<>(getNewPolicyViolationsSince(qm, projectIds, rule.getScheduleLastTriggeredAt()));
+        final var newViolations = new ArrayList<>(getNewPolicyViolationsSince(qm, projectIds, rule.getScheduleLastTriggeredAt()));
         if (newViolations.isEmpty() && Boolean.TRUE.equals(rule.isScheduleSkipUnchanged())) {
             LOGGER.info("No new policy violations since rule was last processed at %s".formatted(
                     DateUtil.toISO8601(rule.getScheduleLastTriggeredAt())));
@@ -280,9 +280,9 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
         }
 
         if(!newViolations.isEmpty() && Boolean.TRUE.equals(rule.isScheduleIgnoreSuppressed())) {
-            Iterator<NewPolicyViolation> iterator = newViolations.iterator();
+            final Iterator<NewPolicyViolation> iterator = newViolations.iterator();
             while (iterator.hasNext()) {
-                NewPolicyViolation violation = iterator.next();
+                final var violation = iterator.next();
                 if (Boolean.TRUE.equals(violation.isSuppressed())) {
                     iterator.remove();
                 }

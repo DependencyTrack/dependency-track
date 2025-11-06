@@ -182,11 +182,11 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
 
         final var finding1 = new ProjectFinding(
                 component, vuln1, AnalyzerIdentity.INTERNAL_ANALYZER, Date.from(Instant.ofEpochSecond(66666, 666)),
-                "", AnalysisState.NOT_SET, Boolean.FALSE);
+                "", AnalysisState.NOT_SET, false);
 
         final var filteredFindingsByProject = Map.of(project, List.of(finding1));
 
-        final var subject = NewVulnerabilitiesSummary.of(filteredFindingsByProject, new Date(66666), 1, Boolean.TRUE);
+        final var subject = NewVulnerabilitiesSummary.of(filteredFindingsByProject, new Date(66666), 1, true);
 
         final var notification = new Notification()
                 .scope(NotificationScope.PORTFOLIO)
@@ -303,7 +303,7 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 component, vuln, AnalyzerIdentity.INTERNAL_ANALYZER, Date.from(Instant.ofEpochSecond(66666, 666)),
                 "", AnalysisState.FALSE_POSITIVE, true)));
 
-        final var subject = NewVulnerabilitiesSummary.of(findingsByProject, new Date(66666), 666, Boolean.FALSE);
+        final var subject = NewVulnerabilitiesSummary.of(findingsByProject, new Date(66666), 666, false);
 
         final var notification = new Notification()
                 .scope(NotificationScope.PORTFOLIO)
@@ -330,7 +330,7 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 violation.getAnalysis().getAnalysisState(),
                 violation.getAnalysis().isSuppressed())));
 
-        final var subject = NewPolicyViolationsSummary.of(violationsByProject, new Date(66666), 666, Boolean.FALSE);
+        final var subject = NewPolicyViolationsSummary.of(violationsByProject, new Date(66666), 666, false);
 
         final var notification = new Notification()
                 .scope(NotificationScope.PORTFOLIO)
@@ -362,7 +362,7 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 )
         );
 
-        final var subject = NewPolicyViolationsSummary.of(violationsByProject, new Date(66666), 666, Boolean.TRUE);
+        final var subject = NewPolicyViolationsSummary.of(violationsByProject, new Date(66666), 666, true);
 
         final var notification = new Notification()
                 .scope(NotificationScope.PORTFOLIO)

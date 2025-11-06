@@ -761,8 +761,9 @@ The next planned trigger is calculated based on the configured cron expression, 
 Both the last successful, and the next planned trigger timestamp can be viewed in a notification rule's configuration panel.
 
 To further reduce the noise produced by the system, users can opt into skipping the publishing of a notification,  
-if no new data has been identified since the last time it triggered. Another option is to only publish unsuppressed findings. If enabled, 
-the notification will filter the suppressed findings out of its results.
+if no new data has been identified since the last time it triggered. 
+Another option is to only publish unsuppressed findings. 
+If enabled, the notification will filter the suppressed findings out of its results.
 
 Certain notification groups may require the alert to be limited to specific projects.  
 This is to protect the system from generating payloads that are too resource intensive to compute,  

@@ -130,12 +130,13 @@ public class SendMailPublisher implements Publisher {
             return;
         }
         String unescapedContent = StringEscapeUtils.unescapeHtml4(content);
-
+        String subject = emailSubjectPrefix.trim() + " [" + ctx.notificationLevel() + "] " + notification.getTitle();
+        
         try {
             final SendMail sendMail = new SendMail()
                     .from(smtpFrom)
                     .to(destinations)
-                    .subject(emailSubjectPrefix + " " + notification.getTitle())
+                    .subject(subject)
                     .body(MediaType.TEXT_HTML.equals(mimeType) ? StringEscapeUtils.escapeHtml4(unescapedContent) : unescapedContent)
                     .bodyMimeType(mimeType)
                     .host(smtpHostname)

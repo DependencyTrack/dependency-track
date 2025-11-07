@@ -129,7 +129,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message ->
                 assertThat(message.getSubject())
-                        .isEqualTo("[Dependency-Track] New Vulnerability Identified on Project: [projectName : projectVersion]")
+                        .isEqualTo("[Dependency-Track] [INFORMATIONAL] New Vulnerability Identified on Project: [projectName : projectVersion]")
         );
     }
 
@@ -138,7 +138,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestInformWithBomConsumedNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Consumed");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] [INFORMATIONAL] Bill of Materials Consumed");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
@@ -170,7 +170,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestInformWithBomProcessingFailedNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Processing Failed");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] [ERROR] Bill of Materials Processing Failed");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
@@ -206,7 +206,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestInformWithBomValidationFailedNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Validation Failed");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] [ERROR] Bill of Materials Validation Failed");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
@@ -238,7 +238,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Bill of Materials Processing Failed");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] [ERROR] Bill of Materials Processing Failed");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
@@ -274,7 +274,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestInformWithDataSourceMirroringNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] GitHub Advisory Mirroring");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] [ERROR] GitHub Advisory Mirroring");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
@@ -304,7 +304,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestInformWithNewVulnerabilityNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerability Identified on Project: [projectName : projectVersion]");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] [INFORMATIONAL] New Vulnerability Identified on Project: [projectName : projectVersion]");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
@@ -341,7 +341,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestPublishWithScheduledNewVulnerabilitiesNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Vulnerabilities Summary");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] [INFORMATIONAL] New Vulnerabilities Summary");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
@@ -399,7 +399,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestPublishWithScheduledNewPolicyViolationsNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] New Policy Violations Summary");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] [INFORMATIONAL] New Policy Violations Summary");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
@@ -458,7 +458,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestInformWithNewVulnerableDependencyNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Vulnerable Dependency Introduced");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] [INFORMATIONAL] Vulnerable Dependency Introduced");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
@@ -500,7 +500,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestInformWithProjectAuditChangeNotification();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Analysis Decision: Finding Suppressed");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] [INFORMATIONAL] Analysis Decision: Finding Suppressed");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);
@@ -541,7 +541,7 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
         super.baseTestInformWithEscapedData();
 
         assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message -> {
-            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] Notification Test");
+            assertThat(message.getSubject()).isEqualTo("[Dependency-Track] [ERROR] Notification Test");
             assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
             final MimeMultipart content = (MimeMultipart) message.getContent();
             assertThat(content.getCount()).isEqualTo(1);

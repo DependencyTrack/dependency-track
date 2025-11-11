@@ -18,11 +18,11 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.concurrent.TimeUnit;
-
+import alpine.common.logging.Logger;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.packageurl.PackageURL;
+import jakarta.ws.rs.core.UriBuilder;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -34,12 +34,10 @@ import org.dependencytrack.util.JsonUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.packageurl.PackageURL;
-
-import alpine.common.logging.Logger;
-import jakarta.ws.rs.core.UriBuilder;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An IMetaAnalyzer implementation that supports Composer.
@@ -226,7 +224,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             }
 
             final JSONObject newPackages = packages;
-            newPackages.names().forEach(name -> {
+            newPackages.keySet().forEach(name -> {
                 String packageName = (String) name;
                 JSONObject packageVersions = newPackages.getJSONObject(packageName);
 
@@ -236,7 +234,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
                 JSONObject includedPackage = repoRoot.getJSONObject("packages").getJSONObject(packageName);
                 final JSONObject finalPackageVersions = packageVersions;
-                finalPackageVersions.names().forEach(version -> {
+                finalPackageVersions.keySet().forEach(version -> {
                     includedPackage.put((String) version, finalPackageVersions.getJSONObject((String) version));
                 });
             });
@@ -244,7 +242,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
         if (data.has("includes")) {
             JSONObject includes = data.getJSONObject("includes");
-            includes.names().forEach(name -> {
+            includes.keySet().forEach(name -> {
                 String includeFilename = (String) name;
                 String includeUrl = UriBuilder.fromUri(baseUrl).path(includeFilename).build().toString();
                 try (final CloseableHttpResponse includeResponse = processHttpRequest(includeUrl)) {
@@ -345,7 +343,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private JSONObject expandPackages(JSONObject packages) {
         JSONObject result = new JSONObject();
-        packages.names().forEach(name -> {
+        packages.keySet().forEach(name -> {
             String packageName = (String) name;
             JSONArray packageVersionsMinified = packages.getJSONArray(packageName);
             JSONObject packageVersions = expandPackageVersions(packageVersionsMinified);
@@ -359,7 +357,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
         final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
         LOGGER.debug("%s: analyzing package versions in %s: ".formatted(component.getPurl(), this.repositoryId));
-        packageVersions.names().forEach(item -> {
+        packageVersions.keySet().forEach(item -> {
             JSONObject packageVersion = packageVersions.getJSONObject((String) item);
             // Sometimes the JSON key differs from the the version inside the JSON value. The latter is leading.
             String version = packageVersion.getString("version");

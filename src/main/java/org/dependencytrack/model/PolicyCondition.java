@@ -144,6 +144,7 @@ public class PolicyCondition implements Serializable {
         this.id = id;
     }
 
+    @JsonIgnore
     public Policy getPolicy() {
         return policy;
     }

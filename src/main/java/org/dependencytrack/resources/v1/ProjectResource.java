@@ -39,6 +39,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.constraints.Size;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.MDC;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.CloneProjectEvent;
 import org.dependencytrack.model.Classifier;
@@ -77,6 +78,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
+import static org.dependencytrack.common.MdcKeys.MDC_EVENT_TOKEN;
 
 import static java.util.Objects.requireNonNullElseGet;
 import static org.dependencytrack.util.PersistenceUtil.isPersistent;
@@ -472,7 +478,13 @@ public class ProjectResource extends AlpineResource {
                 return project;
             });
 
-            LOGGER.info("Project " + createdProject + " created by " + super.getPrincipal().getName());
+            try (var createdMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, createdProject.getUuid().toString());
+                 var createdMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, createdProject.getName());
+                 var createdMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, createdProject.getVersion())) {
+
+                LOGGER.info("Project " + createdProject + " created by " + super.getPrincipal().getName());
+            }
+
             return Response.status(Response.Status.CREATED).entity(createdProject).build();
         }
     }
@@ -576,7 +588,13 @@ public class ProjectResource extends AlpineResource {
                 }
             });
 
-            LOGGER.info("Project " + updatedProject + " updated by " + super.getPrincipal().getName());
+            try (var updatedMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, updatedProject.getUuid().toString());
+                 var updatedMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, updatedProject.getName());
+                 var updatedMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())){
+
+                LOGGER.info("Project " + updatedProject + " updated by " + super.getPrincipal().getName());
+            }
+
             return Response.ok(updatedProject).build();
         }
     }
@@ -728,7 +746,12 @@ public class ProjectResource extends AlpineResource {
                 return Response.notModified().build();
             }
 
-            LOGGER.info("Project " + updatedProject + " updated by " + super.getPrincipal().getName());
+            try (var updatedMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, updatedProject.getUuid().toString());
+                 var updatedMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, updatedProject.getName());
+                 var updatedMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())){
+
+                LOGGER.info("Project " + updatedProject + " updated by " + super.getPrincipal().getName());
+            }
             return Response.ok(updatedProject).build();
         }
     }
@@ -737,7 +760,7 @@ public class ProjectResource extends AlpineResource {
      * returns `true` if the given [updated] collection should be considered an update of the [original] collection.
      */
     private static <T> boolean isCollectionModified(Collection<T> updated, Collection<T> original) {
-       return updated != null && (!Collections.isEmpty(updated) || !Collections.isEmpty(original));
+        return updated != null && (!Collections.isEmpty(updated) || !Collections.isEmpty(original));
     }
 
     /**
@@ -799,7 +822,13 @@ public class ProjectResource extends AlpineResource {
                             .build());
                 }
 
-                LOGGER.info("Project " + project + " deletion request by " + super.getPrincipal().getName());
+                try (var mdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());
+                     var mdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
+                     var mdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
+
+                    LOGGER.info("Project " + project + " deletion request by " + super.getPrincipal().getName());
+                }
+
                 try {
                     qm.recursivelyDelete(project, true);
                 } catch (RuntimeException e) {
@@ -831,7 +860,7 @@ public class ProjectResource extends AlpineResource {
     @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
     public Response deleteProjects(@Size(min = 1, max = 1000) final Set<UUID> uuids) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
-                qm.deleteProjectsByUUIDs(uuids);
+            qm.deleteProjectsByUUIDs(uuids);
         }
         return Response.status(Response.Status.NO_CONTENT).build();
     }
@@ -898,11 +927,20 @@ public class ProjectResource extends AlpineResource {
                     }
                 }
 
-                LOGGER.info("Project " + sourceProject + " is being cloned by " + super.getPrincipal().getName());
+                try (var sourceMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, sourceProject.getUuid().toString());
+                     var sourceMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, sourceProject.getName());
+                     var sourceMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, sourceProject.getVersion())){
+
+                    LOGGER.info("Project " + sourceProject + " is being cloned by " + super.getPrincipal().getName());
+                }
+
                 return new CloneProjectEvent(jsonRequest);
             });
 
-            Event.dispatch(cloneEvent);
+            try (var cloneMdcEventToken = MDC.putCloseable(MDC_EVENT_TOKEN, cloneEvent.getChainIdentifier().toString())) {
+                Event.dispatch(cloneEvent);
+            }
+
             return Response.ok(Map.of("token", cloneEvent.getChainIdentifier())).build();
         }
     }
@@ -1054,19 +1092,19 @@ public class ProjectResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectsWithoutDescendantsOf(
-                                @Parameter(description = "The UUID of the project which descendants will be excluded", schema = @Schema(type = "string", format = "uuid"), required = true)
-                                @PathParam("uuid") @ValidUuid String uuid,
-                                @Parameter(description = "The optional name of the project to query on", required = false)
-                                @QueryParam("name") String name,
-                                @Parameter(description = "Optionally excludes inactive projects from being returned", required = false)
-                                @QueryParam("excludeInactive") boolean excludeInactive) {
+            @Parameter(description = "The UUID of the project which descendants will be excluded", schema = @Schema(type = "string", format = "uuid"), required = true)
+            @PathParam("uuid") @ValidUuid String uuid,
+            @Parameter(description = "The optional name of the project to query on", required = false)
+            @QueryParam("name") String name,
+            @Parameter(description = "Optionally excludes inactive projects from being returned", required = false)
+            @QueryParam("excludeInactive") boolean excludeInactive) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     final PaginatedResult result = (name != null) ? qm.getProjectsWithoutDescendantsOf(name, excludeInactive, project) : qm.getProjectsWithoutDescendantsOf(excludeInactive, project);
                     return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
-                } else{
+                } else {
                     return Response.status(Response.Status.FORBIDDEN).entity("Access to the specified project is forbidden").build();
                 }
             } else {

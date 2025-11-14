@@ -23,6 +23,7 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -37,6 +38,9 @@ import jakarta.validation.constraints.Pattern;
  * @since 3.1.0
  */
 public class AnalysisRequest {
+
+    private static final String RISK_IMPACT_PATTERN = "LOW|MEDIUM|HIGH|CRITICAL";
+    private static final String RISK_LIKELIHOOD_PATTERN = "VIRTUALLY_IMPOSSIBLE|UNLIKELY|POSSIBLE|LIKELY|ALMOST_CERTAIN";
 
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
     private final String project;
@@ -63,6 +67,26 @@ public class AnalysisRequest {
 
     private final AnalysisResponse analysisResponse;
 
+    @Pattern(regexp = RISK_IMPACT_PATTERN, message = "The risk impact must be a valid option")
+    private final String riskImpact;
+
+    @Pattern(regexp = RISK_LIKELIHOOD_PATTERN, message = "The risk likelihood must be a valid option")
+    private final String riskLikelihood;
+
+    @Pattern(regexp = RISK_IMPACT_PATTERN, message = "The residual risk impact must be a valid option")
+    private final String residualRiskImpact;
+
+    @Pattern(regexp = RISK_LIKELIHOOD_PATTERN, message = "The residual risk likelihood must be a valid option")
+    private final String residualRiskLikelihood;
+
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The risk justification may only contain printable characters")
+    private final String riskJustification;
+
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The residual risk justification may only contain printable characters")
+    private final String residualRiskJustification;
+
     private final Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
 
     @JsonCreator
@@ -74,6 +98,12 @@ public class AnalysisRequest {
                            @JsonProperty(value = "analysisResponse") AnalysisResponse analysisResponse,
                            @JsonProperty(value = "analysisDetails") String analysisDetails,
                            @JsonProperty(value = "comment") String comment,
+                           @JsonProperty(value = "riskImpact") String riskImpact,
+                           @JsonProperty(value = "riskLikelihood") String riskLikelihood,
+                           @JsonProperty(value = "residualRiskImpact") String residualRiskImpact,
+                           @JsonProperty(value = "residualRiskLikelihood") String residualRiskLikelihood,
+                           @JsonProperty(value = "riskJustification") String riskJustification,
+                           @JsonProperty(value = "residualRiskJustification") String residualRiskJustification,
                            @JsonProperty(value = "isSuppressed") Boolean suppressed) {
         this.project = project;
         this.component = component;
@@ -83,7 +113,26 @@ public class AnalysisRequest {
         this.analysisResponse = analysisResponse;
         this.analysisDetails = analysisDetails;
         this.comment = comment;
+        this.riskImpact = riskImpact;
+        this.riskLikelihood = riskLikelihood;
+        this.residualRiskImpact = residualRiskImpact;
+        this.residualRiskLikelihood = residualRiskLikelihood;
+        this.riskJustification = riskJustification;
+        this.residualRiskJustification = residualRiskJustification;
         this.suppressed = suppressed;
+    }
+
+    public AnalysisRequest(String project,
+                           String component,
+                           String vulnerability,
+                           AnalysisState analysisState,
+                           AnalysisJustification analysisJustification,
+                           AnalysisResponse analysisResponse,
+                           String analysisDetails,
+                           String comment,
+                           Boolean suppressed) {
+        this(project, component, vulnerability, analysisState, analysisJustification, analysisResponse,
+                analysisDetails, comment, null, null, null, null, null, null, suppressed);
     }
 
     public String getProject() {
@@ -132,5 +181,29 @@ public class AnalysisRequest {
 
     public Boolean isSuppressed() {
         return suppressed;
+    }
+
+    public String getRiskImpact() {
+        return StringUtils.trimToNull(riskImpact);
+    }
+
+    public String getRiskLikelihood() {
+        return StringUtils.trimToNull(riskLikelihood);
+    }
+
+    public String getResidualRiskImpact() {
+        return StringUtils.trimToNull(residualRiskImpact);
+    }
+
+    public String getResidualRiskLikelihood() {
+        return StringUtils.trimToNull(residualRiskLikelihood);
+    }
+
+    public String getRiskJustification() {
+        return StringUtils.trimToNull(riskJustification);
+    }
+
+    public String getResidualRiskJustification() {
+        return StringUtils.trimToNull(residualRiskJustification);
     }
 }

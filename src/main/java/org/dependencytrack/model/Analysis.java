@@ -87,6 +87,38 @@ public class Analysis implements Serializable {
     @NotNull
     private String analysisDetails;
 
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RISK_IMPACT", jdbcType = "VARCHAR", allowsNull = "true")
+    private String riskImpact;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RISK_LIKELIHOOD", jdbcType = "VARCHAR", allowsNull = "true")
+    private String riskLikelihood;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RESIDUAL_RISK_IMPACT", jdbcType = "VARCHAR", allowsNull = "true")
+    private String residualRiskImpact;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RESIDUAL_RISK_LIKELIHOOD", jdbcType = "VARCHAR", allowsNull = "true")
+    private String residualRiskLikelihood;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RISK_JUSTIFICATION", jdbcType = "CLOB", allowsNull = "true")
+    private String riskJustification;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RESIDUAL_RISK_JUSTIFICATION", jdbcType = "CLOB", allowsNull = "true")
+    private String residualRiskJustification;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RISK_SCORE", jdbcType = "DOUBLE", allowsNull = "true")
+    private Double riskScore;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RESIDUAL_RISK_SCORE", jdbcType = "DOUBLE", allowsNull = "true")
+    private Double residualRiskScore;
+
     @Persistent(mappedBy = "analysis", defaultFetchGroup = "true")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "timestamp ASC"))
     private List<AnalysisComment> analysisComments;
@@ -155,6 +187,70 @@ public class Analysis implements Serializable {
 
     public void setAnalysisDetails(String analysisDetails) {
         this.analysisDetails = analysisDetails;
+    }
+
+    public String getRiskImpact() {
+        return riskImpact;
+    }
+
+    public void setRiskImpact(String riskImpact) {
+        this.riskImpact = riskImpact;
+    }
+
+    public String getRiskLikelihood() {
+        return riskLikelihood;
+    }
+
+    public void setRiskLikelihood(String riskLikelihood) {
+        this.riskLikelihood = riskLikelihood;
+    }
+
+    public String getResidualRiskImpact() {
+        return residualRiskImpact;
+    }
+
+    public void setResidualRiskImpact(String residualRiskImpact) {
+        this.residualRiskImpact = residualRiskImpact;
+    }
+
+    public String getResidualRiskLikelihood() {
+        return residualRiskLikelihood;
+    }
+
+    public void setResidualRiskLikelihood(String residualRiskLikelihood) {
+        this.residualRiskLikelihood = residualRiskLikelihood;
+    }
+
+    public String getRiskJustification() {
+        return riskJustification;
+    }
+
+    public void setRiskJustification(String riskJustification) {
+        this.riskJustification = riskJustification;
+    }
+
+    public String getResidualRiskJustification() {
+        return residualRiskJustification;
+    }
+
+    public void setResidualRiskJustification(String residualRiskJustification) {
+        this.residualRiskJustification = residualRiskJustification;
+    }
+
+    public Double getRiskScore() {
+        return riskScore;
+    }
+
+    public void setRiskScore(Double riskScore) {
+        this.riskScore = riskScore;
+    }
+
+    public Double getResidualRiskScore() {
+        return residualRiskScore;
+    }
+
+    public void setResidualRiskScore(Double residualRiskScore) {
+        this.residualRiskScore = residualRiskScore;
     }
 
     public List<AnalysisComment> getAnalysisComments() {

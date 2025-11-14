@@ -29,9 +29,7 @@ Dockerfile
 .idea/
 docs/
 scripts/
-src/
-!src/main/docker/create-jre.sh
-!src/main/docker/logback*.xml
+# Include source files so the backend image can be built from source.
 target/
 !target/*.jar
 /*.md

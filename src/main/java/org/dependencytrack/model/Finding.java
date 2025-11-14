@@ -89,6 +89,11 @@ public class Finding implements Serializable {
                  , "FINDINGATTRIBUTION"."REFERENCE_URL"
                  , "ANALYSIS"."STATE"
                  , "ANALYSIS"."SUPPRESSED"
+                      , "ANALYSIS"."RISK_IMPACT"
+                      , "ANALYSIS"."RISK_LIKELIHOOD"
+                      , "ANALYSIS"."RESIDUAL_RISK_IMPACT"
+                      , "ANALYSIS"."RESIDUAL_RISK_LIKELIHOOD"
+                      , "ANALYSIS"."RISK_JUSTIFICATION"
               FROM "COMPONENT"
              INNER JOIN "COMPONENTS_VULNERABILITIES"
                 ON "COMPONENT"."ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID"
@@ -137,6 +142,11 @@ public class Finding implements Serializable {
                  , "FINDINGATTRIBUTION"."REFERENCE_URL"
                  , "ANALYSIS"."STATE"
                  , "ANALYSIS"."SUPPRESSED"
+                 , "ANALYSIS"."RISK_IMPACT"
+                 , "ANALYSIS"."RISK_LIKELIHOOD"
+                 , "ANALYSIS"."RESIDUAL_RISK_IMPACT"
+                 , "ANALYSIS"."RESIDUAL_RISK_LIKELIHOOD"
+                 , "ANALYSIS"."RISK_JUSTIFICATION"
                  , "VULNERABILITY"."PUBLISHED"
                  , "PROJECT"."UUID"
                  , "PROJECT"."NAME"
@@ -219,10 +229,15 @@ public class Finding implements Serializable {
 
         optValue(analysis, "state", o[27]);
         optValue(analysis, "isSuppressed", o[28], false);
-        if (o.length > 30) {
-            optValue(vulnerability, "published", o[29]);
-            optValue(component, "projectName", o[31]);
-            optValue(component, "projectVersion", o[32]);
+        optValue(analysis, "riskImpact", o[29]);
+        optValue(analysis, "riskLikelihood", o[30]);
+        optValue(analysis, "residualRiskImpact", o[31]);
+        optValue(analysis, "residualRiskLikelihood", o[32]);
+        optValue(analysis, "riskJustification", o[33]);
+        if (o.length > 34) {
+            optValue(vulnerability, "published", o[34]);
+            optValue(component, "projectName", o[36]);
+            optValue(component, "projectVersion", o[37]);
         }
     }
 

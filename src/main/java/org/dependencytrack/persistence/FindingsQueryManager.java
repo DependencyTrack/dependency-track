@@ -20,6 +20,7 @@ package org.dependencytrack.persistence;
 
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
+import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
@@ -183,6 +184,15 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
     public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
                                  AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
                                  String analysisDetails, Boolean isSuppressed) {
+        return makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse,
+                analysisDetails, isSuppressed, null, null, null, null, null, null);
+    }
+
+    public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
+                                 AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
+                                 String analysisDetails, Boolean isSuppressed,
+                                 String riskImpact, String riskLikelihood, String residualRiskImpact,
+                                 String residualRiskLikelihood, String riskJustification, String residualRiskJustification) {
         Analysis analysis = getAnalysis(component, vulnerability);
         if (analysis == null) {
             analysis = new Analysis();
@@ -208,6 +218,45 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
         }
         if (isSuppressed != null) {
             analysis.setSuppressed(isSuppressed);
+        }
+
+        final String normalizedRiskImpact = riskImpact != null ? StringUtils.trimToNull(riskImpact) : null;
+        final String normalizedRiskLikelihood = riskLikelihood != null ? StringUtils.trimToNull(riskLikelihood) : null;
+        final String normalizedResidualRiskImpact = residualRiskImpact != null ? StringUtils.trimToNull(residualRiskImpact) : null;
+        final String normalizedResidualRiskLikelihood = residualRiskLikelihood != null ? StringUtils.trimToNull(residualRiskLikelihood) : null;
+        final String normalizedRiskJustification = riskJustification != null ? StringUtils.trimToNull(riskJustification) : null;
+        final String normalizedResidualRiskJustification = residualRiskJustification != null ? StringUtils.trimToNull(residualRiskJustification) : null;
+
+        if (riskImpact != null) {
+            analysis.setRiskImpact(normalizedRiskImpact);
+        }
+        if (riskLikelihood != null) {
+            analysis.setRiskLikelihood(normalizedRiskLikelihood);
+        }
+        
+        // Calculate risk score if both impact and likelihood are set
+        if (analysis.getRiskImpact() != null && analysis.getRiskLikelihood() != null) {
+            analysis.setRiskScore(calculateRiskScore(analysis.getRiskImpact(), analysis.getRiskLikelihood()));
+        }
+        
+        if (residualRiskImpact != null) {
+            analysis.setResidualRiskImpact(normalizedResidualRiskImpact);
+        }
+        if (residualRiskLikelihood != null) {
+            analysis.setResidualRiskLikelihood(normalizedResidualRiskLikelihood);
+        }
+        
+        // Calculate residual risk score if both impact and likelihood are set
+        if (analysis.getResidualRiskImpact() != null && analysis.getResidualRiskLikelihood() != null) {
+            analysis.setResidualRiskScore(calculateRiskScore(analysis.getResidualRiskImpact(), analysis.getResidualRiskLikelihood()));
+        }
+        
+        if (riskJustification != null) {
+            analysis.setRiskJustification(normalizedRiskJustification);
+        }
+        
+        if (residualRiskJustification != null) {
+            analysis.setResidualRiskJustification(normalizedResidualRiskJustification);
         }
 
         analysis = persist(analysis);
@@ -335,5 +384,41 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
                 });
 
         return findings;
+    }
+
+    /**
+     * Calculates the risk score based on the OWASP Risk Rating methodology.
+     * @param impact the risk impact value (VERY_LOW, LOW, MEDIUM, HIGH, VERY_HIGH)
+     * @param likelihood the risk likelihood value (VERY_LOW, LOW, MEDIUM, HIGH, VERY_HIGH)
+     * @return the calculated risk score
+     */
+    private Double calculateRiskScore(String impact, String likelihood) {
+        if (impact == null || likelihood == null) {
+            return null;
+        }
+
+        // Map risk levels to numeric values (1-5)
+        final double impactValue = getRiskValue(impact);
+        final double likelihoodValue = getRiskValue(likelihood);
+
+        // Calculate risk score using OWASP formula: (Impact + Likelihood) / 2
+        // Result range: 1.0 to 5.0
+        return (impactValue + likelihoodValue) / 2.0;
+    }
+
+    /**
+     * Converts a risk level string to its numeric value.
+     * @param riskLevel the risk level (VERY_LOW, LOW, MEDIUM, HIGH, VERY_HIGH)
+     * @return the numeric value (1-5)
+     */
+    private double getRiskValue(String riskLevel) {
+        return switch (riskLevel.toUpperCase()) {
+            case "VERY_LOW" -> 1.0;
+            case "LOW" -> 2.0;
+            case "MEDIUM" -> 3.0;
+            case "HIGH" -> 4.0;
+            case "VERY_HIGH" -> 5.0;
+            default -> 3.0; // default to MEDIUM
+        };
     }
 }

@@ -154,7 +154,13 @@ public class AnalysisResource extends AlpineResource {
                 validator.validateProperty(request, "analysisJustification"),
                 validator.validateProperty(request, "analysisResponse"),
                 validator.validateProperty(request, "analysisDetails"),
-                validator.validateProperty(request, "comment")
+                validator.validateProperty(request, "comment"),
+                validator.validateProperty(request, "riskImpact"),
+                validator.validateProperty(request, "riskLikelihood"),
+                validator.validateProperty(request, "residualRiskImpact"),
+                validator.validateProperty(request, "residualRiskLikelihood"),
+                validator.validateProperty(request, "riskJustification"),
+                validator.validateProperty(request, "residualRiskJustification")
         );
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, request.getProject());
@@ -188,8 +194,17 @@ public class AnalysisResource extends AlpineResource {
             AnalysisCommentUtil.makeJustificationComment(qm, analysis, request.getAnalysisJustification(), commenter);
             AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, request.getAnalysisResponse(), commenter);
             AnalysisCommentUtil.makeAnalysisDetailsComment(qm, analysis, request.getAnalysisDetails(), commenter);
+            AnalysisCommentUtil.makeRiskImpactComment(qm, analysis, request.getRiskImpact(), commenter);
+            AnalysisCommentUtil.makeRiskLikelihoodComment(qm, analysis, request.getRiskLikelihood(), commenter);
+            AnalysisCommentUtil.makeResidualRiskImpactComment(qm, analysis, request.getResidualRiskImpact(), commenter);
+            AnalysisCommentUtil.makeResidualRiskLikelihoodComment(qm, analysis, request.getResidualRiskLikelihood(), commenter);
+            AnalysisCommentUtil.makeRiskJustificationComment(qm, analysis, request.getRiskJustification(), commenter);
             final var suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
-            analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed());
+            analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(),
+                    request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed(),
+                    request.getRiskImpact(), request.getRiskLikelihood(),
+                    request.getResidualRiskImpact(), request.getResidualRiskLikelihood(),
+                    request.getRiskJustification(), request.getResidualRiskJustification());
 
             final String comment = StringUtils.trimToNull(request.getComment());
             qm.makeAnalysisComment(analysis, comment, commenter);

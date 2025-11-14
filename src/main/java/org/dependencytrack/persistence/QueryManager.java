@@ -1109,11 +1109,22 @@ public class QueryManager extends AlpineQueryManager {
         return getFindingsQueryManager().getAnalysis(component, vulnerability);
     }
 
-    public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
-                                 AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
-                                 String analysisDetails, Boolean isSuppressed) {
-        return getFindingsQueryManager().makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse, analysisDetails, isSuppressed);
-    }
+        public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
+                     AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
+                     String analysisDetails, Boolean isSuppressed) {
+        return makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse,
+            analysisDetails, isSuppressed, null, null, null, null, null, null);
+        }
+
+        public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
+                     AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
+                     String analysisDetails, Boolean isSuppressed,
+                     String riskImpact, String riskLikelihood, String residualRiskImpact,
+                     String residualRiskLikelihood, String riskJustification, String residualRiskJustification) {
+        return getFindingsQueryManager().makeAnalysis(component, vulnerability, analysisState, analysisJustification,
+            analysisResponse, analysisDetails, isSuppressed, riskImpact, riskLikelihood,
+            residualRiskImpact, residualRiskLikelihood, riskJustification, residualRiskJustification);
+        }
 
     public AnalysisComment makeAnalysisComment(Analysis analysis, String comment, String commenter) {
         return getFindingsQueryManager().makeAnalysisComment(analysis, comment, commenter);

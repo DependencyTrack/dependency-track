@@ -23,6 +23,14 @@
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          metadata-complete="true"
          version="6.0">
+    <context-param>
+        <param-name>h2.console.enabled</param-name>
+        <param-value>true</param-value>
+    </context-param>
+    <context-param>
+        <param-name>h2.console.path</param-name>
+        <param-value>/h2-console</param-value>
+    </context-param>
     <listener>
         <listener-class>alpine.server.metrics.MetricsInitializer</listener-class>
     </listener>

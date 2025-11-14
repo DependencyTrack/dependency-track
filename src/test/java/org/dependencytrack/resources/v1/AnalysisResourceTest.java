@@ -123,7 +123,8 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability = qm.createVulnerability(vulnerability, false);
 
         final Analysis analysis = qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED,
-                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true);
+                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true,
+                "HIGH", "LIKELY", "MEDIUM", "UNLIKELY", "Mitigation justification");
         qm.makeAnalysisComment(analysis, "Analysis comment here", "Jane Doe");
 
         final Response response = jersey.target(V1_ANALYSIS)
@@ -142,6 +143,11 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
+        assertThat(responseJson.getString("riskImpact")).isEqualTo("HIGH");
+        assertThat(responseJson.getString("riskLikelihood")).isEqualTo("LIKELY");
+        assertThat(responseJson.getString("residualRiskImpact")).isEqualTo("MEDIUM");
+        assertThat(responseJson.getString("residualRiskLikelihood")).isEqualTo("UNLIKELY");
+        assertThat(responseJson.getString("riskJustification")).isEqualTo("Mitigation justification");
         assertThat(responseJson.getJsonArray("analysisComments")).hasSize(1);
         assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
@@ -335,7 +341,8 @@ class AnalysisResourceTest extends ResourceTest {
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here",
+                "HIGH", "LIKELY", "MEDIUM", "POSSIBLE", "Primary justification", true);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -350,8 +357,13 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
+        assertThat(responseJson.getString("riskImpact")).isEqualTo("HIGH");
+        assertThat(responseJson.getString("riskLikelihood")).isEqualTo("LIKELY");
+        assertThat(responseJson.getString("residualRiskImpact")).isEqualTo("MEDIUM");
+        assertThat(responseJson.getString("residualRiskLikelihood")).isEqualTo("POSSIBLE");
+        assertThat(responseJson.getString("riskJustification")).isEqualTo("Primary justification");
         final var comments = responseJson.getJsonArray("analysisComments");
-        assertThat(comments).hasSize(6);
+        assertThat(comments).hasSize(11);
         assertThat(comments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis: NOT_SET → NOT_AFFECTED"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
@@ -365,9 +377,24 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Details: Analysis details here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(comments.getJsonObject(4))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppressed"))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Risk impact: NOT_SET → HIGH"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(comments.getJsonObject(5))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Risk likelihood: NOT_SET → LIKELY"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(comments.getJsonObject(6))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Residual risk impact: NOT_SET → MEDIUM"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(comments.getJsonObject(7))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Residual risk likelihood: NOT_SET → POSSIBLE"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(comments.getJsonObject(8))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Risk justification: NOT_SET → Primary justification"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(comments.getJsonObject(9))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppressed"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(comments.getJsonObject(10))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
@@ -408,7 +435,8 @@ class AnalysisResourceTest extends ResourceTest {
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here",
+                "HIGH", "LIKELY", "MEDIUM", "POSSIBLE", "Primary justification", true);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -423,8 +451,13 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisJustification")).isEqualTo(AnalysisJustification.CODE_NOT_REACHABLE.name());
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
+        assertThat(responseJson.getString("riskImpact")).isEqualTo("HIGH");
+        assertThat(responseJson.getString("riskLikelihood")).isEqualTo("LIKELY");
+        assertThat(responseJson.getString("residualRiskImpact")).isEqualTo("MEDIUM");
+        assertThat(responseJson.getString("residualRiskLikelihood")).isEqualTo("POSSIBLE");
+        assertThat(responseJson.getString("riskJustification")).isEqualTo("Primary justification");
         final var comments = responseJson.getJsonArray("analysisComments");
-        assertThat(comments).hasSize(6);
+        assertThat(comments).hasSize(11);
         assertThat(comments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis: NOT_SET → NOT_AFFECTED"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
@@ -438,9 +471,24 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Details: Analysis details here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
         assertThat(comments.getJsonObject(4))
-                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppressed"))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Risk impact: NOT_SET → HIGH"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
         assertThat(comments.getJsonObject(5))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Risk likelihood: NOT_SET → LIKELY"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
+        assertThat(comments.getJsonObject(6))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Residual risk impact: NOT_SET → MEDIUM"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
+        assertThat(comments.getJsonObject(7))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Residual risk likelihood: NOT_SET → POSSIBLE"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
+        assertThat(comments.getJsonObject(8))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Risk justification: NOT_SET → Primary justification"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
+        assertThat(comments.getJsonObject(9))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppressed"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
+        assertThat(comments.getJsonObject(10))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
@@ -455,6 +503,37 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
         assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.ANALYSIS_DECISION_NOT_AFFECTED, project));
         assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+    }
+
+    @Test
+    void updateAnalysisRejectsInvalidResidualRiskJustificationTest() throws Exception {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setVulnId("INT-001");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.HIGH);
+        vulnerability.setComponents(List.of(component));
+        vulnerability = qm.createVulnerability(vulnerability, false);
+
+        final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
+                vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here",
+                "HIGH", "LIKELY", "MEDIUM", "POSSIBLE", "Primary justification", "Invalid\u0001Residual", true);
+
+        final Response response = jersey.target(V1_ANALYSIS)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(analysisRequest, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_BAD_REQUEST);
     }
 
     @Test

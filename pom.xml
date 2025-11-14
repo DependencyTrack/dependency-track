@@ -126,7 +126,7 @@
         <lib.com-asahaf-javacron.version>1.4.0</lib.com-asahaf-javacron.version>
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>12.10.2.jre11</lib.jdbc-driver.mssql.version>
-        <lib.jdbc-driver.mysql.version>8.2.0</lib.jdbc-driver.mysql.version>
+        <lib.jdbc-driver.mysql.version>8.4.0</lib.jdbc-driver.mysql.version>
         <lib.jdbc-driver.postgresql.version>42.7.8</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>

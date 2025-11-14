@@ -41,6 +41,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVE
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SSLTLS;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_TRUSTCERT;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_USERNAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SUBJECT_SHOW_LEVEL;
 
 class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
 
@@ -120,6 +121,13 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
                 "false",
                 EMAIL_SMTP_TRUSTCERT.getPropertyType(),
                 EMAIL_SMTP_TRUSTCERT.getDescription()
+        );
+        qm.createConfigProperty(
+                EMAIL_SUBJECT_SHOW_LEVEL.getGroupName(),
+                EMAIL_SUBJECT_SHOW_LEVEL.getPropertyName(),
+                "true",
+                EMAIL_SUBJECT_SHOW_LEVEL.getPropertyType(),
+                EMAIL_SUBJECT_SHOW_LEVEL.getDescription()
         );
     }
     
@@ -952,6 +960,21 @@ class SendMailPublisherTest extends AbstractPublisherTest<SendMailPublisher> {
                         "ldapUser@Test.com",
                         "managedUser@Test.com",
                         "steve@jobs.org");
+    }
+
+    @Test
+    public void testMailSubjectWithoutLevelWhenDisabled() {
+        qm.getConfigProperty(
+                EMAIL_SUBJECT_SHOW_LEVEL.getGroupName(),
+                EMAIL_SUBJECT_SHOW_LEVEL.getPropertyName())
+        .setPropertyValue("false");
+
+        super.baseTestInformWithNewVulnerabilityNotification();
+
+        assertThat(greenMail.getReceivedMessages()).satisfiesExactly(message ->
+                assertThat(message.getSubject())
+                        .isEqualTo("[Dependency-Track] New Vulnerability Identified on Project: [projectName : projectVersion]")
+        );
     }
 
     private NotificationRule createNotificationRule() {

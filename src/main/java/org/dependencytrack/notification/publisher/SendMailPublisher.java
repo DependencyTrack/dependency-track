@@ -48,6 +48,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SERVE
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_SSLTLS;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_TRUSTCERT;
 import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SMTP_USERNAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.EMAIL_SUBJECT_SHOW_LEVEL;
 
 public class SendMailPublisher implements Publisher {
 
@@ -98,7 +99,9 @@ public class SendMailPublisher implements Publisher {
         final String encryptedSmtpPassword;
         final boolean smtpSslTls;
         final boolean smtpTrustCert;
+        final boolean showLevel;
         String emailSubjectPrefix;
+        String subject;
 
         try (QueryManager qm = new QueryManager()) {
             smtpEnabled = qm.isEnabled(EMAIL_SMTP_ENABLED);
@@ -116,6 +119,11 @@ public class SendMailPublisher implements Publisher {
             encryptedSmtpPassword = qm.getConfigProperty(EMAIL_SMTP_PASSWORD.getGroupName(), EMAIL_SMTP_PASSWORD.getPropertyName()).getPropertyValue();
             smtpSslTls = qm.isEnabled(EMAIL_SMTP_SSLTLS);
             smtpTrustCert = qm.isEnabled(EMAIL_SMTP_TRUSTCERT);
+            showLevel = qm.isEnabled(EMAIL_SUBJECT_SHOW_LEVEL);
+            subject = emailSubjectPrefix.trim() 
+                    + (showLevel ? " [" + ctx.notificationLevel() + "] " : " ")
+                    + notification.getTitle();
+
         } catch (RuntimeException e) {
             LOGGER.error("Failed to load SMTP configuration from datastore (%s)".formatted(ctx), e);
             return;
@@ -130,7 +138,6 @@ public class SendMailPublisher implements Publisher {
             return;
         }
         String unescapedContent = StringEscapeUtils.unescapeHtml4(content);
-        String subject = emailSubjectPrefix.trim() + " [" + ctx.notificationLevel() + "] " + notification.getTitle();
         
         try {
             final SendMail sendMail = new SendMail()

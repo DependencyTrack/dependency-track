@@ -206,7 +206,7 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
                             "scope": "PORTFOLIO",
                             "group": "NEW_VULNERABILITY",
                             "timestamp": "1970-01-01T18:31:06.000000666",
-                            "title": "New Vulnerability Identified",
+                            "title": "New Vulnerability Identified on Project: [projectName : projectVersion]",
                             "content": "",
                             "subject": {
                               "component": {

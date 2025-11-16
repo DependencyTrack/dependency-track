@@ -203,6 +203,7 @@ public class Project implements Serializable {
     @Persistent
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
     private String description;
 

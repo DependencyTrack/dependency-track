@@ -124,7 +124,7 @@ class AnalysisResourceTest extends ResourceTest {
 
         final Analysis analysis = qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED,
                 AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true,
-                "HIGH", "LIKELY", "MEDIUM", "UNLIKELY", "Mitigation justification");
+                "HIGH", "LIKELY", "MEDIUM", "UNLIKELY", "Mitigation justification", "Residual mitigation justification");
         qm.makeAnalysisComment(analysis, "Analysis comment here", "Jane Doe");
 
         final Response response = jersey.target(V1_ANALYSIS)
@@ -148,6 +148,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("residualRiskImpact")).isEqualTo("MEDIUM");
         assertThat(responseJson.getString("residualRiskLikelihood")).isEqualTo("UNLIKELY");
         assertThat(responseJson.getString("riskJustification")).isEqualTo("Mitigation justification");
+        assertThat(responseJson.getString("residualRiskJustification")).isEqualTo("Residual mitigation justification");
         assertThat(responseJson.getJsonArray("analysisComments")).hasSize(1);
         assertThat(responseJson.getJsonArray("analysisComments").getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
@@ -342,7 +343,7 @@ class AnalysisResourceTest extends ResourceTest {
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
                 AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here",
-                "HIGH", "LIKELY", "MEDIUM", "POSSIBLE", "Primary justification", true);
+                "HIGH", "LIKELY", "MEDIUM", "POSSIBLE", "Primary justification", "Residual justification", true);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -362,6 +363,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("residualRiskImpact")).isEqualTo("MEDIUM");
         assertThat(responseJson.getString("residualRiskLikelihood")).isEqualTo("POSSIBLE");
         assertThat(responseJson.getString("riskJustification")).isEqualTo("Primary justification");
+        assertThat(responseJson.getString("residualRiskJustification")).isEqualTo("Residual justification");
         final var comments = responseJson.getJsonArray("analysisComments");
         assertThat(comments).hasSize(11);
         assertThat(comments.getJsonObject(0))
@@ -436,7 +438,7 @@ class AnalysisResourceTest extends ResourceTest {
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
                 AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here",
-                "HIGH", "LIKELY", "MEDIUM", "POSSIBLE", "Primary justification", true);
+                "HIGH", "LIKELY", "MEDIUM", "POSSIBLE", "Primary justification", "Residual justification", true);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -456,6 +458,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("residualRiskImpact")).isEqualTo("MEDIUM");
         assertThat(responseJson.getString("residualRiskLikelihood")).isEqualTo("POSSIBLE");
         assertThat(responseJson.getString("riskJustification")).isEqualTo("Primary justification");
+        assertThat(responseJson.getString("residualRiskJustification")).isEqualTo("Residual justification");
         final var comments = responseJson.getJsonArray("analysisComments");
         assertThat(comments).hasSize(11);
         assertThat(comments.getJsonObject(0))

@@ -1,0 +1,44 @@
+services:
+  # --------------------------
+  # Backend (your custom build) - Using embedded H2 database
+  # --------------------------
+  apiserver:
+    image: acrdependencytracktest.azurecr.io/dtrack-backend:20251117
+    container_name: dtrack-apiserver
+    ports:
+      - "8080:8080"
+    environment:
+      - ALPINE_DATABASE_MODE=embedded
+      - ALPINE_DATABASE_URL=jdbc:h2:file:/data/.dependency-track/db;AUTO_SERVER=TRUE
+      - ALPINE_DATABASE_DRIVER=org.h2.Driver
+      - ALPINE_DATABASE_USERNAME=sa
+      - ALPINE_DATABASE_PASSWORD=
+      - LOGGING_LEVEL=INFO
+      - ALPINE_SECRET_KEY_PATH=/data/.dependency-track/secret.key
+    volumes:
+      - dtrack-data:/data/.dependency-track
+    networks:
+      - dtrack-net
+    restart: unless-stopped
+
+  # --------------------------
+  # Frontend (your custom build)
+  # --------------------------
+  dtrack-frontend:
+    image: acrdependencytracktest.azurecr.io/dtrack-frontend:20251117
+    container_name: dtrack-frontend
+    ports:
+      - "8081:80"
+    environment:
+      - API_BASE_URL=http://apiserver:8080   # must match backend service name
+    depends_on:
+      - apiserver
+    networks:
+      - dtrack-net
+    restart: unless-stopped
+
+networks:
+  dtrack-net:
+
+volumes:
+  dtrack-data:

@@ -19,6 +19,7 @@
 package org.dependencytrack.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -250,8 +251,8 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
         if (version == null) {
             return 1;
         }
-        final List<String> left = this.getVersionParts();
-        final List<String> right = version.getVersionParts();
+        final List<String> left = makeComparable(this.getVersionParts());
+        final List<String> right = makeComparable(version.getVersionParts());
         final int max = left.size() < right.size() ? left.size() : right.size();
 
         for (int i = 0; i < max; i++) {
@@ -286,5 +287,18 @@ public class ComponentVersion implements Iterable<String>, Comparable<ComponentV
         } else {
             return Integer.compare(left.size(), right.size());
         }
+    }
+
+    private List<String> makeComparable(List<String> versionParts) {
+        final List<String> comparableParts = new ArrayList<>();
+        for (String versionPart : versionParts){
+            final String[] token = versionPart.split("(?<=\\d)(?=\\D)|(?=\\d)(?<=\\D)");
+            if (token.length > 1) {
+                comparableParts.addAll(Arrays.asList(token));
+            } else {
+                comparableParts.add(versionPart);
+            }
+        }
+        return comparableParts;
     }
 }

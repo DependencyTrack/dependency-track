@@ -185,6 +185,7 @@ class NotificationRuleResourceTest extends ResourceTest {
                   "scheduleNextTriggerAt": "${json-unit.any-number}",
                   "scheduleCron": "0 * * * *",
                   "scheduleSkipUnchanged": false,
+                  "scheduleIgnoreSuppressed": false,
                   "uuid": "${json-unit.any-string}"
                 }
                 """);

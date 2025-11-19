@@ -606,4 +606,80 @@ class ScheduledNotificationDispatchTaskTest extends PersistenceCapableTest {
                 notification -> assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY.name()));
     }
 
+
+    @Test
+    void shouldNotDispatchNotificationWhenNoNewUnsuppressedFindingsAndSkipPublishIfUnchangedIsEnabled() {
+        final Instant ruleLastFiredAt = Instant.now().minus(10, ChronoUnit.MINUTES);
+        final Instant afterRuleLastFiredAt = ruleLastFiredAt.plus(5, ChronoUnit.MINUTES);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        qm.addVulnerability(
+                vuln,
+                component,
+                AnalyzerIdentity.INTERNAL_ANALYZER,
+                null,
+                null,
+                Date.from(afterRuleLastFiredAt));
+
+        qm.makeAnalysis(component, vuln, AnalysisState.FALSE_POSITIVE, null, null, null, true);
+
+        final var policy = new Policy();
+        policy.setName("policy-a");
+        policy.setOperator(Policy.Operator.ALL);
+        policy.setViolationState(Policy.ViolationState.WARN);
+        qm.persist(policy);
+
+        final var condition = new PolicyCondition();
+        condition.setPolicy(policy);
+        condition.setSubject(PolicyCondition.Subject.VERSION);
+        condition.setOperator(PolicyCondition.Operator.IS);
+        condition.setValue("1.0.0");
+        qm.persist(condition);
+
+        final var violation = new PolicyViolation();
+        violation.setPolicyCondition(condition);
+        violation.setComponent(component);
+        violation.setType(PolicyViolation.Type.OPERATIONAL);
+        violation.setTimestamp(Date.from(afterRuleLastFiredAt));
+        qm.persist(violation);
+
+        qm.makeViolationAnalysis(component, violation, ViolationAnalysisState.APPROVED, true);
+
+        final var publisher = qm.createNotificationPublisher(
+                "foo", null, WebhookPublisher.class, "template", "templateMimeType", false);
+        final var rule = qm.createScheduledNotificationRule(
+                "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(
+                NotificationGroup.NEW_VULNERABILITIES_SUMMARY,
+                NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY));
+        rule.setProjects(List.of(project));
+        rule.setNotifyChildren(true);
+        rule.setScheduleCron("* * * * *"); // Every minute.
+        rule.setScheduleLastTriggeredAt(Date.from(ruleLastFiredAt));
+        rule.updateScheduleNextTriggerAt();
+        rule.setScheduleSkipUnchanged(true);
+        rule.setScheduleIgnoreSuppressed(true);
+        rule.setEnabled(true);
+
+        new ScheduledNotificationDispatchTask().inform(new ScheduledNotificationDispatchEvent());
+        assertThat(NOTIFICATIONS.poll()).isNull();
+    }
+
+
+
 }

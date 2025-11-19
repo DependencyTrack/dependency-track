@@ -71,9 +71,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNullElseGet;
 import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_INITIAL_DURATION_MS;
@@ -360,11 +364,99 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
             }
         }
 
-        for (final Map.Entry<Component, List<trivy.proto.common.Vulnerability>> entry : vulnsByComponent.entrySet()) {
-            final Component component = entry.getKey();
-            final List<trivy.proto.common.Vulnerability> vulns = entry.getValue();
-            handle(component, vulns);
+        handleAllComponentsBatchOptimized(vulnsByComponent);
+    }
+
+    private void handleAllComponentsBatchOptimized(final Map<Component, List<trivy.proto.common.Vulnerability>> vulnsByComponent) {
+        if (vulnsByComponent.isEmpty()) {
+            return;
         }
+
+        try (final var qm = new QueryManager()) {
+            final var trivyParser = new TrivyParser();
+            boolean didCreateVulns = false;
+            final var vulnerabilityAdditions = new ArrayList<VulnerabilityAddition>();
+
+            final var componentUuids = vulnsByComponent.keySet().stream()
+                    .map(Component::getUuid)
+                    .collect(Collectors.toSet());
+
+            final var persistentComponents = new HashMap<UUID, Component>();
+            for (UUID uuid : componentUuids) {
+                Component persistent = qm.getObjectByUuid(Component.class, uuid);
+                if (persistent != null) {
+                    persistentComponents.put(uuid, persistent);
+                }
+            }
+
+            final var vulnIds = new HashMap<String, Set<String>>();
+            for (final List<trivy.proto.common.Vulnerability> trivyVulns : vulnsByComponent.values()) {
+                for (final trivy.proto.common.Vulnerability trivyVuln : trivyVulns) {
+                    final Vulnerability parsed = trivyParser.parse(trivyVuln);
+                    vulnIds.computeIfAbsent(parsed.getSource(), k -> new HashSet<>())
+                            .add(parsed.getVulnId());
+                }
+            }
+
+            final var existingVulns = new HashMap<String, Vulnerability>(); // "source:vulnId" -> Vulnerability
+
+            List<Vulnerability> fetchedVulns = qm.getVulnerabilityByVulnIds(vulnIds, false);
+
+            for (Vulnerability vuln : fetchedVulns) {
+                existingVulns.put(vuln.getSource() + ":" + vuln.getVulnId(), vuln);
+            }
+
+            for (final Map.Entry<Component, List<trivy.proto.common.Vulnerability>> entry : vulnsByComponent.entrySet()) {
+                final Component component = entry.getKey();
+                final List<trivy.proto.common.Vulnerability> trivyVulns = entry.getValue();
+
+                final Component persistentComponent = persistentComponents.get(component.getUuid());
+                if (persistentComponent == null) {
+                    LOGGER.warn("""
+                            %s vulnerabilities were reported for component %s, \
+                            but it no longer exists; Skipping""".formatted(trivyVulns.size(), component.getUuid()));
+                    continue;
+                }
+
+                for (final trivy.proto.common.Vulnerability trivyVuln : trivyVulns) {
+                    final Vulnerability parsedVulnerability = trivyParser.parse(trivyVuln);
+                    final String vulnKey = parsedVulnerability.getSource() + ":" + parsedVulnerability.getVulnId();
+
+                    Vulnerability vulnerability = existingVulns.get(vulnKey);
+                    if (vulnerability == null) {
+                        LOGGER.debug("Creating unavailable vulnerability: %s - %s".formatted(parsedVulnerability.getSource(), parsedVulnerability.getVulnId()));
+                        vulnerability = qm.createVulnerability(parsedVulnerability, false);
+                        existingVulns.put(vulnKey, vulnerability);
+                        didCreateVulns = true;
+                    } else {
+                        if (parsedVulnerability.getSeverity() != null &&
+                                !parsedVulnerability.getSeverity().equals(vulnerability.getSeverity())) {
+                            qm.updateVulnerability(parsedVulnerability, false);
+                        }
+                    }
+
+                    vulnerabilityAdditions.add(new VulnerabilityAddition(vulnerability, persistentComponent));
+                }
+            }
+
+            for (VulnerabilityAddition addition : vulnerabilityAdditions) {
+                LOGGER.debug("Trivy vulnerability added: %s to component %s".formatted(addition.vulnerability.getVulnId(), addition.component.getName()));
+
+                NotificationUtil.analyzeNotificationCriteria(
+                        qm, addition.vulnerability, addition.component, vulnerabilityAnalysisLevel
+                );
+
+                qm.addVulnerability(addition.vulnerability, addition.component, this.getAnalyzerIdentity());
+            }
+
+            if (didCreateVulns) {
+                Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+            }
+
+        }
+    }
+
+    private record VulnerabilityAddition(Vulnerability vulnerability, Component component) {
     }
 
     private ArrayList<Result> analyzeBlob(final Collection<BlobInfo> blobs) {
@@ -476,39 +568,6 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
             LOGGER.debug("DeleteBlob response: " + response.getStatusLine().getStatusCode());
         } catch (Throwable ex) {
             handleRequestException(LOGGER, ex);
-        }
-    }
-
-    private void handle(final Component component, final Collection<trivy.proto.common.Vulnerability> trivyVulns) {
-        try (final var qm = new QueryManager()) {
-            final var trivyParser = new TrivyParser();
-            final var persistentComponent = qm.getObjectByUuid(Component.class, component.getUuid());
-            if (persistentComponent == null) {
-                LOGGER.warn("""
-                        %s vulnerabilities were reported for component %s, \
-                        but it no longer exists; Skipping""".formatted(trivyVulns.size(), component.getUuid()));
-                return;
-            }
-
-            boolean didCreateVulns = false;
-            for (final trivy.proto.common.Vulnerability trivyVuln : trivyVulns) {
-                final Vulnerability parsedVulnerability = trivyParser.parse(trivyVuln);
-
-                Vulnerability vulnerability = qm.getVulnerabilityByVulnId(parsedVulnerability.getSource(), parsedVulnerability.getVulnId());
-                if (vulnerability == null) {
-                    LOGGER.debug("Creating unavailable vulnerability:" + parsedVulnerability.getSource() + " - " + parsedVulnerability.getVulnId());
-                    vulnerability = qm.createVulnerability(parsedVulnerability, false);
-                    didCreateVulns = true;
-                }
-
-                LOGGER.debug("Trivy vulnerability added: " + vulnerability.getVulnId() + " to component " + persistentComponent.getName());
-                NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, persistentComponent, vulnerabilityAnalysisLevel);
-                qm.addVulnerability(vulnerability, persistentComponent, this.getAnalyzerIdentity());
-            }
-
-            if (didCreateVulns) {
-                Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
-            }
         }
     }
 

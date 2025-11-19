@@ -1,0 +1,39 @@
+AlmaLinux
+Alpaquita
+Alpine
+Android
+BellSoft Hardened Containers
+Bitnami
+CRAN
+Chainguard
+Debian
+Echo
+GHC
+GIT
+GSD
+GitHub Actions
+Go
+Hackage
+Hex
+Linux
+Mageia
+Maven
+MinimOS
+NuGet
+OSS-Fuzz
+Packagist
+Pub
+PyPI
+Red Hat
+Rocky Linux
+RubyGems
+SUSE
+SwiftURL
+UVI
+Ubuntu
+Wolfi
+[EMPTY]
+crates.io
+npm
+openEuler
+openSUSE

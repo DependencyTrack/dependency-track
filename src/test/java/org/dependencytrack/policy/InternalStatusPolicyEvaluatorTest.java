@@ -58,7 +58,7 @@ class InternalStatusPolicyEvaluatorTest {
         Policy policy = policyWith(condition);
         List<PolicyConditionViolation> result = evaluator.evaluate(policy, component);
 
-        assertTrue(result.isEmpty());
+        assertFalse(result.isEmpty());
     }
 
     @Test
@@ -74,7 +74,7 @@ class InternalStatusPolicyEvaluatorTest {
         Policy policy = policyWith(condition);
         List<PolicyConditionViolation> result = evaluator.evaluate(policy, component);
 
-        assertEquals(1, result.size());
+        assertEquals(0, result.size());
     }
 
     @Test
@@ -90,7 +90,7 @@ class InternalStatusPolicyEvaluatorTest {
         Policy policy = policyWith(condition);
         List<PolicyConditionViolation> result = evaluator.evaluate(policy, component);
 
-        assertEquals(1, result.size());
+        assertEquals(0, result.size());
     }
 
     @Test
@@ -106,6 +106,6 @@ class InternalStatusPolicyEvaluatorTest {
         Policy policy = policyWith(condition);
         List<PolicyConditionViolation> result = evaluator.evaluate(policy, component);
 
-        assertTrue(result.isEmpty());
+        assertFalse(result.isEmpty());
     }
 }

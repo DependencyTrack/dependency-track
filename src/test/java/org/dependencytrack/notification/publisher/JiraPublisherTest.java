@@ -179,6 +179,29 @@ class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublisher> {
     }
 
     @Test
+    public void testInformWithNewVulnerabilityCustomUTF8TemplateNotification() throws Exception {
+        super.baseTestInformWithNewVulnerabilityCustomUTF8TemplateNotification();
+
+        verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
+                .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "fields" : {
+                            "project" : {
+                              "key" : "PROJECT"
+                            },
+                            "issuetype" : {
+                              "name" : "Task"
+                            },
+                            "summary" : "[Dependency-Track] [NEW_VULNERABILITY] [] New  vulnerability identified: ",
+                            "description" : "A new vulnerability has been identified on your project(s).\\n\\\\\\\\\\n\\\\\\\\\\n*Vulnérabilité description*\\n{code:none|bgColor=white|borderStyle=none}{code}\\n\\n*VulnID*\\n\\n\\n*Severity*\\n\\n\\n*Component*\\n[|https://example.com/components/]\\n\\n*Affected project(s)*\\n"
+                          }
+                        }
+                        """)));
+    }
+
+    @Test
     public void testInformWithNewVulnerabilityNotification() {
         super.baseTestInformWithNewVulnerabilityNotification();
 

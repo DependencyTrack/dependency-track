@@ -39,6 +39,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,7 +53,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
@@ -222,9 +222,9 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         final Path tempMockZipFile = mirrorDirPath.resolve("google-osv-Maven.zip");
         Files.writeString(tempMockZipFile, "------fake-zip-data------");
         final Path tempMockZipTsFile = mirrorDirPath.resolve("google-osv-Maven.zip.ts");
-        Files.writeString(tempMockZipTsFile, "2025-10-22T17:35:28Z");
+        Files.writeString(tempMockZipTsFile, "2025-10-22T17:35:28Z", StandardCharsets.UTF_8);
         final Path tempMockCsvTsFile = mirrorDirPath.resolve("google-osv-Maven-modified.csv.ts");
-        Files.writeString(tempMockCsvTsFile, "2025-10-22T17:35:28Z");
+        Files.writeString(tempMockCsvTsFile, "2025-10-22T17:35:28Z", StandardCharsets.UTF_8);
 
         // Fixed clock for Instant.now() in the OsvDownloadTask, such that the incremental update will be correctly triggered in this test
         final Instant instant = Instant.parse("2025-10-23T17:00:00Z");
@@ -654,13 +654,10 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testGetEcosystems() throws IOException {
-        stubFor(get(anyUrl())
-                .willReturn(aResponse()
-                        .withStatus(404)));
+    void testGetEcosystems() {
         stubFor(get(urlPathEqualTo("/ecosystems.txt"))
                 .willReturn(aResponse()
-                        .withBody(resourceToByteArray("/unit/osv.jsons/ecosystems.txt"))));
+                        .proxiedFrom("https://osv-vulnerabilities.storage.googleapis.com")));
         final var task = new OsvDownloadTask();
         List<String> ecosystems = task.getEcosystems();
         Assertions.assertFalse(ecosystems.isEmpty());

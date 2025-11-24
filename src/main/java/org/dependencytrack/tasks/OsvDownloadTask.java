@@ -64,7 +64,6 @@ import org.slf4j.MDC;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -638,9 +637,8 @@ public class OsvDownloadTask implements LoggableSubscriber {
     }
 
     private void writeTimestampFile(final File file, Instant modificationTime) throws IOException {
-        try (FileWriter writer = new FileWriter(file)) {
-            writer.write(modificationTime.truncatedTo(ChronoUnit.MILLIS).toString());
-        }
+        String timestamp = modificationTime.truncatedTo(ChronoUnit.MILLIS).toString();
+        Files.writeString(file.toPath(), timestamp, StandardCharsets.UTF_8);
     }
 
     private void setOutputDir(final String outputDirPath) {

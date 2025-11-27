@@ -435,6 +435,7 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
                             "title": "New Vulnerabilities Summary",
                             "content": "Identified 1 new vulnerabilities across 1 projects and 1 components since 1970-01-01T00:01:06Z, of which 1 are suppressed.",
                             "subject": {
+                              "scheduleIgnoreSuppressed" : false,
                               "overview": {
                                 "affectedProjectsCount": 1,
                                 "affectedComponentsCount": 1,
@@ -551,6 +552,7 @@ public class WebhookPublisherTest extends AbstractWebhookPublisherTest<WebhookPu
                             "title": "New Policy Violations Summary",
                             "content": "Identified 1 new policy violations across 1 project and 1 components since 1970-01-01T00:01:06Z, of which 0 are suppressed.",
                             "subject": {
+                              "scheduleIgnoreSuppressed" : false,
                               "overview": {
                                 "affectedProjectsCount": 1,
                                 "affectedComponentsCount": 1,

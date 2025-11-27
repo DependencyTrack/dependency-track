@@ -121,10 +121,15 @@ Violated Policy:   {{ subject.policyViolation.policyCondition.policy.name }}
 {% elseif notification.group == "NEW_POLICY_VIOLATIONS_SUMMARY" %}
 {% set newViolationsSummarySubject = subject -%}
 Overview:
+{% if newViolationsSummarySubject.scheduleIgnoreSuppressed %}
+- New Violations:      {{ newViolationsSummarySubject.overview.totalNewViolationsCount }}
+{%else%}
 - New Violations:      {{ newViolationsSummarySubject.overview.totalNewViolationsCount }} (Suppressed: {{ newViolationsSummarySubject.overview.suppressedNewViolationsCount }})
+{% endif %}
 {%- for newViolationsCountByType in newViolationsSummarySubject.overview.newViolationsCountByType %}
   - Of Type {{ newViolationsCountByType.key.name }}: {{ newViolationsCountByType.value }}
 {%- endfor %}
+
 - Affected Projects:   {{ newViolationsSummarySubject.overview.affectedProjectsCount }}
 - Affected Components: {{ newViolationsSummarySubject.overview.affectedComponentsCount }}
 - Since:               {{ newViolationsSummarySubject.since | date("yyyy-MM-dd'T'HH:mm:ssX", timeZone="UTC") }}
@@ -137,7 +142,11 @@ Project Summaries:
 - Project: [{{ summaryByProject.key.name }} : {{ summaryByProject.key.version }}]
   Project URL: {{ baseUrl }}/projects/{{ summaryByProject.key.uuid }}
 {% for entry in summaryByProject.value.totalNewViolationsCountByType %}
+  {% if newViolationsSummarySubject.scheduleIgnoreSuppressed %}
+  + New Violations Of Type {{ entry.key.name }}: {{ entry.value }}
+  {%else%}
   + New Violations Of Type {{ entry.key.name }}: {{ entry.value }} (Suppressed: {{ summaryByProject.value.suppressedNewViolationsCountByType.get(entry.key) | default(0) }})
+  {% endif %}
 {%- endfor %}
 {% endfor %}
 {%- endif %}
@@ -156,17 +165,23 @@ Violation Details:
     Component URL:         {{ baseUrl }}/component/?uuid={{ violation.component.uuid }}
     Timestamp:             {{ violation.timestamp | date("yyyy-MM-dd'T'HH:mm:ssX", timeZone="UTC") }}
     Analysis State:        {{ violation.analysisState | default("-") }}
-    Suppressed:            {{ violation.suppressed }}
+    {% if not newViolationsSummarySubject.scheduleIgnoreSuppressed %}
+    Suppressed:             {{ violation.suppressed }}
+    {% endif %}
 {% endfor -%}
 {% endfor -%}
 {% endif %}
 {% elseif notification.group == "NEW_VULNERABILITIES_SUMMARY" %}
 {% set newVulnsSummarySubject = subject -%}
 Overview:
+{% if newVulnsSummarySubject.scheduleIgnoreSuppressed %}
+- New Vulnerabilities: {{ newVulnsSummarySubject.overview.totalNewVulnerabilitiesCount }}
+{%else%}
 - New Vulnerabilities: {{ newVulnsSummarySubject.overview.totalNewVulnerabilitiesCount }} (Suppressed: {{ newVulnsSummarySubject.overview.suppressedNewVulnerabilitiesCount }})
+{% endif %}
 {% for newVulnsCountBySeverity in newVulnsSummarySubject.overview.newVulnerabilitiesCountBySeverity %}
   - Of Severity {{ newVulnsCountBySeverity.key.name }}: {{ newVulnsCountBySeverity.value }}
-{%- endfor -%}
+{%- endfor %}
 - Affected Projects:   {{ newVulnsSummarySubject.overview.affectedProjectsCount }}
 - Affected Components: {{ newVulnsSummarySubject.overview.affectedComponentsCount }}
 - Since:               {{ newVulnsSummarySubject.since | date("yyyy-MM-dd'T'HH:mm:ssX", timeZone="UTC") }}
@@ -179,7 +194,11 @@ Project Summaries:
 - Project: [{{ summaryByProject.key.name }} : {{ summaryByProject.key.version }}]
   Project URL: {{ baseUrl }}/projects/{{ summaryByProject.key.uuid }}
 {% for entry in summaryByProject.value.totalNewVulnerabilitiesCountBySeverity %}
+  {% if newVulnsSummarySubject.scheduleIgnoreSuppressed %}
+  + New Vulnerabilities Of Severity {{ entry.key.name }}: {{ entry.value }}
+  {%else%}
   + New Vulnerabilities Of Severity {{ entry.key.name }}: {{ entry.value }} (Suppressed: {{ summaryByProject.value.suppressedNewVulnerabilitiesCountBySeverity.get(entry.key) | default(0) }})
+  {% endif %}
 {%- endfor %}
 {% endfor %}
 {%- endif %}
@@ -199,7 +218,9 @@ Vulnerability Details:
     Component URL:          {{ baseUrl }}/component/?uuid={{ finding.component.uuid }}
     Timestamp:              {{ finding.attributedOn | date("yyyy-MM-dd'T'HH:mm:ssX", timeZone="UTC") }}
     Analysis State:         {{ finding.analysisState | default("-") }}
+    {% if not newVulnsSummarySubject.scheduleIgnoreSuppressed %}
     Suppressed:             {{ finding.suppressed }}
+    {% endif %}
 {% endfor -%}
 {% endfor -%}
 {% endif %}

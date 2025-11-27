@@ -267,6 +267,35 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 .withMessage("Unexpected tag name \"include\" ({% include '/some/path' %}:1)");
     }
 
+    public final void baseTestInformWithNewVulnerabilityCustomUTF8TemplateNotification() throws Exception {
+        final var project = createProject();
+        final var component = createComponent(project);
+        final var vuln = createVulnerability();
+
+        final var subject = new NewVulnerabilityIdentified(vuln, component, Set.of(project),
+                VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+
+
+        final var notification = new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.NEW_VULNERABILITY)
+                .title(NotificationConstants.Title.NOTIFICATION_TEST)
+                .level(NotificationLevel.INFORMATIONAL)
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        final JsonObject defaultConfig = createConfig();
+        final String defaultTemplate = defaultConfig.getString(Publisher.CONFIG_TEMPLATE_KEY);
+        final String template = defaultTemplate.replaceAll("Vulnerability", "Vulnérabilité");
+
+        final JsonObject config = Json.createObjectBuilder(createConfig())
+                .add(Publisher.CONFIG_TEMPLATE_KEY, template)
+                .build();
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, config));
+    }
+
     public final void baseTestPublishWithScheduledNewVulnerabilitiesNotification() {
         final var project = createProject();
         final var component = createComponent(project);

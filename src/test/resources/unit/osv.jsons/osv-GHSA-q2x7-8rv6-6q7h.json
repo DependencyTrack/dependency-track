@@ -1,0 +1,150 @@
+{
+  "id": "GHSA-q2x7-8rv6-6q7h",
+  "summary": "Jinja has a sandbox breakout through indirect reference to format method",
+  "details": "An oversight in how the Jinja sandboxed environment detects calls to `str.format` allows an attacker that controls the content of a template to execute arbitrary Python code.\n\nTo exploit the vulnerability, an attacker needs to control the content of a template. Whether that is the case depends on the type of application using Jinja. This vulnerability impacts users of applications which execute untrusted templates.\n\nJinja's sandbox does catch calls to `str.format` and ensures they don't escape the sandbox. However, it's possible to store a reference to a malicious string's `format` method, then pass that to a filter that calls it. No such filters are built-in to Jinja, but could be present through custom filters in an application. After the fix, such indirect calls are also handled by the sandbox.",
+  "aliases": [
+    "CVE-2024-56326"
+  ],
+  "modified": "2024-12-27T19:24:19.224818Z",
+  "published": "2024-12-23T17:56:08Z",
+  "related": [
+    "CGA-3cj4-2jg2-4qm3",
+    "CGA-48m9-g63w-3pmj",
+    "CGA-4qcp-6r5p-mjg3",
+    "CGA-6g29-xf5c-xrq4",
+    "CGA-79fr-pvjg-j9xm",
+    "CGA-8r3m-hvvj-88ff",
+    "CGA-98jf-gjq4-76gh",
+    "CGA-crfr-r549-cvmg",
+    "CGA-f7wq-crqm-v76f",
+    "CGA-gm37-p355-3fq6",
+    "CGA-h3v9-xgx5-mrgr",
+    "CGA-hvm4-vp8w-6q8r",
+    "CGA-p9v5-jpj2-q3ww",
+    "CGA-rx48-pgcw-gx64",
+    "CGA-v3rh-g84v-9h7h",
+    "CGA-w2xv-8gr2-xp8m",
+    "CGA-wxqh-34vm-g4hv",
+    "CGA-x4cq-2pgw-pj4r"
+  ],
+  "database_specific": {
+    "nvd_published_at": "2024-12-23T16:15:07Z",
+    "cwe_ids": [
+      "CWE-693"
+    ],
+    "severity": "MODERATE",
+    "github_reviewed": true,
+    "github_reviewed_at": "2024-12-23T17:56:08Z"
+  },
+  "references": [
+    {
+      "type": "WEB",
+      "url": "https://github.com/pallets/jinja/security/advisories/GHSA-q2x7-8rv6-6q7h"
+    },
+    {
+      "type": "ADVISORY",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-56326"
+    },
+    {
+      "type": "WEB",
+      "url": "https://github.com/pallets/jinja/commit/48b0687e05a5466a91cd5812d604fa37ad0943b4"
+    },
+    {
+      "type": "PACKAGE",
+      "url": "https://github.com/pallets/jinja"
+    },
+    {
+      "type": "WEB",
+      "url": "https://github.com/pallets/jinja/releases/tag/3.1.5"
+    }
+  ],
+  "affected": [
+    {
+      "package": {
+        "name": "jinja2",
+        "ecosystem": "PyPI",
+        "purl": "pkg:pypi/jinja2"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "3.1.5"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "2.0",
+        "2.0rc1",
+        "2.1",
+        "2.1.1",
+        "2.10",
+        "2.10.1",
+        "2.10.2",
+        "2.10.3",
+        "2.11.0",
+        "2.11.1",
+        "2.11.2",
+        "2.11.3",
+        "2.2",
+        "2.2.1",
+        "2.3",
+        "2.3.1",
+        "2.4",
+        "2.4.1",
+        "2.5",
+        "2.5.1",
+        "2.5.2",
+        "2.5.3",
+        "2.5.4",
+        "2.5.5",
+        "2.6",
+        "2.7",
+        "2.7.1",
+        "2.7.2",
+        "2.7.3",
+        "2.8",
+        "2.8.1",
+        "2.9",
+        "2.9.1",
+        "2.9.2",
+        "2.9.3",
+        "2.9.4",
+        "2.9.5",
+        "2.9.6",
+        "3.0.0",
+        "3.0.0a1",
+        "3.0.0rc1",
+        "3.0.0rc2",
+        "3.0.1",
+        "3.0.2",
+        "3.0.3",
+        "3.1.0",
+        "3.1.1",
+        "3.1.2",
+        "3.1.3",
+        "3.1.4"
+      ],
+      "database_specific": {
+        "last_known_affected_version_range": "<= 3.1.4",
+        "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2024/12/GHSA-q2x7-8rv6-6q7h/GHSA-q2x7-8rv6-6q7h.json"
+      }
+    }
+  ],
+  "schema_version": "1.7.3",
+  "severity": [
+    {
+      "type": "CVSS_V3",
+      "score": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H"
+    },
+    {
+      "type": "CVSS_V4",
+      "score": "CVSS:4.0/AV:L/AC:L/AT:P/PR:L/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N"
+    }
+  ]
+}

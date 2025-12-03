@@ -24,12 +24,19 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.util.ComponentVersion;
 import org.dependencytrack.util.NotificationUtil;
+import org.dependencytrack.util.ComponentVersion;
+
+import com.github.packageurl.PackageURL;
+
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.util.Relation;
 
 import java.util.List;
+
+import io.github.nscuro.versatile.spi.Version;
+import io.github.nscuro.versatile.VersionFactory;
+import io.github.nscuro.versatile.Vers;
 
 /**
  * Base analysis task for using the internal VulnerableSoftware model as the source of truth for
@@ -39,6 +46,7 @@ import java.util.List;
  * @since 3.6.0
  */
 public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseComponentAnalyzerTask {
+    private static final Logger LOGGER = Logger.getLogger(AbstractVulnerableSoftwareAnalysisTask.class);
 
     /**
      * Analyzes the targetVersion against a list of VulnerableSoftware objects which may contain
@@ -51,11 +59,48 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * @param component     the component being analyzed
      */
     protected void analyzeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
+            final Cpe targetCpe, final PackageURL targetPURL, final String targetVersion, final Component component,
+            final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
+        boolean ran = false;
+        if (targetCpe != null) {
+            analyzeCpeVersionRange(qm, vsList, targetCpe, targetVersion, component, vulnerabilityAnalysisLevel);
+            ran = true;
+        }
+        if (targetPURL != null) {
+            analyzePurlVersionRange(qm, vsList, targetPURL, targetVersion, component, vulnerabilityAnalysisLevel);
+            ran = true;
+        }
+        if (!ran) {
+            LOGGER.info("Neither CPE nor PURL available for component %s, skipping version range analysis"
+                    .formatted(component.getUuid()));
+            return;
+        }
+    }
+
+    protected void analyzePurlVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
+                                       final PackageURL targetPurl, final String targetVersion, final Component component,
+                                       final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel){
+        
+        final Version version = VersionFactory.forScheme(targetPurl.getType(), targetVersion);
+        for (final VulnerableSoftware vs : vsList) {
+            if(comparePurlVersions(vs, version)){
+                if (vs.getVulnerabilities() != null) {
+                    for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
+                        NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
+                        qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
+                    }
+                }
+            }
+        }                                
+        
+    }
+
+    protected void analyzeCpeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
                                        final Cpe targetCpe, final String targetVersion, final Component component,
-                                       final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
+                                       final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel){
         for (final VulnerableSoftware vs : vsList) {
             final Boolean isCpeMatch = maybeMatchCpe(vs, targetCpe, targetVersion);
-            if ((isCpeMatch == null || isCpeMatch) && compareVersions(vs, targetVersion)) {
+            if ((isCpeMatch == null || isCpeMatch) && compareCpeVersions(vs, targetVersion)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
@@ -69,7 +114,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
     private static String toLowerCaseNullable(final String string) {
         return string == null ? null : string.toLowerCase();
     }
-    
+
     private Boolean maybeMatchCpe(final VulnerableSoftware vs, final Cpe targetCpe, final String targetVersion) {
         if (targetCpe == null || vs.getCpe23() == null) {
             return null;
@@ -108,6 +153,22 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         return isMatch;
     }
 
+    
+    private static boolean comparePurlVersions(VulnerableSoftware vs, Version targetVersion) {
+        final Vers vulnerableVersionRange = vs.getVers();
+
+        if (vulnerableVersionRange == null) {
+            return false;
+        }
+
+        if (vs.getVers().contains(targetVersion.toString())) {
+            return true;
+        } else{
+            return false;
+        }
+
+    }
+
     /**
      * Evaluates the target against the version and version range checks:
      * versionEndExcluding, versionStartExcluding versionEndIncluding, and
@@ -120,7 +181,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * <p>
      * Ported from Dependency-Check v5.2.1
      */
-    private static boolean compareVersions(VulnerableSoftware vs, String targetVersion) {
+    private static boolean compareCpeVersions(VulnerableSoftware vs, String targetVersion) {
         // Modified from original by @nscuro.
         // Special cases for CPE matching of ANY (*) and NA (*) versions.
         // These don't make sense to use for version range comparison and
@@ -180,3 +241,5 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
     }
 
 }
+
+

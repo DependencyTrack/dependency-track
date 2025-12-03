@@ -97,25 +97,32 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
         final boolean fuzzyEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_ENABLED) &&
                 (!component.isInternal() || !super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_EXCLUDE_INTERNAL));
         final boolean excludeComponentsWithPurl = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_EXCLUDE_PURL);
+
+        com.github.packageurl.PackageURL parsedPurl = null;
         us.springett.parsers.cpe.Cpe parsedCpe = null;
+
         if (component.getCpe() != null) {
             try {
                 parsedCpe = CpeParser.parse(component.getCpe());
             } catch (CpeParsingException e) {
                 LOGGER.warn("An error occurred while parsing: " + component.getCpe() + " - The CPE is invalid and will be discarded. " + e.getMessage());
             }
-        }
+        } else if (component.getPurl() != null) { 
+            parsedPurl = component.getPurl();
+        } 
+
         List<VulnerableSoftware> vsList = Collections.emptyList();
-        String componentVersion;
-        if (parsedCpe != null) {
-            componentVersion = parsedCpe.getVersion();
-        } else if (component.getPurl() != null) {
-            componentVersion = component.getPurl().getVersion();
-        } else {
-            // Catch cases where the CPE couldn't be parsed and no PURL exists.
-            // Should be rare, but could lead to NPEs later.
-            LOGGER.debug("Neither CPE nor PURL of component " + component.getUuid() + " provide a version - skipping analysis");
-            return;
+
+        String componentVersion = component.getVersion();
+        if (componentVersion == null || componentVersion.isBlank()) {
+            if (parsedCpe != null && parsedCpe.getVersion() != null && !parsedCpe.getVersion().isBlank()) {
+                componentVersion = parsedCpe.getVersion();
+            } else if (parsedPurl != null && parsedPurl.getVersion() != null && !parsedPurl.getVersion().isBlank()) {
+                componentVersion = parsedPurl.getVersion();
+            } else {
+                LOGGER.debug("Neither CPE, PURL, nor component version provide a version - skipping analysis");
+                return;
+            }
         }
         // In some cases, componentVersion may be null, such as when a Package URL does not have a version specified
         if (componentVersion == null) {
@@ -134,9 +141,10 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
                 componentVersion = componentVersion.substring(1);
             }
         }
-
+        
         if (parsedCpe != null) {
-            vsList = qm.getAllVulnerableSoftware(parsedCpe.getPart().getAbbreviation(), parsedCpe.getVendor(), parsedCpe.getProduct(), component.getPurl());
+            vsList = qm.getAllVulnerableSoftware(parsedCpe.getPart().getAbbreviation(), parsedCpe.getVendor(),
+                    parsedCpe.getProduct(), component.getPurl());
         } else {
             vsList = qm.getAllVulnerableSoftware(null, null, null, component.getPurl());
         }
@@ -145,7 +153,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             FuzzyVulnerableSoftwareSearchManager fm = new FuzzyVulnerableSoftwareSearchManager(excludeComponentsWithPurl);
             vsList = fm.fuzzyAnalysis(qm, component, parsedCpe);
         }
-        super.analyzeVersionRange(qm, vsList, parsedCpe, componentVersion, component, vulnerabilityAnalysisLevel);
+        super.analyzeVersionRange(qm, vsList, parsedCpe, parsedPurl, componentVersion, component, vulnerabilityAnalysisLevel);
     }
 
 }

@@ -112,7 +112,7 @@
         <lib.pebble.version>3.2.4</lib.pebble.version>
         <lib.protobuf-java.version>4.33.1</lib.protobuf-java.version>
         <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
-        <lib.swagger-parser.version>2.1.35</lib.swagger-parser.version>
+        <lib.swagger-parser.version>2.1.36</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
         <lib.testcontainers.version>1.20.6</lib.testcontainers.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>

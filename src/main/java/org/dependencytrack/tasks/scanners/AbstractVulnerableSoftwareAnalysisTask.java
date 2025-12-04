@@ -34,6 +34,7 @@ import us.springett.parsers.cpe.util.Relation;
 
 import java.util.List;
 
+import io.github.nscuro.versatile.spi.InvalidVersionException;
 import io.github.nscuro.versatile.spi.Version;
 import io.github.nscuro.versatile.VersionFactory;
 import io.github.nscuro.versatile.Vers;
@@ -78,21 +79,28 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
     }
 
     protected void analyzePurlVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
-                                       final PackageURL targetPurl, final String targetVersion, final Component component,
-                                       final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel){
-        
-        final Version version = VersionFactory.forScheme(targetPurl.getType(), targetVersion);
+            final PackageURL targetPurl, final String targetVersion, final Component component,
+            final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
+
+        final Version version;
+        try {
+            version = VersionFactory.forScheme(targetPurl.getType(), targetVersion);
+        } catch (InvalidVersionException e) {
+            LOGGER.warn("Unable to parse version (" + targetVersion + ") for component (" + component.getUuid() + ")");
+            return;
+        }
         for (final VulnerableSoftware vs : vsList) {
-            if(comparePurlVersions(vs, version)){
+            if (comparePurlVersions(vs, version)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
-                        NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
+                        NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component,
+                                vulnerabilityAnalysisLevel);
                         qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
                     }
                 }
             }
-        }                                
-        
+        }
+
     }
 
     protected void analyzeCpeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
@@ -161,12 +169,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             return false;
         }
 
-        if (vs.getVers().contains(targetVersion.toString())) {
-            return true;
-        } else{
-            return false;
-        }
-
+        return vs.getVers().contains(targetVersion.toString());
     }
 
     /**

@@ -20,6 +20,7 @@ package org.dependencytrack.policy;
 
 import alpine.common.logging.Logger;
 import io.github.nscuro.versatile.VersionFactory;
+import io.github.nscuro.versatile.spi.InvalidVersionException;
 import io.github.nscuro.versatile.spi.Version;
 
 import org.dependencytrack.model.Component;
@@ -53,40 +54,33 @@ public class VersionPolicyEvaluator extends AbstractPolicyEvaluator {
             return violations;
         }
 
-        
-        final var componentVersion = new ComponentVersion(component.getVersion());
+        final var componentVersion = component.getVersion();
         final var componentPurl = component.getPurl();
-        final var componentPurlType = componentPurl != null ? componentPurl.getType() : null;
-        Version componentVersionObj = null;
+        final var scheme = componentPurl != null && componentPurl.getType() != null ? componentPurl.getType()
+                : "generic";
+        final Version componentVersionObj;
 
-        if (componentPurl != null && componentPurlType != null) {
-            componentVersionObj = VersionFactory.forScheme(componentPurlType, component.getVersion());
+        try {
+            componentVersionObj = VersionFactory.forScheme(scheme, componentVersion);
+        } catch (InvalidVersionException e) {
+            LOGGER.warn(
+                    "Unable to parse version (" + componentVersion + ") for component (" + component.getUuid() + ")");
+            return violations;
         }
 
         for (final PolicyCondition condition : super.extractSupportedConditions(policy)) {
             LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy condition ("
                     + condition.getUuid() + ")");
 
-            if (componentVersionObj == null) {
-                final var conditionVersion = new ComponentVersion(condition.getValue());
-                if (conditionVersion.getVersionParts().isEmpty()) {
-                    LOGGER.warn("Unable to parse version (" + condition.getValue() + " provided by condition");
-                    continue;
-                }
-
-                if (matches(componentVersion, conditionVersion, condition.getOperator())) {
-                    violations.add(new PolicyConditionViolation(condition, component));
-                }
-            } else {
-                final var conditionVersionObj = VersionFactory.forScheme(componentPurlType, condition.getValue());
-                if (conditionVersionObj == null){
-                    LOGGER.warn("Unable to parse version (" + condition.getValue() + " provided by condition");
-                    continue;
-                }
-                if(matches(componentVersionObj, conditionVersionObj, condition.getOperator())) {
-                    violations.add(new PolicyConditionViolation(condition, component));
-                }
+            final var conditionVersionObj = VersionFactory.forScheme(scheme, condition.getValue());
+            if (conditionVersionObj == null) {
+                LOGGER.warn("Unable to parse version (" + condition.getValue() + " provided by condition");
+                continue;
             }
+            if (matches(componentVersionObj, conditionVersionObj, condition.getOperator())) {
+                violations.add(new PolicyConditionViolation(condition, component));
+            }
+
         }
 
         return violations;
@@ -115,7 +109,6 @@ public class VersionPolicyEvaluator extends AbstractPolicyEvaluator {
         }
         return false;
     }
-    
 
 
     static boolean matches(final ComponentVersion componentVersion,
@@ -141,5 +134,4 @@ public class VersionPolicyEvaluator extends AbstractPolicyEvaluator {
         }
         return false;
     }
-
 }

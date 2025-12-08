@@ -144,60 +144,63 @@ public final class NotificationUtil {
         }
     }
 
-    public static void analyzeNotificationCriteria(final QueryManager qm, Analysis analysis,
+    public static void analyzeNotificationCriteria(final QueryManager qm, List<Analysis> analysisList,
                                                    final boolean analysisStateChange, final boolean suppressionChange) {
         if (analysisStateChange || suppressionChange) {
             final NotificationGroup notificationGroup;
             notificationGroup = NotificationGroup.PROJECT_AUDIT_CHANGE;
 
-            String title = null;
-            if (analysisStateChange) {
-                switch (analysis.getAnalysisState()) {
-                    case EXPLOITABLE:
-                        title = NotificationConstants.Title.ANALYSIS_DECISION_EXPLOITABLE;
-                        break;
-                    case IN_TRIAGE:
-                        title = NotificationConstants.Title.ANALYSIS_DECISION_IN_TRIAGE;
-                        break;
-                    case NOT_AFFECTED:
-                        title = NotificationConstants.Title.ANALYSIS_DECISION_NOT_AFFECTED;
-                        break;
-                    case FALSE_POSITIVE:
-                        title = NotificationConstants.Title.ANALYSIS_DECISION_FALSE_POSITIVE;
-                        break;
-                    case NOT_SET:
-                        title = NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET;
-                        break;
-                    case RESOLVED:
-                        title = NotificationConstants.Title.ANALYSIS_DECISION_RESOLVED;
-                        break;
+            for (Analysis analysis : analysisList) {
+                String title = null;
+                if (analysisStateChange) {
+                    switch (analysis.getAnalysisState()) {
+                        case EXPLOITABLE:
+                            title = NotificationConstants.Title.ANALYSIS_DECISION_EXPLOITABLE;
+                            break;
+                        case IN_TRIAGE:
+                            title = NotificationConstants.Title.ANALYSIS_DECISION_IN_TRIAGE;
+                            break;
+                        case NOT_AFFECTED:
+                            title = NotificationConstants.Title.ANALYSIS_DECISION_NOT_AFFECTED;
+                            break;
+                        case FALSE_POSITIVE:
+                            title = NotificationConstants.Title.ANALYSIS_DECISION_FALSE_POSITIVE;
+                            break;
+                        case NOT_SET:
+                            title = NotificationConstants.Title.ANALYSIS_DECISION_NOT_SET;
+                            break;
+                        case RESOLVED:
+                            title = NotificationConstants.Title.ANALYSIS_DECISION_RESOLVED;
+                            break;
+                    }
+                } else if (suppressionChange) {
+
+                    if (analysis.isSuppressed()) {
+                        title = NotificationConstants.Title.ANALYSIS_DECISION_SUPPRESSED;
+                    } else {
+                        title = NotificationConstants.Title.ANALYSIS_DECISION_UNSUPPRESSED;
+                    }
                 }
-            } else if (suppressionChange) {
-                if (analysis.isSuppressed()) {
-                    title = NotificationConstants.Title.ANALYSIS_DECISION_SUPPRESSED;
-                } else {
-                    title = NotificationConstants.Title.ANALYSIS_DECISION_UNSUPPRESSED;
-                }
+
+                Project project = analysis.getComponent().getProject();
+
+                analysis = qm.detach(Analysis.class, analysis.getId());
+
+                analysis.getComponent().setProject(project); // Project of component is lost after the detach above
+
+                // Aliases are lost during the detach above
+                analysis.getVulnerability().setAliases(qm.detach(qm.getVulnerabilityAliases(analysis.getVulnerability())));
+
+                Notification.dispatch(new Notification()
+                        .scope(NotificationScope.PORTFOLIO)
+                        .group(notificationGroup)
+                        .title(generateNotificationTitle(title, analysis.getComponent().getProject()))
+                        .level(NotificationLevel.INFORMATIONAL)
+                        .content(generateNotificationContent(analysis))
+                        .subject(new AnalysisDecisionChange(analysis.getVulnerability(),
+                                analysis.getComponent(), analysis.getProject(), analysis))
+                );
             }
-
-            Project project = analysis.getComponent().getProject();
-
-            analysis = qm.detach(Analysis.class, analysis.getId());
-
-            analysis.getComponent().setProject(project); // Project of component is lost after the detach above
-
-            // Aliases are lost during the detach above
-            analysis.getVulnerability().setAliases(qm.detach(qm.getVulnerabilityAliases(analysis.getVulnerability())));
-
-            Notification.dispatch(new Notification()
-                    .scope(NotificationScope.PORTFOLIO)
-                    .group(notificationGroup)
-                    .title(generateNotificationTitle(title, analysis.getComponent().getProject()))
-                    .level(NotificationLevel.INFORMATIONAL)
-                    .content(generateNotificationContent(analysis))
-                    .subject(new AnalysisDecisionChange(analysis.getVulnerability(),
-                            analysis.getComponent(), analysis.getProject(), analysis))
-            );
         }
     }
 

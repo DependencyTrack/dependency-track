@@ -37,6 +37,8 @@ import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.parser.cyclonedx.CycloneDXVexImporter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
+import org.slf4j.MDC;
 
 import java.util.Base64;
 import java.util.Date;
@@ -61,6 +63,7 @@ public class VexUploadProcessingTask implements Subscriber {
             final byte[] vexBytes = CompressUtil.optionallyDecompress(event.getVex());
             try(final QueryManager qm = new QueryManager()) {
                 final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
+                try (var mdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString())) {
                 final List<Vulnerability> vulnerabilities;
 
                 // Holds a list of all Components that are existing dependencies of the specified project
@@ -68,20 +71,20 @@ public class VexUploadProcessingTask implements Subscriber {
                 final Vex.Format vexFormat;
                 final String vexSpecVersion;
                 final Integer vexVersion;
-                final String serialNumnber;
+                final String serialNumber;
                 org.cyclonedx.model.Bom cycloneDxBom = null;
                 if (BomParserFactory.looksLikeCycloneDX(vexBytes)) {
                     if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
-                        LOGGER.info("Processing CycloneDX VEX uploaded to project: " + event.getProjectUuid());
+                        LOGGER.info("Processing CycloneDX VEX uploaded.");
                         vexFormat = Vex.Format.CYCLONEDX;
                         final Parser parser = BomParserFactory.createParser(vexBytes);
                         cycloneDxBom = parser.parse(vexBytes);
                         vexSpecVersion = cycloneDxBom.getSpecVersion();
                         vexVersion = cycloneDxBom.getVersion();
-                        serialNumnber = cycloneDxBom.getSerialNumber();
+                        serialNumber = cycloneDxBom.getSerialNumber();
                         final CycloneDXVexImporter vexImporter = new CycloneDXVexImporter();
                         vexImporter.applyVex(qm, cycloneDxBom, project);
-                        LOGGER.info("Completed processing of CycloneDX VEX for project: " + event.getProjectUuid());
+                        LOGGER.info("Completed processing of CycloneDX VEX.");
                     } else {
                         LOGGER.warn("A CycloneDX VEX was uploaded but accepting CycloneDX format is disabled. Aborting");
                         return;
@@ -100,7 +103,7 @@ public class VexUploadProcessingTask implements Subscriber {
                         .content("A " + vexFormat.getFormatShortName() + " VEX was consumed and will be processed")
                         .subject(new VexConsumedOrProcessed(copyOfProject, Base64.getEncoder().encodeToString(vexBytes), vexFormat, vexSpecVersion)));
 
-                qm.createVex(project, new Date(), vexFormat, vexSpecVersion, vexVersion, serialNumnber);
+                qm.createVex(project, new Date(), vexFormat, vexSpecVersion, vexVersion, serialNumber);
 
                 final Project detachedProject = qm.detach(Project.class, project.getId());
 
@@ -114,6 +117,7 @@ public class VexUploadProcessingTask implements Subscriber {
             } catch (Exception ex) {
                 LOGGER.error("Error while processing vex", ex);
             }
+        }
         }
     }
 }

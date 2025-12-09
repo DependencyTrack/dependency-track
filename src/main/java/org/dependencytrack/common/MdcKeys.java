@@ -36,6 +36,7 @@ public final class MdcKeys {
     public static final String MDC_PROJECT_NAME = "projectName";
     public static final String MDC_PROJECT_UUID = "projectUuid";
     public static final String MDC_PROJECT_VERSION = "projectVersion";
+    public static final String MDC_PROJECT_TEAMS = "projectTeams";
     public static final String MDC_VULN_ANALYSIS_LEVEL = "vulnAnalysisLevel";
     public static final String MDC_VULN_ID = "vulnId";
 

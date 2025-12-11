@@ -108,11 +108,11 @@ class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
 
         // Create a project with an audited vulnerability.
         var componentAudited = this.prepareVulnerableComponent("acme-lib-b", vuln, project);
-        qm.makeAnalysis(componentAudited, vuln, AnalysisState.NOT_AFFECTED, null, null, null, false);
+        qm.makeAnalysis(componentAudited, vuln, AnalysisState.NOT_AFFECTED, null, null, null, false, null);
 
         // Create a project with a suppressed vulnerability.
         var componentSuppressed = this.prepareVulnerableComponent("acme-lib-c", vuln, project);
-        qm.makeAnalysis(componentSuppressed, vuln, AnalysisState.FALSE_POSITIVE, null, null, null, true);
+        qm.makeAnalysis(componentSuppressed, vuln, AnalysisState.FALSE_POSITIVE, null, null, null, true, null);
 
         new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
 
@@ -385,11 +385,11 @@ class ProjectMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
 
         // Create a project with an audited vulnerability.
         var componentAudited = this.prepareVulnerableComponent(prefix + "acme-lib-b", vuln, project);
-        qm.makeAnalysis(componentAudited, vuln, AnalysisState.NOT_AFFECTED, null, null, null, false);
+        qm.makeAnalysis(componentAudited, vuln, AnalysisState.NOT_AFFECTED, null, null, null, false, null);
 
         // Create a project with a suppressed vulnerability.
         var componentSuppressed = this.prepareVulnerableComponent(prefix + "acme-lib-c", vuln, project);
-        qm.makeAnalysis(componentSuppressed, vuln, AnalysisState.FALSE_POSITIVE, null, null, null, true);
+        qm.makeAnalysis(componentSuppressed, vuln, AnalysisState.FALSE_POSITIVE, null, null, null, true, null);
 
         new ProjectMetricsUpdateTask().inform(new ProjectMetricsUpdateEvent(project.getUuid()));
         return project;

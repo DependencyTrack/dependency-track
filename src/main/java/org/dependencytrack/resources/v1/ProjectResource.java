@@ -82,6 +82,7 @@ import java.util.function.Function;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_TEAMS;
 import static org.dependencytrack.common.MdcKeys.MDC_EVENT_TOKEN;
 
 import static java.util.Objects.requireNonNullElseGet;
@@ -478,9 +479,14 @@ public class ProjectResource extends AlpineResource {
                 return project;
             });
 
+            final String teamsValue = (createdProject.getAccessTeams() == null || createdProject.getAccessTeams().isEmpty())
+                    ? "[]"
+                    : createdProject.getAccessTeams().toString();
+
             try (var createdMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, createdProject.getUuid().toString());
                  var createdMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, createdProject.getName());
-                 var createdMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, createdProject.getVersion())) {
+                 var createdMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, createdProject.getVersion());
+                 var createdMdcProjectTeams = MDC.putCloseable(MDC_PROJECT_TEAMS, teamsValue)){ 
 
                 LOGGER.info("Project " + createdProject + " created by " + super.getPrincipal().getName());
             }
@@ -588,9 +594,14 @@ public class ProjectResource extends AlpineResource {
                 }
             });
 
+            final String teamsValue = (updatedProject.getAccessTeams() == null || updatedProject.getAccessTeams().isEmpty())
+                    ? "[]"
+                    : updatedProject.getAccessTeams().toString();
+
             try (var updatedMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, updatedProject.getUuid().toString());
                  var updatedMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, updatedProject.getName());
-                 var updatedMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())){
+                 var updatedMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion());
+                 var updatedMdcProjectTeams = MDC.putCloseable(MDC_PROJECT_TEAMS, teamsValue)){
 
                 LOGGER.info("Project " + updatedProject + " updated by " + super.getPrincipal().getName());
             }
@@ -746,9 +757,14 @@ public class ProjectResource extends AlpineResource {
                 return Response.notModified().build();
             }
 
+            final String teamsValue = (updatedProject.getAccessTeams() == null || updatedProject.getAccessTeams().isEmpty())
+                    ? "[]"
+                    : updatedProject.getAccessTeams().toString();
+
             try (var updatedMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, updatedProject.getUuid().toString());
                  var updatedMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, updatedProject.getName());
-                 var updatedMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())){
+                 var updatedMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion());
+                 var updatedMdcProjectTeams = MDC.putCloseable(MDC_PROJECT_TEAMS, teamsValue)){
 
                 LOGGER.info("Project " + updatedProject + " updated by " + super.getPrincipal().getName());
             }
@@ -822,9 +838,14 @@ public class ProjectResource extends AlpineResource {
                             .build());
                 }
 
+                final String teamsValue = project.getAccessTeams() == null || project.getAccessTeams().isEmpty()
+                        ? "[]"
+                        : project.getAccessTeams().toString();
+
                 try (var mdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());
                      var mdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
-                     var mdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
+                     var mdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion());
+                     var mdcProjectTeams = MDC.putCloseable(MDC_PROJECT_TEAMS, teamsValue)){
 
                     LOGGER.info("Project " + project + " deletion request by " + super.getPrincipal().getName());
                 }
@@ -927,9 +948,14 @@ public class ProjectResource extends AlpineResource {
                     }
                 }
 
+                final String teamsValue = sourceProject.getAccessTeams() == null || sourceProject.getAccessTeams().isEmpty()
+                        ? "[]"
+                        : sourceProject.getAccessTeams().toString();
+
                 try (var sourceMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, sourceProject.getUuid().toString());
                      var sourceMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, sourceProject.getName());
-                     var sourceMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, sourceProject.getVersion())){
+                     var sourceMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, sourceProject.getVersion());
+                     var sourceMdcProjectTeams = MDC.putCloseable(MDC_PROJECT_TEAMS, teamsValue)){
 
                     LOGGER.info("Project " + sourceProject + " is being cloned by " + super.getPrincipal().getName());
                 }

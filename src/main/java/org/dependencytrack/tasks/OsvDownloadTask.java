@@ -101,6 +101,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
+import static org.dependencytrack.util.RetryUtil.maybeClosePreviousResult;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV3Score;
 
@@ -113,7 +114,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
     private static final long MAX_ZIP_BYTES = 1024 * 1024 * 1024;
     private static final String OSV_FILENAME_PREFIX = "google-osv-";
     private static final Logger LOGGER = Logger.getLogger(OsvDownloadTask.class);
-    private static final Retry DOWNLOAD_RETRY;
+    private static final Pattern JSON_PATTERN = Pattern.compile("\\.json$", Pattern.CASE_INSENSITIVE);
     private static final Retry REQUEST_RETRY;
     private Set<String> ecosystems;
     private String osvBaseUrl;
@@ -126,27 +127,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
     private boolean mirroredWithoutErrors = true;
 
     static {
-        RetryRegistry registry = RetryRegistry.ofDefaults();
-        final RetryConfig downloadRetryConfig = RetryConfig.custom()
-                .intervalFunction(ofExponentialBackoff(
-                        Duration.ofSeconds(2),
-                        2,
-                        Duration.ofSeconds(32)
-                ))
-                .maxAttempts(6)
-                .retryExceptions(
-                        SocketException.class, SocketTimeoutException.class,
-                        NoRouteToHostException.class, ConnectTimeoutException.class
-                )
-                .build();
-        DOWNLOAD_RETRY = registry.retry("osv-mirror-download", downloadRetryConfig);
-        DOWNLOAD_RETRY.getEventPublisher()
-                .onRetry(event -> LOGGER.warn("Encountered retryable exception; Retries: "
-                        + event.getNumberOfRetryAttempts() + "; Next retry in: "
-                        + event.getWaitInterval().toSeconds() + " s", event.getLastThrowable()))
-                .onError(event -> LOGGER.error("Failed after "
-                        + event.getNumberOfRetryAttempts() + " attempts"));
-
+        final RetryRegistry registry = RetryRegistry.ofDefaults();
         final RetryConfig requestRetryConfig = RetryConfig.<CloseableHttpResponse>custom()
                 .intervalFunction(ofExponentialBackoff(
                         Duration.ofSeconds(2),
@@ -154,6 +135,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                         Duration.ofSeconds(32)
                 ))
                 .maxAttempts(6)
+                .consumeResultBeforeRetryAttempt(maybeClosePreviousResult())
                 .retryExceptions(
                         SocketException.class, SocketTimeoutException.class,
                         NoRouteToHostException.class, ConnectTimeoutException.class
@@ -221,7 +203,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
             final long start = System.currentTimeMillis();
             setOutputDir(mirrorDirPath.toAbsolutePath().toString());
             LOGGER.info("Starting Google OSV mirroring for: " + ecosystems);
-            ecosystems.forEach(this::processOsvEcosystem);
+            ecosystems.forEach(ecosystem -> processOsvEcosystem(ecosystem, false));
             final long end = System.currentTimeMillis();
             if (mirroredWithoutErrors) {
                 LOGGER.info("Google OSV mirroring complete");
@@ -248,19 +230,15 @@ public class OsvDownloadTask implements LoggableSubscriber {
         }
     }
 
-    private void processOsvEcosystem(String ecosystem) {
+    private void processOsvEcosystem(String ecosystem, boolean forceFullMirror) {
         try (var ignoredMdcOsvEcosystem = MDC.putCloseable("osvEcosystem", ecosystem)) {
             final Instant currentTime = Instant.now(this.clock);
-            if (shouldDoIncrementalUpdate(ecosystem, currentTime)) {
-                String url = this.osvBaseUrl
-                        + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20")
-                        + "/modified_id.csv";
+            if (shouldDoIncrementalUpdate(ecosystem, currentTime) && !forceFullMirror) {
+                String url = this.osvBaseUrl + encodeURL(ecosystem) + "/modified_id.csv";
                 LOGGER.info("Incremental update - Initiating download of " + url);
                 doUpdate(url, ecosystem, true, currentTime);
             } else {
-                String url = this.osvBaseUrl
-                        + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20")
-                        + "/all.zip";
+                String url = this.osvBaseUrl + encodeURL(ecosystem) + "/all.zip";
                 LOGGER.info("Full mirror - Initiating download of " + url);
                 doUpdate(url, ecosystem, false, currentTime);
             }
@@ -276,29 +254,21 @@ public class OsvDownloadTask implements LoggableSubscriber {
         final String modifiedOsvFileName = OSV_FILENAME_PREFIX + ecosystem + "-modified.csv";
         File fullMirrorFile = new File(outputDir, fullMirrorOsvFileName).getAbsoluteFile();
 
-        if (!fullMirrorFile.exists() || !(fullMirrorFile.length() > 0))
+        if (!fullMirrorFile.exists() || !(fullMirrorFile.length() > 0)) {
             // the .zip file does not exist or is empty
             return false;
-
+        }
         Instant lastFullMirror = readTimestampFile(fullMirrorOsvFileName);
         Instant lastIncrementalMirror = readTimestampFile(modifiedOsvFileName);
-        if (lastFullMirror == null || lastIncrementalMirror == null)
+        if (lastFullMirror == null || lastIncrementalMirror == null) {
             // either one or both timestamp files are not present or timestamp parsing failed
             return false;
-
-        if (currentTime.isBefore(lastFullMirror.plus(5, ChronoUnit.DAYS))) {
-            // full mirror every five days in case any individual advisory files failed to be acquired or were skipped
-            // during an incremental update
-            LOGGER.info("Last successful full mirror for " + ecosystem + " was started at "
-                    + lastFullMirror.truncatedTo(ChronoUnit.SECONDS)
-                    + ", performing incremental update");
-            return true;
-        } else {
-            LOGGER.info("Last successful full mirror for " + ecosystem + " was started at "
-                    + lastFullMirror.truncatedTo(ChronoUnit.SECONDS)
-                    + ", performing full update");
-            return false;
         }
+        LOGGER.info("Last successful full mirror for " + ecosystem + " was started at "
+                + lastFullMirror.truncatedTo(ChronoUnit.SECONDS));
+        // full mirror every five days in case any individual advisory files failed to be acquired or were skipped
+        // during an incremental update
+        return currentTime.isBefore(lastFullMirror.plus(5, ChronoUnit.DAYS));
     }
 
     private void doUpdate(String url, String ecosystem, boolean incremental, Instant startTime) throws Throwable {
@@ -307,7 +277,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
         File fullTimestampFile = new File(outputDir, OSV_FILENAME_PREFIX + ecosystem
                 + ".zip.ts").getAbsoluteFile();
         if (incremental) {
-            Path modifiedCsv = DOWNLOAD_RETRY.executeCheckedSupplier(() -> downloadModifiedCsvFile(url, ecosystem));
+            Path modifiedCsv = downloadModifiedCsvFile(url, ecosystem);
             LOGGER.debug("Downloaded list of new or modified OSV advisories for " + ecosystem + " into " + modifiedCsv);
             final boolean success = processModifiedCsvFile(modifiedCsv, ecosystem);
             if (success) {
@@ -315,7 +285,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                 writeTimestampFile(incrementalTimestampFile, startTime);
             }
         } else {
-            Path osvZipFile = DOWNLOAD_RETRY.executeCheckedSupplier(() -> downloadOsvZipFile(url, ecosystem));
+            Path osvZipFile = downloadOsvZipFile(url, ecosystem);
             LOGGER.debug("Downloaded OSV advisories for " + ecosystem + " into " + osvZipFile);
             final boolean success = processOsvZipFile(osvZipFile);
             if (success) {
@@ -339,7 +309,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     LOGGER.error("Download of modified_id.csv failed for: " + ecosystem + " - " +
                             status.getStatusCode() + " " + status.getReasonPhrase());
                     mirroredWithoutErrors = false;
-                    throw new Exception("Download failed: " + status);
+                    throw new IllegalStateException("Download failed: " + status);
                 }
                 final String fileName = OSV_FILENAME_PREFIX + ecosystem + "-modified.csv";
                 final File file = new File(outputDir, fileName).getAbsoluteFile();
@@ -378,6 +348,11 @@ public class OsvDownloadTask implements LoggableSubscriber {
             LOGGER.info("No new or modified advisories since the last update, skipping");
             return true;
         }
+        if (modifiedIds.size() > 1000) {
+            LOGGER.info("More than 1000 new or modified advisories, aborting and starting a full update instead");
+            processOsvEcosystem(ecosystem, true);
+            return false;
+        }
         LOGGER.info("Downloading and processing new or modified advisories");
         final OsvAdvisoryParser parser = new OsvAdvisoryParser();
         final ArrayList<String> unsuccessfulIds = new ArrayList<>();
@@ -385,12 +360,10 @@ public class OsvDownloadTask implements LoggableSubscriber {
         int lastLoggedPercent = 0;
         for (String id : modifiedIds) {
             final long downloadStartTime = System.currentTimeMillis();
-            String url = this.osvBaseUrl
-                    + URLEncoder.encode(ecosystem, StandardCharsets.UTF_8).replace("+", "%20")
-                    + "/" + URLEncoder.encode(id, StandardCharsets.UTF_8).replace("+", "%20")
-                    + ".json";
+            String url = this.osvBaseUrl + encodeURL(ecosystem) + "/" + encodeURL(id) + ".json";
             final HttpUriRequest request = new HttpGet(url);
-            try (CloseableHttpResponse response = REQUEST_RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
+            try (CloseableHttpResponse response = REQUEST_RETRY.executeCheckedSupplier(
+                    () -> HttpClientPool.getClient().execute(request))) {
                 final StatusLine status = response.getStatusLine();
                 final HttpEntity entity = response.getEntity();
                 try {
@@ -402,19 +375,18 @@ public class OsvDownloadTask implements LoggableSubscriber {
                         continue;
                     }
                     if (unsuccessfulIds.size() > 5) {
-                        LOGGER.error("Failed to acquire more than 5 out of " + modifiedIds.size() + " advisories, aborting."
-                                + " IDs that could not be acquired: " + unsuccessfulIds);
+                        LOGGER.error("Failed to acquire more than 5 out of " + modifiedIds.size()
+                                + " advisories, aborting. IDs that could not be acquired: " + unsuccessfulIds);
                         return false;
                     }
-                    try (final InputStream in = response.getEntity().getContent()) {
-                        final BufferedReader reader = new BufferedReader(
-                                new InputStreamReader(in, StandardCharsets.UTF_8), 8192
-                        );
+                    try (final InputStream in = response.getEntity().getContent();
+                         final BufferedReader reader = new BufferedReader(
+                                 new InputStreamReader(in, StandardCharsets.UTF_8), 8192)) {
                         final long downloadEndTime = System.currentTimeMillis();
                         metricDownloadTime += downloadEndTime - downloadStartTime;
                         final JSONObject json = new JSONObject(new JSONTokener(reader));
                         processOsvAdvisoryJsonFromCsv(json, parser);
-                        if (modifiedIds.size() >= 500) {
+                        if (modifiedIds.size() >= 200) {
                             count++;
                             final int totalCount = modifiedIds.size() - unsuccessfulIds.size();
                             lastLoggedPercent = logProgressPercent(count, totalCount, lastLoggedPercent);
@@ -438,6 +410,10 @@ public class OsvDownloadTask implements LoggableSubscriber {
         return true;
     }
 
+    private String encodeURL(String text) {
+        return URLEncoder.encode(text, StandardCharsets.UTF_8).replace("+", "%20");
+    }
+
     private ArrayList<String> parseModifiedOsvAdvisoryCsv(Path modifiedCsvFilePath, Instant lastUpdate) throws IOException {
         ArrayList<String> modifiedIds = new ArrayList<>();
         final long parseStartTime = System.currentTimeMillis();
@@ -459,14 +435,6 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     Instant modifiedTimestamp = Instant.parse(timestampStr);
                     if (lastUpdate != null && modifiedTimestamp.isBefore(lastUpdate)) {
                         // found an entry that was before the last update, the list is sorted with new entries at the top
-                        break;
-                    }
-                    // For some ecosystems more than 10k advisories (npm sometimes has 40k+) might be modified within a day.
-                    // Those mass updates are usually non-critical i.e. versions being added after a new release, but
-                    // they might also contain many new "malicious package" notices for npm
-                    if (modifiedIds.size() >= 10000) {
-                        LOGGER.warn("Cutting off after 10k new or modified advisories, "
-                                + "remaining updates will be retrieved in full mirror every 5 days");
                         break;
                     }
                     modifiedIds.add(id);
@@ -558,7 +526,6 @@ public class OsvDownloadTask implements LoggableSubscriber {
     }
 
     private void unzipOsvZipFile(ZipInputStream zipIn, int totalCount) throws IOException {
-        final Pattern jsonPattern = Pattern.compile("\\.json$", Pattern.CASE_INSENSITIVE);
         final OsvAdvisoryParser parser = new OsvAdvisoryParser();
         ZipEntry zipEntry;
         int lastLoggedPercent = 0;
@@ -571,7 +538,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     continue;
                 }
                 final String entryName = zipEntry.getName();
-                if (!jsonPattern.matcher(entryName).find()) {
+                if (!JSON_PATTERN.matcher(entryName).find()) {
                     LOGGER.warn("Skipped non-JSON entry: " + entryName);
                     continue;
                 }

@@ -108,7 +108,7 @@ CI/CD environments.
 curl -LO https://dependencytrack.org/docker-compose.yml
 
 # Starts the stack using Docker Compose
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Quickstart (Docker Swarm)

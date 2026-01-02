@@ -18,7 +18,7 @@ name: "dependency-track"
 
 services:
   apiserver:
-    image: dependencytrack/apiserver:snapshot
+    image: dependencytrack/apiserver:snapshot-alpine
     environment:
       # Speed up password hashing for faster initial login (default is 14 rounds).
       ALPINE_BCRYPT_ROUNDS: "4"
@@ -27,11 +27,6 @@ services:
     - "127.0.0.1:8080:8080"
     volumes:
     - "apiserver-data:/data"
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -t 1 -T 3 --no-proxy -q -O /dev/null http://127.0.0.1:8080$${CONTEXT}health || exit 1" ]
-      interval: 30s
-      start_period: 60s
-      timeout: 3s
     restart: unless-stopped
 
   frontend:

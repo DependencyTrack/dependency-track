@@ -110,11 +110,15 @@ services:
     - '8081:8080'
     volumes:
     - 'dtrack-data:/data'
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -t 1 -T 3 --no-proxy -q -O /dev/null http://127.0.0.1:8080$${CONTEXT}health || exit 1" ]
-      interval: 30s
-      start_period: 60s
-      timeout: 3s
+    # Older versions of Podman Compose do not support the HEALTHCHECK directive
+    # that is defined in the image's Dockerfile. If you're using Podman and are
+    # facing healthcheck-related issues, try un-commenting the section below.
+    #
+    # healthcheck:
+    #   test: [ "CMD-SHELL", "curl -f -s --max-time 3 --noproxy '*' -o /dev/null http://127.0.0.1:8080$${CONTEXT}health" ]
+    #   interval: 30s
+    #   start_period: 60s
+    #   timeout: 3s
     restart: unless-stopped
 
   frontend:

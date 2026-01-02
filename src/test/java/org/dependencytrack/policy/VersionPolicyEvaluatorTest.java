@@ -4,22 +4,22 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class VersionPolicyEvaluatorTest extends PersistenceCapableTest {
+class VersionPolicyEvaluatorTest extends PersistenceCapableTest {
 
     private VersionPolicyEvaluator evaluator;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         evaluator = new VersionPolicyEvaluator();
         evaluator.setQueryManager(qm);
     }
 
     @Test
-    public void testLessThanOperator() {
+    void testLessThanOperator() {
         final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_LESS_THAN, "1.1.1");
 
@@ -29,19 +29,19 @@ public class VersionPolicyEvaluatorTest extends PersistenceCapableTest {
 
         // Component version is lower
         component.setVersion("1.1.0");
-        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
 
         // Component version is equal
         component.setVersion("1.1.1");
-        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
 
         // Component version is higher
         component.setVersion("1.1.2");
-        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
     }
 
     @Test
-    public void testLessThanOrEqualOperator() {
+    void testLessThanOrEqualOperator() {
         final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "1.1.1");
 
@@ -51,19 +51,19 @@ public class VersionPolicyEvaluatorTest extends PersistenceCapableTest {
 
         // Component version is lower
         component.setVersion("1.1.0");
-        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
 
         // Component version is equal
         component.setVersion("1.1.1");
-        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
 
         // Component version is higher
         component.setVersion("1.1.2");
-        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
     }
 
     @Test
-    public void testEqualOperator() {
+    void testEqualOperator() {
         final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.1.1");
 
@@ -73,19 +73,19 @@ public class VersionPolicyEvaluatorTest extends PersistenceCapableTest {
 
         // Component version is lower
         component.setVersion("1.1.0");
-        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
 
         // Component version is equal
         component.setVersion("1.1.1");
-        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
 
         // Component version is higher
         component.setVersion("1.1.2");
-        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
     }
 
     @Test
-    public void testNotEqualOperator() {
+    void testNotEqualOperator() {
         final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_NOT_EQUAL, "1.1.1");
 
@@ -95,19 +95,19 @@ public class VersionPolicyEvaluatorTest extends PersistenceCapableTest {
 
         // Component version is lower
         component.setVersion("1.1.0");
-        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
 
         // Component version is equal
         component.setVersion("1.1.1");
-        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
 
         // Component version is higher
         component.setVersion("1.1.2");
-        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
     }
 
     @Test
-    public void testGreaterThanOperator() {
+    void testGreaterThanOperator() {
         final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_GREATER_THAN, "1.1.1");
 
@@ -117,19 +117,19 @@ public class VersionPolicyEvaluatorTest extends PersistenceCapableTest {
 
         // Component version is lower
         component.setVersion("1.1.0");
-        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
 
         // Component version is equal
         component.setVersion("1.1.1");
-        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
 
         // Component version is higher
         component.setVersion("1.1.2");
-        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
     }
 
     @Test
-    public void testGreaterThanOrEqualOperator() {
+    void testGreaterThanOrEqualOperator() {
         final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "1.1.1");
 
@@ -139,15 +139,167 @@ public class VersionPolicyEvaluatorTest extends PersistenceCapableTest {
 
         // Component version is lower
         component.setVersion("1.1.0");
-        Assert.assertEquals(0, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
 
         // Component version is equal
         component.setVersion("1.1.1");
-        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
 
         // Component version is higher
         component.setVersion("1.1.2");
-        Assert.assertEquals(1, evaluator.evaluate(policy, component).size());
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
     }
 
+        @Test
+    void testLessThanOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_LESS_THAN, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.1.0");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    void testLessThanOrEqualOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.1.0");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    void testEqualOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.0.0");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    void testNotEqualOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_NOT_EQUAL, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.0.0");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    void testGreaterThanOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_GREATER_THAN, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.1.0");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    void testGreaterThanOrEqualOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION,
+                PolicyCondition.Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.0.0");
+
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
 }

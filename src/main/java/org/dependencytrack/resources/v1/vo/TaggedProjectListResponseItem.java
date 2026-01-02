@@ -19,17 +19,18 @@
 package org.dependencytrack.resources.v1.vo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.UUID;
+
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
 /**
  * @since 4.12.0
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record TaggedProjectListResponseItem(
-        @Parameter(description = "UUID of the project", required = true) UUID uuid,
-        @Parameter(description = "Name of the project", required = true) String name,
-        @Parameter(description = "Version of the project") String version
-) {
+        @Schema(description = "UUID of the project", requiredMode = REQUIRED) UUID uuid,
+        @Schema(description = "Name of the project", requiredMode = REQUIRED) String name,
+        @Schema(description = "Version of the project") String version) {
 }

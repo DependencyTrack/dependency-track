@@ -42,8 +42,8 @@ import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
 import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.notification.vo.ViolationAnalysisDecisionChange;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import jakarta.json.JsonObject;
 import java.util.ArrayList;
@@ -53,37 +53,37 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class NotificationRouterTest extends PersistenceCapableTest {
+class NotificationRouterTest extends PersistenceCapableTest {
 
     @Test
-    public void testNullNotification() {
+    void testNullNotification() {
         Notification notification = null;
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertEquals(0, rules.size());
+        Assertions.assertEquals(0, rules.size());
     }
 
     @Test
-    public void testInvalidNotification() {
+    void testInvalidNotification() {
         Notification notification = new Notification();
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertEquals(0, rules.size());
+        Assertions.assertEquals(0, rules.size());
     }
 
     @Test
-    public void testNoRules() {
+    void testNoRules() {
         Notification notification = new Notification();
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertEquals(0, rules.size());
+        Assertions.assertEquals(0, rules.size());
     }
 
     @Test
-    public void testValidMatchingRule() {
+    void testValidMatchingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -99,16 +99,19 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         Project affectedProject = qm.createProject("Test Project", null, "1.0", null, null, null, true, false);
         Component affectedComponent = new Component();
         affectedComponent.setProject(affectedProject);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, null, null);
+        affectedComponent.setName("acme-lib");
+        qm.persist(affectedComponent);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(affectedComponent), null, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertEquals(1, rules.size());
+        Assertions.assertEquals(1, rules.size());
     }
 
     @Test
-    public void testValidMatchingProjectLimitingRule() {
+    void testValidMatchingProjectLimitingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -130,16 +133,19 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         affectedProjects.add(project);
         Component affectedComponent = new Component();
         affectedComponent.setProject(project);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
+        affectedComponent.setName("acme-lib");
+        qm.persist(affectedComponent);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(affectedComponent), qm.detach(affectedProjects), null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertEquals(1, rules.size());
+        Assertions.assertEquals(1, rules.size());
     }
 
     @Test
-    public void testValidNonMatchingProjectLimitingRule() {
+    void testValidNonMatchingProjectLimitingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -162,16 +168,19 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         affectedProjects.add(affectedProject);
         Component affectedComponent = new Component();
         affectedComponent.setProject(affectedProject);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
+        affectedComponent.setName("acme-lib");
+        qm.persist(affectedComponent);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(affectedComponent), qm.detach(affectedProjects), null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertEquals(0, rules.size());
+        Assertions.assertEquals(0, rules.size());
     }
 
     @Test
-    public void testValidMatchingRuleAndPublisherInform()  {
+    void testValidMatchingRuleAndPublisherInform()  {
         NotificationPublisher publisher = createMockPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -188,19 +197,22 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         Project affectedProject = qm.createProject("Test Project", null, "1.0", null, null, null, true, false);
         Component affectedComponent = new Component();
         affectedComponent.setProject(affectedProject);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, null, null);
+        affectedComponent.setName("acme-lib");
+        qm.persist(affectedComponent);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(affectedComponent), null, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         router.inform(notification);
         JsonObject providedConfig = MockPublisher.getConfig();
-        Assert.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_CONTENT, providedConfig.getString(Publisher.CONFIG_TEMPLATE_KEY));
-        Assert.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_MIME_TYPE, providedConfig.getString(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY));
-        Assert.assertEquals("testDestination", providedConfig.getString(Publisher.CONFIG_DESTINATION));
+        Assertions.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_CONTENT, providedConfig.getString(Publisher.CONFIG_TEMPLATE_KEY));
+        Assertions.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_MIME_TYPE, providedConfig.getString(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY));
+        Assertions.assertEquals("testDestination", providedConfig.getString(Publisher.CONFIG_DESTINATION));
     }
 
     @Test
-    public void testValidMatchingProjectLimitingRuleAndPublisherInform()  {
+    void testValidMatchingProjectLimitingRuleAndPublisherInform()  {
         NotificationPublisher publisher = createMockPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -225,23 +237,26 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         affectedProjects.add(secondProject);
         Component affectedComponent = new Component();
         affectedComponent.setProject(firstProject);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
+        affectedComponent.setName("acme-lib");
+        qm.persist(affectedComponent);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(affectedComponent), qm.detach(affectedProjects), null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         router.inform(notification);
         JsonObject providedConfig = MockPublisher.getConfig();
-        Assert.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_CONTENT, providedConfig.getString(Publisher.CONFIG_TEMPLATE_KEY));
-        Assert.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_MIME_TYPE, providedConfig.getString(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY));
-        Assert.assertEquals("testDestination", providedConfig.getString(Publisher.CONFIG_DESTINATION));
+        Assertions.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_CONTENT, providedConfig.getString(Publisher.CONFIG_TEMPLATE_KEY));
+        Assertions.assertEquals(MockPublisher.MOCK_PUBLISHER_TEMPLATE_MIME_TYPE, providedConfig.getString(Publisher.CONFIG_TEMPLATE_MIME_TYPE_KEY));
+        Assertions.assertEquals("testDestination", providedConfig.getString(Publisher.CONFIG_DESTINATION));
         Notification providedNotification = MockPublisher.getNotification();
         NewVulnerabilityIdentified providedSubject = (NewVulnerabilityIdentified) providedNotification.getSubject();
-        Assert.assertEquals(1, providedSubject.getAffectedProjects().size());
-        Assert.assertEquals(firstProject.getName(), providedSubject.getAffectedProjects().toArray(new Project[1])[0].getName());
+        Assertions.assertEquals(1, providedSubject.getAffectedProjects().size());
+        Assertions.assertEquals(firstProject.getName(), providedSubject.getAffectedProjects().toArray(new Project[1])[0].getName());
     }
 
     @Test
-    public void testValidNonMatchingRule() {
+    void testValidNonMatchingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -257,16 +272,19 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         Project affectedProject = qm.createProject("Test Project 1", null, "1.0", null, null, null, true, false);
         Component affectedComponent = new Component();
         affectedComponent.setProject(affectedProject);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, null, null);
+        affectedComponent.setName("acme-lib");
+        qm.persist(affectedComponent);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(affectedComponent), null, null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertEquals(0, rules.size());
+        Assertions.assertEquals(0, rules.size());
     }
 
     @Test
-    public void testRuleLevelEqual() {
+    void testRuleLevelEqual() {
         final NotificationPublisher publisher = createSlackPublisher();
         final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.WARNING, publisher);
         rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
@@ -281,7 +299,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testRuleLevelBelow() {
+    void testRuleLevelBelow() {
         final NotificationPublisher publisher = createSlackPublisher();
         final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.WARNING, publisher);
         rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
@@ -296,7 +314,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testRuleLevelAbove() {
+    void testRuleLevelAbove() {
         final NotificationPublisher publisher = createSlackPublisher();
 
         final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.WARNING, publisher);
@@ -312,7 +330,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testDisabledRule() {
+    void testDisabledRule() {
         final NotificationPublisher publisher = createSlackPublisher();
 
         final NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -329,7 +347,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testNewVulnerabilityIdentifiedLimitedToProject() {
+    void testNewVulnerabilityIdentifiedLimitedToProject() {
         final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
         var componentA = new Component();
         componentA.setProject(projectA);
@@ -352,18 +370,18 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
-        notification.setSubject(new NewVulnerabilityIdentified(null, componentB, Set.of(), null));
+        notification.setSubject(new NewVulnerabilityIdentified(null, qm.detach(componentB), Set.of(), null));
 
         final var router = new NotificationRouter();
         assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
-        notification.setSubject(new NewVulnerabilityIdentified(null, componentA, Set.of(), null));
+        notification.setSubject(new NewVulnerabilityIdentified(null, qm.detach(componentA), Set.of(), null));
         assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
     @Test
-    public void testNewVulnerableDependencyLimitedToProject() {
+    void testNewVulnerableDependencyLimitedToProject() {
         final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
         var componentA = new Component();
         componentA.setProject(projectA);
@@ -386,18 +404,18 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
-        notification.setSubject(new NewVulnerableDependency(componentB, null));
+        notification.setSubject(new NewVulnerableDependency(qm.detach(componentB), null));
 
         final var router = new NotificationRouter();
         assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
-        notification.setSubject(new NewVulnerableDependency(componentA, null));
+        notification.setSubject(new NewVulnerableDependency(qm.detach(componentA), null));
         assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
     @Test
-    public void testBomConsumedOrProcessedLimitedToProject() {
+    void testBomConsumedOrProcessedLimitedToProject() {
         final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
         final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
 
@@ -411,18 +429,18 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.BOM_CONSUMED.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
-        notification.setSubject(new BomConsumedOrProcessed(projectB, "", Bom.Format.CYCLONEDX, ""));
+        notification.setSubject(new BomConsumedOrProcessed(qm.detach(projectB), "", Bom.Format.CYCLONEDX, ""));
 
         final var router = new NotificationRouter();
         assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
-        notification.setSubject(new BomConsumedOrProcessed(projectA, "", Bom.Format.CYCLONEDX, ""));
+        notification.setSubject(new BomConsumedOrProcessed(qm.detach(projectA), "", Bom.Format.CYCLONEDX, ""));
         assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
     @Test
-    public void testBomProcessingFailedLimitedToProject() {
+    void testBomProcessingFailedLimitedToProject() {
         final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
         final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
 
@@ -436,18 +454,18 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.BOM_PROCESSING_FAILED.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
-        notification.setSubject(new BomProcessingFailed(projectB, "", null, Bom.Format.CYCLONEDX, ""));
+        notification.setSubject(new BomProcessingFailed(qm.detach(projectB), "", null, Bom.Format.CYCLONEDX, ""));
 
         final var router = new NotificationRouter();
         assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
-        notification.setSubject(new BomProcessingFailed(projectA, "", null, Bom.Format.CYCLONEDX, ""));
+        notification.setSubject(new BomProcessingFailed(qm.detach(projectA), "", null, Bom.Format.CYCLONEDX, ""));
         assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
     @Test
-    public void testBomValidationFailedLimitedToProject() {
+    void testBomValidationFailedLimitedToProject() {
         final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
         final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
 
@@ -461,18 +479,18 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.BOM_VALIDATION_FAILED.name());
         notification.setLevel(NotificationLevel.ERROR);
-        notification.setSubject(new BomValidationFailed(projectB, "", null, Bom.Format.CYCLONEDX));
+        notification.setSubject(new BomValidationFailed(qm.detach(projectB), "", null, Bom.Format.CYCLONEDX));
 
         final var router = new NotificationRouter();
         assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
-        notification.setSubject(new BomValidationFailed(projectA, "", null, Bom.Format.CYCLONEDX));
+        notification.setSubject(new BomValidationFailed(qm.detach(projectA), "", null, Bom.Format.CYCLONEDX));
         assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
     @Test
-    public void testVexConsumedOrProcessedLimitedToProject() {
+    void testVexConsumedOrProcessedLimitedToProject() {
         final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
         final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
 
@@ -486,18 +504,18 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.VEX_CONSUMED.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
-        notification.setSubject(new VexConsumedOrProcessed(projectB, "", Vex.Format.CYCLONEDX, ""));
+        notification.setSubject(new VexConsumedOrProcessed(qm.detach(projectB), "", Vex.Format.CYCLONEDX, ""));
 
         final var router = new NotificationRouter();
         assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
-        notification.setSubject(new VexConsumedOrProcessed(projectA, "", Vex.Format.CYCLONEDX, ""));
+        notification.setSubject(new VexConsumedOrProcessed(qm.detach(projectA), "", Vex.Format.CYCLONEDX, ""));
         assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
     @Test
-    public void testPolicyViolationIdentifiedLimitedToProject() {
+    void testPolicyViolationIdentifiedLimitedToProject() {
         final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
         var componentA = new Component();
         componentA.setProject(projectA);
@@ -525,13 +543,13 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         final var router = new NotificationRouter();
         assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
 
-        notification.setSubject(new PolicyViolationIdentified(null, componentA, projectA));
+        notification.setSubject(new PolicyViolationIdentified(null, qm.detach(componentA), projectA));
         assertThat(router.resolveRules(PublishContext.from(notification), notification))
                 .satisfiesExactly(resolvedRule -> assertThat(resolvedRule.getName()).isEqualTo("Test Rule"));
     }
 
     @Test
-    public void testAnalysisDecisionChangeLimitedToProject() {
+    void testAnalysisDecisionChangeLimitedToProject() {
         final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
         final Project projectB = qm.createProject("Project B", null, "1.0", null, null, null, true, false);
 
@@ -545,7 +563,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
-        notification.setSubject(new AnalysisDecisionChange(null, null, projectB, null));
+        notification.setSubject(new AnalysisDecisionChange(null, null, qm.detach(projectB), null));
 
         final var router = new NotificationRouter();
         assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
@@ -556,7 +574,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testViolationAnalysisDecisionChangeLimitedToProject() {
+    void testViolationAnalysisDecisionChangeLimitedToProject() {
         final Project projectA = qm.createProject("Project A", null, "1.0", null, null, null, true, false);
         var componentA = new Component();
         componentA.setProject(projectA);
@@ -579,7 +597,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
         notification.setLevel(NotificationLevel.INFORMATIONAL);
-        notification.setSubject(new ViolationAnalysisDecisionChange(null, componentB, null));
+        notification.setSubject(new ViolationAnalysisDecisionChange(null, qm.detach(componentB), null));
 
         final var router = new NotificationRouter();
         assertThat(router.resolveRules(PublishContext.from(notification), notification)).isEmpty();
@@ -590,7 +608,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAffectedChild() {
+    void testAffectedChild() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Matching Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -608,6 +626,8 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         // Creates a new component
         Component component = new Component();
         component.setProject(grandChild);
+        component.setName("acme-lib");
+        qm.persist(component);
         // Creates a new notification
         Notification notification = new Notification();
         notification.setScope(NotificationScope.PORTFOLIO.name());
@@ -616,17 +636,18 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
         Set<Project> affectedProjects = new HashSet<>();
         affectedProjects.add(grandChild);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), component, affectedProjects, null);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(component), qm.detach(affectedProjects), null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertTrue(rule.isNotifyChildren());
-        Assert.assertEquals(1, rules.size());
+        Assertions.assertTrue(rule.isNotifyChildren());
+        Assertions.assertEquals(1, rules.size());
     }
 
     @Test
-    public void testAffectedChildNotifyChildrenDisabled() {
+    void testAffectedChildNotifyChildrenDisabled() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Matching Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -645,6 +666,8 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         // Creates a new component
         Component component = new Component();
         component.setProject(grandChild);
+        component.setName("acme-lib");
+        qm.persist(component);
         // Creates a new notification
         Notification notification = new Notification();
         notification.setScope(NotificationScope.PORTFOLIO.name());
@@ -653,17 +676,18 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
         Set<Project> affectedProjects = new HashSet<>();
         affectedProjects.add(grandChild);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), component, affectedProjects, null);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(component), qm.detach(affectedProjects), null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertFalse(rule.isNotifyChildren());
-        Assert.assertEquals(0, rules.size());
+        Assertions.assertFalse(rule.isNotifyChildren());
+        Assertions.assertEquals(0, rules.size());
     }
 
     @Test
-    public void testAffectedInactiveChild() {
+    void testAffectedInactiveChild() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -681,6 +705,8 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         // Creates a new component
         Component component = new Component();
         component.setProject(grandChild);
+        component.setName("acme-lib");
+        qm.persist(component);
         // Creates a new notification
         Notification notification = new Notification();
         notification.setScope(NotificationScope.PORTFOLIO.name());
@@ -689,17 +715,18 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         // Notification should be limited to only specific projects - Set the projects which are affected by the notification event
         Set<Project> affectedProjects = new HashSet<>();
         affectedProjects.add(grandChild);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), component, affectedProjects, null);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(component), qm.detach(affectedProjects), null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertTrue(rule.isNotifyChildren());
-        Assert.assertEquals(0, rules.size());
+        Assertions.assertTrue(rule.isNotifyChildren());
+        Assertions.assertEquals(0, rules.size());
     }
 
     @Test
-    public void testValidMatchingTagLimitingRule() {
+    void testValidMatchingTagLimitingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -721,16 +748,19 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         affectedProjects.add(project);
         Component affectedComponent = new Component();
         affectedComponent.setProject(project);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
+        affectedComponent.setName("acme-lib");
+        qm.persist(affectedComponent);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(affectedComponent), qm.detach(affectedProjects), null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
-        Assert.assertEquals(1, rules.size());
+        Assertions.assertEquals(1, rules.size());
     }
 
     @Test
-    public void testValidNonMatchingTagLimitingRule() {
+    void testValidNonMatchingTagLimitingRule() {
         NotificationPublisher publisher = createSlackPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -754,17 +784,20 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         affectedProjects.add(affectedProject);
         Component affectedComponent = new Component();
         affectedComponent.setProject(affectedProject);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
+        affectedComponent.setName("acme-lib");
+        qm.persist(affectedComponent);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(affectedComponent), qm.detach(affectedProjects), null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
         List<NotificationRule> rules = router.resolveRules(PublishContext.from(notification), notification);
         // Affected project is not tagged, rule should be empty
-        Assert.assertEquals(0, rules.size());
+        Assertions.assertEquals(0, rules.size());
     }
 
     @Test
-    public void testValidMatchingProjectAndTagLimitingRule() {
+    void testValidMatchingProjectAndTagLimitingRule() {
         NotificationPublisher publisher = createMockPublisher();
         // Creates a new rule and defines when the rule should be triggered (notifyOn)
         NotificationRule rule = qm.createNotificationRule("Test Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
@@ -791,7 +824,10 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         affectedProjects.add(otherAffectedProject);
         Component affectedComponent = new Component();
         affectedComponent.setProject(taggedProject);
-        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(new Vulnerability(), affectedComponent, affectedProjects, null);
+        affectedComponent.setName("acme-lib");
+        qm.persist(affectedComponent);
+        NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(
+                new Vulnerability(), qm.detach(affectedComponent), qm.detach(affectedProjects), null);
         notification.setSubject(subject);
         // Ok, let's test this
         NotificationRouter router = new NotificationRouter();
@@ -799,7 +835,7 @@ public class NotificationRouterTest extends PersistenceCapableTest {
         // Affected project is not tagged, rules should be empty
         Notification providedNotification = MockPublisher.getNotification();
         NewVulnerabilityIdentified providedSubject = (NewVulnerabilityIdentified) providedNotification.getSubject();
-        Assert.assertEquals(2, providedSubject.getAffectedProjects().size());
+        Assertions.assertEquals(2, providedSubject.getAffectedProjects().size());
     }
 
     private NotificationPublisher createSlackPublisher() {

@@ -45,16 +45,16 @@ import us.springett.parsers.cpe.exceptions.CpeValidationException;
 import us.springett.parsers.cpe.values.Part;
 
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import static org.dependencytrack.search.IndexConstants.VULNERABLESOFTWARE_UUID;
 
 public class FuzzyVulnerableSoftwareSearchManager {
 
@@ -148,9 +148,12 @@ public class FuzzyVulnerableSoftwareSearchManager {
         }
         return fuzzyList;
     }
-    private List<VulnerableSoftware> fuzzySearch(QueryManager qm, Part part, String vendor, String product)  {
+
+    private static List<VulnerableSoftware> fuzzySearch(QueryManager qm, Part part, String vendor, String product)  {
         try {
-            us.springett.parsers.cpe.Cpe cpe = new us.springett.parsers.cpe.Cpe(part, escape(vendor), escape(product), "*", "*", "*", "*", "*", "*", "*", "*");
+            String sanitizedVendor = vendor.replace(" ", "_");
+            String sanitizedProduct = product.replace(" ", "_");
+            us.springett.parsers.cpe.Cpe cpe = new us.springett.parsers.cpe.Cpe(part, escapeLuceneQuery(sanitizedVendor), escapeLuceneQuery(sanitizedProduct), "*", "*", "*", "*", "*", "*", "*", "*");
             String cpeSearch = getLuceneCpeRegexp(cpe.toCpe23FS());
             return fuzzySearch(qm, cpeSearch);
         } catch (CpeValidationException cpeValidationException) {
@@ -159,7 +162,7 @@ public class FuzzyVulnerableSoftwareSearchManager {
         }
     }
 
-    public SearchResult searchIndex(final String luceneQuery) {
+    public static SearchResult searchIndex(final String luceneQuery) {
         final SearchResult searchResult = new SearchResult();
         final List<Map<String, String>> resultSet = new ArrayList<>();
         IndexManager indexManager = VulnerableSoftwareIndexer.getInstance();
@@ -217,15 +220,17 @@ public class FuzzyVulnerableSoftwareSearchManager {
         return searchResult;
     }
 
-    private List<VulnerableSoftware> fuzzySearch(QueryManager qm, String luceneQuery) {
-        List<VulnerableSoftware>  fuzzyList = new LinkedList<>();
-        SearchResult sr = searchIndex(luceneQuery);
-        if (sr.getResults().containsKey("vulnerablesoftware")) {
-            for (Map<String, String> result : sr.getResults().get("vulnerablesoftware")) {
-                fuzzyList.add(qm.getObjectByUuid(VulnerableSoftware.class, result.get("uuid")));
-            }
+    static List<VulnerableSoftware> fuzzySearch(QueryManager qm, String luceneQuery) {
+        final var vulnerableSoftware = searchIndex(luceneQuery).getResults().get("vulnerablesoftware");
+        if (vulnerableSoftware == null) {
+            return Collections.emptyList();
         }
-        return fuzzyList;
+
+        return vulnerableSoftware
+                .stream()
+                .map(result -> qm.getObjectByUuid(VulnerableSoftware.class, result.get(VULNERABLESOFTWARE_UUID)))
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     public static String getLuceneCpeRegexp(String cpeString) {
@@ -239,8 +244,8 @@ public class FuzzyVulnerableSoftwareSearchManager {
                 exp.insert(0, "cpe22:/");
                 exp.append("\\/").append(cpe.getPart().getAbbreviation());
             }
-            exp.append("\\:").append(escape(getComponentRegex(cpe.getVendor())));
-            exp.append("\\:").append(escape(getComponentRegex(cpe.getProduct())));
+            exp.append("\\:").append(escapeLuceneQuery(getComponentRegex(cpe.getVendor())));
+            exp.append("\\:").append(escapeLuceneQuery(getComponentRegex(cpe.getProduct())));
             exp.append("\\:").append(getComponentRegex(cpe.getVersion()));
             exp.append("\\:").append(getComponentRegex(cpe.getUpdate()));
             exp.append("\\:").append(getComponentRegex(cpe.getEdition()));
@@ -260,19 +265,19 @@ public class FuzzyVulnerableSoftwareSearchManager {
 
     private static String getComponentRegex(String component) {
         if (component != null) {
-            return component.replace("*", ".*");
+            return component.replace("*", ".*").toLowerCase();
         } else {
             return ".*";
         }
     }
 
-    private static String escape(final String input) {
+    private static String escapeLuceneQuery(final String input) {
         if(input == null) {
             return null;
         } else if (input.equals(".*")) {
             return input;
         }
-        return QueryParser.escape(input);
+        return QueryParser.escape(input.toLowerCase());
     }
 
 }

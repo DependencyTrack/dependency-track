@@ -36,19 +36,23 @@ import org.dependencytrack.event.OsvMirrorEvent;
 import org.dependencytrack.event.PortfolioMetricsUpdateEvent;
 import org.dependencytrack.event.PortfolioVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
+import org.dependencytrack.event.ScheduledNotificationDispatchEvent;
+import org.dependencytrack.event.TelemetrySubmissionEvent;
 import org.dependencytrack.event.VulnDbSyncEvent;
 import org.dependencytrack.event.VulnerabilityMetricsUpdateEvent;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_SYNC_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_SYNC_CADENCE;
-import static org.dependencytrack.model.ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_CADENCE;
-import static org.dependencytrack.model.ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_SYNC_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_CADENCE;
+import static org.dependencytrack.model.ConfigPropertyConstants.SEARCH_INDEXES_CONSISTENCY_CHECK_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_GHSA_MIRROR_CADENCE;
 import static org.dependencytrack.model.ConfigPropertyConstants.TASK_SCHEDULER_INTERNAL_COMPONENT_IDENTIFICATION_CADENCE;
@@ -109,6 +113,10 @@ public final class TaskScheduler extends AlpineTaskScheduler {
 
             // Creates a new event that executes every 72 hours (259200000) by default after an initial 10 second (10000) delay
             scheduleEvent(new ClearComponentAnalysisCacheEvent(), 10000, getCadenceConfigPropertyValueInMilliseconds(qm, TASK_SCHEDULER_COMPONENT_ANALYSIS_CACHE_CLEAR_CADENCE));
+
+            scheduleEvent(new TelemetrySubmissionEvent(), TimeUnit.MINUTES.toMillis(1), TimeUnit.HOURS.toMillis(1));
+
+            scheduleEvent(new ScheduledNotificationDispatchEvent(), TimeUnit.MINUTES.toMillis(1), TimeUnit.MINUTES.toMillis(1));
         }
 
         // Configurable tasks

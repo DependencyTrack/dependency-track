@@ -31,9 +31,13 @@ public final class MdcKeys {
     public static final String MDC_BOM_UPLOAD_TOKEN = "bomUploadToken";
     public static final String MDC_BOM_VERSION = "bomVersion";
     public static final String MDC_EVENT_TOKEN = "eventToken";
+    public static final String MDC_NOTIFICATION_RULE_NAME = "notificationRuleName";
+    public static final String MDC_NOTIFICATION_RULE_UUID = "notificationRuleUuid";
     public static final String MDC_PROJECT_NAME = "projectName";
     public static final String MDC_PROJECT_UUID = "projectUuid";
     public static final String MDC_PROJECT_VERSION = "projectVersion";
+    public static final String MDC_VULN_ANALYSIS_LEVEL = "vulnAnalysisLevel";
+    public static final String MDC_VULN_ID = "vulnId";
 
     private MdcKeys() {
     }

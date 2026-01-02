@@ -20,6 +20,10 @@ package org.dependencytrack.parser.nvd;
 
 import org.dependencytrack.model.ICpe;
 import org.dependencytrack.model.VulnerableSoftware;
+
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
@@ -51,4 +55,32 @@ public final class ModelConverter {
         VulnerableSoftware vs = new VulnerableSoftware();
         return (VulnerableSoftware)convertCpe23Uri(vs, cpe23Uri);
     }
+
+    public static VulnerableSoftware convertPurlToVulnerableSoftware(String purlString) throws MalformedPackageURLException {
+        final com.github.packageurl.PackageURL purl = new PackageURL(purlString);
+        final VulnerableSoftware vs = new VulnerableSoftware();
+
+        vs.setPurl(purl.toString());
+
+        vs.setPurlType(purl.getType());
+        vs.setPurlNamespace(purl.getNamespace());
+        vs.setPurlName(purl.getName());
+        vs.setPurlVersion(purl.getVersion());
+        vs.setPurlSubpath(purl.getSubpath());
+
+        final var qualifiers = purl.getQualifiers();
+        if (qualifiers != null && !qualifiers.isEmpty()) {
+            final String qualifiersStr = qualifiers.entrySet().stream()
+                    .sorted(java.util.Map.Entry.comparingByKey())
+                    .map(e -> e.getKey() + "=" + e.getValue())
+                    .collect(java.util.stream.Collectors.joining("&"));
+            vs.setPurlQualifiers(qualifiersStr);
+        }
+
+        vs.setVersion(purl.getVersion());
+
+        return vs;
+
+    }
+
 }

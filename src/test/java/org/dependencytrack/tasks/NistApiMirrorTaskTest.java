@@ -19,7 +19,8 @@
 package org.dependencytrack.tasks;
 
 import alpine.model.ConfigProperty;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.NistApiMirrorEvent;
 import org.dependencytrack.model.AffectedVersionAttribution;
@@ -27,9 +28,8 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.Vulnerability.Source;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -39,20 +39,18 @@ import java.util.List;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static org.apache.commons.io.IOUtils.resourceToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_API_URL;
 
-public class NistApiMirrorTaskTest extends PersistenceCapableTest {
+@WireMockTest
+class NistApiMirrorTaskTest extends PersistenceCapableTest {
 
-    @Rule
-    public WireMockRule wireMock = new WireMockRule(options().dynamicPort());
-
-    @Before
-    public void setUp() {
+    @BeforeEach
+    public void setUp(WireMockRuntimeInfo wmRuntimeInfo) {
         qm.createConfigProperty(
                 VULNERABILITY_SOURCE_NVD_API_ENABLED.getGroupName(),
                 VULNERABILITY_SOURCE_NVD_API_ENABLED.getPropertyName(),
@@ -63,7 +61,7 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 VULNERABILITY_SOURCE_NVD_API_URL.getGroupName(),
                 VULNERABILITY_SOURCE_NVD_API_URL.getPropertyName(),
-                wireMock.baseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl(),
                 VULNERABILITY_SOURCE_NVD_API_URL.getPropertyType(),
                 VULNERABILITY_SOURCE_NVD_API_URL.getDescription()
         );
@@ -77,8 +75,8 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testInformWithNewVulnerability() throws Exception {
-        wireMock.stubFor(get(anyUrl())
+    void testInformWithNewVulnerability() throws Exception {
+        stubFor(get(anyUrl())
                 .willReturn(aResponse()
                         .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2022-1954.json"))));
 
@@ -104,8 +102,8 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
         assertThat(vuln.getPublished()).isEqualTo("2022-07-01T18:15:08.570Z");
         assertThat(vuln.getUpdated()).isEqualTo("2023-08-08T14:22:24.967Z");
         assertThat(vuln.getCwes()).containsOnly(1333);
-        assertThat(vuln.getCvssV2Vector()).isEqualTo("(AV:N/AC:L/Au:N/C:N/I:N/A:P)");
-        assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L");
+        assertThat(vuln.getCvssV2Vector()).isEqualTo("AV:N/AC:L/Au:N/C:N/I:N/A:P");
+        assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L");
         assertThat(vuln.getSeverity()).isEqualTo(Severity.MEDIUM);
         assertThat(vuln.getVulnerableVersions()).isNull();
         assertThat(vuln.getPatchedVersions()).isNull();
@@ -247,7 +245,7 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testInformWithUpdatedVulnerability() throws Exception {
+    void testInformWithUpdatedVulnerability() throws Exception {
         final var vuln = new Vulnerability();
         vuln.setVulnId("CVE-2022-1954");
         vuln.setSource(Source.NVD);
@@ -261,7 +259,7 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
         vuln.setEpssPercentile(BigDecimal.valueOf(0.6));
         qm.persist(vuln);
 
-        wireMock.stubFor(get(anyUrl())
+        stubFor(get(anyUrl())
                 .willReturn(aResponse()
                         .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2022-1954.json"))));
 
@@ -283,7 +281,7 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testInformWithUpdatedVulnerableSoftware() throws Exception {
+    void testInformWithUpdatedVulnerableSoftware() throws Exception {
         final var vuln = new Vulnerability();
         vuln.setVulnId("CVE-2022-1954");
         vuln.setSource(Source.NVD);
@@ -346,7 +344,7 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
         vuln.setVulnerableSoftware(List.of(oldVsReportedByNvd, vsReportedByNvd, vsReportedByOsv));
         qm.persist(vuln);
 
-        wireMock.stubFor(get(anyUrl())
+        stubFor(get(anyUrl())
                 .willReturn(aResponse()
                         .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2022-1954.json"))));
 
@@ -404,8 +402,8 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testInformWithIgnoringAmbiguousRunningOnCpeMatches() throws Exception {
-        wireMock.stubFor(get(anyUrl())
+    void testInformWithIgnoringAmbiguousRunningOnCpeMatches() throws Exception {
+        stubFor(get(anyUrl())
                 .willReturn(aResponse()
                         .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2015-0312.json"))));
 
@@ -440,8 +438,8 @@ public class NistApiMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-public void testInformWithIgnoringAmbiguousRunningOnCpeMatchesAlt() throws Exception {
-        wireMock.stubFor(get(anyUrl())
+    void testInformWithIgnoringAmbiguousRunningOnCpeMatchesAlt() throws Exception {
+        stubFor(get(anyUrl())
                 .willReturn(aResponse()
                         .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2024-23113.json"))));
 

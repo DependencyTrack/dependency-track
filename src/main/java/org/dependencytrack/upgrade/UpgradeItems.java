@@ -41,6 +41,11 @@ class UpgradeItems {
         UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4110.v4110Updater.class);
         UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4120.v4120Updater.class);
         UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4122.v4122Updater.class);
+        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4123.v4123Updater.class);
+        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4130.v4130Updater.class);
+        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4130.v4130_1Updater.class);
+        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4131.v4131Updater.class);
+        UPGRADE_ITEMS.add(org.dependencytrack.upgrade.v4135.v4135Updater.class);
     }
 
     static List<Class<? extends UpgradeItem>> getUpgradeItems() {

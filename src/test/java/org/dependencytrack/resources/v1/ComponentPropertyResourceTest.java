@@ -21,34 +21,34 @@ package org.dependencytrack.resources.v1;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
-import org.dependencytrack.JerseyTestRule;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.Project;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
-public class ComponentPropertyResourceTest extends ResourceTest {
+class ComponentPropertyResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(ComponentPropertyResource.class)
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(ComponentPropertyResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
     @Test
-    public void getPropertiesTest() {
+    void getPropertiesTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -108,7 +108,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getPropertiesInvalidTest() {
+    void getPropertiesInvalidTest() {
         final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, UUID.randomUUID())).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -119,7 +119,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createPropertyTest() {
+    void createPropertyTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -156,7 +156,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createPropertyWithoutGroupTest() {
+    void createPropertyWithoutGroupTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -191,7 +191,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createPropertyDuplicateTest() {
+    void createPropertyDuplicateTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -228,7 +228,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createPropertyDisallowedPropertyTypeTest() {
+    void createPropertyDisallowedPropertyTypeTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -265,7 +265,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void createPropertyComponentNotFoundTest() {
+    void createPropertyComponentNotFoundTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -293,7 +293,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
     }
 
     @Test
-    public void deletePropertyTest() {
+    void deletePropertyTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);

@@ -19,19 +19,19 @@
 package org.dependencytrack.event;
 
 import org.dependencytrack.model.Project;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class BomUploadEventTest {
+class BomUploadEventTest {
 
     @Test
-    public void testByteArrayConstructor() {
+    void testByteArrayConstructor() {
         var project = new Project();
         byte[] bom = "testing".getBytes();
         BomUploadEvent event = new BomUploadEvent(project, bom);
-        Assert.assertEquals(project, event.getProject());
-        Assert.assertNotEquals(bom, event.getBom()); // should be a cloned byte array - not the same reference
-        Assert.assertTrue(event.getBom().length > 0);
+        Assertions.assertEquals(project, event.getProject());
+        Assertions.assertNotEquals(bom, event.getBom()); // should be a cloned byte array - not the same reference
+        Assertions.assertTrue(event.getBom().length > 0);
     }
 
 }

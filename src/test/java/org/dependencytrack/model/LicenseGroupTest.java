@@ -18,43 +18,43 @@
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LicenseGroupTest {
+class LicenseGroupTest {
 
     @Test
-    public void testId() {
+    void testId() {
         LicenseGroup lg = new LicenseGroup();
         lg.setId(111L);
-        Assert.assertEquals(111L, lg.getId());
+        Assertions.assertEquals(111L, lg.getId());
     }
 
     @Test
-    public void testName() {
+    void testName() {
         LicenseGroup lg = new LicenseGroup();
         lg.setName("Copyleft");
-        Assert.assertEquals("Copyleft", lg.getName());
+        Assertions.assertEquals("Copyleft", lg.getName());
     }
 
     @Test
-    public void testLicenses() {
+    void testLicenses() {
         List<License> licenses = new ArrayList<>();
         License license = new License();
         licenses.add(license);
         LicenseGroup lg = new LicenseGroup();
         lg.setLicenses(licenses);
-        Assert.assertEquals(1, lg.getLicenses().size());
-        Assert.assertEquals(license, lg.getLicenses().get(0));
+        Assertions.assertEquals(1, lg.getLicenses().size());
+        Assertions.assertEquals(license, lg.getLicenses().get(0));
     }
 
     @Test
-    public void testRiskWeight() {
+    void testRiskWeight() {
         LicenseGroup lg = new LicenseGroup();
         lg.setRiskWeight(9);
-        Assert.assertEquals(9, lg.getRiskWeight());
+        Assertions.assertEquals(9, lg.getRiskWeight());
     }
 }

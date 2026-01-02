@@ -40,13 +40,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.text.WordUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.PolicyEvaluationEvent;
+import org.dependencytrack.event.ProjectVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
-import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.integrations.FindingPackagingFormat;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
@@ -122,7 +123,10 @@ public class FindingResource extends AlpineResource {
             if (project != null) {
                 if (qm.hasAccess(super.getPrincipal(), project)) {
                     //final long totalCount = qm.getVulnerabilityCount(project, suppressed);
-                    final List<Finding> findings = qm.getFindings(project, suppressed);
+                    List<Finding> findings = qm.getFindings(project, suppressed);
+                    if (source != null) {
+                        findings = findings.stream().filter(finding -> source.name().equals(finding.getVulnerability().get("source"))).collect(Collectors.toList());
+                    }
                     if (acceptHeader != null && acceptHeader.contains(MEDIA_TYPE_SARIF_JSON)) {
                         try {
                             return Response.ok(generateSARIF(findings), MEDIA_TYPE_SARIF_JSON)
@@ -132,10 +136,6 @@ public class FindingResource extends AlpineResource {
                             LOGGER.error(ioException.getMessage(), ioException);
                             return Response.status(Status.INTERNAL_SERVER_ERROR).entity("An error occurred while generating SARIF file").build();
                         }
-                    }
-                    if (source != null) {
-                        final List<Finding> filteredList = findings.stream().filter(finding -> source.name().equals(finding.getVulnerability().get("source"))).collect(Collectors.toList());
-                        return Response.ok(filteredList).header(TOTAL_COUNT_HEADER, filteredList.size()).build();
                     } else {
                         return Response.ok(findings).header(TOTAL_COUNT_HEADER, findings.size()).build();
                     }
@@ -215,7 +215,8 @@ public class FindingResource extends AlpineResource {
 
                   final List<Component> detachedComponents = qm.detach(qm.getAllComponents(project));
                   final Project detachedProject = qm.detach(Project.class, project.getId());
-                  final VulnerabilityAnalysisEvent vae = new VulnerabilityAnalysisEvent(detachedComponents).project(detachedProject);
+                  final var vae = new ProjectVulnerabilityAnalysisEvent(
+                          detachedProject, VulnerabilityAnalysisLevel.ON_DEMAND);
                   // Wait for RepositoryMetaEvent after VulnerabilityAnalysisEvent,
                   // as both might be needed in policy evaluation
                   vae.onSuccess(new RepositoryMetaEvent(detachedComponents));
@@ -277,7 +278,15 @@ public class FindingResource extends AlpineResource {
                                    @Parameter(description = "Filter CVSSv3 from this value")
                                    @QueryParam("cvssv3From") String cvssv3From,
                                    @Parameter(description = "Filter CVSSv3 from this Value")
-                                   @QueryParam("cvssv3To") String cvssv3To) {
+                                   @QueryParam("cvssv3To") String cvssv3To,
+                                   @Parameter(description = "Filter EPSS from this value")
+                                   @QueryParam("epssFrom") String epssFrom,
+                                   @Parameter(description = "Filter EPSS to this value")
+                                   @QueryParam("epssTo") String epssTo,
+                                   @Parameter(description = "Filter EPSS Percentile from this value")
+                                   @QueryParam("epssPercentileFrom") String epssPercentileFrom,
+                                   @Parameter(description = "Filter EPSS Percentile to this value")
+                                   @QueryParam("epssPercentileTo") String epssPercentileTo) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Map<String, String> filters = new HashMap<>();
             filters.put("severity", severity);
@@ -293,6 +302,10 @@ public class FindingResource extends AlpineResource {
             filters.put("cvssv2To", cvssv2To);
             filters.put("cvssv3From", cvssv3From);
             filters.put("cvssv3To", cvssv3To);
+            filters.put("epssFrom", epssFrom);
+            filters.put("epssTo", epssTo);
+            filters.put("epssPercentileFrom", epssPercentileFrom);
+            filters.put("epssPercentileTo", epssPercentileTo);
             final PaginatedResult result = qm.getAllFindings(filters, showSuppressed, showInactive);
             return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
@@ -335,6 +348,14 @@ public class FindingResource extends AlpineResource {
                                    @QueryParam("cvssv3From") String cvssv3From,
                                    @Parameter(description = "Filter CVSSv3 to this value")
                                    @QueryParam("cvssv3To") String cvssv3To,
+                                   @Parameter(description = "Filter EPSS from this value")
+                                   @QueryParam("epssFrom") String epssFrom,
+                                   @Parameter(description = "Filter EPSS to this value")
+                                   @QueryParam("epssTo") String epssTo,
+                                   @Parameter(description = "Filter EPSS Percentile from this value")
+                                   @QueryParam("epssPercentileFrom") String epssPercentileFrom,
+                                   @Parameter(description = "Filter EPSS Percentile to this value")
+                                   @QueryParam("epssPercentileTo") String epssPercentileTo,
                                    @Parameter(description = "Filter occurrences in projects from this value")
                                    @QueryParam("occurrencesFrom") String occurrencesFrom,
                                    @Parameter(description = "Filter occurrences in projects to this value")
@@ -350,6 +371,10 @@ public class FindingResource extends AlpineResource {
             filters.put("cvssv2To", cvssv2To);
             filters.put("cvssv3From", cvssv3From);
             filters.put("cvssv3To", cvssv3To);
+            filters.put("epssFrom", epssFrom);
+            filters.put("epssTo", epssTo);
+            filters.put("epssPercentileFrom", epssPercentileFrom);
+            filters.put("epssPercentileTo", epssPercentileTo);
             filters.put("occurrencesFrom", occurrencesFrom);
             filters.put("occurrencesTo", occurrencesTo);
             final PaginatedResult result = qm.getAllFindingsGroupedByVulnerability(filters, showInactive);

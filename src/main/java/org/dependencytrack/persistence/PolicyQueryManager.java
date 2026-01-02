@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -831,21 +832,31 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
-     * @since 4.12.0
+     * @since 4.12.3
      */
     @Override
-    public boolean bind(final Policy policy, final Collection<Tag> tags) {
+    public boolean bind(final Policy policy, final Collection<Tag> tags, final boolean keepExisting) {
         assertPersistent(policy, "policy must be persistent");
         assertPersistentAll(tags, "tags must be persistent");
 
         return callInTransaction(() -> {
             boolean modified = false;
 
-            for (final Tag existingTag : policy.getTags()) {
-                if (!tags.contains(existingTag)) {
-                    policy.getTags().remove(existingTag);
-                    existingTag.getPolicies().remove(policy);
-                    modified = true;
+            if (policy.getTags() == null) {
+                policy.setTags(new HashSet<>());
+            }
+
+            if (!keepExisting) {
+                final Iterator<Tag> existingTagsIterator = policy.getTags().iterator();
+                while (existingTagsIterator.hasNext()) {
+                    final Tag existingTag = existingTagsIterator.next();
+                    if (!tags.contains(existingTag)) {
+                        existingTagsIterator.remove();
+                        if (existingTag.getPolicies() != null) {
+                            existingTag.getPolicies().remove(policy);
+                        }
+                        modified = true;
+                    }
                 }
             }
 
@@ -854,8 +865,8 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
                     policy.getTags().add(tag);
 
                     if (tag.getPolicies() == null) {
-                        tag.setPolicies(new ArrayList<>(List.of(policy)));
-                    } else if (!tag.getPolicies().contains(policy)) {
+                        tag.setPolicies(new HashSet<>(Set.of(policy)));
+                    } else {
                         tag.getPolicies().add(policy);
                     }
 
@@ -865,6 +876,14 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
 
             return modified;
         });
+    }
+
+    /**
+     * @since 4.12.0
+     */
+    @Override
+    public boolean bind(final Policy policy, final Collection<Tag> tags) {
+        return bind(policy, tags, /* keepExisting */ false);
     }
 
 }

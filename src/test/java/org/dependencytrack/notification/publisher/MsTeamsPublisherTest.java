@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.notification.publisher;
 
+import org.junit.jupiter.api.Test;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
@@ -30,9 +32,9 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
         super(DefaultNotificationPublishers.MS_TEAMS, new MsTeamsPublisher());
     }
 
-    @Override
+    @Test
     public void testInformWithBomConsumedNotification() {
-        super.testInformWithBomConsumedNotification();
+        super.baseTestInformWithBomConsumedNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -68,9 +70,9 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithBomProcessingFailedNotification() {
-        super.testInformWithBomProcessingFailedNotification();
+        super.baseTestInformWithBomProcessingFailedNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -100,7 +102,7 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                                 },
                                 {
                                   "name": "Project",
-                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "value": "projectName : projectVersion"
                                 },
                                 {
                                   "name": "Project URL",
@@ -114,9 +116,9 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithBomValidationFailedNotification() {
-        super.testInformWithBomValidationFailedNotification();
+        super.baseTestInformWithBomValidationFailedNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -146,7 +148,7 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                                 },
                                 {
                                   "name": "Project",
-                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "value": "projectName : projectVersion"
                                 },
                                 {
                                   "name": "Project URL",
@@ -164,9 +166,9 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
-        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+        super.baseTestInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -196,7 +198,7 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                                 },
                                 {
                                   "name": "Project",
-                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "value": "projectName : projectVersion"
                                 },
                                 {
                                   "name": "Project URL",
@@ -210,9 +212,9 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithDataSourceMirroringNotification() {
-        super.testInformWithDataSourceMirroringNotification();
+        super.baseTestInformWithDataSourceMirroringNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -248,9 +250,10 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         """)));
     }
 
-    @Override
+
+    @Test
     public void testInformWithNewVulnerabilityNotification() {
-        super.testInformWithNewVulnerabilityNotification();
+        super.baseTestInformWithNewVulnerabilityNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -258,8 +261,8 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         {
                           "@type": "MessageCard",
                           "@context": "http://schema.org/extensions",
-                          "summary": "New Vulnerability Identified",
-                          "title": "New Vulnerability Identified",
+                          "summary": "New Vulnerability Identified on Project: [projectName : projectVersion]",
+                          "title": "New Vulnerability Identified on Project: [projectName : projectVersion]",
                           "sections": [
                             {
                               "activityTitle": "Dependency-Track",
@@ -290,9 +293,9 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithNewVulnerableDependencyNotification() {
-        super.testInformWithNewVulnerableDependencyNotification();
+        super.baseTestInformWithNewVulnerableDependencyNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -310,7 +313,7 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                               "facts": [
                                 {
                                   "name": "Project",
-                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "value": "projectName : projectVersion"
                                 },
                                 {
                                   "name": "Component",
@@ -324,9 +327,9 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithProjectAuditChangeNotification() {
-        super.testInformWithProjectAuditChangeNotification();
+        super.baseTestInformWithProjectAuditChangeNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -372,7 +375,7 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                                 },
                                 {
                                   "name": "Project",
-                                  "value": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "value": "projectName : projectVersion"
                                 }
                               ],
                               "text": ""
@@ -382,4 +385,79 @@ public class MsTeamsPublisherTest extends AbstractWebhookPublisherTest<MsTeamsPu
                         """)));
     }
 
+    @Test
+    public void testPublishWithScheduledNewVulnerabilitiesNotification() {
+        super.baseTestPublishWithScheduledNewVulnerabilitiesNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson(/* language=JSON */ """
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "New Vulnerabilities Summary",
+                          "title": "New Vulnerabilities Summary",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T18:31:06.000000666",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Level",
+                                  "value": "INFORMATIONAL"
+                                },
+                                {
+                                  "name": "Scope",
+                                  "value": "PORTFOLIO"
+                                },
+                                {
+                                  "name": "Group",
+                                  "value": "NEW_VULNERABILITIES_SUMMARY"
+                                }
+                              ],
+                              "text": "Identified 1 new vulnerabilities across 1 projects and 1 components since 1970-01-01T00:01:06Z, of which 1 are suppressed."
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Test
+    public void testPublishWithScheduledNewPolicyViolationsNotification() {
+        super.baseTestPublishWithScheduledNewPolicyViolationsNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson(/* language=JSON */ """
+                        {
+                          "@type": "MessageCard",
+                          "@context": "http://schema.org/extensions",
+                          "summary": "New Policy Violations Summary",
+                          "title": "New Policy Violations Summary",
+                          "sections": [
+                            {
+                              "activityTitle": "Dependency-Track",
+                              "activitySubtitle": "1970-01-01T18:31:06.000000666",
+                              "activityImage": "https://raw.githubusercontent.com/DependencyTrack/branding/master/dt-logo-symbol-blue-background.png",
+                              "facts": [
+                                {
+                                  "name": "Level",
+                                  "value": "INFORMATIONAL"
+                                },
+                                {
+                                  "name": "Scope",
+                                  "value": "PORTFOLIO"
+                                },
+                                {
+                                  "name": "Group",
+                                  "value": "NEW_POLICY_VIOLATIONS_SUMMARY"
+                                }
+                              ],
+                              "text": "Identified 1 new policy violations across 1 project and 1 components since 1970-01-01T00:01:06Z, of which 0 are suppressed."
+                            }
+                          ]
+                        }
+                        """)));
+    }
 }

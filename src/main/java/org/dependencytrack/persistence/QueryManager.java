@@ -56,6 +56,7 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.NotificationTriggerType;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -380,14 +381,6 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getProjects();
     }
 
-    public List<Project> getAllProjects() {
-        return getProjectQueryManager().getAllProjects();
-    }
-
-    public List<Project> getAllProjects(boolean excludeInactive) {
-        return getProjectQueryManager().getAllProjects(excludeInactive);
-    }
-
     public PaginatedResult getProjects(final String name, final boolean excludeInactive, final boolean onlyRoot, final Team notAssignedToTeam) {
         return getProjectQueryManager().getProjects(name, excludeInactive, onlyRoot, notAssignedToTeam);
     }
@@ -460,11 +453,11 @@ public class QueryManager extends AlpineQueryManager {
         return getTagQueryManager().createTag(name);
     }
 
-    public List<Tag> createTags(final List<String> names) {
+    public Set<Tag> createTags(final Collection<String> names) {
         return getTagQueryManager().createTags(names);
     }
 
-    public List<Tag> resolveTags(final List<Tag> tags) {
+    public Set<Tag> resolveTags(final Collection<Tag> tags) {
         return getTagQueryManager().resolveTags(tags);
     }
 
@@ -476,7 +469,7 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().createProject(name, description, version, tags, parent, purl, active, isLatest, commitIndex);
     }
 
-    public Project createProject(final Project project, List<Tag> tags, boolean commitIndex) {
+    public Project createProject(final Project project, Collection<Tag> tags, boolean commitIndex) {
         return getProjectQueryManager().createProject(project, tags, commitIndex);
     }
 
@@ -927,24 +920,17 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerableSoftwareQueryManager().getAllVulnerableSoftwareByCpe(cpeString);
     }
 
-    public VulnerableSoftware getVulnerableSoftwareByPurl(String purlType, String purlNamespace, String purlName,
-                                                          String versionEndExcluding, String versionEndIncluding,
-                                                          String versionStartExcluding, String versionStartIncluding) {
-        return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(purlType, purlNamespace, purlName, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
-    }
-
     public VulnerableSoftware getVulnerableSoftwareByPurl(
-            final String purl,
+            final String purlType,
+            final String purlNamespace,
+            final String purlName,
+            final String version,
             final String versionEndExcluding,
             final String versionEndIncluding,
             final String versionStartExcluding,
-            final String versionStartIncluding) {
+            String versionStartIncluding) {
         return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(
-                purl,
-                versionEndExcluding,
-                versionEndIncluding,
-                versionStartExcluding,
-                versionStartIncluding);
+                purlType, purlNamespace, purlName, version, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
     }
 
     public List<VulnerableSoftware> getVulnerableSoftwareByVulnId(final String source, final String vulnId) {
@@ -1241,12 +1227,44 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().createNotificationRule(name, scope, level, publisher);
     }
 
+    public NotificationRule createScheduledNotificationRule(
+            final String name,
+            final NotificationScope scope,
+            final NotificationLevel level,
+            final NotificationPublisher publisher) {
+        return getNotificationQueryManager().createScheduledNotificationRule(name, scope, level, publisher);
+    }
+
     public NotificationRule updateNotificationRule(NotificationRule transientRule) {
         return getNotificationQueryManager().updateNotificationRule(transientRule);
     }
 
-    public PaginatedResult getNotificationRules() {
-        return getNotificationQueryManager().getNotificationRules();
+    public PaginatedResult getNotificationRules(final NotificationTriggerType triggerTypeFilter) {
+        return getNotificationQueryManager().getNotificationRules(triggerTypeFilter);
+    }
+
+    public List<NotificationRule> getDueScheduledNotificationRules() {
+        return getNotificationQueryManager().getDueScheduledNotificationRules();
+    }
+
+    public List<Project> getProjectsForNotificationById(final Collection<Long> ids) {
+        return getNotificationQueryManager().getProjectsForNotificationById(ids);
+    }
+
+    public List<Component> getComponentsForNotificationById(final Collection<Long> ids) {
+        return getNotificationQueryManager().getComponentsForNotificationById(ids);
+    }
+
+    public List<PolicyCondition> getPolicyConditionsForNotificationById(final Collection<Long> ids) {
+        return getNotificationQueryManager().getPolicyConditionsForNotificationById(ids);
+    }
+
+    public List<Vulnerability> getVulnerabilitiesForNotificationById(final Collection<Long> ids) {
+        return getNotificationQueryManager().getVulnerabilitiesForNotificationById(ids);
+    }
+
+    public Set<String> getTeamMemberEmailsForNotificationRule(final long ruleId) {
+        return getNotificationQueryManager().getTeamMemberEmailsForNotificationRule(ruleId);
     }
 
     public List<NotificationPublisher> getAllNotificationPublishers() {
@@ -1318,12 +1336,24 @@ public class QueryManager extends AlpineQueryManager {
         getCacheQueryManager().clearComponentAnalysisCache(threshold);
     }
 
+    public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags, final boolean keepExisting) {
+        return getNotificationQueryManager().bind(notificationRule, tags, keepExisting);
+    }
+
     public boolean bind(final NotificationRule notificationRule, final Collection<Tag> tags) {
         return getNotificationQueryManager().bind(notificationRule, tags);
     }
 
-    public void bind(Project project, List<Tag> tags) {
+    public boolean bind(final Project project, final Collection<Tag> tags, final boolean keepExisting) {
+        return getProjectQueryManager().bind(project, tags, keepExisting);
+    }
+
+    public void bind(Project project, Collection<Tag> tags) {
         getProjectQueryManager().bind(project, tags);
+    }
+
+    public boolean bind(final Policy policy, final Collection<Tag> tags, final boolean keepExisting) {
+        return getPolicyQueryManager().bind(policy, tags, keepExisting);
     }
 
     public boolean bind(final Policy policy, final Collection<Tag> tags) {
@@ -1385,6 +1415,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public void untagProjects(final String tagName, final Collection<String> projectUuids) {
         getTagQueryManager().untagProjects(tagName, projectUuids);
+    }
+
+    public List<TagQueryManager.TaggedCollectionProjectRow> getTaggedCollectionProjects(final String tagName) {
+        return getTagQueryManager().getTaggedCollectionProjects(tagName);
     }
 
     public List<TagQueryManager.TaggedPolicyRow> getTaggedPolicies(final String tagName) {
@@ -1508,6 +1542,10 @@ public class QueryManager extends AlpineQueryManager {
                 final Query<?> aclDeleteQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                         DELETE FROM "PROJECT_ACCESS_TEAMS" WHERE "PROJECT_ACCESS_TEAMS"."TEAM_ID" = ?""");
                 executeAndCloseWithArray(aclDeleteQuery, team.getId());
+
+                final Query<?> notificationRuleQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "NOTIFICATIONRULE_TEAMS" WHERE "NOTIFICATIONRULE_TEAMS"."TEAM_ID" = ?""");
+                executeAndCloseWithArray(notificationRuleQuery, team.getId());
             }
 
             pm.deletePersistent(team);

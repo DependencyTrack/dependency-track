@@ -54,17 +54,15 @@ import org.dependencytrack.parser.ossindex.OssIndexParser;
 import org.dependencytrack.parser.ossindex.model.ComponentReport;
 import org.dependencytrack.parser.ossindex.model.ComponentReportVulnerability;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.CvssUtil;
 import org.dependencytrack.util.DebugDataEncryption;
 import org.dependencytrack.util.HttpUtil;
 import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.json.JSONObject;
-import us.springett.cvss.Cvss;
-import us.springett.cvss.CvssV2;
-import us.springett.cvss.CvssV3;
-import us.springett.cvss.Score;
+import org.metaeffekt.core.security.cvss.v2.Cvss2;
+import org.metaeffekt.core.security.cvss.v3.Cvss3;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -155,25 +153,25 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
             );
             if (apiUsernameProperty == null || apiUsernameProperty.getPropertyValue() == null
                     || apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
-                LOGGER.warn("An API username or token has not been specified for use with OSS Index. Using anonymous access");
+                LOGGER.warn("An API username or token has not been specified for use with OSS Index; Skipping");
+                return;
             } else {
                 try {
                     apiUsername = apiUsernameProperty.getPropertyValue();
                     apiToken = DebugDataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
                 } catch (Exception ex) {
-                    // NB: OSS Index can be used without AuthN, however stricter rate limiting may apply.
-                    // We favour "service degradation" over "service outage" here. Analysis will continue
-                    // to work, although more retries may need to be performed until a new token is supplied.
-                    LOGGER.error("An error occurred decrypting the OSS Index API Token; Continuing without authentication", ex);
+                    // OSS Index will stop supporting unauthenticated requests
+                    LOGGER.error("An error occurred decrypting the OSS Index API Token; Skipping", ex);
+                    return;
                 }
             }
             aliasSyncEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ALIAS_SYNC_ENABLED);
         }
 
         LOGGER.info("Starting Sonatype OSS Index analysis task");
-        vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
-        if (!event.getComponents().isEmpty()) {
-            analyze(event.getComponents());
+        vulnerabilityAnalysisLevel = event.analysisLevel();
+        if (!event.components().isEmpty()) {
+            analyze(event.components());
         }
         LOGGER.info("Sonatype OSS Index analysis complete");
     }
@@ -404,19 +402,12 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         }
 
         if (reportedVuln.getCvssVector() != null) {
-            final Cvss cvss = Cvss.fromVector(reportedVuln.getCvssVector());
+            final var cvss = CvssUtil.parse(reportedVuln.getCvssVector());
             if (cvss != null) {
-                final Score score = cvss.calculateScore();
-                if (cvss instanceof CvssV2) {
-                    vulnerability.setCvssV2BaseScore(BigDecimal.valueOf(score.getBaseScore()));
-                    vulnerability.setCvssV2ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
-                    vulnerability.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
-                    vulnerability.setCvssV2Vector(cvss.getVector());
-                } else if (cvss instanceof CvssV3) {
-                    vulnerability.setCvssV3BaseScore(BigDecimal.valueOf(score.getBaseScore()));
-                    vulnerability.setCvssV3ImpactSubScore(BigDecimal.valueOf(score.getImpactSubScore()));
-                    vulnerability.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(score.getExploitabilitySubScore()));
-                    vulnerability.setCvssV3Vector(cvss.getVector());
+                if (cvss instanceof Cvss2) {
+                    vulnerability.applyV2Score(cvss);
+                } else if (cvss instanceof Cvss3) {
+                    vulnerability.applyV3Score(cvss);
                 }
             }
         }

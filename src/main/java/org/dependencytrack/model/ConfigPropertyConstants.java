@@ -18,12 +18,13 @@
  */
 package org.dependencytrack.model;
 
-import java.util.Arrays;
-
-import org.apache.commons.lang3.SystemUtils;
-
+import alpine.Config;
 import alpine.model.IConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
+import org.apache.commons.lang3.SystemUtils;
+import org.dependencytrack.common.ConfigKey;
+
+import java.util.Arrays;
 
 public enum ConfigPropertyConstants {
 
@@ -40,6 +41,7 @@ public enum ConfigPropertyConstants {
     EMAIL_SMTP_TRUSTCERT("email", "smtp.trustcert", "false", PropertyType.BOOLEAN, "Flag to enable/disable the trust of the certificate presented by the SMTP server"),
     INTERNAL_COMPONENTS_GROUPS_REGEX("internal-components", "groups.regex", null, PropertyType.STRING, "Regex that matches groups of internal components"),
     INTERNAL_COMPONENTS_NAMES_REGEX("internal-components", "names.regex", null, PropertyType.STRING, "Regex that matches names of internal components"),
+    INTERNAL_COMPONENTS_MATCH_MODE("internal-components", "match-mode", "OR", PropertyType.STRING, "Determines how internal component regexes are combined: OR (default) or AND"),
     JIRA_URL("integrations", "jira.url", null, PropertyType.URL, "The base URL of the JIRA instance"),
     JIRA_USERNAME("integrations", "jira.username", null, PropertyType.STRING, "The optional username to authenticate with when creating an Jira issue"),
     JIRA_PASSWORD("integrations", "jira.password", null, PropertyType.ENCRYPTEDSTRING, "The password for the username or bearer token used for authentication"),
@@ -67,6 +69,8 @@ public enum ConfigPropertyConstants {
     SCANNER_TRIVY_API_TOKEN("scanner", "trivy.api.token", null, PropertyType.ENCRYPTEDSTRING, "The API token used for Trivy API authentication"),
     SCANNER_TRIVY_BASE_URL("scanner", "trivy.base.url", null, PropertyType.URL, "Base Url pointing to the hostname and path for Trivy analysis"),
     SCANNER_TRIVY_IGNORE_UNFIXED("scanner", "trivy.ignore.unfixed", "false", PropertyType.BOOLEAN, "Flag to ignore unfixed vulnerabilities"),
+    SCANNER_TRIVY_SCAN_LIBRARY("scanner", "trivy.scanner.scanLibrary", "true", PropertyType.BOOLEAN, "Flag to enable library scanning"),
+    SCANNER_TRIVY_SCAN_OS("scanner", "trivy.scanner.scanOs", "true", PropertyType.BOOLEAN, "Flag to enable os scanning"),
     VULNERABILITY_SOURCE_NVD_ENABLED("vuln-source", "nvd.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable National Vulnerability Database"),
     VULNERABILITY_SOURCE_NVD_FEEDS_URL("vuln-source", "nvd.feeds.url", "https://nvd.nist.gov/feeds", PropertyType.URL, "A base URL pointing to the hostname and path of the NVD feeds"),
     VULNERABILITY_SOURCE_NVD_API_ENABLED("vuln-source", "nvd.api.enabled", "false", PropertyType.BOOLEAN, "Whether to enable NVD mirroring via REST API"),
@@ -75,8 +79,10 @@ public enum ConfigPropertyConstants {
     VULNERABILITY_SOURCE_NVD_API_KEY("vuln-source", "nvd.api.key", null, PropertyType.ENCRYPTEDSTRING, "API key for the NVD REST API"),
     VULNERABILITY_SOURCE_NVD_API_LAST_MODIFIED_EPOCH_SECONDS("vuln-source", "nvd.api.last.modified.epoch.seconds", null, PropertyType.INTEGER, "Epoch timestamp in seconds of the latest observed CVE modification time"),
     VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED("vuln-source", "github.advisories.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable GitHub Advisories"),
+    VULNERABILITY_SOURCE_GITHUB_ADVISORIES_API_URL("vuln-source", "github.advisories.api.url", "https://api.github.com/graphql", PropertyType.STRING, "URL of the GitHub GraphQL API"),
     VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED("vuln-source", "github.advisories.alias.sync.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable alias synchronization for GitHub Advisories"),
     VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN("vuln-source", "github.advisories.access.token", null, PropertyType.STRING, "The access token used for GitHub API authentication"),
+    VULNERABILITY_SOURCE_GITHUB_ADVISORIES_LAST_MODIFIED_EPOCH_SECONDS("vuln-source", "github.advisories.last.modified.epoch.seconds", null, PropertyType.INTEGER, "Epoch timestamp in seconds of the latest observed GHSA modification time"),
     VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL("vuln-source", "google.osv.base.url", "https://osv-vulnerabilities.storage.googleapis.com/", PropertyType.URL, "A base URL pointing to the hostname and path for OSV mirroring"),
     VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED("vuln-source", "google.osv.enabled", null, PropertyType.STRING, "List of enabled ecosystems to mirror OSV"),
     VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED("vuln-source", "google.osv.alias.sync.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable alias synchronization for OSV"),
@@ -93,6 +99,7 @@ public enum ConfigPropertyConstants {
     DEFECTDOJO_URL("integrations", "defectdojo.url", null, PropertyType.URL, "Base URL to DefectDojo"),
     DEFECTDOJO_API_KEY("integrations", "defectdojo.apiKey", null, PropertyType.STRING, "API Key for DefectDojo"),
     KENNA_ENABLED("integrations", "kenna.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Kenna Security integration"),
+    KENNA_API_URL("integrations", "kenna.api.url", "https://api.kennasecurity.com", PropertyType.STRING, "Kenna Security API URL"),
     KENNA_SYNC_CADENCE("integrations", "kenna.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Kenna Security"),
     KENNA_TOKEN("integrations", "kenna.token", null, PropertyType.ENCRYPTEDSTRING, "The token to use when authenticating to Kenna Security"),
     KENNA_CONNECTOR_ID("integrations", "kenna.connector.id", null, PropertyType.STRING, "The Kenna Security connector identifier to upload to"),
@@ -116,9 +123,12 @@ public enum ConfigPropertyConstants {
     BOM_VALIDATION_MODE("artifact", "bom.validation.mode", BomValidationMode.ENABLED.name(), PropertyType.STRING, "Flag to control the BOM validation mode"),
     BOM_VALIDATION_TAGS_INCLUSIVE("artifact", "bom.validation.tags.inclusive", "[]", PropertyType.STRING, "JSON array of tags for which BOM validation shall be performed"),
     BOM_VALIDATION_TAGS_EXCLUSIVE("artifact", "bom.validation.tags.exclusive", "[]", PropertyType.STRING, "JSON array of tags for which BOM validation shall NOT be performed"),
-    WELCOME_MESSAGE("general", "welcome.message.html", "%20%3Chtml%3E%3Ch1%3EYour%20Welcome%20Message%3C%2Fh1%3E%3C%2Fhtml%3E", PropertyType.STRING, "Custom HTML Code that is displayed before login", true),
-    IS_WELCOME_MESSAGE("general", "welcome.message.enabled", "false", PropertyType.BOOLEAN, "Bool that says wheter to show the welcome message or not", true),
-    DEFAULT_LANGUAGE("general", "default.locale", null, PropertyType.STRING, "Determine the default Language to use", true);
+    WELCOME_MESSAGE("general", "welcome.message.html", "%3Chtml%3E%3Ch1%3EYour%20Welcome%20Message%3C%2Fh1%3E%3C%2Fhtml%3E", PropertyType.STRING, "Custom HTML Code that is displayed before login", true),
+    IS_WELCOME_MESSAGE("general", "welcome.message.enabled", "false", PropertyType.BOOLEAN, "Bool that says whether to show the welcome message or not", true),
+    DEFAULT_LANGUAGE("general", "default.locale", null, PropertyType.STRING, "Determine the default Language to use", true),
+    TELEMETRY_SUBMISSION_ENABLED("telemetry", "submission.enabled", String.valueOf(!"true".equals(System.getProperty("dev.mode.enabled")) && Config.getInstance().getPropertyAsBoolean(ConfigKey.TELEMETRY_SUBMISSION_ENABLED_DEFAULT)), PropertyType.BOOLEAN, "Whether submission of telemetry data is enabled"),
+    TELEMETRY_LAST_SUBMISSION_DATA("telemetry", "last.submission.data", null, PropertyType.STRING, "Data of the last telemetry submission"),
+    TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS("telemetry", "last.submission.epoch.seconds", null, PropertyType.INTEGER, "Timestamp of the last telemetry submission in epoch seconds");
 
     private final String groupName;
     private final String propertyName;
@@ -126,7 +136,6 @@ public enum ConfigPropertyConstants {
     private final PropertyType propertyType;
     private final String description;
     private final Boolean isPublic;
-
 
 	ConfigPropertyConstants(String groupName, String propertyName, String defaultPropertyValue, PropertyType propertyType, String description) {
         this.groupName = groupName;

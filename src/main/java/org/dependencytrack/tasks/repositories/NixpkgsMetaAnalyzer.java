@@ -19,6 +19,10 @@
 package org.dependencytrack.tasks.repositories;
 
 import alpine.common.logging.Logger;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -30,12 +34,8 @@ import org.apache.http.client.utils.URIBuilder;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 public class NixpkgsMetaAnalyzer extends AbstractMetaAnalyzer {
     private static final Logger LOGGER = Logger.getLogger(NixpkgsMetaAnalyzer.class);
     private static final String DEFAULT_CHANNEL_URL = "https://channels.nixos.org/nixpkgs-unstable/packages.json.br";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Cache<String, Map<String, String>> CACHE = Caffeine.newBuilder()
             .expireAfterWrite(60, TimeUnit.MINUTES)
             .maximumSize(1)
@@ -59,28 +60,40 @@ public class NixpkgsMetaAnalyzer extends AbstractMetaAnalyzer {
     public MetaModel analyze(Component component) {
         Map<String, String> latestVersions = CACHE.get("nixpkgs", cacheKey -> {
             final var versions = new HashMap<String, String>();
+
             try (final CloseableHttpClient client = HttpClients.createDefault()) {
                 try (final CloseableHttpResponse packagesResponse = processHttpRequest5(client)) {
                     if (packagesResponse != null && packagesResponse.getCode() == HttpStatus.SC_OK) {
-                        var reader = new BufferedReader(new InputStreamReader(packagesResponse.getEntity().getContent()));
-                        var packages = new JSONObject(new JSONTokener(reader)).getJSONObject("packages").toMap().values();
-                        packages.forEach(pkg -> {
-                            // FUTUREWORK(mangoiv): there are potentially packages with the same pname
-                            if (pkg instanceof HashMap jsonPkg) {
-                                final var pname = jsonPkg.get("pname");
-                                final var version = jsonPkg.get("version");
-                                versions.putIfAbsent((String) pname, (String) version);
+                        try (final JsonParser jsonParser = OBJECT_MAPPER.createParser(packagesResponse.getEntity().getContent())) {
+                            jsonParser.nextToken();
+
+                            while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                                final String fieldName = jsonParser.currentName();
+                                final JsonToken currentToken = jsonParser.nextToken();
+
+                                if ("packages".equals(fieldName) && currentToken == JsonToken.START_OBJECT) {
+                                    while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                                        jsonParser.nextToken(); // Move to the package object value
+
+                                        final JsonNode packageNode = OBJECT_MAPPER.readTree(jsonParser);
+                                        final JsonNode pnameNode = packageNode.get("pname");
+                                        final JsonNode versionNode = packageNode.get("version");
+
+                                        // FUTUREWORK(mangoiv): there are potentially packages with the same pname
+                                        if (pnameNode != null && versionNode != null) {
+                                            versions.putIfAbsent(pnameNode.asText(), versionNode.asText());
+                                        }
+                                    }
+                                } else {
+                                    jsonParser.skipChildren();
+                                }
                             }
-                        });
-
-
+                        }
                     }
                 }
             } catch (IOException ex) {
-                LOGGER.debug(ex.toString());
                 handleRequestException(LOGGER, ex);
             } catch (Exception ex) {
-                LOGGER.debug(ex.toString());
                 throw new MetaAnalyzerException(ex);
             }
             return versions;

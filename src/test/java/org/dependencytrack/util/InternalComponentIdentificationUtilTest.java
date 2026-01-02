@@ -2,67 +2,63 @@ package org.dependencytrack.util;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX;
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX;
-import static org.junit.Assert.assertEquals;
+import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_MATCH_MODE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(Parameterized.class)
-public class InternalComponentIdentificationUtilTest extends PersistenceCapableTest {
+class InternalComponentIdentificationUtilTest extends PersistenceCapableTest {
 
-    private final String groupsRegexProperty;
-    private final String componentGroup;
-    private final String namesRegexProperty;
-    private final String componentName;
-    private final boolean shouldBeInternal;
-
-    @Parameterized.Parameters(name = "[{index}] groupsRegexProperty={0} componentGroup={1} " +
-            "namesRegexProperty={2} componentName={3} shouldBeInternal={4}")
-    public static Collection testParameters() {
-        return Arrays.asList(new Object[][]{
+    public static Collection<Arguments> testParameters() {
+        return Arrays.asList(
                 // neither regexes nor group / name provided
-                {"", "", "", "", false},
+                Arguments.of("", "", "", "", "OR", false),
+                Arguments.of("", "", "", "", "AND", false),
                 // Neither group nor name provided
-                {".*", null, ".*", null, false},
+                Arguments.of(".*", null, ".*", null, "OR", false),
+                Arguments.of(".*", null, ".*", null, "AND", false),
                 // group matches, name not provided
-                {".*", "a", ".*", null, true},
+                Arguments.of(".*", "a", ".*", null, "OR", true),
+                Arguments.of(".*", "a", ".*", null, "AND", false),
                 // group not provided, name matches
-                {".*", null, ".*", "a", true},
+                Arguments.of(".*", null, ".*", "a", "OR", true),
+                Arguments.of(".*", null, ".*", "a", "AND", false),
                 // both group and name match
-                {".*", "a", ".*", "b", true},
+                Arguments.of(".*", "a", ".*", "b", "OR", true),
+                Arguments.of(".*", "a", ".*", "b", "AND", true),
+                // both group and name doesn't match
+                Arguments.of(".*", "a", "b", "c", "OR", true),
+                Arguments.of(".*", "a", "b", "c", "AND", false),
                 // specific regex for group
-                {"^us\\.springett$", "us.springett", null, null, true},
+                Arguments.of("^us\\.springett$", "us.springett", null, null, "OR", true),
                 // specific regex for name
-                {null, null, "^dependency-track$", "dependency-track", true},
+                Arguments.of(null, null, "^dependency-track$", "dependency-track", "OR", true),
                 // generalized, case-insensitive regex for group
-                {"(?i)^(org\\.apache)(\\.[\\w.]+)?$", "Org.Apache.Logging.Log4J", null, "log4j-test", true},
+                Arguments.of("(?i)^(org\\.apache)(\\.[\\w.]+)?$", "Org.Apache.Logging.Log4J", null, "log4j-test", "OR", true),
                 // same as above, but with incomplete regex
-                {"(?i)^(org\\.apache)", "Org.Apache.Logging.Log4J", null, "log4j-test", false},
+                Arguments.of("(?i)^(org\\.apache)", "Org.Apache.Logging.Log4J", null, "log4j-test", "OR", false),
                 // generalized regex for names
-                {null, "org.apache.logging.log4j", "^(log4j-)([\\w-]+)$", "log4j-test", true},
+                Arguments.of(null, "org.apache.logging.log4j", "^(log4j-)([\\w-]+)$", "log4j-test", "OR", true),
                 // same as above, but with incomplete regex
-                {null, "org.apache.logging.log4j", "^(log4j-)", "log4j-test", false},
-        });
+                Arguments.of(null, "org.apache.logging.log4j", "^(log4j-)", "log4j-test", "OR", false)
+        );
     }
 
-    public InternalComponentIdentificationUtilTest(final String groupsRegexProperty, final String componentGroup,
-                                                   final String namesRegexProperty, final String componentName,
-                                                   final boolean shouldBeInternal) {
-        this.groupsRegexProperty = groupsRegexProperty;
-        this.componentGroup = componentGroup;
-        this.namesRegexProperty = namesRegexProperty;
-        this.componentName = componentName;
-        this.shouldBeInternal = shouldBeInternal;
-    }
-
-    @Test
-    public void testIsInternal() {
+    @ParameterizedTest
+    @MethodSource("testParameters")
+    void testIsInternal(final String groupsRegexProperty,
+                        final String componentGroup,
+                        final String namesRegexProperty,
+                        final String componentName,
+                        final String matchMode,
+                        final boolean shouldBeInternal) {
         qm.createConfigProperty(
                 INTERNAL_COMPONENTS_GROUPS_REGEX.getGroupName(),
                 INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyName(),
@@ -76,6 +72,13 @@ public class InternalComponentIdentificationUtilTest extends PersistenceCapableT
                 namesRegexProperty,
                 INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyType(),
                 INTERNAL_COMPONENTS_NAMES_REGEX.getDescription()
+        );
+        qm.createConfigProperty(
+                INTERNAL_COMPONENTS_MATCH_MODE.getGroupName(),
+                INTERNAL_COMPONENTS_MATCH_MODE.getPropertyName(),
+                matchMode,
+                INTERNAL_COMPONENTS_MATCH_MODE.getPropertyType(),
+                INTERNAL_COMPONENTS_MATCH_MODE.getDescription()
         );
 
         final Component component = new Component();

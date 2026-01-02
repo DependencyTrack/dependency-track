@@ -85,10 +85,12 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
     }
 
     protected void handleUnexpectedHttpResponse(final Logger logger, String url, final int statusCode,
-            final String statusText, final Component component) {
+                                                final String statusText, final Component component) {
         logger.debug("HTTP Status : " + statusCode + " " + statusText);
         logger.debug(" - RepositoryType URL : " + url);
-        logger.debug(" - Package URL : " + component.getPurl().canonicalize());
+        if(component != null && component.getPurl() != null) {
+            logger.debug(" - Package URL : " + component.getPurl().canonicalize());
+        }
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.REPOSITORY)
@@ -99,8 +101,7 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
     }
 
     protected void handleRequestException(final Logger logger, final Exception e) {
-        logger.error("Request failure", e);
-        e.printStackTrace();
+        logger.error("Request failure for repository URL: " + baseUrl, e);
         Notification.dispatch(new Notification()
                 .scope(NotificationScope.SYSTEM)
                 .group(NotificationGroup.REPOSITORY)

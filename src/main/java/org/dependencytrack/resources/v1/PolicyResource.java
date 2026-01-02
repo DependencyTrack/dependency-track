@@ -52,6 +52,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Set;
 
 /**
  * JAX-RS resources for processing policies.
@@ -401,7 +402,7 @@ public class PolicyResource extends AlpineResource {
             if (tag == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The tag could not be found.").build();
             }
-            final List<Tag> tags = policy.getTags();
+            final Set<Tag> tags = policy.getTags();
             if (tags != null && tags.contains(tag)) {
                 policy.getTags().remove(tag);
                 qm.persist(policy);

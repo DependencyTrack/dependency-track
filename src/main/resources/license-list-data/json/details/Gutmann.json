@@ -6,11 +6,11 @@
   "licenseId": "Gutmann",
   "crossRef": [
     {
-      "match": "false",
+      "match": "true",
       "url": "https://www.cs.auckland.ac.nz/~pgut001/dumpasn1.c",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2024-08-19T17:35:39Z",
+      "timestamp": "2025-07-01T15:01:35Z",
       "isWayBackLink": false,
       "order": 0
     }

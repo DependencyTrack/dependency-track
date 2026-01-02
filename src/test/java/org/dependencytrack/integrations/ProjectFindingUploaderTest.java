@@ -20,8 +20,8 @@ package org.dependencytrack.integrations;
 
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Project;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,11 +31,11 @@ import java.util.List;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ProjectFindingUploaderTest {
+class ProjectFindingUploaderTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public final void projectFindingMethodsTest() throws IOException {
+    final void projectFindingMethodsTest() throws IOException {
         Project project = new Project();
         List<Finding> findings = Collections.EMPTY_LIST;
         ProjectFindingUploader uploader = mock(ProjectFindingUploader.class);
@@ -50,11 +50,11 @@ public class ProjectFindingUploaderTest {
             }
         });
         InputStream in = uploader.process(project, findings);
-        Assert.assertTrue(in != null && in.available() == 1);
+        Assertions.assertTrue(in != null && in.available() == 1);
         uploader.upload(project, in);
         when(uploader.isProjectConfigured(project)).thenReturn(true);
-        Assert.assertTrue(uploader.isProjectConfigured(project));
+        Assertions.assertTrue(uploader.isProjectConfigured(project));
         when(uploader.isProjectConfigured(project)).thenReturn(false);
-        Assert.assertFalse(uploader.isProjectConfigured(project));
+        Assertions.assertFalse(uploader.isProjectConfigured(project));
     }
 }

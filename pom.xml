@@ -24,14 +24,14 @@
     <parent>
         <groupId>us.springett</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>3.1.2</version>
+        <version>3.5.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track</artifactId>
     <packaging>war</packaging>
-    <version>4.13.0-SNAPSHOT</version>
+    <version>4.14.0-SNAPSHOT</version>
 
     <name>Dependency-Track</name>
     <url>https://dependencytrack.org/</url>
@@ -85,73 +85,55 @@
         <maven.compiler.target>21</maven.compiler.target>
 
         <!-- Dependency Versions -->
-        <frontend.version>4.12.2</frontend.version>
+        <frontend.version>4.13.6</frontend.version>
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
-        <lib.awaitility.version>4.2.2</lib.awaitility.version>
+        <lib.awaitility.version>4.3.0</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
-        <lib.checkstyle.version>10.20.2</lib.checkstyle.version>
-        <lib.aws-advanced-jdbc-wrapper.version>2.5.4</lib.aws-advanced-jdbc-wrapper.version>
-        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.21.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
-        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.21.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
-        <lib.cloud-sql-postgres-socket-factory.version>1.21.0</lib.cloud-sql-postgres-socket-factory.version>
-        <lib.cpe-parser.version>2.1.0</lib.cpe-parser.version>
-        <lib.commons-compress.version>1.27.1</lib.commons-compress.version>
-        <lib.commons-text.version>1.13.0</lib.commons-text.version>
-        <lib.cvss-calculator.version>1.4.2</lib.cvss-calculator.version>
+        <lib.checkstyle.version>12.3.1</lib.checkstyle.version>
+        <lib.cloud-sql-connector-jdbc-sqlserver.version>1.27.1</lib.cloud-sql-connector-jdbc-sqlserver.version>
+        <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.27.1</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.27.1</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cpe-parser.version>3.0.1</lib.cpe-parser.version>
+        <lib.commons-compress.version>1.28.0</lib.commons-compress.version>
+        <lib.commons-text.version>1.15.0</lib.commons-text.version>
+        <lib.ae-security.version>0.150.2</lib.ae-security.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
-        <lib.cyclonedx-java.version>9.1.0</lib.cyclonedx-java.version>
-        <lib.greenmail.version>2.1.2</lib.greenmail.version>
-        <lib.jackson.version>2.18.0</lib.jackson.version>
-        <lib.jackson-databind.version>2.18.0</lib.jackson-databind.version>
-        <lib.json-java.version>20241224</lib.json-java.version>
-        <lib.json-unit.version>4.1.0</lib.json-unit.version>
-        <lib.junit.version>4.13.2</lib.junit.version>
+        <lib.cyclonedx-java.version>11.0.1</lib.cyclonedx-java.version>
+        <lib.greenmail.version>2.1.8</lib.greenmail.version>
+        <lib.json-java.version>20250517</lib.json-java.version>
         <lib.lucene.version>8.11.4</lib.lucene.version>
-        <lib.maven-artifact.version>3.9.9</lib.maven-artifact.version>
+        <lib.maven-artifact.version>3.9.12</lib.maven-artifact.version>
         <lib.mockserver-netty.version>5.15.0</lib.mockserver-netty.version>
-        <lib.open-vulnerability-clients.version>7.1.0</lib.open-vulnerability-clients.version>
+        <lib.open-vulnerability-clients.version>9.0.2</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
-        <lib.pebble.version>3.2.2</lib.pebble.version>
-        <lib.protobuf-java.version>4.29.2</lib.protobuf-java.version>
-        <lib.resilience4j.version>2.2.0</lib.resilience4j.version>
-        <lib.swagger-parser.version>2.1.22</lib.swagger-parser.version>
-        <lib.system-rules.version>1.19.0</lib.system-rules.version>
-        <lib.testcontainers.version>1.20.4</lib.testcontainers.version>
+        <lib.pebble.version>4.1.0</lib.pebble.version>
+        <lib.protobuf-java.version>4.33.2</lib.protobuf-java.version>
+        <lib.resilience4j.version>2.3.0</lib.resilience4j.version>
+        <lib.swagger-parser.version>2.1.37</lib.swagger-parser.version>
+        <lib.junit-pioneer.version>2.3.0</lib.junit-pioneer.version>
+        <lib.testcontainers.version>2.0.2</lib.testcontainers.version>
+        <lib.versatile.version>0.15.0</lib.versatile.version>
         <lib.wiremock.version>2.35.2</lib.wiremock.version>
-        <lib.woodstox.version>7.0.0</lib.woodstox.version>
-        <lib.junit-params.version>1.1.1</lib.junit-params.version>
+        <lib.woodstox.version>7.1.1</lib.woodstox.version>
         <lib.signpost-core.version>2.1.1</lib.signpost-core.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
-        <lib.httpclient5.version>5.4.1</lib.httpclient5.version>
-        <lib.log4j-over-slf4j.version>2.0.16</lib.log4j-over-slf4j.version>
-        <lib.org-kohsuke-github-api.version>1.323</lib.org-kohsuke-github-api.version>
+        <lib.httpclient5.version>5.5.1</lib.httpclient5.version>
+        <lib.log4j-over-slf4j.version>2.0.17</lib.log4j-over-slf4j.version>
+        <lib.org-kohsuke-github-api.version>1.330</lib.org-kohsuke-github-api.version>
+        <lib.com-asahaf-javacron.version>1.4.0</lib.com-asahaf-javacron.version>
         <!-- JDBC Drivers -->
-        <lib.jdbc-driver.mssql.version>12.8.1.jre11</lib.jdbc-driver.mssql.version>
+        <lib.jdbc-driver.mssql.version>13.2.1.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.2.0</lib.jdbc-driver.mysql.version>
-        <lib.jdbc-driver.postgresql.version>42.7.4</lib.jdbc-driver.postgresql.version>
+        <lib.jdbc-driver.postgresql.version>42.7.8</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
-        <plugin.jetty.version>12.0.16</plugin.jetty.version>
         <plugin.protoc-jar.version>3.11.4</plugin.protoc-jar.version>
         <!-- SonarCloud properties -->
         <sonar.exclusions>src/main/webapp/**</sonar.exclusions>
-        <!-- Tool Versions -->
-        <tool.protoc.version>com.google.protobuf:protoc:${lib.protobuf-java.version}</tool.protoc.version>
         <!-- CycloneDX CLI -->
         <cyclonedx-cli.path>cyclonedx</cyclonedx-cli.path>
         <services.bom.merge.skip>true</services.bom.merge.skip>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>ossrh-snapshot</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <snapshots>
-                <updatePolicy>always</updatePolicy>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 
     <dependencies>
         <!-- Alpine -->
@@ -175,11 +157,11 @@
             <artifactId>alpine-server</artifactId>
             <version>${lib.alpine.version}</version>
         </dependency>
-        <!-- CVSS Calculator -->
+        <!-- AE Security -->
         <dependency>
-            <groupId>us.springett</groupId>
-            <artifactId>cvss-calculator</artifactId>
-            <version>${lib.cvss-calculator.version}</version>
+            <groupId>org.metaeffekt.core</groupId>
+            <artifactId>ae-security</artifactId>
+            <version>${lib.ae-security.version}</version>
         </dependency>
         <!-- OWASP Risk Rating calculator -->
         <dependency>
@@ -214,6 +196,11 @@
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
         </dependency>
 
         <dependency>
@@ -351,11 +338,6 @@
             <version>${lib.jdbc-driver.postgresql.version}</version>
         </dependency>
         <dependency>
-            <groupId>software.amazon.jdbc</groupId>
-            <artifactId>aws-advanced-jdbc-wrapper</artifactId>
-            <version>${lib.aws-advanced-jdbc-wrapper.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>mysql-socket-factory-connector-j-8</artifactId>
             <version>${lib.cloud-sql-mysql-socket-factory-connector-j-8.version}</version>
@@ -411,60 +393,59 @@
             <version>${lib.org-kohsuke-github-api.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.asahaf.javacron</groupId>
+            <artifactId>javacron</artifactId>
+            <version>${lib.com-asahaf-javacron.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.nscuro</groupId>
+            <artifactId>versatile-core</artifactId>
+            <version>${lib.versatile.version}</version>
+        </dependency>
+
         <!-- Test Dependencies -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${lib.junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>pl.pragmatists</groupId>
-            <artifactId>JUnitParams</artifactId>
-            <version>${lib.junit-params.version}</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.test-framework.providers</groupId>
             <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
-            <version>${lib.jersey.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.connectors</groupId>
-            <artifactId>jersey-grizzly-connector</artifactId>
-            <version>${lib.jersey.version}</version>
-            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>junit</groupId>
+                    <artifactId>junit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>${lib.mockito.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-jre8</artifactId>
-            <version>${lib.wiremock.version}</version>
+            <artifactId>wiremock-jre8-standalone</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.stefanbirkner</groupId>
-            <artifactId>system-rules</artifactId>
-            <version>${lib.system-rules.version}</version>
+            <groupId>org.junit-pioneer</groupId>
+            <artifactId>junit-pioneer</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>${lib.assertj.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>net.javacrumbs.json-unit</groupId>
             <artifactId>json-unit-assertj</artifactId>
-            <version>${lib.json-unit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -481,7 +462,7 @@
         </dependency>
         <dependency>
             <groupId>com.icegreen</groupId>
-            <artifactId>greenmail-junit4</artifactId>
+            <artifactId>greenmail-junit5</artifactId>
             <version>${lib.greenmail.version}</version>
             <scope>test</scope>
         </dependency>
@@ -575,26 +556,21 @@
                 </dependencies>
             </plugin>
             <plugin>
-                <groupId>com.github.os72</groupId>
-                <artifactId>protoc-jar-maven-plugin</artifactId>
-                <version>${plugin.protoc-jar.version}</version>
+                <groupId>io.github.ascopes</groupId>
+                <artifactId>protobuf-maven-plugin</artifactId>
+                <version>4.1.1</version>
+                <configuration>
+                    <protocVersion>${lib.protobuf-java.version}</protocVersion>
+                    <sourceDirectories>
+                        <sourceDirectory>${project.basedir}/src/main/proto</sourceDirectory>
+                    </sourceDirectories>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>protobuf</id>
                         <phase>generate-sources</phase>
                         <goals>
-                            <goal>run</goal>
+                            <goal>generate</goal>
                         </goals>
-                        <configuration>
-                            <includeMavenTypes>direct</includeMavenTypes>
-                            <inputDirectories>
-                                <inputDirectory>src/main/proto</inputDirectory>
-                            </inputDirectories>
-                            <includeDirectories>
-                                <includeDirectory>src/main/proto</includeDirectory>
-                            </includeDirectories>
-                            <protocArtifact>${tool.protoc.version}</protocArtifact>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -602,20 +578,23 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <argLine>
+                        @{argLine}
+                        -Xmx512m
+                        --add-opens java.base/java.net=ALL-UNNAMED
+                        --add-opens java.base/java.lang=ALL-UNNAMED
+                        --add-opens java.base/java.util=ALL-UNNAMED
+                        -javaagent:${settings.localRepository}/org/mockito/mockito-core/${lib.mockito.version}/mockito-core-${lib.mockito.version}.jar
+                        -Xshare:off
+                    </argLine>
                     <systemProperties>
                         <property>
                             <name>java.util.logging.config.file</name>
                             <value>src/test/resources/logging.properties</value>
                         </property>
                     </systemProperties>
+                    <reuseForks>true</reuseForks>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-junit4</artifactId>
-                        <version>${maven.surefire.plugin.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -650,6 +629,7 @@
                     <includeLicenseText>false</includeLicenseText>
                     <outputReactorProjects>true</outputReactorProjects>
                     <outputFormat>json</outputFormat>
+                    <skipNotDeployed>false</skipNotDeployed>
                     <externalReferences>
                         <externalReference>
                             <type>advisories</type>
@@ -685,7 +665,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.6.3</version>
                 <executions>
                     <execution>
                         <id>merge-services-bom</id>
@@ -710,7 +690,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.2.0</version>
                 <executions>
                     <execution>
                         <id>deploy-bom</id>
@@ -728,10 +708,13 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.eclipse.jetty.ee10</groupId>
-                <artifactId>jetty-ee10-maven-plugin</artifactId>
-                <version>${plugin.jetty.version}</version>
+                <groupId>org.eclipse.jetty.ee11</groupId>
+                <artifactId>jetty-ee11-maven-plugin</artifactId>
+                <version>${lib.jetty.version}</version>
                 <configuration>
+                    <systemProperties>
+                        <dev.mode.enabled>true</dev.mode.enabled>
+                    </systemProperties>
                     <webApp>
                         <!-- Disable classpath scanning. -->
                         <containerIncludeJarPattern>^$</containerIncludeJarPattern>
@@ -744,6 +727,19 @@
 
     <profiles>
         <profile>
+            <id>quick</id>
+            <activation>
+                <property>
+                    <name>quickly</name>
+                </property>
+            </activation>
+            <properties>
+                <checkstyle.skip>true</checkstyle.skip>
+                <jacoco.skip>true</jacoco.skip>
+                <maven.test.skip>true</maven.test.skip>
+            </properties>
+        </profile>
+        <profile>
             <id>clean-exclude-wars</id>
             <build>
                 <pluginManagement>
@@ -751,7 +747,7 @@
                         <plugin>
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-clean-plugin</artifactId>
-                            <version>3.4.0</version>
+                            <version>3.5.0</version>
                             <configuration>
                                 <excludeDefaultDirectories>true</excludeDefaultDirectories>
                                 <filesets>
@@ -790,10 +786,13 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.eclipse.jetty.ee10</groupId>
-                        <artifactId>jetty-ee10-maven-plugin</artifactId>
-                        <version>${plugin.jetty.version}</version>
+                        <groupId>org.eclipse.jetty.ee11</groupId>
+                        <artifactId>jetty-ee11-maven-plugin</artifactId>
+                        <version>${lib.jetty.version}</version>
                         <configuration>
+                            <systemProperties>
+                                <dev.mode.enabled>true</dev.mode.enabled>
+                            </systemProperties>
                             <webApp>
                                 <!-- Disable classpath scanning. -->
                                 <containerIncludeJarPattern>^$</containerIncludeJarPattern>
@@ -820,7 +819,7 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.0</version>
                         <executions>
                             <execution>
                                 <id>frontend-download</id>

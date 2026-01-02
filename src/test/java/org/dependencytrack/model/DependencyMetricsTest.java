@@ -18,126 +18,126 @@
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 
-public class DependencyMetricsTest {
+class DependencyMetricsTest {
 
     @Test
-    public void testId() {
+    void testId() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setId(111L);
-        Assert.assertEquals(111L, metric.getId());
+        Assertions.assertEquals(111L, metric.getId());
     }
 
     @Test
-    public void testProject() {
+    void testProject() {
         Project project = new Project();
         DependencyMetrics metric = new DependencyMetrics();
         metric.setProject(project);
-        Assert.assertEquals(project, metric.getProject());
+        Assertions.assertEquals(project, metric.getProject());
     }
 
     @Test
-    public void testComponent() {
+    void testComponent() {
         Component component = new Component();
         DependencyMetrics metric = new DependencyMetrics();
         metric.setComponent(component);
-        Assert.assertEquals(component, metric.getComponent());
+        Assertions.assertEquals(component, metric.getComponent());
     }
 
     @Test
-    public void testCritical() {
+    void testCritical() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setCritical(10);
-        Assert.assertEquals(10, metric.getCritical());
+        Assertions.assertEquals(10, metric.getCritical());
     }
 
     @Test
-    public void testHigh() {
+    void testHigh() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setHigh(9);
-        Assert.assertEquals(9, metric.getHigh());
+        Assertions.assertEquals(9, metric.getHigh());
     }
 
     @Test
-    public void testMedium() {
+    void testMedium() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setMedium(8);
-        Assert.assertEquals(8, metric.getMedium());
+        Assertions.assertEquals(8, metric.getMedium());
     }
 
     @Test
-    public void testLow() {
+    void testLow() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setLow(7);
-        Assert.assertEquals(7, metric.getLow());
+        Assertions.assertEquals(7, metric.getLow());
     }
 
     @Test
-    public void testUnassigned() {
+    void testUnassigned() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setUnassigned(9191);
-        Assert.assertEquals(9191, metric.getUnassigned());
+        Assertions.assertEquals(9191, metric.getUnassigned());
     }
 
     @Test
-    public void testVulnerabilities() {
+    void testVulnerabilities() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setVulnerabilities(6);
-        Assert.assertEquals(6, metric.getVulnerabilities());
+        Assertions.assertEquals(6, metric.getVulnerabilities());
     }
 
     @Test
-    public void testSuppressed() {
+    void testSuppressed() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setSuppressed(5);
-        Assert.assertEquals(5, metric.getSuppressed());
+        Assertions.assertEquals(5, metric.getSuppressed());
     }
 
     @Test
-    public void testFindingsTotal() {
+    void testFindingsTotal() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setFindingsTotal(4);
-        Assert.assertEquals(4, metric.getFindingsTotal());
+        Assertions.assertEquals(4, metric.getFindingsTotal());
     }
 
     @Test
-    public void testFindingsAudited() {
+    void testFindingsAudited() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setFindingsAudited(3);
-        Assert.assertEquals(3, metric.getFindingsAudited());
+        Assertions.assertEquals(3, metric.getFindingsAudited());
     }
 
     @Test
-    public void testFindingsUnaudited() {
+    void testFindingsUnaudited() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setFindingsUnaudited(2);
-        Assert.assertEquals(2, metric.getFindingsUnaudited());
+        Assertions.assertEquals(2, metric.getFindingsUnaudited());
     }
 
     @Test
-    public void testInheritedRiskScore() {
+    void testInheritedRiskScore() {
         DependencyMetrics metric = new DependencyMetrics();
         metric.setInheritedRiskScore(1000);
-        Assert.assertEquals(1000, metric.getInheritedRiskScore(), 0);
+        Assertions.assertEquals(1000, metric.getInheritedRiskScore(), 0);
     }
 
     @Test
-    public void testFirstOccurrence() {
+    void testFirstOccurrence() {
         Date date = new Date();
         DependencyMetrics metric = new DependencyMetrics();
         metric.setFirstOccurrence(date);
-        Assert.assertEquals(date, metric.getFirstOccurrence());
+        Assertions.assertEquals(date, metric.getFirstOccurrence());
     }
 
     @Test
-    public void testLastOccurrence() {
+    void testLastOccurrence() {
         Date date = new Date();
         DependencyMetrics metric = new DependencyMetrics();
         metric.setLastOccurrence(date);
-        Assert.assertEquals(date, metric.getLastOccurrence());
+        Assertions.assertEquals(date, metric.getLastOccurrence());
     }
 } 

@@ -68,7 +68,7 @@ For a complete overview of available configuration options for both API server a
 > gitlab.com currently does not set the required CORS headers, see GitLab issue [#209259](https://gitlab.com/gitlab-org/gitlab/-/issues/209259).  
 > For on-premise installations, this could be fixed by setting the required headers via reverse proxy.
 
-#### Azure Active Directory
+#### Microsoft Entra ID
 
 | API server                                                                                     | Frontend                                                                                |
 | :--------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------- |
@@ -80,7 +80,7 @@ For a complete overview of available configuration options for both API server a
 | alpine.oidc.teams.claim=groups                                                                 |                                                                                         |
 | alpine.oidc.team.synchronization=true                                                          |                                                                                         |
 
-OIDC integration with Azure Active Directory requires you to register Dependency-Track as an app in your tenant, see [Azure Active Directory app registration](#azure-active-directory-app-registration).
+OIDC integration with Microsoft Entra ID requires you to register Dependency-Track as an app in your tenant, see [Microsoft Entra ID app registration](#microsoft-entra-id-app-registration).
 
 The `alpine.oidc.client.id` contains the Application ID of the app registration, and the `alpine.oidc.issuer` contains the Directory (tenant) ID.
 
@@ -125,6 +125,21 @@ Set the redirect URI to `<dependency track host>/static/oidc-callback.html`
 | alpine.oidc.team.synchronization=true                                                       |                                                                                            |
 
 <span style="color:red">\*</span> Requires additional configuration, see [Example setup with OneLogin](#example-setup-with-onelogin)
+
+#### AWS Cognito
+
+| API server                                                                         | Frontend                                                            |
+| :----------------------------------------------------------------------------------| :-------------------------------------------------------------------|
+| alpine.oidc.enabled=true                                                           |                                                                     |
+| alpine.oidc.client.id=6s7fpripfp87v3khbn87ioq5a3<span style="color:red">\*</span>  | OIDC_CLIENT_ID=6s7fpripfp87v3khbn87ioq5a3                           |
+| alpine.oidc.issuer=https://cognito-idp.region.amazonaws.com/region_pool-id         | OIDC_ISSUER=https://cognito-idp.region.amazonaws.com/region_pool-id |
+| alpine.oidc.username.claim=email                                                   | OIDC_SCOPE=email openid<span style="color:red">\*</span>            |
+| alpine.oidc.user.provisioning=true                                                 |                                                                     |
+| alpine.oidc.teams.claim=cognito:groups                                             |                                                                     |
+| alpine.oidc.team.synchronization=true<span style="color:red">\*</span>             |                                                                     |
+ 
+<span style="color:red">\*</span> Requires additional configuration. See [Example setup with AWS Cognito](#example-setup-with-aws-cognito)
+
 
 ### Default Groups
 
@@ -279,16 +294,16 @@ The following steps demonstrate how to setup OpenID Connect with OneLogin.
 
 6.  Use the _OpenID_ button on the login page to sign in with a OneLogin user that is member of at least one of the configured groups. Navigating to _Administration -> Access Management -> OpenID Connect Users_ should now reveal that the user has been automatically provisioned and team memberships have been synchronized
 
-### Azure Active Directory app registration
+### Microsoft Entra ID app registration
 
-The following steps demonstrate how to setup OpenID Connect with Azure Active Directory.
+The following steps demonstrate how to setup OpenID Connect with Microsoft Entra ID.
 
 > This guide assumes that:
 >
 > - the Dependency-Track frontend has been deployed to `https://dependencytrack.example.com`
-> - an Azure Active Directory tenant has been created
+> - an Microsoft Entra ID tenant has been created
 
-1. Add an app registration for Dependency-Track to your Azure AD tenant:
+1. Add an app registration for Dependency-Track to your Microsoft Entra ID tenant:
 
    - Name: `Dependency-Track`
    - Supported account types: `Accounts in this organizational directory only`
@@ -302,12 +317,50 @@ The following steps demonstrate how to setup OpenID Connect with Azure Active Di
 3. Under Token configuration:
    
    - Click Add groups claim
-   - Select the group types you'd like to include
-     - If you are unsure, start by trying all options
-     - If you are in a large organization and have users with lots of groups, you may want to choice only `Groups assigned to the application` to avoid SSO issues. See #2150
+   - Select the appropriate group types to include in the token:
+     - If you are testing in a personal environment, you may enable Security Groups.
+     - For corporate environments, where users may belong to thousands of groups, it is recommended to choice only `Groups assigned to the application`. This prevents exceeding the token's size limit, which could lead to authentication failures.
+   - Recommended setting for production: Select `Groups assigned to the application` to ensure optimal performance and avoid Single Sign-On (SSO) issues. See #2150 for more details.
  
 4. Under API permissions, add the following Microsoft Graph API permissions:
    - OpenId permissions -> email
    - OpenId permissions -> openid
    - OpenId permissions -> profile
    - GroupMember -> GroupMember.Read.All
+  
+5. Note that Entra will return the group UUID in the claims (not the group name). 
+
+
+### Example setup with AWS Cognito
+
+The following steps demonstrate how to setup OpenID Connect with AWS Cognito.
+
+> This guide assumes that:
+>
+> - the Dependency-Track frontend has been deployed to `https://dependency-track.example.com`
+> - You have user pool in AWS Cognito
+> - You have AWS Cognito Groups to associate with Dependency Track, e.g. Admins, Users
+
+1.  Log in to AWS and navigate to _Cognito -> Applications -> App Clients_
+
+2. Create AppClient:
+  - Type: Mobile App or SPA
+  - Redirect URI's: `https://dependency-track.example.com/static/oidc-callback.html`
+
+3.  In the _Login Pages_ section of created App Client set:
+  - OAuth grant types: `Authorization code grant`
+  - OpenID Connect scopes: `openid email`
+
+4. Copy:
+  - `Client ID`
+  - `authority`(`OIDC_ISSUER`) - you can find it in _Quick setup guide_ section.
+
+6. Adjust Dependency Track apiserver and frontend OIDC configurations and restart them.
+
+7.  Login to Dependency-Track as an admin and navigate to _Administration -> Access Management -> OpenID Connect Groups_
+  - Create groups with names equivalent to those in AWS Cognito you want to associate with Dependency Track (these must match exactly, including case)
+  - Add teams that the groups should be mapped to
+
+8.  Use the _OpenID_ button on the login page to sign in with AWS Cognito user that is member of at least one of the configured groups. Navigating to _Administration -> Access Management -> OpenID Connect Users_ should now reveal that the user has been automatically provisioned and team memberships have been synchronized
+
+

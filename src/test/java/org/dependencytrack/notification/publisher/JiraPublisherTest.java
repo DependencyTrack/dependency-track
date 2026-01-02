@@ -20,10 +20,9 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.model.ConfigProperty;
 import alpine.security.crypto.DataEncryption;
-import org.junit.Before;
-import org.junit.Test;
-
 import jakarta.json.JsonObjectBuilder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
@@ -34,20 +33,17 @@ import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_PASSWORD;
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_USERNAME;
 
-public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublisher> {
-
+class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublisher> {
     public JiraPublisherTest() {
         super(DefaultNotificationPublishers.JIRA, new JiraPublisher());
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        super.setUp();
-
         qm.createConfigProperty(
                 JIRA_URL.getGroupName(),
                 JIRA_URL.getPropertyName(),
-                wireMock.baseUrl(),
+                wmRuntimeInfo.getHttpBaseUrl(),
                 JIRA_URL.getPropertyType(),
                 JIRA_URL.getDescription()
         );
@@ -67,9 +63,9 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
         );
     }
 
-    @Override
+    @Test
     public void testInformWithBomConsumedNotification() {
-        super.testInformWithBomConsumedNotification();
+        super.baseTestInformWithBomConsumedNotification();
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -90,9 +86,9 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithBomProcessingFailedNotification() {
-        super.testInformWithBomProcessingFailedNotification();
+        super.baseTestInformWithBomProcessingFailedNotification();
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -113,9 +109,9 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithBomValidationFailedNotification() {
-        super.testInformWithBomValidationFailedNotification();
+        super.baseTestInformWithBomValidationFailedNotification();
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -136,9 +132,9 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
-        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+        super.baseTestInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -159,9 +155,9 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithDataSourceMirroringNotification() {
-        super.testInformWithDataSourceMirroringNotification();
+        super.baseTestInformWithDataSourceMirroringNotification();
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -182,9 +178,32 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
                         """)));
     }
 
-    @Override
+    @Test
+    public void testInformWithNewVulnerabilityCustomUTF8TemplateNotification() throws Exception {
+        super.baseTestInformWithNewVulnerabilityCustomUTF8TemplateNotification();
+
+        verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
+                .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson("""
+                        {
+                          "fields" : {
+                            "project" : {
+                              "key" : "PROJECT"
+                            },
+                            "issuetype" : {
+                              "name" : "Task"
+                            },
+                            "summary" : "[Dependency-Track] [NEW_VULNERABILITY] [] New  vulnerability identified: ",
+                            "description" : "A new vulnerability has been identified on your project(s).\\n\\\\\\\\\\n\\\\\\\\\\n*Vulnérabilité description*\\n{code:none|bgColor=white|borderStyle=none}{code}\\n\\n*VulnID*\\n\\n\\n*Severity*\\n\\n\\n*Component*\\n[|https://example.com/components/]\\n\\n*Affected project(s)*\\n"
+                          }
+                        }
+                        """)));
+    }
+
+    @Test
     public void testInformWithNewVulnerabilityNotification() {
-        super.testInformWithNewVulnerabilityNotification();
+        super.baseTestInformWithNewVulnerabilityNotification();
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -205,9 +224,9 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithNewVulnerableDependencyNotification() {
-        super.testInformWithNewVulnerableDependencyNotification();
+        super.baseTestInformWithNewVulnerableDependencyNotification();
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -222,15 +241,15 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
                               "name": "Task"
                             },
                             "summary": "[Dependency-Track] [NEW_VULNERABLE_DEPENDENCY] Vulnerable dependency introduced on project projectName",
-                            "description": "A component which contains one or more vulnerabilities has been added to your project.\\n\\\\\\\\\\n\\\\\\\\\\n*Project*\\n[pkg:maven/org.acme/projectName@projectVersion|https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95]\\n\\n*Component*\\n[componentName : componentVersion|https://example.com/components/94f87321-a5d1-4c2f-b2fe-95165debebc6]\\n\\n*Vulnerabilities*\\n- INT-001 (Medium)\\n"
+                            "description": "A component which contains one or more vulnerabilities has been added to your project.\\n\\\\\\\\\\n\\\\\\\\\\n*Project*\\n[projectName : projectVersion|https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95]\\n\\n*Component*\\n[componentName : componentVersion|https://example.com/components/94f87321-a5d1-4c2f-b2fe-95165debebc6]\\n\\n*Vulnerabilities*\\n- INT-001 (Medium)\\n"
                           }
                         }
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithProjectAuditChangeNotification() {
-        super.testInformWithProjectAuditChangeNotification();
+        super.baseTestInformWithProjectAuditChangeNotification();
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Basic amlyYVVzZXI6amlyYVBhc3N3b3Jk"))
@@ -252,7 +271,7 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
     }
 
     @Test
-    public void testPublishWithBearerToken() throws Exception {
+    void testPublishWithBearerToken() throws Exception {
         final ConfigProperty usernameProperty = qm.getConfigProperty(JIRA_USERNAME.getGroupName(), JIRA_USERNAME.getPropertyName());
         usernameProperty.setPropertyValue(null);
         qm.persist(usernameProperty);
@@ -261,7 +280,7 @@ public class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublishe
         passwordProperty.setPropertyValue(DataEncryption.encryptAsString("jiraToken"));
         qm.persist(passwordProperty);
 
-        super.testInformWithBomConsumedNotification();
+        super.baseTestInformWithBomConsumedNotification();
 
         verify(postRequestedFor(urlPathEqualTo("/rest/api/2/issue"))
                 .withHeader("Authorization", equalTo("Bearer jiraToken"))

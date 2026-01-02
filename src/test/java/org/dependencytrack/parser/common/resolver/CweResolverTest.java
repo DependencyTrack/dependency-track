@@ -20,47 +20,41 @@ package org.dependencytrack.parser.common.resolver;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Cwe;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class CweResolverTest extends PersistenceCapableTest {
-
-    @Before
-    public void before() throws Exception {
-        super.before();
-    }
+class CweResolverTest extends PersistenceCapableTest {
 
     @Test
-    public void testPositiveResolutionByCweId() {
+    void testPositiveResolutionByCweId() {
         Cwe cwe = CweResolver.getInstance().lookup("CWE-79");
-        Assert.assertNotNull(cwe);
-        Assert.assertEquals(79, cwe.getCweId());
+        Assertions.assertNotNull(cwe);
+        Assertions.assertEquals(79, cwe.getCweId());
     }
 
     @Test
-    public void testPositiveResolutionByCweIdIntegerOnly() {
+    void testPositiveResolutionByCweIdIntegerOnly() {
         Cwe cwe = CweResolver.getInstance().lookup("79");
-        Assert.assertNotNull(cwe);
-        Assert.assertEquals(79, cwe.getCweId());
+        Assertions.assertNotNull(cwe);
+        Assertions.assertEquals(79, cwe.getCweId());
     }
 
     @Test
-    public void testPositiveResolutionByCweIdAndName() {
+    void testPositiveResolutionByCweIdAndName() {
         Cwe cwe = CweResolver.getInstance().lookup("CWE-79 Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
-        Assert.assertNotNull(cwe);
-        Assert.assertEquals(79, cwe.getCweId());
+        Assertions.assertNotNull(cwe);
+        Assertions.assertEquals(79, cwe.getCweId());
     }
 
     @Test
-    public void testNegativeResolutionByCweId() {
+    void testNegativeResolutionByCweId() {
         Cwe cwe = CweResolver.getInstance().lookup("CWE-9999");
-        Assert.assertNull(cwe);
+        Assertions.assertNull(cwe);
     }
 
     @Test
-    public void testNegativeResolutionByInvalidCweId() {
+    void testNegativeResolutionByInvalidCweId() {
         Cwe cwe = CweResolver.getInstance().lookup("CWE-A");
-        Assert.assertNull(cwe);
+        Assertions.assertNull(cwe);
     }
 }

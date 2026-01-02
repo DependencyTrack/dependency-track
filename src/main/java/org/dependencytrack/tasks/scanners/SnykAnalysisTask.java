@@ -205,10 +205,10 @@ public class SnykAnalysisTask extends BaseComponentAnalyzerTask implements Cache
 
                 aliasSyncEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_SNYK_ALIAS_SYNC_ENABLED);
             }
-            vulnerabilityAnalysisLevel = event.getVulnerabilityAnalysisLevel();
+            vulnerabilityAnalysisLevel = event.analysisLevel();
             LOGGER.info("Starting Snyk vulnerability analysis task");
-            if (!event.getComponents().isEmpty()) {
-                analyze(event.getComponents());
+            if (!event.components().isEmpty()) {
+                analyze(event.components());
             }
             LOGGER.info("Snyk vulnerability analysis complete");
         }

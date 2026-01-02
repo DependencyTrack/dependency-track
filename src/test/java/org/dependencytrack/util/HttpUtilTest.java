@@ -18,20 +18,20 @@
  */
 package org.dependencytrack.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class HttpUtilTest { 
+class HttpUtilTest {
 
     @Test
-    public void testBasicAuthHeader() throws Exception {
+    void testBasicAuthHeader() throws Exception {
         String header = HttpUtil.basicAuthHeader("username", "password");
-        Assert.assertEquals("Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=", header);
+        Assertions.assertEquals("Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=", header);
     } 
 
     @Test
-    public void testBasicAuthHeaderValue() throws Exception {
+    void testBasicAuthHeaderValue() throws Exception {
         String authvalue = HttpUtil.basicAuthHeaderValue("username", "password");
-        Assert.assertEquals("Basic dXNlcm5hbWU6cGFzc3dvcmQ=", authvalue);
+        Assertions.assertEquals("Basic dXNlcm5hbWU6cGFzc3dvcmQ=", authvalue);
     }
 } 

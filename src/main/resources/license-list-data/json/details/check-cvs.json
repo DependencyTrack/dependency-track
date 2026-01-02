@@ -4,14 +4,15 @@
   "standardLicenseTemplate": "Permission is granted to copy and/or distribute this file, with or without modifications, provided this notice is preserved.\n\n",
   "name": "check-cvs License",
   "licenseComments": "This license is similar to FSFULLR.",
+  "comment": "This license is similar to FSFULLR.",
   "licenseId": "check-cvs",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "http://cvs.savannah.gnu.org/viewvc/cvs/ccvs/contrib/check_cvs.in?revision\u003d1.1.4.3\u0026view\u003dmarkup\u0026pathrev\u003dcvs1-11-23#l2",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2024-08-19T17:39:04Z",
+      "isLive": false,
+      "timestamp": "2025-07-01T14:58:17Z",
       "isWayBackLink": false,
       "order": 0
     }

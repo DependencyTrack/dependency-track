@@ -64,6 +64,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -109,12 +110,30 @@ import java.util.UUID;
                 @Persistent(name = "lastInheritedRiskScore"),
                 @Persistent(name = "uuid")
         }),
+        @FetchGroup(name = "NOTIFICATION", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "name"),
+                @Persistent(name = "version"),
+                @Persistent(name = "description"),
+                @Persistent(name = "purl"),
+                @Persistent(name = "tags"),
+                @Persistent(name = "uuid")
+        }),
         @FetchGroup(name = "PARENT", members = {
                 @Persistent(name = "parent")
+        }),
+        @FetchGroup(name = "PROJECT_TAGS", members = {
+                @Persistent(name = "tags")
         }),
         @FetchGroup(name = "PORTFOLIO_METRICS_UPDATE", members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "lastInheritedRiskScore"),
+                @Persistent(name = "uuid")
+        }),
+        @FetchGroup(name = "PROJECT_VULN_ANALYSIS", members = {
+                @Persistent(name = "id"),
+                @Persistent(name = "name"),
+                @Persistent(name = "version"),
                 @Persistent(name = "uuid")
         })
 })
@@ -130,8 +149,11 @@ public class Project implements Serializable {
         ALL,
         METADATA,
         METRICS_UPDATE,
+        NOTIFICATION,
         PARENT,
-        PORTFOLIO_METRICS_UPDATE
+        PORTFOLIO_METRICS_UPDATE,
+        PROJECT_TAGS,
+        PROJECT_VULN_ANALYSIS
     }
 
     @PrimaryKey
@@ -181,6 +203,7 @@ public class Project implements Serializable {
     @Persistent
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Size(max = 255)
     @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
     private String description;
 
@@ -254,10 +277,9 @@ public class Project implements Serializable {
     private List<ProjectProperty> properties;
 
     @Persistent(table = "PROJECTS_TAGS", defaultFetchGroup = "true", mappedBy = "projects")
-    @Join(column = "PROJECT_ID")
+    @Join(column = "PROJECT_ID", primaryKey = "PROJECTS_TAGS_PK")
     @Element(column = "TAG_ID")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "name ASC"))
-    private List<Tag> tags;
+    private Set<Tag> tags;
 
     /**
      * Convenience field which will contain the date of the last entry in the {@link Bom} table
@@ -283,6 +305,14 @@ public class Project implements Serializable {
     @Index(name = "PROJECT_LAST_RISKSCORE_IDX")
     @Column(name = "LAST_RISKSCORE", allowsNull = "true") // New column, must allow nulls on existing databases))
     private Double lastInheritedRiskScore;
+
+    /**
+     * Convenience field which will contain the date of the last vulnerability analysis of the {@link Bom} components
+     */
+    @Persistent
+    @Column(name = "LAST_VULNERABILITY_ANALYSIS", allowsNull = "true")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    private Date lastVulnerabilityAnalysis;
 
     @Persistent
     @Column(name = "ACTIVE", defaultValue = "true")
@@ -509,11 +539,11 @@ public class Project implements Serializable {
         this.properties = properties;
     }
 
-    public List<Tag> getTags() {
+    public Set<Tag> getTags() {
         return tags;
     }
 
-    public void setTags(List<Tag> tags) {
+    public void setTags(Set<Tag> tags) {
         this.tags = tags;
     }
 
@@ -531,6 +561,14 @@ public class Project implements Serializable {
 
     public void setLastBomImportFormat(String lastBomImportFormat) {
         this.lastBomImportFormat = lastBomImportFormat;
+    }
+
+    public Date getLastVulnerabilityAnalysis() {
+        return lastVulnerabilityAnalysis;
+    }
+
+    public void setLastVulnerabilityAnalysis(Date lastVulnerabilityAnalysis) {
+        this.lastVulnerabilityAnalysis = lastVulnerabilityAnalysis;
     }
 
     public Double getLastInheritedRiskScore() {
@@ -627,19 +665,15 @@ public class Project implements Serializable {
 
     @Override
     public String toString() {
-        if (getPurl() != null) {
-            return getPurl().canonicalize();
-        } else {
-            StringBuilder sb = new StringBuilder();
-            if (getGroup() != null) {
-                sb.append(getGroup()).append(" : ");
-            }
-            sb.append(getName());
-            if (getVersion() != null) {
-                sb.append(" : ").append(getVersion());
-            }
-            return sb.toString();
+        StringBuilder sb = new StringBuilder();
+        if (getGroup() != null) {
+            sb.append(getGroup()).append(" : ");
         }
+        sb.append(getName());
+        if (getVersion() != null) {
+            sb.append(" : ").append(getVersion());
+        }
+        return sb.toString();
     }
 
     private final static class BooleanDefaultTrueSerializer extends JsonSerializer<Boolean> {

@@ -19,7 +19,7 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.model.ConfigProperty;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -28,15 +28,15 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL;
 
-public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublisher> {
+class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublisher> {
 
     public SlackPublisherTest() {
         super(DefaultNotificationPublishers.SLACK, new SlackPublisher());
     }
 
-    @Override
+    @Test
     public void testInformWithBomConsumedNotification() {
-        super.testInformWithBomConsumedNotification();
+        super.baseTestInformWithBomConsumedNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -81,9 +81,9 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithBomProcessingFailedNotification() {
-        super.testInformWithBomProcessingFailedNotification();
+        super.baseTestInformWithBomProcessingFailedNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -128,9 +128,9 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithBomValidationFailedNotification() {
-        super.testInformWithBomValidationFailedNotification();
+        super.baseTestInformWithBomValidationFailedNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -141,7 +141,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                               "type": "header",
                               "text": {
                                 "type": "plain_text",
-                                "text": "BOM_VALIDATION_FAILED | pkg:maven/org.acme/projectName@projectVersion"
+                                "text": "BOM_VALIDATION_FAILED | projectName : projectVersion"
                               }
                             },
                             {
@@ -182,9 +182,9 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject() {
-        super.testInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
+        super.baseTestInformWithBomProcessingFailedNotificationAndNoSpecVersionInSubject();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -229,9 +229,9 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithDataSourceMirroringNotification() {
-        super.testInformWithDataSourceMirroringNotification();
+        super.baseTestInformWithDataSourceMirroringNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -276,9 +276,9 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithNewVulnerabilityNotification() {
-        super.testInformWithNewVulnerabilityNotification();
+        super.baseTestInformWithNewVulnerabilityNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -307,7 +307,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                             {
                               "type": "section",
                               "text": {
-                                "text": "New Vulnerability Identified",
+                                "text": "New Vulnerability Identified on Project: [projectName : projectVersion]",
                                 "type": "mrkdwn"
                               },
                               "fields": [
@@ -373,9 +373,9 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithNewVulnerableDependencyNotification() {
-        super.testInformWithNewVulnerableDependencyNotification();
+        super.baseTestInformWithNewVulnerableDependencyNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -422,7 +422,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                                 },
                                 {
                                   "type": "plain_text",
-                                  "text": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "text": "projectName : projectVersion"
                                 }
                               ]
                             },
@@ -454,9 +454,9 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         """)));
     }
 
-    @Override
+    @Test
     public void testInformWithProjectAuditChangeNotification() {
-        super.testInformWithProjectAuditChangeNotification();
+        super.baseTestInformWithProjectAuditChangeNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -549,7 +549,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         		},
                         		{
                         		  "type": "plain_text",
-                        		  "text": "pkg:maven/org.acme/projectName@projectVersion"
+                        		  "text": "projectName : projectVersion"
                         		}
                         	  ]
                         	},
@@ -591,7 +591,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Test
-    public void testInformWithNewVulnerabilityNotificationWithoutBaseUrl() {
+    void testInformWithNewVulnerabilityNotificationWithoutBaseUrl() {
         final ConfigProperty baseUrlProperty = qm.getConfigProperty(
                 GENERAL_BASE_URL.getGroupName(),
                 GENERAL_BASE_URL.getPropertyName()
@@ -599,7 +599,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
         baseUrlProperty.setPropertyValue(null);
         qm.persist(baseUrlProperty);
 
-        super.testInformWithNewVulnerabilityNotification();
+        super.baseTestInformWithNewVulnerabilityNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -628,7 +628,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                             {
                               "type": "section",
                               "text": {
-                                "text": "New Vulnerability Identified",
+                                "text": "New Vulnerability Identified on Project: [projectName : projectVersion]",
                                 "type": "mrkdwn"
                               },
                               "fields": [
@@ -672,7 +672,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Test
-    public void testInformWithNewVulnerableDependencyNotificationWithoutBaseUrl() {
+    void testInformWithNewVulnerableDependencyNotificationWithoutBaseUrl() {
         final ConfigProperty baseUrlProperty = qm.getConfigProperty(
                 GENERAL_BASE_URL.getGroupName(),
                 GENERAL_BASE_URL.getPropertyName()
@@ -680,7 +680,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
         baseUrlProperty.setPropertyValue(null);
         qm.persist(baseUrlProperty);
 
-        super.testInformWithNewVulnerableDependencyNotification();
+        super.baseTestInformWithNewVulnerableDependencyNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -727,7 +727,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                                 },
                                 {
                                   "type": "plain_text",
-                                  "text": "pkg:maven/org.acme/projectName@projectVersion"
+                                  "text": "projectName : projectVersion"
                                 }
                               ]
                             }
@@ -737,7 +737,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
     }
 
     @Test
-    public void testInformWithProjectAuditChangeNotificationWithoutBaseUrl() {
+    void testInformWithProjectAuditChangeNotificationWithoutBaseUrl() {
         final ConfigProperty baseUrlProperty = qm.getConfigProperty(
                 GENERAL_BASE_URL.getGroupName(),
                 GENERAL_BASE_URL.getPropertyName()
@@ -745,7 +745,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
         baseUrlProperty.setPropertyValue(null);
         qm.persist(baseUrlProperty);
 
-        super.testInformWithProjectAuditChangeNotification();
+        super.baseTestInformWithProjectAuditChangeNotification();
 
         verify(postRequestedFor(anyUrl())
                 .withHeader("Content-Type", equalTo("application/json"))
@@ -838,7 +838,7 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         		},
                         		{
                         		  "type": "plain_text",
-                        		  "text": "pkg:maven/org.acme/projectName@projectVersion"
+                        		  "text": "projectName : projectVersion"
                         		}
                         	  ]
                         	}
@@ -847,4 +847,97 @@ public class SlackPublisherTest extends AbstractWebhookPublisherTest<SlackPublis
                         """)));
     }
 
+    @Test
+    public void testPublishWithScheduledNewVulnerabilitiesNotification() {
+        super.baseTestPublishWithScheduledNewVulnerabilitiesNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson(/* language=JSON */ """
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "NEW_VULNERABILITIES_SUMMARY"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*INFORMATIONAL*  |  *PORTFOLIO*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "New Vulnerabilities Summary",
+                                "type": "plain_text"
+                              }
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "Identified 1 new vulnerabilities across 1 projects and 1 components since 1970-01-01T00:01:06Z, of which 1 are suppressed.",
+                                "type": "plain_text"
+                              }
+                            }
+                          ]
+                        }
+                        """)));
+    }
+
+    @Test
+    public void testPublishWithScheduledNewPolicyViolationsNotification() {
+        super.baseTestPublishWithScheduledNewPolicyViolationsNotification();
+
+        verify(postRequestedFor(anyUrl())
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson(/* language=JSON */ """
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "NEW_POLICY_VIOLATIONS_SUMMARY"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*INFORMATIONAL*  |  *PORTFOLIO*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "New Policy Violations Summary",
+                                "type": "plain_text"
+                              }
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "Identified 1 new policy violations across 1 project and 1 components since 1970-01-01T00:01:06Z, of which 0 are suppressed.",
+                                "type": "plain_text"
+                              }
+                            }
+                          ]
+                        }
+                        """)));
+    }
 }

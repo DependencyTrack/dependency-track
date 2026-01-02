@@ -32,7 +32,7 @@ BOM and insert the resulting text into the 'bom' field.
 ```bash
 curl -X "PUT" "http://dtrack.example.com/api/v1/bom" \
      -H 'Content-Type: application/json' \
-     -H 'X-API-Key: LPojpCDSsEd4V9Zi6qCWr4KsiF3Konze' \
+     -H 'X-Api-Key: LPojpCDSsEd4V9Zi6qCWr4KsiF3Konze' \
      -d $'{
   "project": "f90934f5-cb88-47ce-81cb-db06fc67d4b4",
   "bom": "PD94bWwgdm..."
@@ -56,7 +56,7 @@ containing a payload may be preferred.
 ```bash
 curl -X "PUT" "http://dtrack.example.com/api/v1/bom" \
      -H 'Content-Type: application/json' \
-     -H 'X-API-Key: LPojpCDSsEd4V9Zi6qCWr4KsiF3Konze' \
+     -H 'X-Api-Key: LPojpCDSsEd4V9Zi6qCWr4KsiF3Konze' \
      -d @payload.json
 ```
 

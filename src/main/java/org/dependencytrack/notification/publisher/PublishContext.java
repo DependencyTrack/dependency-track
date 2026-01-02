@@ -24,6 +24,8 @@ import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.notification.vo.AnalysisDecisionChange;
 import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.dependencytrack.notification.vo.BomProcessingFailed;
+import org.dependencytrack.notification.vo.NewPolicyViolationsSummary;
+import org.dependencytrack.notification.vo.NewVulnerabilitiesSummary;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.notification.vo.NewVulnerableDependency;
 import org.dependencytrack.notification.vo.PolicyViolationIdentified;
@@ -45,15 +47,24 @@ import java.util.UUID;
  * @param notificationScope     Scope of the {@link Notification} being published
  * @param notificationTimestamp UTC Timestamp in {@link DateTimeFormatter#ISO_DATE_TIME} of the {@link Notification} being published
  * @param notificationSubjects  Subject(s) of the {@link Notification} being published
+ * @param ruleId                ID of the matched {@link NotificationRule}
  * @param ruleName              Name of the matched {@link NotificationRule}
  * @param ruleScope             Scope of the matched {@link NotificationRule}
  * @param ruleLevel             Level of the matched {@link NotificationRule}
  * @param logSuccess            Whether the publisher shall emit a log message upon successful publishing
  * @since 4.10.0
  */
-public record PublishContext(String notificationGroup, String notificationLevel, String notificationScope,
-                             String notificationTimestamp, Map<String, Object> notificationSubjects,
-                             String ruleName, String ruleScope, String ruleLevel, Boolean logSuccess) {
+public record PublishContext(
+        String notificationGroup,
+        String notificationLevel,
+        String notificationScope,
+        String notificationTimestamp,
+        Map<String, Object> notificationSubjects,
+        long ruleId,
+        String ruleName,
+        String ruleScope,
+        String ruleLevel,
+        Boolean logSuccess) {
 
     private static final String SUBJECT_COMPONENT = "component";
     private static final String SUBJECT_PROJECT = "project";
@@ -101,11 +112,23 @@ public record PublishContext(String notificationGroup, String notificationLevel,
             notificationSubjects.put(SUBJECT_VULNERABILITY, Vulnerability.convert(subject.getVulnerability()));
         } else if (notification.getSubject() instanceof final VexConsumedOrProcessed subject) {
             notificationSubjects.put(SUBJECT_PROJECT, Project.convert(subject.getProject()));
+        } else if (notification.getSubject() instanceof final NewVulnerabilitiesSummary subject) {
+            notificationSubjects.put(SUBJECT_PROJECTS, subject.summary().projectSummaries().keySet().stream().map(Project::convert).toList());
+        } else if (notification.getSubject() instanceof final NewPolicyViolationsSummary subject) {
+            notificationSubjects.put(SUBJECT_PROJECTS, subject.summary().projectSummaries().keySet().stream().map(Project::convert).toList());
         }
 
-        return new PublishContext(notification.getGroup(), Optional.ofNullable(notification.getLevel()).map(Enum::name).orElse(null),
-                notification.getScope(), notification.getTimestamp().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_DATE_TIME), notificationSubjects,
-                /* ruleName */ null, /* ruleScope */ null, /* ruleLevel */ null, /* logSuccess */ null);
+        return new PublishContext(
+                notification.getGroup(),
+                Optional.ofNullable(notification.getLevel()).map(Enum::name).orElse(null),
+                notification.getScope(),
+                notification.getTimestamp().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_DATE_TIME),
+                notificationSubjects,
+                /* ruleId */ -1,
+                /* ruleName */ null,
+                /* ruleScope */ null,
+                /* ruleLevel */ null,
+                /* logSuccess */ null);
     }
 
     /**
@@ -115,8 +138,17 @@ public record PublishContext(String notificationGroup, String notificationLevel,
      * @return This {@link PublishContext}
      */
     public PublishContext withRule(final NotificationRule rule) {
-        return new PublishContext(this.notificationGroup, this.notificationLevel, this.notificationScope, this.notificationTimestamp,
-                this.notificationSubjects, rule.getName(), rule.getScope().name(), rule.getNotificationLevel().name(), rule.isLogSuccessfulPublish());
+        return new PublishContext(
+                this.notificationGroup,
+                this.notificationLevel,
+                this.notificationScope,
+                this.notificationTimestamp,
+                this.notificationSubjects,
+                rule.getId(),
+                rule.getName(),
+                rule.getScope().name(),
+                rule.getNotificationLevel().name(),
+                rule.isLogSuccessfulPublish());
     }
 
     public boolean shouldLogSuccess() {

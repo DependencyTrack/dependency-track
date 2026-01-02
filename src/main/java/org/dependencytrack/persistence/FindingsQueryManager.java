@@ -256,7 +256,6 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
      * @param project the project to retrieve findings for
      * @return a List of Finding objects
      */
-    @SuppressWarnings("unchecked")
     public List<Finding> getFindings(Project project) {
         return getFindings(project, false);
     }

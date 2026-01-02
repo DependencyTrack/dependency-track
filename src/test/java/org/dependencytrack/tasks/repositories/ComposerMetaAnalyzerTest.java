@@ -28,50 +28,50 @@ import java.text.SimpleDateFormat;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 
 import com.github.packageurl.PackageURL;
 
-public class ComposerMetaAnalyzerTest {
+class ComposerMetaAnalyzerTest {
 
         private static ClientAndServer mockServer;
 
-        @BeforeClass
+        @BeforeAll
         public static void beforeClass() {
                 mockServer = ClientAndServer.startClientAndServer(1080);
         }
 
-        @AfterClass
+        @AfterAll
         public static void afterClass() {
                 mockServer.stop();
         }
 
-        @Before
+        @BeforeEach
         public void setUp() {
                 mockServer.reset();
         }
 
         @Test
-        public void testAnalyzer() throws Exception {
+        void testAnalyzer() throws Exception {
                 Component component = new Component();
                 component.setPurl(new PackageURL("pkg:composer/phpunit/phpunit@1.0.0"));
 
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
-                Assert.assertTrue(analyzer.isApplicable(component));
-                Assert.assertEquals(RepositoryType.COMPOSER, analyzer.supportedRepositoryType());
+                Assertions.assertTrue(analyzer.isApplicable(component));
+                Assertions.assertEquals(RepositoryType.COMPOSER, analyzer.supportedRepositoryType());
                 MetaModel metaModel = analyzer.analyze(component);
-                Assert.assertNotNull(metaModel.getLatestVersion());
-                Assert.assertNotNull(metaModel.getPublishedTimestamp());
+                Assertions.assertNotNull(metaModel.getLatestVersion());
+                Assertions.assertNotNull(metaModel.getPublishedTimestamp());
         }
 
         @Test
-        public void testAnalyzerV1() throws Exception {
+        void testAnalyzerV1() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -107,14 +107,12 @@ public class ComposerMetaAnalyzerTest {
 
                 MetaModel metaModel = analyzer.analyze(component);
 
-                Assert.assertEquals("3.8.1", metaModel.getLatestVersion());
-                Assert.assertEquals(
-                                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-12-05 17:15:07 Z"),
-                                metaModel.getPublishedTimestamp());
+                Assertions.assertEquals("3.8.1", metaModel.getLatestVersion());
+                Assertions.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-12-05 17:15:07 Z"), metaModel.getPublishedTimestamp());
         }
 
         @Test
-        public void testAnalyzerFindsVersionWithLeadingVV2() throws Exception {
+        void testAnalyzerFindsVersionWithLeadingVV2() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -150,14 +148,12 @@ public class ComposerMetaAnalyzerTest {
 
                 MetaModel metaModel = analyzer.analyze(component);
 
-                Assert.assertEquals("v1.2.0", metaModel.getLatestVersion());
-                Assert.assertEquals(
-                                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-10-11 08:11:39 Z"),
-                                metaModel.getPublishedTimestamp());
+                Assertions.assertEquals("v1.2.0", metaModel.getLatestVersion());
+                Assertions.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-10-11 08:11:39 Z"), metaModel.getPublishedTimestamp());
         }
 
         @Test
-        public void testAnalyzerInlinePackageAndRepoPath() throws Exception {
+        void testAnalyzerInlinePackageAndRepoPath() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -191,8 +187,8 @@ public class ComposerMetaAnalyzerTest {
 
                 MetaModel metaModel = analyzer.analyze(component);
 
-                Assert.assertEquals("1.18.0", metaModel.getLatestVersion());
-                Assert.assertNull(metaModel.getPublishedTimestamp());
+                Assertions.assertEquals("1.18.0", metaModel.getLatestVersion());
+                Assertions.assertNull(metaModel.getPublishedTimestamp());
 
                 mockClient.verify(
                                 request()
@@ -213,8 +209,8 @@ public class ComposerMetaAnalyzerTest {
                 component.setPurl(new PackageURL("pkg:composer/something/something@v1.1.0"));
                 MetaModel metaModel2 = analyzer.analyze(component);
 
-                Assert.assertNull(metaModel2.getLatestVersion());
-                Assert.assertNull(metaModel2.getPublishedTimestamp());
+                Assertions.assertNull(metaModel2.getLatestVersion());
+                Assertions.assertNull(metaModel2.getPublishedTimestamp());
 
                 // no extra calls should have been made
                 mockClient.verify(
@@ -235,7 +231,7 @@ public class ComposerMetaAnalyzerTest {
         }
 
         @Test
-        public void testAnalyzerIncludesAndRepoPath() throws Exception {
+        void testAnalyzerIncludesAndRepoPath() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -274,9 +270,9 @@ public class ComposerMetaAnalyzerTest {
 
                 MetaModel metaModel = analyzer.analyze(component);
 
-                Assert.assertEquals("2.3.8", metaModel.getLatestVersion());
+                Assertions.assertEquals("2.3.8", metaModel.getLatestVersion());
                 // Timestamps are in invalid format for this repo
-                Assert.assertNull(metaModel.getPublishedTimestamp());
+                Assertions.assertNull(metaModel.getPublishedTimestamp());
 
                 mockClient.verify(
                                 request()
@@ -297,8 +293,8 @@ public class ComposerMetaAnalyzerTest {
                 component.setPurl(new PackageURL("pkg:composer/something/something@v1.1.0"));
                 MetaModel metaModel2 = analyzer.analyze(component);
 
-                Assert.assertNull(metaModel2.getLatestVersion());
-                Assert.assertNull(metaModel2.getPublishedTimestamp());
+                Assertions.assertNull(metaModel2.getLatestVersion());
+                Assertions.assertNull(metaModel2.getPublishedTimestamp());
 
                 // no extra calls should have been made
                 mockClient.verify(
@@ -319,7 +315,7 @@ public class ComposerMetaAnalyzerTest {
         }
 
         @Test
-        public void testAnalyzerIncludesWithMetadataUrl() throws Exception {
+        void testAnalyzerIncludesWithMetadataUrl() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -365,8 +361,8 @@ public class ComposerMetaAnalyzerTest {
 
                 MetaModel metaModel = analyzer.analyze(component);
 
-                Assert.assertEquals("6.6.6", metaModel.getLatestVersion());
-                Assert.assertNull(metaModel.getPublishedTimestamp());
+                Assertions.assertEquals("6.6.6", metaModel.getLatestVersion());
+                Assertions.assertNull(metaModel.getPublishedTimestamp());
 
                 mockClient.verify(
                                 request()
@@ -393,8 +389,8 @@ public class ComposerMetaAnalyzerTest {
                 component.setPurl(new PackageURL("pkg:composer/something/something@v1.1.0"));
                 MetaModel metaModel2 = analyzer.analyze(component);
 
-                Assert.assertNull(metaModel2.getLatestVersion());
-                Assert.assertNull(metaModel2.getPublishedTimestamp());
+                Assertions.assertNull(metaModel2.getLatestVersion());
+                Assertions.assertNull(metaModel2.getPublishedTimestamp());
 
                 // no extra calls should have been made, only a metadata call as those are not
                 // cached
@@ -422,7 +418,7 @@ public class ComposerMetaAnalyzerTest {
         }
 
         @Test
-        public void testAnalyzerCacheOfRoot() throws Exception {
+        void testAnalyzerCacheOfRoot() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -458,10 +454,8 @@ public class ComposerMetaAnalyzerTest {
 
                 MetaModel metaModel = analyzer.analyze(component);
 
-                Assert.assertEquals("v1.2.0", metaModel.getLatestVersion());
-                Assert.assertEquals(
-                                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-10-11 08:11:39 Z"),
-                                metaModel.getPublishedTimestamp());
+                Assertions.assertEquals("v1.2.0", metaModel.getLatestVersion());
+                Assertions.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-10-11 08:11:39 Z"), metaModel.getPublishedTimestamp());
                 mockClient.verify(
                                 request()
                                                 .withMethod("GET")
@@ -490,7 +484,7 @@ public class ComposerMetaAnalyzerTest {
         }
 
         @Test
-        public void testAnalyzerEmptyRoot() throws Exception {
+        void testAnalyzerEmptyRoot() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -513,8 +507,8 @@ public class ComposerMetaAnalyzerTest {
                                                                 .withBody(getTestData(packagistRepoRootFile)));
 
                 MetaModel metaModel = analyzer.analyze(component);
-                Assert.assertNull(metaModel.getLatestVersion());
-                Assert.assertNull(metaModel.getPublishedTimestamp());
+                Assertions.assertNull(metaModel.getLatestVersion());
+                Assertions.assertNull(metaModel.getPublishedTimestamp());
 
                 mockClient.verify(
                                 request()
@@ -523,8 +517,8 @@ public class ComposerMetaAnalyzerTest {
                                 org.mockserver.verify.VerificationTimes.exactly(1));
 
                 MetaModel metaModel2 = analyzer.analyze(component);
-                Assert.assertNull(metaModel2.getLatestVersion());
-                Assert.assertNull(metaModel2.getPublishedTimestamp());
+                Assertions.assertNull(metaModel2.getLatestVersion());
+                Assertions.assertNull(metaModel2.getPublishedTimestamp());
                 mockClient.verify(
                                 request()
                                                 .withMethod("GET")
@@ -534,7 +528,7 @@ public class ComposerMetaAnalyzerTest {
         }
 
         @Test
-        public void testAnalyzerDrupalV2NoTimeWithAvailablePackagePatterns() throws Exception {
+        void testAnalyzerDrupalV2NoTimeWithAvailablePackagePatterns() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -570,14 +564,14 @@ public class ComposerMetaAnalyzerTest {
 
                 MetaModel metaModel = analyzer.analyze(component);
 
-                Assert.assertEquals("2.2.1", metaModel.getLatestVersion());
-                Assert.assertEquals(null, metaModel.getPublishedTimestamp());
+                Assertions.assertEquals("2.2.1", metaModel.getLatestVersion());
+                Assertions.assertEquals(null, metaModel.getPublishedTimestamp());
 
                 component.setPurl(new PackageURL("pkg:composer/phpunit/phpunit@v2.0.0"));
                 MetaModel metaModel2 = analyzer.analyze(component);
 
-                Assert.assertNull(metaModel2.getLatestVersion());
-                Assert.assertNull(metaModel2.getPublishedTimestamp());
+                Assertions.assertNull(metaModel2.getLatestVersion());
+                Assertions.assertNull(metaModel2.getPublishedTimestamp());
 
                 // no calls should have been made for non-matching package
                 mockClient.verify(
@@ -587,7 +581,7 @@ public class ComposerMetaAnalyzerTest {
         }
 
         @Test
-        public void testAnalyzerAvailablePackages() throws Exception {
+        void testAnalyzerAvailablePackages() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -623,16 +617,14 @@ public class ComposerMetaAnalyzerTest {
 
                 MetaModel metaModel = analyzer.analyze(component);
 
-                Assert.assertEquals("v1.2.0", metaModel.getLatestVersion());
-                Assert.assertEquals(
-                                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-10-11 08:11:39 Z"),
-                                metaModel.getPublishedTimestamp());
+                Assertions.assertEquals("v1.2.0", metaModel.getLatestVersion());
+                Assertions.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-10-11 08:11:39 Z"), metaModel.getPublishedTimestamp());
 
                 component.setPurl(new PackageURL("pkg:composer/phpunit/phpunit@v0.0.0"));
                 MetaModel metaModel2 = analyzer.analyze(component);
 
-                Assert.assertNull(metaModel2.getLatestVersion());
-                Assert.assertNull(metaModel2.getPublishedTimestamp());
+                Assertions.assertNull(metaModel2.getLatestVersion());
+                Assertions.assertNull(metaModel2.getPublishedTimestamp());
 
                 // no calls should have been made for non-matching package
                 mockClient.verify(
@@ -642,7 +634,7 @@ public class ComposerMetaAnalyzerTest {
         }
 
         @Test
-        public void testAnalyzerNotInAvailablePackagesAndMatchingLogic() throws Exception {
+        void testAnalyzerNotInAvailablePackagesAndMatchingLogic() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -678,16 +670,14 @@ public class ComposerMetaAnalyzerTest {
 
                 MetaModel metaModel = analyzer.analyze(component);
 
-                Assert.assertEquals("v1.2.0", metaModel.getLatestVersion());
-                Assert.assertEquals(
-                                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-10-11 08:11:39 Z"),
-                                metaModel.getPublishedTimestamp());
+                Assertions.assertEquals("v1.2.0", metaModel.getLatestVersion());
+                Assertions.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX").parse("2024-10-11 08:11:39 Z"), metaModel.getPublishedTimestamp());
 
                 component.setPurl(new PackageURL("pkg:composer/io2/phpunit@v0.0.0"));
                 MetaModel metaModel2 = analyzer.analyze(component);
 
-                Assert.assertNull(metaModel2.getLatestVersion());
-                Assert.assertNull(metaModel2.getPublishedTimestamp());
+                Assertions.assertNull(metaModel2.getLatestVersion());
+                Assertions.assertNull(metaModel2.getPublishedTimestamp());
 
                 // no calls should have been made for non-matching package
                 mockClient.verify(
@@ -708,7 +698,7 @@ public class ComposerMetaAnalyzerTest {
          * behaviour.
          */
         @Test
-        public void testAnalyzerGetsUnexpectedResponseContentCausingLatestVersionBeingNull() throws Exception {
+        void testAnalyzerGetsUnexpectedResponseContentCausingLatestVersionBeingNull() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -745,11 +735,11 @@ public class ComposerMetaAnalyzerTest {
                 analyzer.analyze(component);
                 MetaModel metaModel = analyzer.analyze(component);
 
-                Assert.assertNull(metaModel.getLatestVersion());
+                Assertions.assertNull(metaModel.getLatestVersion());
         }
 
         @Test
-        public void testAnalyzerGetsUnexpectedResponseContent404() throws Exception {
+        void testAnalyzerGetsUnexpectedResponseContent404() throws Exception {
                 Component component = new Component();
                 ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
 
@@ -771,7 +761,7 @@ public class ComposerMetaAnalyzerTest {
                 analyzer.analyze(component);
                 MetaModel metaModel = analyzer.analyze(component);
 
-                Assert.assertNull(metaModel.getLatestVersion());
+                Assertions.assertNull(metaModel.getLatestVersion());
         }
 
         private static File getRepoResourceFile(String repo, String filename) throws Exception {
@@ -804,5 +794,47 @@ public class ComposerMetaAnalyzerTest {
                 fileStream.read(data);
                 fileStream.close();
                 return data;
+        }
+
+        @Test
+        void testAnalyzerHandlesArrayEntryMetadata() throws Exception {
+            Component component = new Component();
+            ComposerMetaAnalyzer analyzer = new ComposerMetaAnalyzer();
+        
+            component.setPurl(new PackageURL("pkg:composer/galaxy/cow@v1.1.0"));
+        
+            final File packagistRepoRootFile = getRepoResourceFile("composer.include.com.metadata", "packages");
+            final File packagistFile = getPackageResourceFile("composer.include.com.metadata", "galaxy", "cow-arrayentry");
+        
+            analyzer.setRepositoryId("13");
+            analyzer.setRepositoryBaseUrl(String.format("http://localhost:%d", mockServer.getPort()));
+            @SuppressWarnings("resource")
+            MockServerClient mockClient = new MockServerClient("localhost", mockServer.getPort());
+        
+            mockClient.when(
+                    request()
+                            .withMethod("GET")
+                            .withPath("/packages.json"))
+                    .respond(
+                            response()
+                                    .withStatusCode(200)
+                                    .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                                    .withBody(getTestData(packagistRepoRootFile)));
+        
+            mockClient.when(
+                    request()
+                            .withMethod("GET")
+                            .withPath("/p2/galaxy/cow.json"))
+                    .respond(
+                            response()
+                                    .withStatusCode(200)
+                                    .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                                    .withBody(getTestData(packagistFile)));
+        
+            MetaModel metaModel = analyzer.analyze(component);
+        
+            Assertions.assertEquals("9.9.9", metaModel.getLatestVersion());
+            Assertions.assertEquals(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX")
+                    .parse("2025-01-01 00:00:00 Z"), metaModel.getPublishedTimestamp());
         }
 }

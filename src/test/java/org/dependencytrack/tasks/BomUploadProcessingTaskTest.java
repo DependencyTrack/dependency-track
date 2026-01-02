@@ -30,8 +30,8 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
 import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.NewVulnerableDependencyAnalysisEvent;
+import org.dependencytrack.event.ProjectVulnerabilityAnalysisEvent;
 import org.dependencytrack.event.RepositoryMetaEvent;
-import org.dependencytrack.event.VulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
@@ -49,15 +49,16 @@ import org.dependencytrack.notification.vo.BomProcessingFailed;
 import org.dependencytrack.notification.vo.NewVulnerabilityIdentified;
 import org.dependencytrack.parser.spdx.json.SpdxLicenseDetailParser;
 import org.dependencytrack.search.document.ComponentDocument;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
+
 import javax.jdo.JDOObjectNotFoundException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -79,7 +80,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
 
-public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
+class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
     public static class EventSubscriber implements alpine.event.framework.Subscriber {
 
@@ -102,11 +103,11 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     private static final ConcurrentLinkedQueue<Event> EVENTS = new ConcurrentLinkedQueue<>();
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         EventService.getInstance().subscribe(IndexEvent.class, EventSubscriber.class);
         EventService.getInstance().subscribe(RepositoryMetaEvent.class, EventSubscriber.class);
-        EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, EventSubscriber.class);
+        EventService.getInstance().subscribe(ProjectVulnerabilityAnalysisEvent.class, EventSubscriber.class);
         NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
 
         // Enable processing of CycloneDX BOMs
@@ -122,7 +123,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 ConfigPropertyConstants.SCANNER_INTERNAL_ENABLED.getDescription());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         EventService.getInstance().unsubscribe(EventSubscriber.class);
         EventService.getInstance().unsubscribe(VulnerabilityAnalysisTask.class);
@@ -134,8 +135,8 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informTest() throws Exception {
-        EventService.getInstance().subscribe(VulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
+    void informTest() throws Exception {
+        EventService.getInstance().subscribe(ProjectVulnerabilityAnalysisEvent.class, VulnerabilityAnalysisTask.class);
         EventService.getInstance().subscribe(NewVulnerableDependencyAnalysisEvent.class, NewVulnerableDependencyAnalysisTask.class);
 
         for (final License license : new SpdxLicenseDetailParser().getLicenseDefinitions()) {
@@ -285,7 +286,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithEmptyBomTest() throws Exception {
+    void informWithEmptyBomTest() throws Exception {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
@@ -302,7 +303,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithInvalidCycloneDxBomTest() throws Exception {
+    void informWithInvalidCycloneDxBomTest() throws Exception {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         final byte[] bomBytes = """
@@ -337,7 +338,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithNonExistentProjectTest() throws Exception {
+    void informWithNonExistentProjectTest() throws Exception {
         final Project project = new Project();
         project.setId(1);
         project.setUuid(UUID.randomUUID());
@@ -356,7 +357,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithComponentsUnderMetadataBomTest() throws Exception {
+    void informWithComponentsUnderMetadataBomTest() throws Exception {
         final var project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
@@ -387,7 +388,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithExistingDuplicateComponentsTest() {
+    void informWithExistingDuplicateComponentsTest() {
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
@@ -465,13 +466,13 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                     assertThat(indexEvent.getIndexableClass()).isEqualTo(Project.class);
                     assertThat(indexEvent.getAction()).isEqualTo(IndexEvent.Action.UPDATE);
                 },
-                event -> assertThat(event).isInstanceOf(VulnerabilityAnalysisEvent.class),
+                event -> assertThat(event).isInstanceOf(ProjectVulnerabilityAnalysisEvent.class),
                 event -> assertThat(event).isInstanceOf(RepositoryMetaEvent.class)
         );
     }
 
     @Test
-    public void informWithBloatedBomTest() throws Exception {
+    void informWithBloatedBomTest() throws Exception {
         final var project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
@@ -522,7 +523,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithCustomLicenseResolutionTest() throws Exception {
+    void informWithCustomLicenseResolutionTest() throws Exception {
         final var customLicense = new License();
         customLicense.setName("custom license foobar");
         qm.createCustomLicense(customLicense, false);
@@ -555,7 +556,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithBomContainingLicenseExpressionTest() {
+    void informWithBomContainingLicenseExpressionTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -595,7 +596,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithBomContainingLicenseExpressionWithSingleIdTest() {
+    void informWithBomContainingLicenseExpressionWithSingleIdTest() {
         final var license = new License();
         license.setLicenseId("EPL-2.0");
         license.setName("Eclipse Public License 2.0");
@@ -641,7 +642,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithBomContainingInvalidLicenseExpressionTest() {
+    void informWithBomContainingInvalidLicenseExpressionTest() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -681,7 +682,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3433
-    public void informIssue3433Test() {
+    void informIssue3433Test() {
         final var license = new License();
         license.setLicenseId("GPL-3.0-or-later");
         license.setName("GPL-3.0-or-later");
@@ -723,8 +724,9 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         });
     }
 
-    @Test // https://github.com/DependencyTrack/dependency-track/issues/3498
-    public void informUpdateExistingLicenseTest() {
+    @Test
+        // https://github.com/DependencyTrack/dependency-track/issues/3498
+    void informUpdateExistingLicenseTest() {
         final var existingLicense = new License();
         existingLicense.setLicenseId("GPL-3.0-or-later");
         existingLicense.setName("GPL-3.0-or-later");
@@ -811,7 +813,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3498
-    public void informDeleteExistingLicenseTest() {
+    void informDeleteExistingLicenseTest() {
         final var existingLicense = new License();
         existingLicense.setLicenseId("GPL-3.0-or-later");
         existingLicense.setName("GPL-3.0-or-later");
@@ -888,7 +890,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithBomContainingServiceTest() throws Exception {
+    void informWithBomContainingServiceTest() throws Exception {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
@@ -901,7 +903,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithExistingComponentPropertiesAndBomWithoutComponentProperties() {
+    void informWithExistingComponentPropertiesAndBomWithoutComponentProperties() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -941,7 +943,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithExistingComponentPropertiesAndBomWithComponentProperties() {
+    void informWithExistingComponentPropertiesAndBomWithComponentProperties() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -992,7 +994,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithExistingDuplicateComponentPropertiesAndBomWithDuplicateComponentProperties() {
+    void informWithExistingDuplicateComponentPropertiesAndBomWithDuplicateComponentProperties() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -1058,7 +1060,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithLicenseResolutionByNameTest() {
+    void informWithLicenseResolutionByNameTest() {
         final var license = new License();
         license.setLicenseId("MIT");
         license.setName("MIT License");
@@ -1101,7 +1103,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithLicenseResolutionByIdOrNameTest() {
+    void informWithLicenseResolutionByIdOrNameTest() {
         final var license = new License();
         license.setLicenseId("MIT");
         license.setName("MIT License");
@@ -1144,7 +1146,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informWithEmptyComponentAndServiceNameTest() {
+    void informWithEmptyComponentAndServiceNameTest() {
         final var project = new Project();
         project.setName("acme-license-app");
         qm.persist(project);
@@ -1183,7 +1185,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/1905
-    public void informIssue1905Test() throws Exception {
+    void informIssue1905Test() throws Exception {
         final var project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         for (int i = 0; i < 3; i++) {
@@ -1217,7 +1219,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/2519
-    public void informIssue2519Test() throws Exception {
+    void informIssue2519Test() throws Exception {
         final var project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         // Upload the same BOM again a few times.
@@ -1237,7 +1239,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/2859
-    public void informIssue2859Test() throws Exception {
+    void informIssue2859Test() throws Exception {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         final byte[] bomBytes = resourceToByteArray("/unit/bom-issue2859.xml");
@@ -1247,7 +1249,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3309
-    public void informIssue3309Test() {
+    void informIssue3309Test() {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -1290,7 +1292,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3371
-    public void informIssue3371Test() throws Exception {
+    void informIssue3371Test() throws Exception {
         final var project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
         // Upload the same BOM again a few times.
@@ -1320,8 +1322,9 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
         }
     }
 
-    @Test // https://github.com/DependencyTrack/dependency-track/issues/3957
-    public void informIssue3957Test() {
+    @Test
+        // https://github.com/DependencyTrack/dependency-track/issues/3957
+    void informIssue3957Test() {
         final var licenseA = new License();
         licenseA.setLicenseId("GPL-1.0");
         licenseA.setName("GNU General Public License v1.0 only");
@@ -1370,7 +1373,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informIssue3981Test() {
+    void informIssue3981Test() {
         final var project = new Project();
         project.setName("acme-license-app");
         project.setVersion("1.2.3");
@@ -1447,7 +1450,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informIssue3936Test() throws Exception {
+    void informIssue3936Test() throws Exception {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
         List<String> boms = new ArrayList<>(Arrays.asList("/unit/bom-issue3936-authors.json", "/unit/bom-issue3936-author.json", "/unit/bom-issue3936-both.json"));
         for (String bom : boms) {
@@ -1465,7 +1468,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informIssue4455Test() throws Exception {
+    void informIssue4455Test() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.2.3");
@@ -1487,7 +1490,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 final JsonObject directDependencyObject = directDependenciesArray.getJsonObject(i);
                 final String directDependencyUuid = directDependencyObject.getString("uuid");
                 if (!uuidsSeen.add(directDependencyUuid)) {
-                    Assert.fail("Duplicate UUID %s in project's directDependencies: %s".formatted(
+                    Assertions.fail("Duplicate UUID %s in project's directDependencies: %s".formatted(
                             directDependencyUuid, directDependenciesJson));
                 }
             }
@@ -1508,7 +1511,7 @@ public class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                 final JsonObject directDependencyObject = directDependenciesArray.getJsonObject(i);
                 final String directDependencyUuid = directDependencyObject.getString("uuid");
                 if (!uuidsSeen.add(directDependencyUuid)) {
-                    Assert.fail("Duplicate UUID %s in component's directDependencies: %s".formatted(
+                    Assertions.fail("Duplicate UUID %s in component's directDependencies: %s".formatted(
                             directDependencyUuid, component.getDirectDependencies()));
                 }
             }

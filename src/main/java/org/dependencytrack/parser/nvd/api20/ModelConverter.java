@@ -34,8 +34,8 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
+import org.dependencytrack.util.CvssUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
-import us.springett.cvss.Cvss;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeEncodingException;
@@ -104,6 +104,8 @@ public final class ModelConverter {
 
         return references.stream()
                 .map(Reference::getUrl)
+                .sorted()
+                .distinct()
                 .map(url -> "* [%s](%s)".formatted(url, url))
                 .collect(Collectors.joining("\n"));
     }
@@ -133,8 +135,9 @@ public final class ModelConverter {
             metrics.getCvssMetricV2().sort(comparingInt(metric -> metric.getType().ordinal()));
 
             for (final CvssV2 metric : metrics.getCvssMetricV2()) {
-                final Cvss cvss = Cvss.fromVector(metric.getCvssData().getVectorString());
-                vuln.setCvssV2Vector(cvss.getVector());
+                final var vector = metric.getCvssData().getVectorString();
+                final var cvss = CvssUtil.parse(vector);
+                vuln.setCvssV2Vector(cvss.toString());
                 vuln.setCvssV2BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
                 vuln.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
                 vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
@@ -146,8 +149,8 @@ public final class ModelConverter {
             metrics.getCvssMetricV31().sort(comparingInt(metric -> metric.getType().ordinal()));
 
             for (final CvssV3 metric : metrics.getCvssMetricV31()) {
-                final Cvss cvss = Cvss.fromVector(metric.getCvssData().getVectorString());
-                vuln.setCvssV3Vector(cvss.getVector());
+                final var cvss = CvssUtil.parse(metric.getCvssData().getVectorString());
+                vuln.setCvssV3Vector(cvss.toString());
                 vuln.setCvssV3BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
                 vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
                 vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
@@ -157,8 +160,8 @@ public final class ModelConverter {
             metrics.getCvssMetricV30().sort(comparingInt(metric -> metric.getType().ordinal()));
 
             for (final CvssV3 metric : metrics.getCvssMetricV30()) {
-                final Cvss cvss = Cvss.fromVector(metric.getCvssData().getVectorString());
-                vuln.setCvssV3Vector(cvss.getVector());
+                final var cvss = CvssUtil.parse(metric.getCvssData().getVectorString());
+                vuln.setCvssV3Vector(cvss.toString());
                 vuln.setCvssV3BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
                 vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
                 vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
@@ -179,6 +182,7 @@ public final class ModelConverter {
         final List<CpeMatch> cpeMatches = extractCpeMatches(cveId, configurations);
         return cpeMatches.stream()
                 .map(cpeMatch -> convertCpeMatch(cveId, cpeMatch))
+                .filter(Objects::nonNull)
                 .filter(distinctIgnoringDatastoreIdentity())
                 .collect(Collectors.toList());
     }
@@ -283,10 +287,10 @@ public final class ModelConverter {
 
             return vs;
         } catch (CpeParsingException e) {
-            LOGGER.warn("Failed to parse CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId));
+            LOGGER.warn("Failed to parse CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId), e);
             return null;
         } catch (CpeEncodingException e) {
-            LOGGER.warn("Failed to encode CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId));
+            LOGGER.warn("Failed to encode CPE %s of %s; Skipping".formatted(cpeMatch.getCriteria(), cveId), e);
             return null;
         }
     }

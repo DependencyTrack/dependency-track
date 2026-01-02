@@ -19,21 +19,13 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
-import io.pebbletemplates.pebble.PebbleEngine;
 
 import jakarta.json.JsonObject;
 
 public class SlackPublisher extends AbstractWebhookPublisher implements Publisher {
 
-    private static final PebbleEngine ENGINE = new PebbleEngine.Builder().defaultEscapingStrategy("json").build();
-
     public void inform(final PublishContext ctx, final Notification notification, final JsonObject config) {
         publish(ctx, getTemplate(config), notification, config);
-    }
-
-    @Override
-    public PebbleEngine getTemplateEngine() {
-        return ENGINE;
     }
 
 }

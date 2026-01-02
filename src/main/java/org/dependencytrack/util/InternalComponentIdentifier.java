@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_GROUPS_REGEX;
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_NAMES_REGEX;
+import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_COMPONENTS_MATCH_MODE;
 
 /**
  * Utility class to identify internal components based on the configured group and name regular expressions.
@@ -55,6 +56,18 @@ public class InternalComponentIdentifier {
     }
 
     private final Supplier<Patterns> patternsSupplier = Suppliers.memoize(InternalComponentIdentifier::loadPatterns);
+    private final Supplier<String> matchModeSupplier = Suppliers.memoize(InternalComponentIdentifier::loadMatchMode);
+
+    private static String loadMatchMode() {
+        try (final var qm = new QueryManager()) {
+            final ConfigProperty matchModeProp = qm.getConfigProperty(
+                    INTERNAL_COMPONENTS_MATCH_MODE.getGroupName(),
+                    INTERNAL_COMPONENTS_MATCH_MODE.getPropertyName()
+            );
+            final String value = matchModeProp != null ? matchModeProp.getPropertyValue() : null;
+            return StringUtils.isNotBlank(value) ? value.trim().toUpperCase() : "OR";
+        }
+    }
 
     public boolean isInternal(final Component component) {
         final Patterns patterns = patternsSupplier.get();
@@ -76,7 +89,14 @@ public class InternalComponentIdentifier {
             matchesName = false;
         }
 
-        return matchesGroup || matchesName;
+        final String matchMode = matchModeSupplier.get();
+        if ("AND".equals(matchMode)) {
+            final boolean groupOk = patterns.groupPattern() == null || matchesGroup;
+            final boolean nameOk = patterns.namePattern() == null || matchesName;
+            return groupOk && nameOk;
+        } else {
+            return matchesGroup || matchesName;
+        }
     }
 
     private static Patterns loadPatterns() {

@@ -25,54 +25,64 @@ import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import org.dependencytrack.JerseyTestRule;
-import org.dependencytrack.ResourceTest;
-import org.dependencytrack.model.ConfigPropertyConstants;
-import org.dependencytrack.model.NotificationPublisher;
-import org.dependencytrack.model.NotificationRule;
-import org.dependencytrack.notification.NotificationGroup;
-import org.dependencytrack.notification.NotificationScope;
-import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
-import org.dependencytrack.notification.publisher.Publisher;
-import org.dependencytrack.notification.publisher.SendMailPublisher;
-import org.dependencytrack.notification.publisher.SlackPublisher;
-import org.dependencytrack.persistence.DefaultObjectGenerator;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Form;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.dependencytrack.JerseyTestExtension;
+import org.dependencytrack.ResourceTest;
+import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.NotificationRule;
+import org.dependencytrack.model.NotificationTriggerType;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.notification.publisher.DefaultNotificationPublishers;
+import org.dependencytrack.notification.publisher.Publisher;
+import org.dependencytrack.notification.publisher.SendMailPublisher;
+import org.dependencytrack.notification.publisher.SlackPublisher;
+import org.dependencytrack.notification.publisher.WebhookPublisher;
+import org.dependencytrack.persistence.DefaultObjectGenerator;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+@WireMockTest
 public class NotificationPublisherResourceTest extends ResourceTest {
 
-    @ClassRule
-    public static JerseyTestRule jersey = new JerseyTestRule(
-            new ResourceConfig(NotificationPublisherResource.class)
+    @RegisterExtension
+    public static JerseyTestExtension jersey = new JerseyTestExtension(
+            () -> new ResourceConfig(NotificationPublisherResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFilter.class));
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
-        super.before();
         final var generator = new DefaultObjectGenerator();
         generator.loadDefaultNotificationPublishers();
     }
@@ -82,17 +92,17 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals(8, json.size());
-        Assert.assertEquals("Console", json.getJsonObject(1).getString("name"));
-        Assert.assertEquals("Displays notifications on the system console", json.getJsonObject(1).getString("description"));
-        Assert.assertEquals("text/plain", json.getJsonObject(1).getString("templateMimeType"));
-        Assert.assertNotNull("template");
-        Assert.assertTrue(json.getJsonObject(1).getBoolean("defaultPublisher"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getJsonObject(1).getString("uuid")));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(8, json.size());
+        Assertions.assertEquals("Console", json.getJsonObject(1).getString("name"));
+        Assertions.assertEquals("Displays notifications on the system console", json.getJsonObject(1).getString("description"));
+        Assertions.assertEquals("text/plain", json.getJsonObject(1).getString("templateMimeType"));
+        Assertions.assertNotNull("template");
+        Assertions.assertTrue(json.getJsonObject(1).getBoolean("defaultPublisher"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getJsonObject(1).getString("uuid")));
     }
 
     @Test
@@ -107,16 +117,16 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(publisher, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(201, response.getStatus(), 0);
+        Assertions.assertEquals(201, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("Example Publisher", json.getString("name"));
-        Assert.assertFalse(json.getBoolean("defaultPublisher"));
-        Assert.assertEquals("Publisher description", json.getString("description"));
-        Assert.assertEquals("template", json.getString("template"));
-        Assert.assertEquals("application/json", json.getString("templateMimeType"));
-        Assert.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
-        Assert.assertEquals(SendMailPublisher.class.getName(), json.getString("publisherClass"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("Example Publisher", json.getString("name"));
+        Assertions.assertFalse(json.getBoolean("defaultPublisher"));
+        Assertions.assertEquals("Publisher description", json.getString("description"));
+        Assertions.assertEquals("template", json.getString("template"));
+        Assertions.assertEquals("application/json", json.getString("templateMimeType"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        Assertions.assertEquals(SendMailPublisher.class.getName(), json.getString("publisherClass"));
     }
 
     @Test
@@ -131,9 +141,9 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(publisher, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertEquals(400, response.getStatus(), 0);
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The creation of a new default publisher is forbidden", body);
+        Assertions.assertEquals("The creation of a new default publisher is forbidden", body);
     }
 
     @Test
@@ -148,9 +158,9 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(publisher, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(409, response.getStatus(), 0);
+        Assertions.assertEquals(409, response.getStatus(), 0);
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The notification with the name " + DefaultNotificationPublishers.SLACK.getPublisherName() + " already exist", body);
+        Assertions.assertEquals("The notification with the name " + DefaultNotificationPublishers.SLACK.getPublisherName() + " already exist", body);
     }
 
     @Test
@@ -165,9 +175,9 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(publisher, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertEquals(400, response.getStatus(), 0);
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The class " + NotificationPublisherResource.class.getName() + " does not implement " + Publisher.class.getName(), body);
+        Assertions.assertEquals("The class " + NotificationPublisherResource.class.getName() + " does not implement " + Publisher.class.getName(), body);
     }
 
     @Test
@@ -182,9 +192,9 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(publisher, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertEquals(400, response.getStatus(), 0);
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The class invalidClassFqcn cannot be found", body);
+        Assertions.assertEquals("The class invalidClassFqcn cannot be found", body);
     }
 
     @Test
@@ -198,16 +208,16 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(notificationPublisher, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
         JsonObject json = parseJsonObject(response);
-        Assert.assertNotNull(json);
-        Assert.assertEquals("Updated Publisher name", json.getString("name"));
-        Assert.assertFalse(json.getBoolean("defaultPublisher"));
-        Assert.assertEquals("Publisher description", json.getString("description"));
-        Assert.assertEquals("template", json.getString("template"));
-        Assert.assertEquals("text/html", json.getString("templateMimeType"));
-        Assert.assertEquals(notificationPublisher.getUuid().toString(), json.getString("uuid"));
-        Assert.assertEquals(SendMailPublisher.class.getName(), json.getString("publisherClass"));
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("Updated Publisher name", json.getString("name"));
+        Assertions.assertFalse(json.getBoolean("defaultPublisher"));
+        Assertions.assertEquals("Publisher description", json.getString("description"));
+        Assertions.assertEquals("template", json.getString("template"));
+        Assertions.assertEquals("text/html", json.getString("templateMimeType"));
+        Assertions.assertEquals(notificationPublisher.getUuid().toString(), json.getString("uuid"));
+        Assertions.assertEquals(SendMailPublisher.class.getName(), json.getString("publisherClass"));
     }
 
     @Test
@@ -222,10 +232,10 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(notificationPublisher, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(404, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The UUID of the notification publisher could not be found.", body);
+        Assertions.assertEquals("The UUID of the notification publisher could not be found.", body);
     }
 
     @Test
@@ -235,10 +245,10 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(notificationPublisher, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The modification of a default publisher is forbidden", body);
+        Assertions.assertEquals("The modification of a default publisher is forbidden", body);
     }
 
     @Test
@@ -253,10 +263,10 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(notificationPublisher, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(409, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(409, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("An existing publisher with the name '" + DefaultNotificationPublishers.MS_TEAMS.getPublisherName() + "' already exist", body);
+        Assertions.assertEquals("An existing publisher with the name '" + DefaultNotificationPublishers.MS_TEAMS.getPublisherName() + "' already exist", body);
     }
 
     @Test
@@ -270,10 +280,10 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(notificationPublisher, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The class unknownClass cannot be found", body);
+        Assertions.assertEquals("The class unknownClass cannot be found", body);
     }
 
     @Test
@@ -287,10 +297,10 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(notificationPublisher, MediaType.APPLICATION_JSON));
-        Assert.assertEquals(400, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("The class " + NotificationPublisherResource.class.getName() + " does not implement " + Publisher.class.getName(), body);
+        Assertions.assertEquals("The class " + NotificationPublisherResource.class.getName() + " does not implement " + Publisher.class.getName(), body);
     }
 
     @Test
@@ -303,8 +313,8 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/" + publisher.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(204, response.getStatus(), 0);
-        Assert.assertNull(qm.getObjectByUuid(NotificationPublisher.class, publisher.getUuid()));
+        Assertions.assertEquals(204, response.getStatus(), 0);
+        Assertions.assertNull(qm.getObjectByUuid(NotificationPublisher.class, publisher.getUuid()));
     }
 
     @Test
@@ -319,10 +329,10 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/" + publisher.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(204, response.getStatus(), 0);
-        Assert.assertNull(qm.getObjectByUuid(NotificationPublisher.class, publisher.getUuid()));
-        Assert.assertNull(qm.getObjectByUuid(NotificationRule.class, firstRule.getUuid()));
-        Assert.assertNull(qm.getObjectByUuid(NotificationRule.class, secondRule.getUuid()));
+        Assertions.assertEquals(204, response.getStatus(), 0);
+        Assertions.assertNull(qm.getObjectByUuid(NotificationPublisher.class, publisher.getUuid()));
+        Assertions.assertNull(qm.getObjectByUuid(NotificationRule.class, firstRule.getUuid()));
+        Assertions.assertNull(qm.getObjectByUuid(NotificationRule.class, secondRule.getUuid()));
     }
 
     @Test
@@ -330,7 +340,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/" + UUID.randomUUID()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(404, response.getStatus(), 0);
+        Assertions.assertEquals(404, response.getStatus(), 0);
     }
 
     @Test
@@ -339,10 +349,10 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/" + notificationPublisher.getUuid()).request()
                 .header(X_API_KEY, apiKey)
                 .delete();
-        Assert.assertEquals(400, response.getStatus(), 0);
-        Assert.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        Assertions.assertEquals(400, response.getStatus(), 0);
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assert.assertEquals("Deleting a default notification publisher is forbidden.", body);
+        Assertions.assertEquals("Deleting a default notification publisher is forbidden.", body);
     }
 
     @Test
@@ -352,7 +362,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/smtp").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-        Assert.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus(), 0);
     }
 
     @Test
@@ -376,7 +386,33 @@ public class NotificationPublisherResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity("", MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
-        Assert.assertEquals(200, sendMailResponse.getStatus());
+        Assertions.assertEquals(200, sendMailResponse.getStatus());
+    }
+
+    @Test
+    public void testScheduledNotificationRuleTest(WireMockRuntimeInfo wmRuntimeInfo) {
+        final var notificationPublisher = qm.getDefaultNotificationPublisher(WebhookPublisher.class);
+        final NotificationRule rule = qm.createScheduledNotificationRule(
+                "rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, notificationPublisher);
+        rule.setNotifyOn(
+                Arrays.stream(NotificationGroup.values())
+                        .filter(group -> group.getSupportedTriggerType() == NotificationTriggerType.SCHEDULE)
+                        .collect(Collectors.toSet()));
+
+        rule.setPublisherConfig("{\"destination\":\"%s\"}".formatted(wmRuntimeInfo.getHttpBaseUrl()));
+
+        stubFor(WireMock.post(WireMock.anyUrl())
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        final Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/" + rule.getUuid()).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity("", MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        await("Notification Delivery")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> verify(rule.getNotifyOn().size(), anyRequestedFor(anyUrl())));
     }
 
     @Test
@@ -399,6 +435,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
         notificationRule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
         notificationRule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
         notificationRule.setScope(NotificationScope.PORTFOLIO);
+        notificationRule.setTriggerType(NotificationTriggerType.EVENT);
         qm.persist(notificationRule);
 
         final var wireMock = new WireMockServer(options().dynamicPort());
@@ -418,7 +455,7 @@ public class NotificationPublisherResourceTest extends ResourceTest {
                     ConfigPropertyConstants.JIRA_PASSWORD.getPropertyType(),
                     ConfigPropertyConstants.JIRA_PASSWORD.getDescription());
 
-            wireMock.stubFor(WireMock.post(WireMock.anyUrl())
+            stubFor(WireMock.post(WireMock.anyUrl())
                     .willReturn(aResponse()
                             .withStatus(200)));
 
@@ -474,9 +511,9 @@ public class NotificationPublisherResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json(""));
         qm.getPersistenceManager().refreshAll();
-        Assert.assertEquals(200, response.getStatus(), 0);
-        Assert.assertFalse(qm.isEnabled(ConfigPropertyConstants.NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertFalse(qm.isEnabled(ConfigPropertyConstants.NOTIFICATION_TEMPLATE_DEFAULT_OVERRIDE_ENABLED));
         slackPublisher = qm.getDefaultNotificationPublisher(DefaultNotificationPublishers.SLACK.getPublisherClass());
-        Assert.assertEquals(DefaultNotificationPublishers.SLACK.getPublisherName(), slackPublisher.getName());
+        Assertions.assertEquals(DefaultNotificationPublishers.SLACK.getPublisherName(), slackPublisher.getName());
     }
 }

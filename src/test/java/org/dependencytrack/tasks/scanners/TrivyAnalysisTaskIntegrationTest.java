@@ -24,18 +24,20 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateVolumeResponse;
 import com.github.dockerjava.api.model.Bind;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.TrivyAnalysisEvent;
+import org.dependencytrack.event.ProjectVulnerabilityAnalysisEvent;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.dependencytrack.tasks.VulnerabilityAnalysisTask;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.images.PullPolicy;
@@ -43,35 +45,29 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_API_TOKEN;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_SCAN_LIBRARY;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_SCAN_OS;
 import static org.testcontainers.containers.wait.strategy.Wait.forLogMessage;
 
-@RunWith(Parameterized.class)
-public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
+class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
 
-    @Parameterized.Parameters(name = "[{index}] trivyVersion={0}")
-    public static Collection<?> testParameters() {
-        return Arrays.asList(new Object[][]{
-                {"0.51.1"}, // Pre breaking change of Application#libraries -> Application#packages
-                {"0.51.2"}, // Post breaking change of Application#libraries -> Application#packages
-                {"latest"}
-        });
+    public static Collection<Arguments> testParameters() {
+        return Arrays.asList(
+                Arguments.of("0.51.1"), // Pre breaking change of Application#libraries -> Application#packages
+                Arguments.of("0.51.2"), // Post breaking change of Application#libraries -> Application#packages
+                Arguments.of("latest")
+        );
     }
 
     private static String trivyCacheVolumeName;
-    private final String trivyVersion;
     private GenericContainer<?> trivyContainer;
 
-    public TrivyAnalysisTaskIntegrationTest(String trivyVersion) {
-        this.trivyVersion = trivyVersion;
-    }
-
-    @BeforeClass
+    @BeforeAll
     @SuppressWarnings("resource")
     public static void beforeClass() {
         final DockerClient dockerClient = DockerClientFactory.lazyClient();
@@ -81,12 +77,8 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         trivyCacheVolumeName = response.getName();
     }
 
-    @Before
-    @Override
     @SuppressWarnings("resource")
-    public void before() throws Exception {
-        super.before();
-
+    private void initTrivyContainer(String trivyVersion) throws Exception {
         trivyContainer = new GenericContainer<>(DockerImageName.parse("aquasec/trivy:" + trivyVersion))
                 .withImagePullPolicy(PullPolicy.alwaysPull())
                 .withCommand("server --cache-dir /tmp/cache --listen :8080 --token TrivyToken")
@@ -120,19 +112,31 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
                 SCANNER_TRIVY_API_TOKEN.getPropertyType(),
                 SCANNER_TRIVY_API_TOKEN.getDescription()
         );
+        qm.createConfigProperty(
+                SCANNER_TRIVY_SCAN_LIBRARY.getGroupName(),
+                SCANNER_TRIVY_SCAN_LIBRARY.getPropertyName(),
+                SCANNER_TRIVY_SCAN_LIBRARY.getDefaultPropertyValue(),
+                SCANNER_TRIVY_SCAN_LIBRARY.getPropertyType(),
+                SCANNER_TRIVY_SCAN_LIBRARY.getDescription()
+        );
+        qm.createConfigProperty(
+                SCANNER_TRIVY_SCAN_OS.getGroupName(),
+                SCANNER_TRIVY_SCAN_OS.getPropertyName(),
+                SCANNER_TRIVY_SCAN_OS.getDefaultPropertyValue(),
+                SCANNER_TRIVY_SCAN_OS.getPropertyType(),
+                SCANNER_TRIVY_SCAN_OS.getDescription()
+        );
     }
 
-    @After
-    @Override
+    @AfterEach
     public void after() {
         if (trivyContainer != null) {
             trivyContainer.stop();
+            trivyContainer = null;
         }
-
-        super.after();
     }
 
-    @AfterClass
+    @AfterAll
     @SuppressWarnings("resource")
     public static void afterClass() {
         if (trivyCacheVolumeName != null) {
@@ -141,8 +145,10 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         }
     }
 
-    @Test
-    public void test() {
+    @ParameterizedTest
+    @MethodSource("testParameters")
+    void test(String trivyVersion) throws Exception {
+        initTrivyContainer(trivyVersion);
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -156,8 +162,9 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         componentA.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0");
         qm.persist(componentA);
 
-        final var analysisEvent = new TrivyAnalysisEvent(List.of(componentA));
-        new TrivyAnalysisTask().inform(analysisEvent);
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
 
         assertThat(qm.getAllVulnerabilities(componentA)).anySatisfy(vuln -> {
             assertThat(vuln.getVulnId()).isEqualTo("CVE-2022-40152");
@@ -225,8 +232,10 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
      * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2560">Add support for CycloneDX component properties</a>
      * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/3369">Support component properties with Trivy</a>
      */
-    @Test
-    public void testWithPackageWithoutTrivyProperties() {
+    @ParameterizedTest
+    @MethodSource("testParameters")
+    void testWithPackageWithoutTrivyProperties(String trivyVersion) throws Exception {
+        initTrivyContainer(trivyVersion);
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -246,8 +255,9 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         component.setPurl("pkg:deb/ubuntu/libc6@2.35-0ubuntu3.4?arch=amd64&distro=ubuntu-22.04");
         qm.persist(component);
 
-        final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
-        new TrivyAnalysisTask().inform(analysisEvent);
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
 
         assertThat(qm.getAllVulnerabilities(component)).isEmpty();
     }
@@ -299,8 +309,10 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
      * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2560">Add support for CycloneDX component properties</a>
      * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/3369">Support component properties with Trivy</a>
      */
-    @Test
-    public void testWithPackageWithTrivyProperties() {
+    @ParameterizedTest
+    @MethodSource("testParameters")
+    void testWithPackageWithTrivyProperties(String trivyVersion) throws Exception {
+        initTrivyContainer(trivyVersion);
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -326,17 +338,18 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         qm.createComponentProperty(component, "aquasecurity", "trivy:PkgType", "ubuntu", IConfigProperty.PropertyType.STRING, null);
 
 
-        final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
-        new TrivyAnalysisTask().inform(analysisEvent);
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
 
         assertThat(qm.getAllVulnerabilities(component)).anySatisfy(vuln -> {
-            assertThat(vuln.getVulnId()).isEqualTo("CVE-2016-20013");
+            assertThat(vuln.getVulnId()).isEqualTo("CVE-2025-4802");
             assertThat(vuln.getSource()).isEqualTo(Vulnerability.Source.NVD.name());
 
             // NB: Can't assert specific values here, as we're testing against
             // a moving target. These values may change over time. We do proper
             // assertions in TrivyAnalyzerTaskTest.
-            assertThat(vuln.getTitle()).isBlank();
+            assertThat(vuln.getTitle()).isNotBlank();
             assertThat(vuln.getDescription()).isNotBlank();
             assertThat(vuln.getCreated()).isNotNull();
             assertThat(vuln.getPublished()).isNotNull();
@@ -391,8 +404,10 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
      * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2560">Add support for CycloneDX component properties</a>
      * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/3369">Support component properties with Trivy</a>
      */
-    @Test
-    public void testWithPackageWithTrivyPropertiesWithDistroWithoutOS() {
+    @ParameterizedTest
+    @MethodSource("testParameters")
+    void testWithPackageWithTrivyPropertiesWithDistroWithoutOS(String trivyVersion) throws Exception {
+        initTrivyContainer(trivyVersion);
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -417,8 +432,9 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         qm.createComponentProperty(component, "aquasecurity", "trivy:SrcName", "git", IConfigProperty.PropertyType.STRING, null);
         qm.createComponentProperty(component, "aquasecurity", "trivy:SrcVersion", "2.43.0-r0", IConfigProperty.PropertyType.STRING, null);
 
-        final var analysisEvent = new TrivyAnalysisEvent(List.of(osComponent, component));
-        new TrivyAnalysisTask().inform(analysisEvent);
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
 
         assertThat(qm.getAllVulnerabilities(component)).anySatisfy(vuln -> {
             assertThat(vuln.getVulnId()).isEqualTo("CVE-2024-32002");
@@ -437,8 +453,11 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         });
     }
 
-    @Test // https://github.com/DependencyTrack/dependency-track/issues/4376
-    public void testWithGoPackage() {
+    @ParameterizedTest
+    @MethodSource("testParameters")
+        // https://github.com/DependencyTrack/dependency-track/issues/4376
+    void testWithGoPackage(String trivyVersion) throws Exception {
+        initTrivyContainer(trivyVersion);
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -451,10 +470,50 @@ public class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
         component.setPurl("pkg:golang/github.com/nats-io/nkeys@0.4.4");
         qm.persist(component);
 
-        final var analysisEvent = new TrivyAnalysisEvent(List.of(component));
-        new TrivyAnalysisTask().inform(analysisEvent);
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
 
         assertThat(qm.getAllVulnerabilities(component)).hasSizeGreaterThanOrEqualTo(1);
+    }
+
+    @Test
+    void testIssue5216Regression() throws Exception {
+        initTrivyContainer("latest");
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var osComponent = new Component();
+        osComponent.setProject(project);
+        osComponent.setClassifier(Classifier.OPERATING_SYSTEM);
+        osComponent.setName("amazon");
+        osComponent.setVersion("2 (Karoo)");
+        qm.persist(osComponent);
+        qm.createComponentProperty(osComponent, "aquasecurity", "trivy:Class", "os-pkgs", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(osComponent, "aquasecurity", "trivy:Type", "amazon", IConfigProperty.PropertyType.STRING, null);
+
+        final var pkgComponent = new Component();
+        pkgComponent.setProject(project);
+        pkgComponent.setClassifier(Classifier.LIBRARY);
+        pkgComponent.setName("libxml2");
+        pkgComponent.setVersion("2.9.1-6.amzn2.5.18");
+        pkgComponent.setPurl("pkg:rpm/amazon/libxml2@2.9.1-6.amzn2.5.18?arch=x86_64&distro=amazon-2+%28Karoo%29");
+        qm.persist(pkgComponent);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:LayerDiffID", "sha256:61f240a8747b2f8f13a54e1ee5a887e389b6f37a10185c117522b45861f25224", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:LayerDigest", "sha256:59c3b062666ba29c100bd47e4ef63a7010fdd4d56e4483d5f68f9ba709e6f55c", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:PkgID", "libxml2@2.9.1-6.amzn2.5.18.x86_64", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:PkgType", "amazon", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:SrcName", "libxml2", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:SrcRelease", "6.amzn2.5.18", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(pkgComponent, "aquasecurity", "trivy:SrcVersion", "2.9.1", IConfigProperty.PropertyType.STRING, null);
+
+        final var analysisEvent = new ProjectVulnerabilityAnalysisEvent(
+                project, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+        new VulnerabilityAnalysisTask().inform(analysisEvent);
+
+        assertThat(qm.getAllVulnerabilities(pkgComponent)).hasSizeGreaterThanOrEqualTo(1);
     }
 
 }

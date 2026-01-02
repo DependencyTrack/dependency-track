@@ -18,23 +18,16 @@
  */
 package org.dependencytrack.event;
 
+import alpine.event.framework.Event;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 
 import java.util.List;
 
 /**
  * Defines an event used to start an analysis via Trivy API.
  */
-public class TrivyAnalysisEvent extends VulnerabilityAnalysisEvent {
-
-    public TrivyAnalysisEvent() { }
-
-    public TrivyAnalysisEvent(final Component component) {
-        super(component);
-    }
-
-    public TrivyAnalysisEvent(final List<Component> components) {
-        super(components);
-    }
-
+public record TrivyAnalysisEvent(
+        List<Component> components,
+        VulnerabilityAnalysisLevel analysisLevel) implements Event {
 }

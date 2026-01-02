@@ -18,64 +18,64 @@
  */
 package org.dependencytrack.model;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class RepositoryTest {
+class RepositoryTest {
 
     @Test
-    public void testId() {
+    void testId() {
         Repository repo = new Repository();
         repo.setId(111L);
-        Assert.assertEquals(111L, repo.getId());
+        Assertions.assertEquals(111L, repo.getId());
     }
 
     @Test
-    public void testType() {
+    void testType() {
         Repository repo = new Repository();
         repo.setType(RepositoryType.MAVEN);
-        Assert.assertEquals(RepositoryType.MAVEN, repo.getType());
+        Assertions.assertEquals(RepositoryType.MAVEN, repo.getType());
     }
 
     @Test
-    public void testIdentifier() {
+    void testIdentifier() {
         Repository repo = new Repository();
         repo.setIdentifier("maven-central");
-        Assert.assertEquals("maven-central", repo.getIdentifier());
+        Assertions.assertEquals("maven-central", repo.getIdentifier());
     }
 
     @Test
-    public void testUrl() {
+    void testUrl() {
         Repository repo = new Repository();
         repo.setUrl("https://repo.maven.apache.org/maven2");
-        Assert.assertEquals("https://repo.maven.apache.org/maven2", repo.getUrl());
+        Assertions.assertEquals("https://repo.maven.apache.org/maven2", repo.getUrl());
     }
 
     @Test
-    public void testResolutionOrder() {
+    void testResolutionOrder() {
         Repository repo = new Repository();
         repo.setResolutionOrder(5);
-        Assert.assertEquals(5, repo.getResolutionOrder());
+        Assertions.assertEquals(5, repo.getResolutionOrder());
     }
 
     @Test
-    public void testEnabled() {
+    void testEnabled() {
         Repository repo = new Repository();
         repo.setEnabled(true);
-        Assert.assertTrue(repo.isEnabled());
+        Assertions.assertTrue(repo.isEnabled());
     }
 
     @Test
-    public void testAuthenticationRequiredTrue() {
+    void testAuthenticationRequiredTrue() {
         Repository repo = new Repository();
         repo.setAuthenticationRequired(true);
-        Assert.assertTrue(repo.isAuthenticationRequired());
+        Assertions.assertTrue(repo.isAuthenticationRequired());
     }
 
     @Test
-    public void testAuthenticationRequiredFalse() {
+    void testAuthenticationRequiredFalse() {
         Repository repo = new Repository();
         repo.setAuthenticationRequired(false);
-        Assert.assertFalse(repo.isAuthenticationRequired());
+        Assertions.assertFalse(repo.isAuthenticationRequired());
     }
 } 

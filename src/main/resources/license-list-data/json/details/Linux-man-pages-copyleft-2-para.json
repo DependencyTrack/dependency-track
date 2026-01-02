@@ -6,22 +6,22 @@
   "licenseId": "Linux-man-pages-copyleft-2-para",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man2/move_pages.2#n5",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2024-08-19T17:39:51Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "N/A",
+      "match": "false",
       "url": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man2/migrate_pages.2#n8",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2024-08-19T17:39:51Z",
+      "isLive": true,
+      "timestamp": "2025-07-01T15:03:30Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man2/move_pages.2#n5",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2025-07-01T15:03:30Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

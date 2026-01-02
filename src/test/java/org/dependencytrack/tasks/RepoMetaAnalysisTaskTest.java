@@ -1,11 +1,13 @@
 package org.dependencytrack.tasks;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.List;
-
+import alpine.event.framework.EventService;
+import com.github.packageurl.PackageURL;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.http.Body;
+import com.github.tomakehurst.wiremock.http.ContentTypeHeader;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import jakarta.ws.rs.core.MediaType;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.RepositoryMetaEvent;
 import org.dependencytrack.model.Component;
@@ -14,42 +16,36 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.tasks.repositories.RepositoryMetaAnalyzerTask;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import com.github.packageurl.PackageURL;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.http.Body;
-import com.github.tomakehurst.wiremock.http.ContentTypeHeader;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import java.util.List;
 
-import alpine.event.framework.EventService;
-import jakarta.ws.rs.core.MediaType;
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
+@WireMockTest
+class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
 
-    @Rule
-    public WireMockRule wireMockRule = new WireMockRule(options().port(2345));
+    private WireMockRuntimeInfo wmRuntimeInfo;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    public void setUp(WireMockRuntimeInfo wmRuntimeInfo) {
+        this.wmRuntimeInfo = wmRuntimeInfo;
         qm.createConfigProperty(ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(),
                 ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName(), "43200000",
                 ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyType(),
                 ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getDescription());
-        wireMockRule.start();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         EventService.getInstance().unsubscribe(RepositoryMetaAnalyzerTask.class);
-        wireMockRule.stop();
     }
 
     @Test
-    public void informTestNullPassword() throws Exception {
+    void informTestNullPassword() throws Exception {
         WireMock.stubFor(WireMock.get(WireMock.anyUrl()).withHeader("Authorization", containing("Basic"))
                 .willReturn(WireMock.aResponse()
                         .withStatus(200)
@@ -87,7 +83,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         component.setName("junit");
         component.setPurl(new PackageURL("pkg:maven/junit/junit@4.12"));
         qm.createComponent(component, false);
-        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, "testuser", null);
+        qm.createRepository(RepositoryType.MAVEN, "test", wmRuntimeInfo.getHttpBaseUrl(), true, false, true, "testuser", null);
         new RepositoryMetaAnalyzerTask().inform(new RepositoryMetaEvent(List.of(component)));
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "junit", "junit");
         qm.getPersistenceManager().refresh(metaComponent);
@@ -95,7 +91,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informTestNullUserName() throws Exception {
+    void informTestNullUserName() throws Exception {
         WireMock.stubFor(WireMock.get(WireMock.anyUrl()).withHeader("Authorization", containing("Bearer"))
                 .willReturn(WireMock.aResponse()
                         .withStatus(200)
@@ -133,7 +129,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         component.setName("test1");
         component.setPurl(new PackageURL("pkg:maven/test1/test1@1.2.0"));
         qm.createComponent(component, false);
-        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, null, "testPassword");
+        qm.createRepository(RepositoryType.MAVEN, "test", wmRuntimeInfo.getHttpBaseUrl(), true, false, true, null, "testPassword");
         new RepositoryMetaAnalyzerTask().inform(new RepositoryMetaEvent(List.of(component)));
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test1", "test1");
         qm.getPersistenceManager().refresh(metaComponent);
@@ -141,7 +137,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informTestNullUserNameAndPassword() throws Exception {
+    void informTestNullUserNameAndPassword() throws Exception {
         WireMock.stubFor(WireMock.get(WireMock.anyUrl())
                 .willReturn(WireMock.aResponse()
                         .withStatus(200)
@@ -179,7 +175,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         component.setName("junit");
         component.setPurl(new PackageURL("pkg:maven/test2/test2@4.12"));
         qm.createComponent(component, false);
-        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, false, null, null);
+        qm.createRepository(RepositoryType.MAVEN, "test", wmRuntimeInfo.getHttpBaseUrl(), true, false, false, null, null);
         new RepositoryMetaAnalyzerTask().inform(new RepositoryMetaEvent(List.of(component)));
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test2", "test2");
         qm.getPersistenceManager().refresh(metaComponent);
@@ -187,7 +183,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void informTestUserNameAndPassword() throws Exception {
+    void informTestUserNameAndPassword() throws Exception {
         WireMock.stubFor(WireMock.get(WireMock.anyUrl()).withHeader("Authorization", containing("Basic"))
                 .willReturn(WireMock.aResponse()
                         .withStatus(200)
@@ -225,7 +221,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         component.setName("test3");
         component.setPurl(new PackageURL("pkg:maven/test3/test3@4.12"));
         qm.createComponent(component, false);
-        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, "testUser", "testPassword");
+        qm.createRepository(RepositoryType.MAVEN, "test", wmRuntimeInfo.getHttpBaseUrl(), true, false, true, "testUser", "testPassword");
         new RepositoryMetaAnalyzerTask().inform(new RepositoryMetaEvent(List.of(component)));
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test3", "test3");
         qm.getPersistenceManager().refresh(metaComponent);
@@ -271,7 +267,7 @@ public class RepoMetaAnalysisTaskTest extends PersistenceCapableTest {
         component.setName("test3");
         component.setPurl(new PackageURL("pkg:maven/test4/test4@5.12"));
         qm.createComponent(component, false);
-        qm.createRepository(RepositoryType.MAVEN, "test", wireMockRule.baseUrl(), true, false, true, null, "testPassword");
+        qm.createRepository(RepositoryType.MAVEN, "test", wmRuntimeInfo.getHttpBaseUrl(), true, false, true, null, "testPassword");
         new RepositoryMetaAnalyzerTask().inform(new RepositoryMetaEvent(List.of(component)));
         RepositoryMetaComponent metaComponent = qm.getRepositoryMetaComponent(RepositoryType.MAVEN, "test4", "test4");
         qm.getPersistenceManager().refresh(metaComponent);

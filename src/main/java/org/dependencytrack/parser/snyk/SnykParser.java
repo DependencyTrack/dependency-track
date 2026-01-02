@@ -83,10 +83,18 @@ public class SnykParser {
 
                 for (int countCoordinates = 0; countCoordinates < coordinates.length(); countCoordinates++) {
                     JSONArray representation = coordinates.getJSONObject(countCoordinates).optJSONArray("representation");
-                    if ((representation.length() == 1 && representation.get(0).equals("*"))) {
+                    boolean v3 = false;
+                    if (representation == null) {
+                        representation = coordinates.getJSONObject(countCoordinates).optJSONArray("representations");
+                        v3 = true;
+                    }
+                    boolean anyRange = representation.length() == 1 && (v3
+                            ? representation.getJSONObject(0).optString("resource_path").equals("*")
+                            : representation.get(0).equals("*"));
+                    if (anyRange) {
                         LOGGER.debug("Range only contains *. Will not compute vulnerable software for this range. Purl is: "+purl);
                     } else {
-                        vsList = parseVersionRanges(qm, purl, representation);
+                        vsList = parseVersionRanges(qm, purl, representation, v3);
                     }
 
                     JSONArray remedies = coordinates.getJSONObject(countCoordinates).optJSONArray("remedies");
@@ -102,7 +110,10 @@ public class SnykParser {
             }
             final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(vulnerability.getSource(), vulnerability.getVulnId()));
             synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
-            if (synchronizedVulnerability == null) return vulnerability;
+            if (synchronizedVulnerability == null) {
+                // Vulnerability already exists but is unchanged.
+                return qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
+            }
             qm.persist(vsList);
             qm.updateAffectedVersionAttributions(synchronizedVulnerability, vsList, Vulnerability.Source.SNYK);
             vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.SNYK);
@@ -239,7 +250,7 @@ public class SnykParser {
         return cvss;
     }
 
-    public List<VulnerableSoftware> parseVersionRanges(final QueryManager qm, final String purl, final JSONArray ranges) {
+    public List<VulnerableSoftware> parseVersionRanges(final QueryManager qm, final String purl, final JSONArray ranges, final boolean v3) {
 
         List<VulnerableSoftware> vulnerableSoftwares = new ArrayList<>();
         if (purl == null) {
@@ -256,7 +267,9 @@ public class SnykParser {
         }
         for (int i = 0; i < ranges.length(); i++) {
 
-            String range = ranges.optString(i);
+            String range = v3
+                ? ranges.getJSONObject(i).optString("resource_path")
+                : ranges.optString(i);
             String versionStartIncluding = null;
             String versionStartExcluding = null;
             String versionEndIncluding = null;
@@ -303,7 +316,7 @@ public class SnykParser {
             
             //check for a numeric definite version range
             if ((versionStartIncluding != null && versionEndIncluding != null) || (versionStartIncluding != null && versionEndExcluding != null) || (versionStartExcluding != null && versionEndIncluding != null) || (versionStartExcluding != null && versionEndExcluding != null)) {
-                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
+                VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(packageURL.getType(), packageURL.getNamespace(), packageURL.getName(), packageURL.getVersion(), versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
                 if (vs == null) {
                     vs = new VulnerableSoftware();
                     vs.setVulnerable(true);

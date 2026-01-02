@@ -1,0 +1,104 @@
+{
+  "affected": [
+    {
+      "database_specific": {
+        "last_known_affected_version_range": "<= 1.2.4",
+        "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2022/05/GHSA-p836-389h-j692/GHSA-p836-389h-j692.json"
+      },
+      "package": {
+        "ecosystem": "Maven",
+        "name": "org.apache.shiro:shiro-core",
+        "purl": "pkg:maven/org.apache.shiro/shiro-core"
+      },
+      "ranges": [
+        {
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "1.2.5"
+            }
+          ],
+          "type": "ECOSYSTEM"
+        }
+      ],
+      "versions": [
+        "1.0.0-incubating",
+        "1.1.0",
+        "1.2.0",
+        "1.2.1",
+        "1.2.2",
+        "1.2.3",
+        "1.2.4"
+      ]
+    }
+  ],
+  "aliases": [
+    "CVE-2016-4437"
+  ],
+  "database_specific": {
+    "cwe_ids": [
+      "CWE-284",
+      "CWE-321"
+    ],
+    "github_reviewed": true,
+    "github_reviewed_at": "2022-07-06T19:56:32Z",
+    "nvd_published_at": "2016-06-07T14:06:00Z",
+    "severity": "CRITICAL"
+  },
+  "details": "Apache Shiro before 1.2.5, when a cipher key has not been configured for the \"remember me\" feature, allows remote attackers to execute arbitrary code or bypass intended access restrictions via an unspecified request parameter.",
+  "id": "GHSA-p836-389h-j692",
+  "modified": "2025-10-22T19:25:56.524449Z",
+  "published": "2022-05-14T02:46:17Z",
+  "references": [
+    {
+      "type": "ADVISORY",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2016-4437"
+    },
+    {
+      "type": "WEB",
+      "url": "https://lists.apache.org/thread.html/ef3a800c7d727a00e04b78e2f06c5cd8960f09ca28c9b69d94c3c4c4%40%3Cannouncements.aurora.apache.org%3E"
+    },
+    {
+      "type": "WEB",
+      "url": "https://lists.apache.org/thread.html/ef3a800c7d727a00e04b78e2f06c5cd8960f09ca28c9b69d94c3c4c4@%3Cannouncements.aurora.apache.org%3E"
+    },
+    {
+      "type": "WEB",
+      "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2016-4437"
+    },
+    {
+      "type": "WEB",
+      "url": "http://packetstormsecurity.com/files/137310/Apache-Shiro-1.2.4-Information-Disclosure.html"
+    },
+    {
+      "type": "WEB",
+      "url": "http://packetstormsecurity.com/files/157497/Apache-Shiro-1.2.4-Remote-Code-Execution.html"
+    },
+    {
+      "type": "WEB",
+      "url": "http://rhn.redhat.com/errata/RHSA-2016-2035.html"
+    },
+    {
+      "type": "WEB",
+      "url": "http://rhn.redhat.com/errata/RHSA-2016-2036.html"
+    },
+    {
+      "type": "WEB",
+      "url": "http://www.securityfocus.com/archive/1/538570/100/0/threaded"
+    },
+    {
+      "type": "WEB",
+      "url": "http://www.securityfocus.com/bid/91024"
+    }
+  ],
+  "schema_version": "1.7.3",
+  "severity": [
+    {
+      "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H/E:H",
+      "type": "CVSS_V3"
+    }
+  ],
+  "summary": "Improper Access Control in Apache Shiro"
+}

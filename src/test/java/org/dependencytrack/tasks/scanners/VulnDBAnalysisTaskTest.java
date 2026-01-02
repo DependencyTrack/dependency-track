@@ -24,6 +24,7 @@ import alpine.notification.NotificationService;
 import alpine.notification.Subscriber;
 import alpine.notification.Subscription;
 import alpine.security.crypto.DataEncryption;
+import jakarta.json.Json;
 import org.apache.http.HttpHeaders;
 import org.assertj.core.api.SoftAssertions;
 import org.dependencytrack.PersistenceCapableTest;
@@ -33,15 +34,15 @@ import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.dependencytrack.model.VulnerabilityAnalysisLevel;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
 
-import jakarta.json.Json;
 import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Date;
@@ -57,17 +58,18 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_O
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
+class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
 
     private static ClientAndServer mockServer;
+    private static final Subscription SUBSCRIPTION = new Subscription(NotificationSubscriber.class);
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
-        NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
+        NotificationService.getInstance().subscribe(SUBSCRIPTION);
         mockServer = ClientAndServer.startClientAndServer(1080);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         qm.createConfigProperty(SCANNER_VULNDB_ENABLED.getGroupName(),
                 SCANNER_VULNDB_ENABLED.getPropertyName(),
@@ -91,20 +93,20 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
                 "secret");
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         mockServer.reset();
         NOTIFICATIONS.clear();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         mockServer.stop();
-        NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
+        NotificationService.getInstance().unsubscribe(SUBSCRIPTION);
     }
 
     @Test
-    public void testIsCapable() {
+    void testIsCapable() {
         final var asserts = new SoftAssertions();
 
         for (final Map.Entry<String, Boolean> test : Map.of(
@@ -120,7 +122,7 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAnalyzeWithOneIssue() {
+    void testAnalyzeWithOneIssue() {
         mockServer
                 .when(request()
                         .withMethod("GET")
@@ -225,7 +227,8 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
         component.setCpe("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*");
         component = qm.createComponent(component, false);
 
-        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(component));
+        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
 
@@ -244,7 +247,7 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAnalyzeWithNoIssue() {
+    void testAnalyzeWithNoIssue() {
         mockServer
                 .when(request()
                         .withMethod("GET")
@@ -274,7 +277,8 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
         component.setCpe("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*");
         component = qm.createComponent(component, false);
 
-        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(component));
+        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
 
@@ -291,7 +295,7 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testAnalyzeWithCurrentCache() {
+    void testAnalyzeWithCurrentCache() {
         var vuln = new Vulnerability();
         vuln.setVulnId("VULNDB-001");
         vuln.setSource(Vulnerability.Source.VULNDB);
@@ -316,7 +320,8 @@ public class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
         component.setCpe("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*");
         component = qm.createComponent(component, false);
 
-        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(component));
+        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(1);

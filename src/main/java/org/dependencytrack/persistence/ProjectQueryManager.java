@@ -45,17 +45,18 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.FindingAttribution;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -74,6 +75,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -83,6 +85,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
+import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
 final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
@@ -172,31 +176,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     @Override
     public PaginatedResult getProjects() {
         return getProjects(false);
-    }
-
-    /**
-     * Returns a list of all projects.
-     * This method if designed NOT to provide paginated results.
-     * @return a List of Projects
-     */
-    @Override
-    public List<Project> getAllProjects() {
-        return getAllProjects(false);
-    }
-
-    /**
-     * Returns a list of all projects.
-     * This method if designed NOT to provide paginated results.
-     * @return a List of Projects
-     */
-    @Override
-    public List<Project> getAllProjects(boolean excludeInactive) {
-        final Query<Project> query = pm.newQuery(Project.class);
-        if (excludeInactive) {
-            query.setFilter("active");
-        }
-        query.setOrdering("id asc");
-        return query.executeList();
     }
 
     /**
@@ -480,7 +459,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      * @return the created Project
      */
     @Override
-    public Project createProject(final Project project, List<Tag> tags, boolean commitIndex) {
+    public Project createProject(final Project project, Collection<Tag> tags, boolean commitIndex) {
         if (project.getParent() != null && !Boolean.TRUE.equals(project.getParent().isActive())){
             throw new IllegalArgumentException("An inactive Parent cannot be selected as parent");
         }
@@ -492,8 +471,19 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 persist(oldLatestProject);
             }
 
+            if (project.getCollectionLogic() == ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN_WITH_TAG
+                && project.getCollectionTag() != null) {
+                final Tag resolvedCollectionTag = resolveTags(List.of(project.getCollectionTag())).iterator().next();
+                project.setCollectionTag(resolvedCollectionTag);
+            } else {
+                project.setCollectionTag(null);
+            }
+
+            // Ensure that tags are not created implicitly but go through resolveTags instead.
+            final Set<Tag> resolvedTags = resolveTags(tags);
+            project.setTags(null);
+
             final Project newProject = persist(project);
-            final List<Tag> resolvedTags = resolveTags(tags);
             bind(project, resolvedTags);
             return newProject;
         });
@@ -591,16 +581,16 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 persist(oldLatestProject);
             }
 
-            final List<Tag> resolvedTags = resolveTags(transientProject.getTags());
+            final Set<Tag> resolvedTags = resolveTags(transientProject.getTags());
             bind(project, resolvedTags);
 
             // Set collection tag only if selected collectionLogic requires it. Clear it otherwise.
             if(transientProject.getCollectionLogic().equals(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN_WITH_TAG) &&
                     transientProject.getCollectionTag() != null) {
-                final List<Tag> resolvedCollectionTags = resolveTags(Collections.singletonList(
+                final Set<Tag> resolvedCollectionTags = resolveTags(Collections.singletonList(
                         transientProject.getCollectionTag()
                 ));
-                project.setCollectionTag(resolvedCollectionTags.get(0));
+                project.setCollectionTag(resolvedCollectionTags.iterator().next());
             } else {
                 project.setCollectionTag(null);
             }
@@ -768,6 +758,24 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 if (sourceComponents != null) {
                     for (final Component sourceComponent : sourceComponents) {
                         final Component clonedComponent = cloneComponent(sourceComponent, project, false);
+
+                        if (sourceComponent.getProperties() != null && !sourceComponent.getProperties().isEmpty()) {
+                            final var clonedProperties = new ArrayList<ComponentProperty>(sourceComponent.getProperties().size());
+                            for (final ComponentProperty sourceProperty : sourceComponent.getProperties()) {
+                                final ComponentProperty clonedProperty = new ComponentProperty();
+                                clonedProperty.setComponent(clonedComponent);
+                                clonedProperty.setPropertyType(sourceProperty.getPropertyType());
+                                clonedProperty.setGroupName(sourceProperty.getGroupName());
+                                clonedProperty.setPropertyName(sourceProperty.getPropertyName());
+                                clonedProperty.setPropertyValue(sourceProperty.getPropertyValue());
+                                clonedProperty.setDescription(sourceProperty.getDescription());
+                                clonedProperties.add(clonedProperty);
+                            }
+
+                            persist(clonedProperties);
+                            clonedComponent.setProperties(clonedProperties);
+                        }
+
                         // Add vulnerabilties and finding attribution from the source component to the cloned component
                         for (Vulnerability vuln : sourceComponent.getVulnerabilities()) {
                             final FindingAttribution sourceAttribution = this.getFindingAttribution(vuln, sourceComponent);
@@ -905,6 +913,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if(clonedProject.getParent() != null && clonedProject.getParent().getCollectionLogic() != ProjectCollectionLogic.NONE) {
             Event.dispatch(new ProjectMetricsUpdateEvent(clonedProject.getParent().getUuid()));
         }
+        Event.dispatch(new ProjectMetricsUpdateEvent(clonedProject.getUuid()));
 
         return clonedProject;
     }
@@ -1065,6 +1074,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
+                    DELETE FROM "POLICYVIOLATION" WHERE "PROJECT_ID" = ANY(?);
+                    """.replace("= ANY(?)", inExpression)
+                );
+                executeAndCloseWithArray(sqlQuery, queryParameter);
+
                 // Deletion with CTEs does not work with H2, but verified on Postgres and MS SQL Server
                 if (!DbUtil.isH2()) {
                     if (DbUtil.isPostgreSQL()) {
@@ -1173,12 +1188,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
                 sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "VIOLATIONANALYSIS" WHERE "PROJECT_ID" = ANY(?);
-                    """.replace("= ANY(?)", inExpression)
-                );
-                executeAndCloseWithArray(sqlQuery, queryParameter);
-
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
-                    DELETE FROM "POLICYVIOLATION" WHERE "PROJECT_ID" = ANY(?);
                     """.replace("= ANY(?)", inExpression)
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
@@ -1370,30 +1379,60 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
+     * @since 4.12.3
+     */
+    @Override
+    public boolean bind(final Project project, final Collection<Tag> tags, final boolean keepExisting) {
+        assertPersistent(project, "project must be persistent");
+        assertPersistentAll(tags, "tags must be persistent");
+
+        return callInTransaction(() -> {
+            boolean modified = false;
+
+            if (project.getTags() == null) {
+                project.setTags(new HashSet<>());
+            }
+
+            if (!keepExisting) {
+                final Iterator<Tag> existingTagsIterator = project.getTags().iterator();
+                while (existingTagsIterator.hasNext()) {
+                    final Tag existingTag = existingTagsIterator.next();
+                    if (!tags.contains(existingTag)) {
+                        existingTagsIterator.remove();
+                        if (existingTag.getProjects() != null) {
+                            existingTag.getProjects().remove(project);
+                        }
+                        modified = true;
+                    }
+                }
+            }
+
+            for (final Tag tag : tags) {
+                if (!project.getTags().contains(tag)) {
+                    project.getTags().add(tag);
+
+                    if (tag.getProjects() == null) {
+                        tag.setProjects(new HashSet<>(Set.of(project)));
+                    } else {
+                        tag.getProjects().add(project);
+                    }
+
+                    modified = true;
+                }
+            }
+
+            return modified;
+        });
+    }
+
+    /**
      * Binds the two objects together in a corresponding join table.
      * @param project a Project object
      * @param tags a List of Tag objects
      */
     @Override
-    public void bind(Project project, List<Tag> tags) {
-        runInTransaction(() -> {
-            final Query<Tag> query = pm.newQuery(Tag.class, "projects.contains(:project)");
-            query.setParameters(project);
-            final List<Tag> currentProjectTags = executeAndCloseList(query);
-
-            for (final Tag tag : currentProjectTags) {
-                if (!tags.contains(tag)) {
-                    tag.getProjects().remove(project);
-                }
-            }
-            project.setTags(tags);
-            for (final Tag tag : tags) {
-                final List<Project> projects = tag.getProjects();
-                if (!projects.contains(project)) {
-                    projects.add(project);
-                }
-            }
-        });
+    public void bind(final Project project, final Collection<Tag> tags) {
+        bind(project, tags, /* keepExisting */ false);
     }
 
     /**

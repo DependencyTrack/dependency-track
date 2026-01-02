@@ -57,22 +57,22 @@ class NugetMetaAnalyzerTest {
     private static void setupMockServerClient(
             String path,
             String responseFile,
-            String encodedBasicHeader
+            String authHeader
     ) throws Exception {
-        setupMockServerClient(path, responseFile, encodedBasicHeader, "application/json", 200);
+        setupMockServerClient(path, responseFile, authHeader, "application/json", 200);
     }
 
     private static void setupMockServerClient(
             String path,
             String responseFile,
-            String encodedBasicHeader,
+            String authHeader,
             String contentType,
             int statusCode
     ) throws Exception {
 
         List<Header> headers = new ArrayList<>();
-        if (encodedBasicHeader != null) {
-            headers.add(new Header("Authorization", encodedBasicHeader));
+        if (authHeader != null) {
+            headers.add(new Header("Authorization", authHeader));
         }
 
         new MockServerClient("localhost", 1080)

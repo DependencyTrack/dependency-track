@@ -61,6 +61,9 @@ for information on Package URL and the various ways it is used throughout Depend
 
 ### Authentication
 
+For each repository a Username and Password can be specified to perform Basic Authentication.
+To use Bearer Token authentication, leave the Username field empty and fill out the Token in the Password field.
+
 #### GitHub
 
 For GitHub repositories (`github.com` per default), the username should be the GitHub account's username,

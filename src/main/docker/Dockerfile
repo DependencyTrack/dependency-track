@@ -64,41 +64,43 @@ ENV TZ=Etc/UTC \
 # Create a user and assign home directory to a ${DATA_DIR}
 # Ensure UID 1000 & GID 1000 own all the needed directories
 RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
-    && groupadd --system --gid ${GID} dtrack || true \
-    && useradd --system --no-user-group --gid dtrack --no-create-home --home-dir ${DATA_DIR} --comment "dtrack user" --shell /bin/false --uid ${UID} dtrack || true \
+    && groupadd --system --gid ${GID} dtrack \
+    && useradd --system --no-user-group --gid dtrack --no-create-home --home-dir ${DATA_DIR} --comment "dtrack user" --shell /bin/false --uid ${UID} dtrack \
     && chown -R dtrack:0 ${DATA_DIR} ${APP_DIR} \
     && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
     \
-    # Install wget for health check
+    # Install curl for health check
     && apt-get -yqq update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends wget \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy JRE from temurin base image
-COPY --from=jre-build /opt/java/openjdk $JAVA_HOME
-
-# Copy the compiled WAR to the application directory created above
-COPY ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ${APP_DIR}
-
-# Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)
 USER ${UID}
-
-# Specify the container working directory
 WORKDIR ${APP_DIR}
 
+COPY --from=jre-build --chown=${UID}:0 /opt/java/openjdk $JAVA_HOME
+COPY --chown=${UID}:0 ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ./
+
 # Launch Dependency-Track
-CMD exec java ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
-    --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
-    -Dlogback.configurationFile=${LOGGING_CONFIG_PATH} \
-    -DdependencyTrack.logging.level=${LOGGING_LEVEL} \
-    -jar ${WAR_FILENAME} \
-    -context ${CONTEXT}
+CMD [ \
+    "/bin/sh", "-c", \
+    "exec java \
+        ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
+        --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
+        --sun-misc-unsafe-memory-access=allow \
+        -Dlogback.configurationFile=${LOGGING_CONFIG_PATH} \
+        -DdependencyTrack.logging.level=${LOGGING_LEVEL} \
+        -jar ${WAR_FILENAME} \
+        -context ${CONTEXT}" \
+]
 
 # Specify which port Dependency-Track listens on
 EXPOSE 8080
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD wget -t 1 -T 3 --no-proxy -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
+HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD [ \
+    "/bin/sh", "-c", \
+    "curl -f -s --max-time 3 --noproxy '*' -o /dev/null http://127.0.0.1:8080${CONTEXT}health" \
+]
 
 # metadata labels
 LABEL \

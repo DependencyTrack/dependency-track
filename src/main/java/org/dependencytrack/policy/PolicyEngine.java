@@ -25,12 +25,15 @@ import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * A lightweight policy engine that evaluates a list of components against
@@ -88,25 +91,43 @@ public class PolicyEngine {
                     || isPolicyAssignedToProjectTag(policy, component.getProject())) {
                 LOGGER.debug("Evaluating component (" + component.getUuid() + ") against policy (" + policy.getUuid() + ")");
                 final List<PolicyConditionViolation> policyConditionViolations = new ArrayList<>();
-                int policyConditionsViolated = 0;
                 for (final PolicyEvaluator evaluator : evaluators) {
                     evaluator.setQueryManager(qm);
                     final List<PolicyConditionViolation> policyConditionViolationsFromEvaluator = evaluator.evaluate(policy, component);
                     if (!policyConditionViolationsFromEvaluator.isEmpty()) {
                         policyConditionViolations.addAll(policyConditionViolationsFromEvaluator);
-                        policyConditionsViolated += (int) policyConditionViolationsFromEvaluator.stream()
-                                .map(pcv -> pcv.getPolicyCondition().getId())
-                                .sorted()
-                                .distinct()
-                                .count();
                     }
                 }
+
+                long uniqueConditions =
+                        policyConditionViolations.stream()
+                                .map(v -> v.getPolicyCondition().getId())
+                                .distinct()
+                                .count();
                 if (Policy.Operator.ANY == policy.getOperator()) {
-                    if (policyConditionsViolated > 0) {
+                    if (uniqueConditions > 0) {
                         policyViolations.addAll(createPolicyViolations(policyConditionViolations));
                     }
-                } else if (Policy.Operator.ALL == policy.getOperator() && policyConditionsViolated == policy.getPolicyConditions().size()) {
+                } else if (Policy.Operator.ALL == policy.getOperator() && uniqueConditions == policy.getPolicyConditions().size()) {
                     policyViolations.addAll(createPolicyViolations(policyConditionViolations));
+                } else if (Policy.Operator.AND == policy.getOperator()) {
+                    Map<Vulnerability, List<PolicyConditionViolation>> byVuln =
+                            policyConditionViolations.stream()
+                                    .collect(Collectors.groupingBy(PolicyConditionViolation::getVulnerability));
+
+
+                    for (Map.Entry<Vulnerability, List<PolicyConditionViolation>> entry : byVuln.entrySet()) {
+                        List<PolicyConditionViolation> perVulnViolations = entry.getValue();
+                        long uniqueForThisVuln =
+                                perVulnViolations.stream()
+                                        .map(v -> v.getPolicyCondition().getId())
+                                        .distinct()
+                                        .count();
+
+                        if (uniqueForThisVuln == policy.getPolicyConditions().size()) {
+                            policyViolations.addAll(createPolicyViolations(perVulnViolations));
+                        }
+                    }
                 }
             }
         }

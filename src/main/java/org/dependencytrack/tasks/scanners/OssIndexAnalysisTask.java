@@ -247,13 +247,6 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * Therefore, this method will return a String representation of a PackageURL without qualifier
      * or subpath.
      * <p>
-     * Additionally, as of October 2021, versions prefixed with "v" (as commonly done in the Go and PHP ecosystems)
-     * are triggering a bug in OSS Index that causes all vulnerabilities for the given component to be returned,
-     * not just the ones for the requested version: https://github.com/OSSIndex/vulns/issues/129#issuecomment-740666614
-     * As a result, this method will remove "v" prefixes from versions.
-     * <p>
-     * This method should be removed at a future date when OSSIndex resolves the issues.
-     * <p>
      * TODO: Delete this method and workaround for OSSIndex bugs once Sonatype resolves them.
      *
      * @since 3.4.0
@@ -264,7 +257,6 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
             return null;
         }
         String p = purl.canonicalize();
-        p = p.replaceFirst("@v", "@");
         if (p.contains("?")) {
             p = p.substring(0, p.lastIndexOf("?"));
         }

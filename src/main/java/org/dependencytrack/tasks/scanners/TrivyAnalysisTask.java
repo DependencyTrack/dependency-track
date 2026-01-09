@@ -212,7 +212,8 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
                 var name = component.getPurl().getName();
 
                 if (component.getPurl().getNamespace() != null) {
-                    if (PackageURL.StandardTypes.GOLANG.equals(component.getPurl().getType())) {
+                    if (PackageURL.StandardTypes.GOLANG.equals(component.getPurl().getType()) || 
+                            PackageURL.StandardTypes.NPM.equals(component.getPurl().getType())) {
                         name = component.getPurl().getNamespace() + "/" + name;
                     } else {
                         name = component.getPurl().getNamespace() + ":" + name;

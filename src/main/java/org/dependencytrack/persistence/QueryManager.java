@@ -811,6 +811,11 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
     }
 
+    public List<Vulnerability> getVulnerabilityByVulnIds(Map<String, Set<String>> sourceToVulnIds,
+                                                         boolean includeVulnerableSoftware) {
+        return getVulnerabilityQueryManager().getVulnerabilitiesBySourceAndVulnIds(sourceToVulnIds, includeVulnerableSoftware);
+    }
+
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {
         getVulnerabilityQueryManager().addVulnerability(vulnerability, component, analyzerIdentity);
     }

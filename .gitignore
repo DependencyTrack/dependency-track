@@ -27,3 +27,4 @@ target/
 # Local files to ignore (do not push)
 .github/copilot-instructions.md
 set-java21.ps1
+IMAGE-LIST.md

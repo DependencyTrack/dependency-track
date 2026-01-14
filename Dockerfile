@@ -3,9 +3,8 @@ WORKDIR /build
 COPY pom.xml .
 RUN mvn -q -e -U -Penhance dependency:go-offline || mvn -q -e -U dependency:go-offline
 COPY . .
-# Produce executable Jar with embedded Jetty (official profile combination)
-# Remove -P quick to include all dependencies (including PostgreSQL driver)
-RUN mvn -q -e clean package -P enhance -P embedded-jetty -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
+# Produce executable Jar with embedded Jetty (official profile combination from DEVELOPING.md)
+RUN mvn -q -e clean package -P quick -P clean-exclude-wars -P enhance -P embedded-jetty -DskipTests -Dlogback.configuration.file=src/main/docker/logback.xml
 
 FROM eclipse-temurin:21-jre AS runtime
 ENV JAVA_OPTIONS="-XX:+UseParallelGC -XX:+UseStringDeduplication -XX:MaxRAMPercentage=85" \

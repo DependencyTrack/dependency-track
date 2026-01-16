@@ -86,10 +86,12 @@ public class PolicyCondition implements Serializable {
         SEVERITY,
         SWID_TAGID,
         VERSION,
+        IS_INTERNAL,
         COMPONENT_HASH,
         CWE,
         VULNERABILITY_ID,
         VERSION_DISTANCE,
+        LATEST_VERSION_STATUS,
         EPSS
     }
 
@@ -184,3 +186,4 @@ public class PolicyCondition implements Serializable {
         this.uuid = uuid;
     }
 }
+

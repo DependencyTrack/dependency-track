@@ -54,6 +54,8 @@ public class OsvAdvisory {
 
     private String cvssV3Vector;
 
+    private String cvssV4Vector;
+
     public String getId() {
         return id;
     }
@@ -185,6 +187,14 @@ public class OsvAdvisory {
 
     public void setCvssV3Vector(String cvssV3Vector) {
         this.cvssV3Vector = cvssV3Vector;
+    }
+
+    public String getCvssV4Vector() {
+        return cvssV4Vector;
+    }
+
+    public void setCvssV4Vector(String cvssV4Vector) {
+        this.cvssV4Vector = cvssV4Vector;
     }
 
     public List<String> getCredits() {

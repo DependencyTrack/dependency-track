@@ -158,9 +158,13 @@ public final class ModelConverter {
                 break; // Always prefer use of the NVD scoring, if available
             }
         }
+
+        // TODO it doesn't look like VulnDB provides CVSSv4 metics yet.
+
         vuln.setSeverity(VulnerabilityUtil.getSeverity(
                 vuln.getCvssV2BaseScore(),
                 vuln.getCvssV3BaseScore(),
+                vuln.getCvssV4BaseScore(),
                 vuln.getOwaspRRLikelihoodScore(),
                 vuln.getOwaspRRTechnicalImpactScore(),
                 vuln.getOwaspRRBusinessImpactScore()

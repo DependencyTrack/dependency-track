@@ -18,12 +18,14 @@
  */
 package org.dependencytrack.model;
 
+import alpine.common.logging.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
-
-import alpine.common.logging.Logger;
+import io.github.nscuro.versatile.Comparator;
+import io.github.nscuro.versatile.Vers;
+import io.github.nscuro.versatile.version.KnownVersioningSchemes;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
@@ -36,15 +38,13 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import io.github.nscuro.versatile.Comparator;
-import io.github.nscuro.versatile.Vers;
+import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_GENERIC;
 
 /**
  * The VulnerableSoftware is a model class for representing vulnerable software
@@ -194,12 +194,9 @@ public class VulnerableSoftware implements ICpe, Serializable {
     }
 
     private Vers buildVersFromFields() {
-        final String purlType = getPurlType();
-        if ((purlType == null) || purlType.isBlank()) {
-            LOGGER.debug("Cannot initialize vers if there is no valid purl.");
-            return null;
-        }
-        final String scheme = purlType;
+        final String scheme = KnownVersioningSchemes
+                .fromPurlType(getPurlType())
+                .orElse(SCHEME_GENERIC);
         final Vers.Builder b = Vers.builder(scheme);
 
         final String endExcluding = (getVersionEndExcluding() != null && !getVersionEndExcluding().isBlank())
@@ -217,7 +214,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
         final String version = (getVersion() != null && !getVersion().isBlank()) ? getVersion() : null;
 
-       
         final boolean hasRange = (endExcluding != null) || (endIncluding != null)
                 || (startExcluding != null) || (startIncluding != null);
 
@@ -226,7 +222,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
             return b.build().simplify();
         }
 
-
         if (startIncluding != null) {
             b.withConstraint(Comparator.GREATER_THAN_OR_EQUAL, startIncluding);
         }
@@ -234,12 +229,10 @@ public class VulnerableSoftware implements ICpe, Serializable {
             b.withConstraint(Comparator.GREATER_THAN, startExcluding);
         }
 
-    
         if (version != null && !hasRange) {
             b.withConstraint(Comparator.EQUAL, version);
         }
 
-       
         if (endIncluding != null) {
             b.withConstraint(Comparator.LESS_THAN_OR_EQUAL, endIncluding);
         }

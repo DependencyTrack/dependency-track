@@ -631,16 +631,16 @@ class FindingResourceTest extends ResourceTest {
         Component c1 = createComponent(p1, "Component A", "1.0");
         Component c2 = createComponent(p1, "Component B", "1.0");
         Component c3 = createComponent(p1, "Component C", "1.0");
-        
+
         // Create vulnerabilities with different EPSS scores
         Vulnerability v1 = createVulnerabilityWithEpss("Vuln-1", Severity.CRITICAL, new BigDecimal("0.1"));
         Vulnerability v2 = createVulnerabilityWithEpss("Vuln-2", Severity.HIGH, new BigDecimal("0.5"));
         Vulnerability v3 = createVulnerabilityWithEpss("Vuln-3", Severity.MEDIUM, new BigDecimal("0.9"));
-        
+
         qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v2, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c3, AnalyzerIdentity.NONE);
-        
+
         // Test filtering by epssFrom
         Response response = jersey.target(V1_FINDING)
                 .queryParam("epssFrom", "0.3")
@@ -652,7 +652,7 @@ class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals(2, json.size());
-        
+
         // Test filtering by epssTo
         response = jersey.target(V1_FINDING)
                 .queryParam("epssTo", "0.7")
@@ -661,7 +661,7 @@ class FindingResourceTest extends ResourceTest {
                 .get(Response.class);
         Assertions.assertEquals(200, response.getStatus());
         Assertions.assertEquals("2", response.getHeaderString(TOTAL_COUNT_HEADER));
-        
+
         // Test filtering by epssFrom and epssTo range
         response = jersey.target(V1_FINDING)
                 .queryParam("epssFrom", "0.3")
@@ -683,16 +683,16 @@ class FindingResourceTest extends ResourceTest {
         Component c1 = createComponent(p1, "Component A", "1.0");
         Component c2 = createComponent(p1, "Component B", "1.0");
         Component c3 = createComponent(p1, "Component C", "1.0");
-        
+
         // Create vulnerabilities with different EPSS scores
         Vulnerability v1 = createVulnerabilityWithEpss("Vuln-1", Severity.CRITICAL, new BigDecimal("0.2"));
         Vulnerability v2 = createVulnerabilityWithEpss("Vuln-2", Severity.HIGH, new BigDecimal("0.6"));
         Vulnerability v3 = createVulnerabilityWithEpss("Vuln-3", Severity.MEDIUM, new BigDecimal("0.8"));
-        
+
         qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v2, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c3, AnalyzerIdentity.NONE);
-        
+
         // Test filtering grouped findings by EPSS range
         Response response = jersey.target(V1_FINDING + "/grouped")
                 .queryParam("epssFrom", "0.5")
@@ -714,16 +714,16 @@ class FindingResourceTest extends ResourceTest {
         Component c1 = createComponent(p1, "Component A", "1.0");
         Component c2 = createComponent(p1, "Component B", "1.0");
         Component c3 = createComponent(p1, "Component C", "1.0");
-        
+
         // Create vulnerabilities with different EPSS percentiles
         Vulnerability v1 = createVulnerabilityWithEpssPercentile("Vuln-1", Severity.CRITICAL, new BigDecimal("0.1"));
         Vulnerability v2 = createVulnerabilityWithEpssPercentile("Vuln-2", Severity.HIGH, new BigDecimal("0.5"));
         Vulnerability v3 = createVulnerabilityWithEpssPercentile("Vuln-3", Severity.MEDIUM, new BigDecimal("0.9"));
-        
+
         qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v2, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c3, AnalyzerIdentity.NONE);
-        
+
         // Test filtering by epssPercentileFrom
         Response response = jersey.target(V1_FINDING)
                 .queryParam("epssPercentileFrom", "0.3")
@@ -735,7 +735,7 @@ class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals(2, json.size());
-        
+
         // Test filtering by epssPercentileTo
         response = jersey.target(V1_FINDING)
                 .queryParam("epssPercentileTo", "0.7")
@@ -744,7 +744,7 @@ class FindingResourceTest extends ResourceTest {
                 .get(Response.class);
         Assertions.assertEquals(200, response.getStatus());
         Assertions.assertEquals("2", response.getHeaderString(TOTAL_COUNT_HEADER));
-        
+
         // Test filtering by epssPercentileFrom and epssPercentileTo range
         response = jersey.target(V1_FINDING)
                 .queryParam("epssPercentileFrom", "0.3")
@@ -766,16 +766,16 @@ class FindingResourceTest extends ResourceTest {
         Component c1 = createComponent(p1, "Component A", "1.0");
         Component c2 = createComponent(p1, "Component B", "1.0");
         Component c3 = createComponent(p1, "Component C", "1.0");
-        
+
         // Create vulnerabilities with different EPSS percentiles
         Vulnerability v1 = createVulnerabilityWithEpssPercentile("Vuln-1", Severity.CRITICAL, new BigDecimal("0.2"));
         Vulnerability v2 = createVulnerabilityWithEpssPercentile("Vuln-2", Severity.HIGH, new BigDecimal("0.6"));
         Vulnerability v3 = createVulnerabilityWithEpssPercentile("Vuln-3", Severity.MEDIUM, new BigDecimal("0.8"));
-        
+
         qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v2, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c3, AnalyzerIdentity.NONE);
-        
+
         // Test filtering grouped findings by EPSS percentile range
         Response response = jersey.target(V1_FINDING + "/grouped")
                 .queryParam("epssPercentileFrom", "0.5")
@@ -888,5 +888,59 @@ class FindingResourceTest extends ResourceTest {
         vulnerability.setCwes(List.of(80, 666));
         vulnerability.setEpssPercentile(epssPercentile);
         return qm.createVulnerability(vulnerability, false);
+    }
+
+    @Test
+    void getFindingsByProjectWithFoundByFuzzingFlagTest() {
+        // Create two projects
+        Project projectExact = qm.createProject("Project Exact", null, "1.0", null, null, null, true, false);
+        Project projectFuzzy = qm.createProject("Project Fuzzy", null, "1.0", null, null, null, true, false);
+
+        // Create components in each project
+        Component componentExact = createComponent(projectExact, "Library A", "1.0");
+        Component componentFuzzy = createComponent(projectFuzzy, "Library B", "1.0");
+
+        // Create a vulnerability
+        Vulnerability vuln = createVulnerability("CVE-2024-FUZZY-TEST", Severity.HIGH);
+
+        // Add vulnerability to exact match component (foundByFuzzing = false/null)
+        qm.addVulnerability(vuln, componentExact, AnalyzerIdentity.INTERNAL_ANALYZER);
+
+        // Add vulnerability to fuzzy match component (foundByFuzzing = true)
+        qm.addVulnerability(vuln, componentFuzzy, AnalyzerIdentity.INTERNAL_ANALYZER, null, null, null, true);
+
+        // Test exact match project - foundByFuzzing should be null/absent
+        Response responseExact = jersey.target(V1_FINDING + "/project/" + projectExact.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assertions.assertEquals(200, responseExact.getStatus());
+        JsonArray jsonExact = parseJsonArray(responseExact);
+        Assertions.assertNotNull(jsonExact);
+        Assertions.assertEquals(1, jsonExact.size());
+
+        JsonObject findingExact = jsonExact.getJsonObject(0);
+        JsonObject attributionExact = findingExact.getJsonObject("attribution");
+        Assertions.assertNotNull(attributionExact);
+        // foundByFuzzing should not be present for exact matches (null is not serialized)
+        Assertions.assertFalse(attributionExact.containsKey("foundByFuzzing"),
+            "foundByFuzzing should not be present for exact matches");
+
+        // Test fuzzy match project - foundByFuzzing should be true
+        Response responseFuzzy = jersey.target(V1_FINDING + "/project/" + projectFuzzy.getUuid().toString()).request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assertions.assertEquals(200, responseFuzzy.getStatus());
+        JsonArray jsonFuzzy = parseJsonArray(responseFuzzy);
+        Assertions.assertNotNull(jsonFuzzy);
+        Assertions.assertEquals(1, jsonFuzzy.size());
+
+        JsonObject findingFuzzy = jsonFuzzy.getJsonObject(0);
+        JsonObject attributionFuzzy = findingFuzzy.getJsonObject("attribution");
+        Assertions.assertNotNull(attributionFuzzy);
+        // foundByFuzzing should be true for fuzzy matches
+        Assertions.assertTrue(attributionFuzzy.containsKey("foundByFuzzing"),
+            "foundByFuzzing should be present for fuzzy matches");
+        Assertions.assertTrue(attributionFuzzy.getBoolean("foundByFuzzing"),
+            "foundByFuzzing should be true for fuzzy matches");
     }
 }

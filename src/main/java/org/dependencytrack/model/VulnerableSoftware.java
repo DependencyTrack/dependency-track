@@ -61,6 +61,7 @@ import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_G
 @Index(name = "VULNERABLESOFTWARE_CPE_PURL_PARTS_IDX", members = {"part", "vendor", "product", "purlType", "purlNamespace", "purlName"})
 @Index(name = "VULNERABLESOFTWARE_PURL_VERSION_RANGE_IDX", members = {"purl", "versionEndExcluding", "versionEndIncluding", "versionStartExcluding", "versionStartIncluding"})
 @Index(name = "VULNERABLESOFTWARE_PURL_TYPE_NS_NAME_IDX", members = {"purlType", "purlNamespace", "purlName"})
+@Index(name = "VULNERABLESOFTWARE_FULL_PURL_IDX", members = {"purlType", "purlNamespace", "purlName", "version"})
 public class VulnerableSoftware implements ICpe, Serializable {
 
     private static final long serialVersionUID = -3987946408457131098L;

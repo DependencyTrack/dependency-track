@@ -22,7 +22,7 @@ import alpine.common.logging.Logger;
 import io.github.nscuro.versatile.VersionFactory;
 import io.github.nscuro.versatile.spi.InvalidVersionException;
 import io.github.nscuro.versatile.spi.Version;
-
+import io.github.nscuro.versatile.version.KnownVersioningSchemes;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
@@ -30,6 +30,9 @@ import org.dependencytrack.util.ComponentVersion;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_GENERIC;
 
 /**
  * Evaluates a components version against a policy.
@@ -54,10 +57,11 @@ public class VersionPolicyEvaluator extends AbstractPolicyEvaluator {
             return violations;
         }
 
-        final var componentVersion = component.getVersion();
-        final var componentPurl = component.getPurl();
-        final var scheme = componentPurl != null && componentPurl.getType() != null ? componentPurl.getType()
-                : "generic";
+        final String componentVersion = component.getVersion();
+        final String scheme = Optional
+                .ofNullable(component.getPurl())
+                .flatMap(KnownVersioningSchemes::fromPurl)
+                .orElse(SCHEME_GENERIC);
         final Version componentVersionObj;
 
         try {

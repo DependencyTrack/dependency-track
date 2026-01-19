@@ -127,7 +127,7 @@
         <!-- JDBC Drivers -->
         <lib.jdbc-driver.mssql.version>12.10.2.jre11</lib.jdbc-driver.mssql.version>
         <lib.jdbc-driver.mysql.version>8.2.0</lib.jdbc-driver.mysql.version>
-        <lib.jdbc-driver.postgresql.version>42.7.8</lib.jdbc-driver.postgresql.version>
+        <lib.jdbc-driver.postgresql.version>42.7.9</lib.jdbc-driver.postgresql.version>
         <!-- Maven Plugin Properties -->
         <plugin.retirejs.breakOnFailure>false</plugin.retirejs.breakOnFailure>
         <plugin.jetty.version>12.1.5</plugin.jetty.version>

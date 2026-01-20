@@ -797,12 +797,11 @@ public class OsvDownloadTask implements LoggableSubscriber {
             return null;
         }
 
-        // Other sources do not populate the versionStartIncluding with 0.
-        // Semantically, versionStartIncluding=null is equivalent to >=0.
-        // Omit zero values here for consistency's sake.
-        final String versionStartIncluding = Optional.ofNullable(affectedPackage.getLowerVersionRange())
-                .filter(version -> !"0".equals(version))
-                .orElse(null);
+        // Store version ranges as-is from OSV, including "0" values.
+        // While other sources may not populate versionStartIncluding with 0,
+        // OSV explicitly uses "introduced": "0" to indicate all versions are affected.
+        // The vers library can handle "0" as a valid lower bound for SEMVER ranges.
+        final String versionStartIncluding = affectedPackage.getLowerVersionRange();
         final String versionEndExcluding = affectedPackage.getUpperVersionRangeExcluding();
         final String versionEndIncluding = affectedPackage.getUpperVersionRangeIncluding();
 

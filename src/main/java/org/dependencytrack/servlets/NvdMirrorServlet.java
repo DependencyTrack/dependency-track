@@ -20,10 +20,9 @@ package org.dependencytrack.servlets;
 
 import alpine.common.logging.Logger;
 import alpine.server.servlets.FileSystemResourceServlet;
-import org.dependencytrack.tasks.NistMirrorTask;
-
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
+import org.dependencytrack.tasks.NistMirrorTask;
 
 public class NvdMirrorServlet extends FileSystemResourceServlet {
 
@@ -36,8 +35,7 @@ public class NvdMirrorServlet extends FileSystemResourceServlet {
     public void init(final ServletConfig config) throws ServletException {
         LOGGER.info("Initializing NVD mirror");
         super.init(config);
-        super.setDirectory(NistMirrorTask.DEFAULT_NVD_MIRROR_DIR.toString());
-        super.setAbsolute(true);
+        super.setDirectoryPath(NistMirrorTask.DEFAULT_NVD_MIRROR_DIR);
     }
 
 }

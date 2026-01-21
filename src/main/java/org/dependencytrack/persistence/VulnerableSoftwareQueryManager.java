@@ -196,8 +196,11 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
             queryParams.put("versionStartExcluding", versionStartExcluding);
         }
 
-        if (versionStartIncluding == null) {
-            queryFilterParts.add("versionStartIncluding == null");
+        if (versionStartIncluding == null || "0".equals(versionStartIncluding)) {
+            // Treat null and "0" as equivalent for backward compatibility.
+            // OSV uses "introduced": "0" to indicate all versions, which is
+            // semantically equivalent to having no lower bound (null).
+            queryFilterParts.add("(versionStartIncluding == null || versionStartIncluding == \"0\")");
         } else {
             queryFilterParts.add("versionStartIncluding == :versionStartIncluding");
             queryParams.put("versionStartIncluding", versionStartIncluding);

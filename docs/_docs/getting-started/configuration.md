@@ -445,6 +445,11 @@ snyk.retry.exponential.backoff.max.duration.seconds=60
 ossindex.request.max.purl=128
 
 # Optional
+# Base URL for OSS Index API. Override to use a proxy or alternative instance.
+# The default value is https://ossindex.sonatype.org
+scanner.ossindex.base.url=https://ossindex.sonatype.org
+
+# Optional
 #Defines the maximum number of attempts used by Resilience4J for exponential backoff retry regarding OSSIndex calls.
 # The default value is 50.
 ossindex.retry.backoff.max.attempts=50

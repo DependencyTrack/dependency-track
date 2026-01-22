@@ -120,7 +120,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     }
 
     public OssIndexAnalysisTask() {
-        this(DEFAULT_API_BASE_URL);
+        this(null);  // Let getApiBaseUrl() read from config
     }
 
     OssIndexAnalysisTask(final String apiBaseUrl) {

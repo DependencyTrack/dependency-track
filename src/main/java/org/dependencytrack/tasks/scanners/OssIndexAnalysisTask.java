@@ -90,7 +90,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     private static final Logger LOGGER = Logger.getLogger(OssIndexAnalysisTask.class);
     private static final Retry RETRY;
 
-    private final String apiBaseUrl;
+    private String apiBaseUrl;
     private String apiUsername;
     private String apiToken;
     private boolean aliasSyncEnabled;
@@ -125,6 +125,33 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
 
     OssIndexAnalysisTask(final String apiBaseUrl) {
         this.apiBaseUrl = apiBaseUrl;
+    }
+
+    /**
+     * Retrieves the OSS Index API base URL from configuration.
+     * The URL is cached after first retrieval.
+     *
+     * @return The base URL for OSS Index API
+     */
+    private String getApiBaseUrl() {
+        if (apiBaseUrl == null) {
+            try (QueryManager qm = new QueryManager()) {
+                final ConfigProperty property = qm.getConfigProperty(
+                        ConfigPropertyConstants.SCANNER_OSSINDEX_BASE_URL.getGroupName(),
+                        ConfigPropertyConstants.SCANNER_OSSINDEX_BASE_URL.getPropertyName()
+                );
+                if (property != null && property.getPropertyValue() != null && !property.getPropertyValue().trim().isEmpty()) {
+                    apiBaseUrl = property.getPropertyValue().trim();
+                    // Remove trailing slash to avoid double slashes in path concatenation
+                    if (apiBaseUrl.endsWith("/")) {
+                        apiBaseUrl = apiBaseUrl.substring(0, apiBaseUrl.length() - 1);
+                    }
+                } else {
+                    apiBaseUrl = DEFAULT_API_BASE_URL;
+                }
+            }
+        }
+        return apiBaseUrl;
     }
 
     public AnalyzerIdentity getAnalyzerIdentity() {
@@ -195,7 +222,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * @return true if OssIndexAnalysisTask should analyze, false if not
      */
     public boolean shouldAnalyze(final PackageURL purl) {
-        return !isCacheCurrent(Vulnerability.Source.OSSINDEX, apiBaseUrl, purl.toString());
+        return !isCacheCurrent(Vulnerability.Source.OSSINDEX, getApiBaseUrl(), purl.toString());
     }
 
     /**
@@ -204,7 +231,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * @param component component the Component to analyze from cache
      */
     public void applyAnalysisFromCache(final Component component) {
-        applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, apiBaseUrl, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
+        applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, getApiBaseUrl(), component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
     }
 
     /**
@@ -215,9 +242,9 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     public void analyze(final List<Component> components) {
         Map<Boolean, List<Component>> componentsPartitionByCacheValidity = components.stream()
                 .filter(component -> !component.isInternal() && isCapable(component))
-                .collect(Collectors.partitioningBy(component -> isCacheCurrent(Vulnerability.Source.OSSINDEX, apiBaseUrl, component.getPurl().toString())));
+                .collect(Collectors.partitioningBy(component -> isCacheCurrent(Vulnerability.Source.OSSINDEX, getApiBaseUrl(), component.getPurl().toString())));
         List<Component> componentWithValidAnalysisFromCache = componentsPartitionByCacheValidity.get(true);
-        componentWithValidAnalysisFromCache.forEach(component -> applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, apiBaseUrl, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel));
+        componentWithValidAnalysisFromCache.forEach(component -> applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, getApiBaseUrl(), component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel));
         List<Component> componentWithInvalidAnalysisFromCache = componentsPartitionByCacheValidity.get(false);
         final Pageable<Component> paginatedComponents = new Pageable<>(Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_REQUEST_MAX_PURL), componentWithInvalidAnalysisFromCache);
         while (!paginatedComponents.isPaginationComplete()) {
@@ -278,7 +305,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * Submits the payload to the Sonatype OSS Index service
      */
     private List<ComponentReport> submit(final JSONObject payload) throws Throwable {
-        HttpPost request = new HttpPost("%s/api/v3/component-report".formatted(apiBaseUrl));
+        HttpPost request = new HttpPost("%s/api/v3/component-report".formatted(getApiBaseUrl()));
         request.addHeader(HttpHeaders.ACCEPT, "application/json");
         request.addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
         request.addHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
@@ -293,7 +320,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                 final OssIndexParser parser = new OssIndexParser();
                 return parser.parse(responseString);
             } else {
-                handleUnexpectedHttpResponse(LOGGER, apiBaseUrl, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                handleUnexpectedHttpResponse(LOGGER, getApiBaseUrl(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
             }
         }
         return new ArrayList<>();
@@ -359,7 +386,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 addVulnerabilityToCache(component, vulnerability);
                             }
                         }
-                        updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, apiBaseUrl, component.getPurl().toString(), component.getCacheResult());
+                        updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, getApiBaseUrl(), component.getPurl().toString(), component.getCacheResult());
                     }
                 }
             }

@@ -32,6 +32,25 @@ Vulnerabilities from the proprietary dataset have their IDs prefixed with `sonat
 
 ![OSS Index Findings](../../images/screenshots/ossindex-findings.png)
 
+### Base URL Configuration
+
+By default, Dependency-Track connects to the public OSS Index service at `https://ossindex.sonatype.org`.
+
+You can override this to:
+- Use a corporate proxy
+- Point to a private OSS Index instance
+- Use an alternative endpoint for testing
+
+To configure a custom base URL, set the `scanner.ossindex.base.url` property in your `application.properties` file:
+
+```properties
+scanner.ossindex.base.url=https://your-custom-ossindex.example.com
+```
+
+Or configure it via the administration panel in the Analyzers configuration section.
+
+**Note**: The custom URL must be a valid OSS Index API endpoint that implements the same API contract as the public service.
+
 ### May 2022 Update
 
 Previously, authentication was only required for an extended rate limiting budget. Up to this point, vulnerabilities in

@@ -37,7 +37,7 @@ Vulnerabilities from the proprietary dataset have their IDs prefixed with `sonat
 By default, Dependency-Track connects to the public OSS Index service at `https://ossindex.sonatype.org`.
 
 > **Important:** Sonatype is migrating OSS Index to a new API endpoint at `https://api.guide.sonatype.com`.
-> The new endpoint requires new API tokens (tokens from the legacy endpoint will not work).
+> Existing API tokens will continue to work with the new endpoint.
 > The legacy endpoint will be deprecated in the future.
 
 You can override the base URL to:
@@ -49,7 +49,7 @@ You can override the base URL to:
 To configure a custom base URL, set the `scanner.ossindex.base.url` property in your `application.properties` file:
 
 ```properties
-# New Sonatype API endpoint (requires new API token)
+# New Sonatype API endpoint (existing API tokens will work)
 scanner.ossindex.base.url=https://api.guide.sonatype.com
 
 # Or use a custom endpoint

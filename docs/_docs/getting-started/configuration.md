@@ -446,8 +446,9 @@ ossindex.request.max.purl=128
 
 # Optional
 # Base URL for OSS Index API. Override to use a proxy or alternative instance.
+# NOTE: Sonatype is migrating to https://api.guide.sonatype.com (requires new API tokens)
 # The default value is https://ossindex.sonatype.org
-scanner.ossindex.base.url=https://ossindex.sonatype.org
+scanner.ossindex.base.url=https://api.guide.sonatype.com
 
 # Optional
 #Defines the maximum number of attempts used by Resilience4J for exponential backoff retry regarding OSSIndex calls.

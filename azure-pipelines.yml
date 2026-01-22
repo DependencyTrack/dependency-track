@@ -35,6 +35,7 @@ steps:
       command: 'buildAndPush'
       repository: '$(imagebackend)'
       dockerfile: '$(dockerfilebackend)'
+      buildContext: '$(System.DefaultWorkingDirectory)'
       containerRegistry: '$(acrserviceconnection)'
       tags: |
         $(Build.BuildId)

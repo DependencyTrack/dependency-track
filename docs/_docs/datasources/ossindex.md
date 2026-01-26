@@ -34,31 +34,20 @@ Vulnerabilities from the proprietary dataset have their IDs prefixed with `sonat
 
 ### Base URL Configuration
 
-By default, Dependency-Track connects to the public OSS Index service at `https://ossindex.sonatype.org`.
-
-> **Important:** Sonatype is migrating OSS Index to a new API endpoint at `https://api.guide.sonatype.com`.
+> **Migration Notice:**
+> Sonatype is migrating OSS Index to a new API endpoint at `https://api.guide.sonatype.com`.
 > Existing API tokens will continue to work with the new endpoint.
 > The legacy endpoint will be deprecated in the future.
 
-You can override the base URL to:
-- Use the new Sonatype API endpoint (`https://api.guide.sonatype.com`)
-- Use a corporate proxy
-- Point to a private OSS Index instance
-- Use an alternative endpoint for testing
+The base URL can be configured to use alternative API endpoints as they become available.
 
-To configure a custom base URL, set the `scanner.ossindex.base.url` property in your `application.properties` file:
+To configure the base URL, navigate to *Analyzers* → *Sonatype OSS Index* in the administration panel.
 
-```properties
-# New Sonatype API endpoint (existing API tokens will work)
-scanner.ossindex.base.url=https://api.guide.sonatype.com
+| Option   | Description                                          | Default                          |
+|:---------|:-----------------------------------------------------|:---------------------------------|
+| Base URL | Base URL of the OSS Index REST API                   | https://ossindex.sonatype.org    |
 
-# Or use a custom endpoint
-scanner.ossindex.base.url=https://your-custom-ossindex.example.com
-```
-
-Or configure it via the administration panel in the Analyzers configuration section.
-
-**Note**: The custom URL must be a valid OSS Index API endpoint that implements the same API contract as the public service.
+**Note:** This is a runtime-only configuration property. For Docker deployments, you can set it via the environment variable `SCANNER_OSSINDEX_BASE_URL`. For non-containerized deployments, use the administration panel or system properties.
 
 ### May 2022 Update
 

@@ -38,7 +38,6 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME;
-import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_ENABLED;
 
 @WireMockTest

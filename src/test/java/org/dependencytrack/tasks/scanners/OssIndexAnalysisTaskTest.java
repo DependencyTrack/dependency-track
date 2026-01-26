@@ -304,15 +304,6 @@ class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testGetApiBaseUrlWithDefaultValue() {
-        // Test that default URL is returned when no custom value is set
-        var task = new OssIndexAnalysisTask();
-        // The method will be private, so we can't test it directly
-        // Instead, we test that the task uses the default URL by checking cache calls
-        assertThat(task).isNotNull();
-    }
-
-    @Test
     void testAnalyzeUsesCustomBaseUrl() throws Exception {
         // Create a task with custom base URL via configuration property
         qm.createConfigProperty(

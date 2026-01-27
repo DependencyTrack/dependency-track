@@ -1043,7 +1043,7 @@ public class ModelConverter {
             case GITHUB:
                 cdxSource.setUrl("https://github.com/advisories"); break;
             case VULNDB:
-                cdxSource.setUrl("https://vulndb.cyberriskanalytics.com/"); break;
+                cdxSource.setUrl("https://vulndb.flashpoint.io"); break;
             case OSSINDEX:
                 cdxSource.setUrl("https://ossindex.sonatype.org/"); break;
             case RETIREJS:

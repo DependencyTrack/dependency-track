@@ -32,6 +32,23 @@ Vulnerabilities from the proprietary dataset have their IDs prefixed with `sonat
 
 ![OSS Index Findings](../../images/screenshots/ossindex-findings.png)
 
+### Base URL Configuration
+
+> **Migration Notice:**
+> Sonatype is migrating OSS Index to a new API endpoint at `https://api.guide.sonatype.com`.
+> Existing API tokens will continue to work with the new endpoint.
+> The legacy endpoint will be deprecated in the future.
+
+The base URL can be configured to use alternative API endpoints as they become available.
+
+To configure the base URL, navigate to *Analyzers* → *Sonatype OSS Index* in the administration panel.
+
+| Option   | Description                                          | Default                          |
+|:---------|:-----------------------------------------------------|:---------------------------------|
+| Base URL | Base URL of the OSS Index REST API                   | https://ossindex.sonatype.org    |
+
+**Note:** This is a runtime-only configuration property. For Docker deployments, you can set it via the environment variable `SCANNER_OSSINDEX_BASE_URL`. For non-containerized deployments, use the administration panel or system properties.
+
 ### May 2022 Update
 
 Previously, authentication was only required for an extended rate limiting budget. Up to this point, vulnerabilities in

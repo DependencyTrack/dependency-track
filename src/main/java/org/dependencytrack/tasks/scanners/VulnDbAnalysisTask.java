@@ -56,7 +56,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     private String apiConsumerKey;
     private String apiConsumerSecret;
 
-    private String apiBaseUrl;
+    private final String apiBaseUrl;
 
     @Override
     public AnalyzerIdentity getAnalyzerIdentity() {
@@ -68,7 +68,7 @@ public class VulnDbAnalysisTask extends BaseComponentAnalyzerTask implements Sub
     }
 
     public VulnDbAnalysisTask() {
-        this("https://vulndb.cyberriskanalytics.com");
+        this("https://vulndb.flashpoint.io");
     }
 
     /**

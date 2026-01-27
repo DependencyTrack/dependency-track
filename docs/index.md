@@ -83,7 +83,7 @@ CI/CD environments.
 [Snyk]: https://snyk.io
 [Trivy]: https://www.aquasec.com/products/trivy/
 [OSV]: https://osv.dev
-[VulnDB]: https://vulndb.cyberriskanalytics.com
+[VulnDB]: https://vulndb.flashpoint.io
 [Risk Based Security]: https://www.riskbasedsecurity.com
 [Component Analysis]: https://owasp.org/www-community/Component_Analysis
 [Software Bill of Materials]: https://owasp.org/www-community/Component_Analysis#software-bill-of-materials-sbom

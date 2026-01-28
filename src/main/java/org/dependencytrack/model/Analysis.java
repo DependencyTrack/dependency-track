@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Extension;
@@ -32,6 +33,7 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -95,6 +97,11 @@ public class Analysis implements Serializable {
     @Column(name = "SUPPRESSED")
     @JsonProperty(value = "isSuppressed")
     private boolean suppressed;
+
+    @Persistent
+    @Column(name = "SUPPRESSION_EXPIRATION", allowsNull = "true")
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    private Date suppressionExpiration;
 
     public long getId() {
         return id;
@@ -171,5 +178,13 @@ public class Analysis implements Serializable {
 
     public void setSuppressed(boolean suppressed) {
         this.suppressed = suppressed;
+    }
+
+    public Date getSuppressionExpiration() {
+        return suppressionExpiration;
+    }
+
+    public void setSuppressionExpiration(Date suppressionExpiration) {
+        this.suppressionExpiration = suppressionExpiration;
     }
 }

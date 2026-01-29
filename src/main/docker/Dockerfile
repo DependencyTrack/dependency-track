@@ -71,7 +71,7 @@ RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
     \
     # Install curl for health check
     && apt-get -yqq update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends curl \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends curl tini \
     && rm -rf /var/lib/apt/lists/*
 
 USER ${UID}
@@ -79,6 +79,8 @@ WORKDIR ${APP_DIR}
 
 COPY --from=jre-build --chown=${UID}:0 /opt/java/openjdk $JAVA_HOME
 COPY --chown=${UID}:0 ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ./
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
 
 # Launch Dependency-Track
 CMD [ \
@@ -97,7 +99,7 @@ CMD [ \
 EXPOSE 8080
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD [ \
+HEALTHCHECK --interval=30s --start-period=60s --timeout=5s CMD [ \
     "/bin/sh", "-c", \
     "curl -f -s --max-time 3 --noproxy '*' -o /dev/null http://127.0.0.1:8080${CONTEXT}health" \
 ]

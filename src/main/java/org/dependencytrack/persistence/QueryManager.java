@@ -841,6 +841,10 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().deleteFindingAttributions(project);
     }
 
+    public void reconcileFindingsForComponentAnalyzer(Component component, AnalyzerIdentity analyzerIdentity, Set<VulnIdAndSource> currentVulnIdAndSources) {
+        getVulnerabilityQueryManager().reconcileFindingsForComponentAnalyzer(component, analyzerIdentity, currentVulnIdAndSources);
+    }
+
     public List<VulnerableSoftware> reconcileVulnerableSoftware(final Vulnerability vulnerability,
                                                                 final List<VulnerableSoftware> vsListOld,
                                                                 final List<VulnerableSoftware> vsList,

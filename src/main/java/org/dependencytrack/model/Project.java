@@ -343,6 +343,14 @@ public class Project implements Serializable {
     private transient ProjectMetrics metrics;
     private transient List<ProjectVersion> versions;
     private transient List<Component> dependencyGraph;
+    private transient List<AncestorPathElement> ancestorPath;
+
+    /**
+     * Represents an element in the ancestor path of a project.
+     * Used to display the full hierarchy path without requiring nested parent objects.
+     */
+    public record AncestorPathElement(UUID uuid, String name, String version) {
+    }
 
     public long getId() {
         return id;
@@ -626,6 +634,14 @@ public class Project implements Serializable {
 
     public void setVersions(List<ProjectVersion> versions) {
         this.versions = versions;
+    }
+
+    public List<AncestorPathElement> getAncestorPath() {
+        return ancestorPath;
+    }
+
+    public void setAncestorPath(List<AncestorPathElement> ancestorPath) {
+        this.ancestorPath = ancestorPath;
     }
 
     @JsonIgnore

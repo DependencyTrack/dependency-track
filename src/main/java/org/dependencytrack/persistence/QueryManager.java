@@ -99,6 +99,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 import static org.dependencytrack.model.ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED;
@@ -1669,6 +1671,95 @@ public class QueryManager extends AlpineQueryManager {
         }
 
         return clauseTemplate.formatted(pagination.getOffset(), pagination.getLimit());
+    }
+
+    /**
+     * Maximum depth for ancestor path traversal to prevent infinite loops
+     * in case of circular references or excessively deep hierarchies.
+     */
+    protected static final int MAX_ANCESTOR_DEPTH = 25;
+
+    /**
+     * Populates the ancestor path for all projects in the list using batch fetching.
+     * This is more efficient than traversing each project's hierarchy individually,
+     * as it fetches all ancestors level by level in O(depth) queries instead of O(N*depth).
+     *
+     * @param projects the list of projects to populate ancestor paths for
+     */
+    protected void populateAncestorPaths(List<Project> projects) {
+        if (projects == null || projects.isEmpty()) {
+            return;
+        }
+
+        // Build a map of all projects by UUID for quick lookup
+        final Map<UUID, Project> projectMap = projects.stream()
+                .filter(p -> p.getUuid() != null)
+                .collect(Collectors.toMap(Project::getUuid, Function.identity(), (a, b) -> a));
+
+        // Collect parent UUIDs that we need to fetch (not already in our map)
+        Set<UUID> parentUuidsToFetch = projects.stream()
+                .map(Project::getParent)
+                .filter(parent -> parent != null && parent.getUuid() != null)
+                .filter(parent -> !projectMap.containsKey(parent.getUuid()))
+                .map(Project::getUuid)
+                .collect(Collectors.toSet());
+
+        // Fetch ancestors level by level until we have all of them (with depth limit for safety)
+        int depth = 0;
+        while (!parentUuidsToFetch.isEmpty() && depth < MAX_ANCESTOR_DEPTH) {
+            final List<Project> fetchedParents = fetchProjectsByUuids(parentUuidsToFetch);
+
+            // Add fetched parents to map and collect next level of parent UUIDs
+            fetchedParents.forEach(parent -> projectMap.put(parent.getUuid(), parent));
+
+            parentUuidsToFetch = fetchedParents.stream()
+                    .map(Project::getParent)
+                    .filter(parent -> parent != null && parent.getUuid() != null)
+                    .filter(parent -> !projectMap.containsKey(parent.getUuid()))
+                    .map(Project::getUuid)
+                    .collect(Collectors.toSet());
+
+            depth++;
+        }
+
+        // Build the ancestor path for each project using the complete map
+        projects.forEach(project -> project.setAncestorPath(buildAncestorPathFromMap(project, projectMap)));
+    }
+
+    /**
+     * Fetches projects by their UUIDs in a single query.
+     */
+    protected List<Project> fetchProjectsByUuids(Set<UUID> uuids) {
+        if (uuids == null || uuids.isEmpty()) {
+            return List.of();
+        }
+        final Query<Project> query = pm.newQuery(Project.class);
+        query.setFilter(":uuids.contains(uuid)");
+        query.setParameters(List.copyOf(uuids));
+        try {
+            return List.copyOf(query.executeList());
+        } finally {
+            query.closeAll();
+        }
+    }
+
+    /**
+     * Builds the ancestor path for a project using a pre-populated map of projects.
+     * The path is ordered from root to immediate parent (not including the project itself).
+     */
+    protected static List<Project.AncestorPathElement> buildAncestorPathFromMap(Project project, Map<UUID, Project> projectMap) {
+        final List<Project.AncestorPathElement> path = new ArrayList<>();
+        Project current = project.getParent();
+        int depth = 0;
+
+        while (current != null && depth < MAX_ANCESTOR_DEPTH) {
+            // Insert at the beginning to maintain root-to-parent order
+            path.addFirst(new Project.AncestorPathElement(current.getUuid(), current.getName(), current.getVersion()));
+            // Look up the parent in our map to continue traversal
+            current = current.getParent() != null ? projectMap.get(current.getParent().getUuid()) : null;
+            depth++;
+        }
+        return path;
     }
 
 }

@@ -25,7 +25,7 @@ ARG UID=1000
 ARG GID=1000
 ARG WAR_FILENAME=dependency-track-apiserver.jar
 
-FROM eclipse-temurin:25.0.1_8-jdk-alpine@sha256:0c4c6300cc86efdf6454702336a0d60352e227f3a862e8ae9861f393f8f1ede9 AS jre-build
+FROM eclipse-temurin:25.0.1_8-jdk-alpine@sha256:7ace075f29555df6696750ee3caffea4fb542a1db8a5b1e7578129162f071c03 AS jre-build
 
 ARG WAR_FILENAME
 
@@ -36,7 +36,7 @@ COPY ./target/${WAR_FILENAME} ./
 
 RUN ./create-jre.sh -i "./${WAR_FILENAME}" -o ./jre
 
-FROM alpine:3.23@sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62
+FROM alpine:3.23@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
 
 ARG COMMIT_SHA
 ARG APP_VERSION
@@ -77,13 +77,15 @@ RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
     && adduser -S -D -G dtrack -H -h ${DATA_DIR} -g "dtrack user" -s /bin/false -u ${UID} dtrack \
     && chown -R dtrack:0 ${DATA_DIR} ${APP_DIR} \
     && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
-    && apk add --no-cache tzdata curl
+    && apk add --no-cache curl tini tzdata
 
 USER ${UID}
 WORKDIR ${APP_DIR}
 
 COPY --from=jre-build --chown=${UID}:0 /work/jre ${JAVA_HOME}
 COPY --chown=${UID}:0 ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ./
+
+ENTRYPOINT ["/sbin/tini", "--"]
 
 # Launch Dependency-Track
 CMD [ \
@@ -102,7 +104,7 @@ CMD [ \
 EXPOSE 8080
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD [ \
+HEALTHCHECK --interval=30s --start-period=60s --timeout=5s CMD [ \
     "/bin/sh", "-c", \
     "curl -f -s --max-time 3 --noproxy '*' -o /dev/null http://127.0.0.1:8080${CONTEXT}health" \
 ]

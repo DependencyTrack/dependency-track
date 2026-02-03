@@ -302,4 +302,32 @@ class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
         );
     }
 
+    @Test
+    void testAnalyzeUsesCustomBaseUrl() throws Exception {
+        // Create a task with custom base URL via configuration property
+        qm.createConfigProperty(
+                "scanner",
+                "ossindex.base.url",
+                wmRuntimeInfo.getHttpBaseUrl(),
+                alpine.model.IConfigProperty.PropertyType.URL,
+                "Base URL for OSS Index API"
+        );
+
+        // Create new task instance that should read from config
+        var customTask = new OssIndexAnalysisTask();
+
+        configApiToken(API_USER, DataEncryption.encryptAsString(API_TOKEN));
+        stubPOSTRequest();
+
+        var project = configProject();
+        var component = getComponent(project);
+        qm.persist(component);
+
+        assertThatNoException().isThrownBy(() -> customTask.inform(new OssIndexAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
+
+        // Verify that the custom URL was used
+        verify(getRequestedPost());
+    }
+
 }

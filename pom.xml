@@ -89,7 +89,7 @@
         <lib.alpine.version>${project.parent.version}</lib.alpine.version>
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
         <lib.brotli-decoder.version>0.1.2</lib.brotli-decoder.version>
-        <lib.checkstyle.version>13.0.0</lib.checkstyle.version>
+        <lib.checkstyle.version>13.1.0</lib.checkstyle.version>
         <lib.cloud-sql-connector-jdbc-sqlserver.version>1.28.0</lib.cloud-sql-connector-jdbc-sqlserver.version>
         <lib.cloud-sql-mysql-socket-factory-connector-j-8.version>1.28.0</lib.cloud-sql-mysql-socket-factory-connector-j-8.version>
         <lib.cloud-sql-postgres-socket-factory.version>1.28.0</lib.cloud-sql-postgres-socket-factory.version>
@@ -104,10 +104,10 @@
         <lib.lucene.version>8.11.4</lib.lucene.version>
         <lib.maven-artifact.version>3.9.12</lib.maven-artifact.version>
         <lib.mockserver-netty.version>5.15.0</lib.mockserver-netty.version>
-        <lib.open-vulnerability-clients.version>9.0.2</lib.open-vulnerability-clients.version>
+        <lib.open-vulnerability-clients.version>9.0.3</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>4.1.0</lib.pebble.version>
-        <lib.protobuf-java.version>4.33.4</lib.protobuf-java.version>
+        <lib.protobuf-java.version>4.33.5</lib.protobuf-java.version>
         <lib.resilience4j.version>2.3.0</lib.resilience4j.version>
         <lib.swagger-parser.version>2.1.37</lib.swagger-parser.version>
         <lib.junit-pioneer.version>2.3.0</lib.junit-pioneer.version>
@@ -564,7 +564,7 @@
             <plugin>
                 <groupId>io.github.ascopes</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
-                <version>4.1.2</version>
+                <version>4.1.3</version>
                 <configuration>
                     <protocVersion>${lib.protobuf-java.version}</protocVersion>
                     <sourceDirectories>

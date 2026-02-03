@@ -18,7 +18,9 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.Event;
+import alpine.event.framework.SingletonCapableEvent;
+
+import java.util.UUID;
 
 /**
  * Defines an event triggered when internal components should be identified in the entire portfolio.
@@ -26,9 +28,13 @@ import alpine.event.framework.Event;
  * @author nscuro
  * @since 3.7.0
  */
-public class InternalComponentIdentificationEvent implements Event {
+public class InternalComponentIdentificationEvent extends SingletonCapableEvent {
+
+    private static final UUID CHAIN_IDENTIFIER = UUID.fromString("57096d18-fdad-41c7-a59e-925ce7dc3d0e");
 
     public InternalComponentIdentificationEvent() {
+        setChainIdentifier(CHAIN_IDENTIFIER);
+        setSingleton(true);
     }
 
 }

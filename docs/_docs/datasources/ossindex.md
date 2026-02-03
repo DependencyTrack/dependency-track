@@ -17,8 +17,7 @@ The OSS Index integration is enabled by default.
 
 #### Important Update (Sep 2025)
 
-> Unauthenticated usage of OSS Index will be no longer supported.  
-An API Token will be required.
+> Unauthenticated usage of OSS Index will be no longer supported. An API Token will be required.
 
 ### Authentication
 
@@ -46,20 +45,6 @@ To configure the base URL, navigate to *Analyzers* → *Sonatype OSS Index* in t
 | Option   | Description                                          | Default                          |
 |:---------|:-----------------------------------------------------|:---------------------------------|
 | Base URL | Base URL of the OSS Index REST API                   | https://ossindex.sonatype.org    |
-
-**Note:** This is a runtime-only configuration property. For Docker deployments, you can set it via the environment variable `SCANNER_OSSINDEX_BASE_URL`. For non-containerized deployments, use the administration panel or system properties.
-
-### May 2022 Update
-
-Previously, authentication was only required for an extended rate limiting budget. Up to this point, vulnerabilities in
-the OSS Index dataset that did not map to CVEs were identified by random UUIDs (e.g. `ae0cc4d7-fafe-4970-87e3-f8956039645a`).
-
-In May 2022, Sonatype announced major changes to OSS Index.
-Beside improvements in data quality and update frequencies, vulnerability IDs changed from random UUIDs to
-a more CVE-like structure (e.g. `sonatype-2022-4402`).
-
-Dependency-Track users who had OSS Index enabled before May 2022 may still have vulnerabilities with the old
-naming scheme in their portfolio.
 
 [Sonatype OSS Index]: https://ossindex.sonatype.org/
 [public API]: https://ossindex.sonatype.org/doc/rest

@@ -18,11 +18,20 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.Event;
+import alpine.event.framework.SingletonCapableEvent;
+
+import java.util.UUID;
 
 /**
  * Defines an event used to start a mirror of Google OSV.
  */
-public class OsvMirrorEvent implements Event {
+public class OsvMirrorEvent extends SingletonCapableEvent {
+
+    private static final UUID CHAIN_IDENTIFIER = UUID.fromString("4133bd23-0e71-418b-a66c-1d8782c51f4d");
+
+    public OsvMirrorEvent() {
+        setChainIdentifier(CHAIN_IDENTIFIER);
+        setSingleton(true);
+    }
 
 }

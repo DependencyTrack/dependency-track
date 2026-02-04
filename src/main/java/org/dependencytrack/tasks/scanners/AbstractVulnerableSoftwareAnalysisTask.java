@@ -19,25 +19,27 @@
 package org.dependencytrack.tasks.scanners;
 
 import alpine.common.logging.Logger;
+import com.github.packageurl.PackageURL;
+import io.github.nscuro.versatile.Comparator;
+import io.github.nscuro.versatile.Vers;
+import io.github.nscuro.versatile.VersException;
+import io.github.nscuro.versatile.VersionFactory;
+import io.github.nscuro.versatile.spi.InvalidVersionException;
+import io.github.nscuro.versatile.spi.Version;
+import io.github.nscuro.versatile.version.KnownVersioningSchemes;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.OsDistribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
-import org.dependencytrack.util.ComponentVersion;
-
-import com.github.packageurl.PackageURL;
-
+import org.dependencytrack.util.PurlUtil;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.util.Relation;
 
 import java.util.List;
-
-import io.github.nscuro.versatile.spi.InvalidVersionException;
-import io.github.nscuro.versatile.spi.Version;
-import io.github.nscuro.versatile.VersionFactory;
-import io.github.nscuro.versatile.Vers;
+import java.util.Optional;
 
 /**
  * Base analysis task for using the internal VulnerableSoftware model as the source of truth for
@@ -90,7 +92,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             return;
         }
         for (final VulnerableSoftware vs : vsList) {
-            if (comparePurlVersions(vs, version)) {
+            if (comparePurlVersions(targetPurl, vs, version)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component,
@@ -103,12 +105,16 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
 
     }
 
-    protected void analyzeCpeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
-                                       final Cpe targetCpe, final String targetVersion, final Component component,
-                                       final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel){
+    private void analyzeCpeVersionRange(
+            QueryManager qm,
+            List<VulnerableSoftware> vsList,
+            Cpe targetCpe,
+            String targetVersion,
+            Component component,
+            VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         for (final VulnerableSoftware vs : vsList) {
             final Boolean isCpeMatch = maybeMatchCpe(vs, targetCpe, targetVersion);
-            if ((isCpeMatch == null || isCpeMatch) && compareCpeVersions(vs, targetVersion)) {
+            if ((isCpeMatch == null || isCpeMatch) && compareCpeVersions(vs, targetVersion, component)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
@@ -161,8 +167,33 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         return isMatch;
     }
 
-    
-    private static boolean comparePurlVersions(VulnerableSoftware vs, Version targetVersion) {
+    private static boolean comparePurlVersions(PackageURL componentPurl, VulnerableSoftware vs, Version targetVersion) {
+        final String componentDistroQualifier = PurlUtil.getDistroQualifier(componentPurl);
+        final String vsDistroQualifier = PurlUtil.getDistroQualifier(vs.getPurl());
+
+        // When both the component and the vulnerable software record have a distro
+        // qualifier, they must match *before* we perform the actual version comparison.
+        if (componentDistroQualifier != null && vsDistroQualifier != null) {
+            // Simplest case: the qualifiers just match without special interpretation.
+            if (!componentDistroQualifier.equals(vsDistroQualifier)) {
+                // Could still match, but depends on distro semantics.
+                // e.g. "debian-13" should match "trixie".
+                final var componentDistro = OsDistribution.of(componentPurl);
+                final var vsDistro = OsDistribution.of(PurlUtil.silentPurl(vs.getPurl()));
+
+                if (componentDistro == null || vsDistro == null) {
+                    // At least one of the distros could not be identified.
+                    // Have to assume they don't match.
+                    return false;
+                }
+
+                if (!componentDistro.matches(vsDistro)) {
+                    // Actual mismatch, e.g. "debian-13" != "sid".
+                    return false;
+                }
+            }
+        }
+
         final Vers vulnerableVersionRange = vs.getVers();
 
         if (vulnerableVersionRange == null) {
@@ -184,7 +215,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * <p>
      * Ported from Dependency-Check v5.2.1
      */
-    private static boolean compareCpeVersions(VulnerableSoftware vs, String targetVersion) {
+    private static boolean compareCpeVersions(VulnerableSoftware vs, String targetVersion, Component component) {
         // Modified from original by @nscuro.
         // Special cases for CPE matching of ANY (*) and NA (*) versions.
         // These don't make sense to use for version range comparison and
@@ -220,27 +251,35 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             return true;
         }
 
-        final ComponentVersion target = new ComponentVersion(targetVersion);
-        if (target.getVersionParts().isEmpty()) {
+        try {
+            // If the component has a PURL, we can deduce the applicable versioning scheme from it.
+            // TODO: We can probably run some heuristics on targetVersion itself,
+            //  e.g. by looking for "deb" or "ubuntu" fragments. But PURL is more reliable.
+            final String versioningScheme = Optional
+                    .ofNullable(component.getPurl())
+                    .flatMap(KnownVersioningSchemes::fromPurl)
+                    .orElse(KnownVersioningSchemes.SCHEME_GENERIC);
+
+            final var versBuilder = Vers.builder(versioningScheme);
+            if (vs.getVersionStartIncluding() != null && !vs.getVersionStartIncluding().isEmpty()) {
+                versBuilder.withConstraint(Comparator.GREATER_THAN_OR_EQUAL, vs.getVersionStartIncluding());
+            }
+            if (vs.getVersionStartExcluding() != null && !vs.getVersionStartExcluding().isEmpty()) {
+                versBuilder.withConstraint(Comparator.GREATER_THAN, vs.getVersionStartExcluding());
+            }
+            if (vs.getVersionEndExcluding() != null && !vs.getVersionEndExcluding().isEmpty()) {
+                versBuilder.withConstraint(Comparator.LESS_THAN, vs.getVersionEndExcluding());
+            }
+            if (vs.getVersionEndIncluding() != null && !vs.getVersionEndIncluding().isEmpty()) {
+                versBuilder.withConstraint(Comparator.LESS_THAN_OR_EQUAL, vs.getVersionEndIncluding());
+            }
+
+            final Vers vers = versBuilder.build();
+            return vers.contains(targetVersion);
+        } catch (VersException | InvalidVersionException e) {
+            LOGGER.warn("Failed to compare %s against %s".formatted(targetVersion, vs), e);
             return false;
         }
-        if (result && vs.getVersionEndExcluding() != null && !vs.getVersionEndExcluding().isEmpty()) {
-            final ComponentVersion endExcluding = new ComponentVersion(vs.getVersionEndExcluding());
-            result = endExcluding.compareTo(target) > 0;
-        }
-        if (result && vs.getVersionStartExcluding() != null && !vs.getVersionStartExcluding().isEmpty()) {
-            final ComponentVersion startExcluding = new ComponentVersion(vs.getVersionStartExcluding());
-            result = startExcluding.compareTo(target) < 0;
-        }
-        if (result && vs.getVersionEndIncluding() != null && !vs.getVersionEndIncluding().isEmpty()) {
-            final ComponentVersion endIncluding = new ComponentVersion(vs.getVersionEndIncluding());
-            result &= endIncluding.compareTo(target) >= 0;
-        }
-        if (result && vs.getVersionStartIncluding() != null && !vs.getVersionStartIncluding().isEmpty()) {
-            final ComponentVersion startIncluding = new ComponentVersion(vs.getVersionStartIncluding());
-            result &= startIncluding.compareTo(target) <= 0;
-        }
-        return result;
     }
 
 }

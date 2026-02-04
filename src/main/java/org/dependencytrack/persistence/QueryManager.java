@@ -33,6 +33,7 @@ import alpine.resources.AlpineRequest;
 import alpine.server.util.DbUtil;
 import com.github.packageurl.PackageURL;
 import com.google.common.collect.Lists;
+import jakarta.json.JsonObject;
 import org.apache.commons.lang3.ClassUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.event.IndexEvent;
@@ -84,7 +85,6 @@ import org.dependencytrack.resources.v1.vo.AffectedProject;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
 
-import jakarta.json.JsonObject;
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -921,16 +921,45 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public VulnerableSoftware getVulnerableSoftwareByPurl(
-            final String purlType,
-            final String purlNamespace,
-            final String purlName,
-            final String version,
-            final String versionEndExcluding,
-            final String versionEndIncluding,
-            final String versionStartExcluding,
+            String purlType,
+            String purlNamespace,
+            String purlName,
+            String version,
+            String versionEndExcluding,
+            String versionEndIncluding,
+            String versionStartExcluding,
             String versionStartIncluding) {
         return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(
-                purlType, purlNamespace, purlName, version, versionEndExcluding, versionEndIncluding, versionStartExcluding, versionStartIncluding);
+                purlType,
+                purlNamespace,
+                purlName,
+                version,
+                versionEndExcluding,
+                versionEndIncluding,
+                versionStartExcluding,
+                versionStartIncluding);
+    }
+
+    public VulnerableSoftware getVulnerableSoftwareByPurl(
+            String purlType,
+            String purlNamespace,
+            String purlName,
+            String purlQualifiers,
+            String version,
+            String versionEndExcluding,
+            String versionEndIncluding,
+            String versionStartExcluding,
+            String versionStartIncluding) {
+        return getVulnerableSoftwareQueryManager().getVulnerableSoftwareByPurl(
+                purlType,
+                purlNamespace,
+                purlName,
+                purlQualifiers,
+                version,
+                versionEndExcluding,
+                versionEndIncluding,
+                versionStartExcluding,
+                versionStartIncluding);
     }
 
     public List<VulnerableSoftware> getVulnerableSoftwareByVulnId(final String source, final String vulnId) {

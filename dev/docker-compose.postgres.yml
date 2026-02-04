@@ -28,6 +28,11 @@ services:
 
   postgres:
     image: postgres:14-alpine
+    command: >-
+      -c 'shared_preload_libraries=pg_stat_statements'
+      -c 'pg_stat_statements.track=all'
+      -c 'pg_stat_statements.max=10000'
+      -c 'track_activity_query_size=2048'
     environment:
       POSTGRES_DB: "dtrack"
       POSTGRES_USER: "dtrack"
@@ -41,6 +46,17 @@ services:
     - "127.0.0.1:5432:5432"
     volumes:
     - "postgres-data:/var/lib/postgresql/data"
+    restart: unless-stopped
+
+  pghero:
+    image: ankane/pghero
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://dtrack:dtrack@postgres:5432/dtrack"
+    ports:
+    - "127.0.0.1:8432:8080"
     restart: unless-stopped
 
 volumes:

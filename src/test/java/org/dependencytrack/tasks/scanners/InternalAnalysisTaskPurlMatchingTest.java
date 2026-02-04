@@ -1,11 +1,6 @@
 package org.dependencytrack.tasks.scanners;
 
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Arrays;
-
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.InternalAnalysisEvent;
 import org.dependencytrack.model.Component;
@@ -13,11 +8,15 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
-import org.dependencytrack.parser.nvd.ModelConverter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_INTERNAL_ENABLED;
@@ -92,7 +91,7 @@ public class InternalAnalysisTaskPurlMatchingTest extends PersistenceCapableTest
               final boolean expectMatch,
               final String targetPurlString) throws Exception {
 
-        final VulnerableSoftware vs = ModelConverter.convertPurlToVulnerableSoftware(sourcePurlString);
+        final VulnerableSoftware vs = VulnerableSoftwareTestUtil.fromPurl(sourcePurlString);
 
         if (sourceRange != null) {
             Optional.ofNullable(sourceRange.startIncluding).ifPresent(vs::setVersionStartIncluding);

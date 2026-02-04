@@ -19,25 +19,24 @@
 package org.dependencytrack.tasks.scanners;
 
 import alpine.common.logging.Logger;
+import com.github.packageurl.PackageURL;
+import io.github.nscuro.versatile.Vers;
+import io.github.nscuro.versatile.VersionFactory;
+import io.github.nscuro.versatile.spi.InvalidVersionException;
+import io.github.nscuro.versatile.spi.Version;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.OsDistribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.ComponentVersion;
-
-import com.github.packageurl.PackageURL;
-
+import org.dependencytrack.util.NotificationUtil;
+import org.dependencytrack.util.PurlUtil;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.util.Relation;
 
 import java.util.List;
-
-import io.github.nscuro.versatile.spi.InvalidVersionException;
-import io.github.nscuro.versatile.spi.Version;
-import io.github.nscuro.versatile.VersionFactory;
-import io.github.nscuro.versatile.Vers;
 
 /**
  * Base analysis task for using the internal VulnerableSoftware model as the source of truth for
@@ -90,7 +89,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             return;
         }
         for (final VulnerableSoftware vs : vsList) {
-            if (comparePurlVersions(vs, version)) {
+            if (comparePurlVersions(targetPurl, vs, version)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component,
@@ -161,8 +160,33 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         return isMatch;
     }
 
-    
-    private static boolean comparePurlVersions(VulnerableSoftware vs, Version targetVersion) {
+    private static boolean comparePurlVersions(PackageURL componentPurl, VulnerableSoftware vs, Version targetVersion) {
+        final String componentDistroQualifier = PurlUtil.getDistroQualifier(componentPurl);
+        final String vsDistroQualifier = PurlUtil.getDistroQualifier(vs.getPurl());
+
+        // When both the component and the vulnerable software record have a distro
+        // qualifier, they must match *before* we perform the actual version comparison.
+        if (componentDistroQualifier != null && vsDistroQualifier != null) {
+            // Simplest case: the qualifiers just match without special interpretation.
+            if (!componentDistroQualifier.equals(vsDistroQualifier)) {
+                // Could still match, but depends on distro semantics.
+                // e.g. "debian-13" should match "trixie".
+                final var componentDistro = OsDistribution.of(componentPurl);
+                final var vsDistro = OsDistribution.of(PurlUtil.silentPurl(vs.getPurl()));
+
+                if (componentDistro == null || vsDistro == null) {
+                    // At least one of the distros could not be identified.
+                    // Have to assume they don't match.
+                    return false;
+                }
+
+                if (!componentDistro.matches(vsDistro)) {
+                    // Actual mismatch, e.g. "debian-13" != "sid".
+                    return false;
+                }
+            }
+        }
+
         final Vers vulnerableVersionRange = vs.getVers();
 
         if (vulnerableVersionRange == null) {

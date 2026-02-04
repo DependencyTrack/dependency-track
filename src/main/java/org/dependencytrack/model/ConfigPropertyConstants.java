@@ -128,6 +128,10 @@ public enum ConfigPropertyConstants {
     DEFAULT_LANGUAGE("general", "default.locale", null, PropertyType.STRING, "Determine the default Language to use", true),
     TELEMETRY_SUBMISSION_ENABLED("telemetry", "submission.enabled", String.valueOf(!"true".equals(System.getProperty("dev.mode.enabled")) && Config.getInstance().getPropertyAsBoolean(ConfigKey.TELEMETRY_SUBMISSION_ENABLED_DEFAULT)), PropertyType.BOOLEAN, "Whether submission of telemetry data is enabled"),
     TELEMETRY_LAST_SUBMISSION_DATA("telemetry", "last.submission.data", null, PropertyType.STRING, "Data of the last telemetry submission"),
+    VULNERABILITY_ID_ORG_CODE("vulnerability-id", "org.code", "DT", PropertyType.STRING, "Organization code used in vulnerability IDs"),
+    VULNERABILITY_ID_TEMPLATE("vulnerability-id", "template", "{ORG_CODE}-{PROJECT_NAME}-{YYYY}-{SEQUENCE}", PropertyType.STRING, "Template for generating vulnerability IDs with variables: {ORG_CODE}, {PROJECT_NAME}, {PROJECT_CODE}, {YYYY}, {MM}, {DD}, {SEQUENCE}"),
+    VULNERABILITY_ID_RESET_POLICY("vulnerability-id", "reset.policy", "YEARLY", PropertyType.STRING, "Sequence reset policy: YEARLY, MONTHLY, DAILY, NEVER"),
+    VULNERABILITY_ID_SEQUENCE_PADDING("vulnerability-id", "sequence.padding", "5", PropertyType.INTEGER, "Number of digits for sequence padding"),
     TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS("telemetry", "last.submission.epoch.seconds", null, PropertyType.INTEGER, "Timestamp of the last telemetry submission in epoch seconds");
 
     private final String groupName;

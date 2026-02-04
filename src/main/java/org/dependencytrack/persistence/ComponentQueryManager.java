@@ -33,6 +33,7 @@ import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 
 import jakarta.json.Json;
@@ -43,6 +44,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -788,6 +790,102 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 pm.deletePersistent(existingProperty);
             }
         }
+    }
+
+    /**
+     * Returns Components matching the VulnerableSoftware by PURL or CPE.
+     * Version matching is performed separately by the caller.
+     *
+     * @param vs the VulnerableSoftware to match
+     * @return matching Component objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Component> getComponentsMatchingVulnerableSoftware(final VulnerableSoftware vs) {
+        if (vs == null) {
+            return Collections.emptyList();
+        }
+
+        LOGGER.debug("Looking for components matching VulnerableSoftware: purl=" + vs.getPurl() + 
+                     ", purlType=" + vs.getPurlType() + ", purlName=" + vs.getPurlName() +
+                     ", vendor=" + vs.getVendor() + ", product=" + vs.getProduct());
+
+        List<Component> results = new ArrayList<>();
+
+        // Try matching by PURL
+        String purlType = vs.getPurlType();
+        String purlName = vs.getPurlName();
+        String purlNamespace = vs.getPurlNamespace();
+        
+        // If purlType/purlName not set but full purl is available, try to parse it
+        if ((purlType == null || purlName == null) && vs.getPurl() != null) {
+            try {
+                PackageURL parsedPurl = new PackageURL(vs.getPurl());
+                purlType = parsedPurl.getType();
+                purlName = parsedPurl.getName();
+                purlNamespace = parsedPurl.getNamespace();
+                LOGGER.debug("Parsed PURL: type=" + purlType + ", namespace=" + purlNamespace + ", name=" + purlName);
+            } catch (MalformedPackageURLException e) {
+                LOGGER.debug("Failed to parse PURL: " + vs.getPurl(), e);
+            }
+        }
+
+        // Match by PURL (type, namespace, name) - version matching is done separately
+        if (purlType != null && purlName != null) {
+            // Build a PURL prefix to search for
+            StringBuilder purlPrefix = new StringBuilder("pkg:");
+            purlPrefix.append(purlType.toLowerCase());
+            purlPrefix.append("/");
+            if (purlNamespace != null && !purlNamespace.isEmpty()) {
+                purlPrefix.append(purlNamespace.toLowerCase());
+                purlPrefix.append("/");
+            }
+            purlPrefix.append(purlName.toLowerCase());
+            
+            String prefix = purlPrefix.toString();
+            LOGGER.debug("Searching for components with purl starting with: " + prefix);
+            
+            // Use startsWith for simpler matching
+            // Match purl that starts with prefix followed by @ (version start) or ? (qualifiers) or end
+            final Query<Component> query = pm.newQuery(Component.class);
+            query.setFilter("purl != null && (purl.toLowerCase().startsWith(:prefix1) || purl.toLowerCase().startsWith(:prefix2))");
+            query.setNamedParameters(Map.of(
+                "prefix1", prefix + "@",  // Has version
+                "prefix2", prefix + "?"   // Has qualifiers without version (unlikely but possible)
+            ));
+            
+            try {
+                List<Component> found = (List<Component>) query.executeList();
+                LOGGER.debug("Found " + found.size() + " components matching PURL prefix");
+                results.addAll(found);
+            } finally {
+                query.closeAll();
+            }
+        }
+        // Match by CPE (vendor, product) - version matching is done separately
+        else if (vs.getVendor() != null && vs.getProduct() != null) {
+            String vendor = vs.getVendor().toLowerCase();
+            String product = vs.getProduct().toLowerCase();
+            LOGGER.debug("Searching for components with CPE vendor=" + vendor + ", product=" + product);
+            
+            // CPE 2.3 format: cpe:2.3:part:vendor:product:version:...
+            // Search for components containing the vendor:product pattern
+            final Query<Component> query = pm.newQuery(Component.class);
+            query.setFilter("cpe != null && cpe.toLowerCase().indexOf(:vendorProduct) >= 0");
+            query.setNamedParameters(Map.of("vendorProduct", ":" + vendor + ":" + product + ":"));
+            
+            try {
+                List<Component> found = (List<Component>) query.executeList();
+                LOGGER.debug("Found " + found.size() + " components matching CPE vendor/product");
+                results.addAll(found);
+            } finally {
+                query.closeAll();
+            }
+        } else {
+            LOGGER.debug("No PURL or CPE info available for matching");
+            return Collections.emptyList();
+        }
+
+        return results;
     }
 
 }

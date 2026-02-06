@@ -613,6 +613,10 @@ public class QueryManager extends AlpineQueryManager {
         getComponentQueryManager().synchronizeComponentProperties(component, properties);
     }
 
+    public List<Component> getComponentsMatchingVulnerableSoftware(final VulnerableSoftware vs) {
+        return getComponentQueryManager().getComponentsMatchingVulnerableSoftware(vs);
+    }
+
     public PaginatedResult getLicenses() {
         return getLicenseQueryManager().getLicenses();
     }
@@ -827,6 +831,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public void removeVulnerability(Vulnerability vulnerability, Component component) {
         getVulnerabilityQueryManager().removeVulnerability(vulnerability, component);
+    }
+
+    public void linkVulnerabilityToMatchingComponents(Vulnerability vulnerability) {
+        getVulnerabilityQueryManager().linkVulnerabilityToMatchingComponents(vulnerability);
     }
 
     public FindingAttribution getFindingAttribution(Vulnerability vulnerability, Component component) {

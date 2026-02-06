@@ -107,9 +107,9 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             } catch (CpeParsingException e) {
                 LOGGER.warn("An error occurred while parsing: " + component.getCpe() + " - The CPE is invalid and will be discarded. " + e.getMessage());
             }
-        } else if (component.getPurl() != null) { 
+        } else if (component.getPurl() != null) {
             parsedPurl = component.getPurl();
-        } 
+        }
 
         List<VulnerableSoftware> vsList = Collections.emptyList();
 
@@ -141,7 +141,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
                 componentVersion = componentVersion.substring(1);
             }
         }
-        
+
         if (parsedCpe != null) {
             vsList = qm.getAllVulnerableSoftware(parsedCpe.getPart().getAbbreviation(), parsedCpe.getVendor(),
                     parsedCpe.getProduct(), component.getPurl());
@@ -149,11 +149,13 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             vsList = qm.getAllVulnerableSoftware(null, null, null, component.getPurl());
         }
 
+        boolean foundByFuzzing = false;
         if (fuzzyEnabled && vsList.isEmpty()) {
             FuzzyVulnerableSoftwareSearchManager fm = new FuzzyVulnerableSoftwareSearchManager(excludeComponentsWithPurl);
             vsList = fm.fuzzyAnalysis(qm, component, parsedCpe);
+            foundByFuzzing = !vsList.isEmpty();
         }
-        super.analyzeVersionRange(qm, vsList, parsedCpe, parsedPurl, componentVersion, component, vulnerabilityAnalysisLevel);
+        super.analyzeVersionRange(qm, vsList, parsedCpe, parsedPurl, componentVersion, component, vulnerabilityAnalysisLevel, foundByFuzzing);
     }
 
 }

@@ -167,4 +167,23 @@ class OsvAdvisoryParserTest {
         OsvAdvisory advisory = parser.parse(jsonObject);
         Assertions.assertNotNull(advisory);
     }
+
+    @Test
+        // https://github.com/DependencyTrack/dependency-track/issues/5716
+    void testIssue5716NpmMaliciousPackageWithIntroducedZero() throws Exception {
+        String jsonFile = "src/test/resources/unit/osv.jsons/osv-MAL-2022-1471.json";
+        String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
+        JSONObject jsonObject = new JSONObject(jsonString);
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assertions.assertNotNull(advisory);
+        Assertions.assertEquals("MAL-2022-1471", advisory.getId());
+        Assertions.assertEquals(1, advisory.getAffectedPackages().size());
+
+        OsvAffectedPackage affectedPackage = advisory.getAffectedPackages().get(0);
+        Assertions.assertEquals("pkg:npm/bats-file", affectedPackage.getPurl());
+        Assertions.assertEquals("0", affectedPackage.getLowerVersionRange());
+        Assertions.assertNull(affectedPackage.getUpperVersionRangeExcluding());
+        Assertions.assertNull(affectedPackage.getUpperVersionRangeIncluding());
+        Assertions.assertEquals("npm", affectedPackage.getPackageEcosystem());
+    }
 }

@@ -12,6 +12,10 @@ target/
 .project
 .vscode/
 
+# Log files
+*.log
+dependency-track.log
+
 # windows
 ~
 

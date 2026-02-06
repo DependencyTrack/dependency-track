@@ -87,6 +87,7 @@ import java.util.UUID;
                 @Persistent(name = "group"),
                 @Persistent(name = "name"),
                 @Persistent(name = "version"),
+                @Persistent(name = "internal"),
                 @Persistent(name = "cpe"),
                 @Persistent(name = "purl"),
                 @Persistent(name = "purlCoordinates"),

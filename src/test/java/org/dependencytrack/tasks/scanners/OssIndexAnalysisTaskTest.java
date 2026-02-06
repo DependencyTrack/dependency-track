@@ -90,12 +90,12 @@ class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
     @Test
     void testShouldAnalyzeWhenCacheIsCurrent() throws Exception {
         qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, wmRuntimeInfo.getHttpBaseUrl(),
-                Vulnerability.Source.OSSINDEX.name(), "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz", new Date(),
+                Vulnerability.Source.OSSINDEX.name(), "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0", new Date(),
                 Json.createObjectBuilder()
                         .add("vulnIds", Json.createArrayBuilder().add(123))
                         .build());
 
-        assertThat(analysisTask.shouldAnalyze(new PackageURL("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0"))).isTrue();
+        assertThat(analysisTask.shouldAnalyze(new PackageURL("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0"))).isFalse();
         assertThat(analysisTask.shouldAnalyze(new PackageURL("pkg:maven/com.fasterxml.woodstox/woodstox-core@6.0.0"))).isTrue();
         assertThat(analysisTask.shouldAnalyze(new PackageURL("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz"))).isFalse();
     }

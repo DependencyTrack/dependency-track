@@ -101,9 +101,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 12288m
-        reservations:
-          memory: 8192m
+          memory: 4g
       restart_policy:
         condition: on-failure
     ports:

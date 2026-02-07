@@ -27,9 +27,11 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import com.github.packageurl.PackageURLBuilder;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
+import jakarta.json.Json;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -43,6 +45,7 @@ import org.dependencytrack.event.IndexEvent;
 import org.dependencytrack.event.OsvMirrorEvent;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
+import org.dependencytrack.model.OsDistribution;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
@@ -55,7 +58,9 @@ import org.dependencytrack.parser.osv.OsvAdvisoryParser;
 import org.dependencytrack.parser.osv.model.OsvAdvisory;
 import org.dependencytrack.parser.osv.model.OsvAffectedPackage;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.listener.IndexingInstanceLifecycleListener;
 import org.dependencytrack.util.CvssUtil;
+import org.dependencytrack.util.PurlUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -64,9 +69,9 @@ import org.slf4j.MDC;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
 import java.net.NoRouteToHostException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -77,8 +82,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Clock;
 import java.time.Duration;
-import java.time.format.DateTimeParseException;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -88,18 +93,21 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.StringJoiner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import static io.github.resilience4j.core.IntervalFunction.ofExponentialBackoff;
+import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_ID;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ALIAS_SYNC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 import static org.dependencytrack.model.Severity.getSeverityByLevel;
 import static org.dependencytrack.util.RetryUtil.maybeClosePreviousResult;
 import static org.dependencytrack.util.VulnerabilityUtil.normalizedCvssV2Score;
@@ -283,6 +291,8 @@ public class OsvDownloadTask implements LoggableSubscriber {
             if (success) {
                 LOGGER.info("Incremental update completed for " + ecosystem);
                 writeTimestampFile(incrementalTimestampFile, startTime);
+                Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+                Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, VulnerableSoftware.class));
             }
         } else {
             Path osvZipFile = downloadOsvZipFile(url, ecosystem);
@@ -519,6 +529,9 @@ public class OsvDownloadTask implements LoggableSubscriber {
              final var bufferedIn = new BufferedInputStream(in);
              final var zipInput = new ZipInputStream(bufferedIn)) {
             unzipOsvZipFile(zipInput, count);
+        } finally {
+            Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+            Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, VulnerableSoftware.class));
         }
         final long end = System.currentTimeMillis();
         metricParseTime += end - start;
@@ -618,66 +631,67 @@ public class OsvDownloadTask implements LoggableSubscriber {
     }
 
     public void updateDatasource(final OsvAdvisory advisory) {
+        LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
+        final Vulnerability vulnerability = mapAdvisoryToVulnerability(advisory);
 
-        try (QueryManager qm = new QueryManager()) {
-
-            LOGGER.debug("Synchronizing Google OSV advisory: " + advisory.getId());
-            final Vulnerability vulnerability = mapAdvisoryToVulnerability(advisory);
-            final List<VulnerableSoftware> vsListOld = qm.detach(qm.getVulnerableSoftwareByVulnId(vulnerability.getSource(), vulnerability.getVulnId()));
-            final Vulnerability existingVulnerability = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
-            final Vulnerability.Source vulnerabilitySource = extractSource(advisory.getId());
-            final ConfigPropertyConstants vulnAuthoritativeSourceToggle = switch (vulnerabilitySource) {
-                case NVD -> ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
-                case GITHUB -> ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
-                default -> VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
-            };
-            final boolean vulnAuthoritativeSourceEnabled = Boolean.parseBoolean(qm.getConfigProperty(vulnAuthoritativeSourceToggle.getGroupName(), vulnAuthoritativeSourceToggle.getPropertyName()).getPropertyValue());
-            Vulnerability synchronizedVulnerability = existingVulnerability;
-            if (shouldUpdateExistingVulnerability(existingVulnerability, vulnerabilitySource, vulnAuthoritativeSourceEnabled)) {
-                synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
-                if (synchronizedVulnerability == null) return; // Exit if nothing to update
+        final var vsList = new ArrayList<VulnerableSoftware>();
+        for (final OsvAffectedPackage osvAffectedPackage : advisory.getAffectedPackages()) {
+            final VulnerableSoftware vs = mapAffectedPackageToVulnerableSoftware(osvAffectedPackage);
+            if (vs != null) {
+                vsList.add(vs);
             }
-
-            if (aliasSyncEnabled && advisory.getAliases() != null) {
-                for (int i = 0; i < advisory.getAliases().size(); i++) {
-                    final String alias = advisory.getAliases().get(i);
-                    final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
-
-                    // OSV will use IDs of other vulnerability databases for its
-                    // primary advisory ID (e.g. GHSA-45hx-wfhj-473x). We need to ensure
-                    // that we don't falsely report GHSA IDs as stemming from OSV.
-                    switch (vulnerabilitySource) {
-                        case NVD -> vulnerabilityAlias.setCveId(advisory.getId());
-                        case GITHUB -> vulnerabilityAlias.setGhsaId(advisory.getId());
-                        default -> vulnerabilityAlias.setOsvId(advisory.getId());
-                    }
-
-                    if (alias.startsWith("CVE") && Vulnerability.Source.NVD != vulnerabilitySource) {
-                        vulnerabilityAlias.setCveId(alias);
-                        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
-                    } else if (alias.startsWith("GHSA") && Vulnerability.Source.GITHUB != vulnerabilitySource) {
-                        vulnerabilityAlias.setGhsaId(alias);
-                        qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
-                    }
-
-                    //TODO - OSV supports GSD and DLA/DSA identifiers (possibly others). Determine how to handle.
-                }
-            }
-
-            List<VulnerableSoftware> vsList = new ArrayList<>();
-            for (OsvAffectedPackage osvAffectedPackage : advisory.getAffectedPackages()) {
-                VulnerableSoftware vs = mapAffectedPackageToVulnerableSoftware(qm, osvAffectedPackage);
-                if (vs != null) {
-                    vsList.add(vs);
-                }
-            }
-            qm.persist(vsList);
-            qm.updateAffectedVersionAttributions(synchronizedVulnerability, vsList, Vulnerability.Source.OSV);
-            vsList = qm.reconcileVulnerableSoftware(synchronizedVulnerability, vsListOld, vsList, Vulnerability.Source.OSV);
-            synchronizedVulnerability.setVulnerableSoftware(vsList);
-            qm.persist(synchronizedVulnerability);
         }
-        Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));
+
+        try (final var qm = new QueryManager()) {
+            qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+            qm.getPersistenceManager().addInstanceLifecycleListener(
+                    new IndexingInstanceLifecycleListener(Event::dispatch),
+                    Vulnerability.class,
+                    VulnerableSoftware.class);
+            qm.runInTransaction(() -> {
+                final Vulnerability existingVulnerability = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
+                final Vulnerability.Source vulnerabilitySource = extractSource(advisory.getId());
+                final ConfigPropertyConstants vulnAuthoritativeSourceToggle = switch (vulnerabilitySource) {
+                    case NVD -> VULNERABILITY_SOURCE_NVD_ENABLED;
+                    case GITHUB -> VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
+                    default -> VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+                };
+                final boolean vulnAuthoritativeSourceEnabled = Boolean.parseBoolean(qm.getConfigProperty(vulnAuthoritativeSourceToggle.getGroupName(), vulnAuthoritativeSourceToggle.getPropertyName()).getPropertyValue());
+                Vulnerability synchronizedVulnerability = existingVulnerability;
+                if (shouldUpdateExistingVulnerability(existingVulnerability, vulnerabilitySource, vulnAuthoritativeSourceEnabled)) {
+                    synchronizedVulnerability = qm.synchronizeVulnerability(vulnerability, false);
+                    if (synchronizedVulnerability == null) return; // Exit if nothing to update
+                }
+
+                if (aliasSyncEnabled && advisory.getAliases() != null) {
+                    for (int i = 0; i < advisory.getAliases().size(); i++) {
+                        final String alias = advisory.getAliases().get(i);
+                        final VulnerabilityAlias vulnerabilityAlias = new VulnerabilityAlias();
+
+                        // OSV will use IDs of other vulnerability databases for its
+                        // primary advisory ID (e.g. GHSA-45hx-wfhj-473x). We need to ensure
+                        // that we don't falsely report GHSA IDs as stemming from OSV.
+                        switch (vulnerabilitySource) {
+                            case NVD -> vulnerabilityAlias.setCveId(advisory.getId());
+                            case GITHUB -> vulnerabilityAlias.setGhsaId(advisory.getId());
+                            default -> vulnerabilityAlias.setOsvId(advisory.getId());
+                        }
+
+                        if (alias.startsWith("CVE") && Vulnerability.Source.NVD != vulnerabilitySource) {
+                            vulnerabilityAlias.setCveId(alias);
+                            qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                        } else if (alias.startsWith("GHSA") && Vulnerability.Source.GITHUB != vulnerabilitySource) {
+                            vulnerabilityAlias.setGhsaId(alias);
+                            qm.synchronizeVulnerabilityAlias(vulnerabilityAlias);
+                        }
+
+                        //TODO - OSV supports GSD and DLA/DSA identifiers (possibly others). Determine how to handle.
+                    }
+                }
+
+                qm.synchronizeVulnerableSoftware(synchronizedVulnerability, vsList, Vulnerability.Source.OSV);
+            });
+        }
     }
 
     private boolean shouldUpdateExistingVulnerability(Vulnerability existingVulnerability, Vulnerability.Source vulnerabilitySource, boolean vulnAuthoritativeSourceEnabled) {
@@ -783,18 +797,39 @@ public class OsvDownloadTask implements LoggableSubscriber {
         };
     }
 
-    public VulnerableSoftware mapAffectedPackageToVulnerableSoftware(final QueryManager qm, final OsvAffectedPackage affectedPackage) {
+    public VulnerableSoftware mapAffectedPackageToVulnerableSoftware(OsvAffectedPackage affectedPackage) {
         if (affectedPackage.getPurl() == null) {
             LOGGER.debug("No PURL provided for affected package " + affectedPackage.getPackageName() + " - skipping");
             return null;
         }
 
-        final PackageURL purl;
+        PackageURL purl;
         try {
             purl = new PackageURL(affectedPackage.getPurl());
         } catch (MalformedPackageURLException e) {
             LOGGER.debug("Invalid PURL provided for affected package  " + affectedPackage.getPackageName() + " - skipping", e);
             return null;
+        }
+
+        // Some PURLs already include the distro qualifier, e.g. "pkg:deb/ubuntu/php7.0?distro=xenial",
+        // while for others we may need to infer it from the package ecosystem, e.g. "Debian:13".
+        final String distroQualifier = PurlUtil.getDistroQualifier(purl);
+        if (distroQualifier == null) {
+            final var distro = OsDistribution.ofOsvEcosystem(affectedPackage.getPackageEcosystem());
+            if (distro != null) {
+                try {
+                    purl = PackageURLBuilder.aPackageURL()
+                            .withType(purl.getType())
+                            .withNamespace(purl.getNamespace())
+                            .withName(purl.getName())
+                            .withVersion(purl.getVersion())
+                            .withQualifier("distro", distro.purlQualifierValue())
+                            .withSubpath(purl.getSubpath())
+                            .build();
+                } catch (MalformedPackageURLException e) {
+                    LOGGER.warn("Failed to add distro qualifier to PURL for " + affectedPackage.getPackageName(), e);
+                }
+            }
         }
 
         // Other sources do not populate the versionStartIncluding with 0.
@@ -806,16 +841,13 @@ public class OsvDownloadTask implements LoggableSubscriber {
         final String versionEndExcluding = affectedPackage.getUpperVersionRangeExcluding();
         final String versionEndIncluding = affectedPackage.getUpperVersionRangeIncluding();
 
-        VulnerableSoftware vs = qm.getVulnerableSoftwareByPurl(purl.getType(), purl.getNamespace(), purl.getName(),
-                purl.getVersion(), versionEndExcluding, versionEndIncluding, null, versionStartIncluding);
-        if (vs != null) {
-            return vs;
-        }
-
-        vs = new VulnerableSoftware();
+        final var vs = new VulnerableSoftware();
         vs.setPurlType(purl.getType());
         vs.setPurlNamespace(purl.getNamespace());
         vs.setPurlName(purl.getName());
+        vs.setPurlQualifiers((purl.getQualifiers() != null && !purl.getQualifiers().isEmpty())
+                ? Json.createObjectBuilder(purl.getQualifiers()).build().toString()
+                : null);
         vs.setPurl(purl.canonicalize());
         vs.setVulnerable(true);
         vs.setVersion(affectedPackage.getVersion());

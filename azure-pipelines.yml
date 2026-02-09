@@ -1,43 +1,126 @@
 trigger: none
 pr: none
 
-# Unused parameter - kept for reference
-# parameters:
-#   - name: branchName
-#     type: string
-#     default: main
-#     displayName: 'Select backend branch to build'
-
 variables:
   acrserviceconnection: 'acr-dependencytracktest-connection'
+  appserviceconnection: 'acr-dependencytracktest-connection'  # Same service connection for App Service
   acrname: 'acrdependencytracktest'
   imagebackend: 'dtrack-backend'
   dockerfilebackend: 'Dockerfile'
-
+  appServiceName: 'app-dependencytrack-backend-test'
+  resourceGroupName: 'your-resource-group'
+  registryUrl: '$(acrname).azurecr.io'
+  enableDeployment: 'false'  # Set to 'true' to enable deployment during pipeline run
 
 pool:
   vmImage: 'ubuntu-latest'
 
+stages:
+  # ===== STAGE 1: BUILD =====
+  - stage: Build
+    displayName: 'Build Docker Image'
+    jobs:
+      - job: BuildBackend
+        displayName: 'Build and Push Backend Image'
+        steps:
+          - checkout: self
+            clean: true
 
-steps:
-  - checkout: self
-    clean: true
+          - task: Docker@2
+            displayName: 'Build and Push Backend Image'
+            inputs:
+              command: 'buildAndPush'
+              repository: '$(imagebackend)'
+              dockerfile: '$(dockerfilebackend)'
+              buildContext: '$(System.DefaultWorkingDirectory)'
+              containerRegistry: '$(acrserviceconnection)'
+              tags: |
+                $(Build.BuildId)
+                latest
 
-  # Unused script - kept for reference
-  # - script: |
-  #     SAFE_BRANCH=$(echo "${{ parameters.branchName }}" | tr '/' '-')
-  #     echo "##vso[task.setvariable variable=safeBranch]$SAFE_BRANCH"
-  #   displayName: "Sanitize branch name"
+  # ===== STAGE 2: DEPLOY =====
+  - stage: Deploy
+    displayName: 'Deploy to App Service'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['enableDeployment'], 'true'))
+    jobs:
+      - deployment: DeployBackend
+        displayName: 'Deploy Backend to App Service'
+        environment: 'production'
+        strategy:
+          runOnce:
+            preDeploy:
+              steps:
+                - script: |
+                    echo "=========================================="
+                    echo "Starting Deployment"
+                    echo "=========================================="
+                    echo "App Service: $(appServiceName)"
+                    echo "Resource Group: $(resourceGroupName)"
+                    echo "Image: $(registryUrl)/$(imagebackend):$(Build.BuildId)"
+                    echo "=========================================="
+                  displayName: 'Pre-deployment info'
 
-  - task: Docker@2
-    displayName: 'Build and Push Backend Image'
-    inputs:
-      command: 'buildAndPush'
-      repository: '$(imagebackend)'
-      dockerfile: '$(dockerfilebackend)'
-      buildContext: '$(System.DefaultWorkingDirectory)'
-      containerRegistry: '$(acrserviceconnection)'
-      tags: |
-        $(Build.BuildId)
-        latest
+            deploy:
+              steps:
+                # Stop App Service
+                - task: AzureAppServiceManage@0
+                  displayName: 'Stop App Service'
+                  inputs:
+                    azureSubscription: '$(appserviceconnection)'
+                    action: 'Stop Azure App Service'
+                    appType: 'webAppContainer'
+                    appName: '$(appServiceName)'
+                    resourceGroupName: '$(resourceGroupName)'
+
+                # Update Docker Image
+                - task: AzureRmWebAppDeployment@4
+                  displayName: 'Update Docker Image in App Service'
+                  inputs:
+                    azureSubscription: '$(appserviceconnection)'
+                    appType: 'webAppContainer'
+                    appName: '$(appServiceName)'
+                    resourceGroupName: '$(resourceGroupName)'
+                    imageName: '$(registryUrl)/$(imagebackend):$(Build.BuildId)'
+                    containerCommand: ''
+
+                # Start App Service
+                - task: AzureAppServiceManage@0
+                  displayName: 'Start App Service'
+                  inputs:
+                    azureSubscription: '$(appserviceconnection)'
+                    action: 'Start Azure App Service'
+                    appType: 'webAppContainer'
+                    appName: '$(appServiceName)'
+                    resourceGroupName: '$(resourceGroupName)'
+
+                # Wait and Health Check
+                - script: |
+                    echo "Waiting for App Service to start..."
+                    sleep 30
+                    
+                    APP_URL="http://$(appServiceName).azurewebsites.net"
+                    echo "Health check URL: $APP_URL/api/v1/about"
+                    
+                    for i in {1..10}; do
+                      if curl -f -s "$APP_URL/api/v1/about" > /dev/null 2>&1; then
+                        echo "✅ App Service is healthy!"
+                        exit 0
+                      fi
+                      echo "⏳ Attempt $i/10: App Service not ready yet..."
+                      sleep 10
+                    done
+                    
+                    echo "⚠️ Warning: Health check failed after 10 attempts"
+                    exit 1
+                  displayName: 'Health Check - Verify App Service'
+                  continueOnError: true
+
+            postDeploy:
+              steps:
+                - script: |
+                    echo "✅ Deployment completed successfully!"
+                    echo "App Service: $(appServiceName)"
+                    echo "Image: $(registryUrl)/$(imagebackend):$(Build.BuildId)"
+                  displayName: 'Post-deployment summary'
 

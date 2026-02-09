@@ -1,6 +1,12 @@
 trigger: none
 pr: none
 
+parameters:
+  - name: enableDeployment
+    displayName: 'Deploy to App Service'
+    type: boolean
+    default: false
+
 variables:
   acrserviceconnection: 'acr-dependencytracktest-connection'
   appserviceconnection: 'acr-dependencytracktest-connection'  # Same service connection for App Service
@@ -10,7 +16,6 @@ variables:
   appServiceName: 'app-dependencytrack-backend-test'
   resourceGroupName: 'your-resource-group'
   registryUrl: '$(acrname).azurecr.io'
-  enableDeployment: 'false'  # Set to 'true' to enable deployment during pipeline run
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -42,7 +47,7 @@ stages:
   - stage: Deploy
     displayName: 'Deploy to App Service'
     dependsOn: Build
-    condition: and(succeeded(), eq(variables['enableDeployment'], 'true'))
+    condition: and(succeeded(), eq(${{ parameters.enableDeployment }}, true))
     jobs:
       - deployment: DeployBackend
         displayName: 'Deploy Backend to App Service'

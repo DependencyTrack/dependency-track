@@ -57,75 +57,64 @@ stages:
             preDeploy:
               steps:
                 - script: |
-                    echo "=========================================="
                     echo "Starting Deployment"
-                    echo "=========================================="
                     echo "App Service: $(appServiceName)"
                     echo "Resource Group: $(resourceGroupName)"
                     echo "Image: $(registryUrl)/$(imagebackend):$(Build.BuildId)"
-                    echo "=========================================="
                   displayName: 'Pre-deployment info'
 
             deploy:
               steps:
-                # Stop App Service
-                - task: AzureAppServiceManage@0
-                  displayName: 'Stop App Service'
-                  inputs:
-                    azureSubscription: '$(appserviceconnection)'
-                    action: 'Stop Azure App Service'
-                    appType: 'webAppContainer'
-                    appName: '$(appServiceName)'
-                    resourceGroupName: '$(resourceGroupName)'
-
-                # Update Docker Image
-                - task: AzureRmWebAppDeployment@4
-                  displayName: 'Update Docker Image in App Service'
-                  inputs:
-                    azureSubscription: '$(appserviceconnection)'
-                    appType: 'webAppContainer'
-                    appName: '$(appServiceName)'
-                    resourceGroupName: '$(resourceGroupName)'
-                    imageName: '$(registryUrl)/$(imagebackend):$(Build.BuildId)'
-                    containerCommand: ''
-
-                # Start App Service
-                - task: AzureAppServiceManage@0
-                  displayName: 'Start App Service'
-                  inputs:
-                    azureSubscription: '$(appserviceconnection)'
-                    action: 'Start Azure App Service'
-                    appType: 'webAppContainer'
-                    appName: '$(appServiceName)'
-                    resourceGroupName: '$(resourceGroupName)'
-
-                # Wait and Health Check
+                # - task: AzureAppServiceManage@0
+                #   displayName: 'Stop App Service'
+                #   inputs:
+                #     azureSubscription: '$(appserviceconnection)'
+                #     action: 'Stop Azure App Service'
+                #     appType: 'webAppContainer'
+                #     appName: '$(appServiceName)'
+                #     resourceGroupName: '$(resourceGroupName)'
+                #
+                # - task: AzureRmWebAppDeployment@4
+                #   displayName: 'Update Docker Image in App Service'
+                #   inputs:
+                #     azureSubscription: '$(appserviceconnection)'
+                #     appType: 'webAppContainer'
+                #     appName: '$(appServiceName)'
+                #     resourceGroupName: '$(resourceGroupName)'
+                #     imageName: '$(registryUrl)/$(imagebackend):$(Build.BuildId)'
+                #     containerCommand: ''
+                #
+                # - task: AzureAppServiceManage@0
+                #   displayName: 'Start App Service'
+                #   inputs:
+                #     azureSubscription: '$(appserviceconnection)'
+                #     action: 'Start Azure App Service'
+                #     appType: 'webAppContainer'
+                #     appName: '$(appServiceName)'
+                #     resourceGroupName: '$(resourceGroupName)'
+                #
+                # - script: |
+                #     echo "Waiting for App Service to start..."
+                #     sleep 30
+                #     APP_URL="http://$(appServiceName).azurewebsites.net"
+                #     for i in {1..10}; do
+                #       if curl -f -s "$APP_URL/api/v1/about" > /dev/null 2>&1; then
+                #         echo "App Service is healthy"
+                #         exit 0
+                #       fi
+                #       echo "Attempt $i/10: App Service not ready"
+                #       sleep 10
+                #     done
+                #     exit 1
+                #   displayName: 'Health Check - Verify App Service'
+                #   continueOnError: true
+                #
+                # - script: |
+                #     echo "Deployment completed"
+                #     echo "App Service: $(appServiceName)"
+                #     echo "Image: $(registryUrl)/$(imagebackend):$(Build.BuildId)"
+                #   displayName: 'Post-deployment summary'
                 - script: |
-                    echo "Waiting for App Service to start..."
-                    sleep 30
-                    
-                    APP_URL="http://$(appServiceName).azurewebsites.net"
-                    echo "Health check URL: $APP_URL/api/v1/about"
-                    
-                    for i in {1..10}; do
-                      if curl -f -s "$APP_URL/api/v1/about" > /dev/null 2>&1; then
-                        echo "✅ App Service is healthy!"
-                        exit 0
-                      fi
-                      echo "⏳ Attempt $i/10: App Service not ready yet..."
-                      sleep 10
-                    done
-                    
-                    echo "⚠️ Warning: Health check failed after 10 attempts"
-                    exit 1
-                  displayName: 'Health Check - Verify App Service'
-                  continueOnError: true
-
-            postDeploy:
-              steps:
-                - script: |
-                    echo "✅ Deployment completed successfully!"
-                    echo "App Service: $(appServiceName)"
-                    echo "Image: $(registryUrl)/$(imagebackend):$(Build.BuildId)"
-                  displayName: 'Post-deployment summary'
+                    echo "Deployment tasks commented out pending service connection configuration"
+                  displayName: 'Placeholder'
 

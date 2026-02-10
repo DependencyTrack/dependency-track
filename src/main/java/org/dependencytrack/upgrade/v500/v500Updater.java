@@ -28,6 +28,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+/**
  * Database upgrade for version 5.0.0
  *
  * Creates the VULNERABILITY_SEQUENCE table to track vulnerability ID sequences per project

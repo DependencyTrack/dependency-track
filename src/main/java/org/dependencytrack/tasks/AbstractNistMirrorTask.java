@@ -116,6 +116,10 @@ abstract class AbstractNistMirrorTask {
         differ.applyIfChanged("cvssV3ImpactSubScore", Vulnerability::getCvssV3ImpactSubScore, existingVuln::setCvssV3ImpactSubScore);
         differ.applyIfChanged("cvssV3ExploitabilitySubScore", Vulnerability::getCvssV3ExploitabilitySubScore, existingVuln::setCvssV3ExploitabilitySubScore);
         differ.applyIfChanged("cvssV3Vector", Vulnerability::getCvssV3Vector, existingVuln::setCvssV3Vector);
+        differ.applyIfChanged("cvssV4BaseScore", Vulnerability::getCvssV4BaseScore, existingVuln::setCvssV4BaseScore);
+        differ.applyIfChanged("cvssV4ThreatScore", Vulnerability::getCvssV4ThreatScore, existingVuln::setCvssV4ThreatScore);
+        differ.applyIfChanged("cvssV4EnvironmentalScore", Vulnerability::getCvssV4EnvironmentalScore, existingVuln::setCvssV4EnvironmentalScore);
+        differ.applyIfChanged("cvssV4Vector", Vulnerability::getCvssV4Vector, existingVuln::setCvssV4Vector);
         differ.applyIfChanged("owaspRRLikelihoodScore", Vulnerability::getOwaspRRLikelihoodScore, existingVuln::setOwaspRRLikelihoodScore);
         differ.applyIfChanged("owaspRRTechnicalImpactScore", Vulnerability::getOwaspRRTechnicalImpactScore, existingVuln::setOwaspRRTechnicalImpactScore);
         differ.applyIfChanged("owaspRRBusinessImpactScore", Vulnerability::getOwaspRRBusinessImpactScore, existingVuln::setOwaspRRBusinessImpactScore);

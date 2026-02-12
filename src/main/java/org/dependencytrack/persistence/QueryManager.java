@@ -31,6 +31,8 @@ import alpine.persistence.PaginatedResult;
 import alpine.persistence.ScopedCustomization;
 import alpine.resources.AlpineRequest;
 import alpine.server.util.DbUtil;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.packageurl.PackageURL;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.ClassUtils;
@@ -80,6 +82,7 @@ import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publisher.Publisher;
+import org.dependencytrack.resources.v1.vo.BannerConfig;
 import org.dependencytrack.resources.v1.vo.AffectedProject;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
@@ -1314,6 +1317,42 @@ public class QueryManager extends AlpineQueryManager {
             return BooleanUtil.valueOf(property.getPropertyValue());
         }
         return false;
+    }
+
+    public BannerConfig getBannerConfig() {
+        final ConfigProperty property = getConfigProperty("banner", "config");
+        if (property == null || property.getPropertyValue() == null || property.getPropertyValue().isBlank()){
+            return new BannerConfig();
+        } 
+        try {
+            final ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(property.getPropertyValue(), BannerConfig.class);
+        } catch (Exception e){
+            return new BannerConfig();
+        }
+    }
+
+    public BannerConfig setBannerConfig(final BannerConfig bannerConfig) {
+        final String json;
+        try {
+            final ObjectMapper objectMapper = new ObjectMapper();
+            json = objectMapper.writeValueAsString(bannerConfig);
+        } catch (Exception e){
+            throw new RuntimeException("Failed to serialize banner configuration", e);
+        }
+
+        runInTransaction(() -> {
+            ConfigProperty cp = getConfigProperty("banner", "config");
+            if (cp == null) {
+                cp = new ConfigProperty();
+                cp.setGroupName("banner");
+                cp.setPropertyName("config");
+                cp.setPropertyType(ConfigProperty.PropertyType.STRING);
+            }
+            cp.setPropertyValue(json);
+            pm.makePersistent(cp);
+        });
+        return bannerConfig;
     }
 
     public ComponentAnalysisCache getComponentAnalysisCache(ComponentAnalysisCache.CacheType cacheType, String targetHost, String targetType, String target) {

@@ -26,6 +26,7 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 /**
@@ -51,7 +52,7 @@ public class v500Updater extends AbstractUpgradeItem {
         createVulnerabilitySequenceTable(connection);
 
         LOGGER.info("Adding vulnerability ID customization ConfigProperties");
-        addConfigProperties(qm);
+        addConfigProperties(connection);
     }
 
     /**
@@ -124,29 +125,54 @@ public class v500Updater extends AbstractUpgradeItem {
      * - vulnerability.id.reset.policy: Sequence reset policy (YEARLY, MONTHLY, DAILY, NEVER)
      * - vulnerability.id.sequence.padding: Number of digits for sequence padding
      *
-     * @param qm the AlpineQueryManager
+     * @param connection the database connection
      */
-    private void addConfigProperties(AlpineQueryManager qm) {
-        createConfigPropertyIfAbsent(qm, ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE);
-        createConfigPropertyIfAbsent(qm, ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE);
-        createConfigPropertyIfAbsent(qm, ConfigPropertyConstants.VULNERABILITY_ID_RESET_POLICY);
-        createConfigPropertyIfAbsent(qm, ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING);
+    private void addConfigProperties(final Connection connection) throws SQLException {
+        createConfigPropertyIfAbsent(connection, ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE);
+        createConfigPropertyIfAbsent(connection, ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE);
+        createConfigPropertyIfAbsent(connection, ConfigPropertyConstants.VULNERABILITY_ID_RESET_POLICY);
+        createConfigPropertyIfAbsent(connection, ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING);
     }
 
-    private void createConfigPropertyIfAbsent(final AlpineQueryManager qm, final ConfigPropertyConstants property) {
-        if (qm.getConfigProperty(property.getGroupName(), property.getPropertyName()) != null) {
+    private void createConfigPropertyIfAbsent(final Connection connection, final ConfigPropertyConstants property) throws SQLException {
+        if (configPropertyExists(connection, property.getGroupName(), property.getPropertyName())) {
             LOGGER.debug("ConfigProperty already exists, skipping: " + property.name());
             return;
         }
 
-        qm.createConfigProperty(
-                property.getGroupName(),
-                property.getPropertyName(),
-                property.getDefaultPropertyValue(),
-                property.getPropertyType(),
-                property.getDescription()
-        );
+        try (final PreparedStatement ps = connection.prepareStatement("""
+                INSERT INTO "CONFIGPROPERTY" (
+                  "DESCRIPTION"
+                , "GROUPNAME"
+                , "PROPERTYNAME"
+                , "PROPERTYTYPE"
+                , "PROPERTYVALUE"
+                ) VALUES (?, ?, ?, ?, ?)
+                """)) {
+            ps.setString(1, property.getDescription());
+            ps.setString(2, property.getGroupName());
+            ps.setString(3, property.getPropertyName());
+            ps.setString(4, property.getPropertyType().name());
+            ps.setString(5, property.getDefaultPropertyValue());
+            ps.executeUpdate();
+        }
         LOGGER.debug("Created ConfigProperty: " + property.name());
+    }
+
+    private boolean configPropertyExists(final Connection connection, final String groupName, final String propertyName)
+            throws SQLException {
+        try (final PreparedStatement ps = connection.prepareStatement("""
+                SELECT 1
+                  FROM "CONFIGPROPERTY"
+                 WHERE "GROUPNAME" = ?
+                   AND "PROPERTYNAME" = ?
+                """)) {
+            ps.setString(1, groupName);
+            ps.setString(2, propertyName);
+            try (final ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
     }
 
     private boolean tableExists(Connection connection, String tableName) throws SQLException {

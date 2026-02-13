@@ -69,27 +69,33 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
             ConfigProperty orgCodeProp = qm.getConfigProperty(
                     ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE.getGroupName(),
                     ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE.getPropertyName());
-            response.put("orgCode", orgCodeProp != null ? orgCodeProp.getPropertyValue() : "DT");
+            response.put("orgCode", orgCodeProp != null
+                    ? orgCodeProp.getPropertyValue()
+                    : ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE.getDefaultPropertyValue());
             
             // Get template
             ConfigProperty templateProp = qm.getConfigProperty(
                     ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE.getGroupName(),
                     ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE.getPropertyName());
-            response.put("template", templateProp != null ? templateProp.getPropertyValue() :
-                    "{ORG_CODE}-{PROJECT_NAME}-{YYYY}-{SEQUENCE}");
+            response.put("template", templateProp != null
+                    ? templateProp.getPropertyValue()
+                    : ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE.getDefaultPropertyValue());
             
             // Get reset policy
             ConfigProperty resetPolicyProp = qm.getConfigProperty(
                     ConfigPropertyConstants.VULNERABILITY_ID_RESET_POLICY.getGroupName(),
                     ConfigPropertyConstants.VULNERABILITY_ID_RESET_POLICY.getPropertyName());
-            response.put("resetPolicy", resetPolicyProp != null ? resetPolicyProp.getPropertyValue() : "YEARLY");
+            response.put("resetPolicy", resetPolicyProp != null
+                    ? resetPolicyProp.getPropertyValue()
+                    : ConfigPropertyConstants.VULNERABILITY_ID_RESET_POLICY.getDefaultPropertyValue());
             
             // Get sequence padding
             ConfigProperty sequencePaddingProp = qm.getConfigProperty(
                     ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING.getGroupName(),
                     ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING.getPropertyName());
-            response.put("sequencePadding", sequencePaddingProp != null ?
-                    Integer.parseInt(sequencePaddingProp.getPropertyValue()) : 5);
+            response.put("sequencePadding", sequencePaddingProp != null
+                    ? Integer.parseInt(sequencePaddingProp.getPropertyValue())
+                    : Integer.parseInt(ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING.getDefaultPropertyValue()));
             
             return Response.ok(response.toString()).build();
         } catch (Exception e) {

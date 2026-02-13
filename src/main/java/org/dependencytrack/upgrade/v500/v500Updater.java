@@ -127,45 +127,26 @@ public class v500Updater extends AbstractUpgradeItem {
      * @param qm the AlpineQueryManager
      */
     private void addConfigProperties(AlpineQueryManager qm) {
-        // Organization Code
-        qm.createConfigProperty(
-            ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE.getGroupName(),
-            ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE.getPropertyName(),
-            "TECAN",
-            ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE.getPropertyType(),
-            ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE.getDescription()
-        );
-        LOGGER.debug("Created ConfigProperty: VULNERABILITY_ID_ORG_CODE");
+        createConfigPropertyIfAbsent(qm, ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE);
+        createConfigPropertyIfAbsent(qm, ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE);
+        createConfigPropertyIfAbsent(qm, ConfigPropertyConstants.VULNERABILITY_ID_RESET_POLICY);
+        createConfigPropertyIfAbsent(qm, ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING);
+    }
 
-        // Template
-        qm.createConfigProperty(
-            ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE.getGroupName(),
-            ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE.getPropertyName(),
-            "{ORG_CODE}-{PROJECT_NAME}-{YYYY}-{SEQUENCE}",
-            ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE.getPropertyType(),
-            ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE.getDescription()
-        );
-        LOGGER.debug("Created ConfigProperty: VULNERABILITY_ID_TEMPLATE");
+    private void createConfigPropertyIfAbsent(final AlpineQueryManager qm, final ConfigPropertyConstants property) {
+        if (qm.getConfigProperty(property.getGroupName(), property.getPropertyName()) != null) {
+            LOGGER.debug("ConfigProperty already exists, skipping: " + property.name());
+            return;
+        }
 
-        // Reset Policy
         qm.createConfigProperty(
-            ConfigPropertyConstants.VULNERABILITY_ID_RESET_POLICY.getGroupName(),
-            ConfigPropertyConstants.VULNERABILITY_ID_RESET_POLICY.getPropertyName(),
-            "YEARLY",
-            ConfigPropertyConstants.VULNERABILITY_ID_RESET_POLICY.getPropertyType(),
-            ConfigPropertyConstants.VULNERABILITY_ID_RESET_POLICY.getDescription()
+                property.getGroupName(),
+                property.getPropertyName(),
+                property.getDefaultPropertyValue(),
+                property.getPropertyType(),
+                property.getDescription()
         );
-        LOGGER.debug("Created ConfigProperty: VULNERABILITY_ID_RESET_POLICY");
-
-        // Sequence Padding
-        qm.createConfigProperty(
-            ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING.getGroupName(),
-            ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING.getPropertyName(),
-            "5",
-            ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING.getPropertyType(),
-            ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING.getDescription()
-        );
-        LOGGER.debug("Created ConfigProperty: VULNERABILITY_ID_SEQUENCE_PADDING");
+        LOGGER.debug("Created ConfigProperty: " + property.name());
     }
 
     private boolean tableExists(Connection connection, String tableName) throws SQLException {

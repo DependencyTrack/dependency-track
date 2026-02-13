@@ -55,6 +55,7 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
                                       schema = @Schema(type = "object", example = """
                                           {
                                               "orgCode": "TECAN",
+                                              "projectCode": "myproject",
                                               "template": "{ORG_CODE}-{PROJECT_NAME}-{YYYY}-{SEQUENCE}",
                                               "resetPolicy": "YEARLY",
                                               "sequencePadding": 5
@@ -72,6 +73,14 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
             response.put("orgCode", orgCodeProp != null
                     ? orgCodeProp.getPropertyValue()
                     : ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE.getDefaultPropertyValue());
+
+            // Get default project code
+            ConfigProperty projectCodeProp = qm.getConfigProperty(
+                    ConfigPropertyConstants.VULNERABILITY_ID_PROJECT_CODE.getGroupName(),
+                    ConfigPropertyConstants.VULNERABILITY_ID_PROJECT_CODE.getPropertyName());
+            response.put("projectCode", projectCodeProp != null
+                    ? projectCodeProp.getPropertyValue()
+                    : ConfigPropertyConstants.VULNERABILITY_ID_PROJECT_CODE.getDefaultPropertyValue());
             
             // Get template
             ConfigProperty templateProp = qm.getConfigProperty(
@@ -139,6 +148,13 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
                                 .toString())
                         .build();
             }
+            if (json.has("projectCode") && json.getString("projectCode").trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new JSONObject()
+                                .put("error", "Project code cannot be empty when provided")
+                                .toString())
+                        .build();
+            }
             if (!json.has("template") || json.getString("template").trim().isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity(new JSONObject()
@@ -175,6 +191,12 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
             // Update org code
             updateConfigProperty(qm, ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE,
                     json.getString("orgCode"));
+
+            // Update default project code
+            if (json.has("projectCode")) {
+                updateConfigProperty(qm, ConfigPropertyConstants.VULNERABILITY_ID_PROJECT_CODE,
+                        json.getString("projectCode"));
+            }
             
             // Update template
             updateConfigProperty(qm, ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE,

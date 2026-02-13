@@ -129,6 +129,7 @@ public class v500Updater extends AbstractUpgradeItem {
      */
     private void addConfigProperties(final Connection connection) throws SQLException {
         createConfigPropertyIfAbsent(connection, ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE);
+        createConfigPropertyIfAbsent(connection, ConfigPropertyConstants.VULNERABILITY_ID_PROJECT_CODE);
         createConfigPropertyIfAbsent(connection, ConfigPropertyConstants.VULNERABILITY_ID_TEMPLATE);
         createConfigPropertyIfAbsent(connection, ConfigPropertyConstants.VULNERABILITY_ID_RESET_POLICY);
         createConfigPropertyIfAbsent(connection, ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING);

@@ -117,6 +117,53 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
     }
 
     /**
+     * Retrieves text placeholder settings used in create/audit forms.
+     *
+     * @return A JSON response containing text placeholder configuration
+     */
+    @GET
+    @Path("/text-placeholders")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Retrieve text placeholder settings",
+               description = "Retrieves customizable placeholder texts for create and audit forms")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Text placeholder settings retrieved successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON,
+                                      schema = @Schema(type = "object", example = """
+                                          {
+                                              "descriptionPlaceholder": "<Add detail description about the vulnerability>",
+                                              "detailPlaceholder": "<Add additional details>",
+                                              "recommendationPlaceholder": "<Add any recommendation from external companies / partners or internal security team>",
+                                              "referencesPlaceholder": "<Add any references if available, example: CPE / CVE references>",
+                                              "riskJustificationPlaceholder": "Explain why this risk is acceptable...",
+                                              "residualRiskPlaceholder": "Describe any remaining risk after mitigation...",
+                                              "commentPlaceholder": "<Add all participants for the review/assessment>",
+                                              "analysisDetailsInstruction": "1.  Affected Software Items: Identify which software items are impacted..."
+                                          }
+                                          """)))
+    })
+    public Response getTextPlaceholderSettings() {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final JSONObject response = new JSONObject();
+            response.put("descriptionPlaceholder", getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_DESCRIPTION));
+            response.put("detailPlaceholder", getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_DETAIL));
+            response.put("recommendationPlaceholder", getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_RECOMMENDATION));
+            response.put("referencesPlaceholder", getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_REFERENCES));
+            response.put("riskJustificationPlaceholder", getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_AUDIT_RISK_JUSTIFICATION));
+            response.put("residualRiskPlaceholder", getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_AUDIT_RESIDUAL_RISK));
+            response.put("commentPlaceholder", getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_AUDIT_COMMENT));
+            response.put("analysisDetailsInstruction", getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_AUDIT_DETAILS_INSTRUCTION));
+            return Response.ok(response.toString()).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new JSONObject()
+                            .put("error", "Error retrieving text placeholder settings: " + e.getMessage())
+                            .toString())
+                    .build();
+        }
+    }
+
+    /**
      * Updates the vulnerability ID customization settings.
      * Requires ADMIN or SYSTEM_CONFIGURATION permission.
      * 
@@ -216,6 +263,109 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
                     .entity(new JSONObject().put("error", e.getMessage()).toString())
                     .build();
         }
+    }
+
+    /**
+     * Updates text placeholder settings used in create/audit forms.
+     *
+     * @param jsonInput The JSON payload containing one or more placeholder settings
+     * @return A 204 No Content response on success
+     */
+    @PUT
+    @Path("/text-placeholders")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    @Operation(summary = "Update text placeholder settings",
+               description = "Updates customizable placeholder texts for create and audit forms")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Text placeholder settings updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input provided"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
+    public Response updateTextPlaceholderSettings(String jsonInput) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final JSONObject json = new JSONObject(jsonInput);
+            final String[] supportedKeys = new String[] {
+                    "descriptionPlaceholder",
+                    "detailPlaceholder",
+                    "recommendationPlaceholder",
+                    "referencesPlaceholder",
+                    "riskJustificationPlaceholder",
+                    "residualRiskPlaceholder",
+                    "commentPlaceholder",
+                    "analysisDetailsInstruction"
+            };
+
+            boolean updated = false;
+            for (String key : supportedKeys) {
+                if (json.has(key)) {
+                    if (json.isNull(key)) {
+                        return Response.status(Response.Status.BAD_REQUEST)
+                                .entity(new JSONObject()
+                                        .put("error", key + " cannot be null")
+                                        .toString())
+                                .build();
+                    }
+                    updated = true;
+                }
+            }
+
+            if (!updated) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new JSONObject()
+                                .put("error", "No supported text placeholder fields were provided")
+                                .toString())
+                        .build();
+            }
+
+            if (json.has("descriptionPlaceholder")) {
+                updateConfigProperty(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_DESCRIPTION,
+                        json.getString("descriptionPlaceholder"));
+            }
+            if (json.has("detailPlaceholder")) {
+                updateConfigProperty(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_DETAIL,
+                        json.getString("detailPlaceholder"));
+            }
+            if (json.has("recommendationPlaceholder")) {
+                updateConfigProperty(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_RECOMMENDATION,
+                        json.getString("recommendationPlaceholder"));
+            }
+            if (json.has("referencesPlaceholder")) {
+                updateConfigProperty(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_REFERENCES,
+                        json.getString("referencesPlaceholder"));
+            }
+            if (json.has("riskJustificationPlaceholder")) {
+                updateConfigProperty(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_AUDIT_RISK_JUSTIFICATION,
+                        json.getString("riskJustificationPlaceholder"));
+            }
+            if (json.has("residualRiskPlaceholder")) {
+                updateConfigProperty(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_AUDIT_RESIDUAL_RISK,
+                        json.getString("residualRiskPlaceholder"));
+            }
+            if (json.has("commentPlaceholder")) {
+                updateConfigProperty(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_AUDIT_COMMENT,
+                        json.getString("commentPlaceholder"));
+            }
+            if (json.has("analysisDetailsInstruction")) {
+                updateConfigProperty(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_AUDIT_DETAILS_INSTRUCTION,
+                        json.getString("analysisDetailsInstruction"));
+            }
+
+            return Response.noContent().build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new JSONObject().put("error", e.getMessage()).toString())
+                    .build();
+        }
+    }
+
+    private String getConfigPropertyValue(final QueryManager qm, final ConfigPropertyConstants propertyConstant) {
+        final ConfigProperty property = qm.getConfigProperty(
+                propertyConstant.getGroupName(),
+                propertyConstant.getPropertyName());
+        return property != null ? property.getPropertyValue() : propertyConstant.getDefaultPropertyValue();
     }
 
     /**

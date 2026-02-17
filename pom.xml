@@ -558,9 +558,9 @@
             <plugin>
                 <groupId>io.github.ascopes</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
-                <version>4.1.3</version>
+                <version>5.0.0</version>
                 <configuration>
-                    <protocVersion>${lib.protobuf-java.version}</protocVersion>
+                    <protoc>${lib.protobuf-java.version}</protoc>
                     <sourceDirectories>
                         <sourceDirectory>${project.basedir}/src/main/proto</sourceDirectory>
                     </sourceDirectories>

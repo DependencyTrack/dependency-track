@@ -109,7 +109,7 @@
         <lib.pebble.version>4.1.1</lib.pebble.version>
         <lib.protobuf-java.version>4.33.5</lib.protobuf-java.version>
         <lib.resilience4j.version>2.3.0</lib.resilience4j.version>
-        <lib.swagger-parser.version>2.1.37</lib.swagger-parser.version>
+        <lib.swagger-parser.version>2.1.38</lib.swagger-parser.version>
         <lib.junit-pioneer.version>2.3.0</lib.junit-pioneer.version>
         <lib.testcontainers.version>2.0.3</lib.testcontainers.version>
         <lib.versatile.version>0.16.1</lib.versatile.version>

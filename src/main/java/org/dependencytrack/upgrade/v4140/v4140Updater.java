@@ -49,6 +49,8 @@ public class v4140Updater extends AbstractUpgradeItem {
         addVarcharColumnIfMissing(connection, "RISK_LIKELIHOOD", 64);
         addVarcharColumnIfMissing(connection, "RESIDUAL_RISK_IMPACT", 32);
         addVarcharColumnIfMissing(connection, "RESIDUAL_RISK_LIKELIHOOD", 64);
+        addDoubleColumnIfMissing(connection, "RISK_SCORE");
+        addDoubleColumnIfMissing(connection, "RESIDUAL_RISK_SCORE");
         if (!columnExists(connection, "ANALYSIS", "RISK_JUSTIFICATION")) {
             if (DbUtil.isH2()) {
                 DbUtil.executeUpdate(connection, "ALTER TABLE \"ANALYSIS\" ADD \"RISK_JUSTIFICATION\" CLOB");
@@ -58,6 +60,15 @@ public class v4140Updater extends AbstractUpgradeItem {
                 DbUtil.executeUpdate(connection, "ALTER TABLE \"ANALYSIS\" ADD \"RISK_JUSTIFICATION\" TEXT");
             }
         }
+        if (!columnExists(connection, "ANALYSIS", "RESIDUAL_RISK_JUSTIFICATION")) {
+            if (DbUtil.isH2()) {
+                DbUtil.executeUpdate(connection, "ALTER TABLE \"ANALYSIS\" ADD \"RESIDUAL_RISK_JUSTIFICATION\" CLOB");
+            } else if (DbUtil.isMysql()) {
+                DbUtil.executeUpdate(connection, "ALTER TABLE \"ANALYSIS\" ADD \"RESIDUAL_RISK_JUSTIFICATION\" MEDIUMTEXT");
+            } else {
+                DbUtil.executeUpdate(connection, "ALTER TABLE \"ANALYSIS\" ADD \"RESIDUAL_RISK_JUSTIFICATION\" TEXT");
+            }
+        }
     }
 
     private void addVarcharColumnIfMissing(final Connection connection, final String columnName, final int length) throws SQLException {
@@ -65,6 +76,19 @@ public class v4140Updater extends AbstractUpgradeItem {
             return;
         }
         DbUtil.executeUpdate(connection, "ALTER TABLE \"ANALYSIS\" ADD \"" + columnName + "\" VARCHAR(" + length + ")");
+    }
+
+    private void addDoubleColumnIfMissing(final Connection connection, final String columnName) throws SQLException {
+        if (columnExists(connection, "ANALYSIS", columnName)) {
+            return;
+        }
+        if (DbUtil.isMssql()) {
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"ANALYSIS\" ADD \"" + columnName + "\" FLOAT");
+        } else if (DbUtil.isPostgreSQL()) {
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"ANALYSIS\" ADD \"" + columnName + "\" DOUBLE PRECISION");
+        } else {
+            DbUtil.executeUpdate(connection, "ALTER TABLE \"ANALYSIS\" ADD \"" + columnName + "\" DOUBLE");
+        }
     }
 
     private boolean columnExists(final Connection connection, final String tableName, final String columnName) throws SQLException {

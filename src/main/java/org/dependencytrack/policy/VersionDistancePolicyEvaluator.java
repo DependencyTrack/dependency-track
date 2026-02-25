@@ -34,14 +34,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Evaluates the {@link VersionDistance} between a {@link Component}'s current and it's latest
+ * Evaluates the {@link VersionDistance} between a {@link Component}'s current, and it's the latest
  * version against a {@link Policy}. This makes it possible to add a policy for checking outdated
  * components. The policy "greater than 0:1.?.?" for example means, a difference of only one
- * between the curren version's major number and the latest version's major number is allowed.
+ * between the current version's major number and the latest version's major number is allowed.
  *
  * VersionDistances can be combined in a policy. For example "greater than 1:1.?.?" means a
  * difference of only one epoch number or one major number is allowed. Or "greater than 1.1.?"
- * means a difference of only one majr number or one minor number is allowed
+ * means a difference of only one major number or one minor number is allowed
  *
  * @since 4.9.0
  */
@@ -112,7 +112,7 @@ public class VersionDistancePolicyEvaluator extends AbstractPolicyEvaluator {
      * Evaluate VersionDistance conditions for a given versionDistance. A condition
      *
      * @param condition operator and value containing combined {@link VersionDistance} values
-     * @param versionDistance the {@link VersionDistance} to evalue
+     * @param versionDistance the {@link VersionDistance} to evaluate
      * @return true if the condition is true for the components versionDistance, false otherwise
      */
     private boolean evaluate(final PolicyCondition condition, final VersionDistance versionDistance) {

@@ -26,7 +26,6 @@ import java.nio.charset.StandardCharsets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.dependencytrack.common.HttpClientPool;
 import org.dependencytrack.model.Component;
@@ -111,22 +110,40 @@ public abstract class AbstractMetaAnalyzer implements IMetaAnalyzer {
                 .level(NotificationLevel.ERROR));
     }
 
-    protected CloseableHttpResponse processHttpRequest(String url) throws IOException {
+    protected CloseableHttpResponse processHttpRequest(final String url) throws IOException {
+        return processHttpRequest(url, "application/json");
+    }
+
+    protected CloseableHttpResponse processHttpRequest(final String url, final String acceptValue) throws IOException {
         final Logger logger = Logger.getLogger(getClass());
         try {
-            URIBuilder uriBuilder = new URIBuilder(url);
-            final HttpUriRequest request = new HttpGet(uriBuilder.build().toString());
-            request.addHeader("accept", "application/json");
-            if (!StringUtils.isEmpty(username)) { // for some reason there is a testcase for password being null
-                request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(username, password));
-            } else if (!StringUtils.isEmpty(password)) {
-                request.addHeader("Authorization", "Bearer " + password);
+            final HttpGet request = new HttpGet(new URIBuilder(url).build());
+
+            if (acceptValue != null && !acceptValue.isBlank()) {
+                request.addHeader("Accept", acceptValue);
             }
+
+            final String authHeader = buildAuthHeaderValue();
+            if (authHeader != null) {
+                request.addHeader("Authorization", authHeader);
+            }
+
             return HttpClientPool.getClient().execute(request);
+
         } catch (URISyntaxException ex) {
             handleRequestException(logger, ex);
             return null;
         }
     }
 
+    private String buildAuthHeaderValue() {
+        if (StringUtils.isNotEmpty(username)) { // for some reason there is a testcase for password being null
+            return HttpUtil.basicAuthHeaderValue(username, password);
+        }
+        if (StringUtils.isNotEmpty(password)) {
+            return "Bearer " + password;
+        }
+        return null;
+    }
 }
+

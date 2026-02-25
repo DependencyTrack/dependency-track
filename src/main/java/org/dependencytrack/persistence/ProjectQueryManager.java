@@ -157,6 +157,11 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 project.setMetrics(getMostRecentProjectMetrics(project));
             }
         }
+        if (!onlyRoot) {
+            // When not showing only root projects (e.g., during search), populate the ancestor path
+            // to provide hierarchy context in the flat list view.
+            populateAncestorPaths(result.getList(Project.class));
+        }
         return result;
     }
 
@@ -1032,13 +1037,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "DEPENDENCYMETRICS" WHERE "PROJECT_ID" = ANY(?);
                     """.replaceAll(Pattern.quote("= ANY(?)"), inExpression)
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "FINDINGATTRIBUTION" WHERE "PROJECT_ID" = ANY(?);
                     """.replaceAll(Pattern.quote("= ANY(?)"), inExpression)
                 );
@@ -1060,13 +1065,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "ANALYSIS" WHERE "PROJECT_ID" = ANY(?);
                     """.replace("= ANY(?)", inExpression)
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "COMPONENT_PROPERTY" WHERE "COMPONENT_ID" IN (
                         SELECT "ID" FROM "COMPONENT" WHERE "PROJECT_ID" = ANY(?)
                     );
@@ -1119,7 +1124,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     executeAndCloseWithArray(sqlQuery, queryParameter);
                 }
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "COMPONENT" WHERE "PROJECT_ID" = ANY(?);
                     """.replace("= ANY(?)", inExpression)
                 );
@@ -1318,7 +1323,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     executeAndCloseWithArray(sqlQuery, queryParameter);
                 }
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "PROJECT" WHERE "ID" = ANY(?);
                     """.replace("= ANY(?)", inExpression)
                 );

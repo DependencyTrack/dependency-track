@@ -514,4 +514,150 @@ class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
         assertThat(retryDelay.toSeconds()).isEqualTo(1);
     }
 
+    @Test
+    void testProcessAdvisoryWithEpss() throws Exception {
+        // Real values from GitHub GraphQL API for GHSA-57j2-w4cx-62h2 (CVE-2020-36518):
+        //   "percentage": 0.00514  →  epssScore  (exploitation probability, 0.0-1.0)
+        //   "percentile": 0.66009  →  epssPercentile (relative rank, 0.0-1.0)
+        final var advisory = jsonMapper.readValue(/* language=JSON */ """
+                {
+                  "id": "GHSA-57j2-w4cx-62h2",
+                  "ghsaId": "GHSA-57j2-w4cx-62h2",
+                  "severity": "HIGH",
+                  "publishedAt": "2022-03-12T00:00:36Z",
+                  "updatedAt": "2024-03-15T00:24:56Z",
+                  "epss": {
+                    "percentage": 0.00514,
+                    "percentile": 0.66009
+                  },
+                  "vulnerabilities": {
+                    "edges": [
+                      {
+                        "node": {
+                          "package": {
+                            "ecosystem": "maven",
+                            "name": "com.fasterxml.jackson.core:jackson-databind"
+                          },
+                          "vulnerableVersionRange": "<=2.13.2.0"
+                        }
+                      }
+                    ]
+                  }
+                }
+                """, SecurityAdvisory.class);
+
+        final var task = new GitHubAdvisoryMirrorTask();
+        final boolean createdOrUpdated = task.processAdvisory(advisory);
+        assertThat(createdOrUpdated).isTrue();
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.GITHUB, "GHSA-57j2-w4cx-62h2");
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getEpssScore()).isNotNull();
+        assertThat(vuln.getEpssScore().doubleValue()).isCloseTo(0.00514, Offset.offset(0.00001));
+        assertThat(vuln.getEpssPercentile()).isNotNull();
+        assertThat(vuln.getEpssPercentile().doubleValue()).isCloseTo(0.66009, Offset.offset(0.00001));
+    }
+
+    @Test
+    void testProcessAdvisoryEpssUpdatedWhenChanged() throws Exception {
+        // Seed the DB with GHSA-57j2-w4cx-62h2's real EPSS values (as of 2024-03-15).
+        var existingVuln = new Vulnerability();
+        existingVuln.setVulnId("GHSA-57j2-w4cx-62h2");
+        existingVuln.setSource(Source.GITHUB);
+        existingVuln.setEpssScore(new java.math.BigDecimal("0.00514"));
+        existingVuln.setEpssPercentile(new java.math.BigDecimal("0.66009"));
+        existingVuln.setPublished(java.util.Date.from(java.time.Instant.parse("2022-03-12T00:00:36Z")));
+        existingVuln.setUpdated(java.util.Date.from(java.time.Instant.parse("2024-03-15T00:24:56Z")));
+        qm.createVulnerability(existingVuln, false);
+
+        // Process a later advisory with different EPSS values (real values from GHSA-44wm-f244-xhp3,
+        // CVE-2024-28219, reused here as "updated" values for the same advisory under test).
+        final var advisory = jsonMapper.readValue(/* language=JSON */ """
+                {
+                  "id": "GHSA-57j2-w4cx-62h2",
+                  "ghsaId": "GHSA-57j2-w4cx-62h2",
+                  "severity": "HIGH",
+                  "publishedAt": "2022-03-12T00:00:36Z",
+                  "updatedAt": "2025-01-01T00:00:00Z",
+                  "epss": {
+                    "percentage": 0.00284,
+                    "percentile": 0.51483
+                  },
+                  "vulnerabilities": {
+                    "edges": [
+                      {
+                        "node": {
+                          "package": {
+                            "ecosystem": "maven",
+                            "name": "com.fasterxml.jackson.core:jackson-databind"
+                          },
+                          "vulnerableVersionRange": "<=2.13.2.0"
+                        }
+                      }
+                    ]
+                  }
+                }
+                """, SecurityAdvisory.class);
+
+        final var task = new GitHubAdvisoryMirrorTask();
+        task.processAdvisory(advisory);
+
+        qm.getPersistenceManager().evictAll();
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.GITHUB, "GHSA-57j2-w4cx-62h2");
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getEpssScore()).isNotNull();
+        assertThat(vuln.getEpssScore().doubleValue()).isCloseTo(0.00284, Offset.offset(0.00001));
+        assertThat(vuln.getEpssPercentile()).isNotNull();
+        assertThat(vuln.getEpssPercentile().doubleValue()).isCloseTo(0.51483, Offset.offset(0.00001));
+    }
+
+    @Test
+    void testProcessAdvisoryEpssNotClearedWhenAbsent() throws Exception {
+        // Seed the DB with real EPSS values for GHSA-57j2-w4cx-62h2 (CVE-2020-36518, as of 2024-03-15).
+        var existingVuln = new Vulnerability();
+        existingVuln.setVulnId("GHSA-57j2-w4cx-62h2");
+        existingVuln.setSource(Source.GITHUB);
+        existingVuln.setEpssScore(new java.math.BigDecimal("0.00514"));
+        existingVuln.setEpssPercentile(new java.math.BigDecimal("0.66009"));
+        existingVuln.setPublished(java.util.Date.from(java.time.Instant.parse("2022-03-12T00:00:36Z")));
+        existingVuln.setUpdated(java.util.Date.from(java.time.Instant.parse("2024-03-15T00:24:56Z")));
+        qm.createVulnerability(existingVuln, false);
+
+        // Process an advisory without an epss field (updatedAt advances to trigger the update path).
+        final var advisory = jsonMapper.readValue(/* language=JSON */ """
+                {
+                  "id": "GHSA-57j2-w4cx-62h2",
+                  "ghsaId": "GHSA-57j2-w4cx-62h2",
+                  "severity": "HIGH",
+                  "publishedAt": "2022-03-12T00:00:36Z",
+                  "updatedAt": "2025-01-01T00:00:00Z",
+                  "vulnerabilities": {
+                    "edges": [
+                      {
+                        "node": {
+                          "package": {
+                            "ecosystem": "maven",
+                            "name": "com.fasterxml.jackson.core:jackson-databind"
+                          },
+                          "vulnerableVersionRange": "<=2.13.2.0"
+                        }
+                      }
+                    ]
+                  }
+                }
+                """, SecurityAdvisory.class);
+
+        final var task = new GitHubAdvisoryMirrorTask();
+        task.processAdvisory(advisory);
+
+        qm.getPersistenceManager().evictAll();
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.GITHUB, "GHSA-57j2-w4cx-62h2");
+        assertThat(vuln).isNotNull();
+        // EPSS data must be preserved when the advisory does not include EPSS
+        assertThat(vuln.getEpssScore()).isNotNull();
+        assertThat(vuln.getEpssScore().doubleValue()).isCloseTo(0.00514, Offset.offset(0.00001));
+        assertThat(vuln.getEpssPercentile()).isNotNull();
+        assertThat(vuln.getEpssPercentile().doubleValue()).isCloseTo(0.66009, Offset.offset(0.00001));
+    }
+
 }

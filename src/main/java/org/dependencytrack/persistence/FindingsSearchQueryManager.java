@@ -134,7 +134,8 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
         final List<Object[]> list = totalList.subList(this.pagination.getOffset(), Math.min(this.pagination.getOffset() + this.pagination.getLimit(), totalList.size()));
         final List<Finding> findings = new ArrayList<>();
         for (final Object[] o : list) {
-            final Finding finding = new Finding(UUID.fromString((String) o[30]), o);
+            // Index 33 is PROJECT.UUID based on QUERY_ALL_FINDINGS (Indices 0-32 are non-project columns)
+            final Finding finding = new Finding(UUID.fromString((String) o[33]), o);
             final Component component = getObjectByUuid(Component.class, (String) finding.getComponent().get("uuid"));
             final Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String) finding.getVulnerability().get("uuid"));
             final Analysis analysis = getAnalysis(component, vulnerability);
@@ -144,6 +145,10 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             // These are CLOB fields. Handle these here so that database-specific deserialization doesn't need to be performed (in Finding)
             finding.getVulnerability().put("description", vulnerability.getDescription());
             finding.getVulnerability().put("recommendation", vulnerability.getRecommendation());
+            finding.getVulnerability().put("references", vulnerability.getReferences());
+            finding.getVulnerability().put("cvssV2Vector", vulnerability.getCvssV2Vector());
+            finding.getVulnerability().put("cvssV3Vector", vulnerability.getCvssV3Vector());
+
             final PackageURL purl = component.getPurl();
             if (purl != null) {
                 final RepositoryType type = RepositoryType.resolve(purl);
@@ -248,7 +253,9 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                            , "VULNERABILITY"."TITLE"
                            , "VULNERABILITY"."SEVERITY"
                            , "VULNERABILITY"."CVSSV2BASESCORE"
+                           , "VULNERABILITY"."CVSSV2VECTOR"
                            , "VULNERABILITY"."CVSSV3BASESCORE"
+                           , "VULNERABILITY"."CVSSV3VECTOR"
                            , "VULNERABILITY"."EPSSSCORE"
                            , "VULNERABILITY"."EPSSPERCENTILE"
                            , "VULNERABILITY"."OWASPRRLIKELIHOODSCORE"
@@ -257,6 +264,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                            , "FINDINGATTRIBUTION"."ANALYZERIDENTITY"
                            , "VULNERABILITY"."PUBLISHED"
                            , "VULNERABILITY"."CWES"
+                           , "VULNERABILITY"."REFERENCES"
                     """);
             StringBuilder aggregateFilter = new StringBuilder();
             processAggregateFilters(filters, aggregateFilter, params);

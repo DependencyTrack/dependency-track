@@ -98,6 +98,8 @@ class FindingResourceTest extends ResourceTest {
         Assertions.assertEquals("1.0", json.getJsonObject(0).getJsonObject("component").getString("version"));
         Assertions.assertEquals("Vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
         Assertions.assertEquals(Severity.CRITICAL.name(), json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+        Assertions.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", json.getJsonObject(0).getJsonObject("vulnerability").getString("cvssV3Vector"));
+        Assertions.assertEquals("http://example.org/vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("references"));
         Assertions.assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getInt("cweId"));
         Assertions.assertEquals(2, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").size());
         Assertions.assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
@@ -198,6 +200,7 @@ class FindingResourceTest extends ResourceTest {
         Assertions.assertEquals("1.0", findings.getJsonObject(0).getJsonObject("component").getString("version"));
         Assertions.assertEquals("Vuln-1", findings.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
         Assertions.assertEquals(Severity.CRITICAL.name(), findings.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+        Assertions.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", findings.getJsonObject(0).getJsonObject("vulnerability").getString("cvssV3Vector"));
         Assertions.assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getInt("cweId"));
         Assertions.assertEquals(2, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").size());
         Assertions.assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
@@ -631,16 +634,16 @@ class FindingResourceTest extends ResourceTest {
         Component c1 = createComponent(p1, "Component A", "1.0");
         Component c2 = createComponent(p1, "Component B", "1.0");
         Component c3 = createComponent(p1, "Component C", "1.0");
-        
+
         // Create vulnerabilities with different EPSS scores
         Vulnerability v1 = createVulnerabilityWithEpss("Vuln-1", Severity.CRITICAL, new BigDecimal("0.1"));
         Vulnerability v2 = createVulnerabilityWithEpss("Vuln-2", Severity.HIGH, new BigDecimal("0.5"));
         Vulnerability v3 = createVulnerabilityWithEpss("Vuln-3", Severity.MEDIUM, new BigDecimal("0.9"));
-        
+
         qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v2, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c3, AnalyzerIdentity.NONE);
-        
+
         // Test filtering by epssFrom
         Response response = jersey.target(V1_FINDING)
                 .queryParam("epssFrom", "0.3")
@@ -652,7 +655,7 @@ class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals(2, json.size());
-        
+
         // Test filtering by epssTo
         response = jersey.target(V1_FINDING)
                 .queryParam("epssTo", "0.7")
@@ -661,7 +664,7 @@ class FindingResourceTest extends ResourceTest {
                 .get(Response.class);
         Assertions.assertEquals(200, response.getStatus());
         Assertions.assertEquals("2", response.getHeaderString(TOTAL_COUNT_HEADER));
-        
+
         // Test filtering by epssFrom and epssTo range
         response = jersey.target(V1_FINDING)
                 .queryParam("epssFrom", "0.3")
@@ -683,16 +686,16 @@ class FindingResourceTest extends ResourceTest {
         Component c1 = createComponent(p1, "Component A", "1.0");
         Component c2 = createComponent(p1, "Component B", "1.0");
         Component c3 = createComponent(p1, "Component C", "1.0");
-        
+
         // Create vulnerabilities with different EPSS scores
         Vulnerability v1 = createVulnerabilityWithEpss("Vuln-1", Severity.CRITICAL, new BigDecimal("0.2"));
         Vulnerability v2 = createVulnerabilityWithEpss("Vuln-2", Severity.HIGH, new BigDecimal("0.6"));
         Vulnerability v3 = createVulnerabilityWithEpss("Vuln-3", Severity.MEDIUM, new BigDecimal("0.8"));
-        
+
         qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v2, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c3, AnalyzerIdentity.NONE);
-        
+
         // Test filtering grouped findings by EPSS range
         Response response = jersey.target(V1_FINDING + "/grouped")
                 .queryParam("epssFrom", "0.5")
@@ -714,16 +717,16 @@ class FindingResourceTest extends ResourceTest {
         Component c1 = createComponent(p1, "Component A", "1.0");
         Component c2 = createComponent(p1, "Component B", "1.0");
         Component c3 = createComponent(p1, "Component C", "1.0");
-        
+
         // Create vulnerabilities with different EPSS percentiles
         Vulnerability v1 = createVulnerabilityWithEpssPercentile("Vuln-1", Severity.CRITICAL, new BigDecimal("0.1"));
         Vulnerability v2 = createVulnerabilityWithEpssPercentile("Vuln-2", Severity.HIGH, new BigDecimal("0.5"));
         Vulnerability v3 = createVulnerabilityWithEpssPercentile("Vuln-3", Severity.MEDIUM, new BigDecimal("0.9"));
-        
+
         qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v2, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c3, AnalyzerIdentity.NONE);
-        
+
         // Test filtering by epssPercentileFrom
         Response response = jersey.target(V1_FINDING)
                 .queryParam("epssPercentileFrom", "0.3")
@@ -735,7 +738,7 @@ class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals(2, json.size());
-        
+
         // Test filtering by epssPercentileTo
         response = jersey.target(V1_FINDING)
                 .queryParam("epssPercentileTo", "0.7")
@@ -744,7 +747,7 @@ class FindingResourceTest extends ResourceTest {
                 .get(Response.class);
         Assertions.assertEquals(200, response.getStatus());
         Assertions.assertEquals("2", response.getHeaderString(TOTAL_COUNT_HEADER));
-        
+
         // Test filtering by epssPercentileFrom and epssPercentileTo range
         response = jersey.target(V1_FINDING)
                 .queryParam("epssPercentileFrom", "0.3")
@@ -766,16 +769,16 @@ class FindingResourceTest extends ResourceTest {
         Component c1 = createComponent(p1, "Component A", "1.0");
         Component c2 = createComponent(p1, "Component B", "1.0");
         Component c3 = createComponent(p1, "Component C", "1.0");
-        
+
         // Create vulnerabilities with different EPSS percentiles
         Vulnerability v1 = createVulnerabilityWithEpssPercentile("Vuln-1", Severity.CRITICAL, new BigDecimal("0.2"));
         Vulnerability v2 = createVulnerabilityWithEpssPercentile("Vuln-2", Severity.HIGH, new BigDecimal("0.6"));
         Vulnerability v3 = createVulnerabilityWithEpssPercentile("Vuln-3", Severity.MEDIUM, new BigDecimal("0.8"));
-        
+
         qm.addVulnerability(v1, c1, AnalyzerIdentity.NONE);
         qm.addVulnerability(v2, c2, AnalyzerIdentity.NONE);
         qm.addVulnerability(v3, c3, AnalyzerIdentity.NONE);
-        
+
         // Test filtering grouped findings by EPSS percentile range
         Response response = jersey.target(V1_FINDING + "/grouped")
                 .queryParam("epssPercentileFrom", "0.5")
@@ -818,9 +821,9 @@ class FindingResourceTest extends ResourceTest {
             target = target.queryParam("source", query);
         }
         Response response = target.request()
-            .header(HttpHeaders.ACCEPT, MEDIA_TYPE_SARIF_JSON)
-            .header(X_API_KEY, apiKey)
-            .get(Response.class);
+                .header(HttpHeaders.ACCEPT, MEDIA_TYPE_SARIF_JSON)
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
 
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertEquals(MEDIA_TYPE_SARIF_JSON, response.getHeaderString(HttpHeaders.CONTENT_TYPE));
@@ -829,15 +832,15 @@ class FindingResourceTest extends ResourceTest {
         final String fullName = "OWASP Dependency-Track - " + version;
         String expectedTemplate = resourceToString(expectedResponsePath, StandardCharsets.UTF_8);
         String expected = expectedTemplate
-            .replace("{{VERSION}}", version)
-            .replace("{{FULL_NAME}}", fullName);
+                .replace("{{VERSION}}", version)
+                .replace("{{FULL_NAME}}", fullName);
         assertThatJson(jsonResponse).isEqualTo(expected);
     }
 
     private static Stream<Arguments> getSARIFFindingsByProjectTestParameters() {
         return Stream.of(
-            Arguments.of("INTERNAL", "/unit/sarif/expected-internal.sarif.json"),
-            Arguments.of(null, "/unit/sarif/expected-all.sarif.json")
+                Arguments.of("INTERNAL", "/unit/sarif/expected-internal.sarif.json"),
+                Arguments.of(null, "/unit/sarif/expected-all.sarif.json")
         );
     }
 
@@ -855,6 +858,9 @@ class FindingResourceTest extends ResourceTest {
         vulnerability.setSource(Vulnerability.Source.INTERNAL);
         vulnerability.setSeverity(severity);
         vulnerability.setCwes(List.of(80, 666));
+        vulnerability.setCvssV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
+        vulnerability.setCvssV3BaseScore(BigDecimal.valueOf(9.8));
+        vulnerability.setReferences("http://example.org/" + vulnId.toLowerCase());
         return qm.createVulnerability(vulnerability, false);
     }
 
@@ -867,6 +873,8 @@ class FindingResourceTest extends ResourceTest {
         vulnerability.setDescription(description);
         vulnerability.setRecommendation(recommendation);
         vulnerability.setCwes(List.of(cweId));
+        vulnerability.setCvssV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
+        vulnerability.setReferences("http://example.org/" + vulnId.toLowerCase());
         return qm.createVulnerability(vulnerability, false);
     }
 
@@ -877,6 +885,7 @@ class FindingResourceTest extends ResourceTest {
         vulnerability.setSeverity(severity);
         vulnerability.setCwes(List.of(80, 666));
         vulnerability.setEpssScore(epssScore);
+        vulnerability.setCvssV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
         return qm.createVulnerability(vulnerability, false);
     }
 
@@ -887,6 +896,7 @@ class FindingResourceTest extends ResourceTest {
         vulnerability.setSeverity(severity);
         vulnerability.setCwes(List.of(80, 666));
         vulnerability.setEpssPercentile(epssPercentile);
+        vulnerability.setCvssV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
         return qm.createVulnerability(vulnerability, false);
     }
 }

@@ -382,6 +382,7 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
     @Test
     void testUpdateDatasourceVulnerableVersionRanges() {
         var vs1 = new VulnerableSoftware();
+        vs1.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind");
         vs1.setPurlType("maven");
         vs1.setPurlNamespace("com.fasterxml.jackson.core");
         vs1.setPurlName("jackson-databind");
@@ -391,6 +392,7 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         vs1 = qm.persist(vs1);
 
         var vs2 = new VulnerableSoftware();
+        vs2.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind");
         vs2.setPurlType("maven");
         vs2.setPurlNamespace("com.fasterxml.jackson.core");
         vs2.setPurlName("jackson-databind");
@@ -399,6 +401,7 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         vs2 = qm.persist(vs2);
 
         var vs3 = new VulnerableSoftware();
+        vs3.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind");
         vs3.setPurlType("maven");
         vs3.setPurlNamespace("com.fasterxml.jackson.core");
         vs3.setPurlName("jackson-databind");

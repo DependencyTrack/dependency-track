@@ -18,8 +18,9 @@ name: "dependency-track"
 
 services:
   apiserver:
-    image: dependencytrack/apiserver:snapshot-alpine
+    image: dependencytrack/apiserver:local-alpine
     environment:
+      EXTRA_JAVA_OPTIONS: "-Xmx2g"
       # Speed up password hashing for faster initial login (default is 14 rounds).
       ALPINE_BCRYPT_ROUNDS: "4"
       TELEMETRY_SUBMISSION_ENABLED_DEFAULT: "false"

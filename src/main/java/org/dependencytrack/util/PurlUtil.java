@@ -20,6 +20,7 @@ package org.dependencytrack.util;
 
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.jspecify.annotations.Nullable;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 
@@ -69,6 +70,29 @@ public class PurlUtil {
         } catch (MalformedPackageURLException ignored) {
             return null;
         }
+    }
+
+    public static @Nullable String getDistroQualifier(@Nullable PackageURL purl) {
+        if (purl == null || purl.getQualifiers() == null || purl.getQualifiers().isEmpty()) {
+            return null;
+        }
+
+        for (final var qualifier : purl.getQualifiers().entrySet()) {
+            if ("distro".equals(qualifier.getKey())) {
+                return qualifier.getValue();
+            }
+        }
+
+        return null;
+    }
+
+    public static @Nullable String getDistroQualifier(@Nullable String purl) {
+        final PackageURL parsedPurl = silentPurl(purl);
+        if (parsedPurl == null) {
+            return null;
+        }
+
+        return getDistroQualifier(parsedPurl);
     }
 
 }

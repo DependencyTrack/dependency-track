@@ -31,7 +31,7 @@ class GroupedFindingTest extends PersistenceCapableTest {
 
     private final Date published = new Date();
     private final GroupedFinding groupedFinding = new GroupedFinding("vuln-source", "vuln-vulnId", "vuln-title",
-            Severity.HIGH, BigDecimal.valueOf(8.5), BigDecimal.valueOf(8.4), null, null, null, AnalyzerIdentity.INTERNAL_ANALYZER, published, null, 3);
+            Severity.HIGH, BigDecimal.valueOf(8.5), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.7), null, null, null, AnalyzerIdentity.INTERNAL_ANALYZER, published, null, 3);
 
 
     @Test
@@ -44,6 +44,7 @@ class GroupedFindingTest extends PersistenceCapableTest {
         Assertions.assertEquals(published, map.get("published"));
         Assertions.assertEquals(BigDecimal.valueOf(8.5), map.get("cvssV2BaseScore"));
         Assertions.assertEquals(BigDecimal.valueOf(8.4), map.get("cvssV3BaseScore"));
+        Assertions.assertEquals(BigDecimal.valueOf(8.7), map.get("cvssV4BaseScore"));
         Assertions.assertEquals(3, map.get("affectedProjectCount"));
     }
 

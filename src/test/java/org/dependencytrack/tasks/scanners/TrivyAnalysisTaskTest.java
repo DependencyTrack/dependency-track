@@ -390,7 +390,132 @@ class TrivyAnalysisTaskTest extends PersistenceCapableTest {
         assertThat(NOTIFICATIONS).satisfiesExactly(
                 notification ->
                         assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name())
-                );
+        );
+
+        verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
+        verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));
+        verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/DeleteBlobs")));
+    }
+
+    @Test
+    void testAnalyzeWithCvss4Scores() throws ParseException {
+        stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/protobuf")));
+
+        stubFor(post(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/protobuf")
+                        .withBody(ScanResponse.newBuilder()
+                                .addResults(Result.newBuilder()
+                                        .setClass_("lang-pkgs")
+                                        .setTarget("java")
+                                        .setType("jar")
+                                        .addVulnerabilities(trivy.proto.common.Vulnerability.newBuilder()
+                                                .setStatus(3)
+                                                .setVulnerabilityId("CVE-2022-40152")
+                                                .setPkgName("com.fasterxml.woodstox:woodstox-core")
+                                                .setPkgIdentifier(PkgIdentifier.newBuilder()
+                                                        .setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz")
+                                                        .build())
+                                                .setInstalledVersion("5.0.0")
+                                                .setFixedVersion("6.4.0, 5.4.0")
+                                                .setTitle("woodstox-core: woodstox to serialise XML data was vulnerable to Denial of Service attacks")
+                                                .setDescription("""
+                                                        Those using Woodstox to parse XML data may be vulnerable to \
+                                                        Denial of Service attacks (DOS) if DTD support is enabled. \
+                                                        If the parser is running on user supplied input, an attacker \
+                                                        may supply content that causes the parser to crash by stackoverflow. \
+                                                        This effect may support a denial of service attack.""")
+                                                .setPublishedDate(Timestamps.parse("2022-09-16T10:15:09.877Z"))
+                                                .setLastModifiedDate(Timestamps.parse("2023-02-09T01:36:03.637Z"))
+                                                .setSeverity(trivy.proto.common.Severity.HIGH)
+                                                .setSeveritySource("nvd")
+                                                .putAllVendorSeverity(Map.ofEntries(
+                                                        Map.entry("amazon", trivy.proto.common.Severity.MEDIUM),
+                                                        Map.entry("ghsa", trivy.proto.common.Severity.MEDIUM),
+                                                        Map.entry("nvd", trivy.proto.common.Severity.HIGH),
+                                                        Map.entry("redhat", trivy.proto.common.Severity.MEDIUM)
+                                                ))
+                                                .putAllCvss(Map.ofEntries(
+                                                        Map.entry("ghsa", CVSS.newBuilder()
+                                                                .setV3Vector("CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H")
+                                                                .setV3Score(6.5)
+                                                                .build()),
+                                                        Map.entry("nvd", CVSS.newBuilder()
+                                                                .setV40Vector("CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N")
+                                                                .setV40Score(8.2)
+                                                                .build()),
+                                                        Map.entry("redhat", CVSS.newBuilder()
+                                                                .setV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H")
+                                                                .setV3Score(7.5)
+                                                                .build())
+                                                ))
+                                                .addAllCweIds(List.of("CWE-787", "CWE-121"))
+                                                .setDataSource(DataSource.newBuilder()
+                                                        .setId("ghsa")
+                                                        .setName("GitHub Security Advisory Maven")
+                                                        .setUrl("https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven")
+                                                        .build())
+                                                .build())
+                                        .build())
+                                .build()
+                                .toByteArray())));
+
+        stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/DeleteBlobs"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")));
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, null, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setGroup("com.fasterxml.woodstox");
+        component.setName("woodstox-core");
+        component.setVersion("5.0.0");
+        component.setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz");
+        component = qm.createComponent(component, false);
+
+        new TrivyAnalysisTask().inform(new TrivyAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
+
+        final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
+        assertThat(vulnerabilities).satisfiesExactly(vuln -> {
+            assertThat(vuln.getVulnId()).isEqualTo("CVE-2022-40152");
+            assertThat(vuln.getSource()).isEqualTo(Vulnerability.Source.NVD.name());
+            assertThat(vuln.getTitle()).isEqualTo("woodstox-core: woodstox to serialise XML data was vulnerable to Denial of Service attacks");
+            assertThat(vuln.getDescription()).isEqualTo("""
+                    Those using Woodstox to parse XML data may be vulnerable to Denial of Service attacks (DOS) if DTD support is enabled. \
+                    If the parser is running on user supplied input, an attacker may supply content that causes the parser to crash by stackoverflow. \
+                    This effect may support a denial of service attack.""");
+            assertThat(vuln.getCreated()).isNotNull();
+            assertThat(vuln.getPublished()).isInSameDayAs("2022-09-16");
+            assertThat(vuln.getUpdated()).isInSameDayAs("2023-02-09");
+            assertThat(vuln.getCvssV2BaseScore()).isNull();
+            assertThat(vuln.getCvssV2Vector()).isNull();
+            assertThat(vuln.getCvssV3BaseScore()).isNull();
+            assertThat(vuln.getCvssV3Vector()).isNull();
+            assertThat(vuln.getCvssV4BaseScore()).isEqualByComparingTo("8.2");
+            assertThat(vuln.getCvssV4Vector()).isEqualTo("CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N");
+            assertThat(vuln.getSeverity()).isEqualTo(Severity.HIGH);
+            assertThat(vuln.getCwes()).containsOnly(121, 787);
+            assertThat(vuln.getPatchedVersions()).isEqualTo("6.4.0, 5.4.0");
+            assertThat(vuln.getVulnerableSoftware()).isEmpty();
+        });
+
+        assertThat(qm.getCount(ComponentAnalysisCache.class)).isZero();
+
+        assertThat(NOTIFICATIONS).satisfiesExactly(
+                notification ->
+                        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name()),
+                notification ->
+                        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITY.name())
+        );
 
         verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
         verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));

@@ -82,11 +82,15 @@ public class TrivyParser {
         if (cvss != null) {
             vulnerability.setCvssV2Vector(trimToNull(cvss.getV2Vector()));
             vulnerability.setCvssV3Vector(trimToNull(cvss.getV3Vector()));
+            vulnerability.setCvssV4Vector(trimToNull(cvss.getV40Vector()));
             if (cvss.getV2Score() > 0.0) {
                 vulnerability.setCvssV2BaseScore(BigDecimal.valueOf(cvss.getV2Score()));
             }
             if (cvss.getV3Score() > 0.0) {
                 vulnerability.setCvssV3BaseScore(BigDecimal.valueOf(cvss.getV3Score()));
+            }
+            if (cvss.getV40Score() > 0.0) {
+                vulnerability.setCvssV4BaseScore(BigDecimal.valueOf(cvss.getV40Score()));
             }
         }
 

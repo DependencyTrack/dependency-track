@@ -39,6 +39,20 @@ class CalculatorResourceTest extends ResourceTest {
                     .register(AuthenticationFilter.class));
 
     @Test
+    void getCvssScoresV4Test() {
+        Response response = jersey.target(V1_CALCULATOR + "/cvss")
+                .queryParam("vector", "AV:L/AC:L/AT:P/PR:L/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assertions.assertEquals(200, response.getStatus());
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(5.4, json.getJsonNumber("baseScore").doubleValue(), 0);
+    }
+
+    @Test
     void getCvssScoresV3Test() {
         Response response = jersey.target(V1_CALCULATOR + "/cvss")
                 .queryParam("vector", "AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H")
@@ -80,7 +94,7 @@ class CalculatorResourceTest extends ResourceTest {
         Assertions.assertEquals(400, response.getStatus());
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assertions.assertEquals("An invalid CVSSv2 or CVSSv3 vector submitted.", body);
+        Assertions.assertEquals("An invalid CVSSv2, CVSSv3 or CVSSv4 vector was submitted.", body);
     }
 
     @Test

@@ -36,7 +36,7 @@ class FindingTest extends PersistenceCapableTest {
     private final Date attributedOn = new Date();
     private final Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
             "component-version", "Required","component-purl", "component-cpe", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
-            "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
+            "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.7), BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
             "0.5", "0.9", null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
 
     @Test
@@ -61,6 +61,7 @@ class FindingTest extends PersistenceCapableTest {
         //Assertions.assertEquals("vuln-recommendation", map.get("recommendation"));
         Assertions.assertEquals(BigDecimal.valueOf(7.2), map.get("cvssV2BaseScore"));
         Assertions.assertEquals(BigDecimal.valueOf(8.4), map.get("cvssV3BaseScore"));
+        Assertions.assertEquals(BigDecimal.valueOf(8.7), map.get("cvssV4BaseScore"));
         Assertions.assertEquals(BigDecimal.valueOf(1.25), map.get("owaspLikelihoodScore"));
         Assertions.assertEquals(BigDecimal.valueOf(1.75), map.get("owaspTechnicalImpactScore"));
         Assertions.assertEquals(BigDecimal.valueOf(1.3), map.get("owaspBusinessImpactScore"));

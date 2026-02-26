@@ -319,7 +319,7 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
 
         List<VulnerableSoftware> vulnerableSoftware = qm.getAllVulnerableSoftwareByPurl(new PackageURL("pkg:maven/org.springframework.security.oauth/spring-security-oauth"));
         Assertions.assertEquals(4, vulnerableSoftware.size());
-        Assertions.assertNull(vulnerableSoftware.get(0).getVersionStartIncluding());
+        Assertions.assertEquals("0", vulnerableSoftware.get(0).getVersionStartIncluding());
         Assertions.assertEquals("2.0.17", vulnerableSoftware.get(0).getVersionEndExcluding());
         Assertions.assertEquals("2.1.0", vulnerableSoftware.get(1).getVersionStartIncluding());
         Assertions.assertEquals("2.1.4", vulnerableSoftware.get(1).getVersionEndExcluding());
@@ -513,6 +513,9 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
                 },
                 // The version range reported by both OSV and another source
                 // must have attributions for both sources.
+                // Note: This record was created with versionStartIncluding=null in test setup,
+                // and our deduplication logic finds and reuses it without updating,
+                // so it remains null even though OSV reports "introduced": "0".
                 vs -> {
                     assertThat(vs.getPurlType()).isEqualTo("maven");
                     assertThat(vs.getPurlNamespace()).isEqualTo("com.fasterxml.jackson.core");
@@ -722,7 +725,7 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getPurlName()).isEqualTo("py3-pillow");
                     assertThat(vs.getPurlVersion()).isNull();
                     assertThat(vs.getVersion()).isNull();
-                    assertThat(vs.getVersionStartIncluding()).isNull();
+                    assertThat(vs.getVersionStartIncluding()).isEqualTo("0");
                     assertThat(vs.getVersionStartExcluding()).isNull();
                     assertThat(vs.getVersionEndExcluding()).isEqualTo("8.3.0-r0");
                     assertThat(vs.getVersionEndIncluding()).isNull();
@@ -798,7 +801,7 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
                     assertThat(vs.getPurlName()).isEqualTo("py3-pillow");
                     assertThat(vs.getPurlVersion()).isNull();
                     assertThat(vs.getVersion()).isNull();
-                    assertThat(vs.getVersionStartIncluding()).isNull();
+                    assertThat(vs.getVersionStartIncluding()).isEqualTo("0");
                     assertThat(vs.getVersionStartExcluding()).isNull();
                     assertThat(vs.getVersionEndExcluding()).isEqualTo("8.3.0-r0");
                     assertThat(vs.getVersionEndIncluding()).isNull();

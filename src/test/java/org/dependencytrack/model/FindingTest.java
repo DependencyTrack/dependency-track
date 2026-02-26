@@ -36,8 +36,10 @@ class FindingTest extends PersistenceCapableTest {
     private final Date attributedOn = new Date();
     private final Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
             "component-version", "Required","component-purl", "component-cpe", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
-            "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-            "0.5", "0.9", null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
+            "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, BigDecimal.valueOf(7.2), "CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:P",
+            BigDecimal.valueOf(8.4), "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
+            BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), "787,79", "vuln-references", attributedOn,
+            AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
 
     @Test
     void testComponent() {
@@ -60,12 +62,16 @@ class FindingTest extends PersistenceCapableTest {
         //Assertions.assertEquals("vuln-description", map.get("description"));
         //Assertions.assertEquals("vuln-recommendation", map.get("recommendation"));
         Assertions.assertEquals(BigDecimal.valueOf(7.2), map.get("cvssV2BaseScore"));
+        Assertions.assertEquals("CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:P", map.get("cvssV2Vector"));
         Assertions.assertEquals(BigDecimal.valueOf(8.4), map.get("cvssV3BaseScore"));
+        Assertions.assertEquals("CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", map.get("cvssV3Vector"));
         Assertions.assertEquals(BigDecimal.valueOf(1.25), map.get("owaspLikelihoodScore"));
         Assertions.assertEquals(BigDecimal.valueOf(1.75), map.get("owaspTechnicalImpactScore"));
         Assertions.assertEquals(BigDecimal.valueOf(1.3), map.get("owaspBusinessImpactScore"));
         Assertions.assertEquals(Severity.HIGH.name(), map.get("severity"));
         Assertions.assertEquals(1, map.get("severityRank"));
+        Assertions.assertEquals("vuln-references", map.get("references"));
+        Assertions.assertEquals(attributedOn, map.get("published"));
     }
 
     @Test

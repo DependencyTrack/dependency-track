@@ -137,7 +137,7 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
         final List<Object[]> list = totalList.subList(this.pagination.getOffset(), Math.min(this.pagination.getOffset() + this.pagination.getLimit(), totalList.size()));
         final List<Finding> findings = new ArrayList<>();
         for (final Object[] o : list) {
-            final Finding finding = new Finding(UUID.fromString((String) o[31]), o);
+            final Finding finding = new Finding(UUID.fromString((String) o[36]), o);
             final Component component = getObjectByUuid(Component.class, (String) finding.getComponent().get("uuid"));
             final Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String) finding.getVulnerability().get("uuid"));
             final Analysis analysis = getAnalysis(component, vulnerability);
@@ -147,6 +147,12 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             // These are CLOB fields. Handle these here so that database-specific deserialization doesn't need to be performed (in Finding)
             finding.getVulnerability().put("description", vulnerability.getDescription());
             finding.getVulnerability().put("recommendation", vulnerability.getRecommendation());
+            finding.getVulnerability().put("references", vulnerability.getReferences());
+            finding.getVulnerability().put("cvssV2Vector", vulnerability.getCvssV2Vector());
+            finding.getVulnerability().put("cvssV3Vector", vulnerability.getCvssV3Vector());
+            finding.getVulnerability().put("cvssV4Vector", vulnerability.getCvssV4Vector());
+            finding.getVulnerability().put("owaspRRVector", vulnerability.getOwaspRRVector());
+
             final PackageURL purl = component.getPurl();
             if (purl != null) {
                 final RepositoryType type = RepositoryType.resolve(purl);
@@ -255,16 +261,21 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
                            , "VULNERABILITY"."TITLE"
                            , "VULNERABILITY"."SEVERITY"
                            , "VULNERABILITY"."CVSSV2BASESCORE"
+                           , "VULNERABILITY"."CVSSV2VECTOR"
                            , "VULNERABILITY"."CVSSV3BASESCORE"
+                           , "VULNERABILITY"."CVSSV3VECTOR"
                            , "VULNERABILITY"."CVSSV4SCORE"
+                           , "VULNERABILITY"."CVSSV4VECTOR"
                            , "VULNERABILITY"."EPSSSCORE"
                            , "VULNERABILITY"."EPSSPERCENTILE"
                            , "VULNERABILITY"."OWASPRRLIKELIHOODSCORE"
                            , "VULNERABILITY"."OWASPRRTECHNICALIMPACTSCORE"
                            , "VULNERABILITY"."OWASPRRBUSINESSIMPACTSCORE"
+                           , "VULNERABILITY"."OWASPRRVECTOR"
                            , "FINDINGATTRIBUTION"."ANALYZERIDENTITY"
                            , "VULNERABILITY"."PUBLISHED"
                            , "VULNERABILITY"."CWES"
+                           , "VULNERABILITY"."REFERENCES"
                     """);
             StringBuilder aggregateFilter = new StringBuilder();
             processAggregateFilters(filters, aggregateFilter, params);

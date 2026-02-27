@@ -112,6 +112,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
         rule.setScheduleCron("0 * * * *");
         rule.setScheduleLastTriggeredAt(new Date());
         rule.setScheduleSkipUnchanged(false);
+        rule.setScheduleIgnoreSuppressed(false);
         rule.updateScheduleNextTriggerAt();
         return persist(rule);
     }
@@ -141,6 +142,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
 
                 rule.setScheduleCron(transientRule.getScheduleCron());
                 rule.setScheduleSkipUnchanged(transientRule.isScheduleSkipUnchanged());
+                rule.setScheduleIgnoreSuppressed(transientRule.isScheduleIgnoreSuppressed());
                 rule.updateScheduleNextTriggerAt();
             } else if (rule.getTriggerType() == NotificationTriggerType.EVENT) {
                 final List<NotificationGroup> invalidGroups = transientRule.getNotifyOn().stream()

@@ -46,6 +46,7 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.VulnIdAndSource;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.parser.trivy.TrivyParser;
@@ -71,9 +72,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNullElseGet;
 import static org.dependencytrack.common.ConfigKey.TRIVY_RETRY_BACKOFF_INITIAL_DURATION_MS;
@@ -361,9 +364,10 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
             }
         }
 
-        for (final Map.Entry<Component, List<trivy.proto.common.Vulnerability>> entry : vulnsByComponent.entrySet()) {
-            final Component component = entry.getKey();
-            final List<trivy.proto.common.Vulnerability> vulns = entry.getValue();
+        // Ensure we call handle() for all components that were submitted for analysis,
+        // even if Trivy reported no vulnerabilities for them (so reconciliation can remove stale findings).
+        for (final Component component : componentByPurl.values()) {
+            final List<trivy.proto.common.Vulnerability> vulns = vulnsByComponent.getOrDefault(component, Collections.emptyList());
             handle(component, vulns);
         }
     }
@@ -371,7 +375,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
     private ArrayList<Result> analyzeBlob(final Collection<BlobInfo> blobs) {
         final var output = new ArrayList<Result>();
 
-        for (final BlobInfo info : blobs) {
+       for (final BlobInfo info : blobs) {
             final PutBlobRequest putBlobRequest = PutBlobRequest.newBuilder()
                     .setBlobInfo(info)
                     .setDiffId("sha256:" + DigestUtils.sha256Hex(java.util.UUID.randomUUID().toString()))
@@ -492,8 +496,12 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
             }
 
             boolean didCreateVulns = false;
+            final Set<VulnIdAndSource> reportedVulns = new HashSet<>();
             for (final trivy.proto.common.Vulnerability trivyVuln : trivyVulns) {
                 final Vulnerability parsedVulnerability = trivyParser.parse(trivyVuln);
+
+                // track reported vulnerabilities so we can reconcile stale findings
+                reportedVulns.add(new VulnIdAndSource(parsedVulnerability.getVulnId(), parsedVulnerability.getSource()));
 
                 Vulnerability vulnerability = qm.getVulnerabilityByVulnId(parsedVulnerability.getSource(), parsedVulnerability.getVulnId());
                 if (vulnerability == null) {
@@ -506,6 +514,9 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
                 NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, persistentComponent, vulnerabilityAnalysisLevel);
                 qm.addVulnerability(vulnerability, persistentComponent, this.getAnalyzerIdentity());
             }
+
+            // Reconcile findings for this component and analyzer: remove any attributions not reported in this scan
+            qm.reconcileFindingsForComponentAnalyzer(persistentComponent, this.getAnalyzerIdentity(), reportedVulns);
 
             if (didCreateVulns) {
                 Event.dispatch(new IndexEvent(IndexEvent.Action.COMMIT, Vulnerability.class));

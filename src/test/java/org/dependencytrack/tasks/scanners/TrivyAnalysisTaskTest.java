@@ -490,6 +490,70 @@ class TrivyAnalysisTaskTest extends PersistenceCapableTest {
         assertThat(scanRequest.getOptions().getPkgTypes(0)).isEqualTo("library");
     }
 
+    @Test
+    void testReconcilesAndRemovesStaleTrivyFindings() {
+        stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/protobuf")));
+
+        stubFor(post(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/protobuf")
+                        .withBody(ScanResponse.newBuilder()
+                                .addResults(Result.newBuilder()
+                                        .setClass_("lang-pkgs")
+                                        .setTarget("java")
+                                        .setType("jar")
+                                        .build())
+                                .build()
+                                .toByteArray())));
+
+        stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/DeleteBlobs"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")));
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, null, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setGroup("com.example");
+        component.setName("openssl-provider");
+        component.setVersion("3.5.4-1~deb13u1");
+        component.setPurl("pkg:maven/com.example/openssl-provider@3.5.4-1~deb13u1?foo=bar#baz");
+        component = qm.createComponent(component, false);
+
+        // previously Trivy reported CVE-2025-15467; create a vulnerability and attribute it to the component
+        var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2025-15467");
+        vuln.setSource(Vulnerability.Source.NVD.name());
+        vuln.setTitle("reverted vuln");
+        vuln = qm.createVulnerability(vuln, false);
+
+        qm.addVulnerability(vuln, component, org.dependencytrack.tasks.scanners.AnalyzerIdentity.TRIVY_ANALYZER);
+
+        assertThat(qm.getAllVulnerabilities(component)).hasSize(1);
+
+        // run analysis again; Trivy reports no vulnerabilities for this component
+        new TrivyAnalysisTask().inform(new TrivyAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
+
+        // stale finding should be removed
+        assertThat(qm.getAllVulnerabilities(component)).isEmpty();
+
+        assertThat(NOTIFICATIONS).satisfiesExactly(
+                notification ->
+                        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_CREATED.name())
+        );
+        verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
+        verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan")));
+        verify(postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/DeleteBlobs")));
+    }
+
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
 
     public static class NotificationSubscriber implements Subscriber {

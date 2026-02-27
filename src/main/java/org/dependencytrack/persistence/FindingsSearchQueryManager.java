@@ -75,6 +75,29 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             Map.entry("vulnerability.affectedProjectCount", "COUNT(DISTINCT \"PROJECT\".\"ID\")")
     );
 
+    private static final String COUNT_FINDINGS_GROUPED_BY_VULN_SELECT_CLAUSE = """
+            SELECT COUNT(*)
+            FROM (
+                SELECT 1
+                FROM       "COMPONENT"
+                INNER JOIN "COMPONENTS_VULNERABILITIES"
+                ON         "COMPONENT"."ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID"
+                INNER JOIN "VULNERABILITY"
+                ON         "COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID" = "VULNERABILITY"."ID"
+                INNER JOIN "FINDINGATTRIBUTION"
+                ON         "COMPONENT"."ID" = "FINDINGATTRIBUTION"."COMPONENT_ID"
+                AND        "VULNERABILITY"."ID" = "FINDINGATTRIBUTION"."VULNERABILITY_ID"
+                LEFT JOIN  "ANALYSIS"
+                ON         "COMPONENT"."ID" = "ANALYSIS"."COMPONENT_ID"
+                AND        "VULNERABILITY"."ID" = "ANALYSIS"."VULNERABILITY_ID"
+                AND        "COMPONENT"."PROJECT_ID" = "ANALYSIS"."PROJECT_ID"
+                INNER JOIN "PROJECT"
+                ON         "COMPONENT"."PROJECT_ID" = "PROJECT"."ID"
+            """;
+
+    private static final String COUNT_FINDINGS_GROUPED_BY_VULN_TERMINATOR = ") AS VULN_COUNT_SUBQUERY";
+
+
     /**
      * Constructs a new QueryManager.
      * @param pm a PersistenceManager object
@@ -163,17 +186,30 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
 
     /**
      * Returns a List of all Finding objects filtered by ACL and other optional filters. The resulting list is grouped by vulnerability.
-     * @param filters      determines the filters to apply on the list of Finding objects
-     * @param showInactive determines if inactive projects should be included or not
+     * @param filters        determines the filters to apply on the list of Finding objects
+     * @param showSuppressed determines if suppressed vulnerabilities should be included or not
+     * @param showInactive   determines if inactive projects should be included or not
      * @return a List of Finding objects
      */
-    public PaginatedResult getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showInactive) {
+    public PaginatedResult getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
         StringBuilder queryFilter = new StringBuilder();
         Map<String, Object> params = new HashMap<>();
+
         if (!showInactive) {
             queryFilter.append(" WHERE (\"PROJECT\".\"ACTIVE\" = :active OR \"PROJECT\".\"ACTIVE\" IS NULL)");
             params.put("active", true);
         }
+
+        if (!showSuppressed) {
+            if (queryFilter.isEmpty()) {
+                queryFilter.append(" WHERE ");
+            } else {
+                queryFilter.append(" AND ");
+            }
+            queryFilter.append("(\"ANALYSIS\".\"SUPPRESSED\" = :showSuppressed OR \"ANALYSIS\".\"SUPPRESSED\" IS NULL)");
+            params.put("showSuppressed", false);
+        }
+
         processFilters(filters, queryFilter, params, true);
 
         final var orderByFragments = new ArrayList<String>();
@@ -187,12 +223,11 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
         }
         final var orderByClause = " ORDER BY " + String.join(", ", orderByFragments);
 
-        final Query<Object[]> query = pm.newQuery(Query.SQL, GroupedFinding.QUERY + queryFilter + orderByClause);
+        final Query<Object[]> query = pm.newQuery(Query.SQL, GroupedFinding.QUERY + queryFilter + orderByClause + ' ' + getOffsetLimitSqlClause());
         PaginatedResult result = new PaginatedResult();
         query.setNamedParameters(params);
-        final List<Object[]> totalList = query.executeList();
-        result.setTotal(totalList.size());
-        final List<Object[]> list = totalList.subList(this.pagination.getOffset(), Math.min(this.pagination.getOffset() + this.pagination.getLimit(), totalList.size()));
+        final List<Object[]> list = query.executeList();
+        result.setTotal(getAllFindingsGroupedByVulnerabilityCount(filters, showSuppressed, showInactive));
         final List<GroupedFinding> findings = new ArrayList<>();
         for (Object[] o : list) {
             final GroupedFinding finding = new GroupedFinding(o);
@@ -201,6 +236,42 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
         result.setObjects(findings);
         return result;
     }
+
+    /**
+     * Returns the total number of unique vulnerabilities
+     * @param filters        determines the filters to apply on the list of Finding objects
+     * @param showSuppressed determines if suppressed vulnerabilities should be included or not
+     * @param showInactive   determines if inactive projects should be included or not
+     * @return a Long containing the number of findings
+     */
+    public Long getAllFindingsGroupedByVulnerabilityCount(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
+        StringBuilder queryFilter = new StringBuilder();
+        Map<String, Object> params = new HashMap<>();
+
+        if (!showInactive) {
+            queryFilter.append(" WHERE (\"PROJECT\".\"ACTIVE\" = :active OR \"PROJECT\".\"ACTIVE\" IS NULL)");
+            params.put("active", true);
+        }
+
+        if (!showSuppressed) {
+            if (queryFilter.isEmpty()) {
+                queryFilter.append(" WHERE ");
+            } else {
+                queryFilter.append(" AND ");
+            }
+            queryFilter.append("(\"ANALYSIS\".\"SUPPRESSED\" = :showSuppressed OR \"ANALYSIS\".\"SUPPRESSED\" IS NULL)");
+            params.put("showSuppressed", false);
+        }
+
+        processFilters(filters, queryFilter, params, true);
+
+        var sqlString = COUNT_FINDINGS_GROUPED_BY_VULN_SELECT_CLAUSE + queryFilter.toString() + COUNT_FINDINGS_GROUPED_BY_VULN_TERMINATOR;
+
+        final Query<Object[]> query = pm.newQuery(Query.SQL, sqlString);
+        query.setNamedParameters(params);
+        return query.executeResultUnique(Long.class);
+    }
+
 
     private void processFilters(Map<String, String> filters, StringBuilder queryFilter, Map<String, Object> params, boolean isGroupedByVulnerabilities) {
         for (String filter : filters.keySet()) {
@@ -324,25 +395,6 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
         }
     }
 
-    private void processAggregatedDateRangeFilter(StringBuilder queryFilter, Map<String, Object> params, String paramName, String filter, String column, boolean fromValue, boolean isMin) {
-        if (filter != null && !filter.isEmpty()) {
-            if (queryFilter.isEmpty()) {
-                queryFilter.append(" HAVING (");
-            } else {
-                queryFilter.append(isMin ? " AND (" : " OR ");
-            }
-            if (DbUtil.isPostgreSQL()) {
-                queryFilter.append(column).append(fromValue ? " >= " : " <= ");
-                queryFilter.append("TO_TIMESTAMP(:").append(paramName).append(", 'YYYY-MM-DD HH24:MI:SS')");
-            } else {
-                queryFilter.append(column).append(fromValue ? " >= :" : " <= :").append(paramName);
-            }
-            params.put(paramName, filter + (fromValue ? " 00:00:00" : " 23:59:59"));
-            if (!isMin) {
-                queryFilter.append(")");
-            }
-        }
-    }
 
     private void processInputFilter(StringBuilder queryFilter, Map<String, Object> params, String paramName, String filter, String input) {
         if (filter != null && !filter.isEmpty() && input != null && !input.isEmpty()) {

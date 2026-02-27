@@ -1131,8 +1131,12 @@ public class QueryManager extends AlpineQueryManager {
         return getFindingsSearchQueryManager().getAllFindings(filters, showSuppressed, showInactive);
     }
 
-    public PaginatedResult getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showInactive) {
-        return getFindingsSearchQueryManager().getAllFindingsGroupedByVulnerability(filters, showInactive);
+    public PaginatedResult getAllFindingsGroupedByVulnerability(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
+        return getFindingsSearchQueryManager().getAllFindingsGroupedByVulnerability(filters, showSuppressed, showInactive);
+    }
+
+    public Long getAllFindingsGroupedByVulnerabilityCount(final Map<String, String> filters, final boolean showSuppressed, final boolean showInactive) {
+        return getFindingsSearchQueryManager().getAllFindingsGroupedByVulnerabilityCount(filters, showSuppressed, showInactive);
     }
 
     public List<VulnerabilityMetrics> getVulnerabilityMetrics() {

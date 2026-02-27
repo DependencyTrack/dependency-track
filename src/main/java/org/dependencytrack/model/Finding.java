@@ -28,6 +28,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.sql.Clob;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -205,6 +207,14 @@ public class Finding implements Serializable {
         optValue(vulnerability, "severityRank", severity.ordinal());
         optValue(vulnerability, "epssScore", o[20]);
         optValue(vulnerability, "epssPercentile", o[21]);
+        // Compute the priority score relative to known scores (EPSS and CVSS).
+        BigDecimal priorityScore = BigDecimal.ZERO;
+        if (o[15] != null || o[16] != null) {
+            final BigDecimal cvssBaseScore = o[16] != null ? (BigDecimal) o[16] : (BigDecimal) o[15];
+            final BigDecimal epssScore = o[20] != null ? (BigDecimal) o[20] : BigDecimal.ZERO;
+            priorityScore = epssScore.sqrt(MathContext.DECIMAL32).multiply(cvssBaseScore).add(cvssBaseScore).setScale(5, RoundingMode.HALF_UP);
+        }
+        optValue(vulnerability, "priorityScore", priorityScore);
         final List<Cwe> cwes = getCwes(o[22]);
         if (cwes != null && !cwes.isEmpty()) {
             // Ensure backwards-compatibility with DT < 4.5.0. Remove this in v5!

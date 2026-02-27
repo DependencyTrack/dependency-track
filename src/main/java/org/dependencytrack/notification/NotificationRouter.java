@@ -22,6 +22,7 @@ import alpine.common.logging.Logger;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.notification.Subscriber;
+import org.apache.commons.collections4.CollectionUtils;
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
@@ -49,6 +50,8 @@ import javax.jdo.Query;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -148,12 +151,21 @@ public class NotificationRouter implements Subscriber {
                 .subject(filteredSubject);
     }
 
+    private Set<UUID> collectProjectsAndAncestorsUuid(Collection<Project> projects){
+        Set<UUID> ids = new HashSet<>();
+        projects.stream().filter(Project::isActive).forEach(project ->  {
+            ids.add(project.getUuid());
+            if (CollectionUtils.isNotEmpty(project.getChildren())) {
+                ids.addAll(collectProjectsAndAncestorsUuid(project.getChildren()));
+            }
+        });
+        return ids;
+    }
+
     private Predicate<Project> matchesAnyProjectOfRule(final NotificationRule rule) {
         requireNonNull(rule.getProjects());
-
-        return project -> rule.getProjects().stream()
-                .map(Project::getUuid)
-                .anyMatch(project.getUuid()::equals);
+        Set<UUID> projectsAndAncestorsUuid = collectProjectsAndAncestorsUuid(rule.getProjects());
+        return project-> projectsAndAncestorsUuid.stream().anyMatch(project.getUuid()::equals);
     }
 
     private Predicate<Project> hasAnyTagOfRule(final NotificationRule rule) {

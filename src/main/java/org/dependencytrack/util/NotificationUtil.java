@@ -95,6 +95,10 @@ public final class NotificationUtil {
     private NotificationUtil() { }
 
     public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, Component component, VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
+        analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel, null);
+    }
+
+    public static void analyzeNotificationCriteria(QueryManager qm, Vulnerability vulnerability, Component component, VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel, Boolean foundByFuzzing) {
         if (!qm.contains(vulnerability, component)) {
             // Component did not previously contain this vulnerability. It could be a newly discovered vulnerability
             // against an existing component, or it could be a newly added (and vulnerable) component. Either way,
@@ -111,13 +115,18 @@ public final class NotificationUtil {
             detachedVuln.setAliases(qm.detach(qm.getVulnerabilityAliases(vulnerability))); // Aliases are lost during detach above
             final Component detachedComponent = qm.detach(Component.class, component.getId());
 
+            final NewVulnerabilityIdentified subject = new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values()), vulnerabilityAnalysisLevel);
+            if (foundByFuzzing != null) {
+                subject.setFoundByFuzzing(foundByFuzzing);
+            }
+
             Notification.dispatch(new Notification()
                     .scope(NotificationScope.PORTFOLIO)
                     .group(NotificationGroup.NEW_VULNERABILITY)
                     .title(generateNotificationTitle(NotificationConstants.Title.NEW_VULNERABILITY, component.getProject()))
                     .level(NotificationLevel.INFORMATIONAL)
                     .content(generateNotificationContent(detachedVuln))
-                    .subject(new NewVulnerabilityIdentified(detachedVuln, detachedComponent, new HashSet<>(affectedProjects.values()), vulnerabilityAnalysisLevel))
+                    .subject(subject)
             );
         }
     }
@@ -404,6 +413,9 @@ public final class NotificationUtil {
                 projectsBuilder.add(toJson(project));
             }
             builder.add("affectedProjects", projectsBuilder.build());
+        }
+        if (vo.getFoundByFuzzing() != null) {
+            builder.add("foundByFuzzing", vo.getFoundByFuzzing());
         }
         return builder.build();
     }

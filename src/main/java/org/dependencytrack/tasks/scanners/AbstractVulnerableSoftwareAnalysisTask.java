@@ -58,17 +58,18 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * @param vsList        a list of VulnerableSoftware objects
      * @param targetVersion the version of the component
      * @param component     the component being analyzed
+     * @param foundByFuzzing indicates whether the vulnerabilities were found by fuzzy matching
      */
     protected void analyzeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
             final Cpe targetCpe, final PackageURL targetPURL, final String targetVersion, final Component component,
-            final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
+            final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel, boolean foundByFuzzing) {
         boolean ran = false;
         if (targetCpe != null) {
-            analyzeCpeVersionRange(qm, vsList, targetCpe, targetVersion, component, vulnerabilityAnalysisLevel);
+            analyzeCpeVersionRange(qm, vsList, targetCpe, targetVersion, component, vulnerabilityAnalysisLevel, foundByFuzzing);
             ran = true;
         }
         if (targetPURL != null) {
-            analyzePurlVersionRange(qm, vsList, targetPURL, targetVersion, component, vulnerabilityAnalysisLevel);
+            analyzePurlVersionRange(qm, vsList, targetPURL, targetVersion, component, vulnerabilityAnalysisLevel, foundByFuzzing);
             ran = true;
         }
         if (!ran) {
@@ -80,7 +81,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
 
     protected void analyzePurlVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
             final PackageURL targetPurl, final String targetVersion, final Component component,
-            final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
+            final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel, boolean foundByFuzzing) {
 
         final Version version;
         try {
@@ -94,8 +95,8 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component,
-                                vulnerabilityAnalysisLevel);
-                        qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
+                                vulnerabilityAnalysisLevel, Boolean.valueOf(foundByFuzzing));
+                        qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), null, null, null, Boolean.valueOf(foundByFuzzing));
                     }
                 }
             }
@@ -105,14 +106,15 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
 
     protected void analyzeCpeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
                                        final Cpe targetCpe, final String targetVersion, final Component component,
-                                       final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel){
+                                       final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel, final boolean foundByFuzzing) {
         for (final VulnerableSoftware vs : vsList) {
             final Boolean isCpeMatch = maybeMatchCpe(vs, targetCpe, targetVersion);
             if ((isCpeMatch == null || isCpeMatch) && compareCpeVersions(vs, targetVersion)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
-                        NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
-                        qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity());
+                        NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component,
+                            vulnerabilityAnalysisLevel, Boolean.valueOf(foundByFuzzing));
+                        qm.addVulnerability(vulnerability, component, this.getAnalyzerIdentity(), null, null, null, Boolean.valueOf(foundByFuzzing));
                     }
                 }
             }
@@ -161,7 +163,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         return isMatch;
     }
 
-    
+
     private static boolean comparePurlVersions(VulnerableSoftware vs, Version targetVersion) {
         final Vers vulnerableVersionRange = vs.getVers();
 

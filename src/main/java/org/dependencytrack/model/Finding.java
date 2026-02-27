@@ -87,6 +87,7 @@ public class Finding implements Serializable {
                  , "FINDINGATTRIBUTION"."ATTRIBUTED_ON"
                  , "FINDINGATTRIBUTION"."ALT_ID"
                  , "FINDINGATTRIBUTION"."REFERENCE_URL"
+                 , "FINDINGATTRIBUTION"."FOUNDBYFUZZING"
                  , "ANALYSIS"."STATE"
                  , "ANALYSIS"."SUPPRESSED"
               FROM "COMPONENT"
@@ -135,6 +136,7 @@ public class Finding implements Serializable {
                  , "FINDINGATTRIBUTION"."ATTRIBUTED_ON"
                  , "FINDINGATTRIBUTION"."ALT_ID"
                  , "FINDINGATTRIBUTION"."REFERENCE_URL"
+                 , "FINDINGATTRIBUTION"."FOUNDBYFUZZING"
                  , "ANALYSIS"."STATE"
                  , "ANALYSIS"."SUPPRESSED"
                  , "VULNERABILITY"."PUBLISHED"
@@ -216,13 +218,14 @@ public class Finding implements Serializable {
         optValue(attribution, "attributedOn", o[24]);
         optValue(attribution, "alternateIdentifier", o[25]);
         optValue(attribution, "referenceUrl", o[26]);
+        optValue(attribution, "foundByFuzzing", o[27]);
 
-        optValue(analysis, "state", o[27]);
-        optValue(analysis, "isSuppressed", o[28], false);
-        if (o.length > 30) {
-            optValue(vulnerability, "published", o[29]);
-            optValue(component, "projectName", o[31]);
-            optValue(component, "projectVersion", o[32]);
+        optValue(analysis, "state", o[28]);
+        optValue(analysis, "isSuppressed", o[29], false);
+        if (o.length > 31) {
+            optValue(vulnerability, "published", o[30]);
+            optValue(component, "projectName", o[32]);
+            optValue(component, "projectVersion", o[33]);
         }
     }
 

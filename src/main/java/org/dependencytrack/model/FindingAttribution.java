@@ -86,6 +86,10 @@ public class FindingAttribution implements Serializable {
     @Column(name = "REFERENCE_URL", allowsNull = "true")
     private String referenceUrl;
 
+    @Persistent
+    @Column(name = "FOUNDBYFUZZING", allowsNull = "true")
+    private Boolean foundByFuzzing;
+
     @Persistent(customValueStrategy = "uuid")
     @Unique(name = "FINDINGATTRIBUTION_UUID_IDX")
     @Column(name = "UUID", jdbcType = "VARCHAR", length = 36, allowsNull = "false")
@@ -96,6 +100,11 @@ public class FindingAttribution implements Serializable {
 
     public FindingAttribution(Component component, Vulnerability vulnerability, AnalyzerIdentity analyzerIdentity,
                               String alternateIdentifier, String referenceUrl) {
+        this(component, vulnerability, analyzerIdentity, alternateIdentifier, referenceUrl, null);
+    }
+
+    public FindingAttribution(Component component, Vulnerability vulnerability, AnalyzerIdentity analyzerIdentity,
+                              String alternateIdentifier, String referenceUrl, Boolean foundByFuzzing) {
         this.component = component;
         this.project = component.getProject();
         this.vulnerability = vulnerability;
@@ -103,6 +112,7 @@ public class FindingAttribution implements Serializable {
         this.attributedOn = new Date();
         this.alternateIdentifier = alternateIdentifier;
         this.referenceUrl = maybeTrimUrl(referenceUrl);
+        this.foundByFuzzing = foundByFuzzing;
     }
 
     public long getId() {
@@ -168,6 +178,14 @@ public class FindingAttribution implements Serializable {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public Boolean getFoundByFuzzing() {
+        return foundByFuzzing;
+    }
+
+    public void setFoundByFuzzing(Boolean foundByFuzzing) {
+        this.foundByFuzzing = foundByFuzzing;
     }
 
     private static String maybeTrimUrl(final String url) {

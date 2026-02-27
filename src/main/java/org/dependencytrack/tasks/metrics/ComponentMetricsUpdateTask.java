@@ -31,19 +31,17 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyViolation;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
-import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.persistence.QueryManager;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.UUID;
 
 import static java.lang.Math.toIntExact;
@@ -80,39 +78,26 @@ public class ComponentMetricsUpdateTask implements Subscriber {
                 throw new NoSuchElementException("Component " + uuid + " does not exist");
             }
 
-            final Set<String> aliasesSeen = new HashSet<>();
-            for (final Vulnerability vulnerability : getVulnerabilities(pm, component)) {
-                // Quick pre-flight check whether we already encountered an alias of this particular vulnerability
-                final String alias = vulnerability.getSource() + "|" + vulnerability.getVulnId();
-                if (aliasesSeen.contains(alias)) {
-                    LOGGER.debug("An alias of " + alias + " has already been processed; Skipping");
+            for (final var count : getVulnerabilityCountsBySeverity(pm, component)) {
+                counters.vulnerabilities = toIntExact(counters.vulnerabilities + count.getCount());
+
+                if (count.getSeverity() == null) {
+                    LOGGER.warn("Vulnerabilities with severity null found for component " + uuid);
+                    // just to make sure the sum is consistent
+                    counters.unassigned = toIntExact(counters.unassigned + count.getCount());
                     continue;
                 }
 
-                // Fetch all aliases for this vulnerability and consider all of them as "seen"
-                qm.getVulnerabilityAliases(vulnerability).stream()
-                        .map(VulnerabilityAlias::getAllBySource)
-                        .flatMap(vulnIdsBySource -> vulnIdsBySource.entrySet().stream())
-                        .map(vulnIdBySource -> vulnIdBySource.getKey() + "|" + vulnIdBySource.getValue())
-                        .forEach(aliasesSeen::add);
-
-                counters.vulnerabilities++;
-
-                if (vulnerability.getSeverity() == null) {
-                    LOGGER.warn("Vulnerability severity is " + vulnerability.getSeverity()+ " null for " + vulnerability.getSource() + "|" + vulnerability.getVulnId());
-                }
-                else {
-                    switch (vulnerability.getSeverity()) {
-                        case CRITICAL -> counters.critical++;
-                        case HIGH -> counters.high++;
-                        case MEDIUM -> counters.medium++;
-                        case LOW, INFO -> counters.low++;
-                        case UNASSIGNED -> counters.unassigned++;
-                    }
+                switch (count.getSeverity()) {
+                    case CRITICAL -> counters.critical = toIntExact(counters.critical + count.getCount());
+                    case HIGH -> counters.high = toIntExact(counters.high + count.getCount());
+                    case MEDIUM -> counters.medium = toIntExact(counters.medium + count.getCount());
+                    case LOW, INFO -> counters.low = toIntExact(counters.low + count.getCount());
+                    case UNASSIGNED -> counters.unassigned = toIntExact(counters.unassigned + count.getCount());
                 }
             }
 
-            counters.findingsTotal = toIntExact(counters.vulnerabilities);
+            counters.findingsTotal = counters.vulnerabilities;
             counters.findingsAudited = toIntExact(getTotalAuditedFindings(pm, component));
             counters.findingsUnaudited = counters.findingsTotal - counters.findingsAudited;
             counters.suppressions = toIntExact(getTotalSuppressedFindings(pm, component));
@@ -176,25 +161,48 @@ public class ComponentMetricsUpdateTask implements Subscriber {
         return counters;
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<Vulnerability> getVulnerabilities(final PersistenceManager pm, final Component component) {
+    public static final class VulnerabilityCount {
+        private Severity severity = null;
+        private long count = 0;
+
+        public Severity getSeverity() {
+            return severity;
+        }
+
+        public long getCount() {
+            return count;
+        }
+
+        public void setSeverity(Severity severity) {
+            this.severity = severity;
+        }
+
+        public void setCount(long count) {
+            this.count = count;
+        }
+    }
+
+    private static List<VulnerabilityCount> getVulnerabilityCountsBySeverity(final PersistenceManager pm, final Component component) {
         // Using the JDO single-string syntax here because we need to pass the parameter
         // of the outer query (the component) to the sub-query. For some reason that does
         // not work with the declarative JDO API.
         final Query<?> query = pm.newQuery(Query.JDOQL, """
-                SELECT FROM org.dependencytrack.model.Vulnerability
+                SELECT this.severity AS severity, COUNT(this) AS count
+                FROM org.dependencytrack.model.Vulnerability
                 WHERE this.components.contains(:component)
-                    && (SELECT FROM org.dependencytrack.model.Analysis a
+                    && (
+                        SELECT FROM org.dependencytrack.model.Analysis a
                         WHERE a.component == :component
                             && a.vulnerability == this
-                            && a.suppressed == true).isEmpty()
+                            && a.suppressed == true
+                    ).isEmpty()
+                GROUP BY this.severity
                 """);
         query.setParameters(component);
 
-        // NB: Set fetch group on PM level to avoid fields of the default fetch group from being loaded.
         try (var ignoredPersistenceCustomization = new ScopedCustomization(pm)
                 .withFetchGroup(Vulnerability.FetchGroup.METRICS_UPDATE.name())) {
-            return List.copyOf((List<Vulnerability>) query.executeList());
+            return List.copyOf(query.executeResultList(VulnerabilityCount.class));
         } finally {
             query.closeAll();
         }

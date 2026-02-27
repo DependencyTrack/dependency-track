@@ -89,6 +89,23 @@ public final class DateUtil {
         return df.format(date);
     }
 
+    /**
+     * Formats a Date object into ISO 8601 date format (date only, no time).
+     * @param date the Date object to convert
+     * @param dateOnly if true, returns only YYYY-MM-DD format; if false, returns full datetime
+     * @return a String representation of an ISO 8601 date
+     * @since 4.13.2
+     */
+    public static String toISO8601(final Date date, final boolean dateOnly) {
+        if (dateOnly) {
+            final TimeZone tz = TimeZone.getTimeZone("UTC");
+            final DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            df.setTimeZone(tz);
+            return df.format(date);
+        }
+        return toISO8601(date);
+    }
+
     public static Date fromISO8601(final String dateString) {
         if (dateString == null) {
             return null;

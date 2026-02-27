@@ -128,7 +128,7 @@ public class GithubMetaAnalyzer extends AbstractMetaAnalyzer {
                 } else if (isBlank(repositoryUser) && isNotBlank(repositoryPassword)) {
                     github = GitHub.connectUsingOAuth(repositoryUrl, repositoryPassword);
                 } else {
-                    github = GitHub.connectAnonymously();
+                    github = GitHub.connectToEnterpriseAnonymously(repositoryUrl);
                 }
 
                 GHRepository repository = github.getRepository(String.format("%s/%s", urlEncode(component.getPurl().getNamespace()), urlEncode(component.getPurl().getName())));

@@ -66,7 +66,8 @@ public class Policy implements Serializable {
 
     public enum Operator {
         ALL,
-        ANY
+        ANY,
+        AND
     }
 
     public enum ViolationState {

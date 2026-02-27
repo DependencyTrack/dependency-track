@@ -19,6 +19,7 @@
 package org.dependencytrack.parser.trivy;
 
 import com.google.protobuf.util.Timestamps;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
@@ -39,7 +40,8 @@ public class TrivyParser {
         vulnerability.setPatchedVersions(data.getFixedVersion());
 
         // get the id of the data record (vulnerability)
-        vulnerability.setVulnId(data.getVulnerabilityId());
+        String pURLMd5 = DigestUtils.md5Hex(data.getPkgIdentifier().getPurl());
+        vulnerability.setVulnId(data.getVulnerabilityId() + "-" + pURLMd5);
         vulnerability.setTitle(data.getTitle());
         vulnerability.setDescription(data.getDescription());
         vulnerability.setSeverity(parseSeverity(data.getSeverity()));

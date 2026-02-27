@@ -65,6 +65,8 @@ public class AnalysisRequest {
 
     private final Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
 
+    private final Boolean suppressAllFlag;
+
     @JsonCreator
     public AnalysisRequest(@JsonProperty(value = "project") String project,
                            @JsonProperty(value = "component", required = true) String component,
@@ -74,7 +76,8 @@ public class AnalysisRequest {
                            @JsonProperty(value = "analysisResponse") AnalysisResponse analysisResponse,
                            @JsonProperty(value = "analysisDetails") String analysisDetails,
                            @JsonProperty(value = "comment") String comment,
-                           @JsonProperty(value = "isSuppressed") Boolean suppressed) {
+                           @JsonProperty(value = "isSuppressed") Boolean suppressed,
+                           @JsonProperty(value = "suppressAllFlag") Boolean suppressAllFlag) {
         this.project = project;
         this.component = component;
         this.vulnerability = vulnerability;
@@ -84,6 +87,7 @@ public class AnalysisRequest {
         this.analysisDetails = analysisDetails;
         this.comment = comment;
         this.suppressed = suppressed;
+        this.suppressAllFlag = suppressAllFlag;
     }
 
     public String getProject() {
@@ -132,5 +136,9 @@ public class AnalysisRequest {
 
     public Boolean isSuppressed() {
         return suppressed;
+    }
+
+    public Boolean isSuppressAllFlag() {
+        return Boolean.TRUE.equals(suppressAllFlag);
     }
 }

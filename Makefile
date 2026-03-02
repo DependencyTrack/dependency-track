@@ -73,11 +73,12 @@ lint: lint-java
 .PHONY: lint
 
 test:
-	$(MVND) $(MVN_FLAGS) -Dcheckstyle.skip -Dcyclonedx.skip verify
+	$(MVND) $(MVN_FLAGS) -Penhance -Dcheckstyle.skip -Dcyclonedx.skip verify
 .PHONY: test
 
 test-single:
 	$(MVND) $(MVN_FLAGS) test \
+		-Penhance \
 		-Dcheckstyle.skip \
 		-Dcyclonedx.skip \
 		-Dtest="$(TEST)"

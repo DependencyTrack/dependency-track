@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
 import alpine.model.IConfigProperty;
+import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import com.fasterxml.jackson.core.StreamReadConstraints;
@@ -948,6 +949,30 @@ class BomResourceTest extends ResourceTest {
     }
 
     @Test
+    void uploadBomAutoCreateWithAccessTeamsTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        String json = """
+                {
+                  "projectName": "AccessTeams Example",
+                  "projectVersion": "1.0",
+                  "autoCreate": true,
+                  "accessTeams": [{"name": "%s"}],
+                  "bom": "%s"
+                }
+                """.formatted(team.getName(), bomString);
+        Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(json, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Project project = qm.getProject("AccessTeams Example", "1.0");
+        Assertions.assertNotNull(project);
+        assertThat(project.getAccessTeams())
+                .extracting(Team::getName)
+                .containsOnly(team.getName());
+    }
+
+    @Test
     void uploadBomAutoCreateWithTagsTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
@@ -1134,7 +1159,7 @@ class BomResourceTest extends ResourceTest {
         String parentUUID = parent.getUuid().toString();
 
         // Upload first child, search parent by UUID
-        request = new BomSubmitRequest(null, "Acme Example", "1.0", null, true, parentUUID, null, null, false, bomString);
+        request = new BomSubmitRequest(null, "Acme Example", "1.0", null, true, parentUUID, null, null, false, null, bomString);
         response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
@@ -1150,7 +1175,7 @@ class BomResourceTest extends ResourceTest {
 
 
         // Upload second child, search parent by name+ver
-        request = new BomSubmitRequest(null, "Acme Example", "2.0", null, true, null, "Acme Parent", "1.0", false, bomString);
+        request = new BomSubmitRequest(null, "Acme Example", "2.0", null, true, null, "Acme Parent", "1.0", false, null, bomString);
         response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
@@ -1165,7 +1190,7 @@ class BomResourceTest extends ResourceTest {
         Assertions.assertEquals(parentUUID, child.getParent().getUuid().toString());
 
         // Upload third child, specify parent's UUID, name, ver. Name and ver are ignored when UUID is specified.
-        request = new BomSubmitRequest(null, "Acme Example", "3.0", null, true, parentUUID, "Non-existent parent", "1.0", false, bomString);
+        request = new BomSubmitRequest(null, "Acme Example", "3.0", null, true, parentUUID, "Non-existent parent", "1.0", false, null, bomString);
         response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
@@ -1184,7 +1209,7 @@ class BomResourceTest extends ResourceTest {
     void uploadBomInvalidParentTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
-        BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0", null, true, UUID.randomUUID().toString(), null, null, false, bomString);
+        BomSubmitRequest request = new BomSubmitRequest(null, "Acme Example", "1.0", null, true, UUID.randomUUID().toString(), null, null, false, null, bomString);
         Response response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
@@ -1192,7 +1217,7 @@ class BomResourceTest extends ResourceTest {
         String body = getPlainTextBody(response);
         Assertions.assertEquals("The parent component could not be found.", body);
 
-        request = new BomSubmitRequest(null, "Acme Example", "2.0", null, true, null, "Non-existent parent", null, false, bomString);
+        request = new BomSubmitRequest(null, "Acme Example", "2.0", null, true, null, "Non-existent parent", null, false, null, bomString);
         response = jersey.target(V1_BOM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));

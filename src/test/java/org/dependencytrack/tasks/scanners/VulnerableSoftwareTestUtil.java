@@ -1,0 +1,46 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
+ */
+package org.dependencytrack.tasks.scanners;
+
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.util.PurlUtil;
+
+final class VulnerableSoftwareTestUtil {
+
+    private VulnerableSoftwareTestUtil() {
+    }
+
+    static VulnerableSoftware fromPurl(String purlString) throws MalformedPackageURLException {
+        final var purl = new PackageURL(purlString);
+
+        final var vs = new VulnerableSoftware();
+        vs.setPurl(purl.canonicalize());
+        vs.setPurlType(purl.getType());
+        vs.setPurlNamespace(purl.getNamespace());
+        vs.setPurlName(purl.getName());
+        vs.setPurlVersion(purl.getVersion());
+        vs.setPurlSubpath(purl.getSubpath());
+        vs.setPurlQualifiers(PurlUtil.serializeQualifiers(purl));
+        vs.setVersion(purl.getVersion());
+        return vs;
+    }
+
+}

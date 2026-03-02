@@ -20,6 +20,10 @@ package org.dependencytrack.util;
 
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import jakarta.json.Json;
+import org.jspecify.annotations.Nullable;
+
+import java.util.TreeMap;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 
@@ -69,6 +73,42 @@ public class PurlUtil {
         } catch (MalformedPackageURLException ignored) {
             return null;
         }
+    }
+
+    public static @Nullable String serializeQualifiers(@Nullable PackageURL purl) {
+        if (purl == null || purl.getQualifiers() == null || purl.getQualifiers().isEmpty()) {
+            return null;
+        }
+
+        // Ensure that we produce deterministic output in case of multiple qualifiers.
+        final var orderedQualifiers = new TreeMap<>(purl.getQualifiers());
+
+        final var builder = Json.createObjectBuilder();
+        orderedQualifiers.forEach(builder::add);
+        return builder.build().toString();
+    }
+
+    public static @Nullable String getDistroQualifier(@Nullable PackageURL purl) {
+        if (purl == null || purl.getQualifiers() == null || purl.getQualifiers().isEmpty()) {
+            return null;
+        }
+
+        for (final var qualifier : purl.getQualifiers().entrySet()) {
+            if ("distro".equals(qualifier.getKey())) {
+                return qualifier.getValue();
+            }
+        }
+
+        return null;
+    }
+
+    public static @Nullable String getDistroQualifier(@Nullable String purl) {
+        final PackageURL parsedPurl = silentPurl(purl);
+        if (parsedPurl == null) {
+            return null;
+        }
+
+        return getDistroQualifier(parsedPurl);
     }
 
 }

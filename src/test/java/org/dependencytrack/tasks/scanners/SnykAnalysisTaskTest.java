@@ -27,6 +27,7 @@ import alpine.notification.Subscriber;
 import alpine.notification.Subscription;
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
+import jakarta.json.Json;
 import org.apache.http.HttpHeaders;
 import org.assertj.core.api.SoftAssertions;
 import org.dependencytrack.PersistenceCapableTest;
@@ -43,14 +44,13 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.matchers.Times;
 import org.mockserver.verify.VerificationTimes;
 
-import jakarta.json.Json;
 import javax.jdo.Query;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -61,7 +61,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.dependencytrack.assertion.Assertions.assertConditionWithTimeout;
+import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_ALIAS_SYNC_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_API_TOKEN;
@@ -745,15 +745,17 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
         new SnykAnalysisTask().inform(
                 new SnykAnalysisEvent(List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
-        assertConditionWithTimeout(() -> NOTIFICATIONS.size() > 0, Duration.ofSeconds(5));
-        assertThat(NOTIFICATIONS).anySatisfy(notification -> {
-            assertThat(notification.getScope()).isEqualTo(NotificationScope.SYSTEM.name());
-            assertThat(notification.getLevel()).isEqualTo(NotificationLevel.WARNING);
-            assertThat(notification.getGroup()).isEqualTo(NotificationGroup.ANALYZER.name());
-            assertThat(notification.getTitle()).isNotEmpty();
-            assertThat(notification.getContent()).contains("Wed, 11 Nov 2021 11:11:11 GMT");
-            assertThat(notification.getSubject()).isNull();
-        });
+        await("Notification")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() ->
+                        assertThat(NOTIFICATIONS).anySatisfy(notification -> {
+                            assertThat(notification.getScope()).isEqualTo(NotificationScope.SYSTEM.name());
+                            assertThat(notification.getLevel()).isEqualTo(NotificationLevel.WARNING);
+                            assertThat(notification.getGroup()).isEqualTo(NotificationGroup.ANALYZER.name());
+                            assertThat(notification.getTitle()).isNotEmpty();
+                            assertThat(notification.getContent()).contains("Wed, 11 Nov 2021 11:11:11 GMT");
+                            assertThat(notification.getSubject()).isNull();
+                        }));
     }
 
     @Test

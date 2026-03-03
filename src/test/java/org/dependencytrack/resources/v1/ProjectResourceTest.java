@@ -461,6 +461,63 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void getProjectByUuidWithDeepParentChainTest() {
+        // 4 levels: root -> org -> product -> app
+        final var root = new Project();
+        root.setName("acme-root");
+        root.setVersion("1.0");
+        qm.persist(root);
+
+        final var org = new Project();
+        org.setName("acme-org");
+        org.setVersion("2.0");
+        org.setParent(root);
+        qm.persist(org);
+
+        final var product = new Project();
+        product.setName("acme-product");
+        product.setVersion("3.0");
+        product.setParent(org);
+        qm.persist(product);
+
+        final var app = new Project();
+        app.setName("acme-app");
+        app.setVersion("4.0");
+        app.setParent(product);
+        qm.persist(app);
+
+        Response response = jersey.target(V1_PROJECT + "/" + app.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json).isNotNull();
+        assertThat(json.getString("name")).isEqualTo("acme-app");
+
+        // Assert full parent chain with all fields populated (no empty objects)
+        JsonObject parent1 = json.getJsonObject("parent");
+        assertThat(parent1).isNotNull();
+        assertThat(parent1.getString("name")).isEqualTo("acme-product");
+        assertThat(parent1.getString("version")).isEqualTo("3.0");
+        assertThat(parent1.getString("uuid")).isEqualTo(product.getUuid().toString());
+
+        JsonObject parent2 = parent1.getJsonObject("parent");
+        assertThat(parent2).isNotNull();
+        assertThat(parent2.getString("name")).isEqualTo("acme-org");
+        assertThat(parent2.getString("version")).isEqualTo("2.0");
+        assertThat(parent2.getString("uuid")).isEqualTo(org.getUuid().toString());
+
+        JsonObject parent3 = parent2.getJsonObject("parent");
+        assertThat(parent3).isNotNull();
+        assertThat(parent3.getString("name")).isEqualTo("acme-root");
+        assertThat(parent3.getString("version")).isEqualTo("1.0");
+        assertThat(parent3.getString("uuid")).isEqualTo(root.getUuid().toString());
+
+        assertThat(parent3.containsKey("parent")).isFalse();
+    }
+
+    @Test
     void getProjectByUuidNotPermittedTest() {
         enablePortfolioAccessControl();
 
@@ -1932,6 +1989,39 @@ class ProjectResourceTest extends ResourceTest {
             item -> assertThat(((JsonObject) item).getString("name")).isEqualTo("DEF"),
             item -> assertThat(((JsonObject) item).getString("name")).isEqualTo("GHI")
         );
+    }
+
+    @Test
+    void getChildrenProjectsWithDeepParentChainTest() {
+        // root -> parent -> child; fetch children of parent (returns child with 2-level parent chain)
+        final var root = qm.createProject("root", null, "1.0", null, null, null, true, false);
+        final var parent = qm.createProject("parent", null, "2.0", null, root, null, true, false);
+        final var child = qm.createProject("child", null, "3.0", null, parent, null, true, false);
+
+        Response response = jersey.target(V1_PROJECT + "/" + parent.getUuid() + "/children")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonArray json = parseJsonArray(response);
+        assertThat(json.size()).isEqualTo(1);
+        JsonObject childJson = json.getJsonObject(0);
+        assertThat(childJson.getString("name")).isEqualTo("child");
+        assertThat(childJson.getString("uuid")).isEqualTo(child.getUuid().toString());
+
+        // Parent chain must be fully populated (no empty {} at root)
+        JsonObject childParent = childJson.getJsonObject("parent");
+        assertThat(childParent).isNotNull();
+        assertThat(childParent.getString("name")).isEqualTo("parent");
+        assertThat(childParent.getString("version")).isEqualTo("2.0");
+        assertThat(childParent.getString("uuid")).isEqualTo(parent.getUuid().toString());
+
+        JsonObject grandparent = childParent.getJsonObject("parent");
+        assertThat(grandparent).isNotNull();
+        assertThat(grandparent.getString("name")).isEqualTo("root");
+        assertThat(grandparent.getString("version")).isEqualTo("1.0");
+        assertThat(grandparent.getString("uuid")).isEqualTo(root.getUuid().toString());
+        assertThat(grandparent.containsKey("parent")).isFalse();
     }
 
     @Test

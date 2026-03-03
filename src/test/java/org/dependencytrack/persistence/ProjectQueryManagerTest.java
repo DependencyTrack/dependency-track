@@ -157,4 +157,43 @@ class ProjectQueryManagerTest extends PersistenceCapableTest {
         Assertions.assertNull(fetched.getParent().getParent().getParent());
     }
 
+    @Test
+    void testGetProjectPopulatesDeepParentChain() {
+        // 4 levels: root -> level1 -> level2 -> leaf
+        final Project root = qm.createProject("root", null, "1.0", null, null, null, true, false);
+        final Project level1 = new Project();
+        level1.setName("level1");
+        level1.setVersion("1.0");
+        level1.setParent(root);
+        qm.persist(level1);
+        final Project level2 = new Project();
+        level2.setName("level2");
+        level2.setVersion("1.0");
+        level2.setParent(level1);
+        qm.persist(level2);
+        final Project leaf = new Project();
+        leaf.setName("leaf");
+        leaf.setVersion("1.0");
+        leaf.setParent(level2);
+        qm.persist(leaf);
+
+        final Project fetched = qm.getProject(leaf.getUuid().toString());
+        Assertions.assertNotNull(fetched);
+
+        // All ancestors must have name/version populated (validates fetch group fix)
+        Assertions.assertNotNull(fetched.getParent());
+        Assertions.assertEquals("level2", fetched.getParent().getName());
+        Assertions.assertEquals("1.0", fetched.getParent().getVersion());
+
+        Assertions.assertNotNull(fetched.getParent().getParent());
+        Assertions.assertEquals("level1", fetched.getParent().getParent().getName());
+        Assertions.assertEquals("1.0", fetched.getParent().getParent().getVersion());
+
+        Assertions.assertNotNull(fetched.getParent().getParent().getParent());
+        Assertions.assertEquals("root", fetched.getParent().getParent().getParent().getName());
+        Assertions.assertEquals("1.0", fetched.getParent().getParent().getParent().getVersion());
+
+        Assertions.assertNull(fetched.getParent().getParent().getParent().getParent());
+    }
+
 }

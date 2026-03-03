@@ -32,5 +32,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 public record TaggedCollectionProjectListResponseItem(
         @Schema(description = "UUID of the collection project", requiredMode = REQUIRED) UUID uuid,
         @Schema(description = "Name of the collection project", requiredMode = REQUIRED) String name,
-        @Schema(description = "Version of the collection project") String version) {
+        @Schema(description = "Version of the collection project") String version,
+        @Schema(description = "Parent project (nested chain for hierarchy display)") ProjectParentInfo parent) {
 }

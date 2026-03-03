@@ -447,6 +447,10 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().doesProjectExist(name, version);
     }
 
+    public Map<UUID, Project> getProjectsWithAncestorPaths(final Collection<UUID> uuids) {
+        return getProjectQueryManager().getProjectsWithAncestorPaths(uuids);
+    }
+
     public Tag getTagByName(final String name) {
         return getTagQueryManager().getTagByName(name);
     }

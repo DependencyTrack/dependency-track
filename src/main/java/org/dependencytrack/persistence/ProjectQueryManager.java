@@ -1642,6 +1642,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         preprocessACLs(query, queryFilter, params, false);
         query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         result = execute(query, params);
+        populateAncestorPaths(result.getList(Project.class));
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
@@ -1671,6 +1672,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         preprocessACLs(query, queryFilter, params, false);
         query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         result = execute(query, params);
+        populateAncestorPaths(result.getList(Project.class));
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
@@ -1703,7 +1705,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Map<String, Object> params = filterBuilder.getParams();
 
         preprocessACLs(query, queryFilter, params, false);
+        query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         result = execute(query, params);
+        populateAncestorPaths(result.getList(Project.class));
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
@@ -1817,6 +1821,24 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         } finally {
             query.closeAll();
         }
+    }
+
+    /**
+     * Fetches projects by their UUIDs and populates their ancestor paths.
+     * Returns a map of project UUID to project for efficient lookup.
+     *
+     * @param uuids project UUIDs to fetch
+     * @return map of project UUID to project with ancestor chains wired
+     */
+    public Map<UUID, Project> getProjectsWithAncestorPaths(Collection<UUID> uuids) {
+        if (uuids == null || uuids.isEmpty()) {
+            return Map.of();
+        }
+        final List<Project> projects = fetchProjectsByUuids(Set.copyOf(uuids));
+        populateAncestorPaths(projects);
+        return projects.stream()
+                .filter(p -> p.getUuid() != null)
+                .collect(Collectors.toMap(Project::getUuid, p -> p, (a, b) -> a));
     }
 
     private static boolean isChildOf(Project project, UUID uuid) {

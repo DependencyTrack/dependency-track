@@ -27,6 +27,11 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
@@ -135,29 +140,29 @@ class ModelConverterTest {
         assertThat(converter.convert(advisory)).isNull();
     }
 
-    @Test
-    void testConvertSeverityMapping() throws Exception {
-        for (final var entry : new Object[][]{
-                {"LOW", Severity.LOW},
-                {"MODERATE", Severity.MEDIUM},
-                {"HIGH", Severity.HIGH},
-                {"CRITICAL", Severity.CRITICAL},
-        }) {
-            final String ghsaSeverity = (String) entry[0];
-            final Severity expected = (Severity) entry[1];
+    @ParameterizedTest(name = "[{index}] {0} -> {1}")
+    @MethodSource("severityMappingParameters")
+    void testConvertSeverityMapping(String ghsaSeverity, Severity expected) throws Exception {
+        final var advisory = jsonMapper.readValue(/* language=JSON */ """
+                {
+                  "ghsaId": "GHSA-57j2-w4cx-62h2",
+                  "severity": "%s",
+                  "publishedAt": "2022-03-12T00:00:00Z",
+                  "updatedAt": "2022-08-11T00:00:00Z"
+                }
+                """.formatted(ghsaSeverity), SecurityAdvisory.class);
 
-            final var advisory = jsonMapper.readValue(/* language=JSON */ """
-                    {
-                      "ghsaId": "GHSA-57j2-w4cx-62h2",
-                      "severity": "%s",
-                      "publishedAt": "2022-03-12T00:00:00Z",
-                      "updatedAt": "2022-08-11T00:00:00Z"
-                    }
-                    """.formatted(ghsaSeverity), SecurityAdvisory.class);
+        assertThat(converter.convert(advisory).getSeverity())
+                .as("severity for GHSA %s", ghsaSeverity)
+                .isEqualTo(expected);
+    }
 
-            assertThat(converter.convert(advisory).getSeverity())
-                    .as("severity for GHSA %s", ghsaSeverity)
-                    .isEqualTo(expected);
-        }
+    static Stream<Arguments> severityMappingParameters() {
+        return Stream.of(
+                Arguments.of("LOW", Severity.LOW),
+                Arguments.of("MODERATE", Severity.MEDIUM),
+                Arguments.of("HIGH", Severity.HIGH),
+                Arguments.of("CRITICAL", Severity.CRITICAL)
+        );
     }
 }

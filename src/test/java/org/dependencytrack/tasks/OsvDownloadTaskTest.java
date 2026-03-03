@@ -58,10 +58,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.apache.commons.io.IOUtils.resourceToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 
 @WireMockTest
 class OsvDownloadTaskTest extends PersistenceCapableTest {
@@ -412,8 +412,8 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         var existingVuln = new Vulnerability();
         existingVuln.setVulnId("GHSA-57j2-w4cx-62h2");
         existingVuln.setSource(Vulnerability.Source.GITHUB);
-        existingVuln.setVulnerableSoftware(List.of(vs1, vs2, vs3));
         existingVuln = qm.createVulnerability(existingVuln, false);
+        existingVuln.setVulnerableSoftware(List.of(vs1, vs2, vs3));
         qm.updateAffectedVersionAttribution(existingVuln, vs1, Vulnerability.Source.GITHUB);
         qm.updateAffectedVersionAttribution(existingVuln, vs2, Vulnerability.Source.GITHUB);
         qm.updateAffectedVersionAttribution(existingVuln, vs3, Vulnerability.Source.OSV);
@@ -685,8 +685,8 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         existingVuln.setDescription("Initial description");
         existingVuln.setSource(Vulnerability.Source.NVD);
         existingVuln.setSeverity(Severity.CRITICAL);
-        existingVuln.setVulnerableSoftware(List.of(vulnerableSoftware));
         existingVuln = qm.createVulnerability(existingVuln, false);
+        existingVuln.setVulnerableSoftware(List.of(vulnerableSoftware));
         qm.updateAffectedVersionAttribution(existingVuln, vulnerableSoftware, Vulnerability.Source.NVD);
 
         OsvAdvisory advisory = parser.parse(jsonObject);
@@ -761,8 +761,8 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         existingVuln.setDescription("Initial description");
         existingVuln.setSource(Vulnerability.Source.NVD);
         existingVuln.setSeverity(Severity.CRITICAL);
-        existingVuln.setVulnerableSoftware(List.of(vulnerableSoftware));
         existingVuln = qm.createVulnerability(existingVuln, false);
+        existingVuln.setVulnerableSoftware(List.of(vulnerableSoftware));
         qm.updateAffectedVersionAttribution(existingVuln, vulnerableSoftware, Vulnerability.Source.NVD);
 
         OsvAdvisory advisory = parser.parse(jsonObject);

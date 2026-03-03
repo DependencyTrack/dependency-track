@@ -231,8 +231,8 @@ class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
         var existingVuln = new Vulnerability();
         existingVuln.setVulnId("GHSA-57j2-w4cx-62h2");
         existingVuln.setSource(Source.GITHUB);
-        existingVuln.setVulnerableSoftware(List.of(vs1, vs2, vs3));
         existingVuln = qm.createVulnerability(existingVuln, false);
+        existingVuln.setVulnerableSoftware(List.of(vs1, vs2, vs3));
         qm.updateAffectedVersionAttribution(existingVuln, vs1, Source.OSV);
         qm.updateAffectedVersionAttribution(existingVuln, vs2, Source.OSV);
         qm.updateAffectedVersionAttribution(existingVuln, vs3, Source.GITHUB);

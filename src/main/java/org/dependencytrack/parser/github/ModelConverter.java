@@ -89,13 +89,19 @@ public final class ModelConverter {
                 }
             }
 
-            // TODO: advisory.getCvssSeverities().getCvssV4()
-            //  Requires CVSSv4 support in the DT data model.
+            final var cvssv4 = advisory.getCvssSeverities().getCvssV4();
+            if (cvssv4 != null) {
+                final var parsedCvssV4 = CvssUtil.parse(cvssv4.getVectorString());
+                if (parsedCvssV4 != null) {
+                    vuln.applyV4Score(parsedCvssV4);
+                }
+            }
 
             vuln.setSeverity(VulnerabilityUtil.getSeverity(
                     vuln.getSeverity(),
                     vuln.getCvssV2BaseScore(),
                     vuln.getCvssV3BaseScore(),
+                    vuln.getCvssV4Score(),
                     vuln.getOwaspRRLikelihoodScore(),
                     vuln.getOwaspRRTechnicalImpactScore(),
                     vuln.getOwaspRRBusinessImpactScore()));

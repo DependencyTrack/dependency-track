@@ -642,6 +642,30 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testCalculateOSVSeverityWithCvssV4() throws IOException {
+        final var task = new OsvDownloadTask();
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-q2x7-8rv6-6q7h.json");
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assertions.assertNotNull(advisory);
+        Assertions.assertNotNull(advisory.getCvssV4Vector());
+        Severity severity = task.calculateOSVSeverity(advisory);
+        Assertions.assertEquals(Severity.CRITICAL, severity);
+    }
+
+    @Test
+    void testParseAdvisoryToVulnerabilityWithCvssV4() throws IOException {
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-q2x7-8rv6-6q7h.json");
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assertions.assertNotNull(advisory);
+        final var task = new OsvDownloadTask();
+        Vulnerability vuln = task.mapAdvisoryToVulnerability(advisory);
+        Assertions.assertNotNull(vuln);
+        Assertions.assertEquals("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N", vuln.getCvssV4Vector());
+        Assertions.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", vuln.getCvssV3Vector());
+        Assertions.assertEquals(Severity.CRITICAL, vuln.getSeverity());
+    }
+
+    @Test
     void testCommitHashRangesAndVersions() throws IOException {
         final var task = new OsvDownloadTask();
 

@@ -458,15 +458,6 @@ class ProjectResourceTest extends ResourceTest {
 
         // Root has no parent (key omitted with NON_NULL or null)
         assertThat(grandparent.containsKey("parent")).isFalse();
-
-        // Assert ancestorPath is also populated (flat list for backwards compatibility)
-        JsonArray ancestorPath = json.getJsonArray("ancestorPath");
-        assertThat(ancestorPath).isNotNull();
-        assertThat(ancestorPath.size()).isEqualTo(2); // grandparent, parent (root to immediate)
-        assertThat(ancestorPath.getJsonObject(0).getString("name")).isEqualTo("acme-org");
-        assertThat(ancestorPath.getJsonObject(0).getString("version")).isEqualTo("1.0");
-        assertThat(ancestorPath.getJsonObject(1).getString("name")).isEqualTo("acme-app-parent");
-        assertThat(ancestorPath.getJsonObject(1).getString("version")).isEqualTo("1.0.0");
     }
 
     @Test

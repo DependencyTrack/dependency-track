@@ -142,6 +142,68 @@ class GitHubAdvisoryMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testProcessAdvisoryWithCvssV4() throws Exception {
+        qm.createConfigProperty(
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyName(),
+                "false",
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getPropertyType(),
+                VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getDescription());
+
+        final var advisory = jsonMapper.readValue(/* language=JSON */ """
+                {
+                  "id": "GHSA-test-cvss-v4v4",
+                  "ghsaId": "GHSA-test-cvss-v4v4",
+                  "identifiers": [
+                    {
+                      "type": "CVE",
+                      "value": "CVE-2099-99999"
+                    }
+                  ],
+                  "severity": "HIGH",
+                  "cvssSeverities": {
+                    "cvssV4": {
+                      "vectorString": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+                      "score": 9.3
+                    },
+                    "cvssV3": {
+                      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+                      "score": 9.8
+                    }
+                  },
+                  "publishedAt": "2024-01-15T00:00:00Z",
+                  "updatedAt": "2024-02-20T00:00:00Z",
+                  "vulnerabilities": {
+                    "edges": [
+                      {
+                        "node": {
+                          "package": {
+                            "ecosystem": "maven",
+                            "name": "com.example:test-lib"
+                          },
+                          "vulnerableVersionRange": "<=1.0.0"
+                        }
+                      }
+                    ]
+                  }
+                }
+                """, SecurityAdvisory.class);
+
+        final var task = new GitHubAdvisoryMirrorTask();
+        final boolean createdOrUpdated = task.processAdvisory(advisory);
+        assertThat(createdOrUpdated).isTrue();
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.GITHUB, "GHSA-test-cvss-v4v4");
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getCvssV4Vector()).isNotNull();
+        assertThat(vuln.getCvssV4Score()).isNotNull();
+        assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
+        assertThat(vuln.getCvssV3BaseScore()).isNotNull();
+        // Severity comes from explicit "severity":"HIGH" field, not CVSS scores
+        assertThat(vuln.getSeverity()).isEqualTo(Severity.HIGH);
+    }
+
+    @Test
     void testProcessAdvisoryWithAliasSyncDisabled() throws Exception {
         qm.createConfigProperty(
                 VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ALIAS_SYNC_ENABLED.getGroupName(),

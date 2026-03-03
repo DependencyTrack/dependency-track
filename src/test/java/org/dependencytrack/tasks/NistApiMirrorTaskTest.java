@@ -245,6 +245,22 @@ class NistApiMirrorTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testInformWithCvssV4() throws Exception {
+        stubFor(get(anyUrl())
+                .willReturn(aResponse()
+                        .withBody(resourceToByteArray("/unit/nvd/api/jsons/cve-2025-9377.json"))));
+
+        new NistApiMirrorTask().inform(new NistApiMirrorEvent());
+
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId(Source.NVD, "CVE-2025-9377", true);
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getCvssV4Score()).isEqualByComparingTo("9.3");
+        assertThat(vuln.getCvssV4Vector()).startsWith("CVSS:4.0/");
+        assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
+        assertThat(vuln.getSeverity()).isEqualTo(Severity.CRITICAL);
+    }
+
+    @Test
     void testInformWithUpdatedVulnerability() throws Exception {
         final var vuln = new Vulnerability();
         vuln.setVulnId("CVE-2022-1954");

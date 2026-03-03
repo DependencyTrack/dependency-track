@@ -13,6 +13,7 @@ import org.dependencytrack.event.OssIndexAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentAnalysisCache;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.util.HttpUtil;
@@ -165,7 +166,7 @@ class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
                     assertThat(vuln.getTitle()).isNull();
                     assertThat(vuln.getDescription()).isEqualTo("""
                             jackson-databind before 2.13.0 allows a Java StackOverflow exception and denial of service via a large depth of nested objects.
-                                                    
+
                             Sonatype's research suggests that this CVE's details differ from those defined at NVD. See https://ossindex.sonatype.org/vulnerability/CVE-2020-36518 for details""");
                     assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H");
                     assertThat(vuln.getCvssV3BaseScore()).isEqualByComparingTo("7.5");
@@ -299,6 +300,55 @@ class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
             apiToken,
             SCANNER_OSSINDEX_API_TOKEN.getPropertyType(),
             SCANNER_OSSINDEX_API_TOKEN.getDescription()
+        );
+    }
+
+    @Test
+    void testAnalyzeWithCvssV4() throws Exception {
+        configApiToken(API_USER, DataEncryption.encryptAsString(API_TOKEN));
+        stubFor(post(urlPathEqualTo("/api/v3/component-report"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/vnd.ossindex.component-report.v1+json")
+                        .withBody("""
+                                [
+                                  {
+                                    "coordinates": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1",
+                                    "description": "General data-binding functionality for Jackson: works on core streaming API",
+                                    "reference": "https://ossindex.sonatype.org/component/pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1",
+                                    "vulnerabilities": [
+                                      {
+                                        "id": "sonatype-2024-0001",
+                                        "displayName": "sonatype-2024-0001",
+                                        "title": "[sonatype-2024-0001] Test CVSSv4 vulnerability",
+                                        "description": "Test vulnerability with CVSSv4 vector",
+                                        "cvssScore": 9.3,
+                                        "cvssVector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+                                        "cwe": "CWE-502",
+                                        "reference": "https://ossindex.sonatype.org/vulnerability/sonatype-2024-0001",
+                                        "externalReferences": []
+                                      }
+                                    ]
+                                  }
+                                ]
+                                """)));
+
+        var project = configProject();
+        var component = getComponent(project);
+        qm.persist(component);
+
+        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
+
+        final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
+        assertThat(vulnerabilities).satisfiesExactly(
+                vuln -> {
+                    assertThat(vuln.getVulnId()).isEqualTo("sonatype-2024-0001");
+                    assertThat(vuln.getSource()).isEqualTo("OSSINDEX");
+                    assertThat(vuln.getCvssV4Vector()).isEqualTo("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N");
+                    assertThat(vuln.getCvssV4Score()).isNotNull();
+                    assertThat(vuln.getSeverity()).isEqualTo(Severity.CRITICAL);
+                }
         );
     }
 

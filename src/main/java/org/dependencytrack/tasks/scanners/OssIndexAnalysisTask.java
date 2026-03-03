@@ -62,6 +62,7 @@ import org.dependencytrack.util.VulnerabilityUtil;
 import org.json.JSONObject;
 import org.metaeffekt.core.security.cvss.v2.Cvss2;
 import org.metaeffekt.core.security.cvss.v3.Cvss3;
+import org.metaeffekt.core.security.cvss.v4P0.Cvss4P0;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -451,10 +452,12 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         if (reportedVuln.getCvssVector() != null) {
             final var cvss = CvssUtil.parse(reportedVuln.getCvssVector());
             if (cvss != null) {
-                if (cvss instanceof Cvss2) {
-                    vulnerability.applyV2Score(cvss);
+                if (cvss instanceof Cvss4P0) {
+                    vulnerability.applyV4Score(cvss);
                 } else if (cvss instanceof Cvss3) {
                     vulnerability.applyV3Score(cvss);
+                } else if (cvss instanceof Cvss2) {
+                    vulnerability.applyV2Score(cvss);
                 }
             }
         }
@@ -462,6 +465,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         vulnerability.setSeverity(VulnerabilityUtil.getSeverity(
                 vulnerability.getCvssV2BaseScore(),
                 vulnerability.getCvssV3BaseScore(),
+                vulnerability.getCvssV4Score(),
                 vulnerability.getOwaspRRLikelihoodScore(),
                 vulnerability.getOwaspRRTechnicalImpactScore(),
                 vulnerability.getOwaspRRBusinessImpactScore()

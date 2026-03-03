@@ -41,8 +41,8 @@ class InternalAnalysisTaskTest extends PersistenceCapableTest {
         var vulnerability = new Vulnerability();
         vulnerability.setVulnId("GHSA-wjm3-fq3r-5x46");
         vulnerability.setSource(Vulnerability.Source.GITHUB);
+        vulnerability = qm.createVulnerability(vulnerability, false);
         vulnerability.setVulnerableSoftware(List.of(vulnerableSoftware));
-        qm.createVulnerability(vulnerability, false);
 
         new InternalAnalysisTask().analyze(List.of(component));
 
@@ -70,8 +70,8 @@ class InternalAnalysisTaskTest extends PersistenceCapableTest {
         var vulnerability = new Vulnerability();
         vulnerability.setVulnId("CVE-2020-23904");
         vulnerability.setSource(Vulnerability.Source.NVD);
+        vulnerability = qm.createVulnerability(vulnerability, false);
         vulnerability.setVulnerableSoftware(List.of(vulnerableSoftware));
-        qm.createVulnerability(vulnerability, false);
 
         new InternalAnalysisTask().analyze(List.of(component));
 

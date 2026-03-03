@@ -84,6 +84,7 @@ import org.dependencytrack.notification.publisher.Publisher;
 import org.dependencytrack.resources.v1.vo.AffectedProject;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
+import org.dependencytrack.util.PersistenceUtil;
 
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
@@ -785,6 +786,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public Vulnerability createVulnerability(Vulnerability vulnerability, boolean commitIndex) {
         return getVulnerabilityQueryManager().createVulnerability(vulnerability, commitIndex);
+    }
+
+    public Map<String, PersistenceUtil.Diff> updateVulnerabilityIfChanged(Vulnerability persistentVuln, Vulnerability transientVuln) {
+        return getVulnerabilityQueryManager().updateIfChanged(persistentVuln, transientVuln);
     }
 
     public Vulnerability updateVulnerability(Vulnerability transientVulnerability, boolean commitIndex) {

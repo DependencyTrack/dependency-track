@@ -266,7 +266,7 @@ public class Project implements Serializable {
 
     @Persistent
     @Column(name = "PARENT_PROJECT_ID")
-    @JsonIncludeProperties(value = {"name", "version", "uuid"})
+    @JsonIncludeProperties(value = {"name", "version", "uuid", "parent"})
     private Project parent;
 
     @Persistent(mappedBy = "parent")

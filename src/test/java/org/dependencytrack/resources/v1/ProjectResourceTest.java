@@ -227,6 +227,39 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void getProjectLookupReturnsNestedParentChainTest() {
+        final var parentProject = new Project();
+        parentProject.setName("acme-parent");
+        parentProject.setVersion("2.0");
+        qm.persist(parentProject);
+
+        final var project = new Project();
+        project.setName("acme-lookup-child");
+        project.setVersion("1.0");
+        project.setParent(parentProject);
+        qm.persist(project);
+
+        Response response = jersey.target(V1_PROJECT + "/lookup")
+                .queryParam("name", "acme-lookup-child")
+                .queryParam("version", "1.0")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json).isNotNull();
+        assertThat(json.getString("name")).isEqualTo("acme-lookup-child");
+        assertThat(json.getString("version")).isEqualTo("1.0");
+
+        JsonObject parent = json.getJsonObject("parent");
+        assertThat(parent).isNotNull();
+        assertThat(parent.getString("name")).isEqualTo("acme-parent");
+        assertThat(parent.getString("version")).isEqualTo("2.0");
+        assertThat(parent.getString("uuid")).isEqualTo(parentProject.getUuid().toString());
+        assertThat(parent.containsKey("parent")).isFalse(); // root, no further parent
+    }
+
+    @Test
     void getProjectLookupNotFoundTest() {
         final var project = new Project();
         project.setName("acme-app");
@@ -381,6 +414,59 @@ class ProjectResourceTest extends ResourceTest {
                           ]
                         }
                         """);
+    }
+
+    @Test
+    void getProjectByUuidWithNestedParentChainTest() {
+        final var grandparentProject = new Project();
+        grandparentProject.setName("acme-org");
+        grandparentProject.setVersion("1.0");
+        qm.persist(grandparentProject);
+
+        final var parentProject = new Project();
+        parentProject.setName("acme-app-parent");
+        parentProject.setVersion("1.0.0");
+        parentProject.setParent(grandparentProject);
+        qm.persist(parentProject);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setParent(parentProject);
+        qm.persist(project);
+
+        Response response = jersey.target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json).isNotNull();
+
+        // Assert nested parent chain: project -> parent -> grandparent -> null
+        JsonObject parent = json.getJsonObject("parent");
+        assertThat(parent).isNotNull();
+        assertThat(parent.getString("name")).isEqualTo("acme-app-parent");
+        assertThat(parent.getString("version")).isEqualTo("1.0.0");
+        assertThat(parent.getString("uuid")).isEqualTo(parentProject.getUuid().toString());
+
+        JsonObject grandparent = parent.getJsonObject("parent");
+        assertThat(grandparent).isNotNull();
+        assertThat(grandparent.getString("name")).isEqualTo("acme-org");
+        assertThat(grandparent.getString("version")).isEqualTo("1.0");
+        assertThat(grandparent.getString("uuid")).isEqualTo(grandparentProject.getUuid().toString());
+
+        // Root has no parent (key omitted with NON_NULL or null)
+        assertThat(grandparent.containsKey("parent")).isFalse();
+
+        // Assert ancestorPath is also populated (flat list for backwards compatibility)
+        JsonArray ancestorPath = json.getJsonArray("ancestorPath");
+        assertThat(ancestorPath).isNotNull();
+        assertThat(ancestorPath.size()).isEqualTo(2); // grandparent, parent (root to immediate)
+        assertThat(ancestorPath.getJsonObject(0).getString("name")).isEqualTo("acme-org");
+        assertThat(ancestorPath.getJsonObject(0).getString("version")).isEqualTo("1.0");
+        assertThat(ancestorPath.getJsonObject(1).getString("name")).isEqualTo("acme-app-parent");
+        assertThat(ancestorPath.getJsonObject(1).getString("version")).isEqualTo("1.0.0");
     }
 
     @Test
@@ -2449,6 +2535,38 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals("Acme Example", json.getString("name"));
         Assertions.assertEquals("1.0.2", json.getString("version"));
+    }
+
+    @Test
+    void getLatestProjectReturnsNestedParentChainTest() {
+        final var parentProject = new Project();
+        parentProject.setName("acme-latest-parent");
+        parentProject.setVersion("1.0");
+        qm.persist(parentProject);
+
+        qm.createProject("Acme Latest", null, "1.0.0", null, null, null, true, false);
+        final var latestProject = new Project();
+        latestProject.setName("Acme Latest");
+        latestProject.setVersion("1.0.2");
+        latestProject.setParent(parentProject);
+        latestProject.setIsLatest(true);
+        qm.persist(latestProject);
+
+        Response response = jersey.target(V1_PROJECT_LATEST + "Acme Latest")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json).isNotNull();
+        assertThat(json.getString("name")).isEqualTo("Acme Latest");
+        assertThat(json.getString("version")).isEqualTo("1.0.2");
+
+        JsonObject parent = json.getJsonObject("parent");
+        assertThat(parent).isNotNull();
+        assertThat(parent.getString("name")).isEqualTo("acme-latest-parent");
+        assertThat(parent.getString("version")).isEqualTo("1.0");
+        assertThat(parent.getString("uuid")).isEqualTo(parentProject.getUuid().toString());
     }
 
     @Test

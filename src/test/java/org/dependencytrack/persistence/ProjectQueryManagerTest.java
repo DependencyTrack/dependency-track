@@ -132,4 +132,38 @@ class ProjectQueryManagerTest extends PersistenceCapableTest {
         }
     }
 
+    @Test
+    void testGetProjectPopulatesAncestorPathAndNestedParentChain() {
+        final Project grandparent = qm.createProject("grandparent", null, "1.0", null, null, null, true, false);
+        final Project parent = new Project();
+        parent.setName("parent");
+        parent.setVersion("1.0");
+        parent.setParent(grandparent);
+        qm.persist(parent);
+        final Project project = new Project();
+        project.setName("child");
+        project.setVersion("1.0");
+        project.setParent(parent);
+        qm.persist(project);
+
+        final Project fetched = qm.getProject(project.getUuid().toString());
+        Assertions.assertNotNull(fetched);
+
+        // Ancestor path is populated (root to immediate parent)
+        final List<Project.AncestorPathElement> ancestorPath = fetched.getAncestorPath();
+        Assertions.assertNotNull(ancestorPath);
+        Assertions.assertEquals(2, ancestorPath.size());
+        Assertions.assertEquals("grandparent", ancestorPath.get(0).name());
+        Assertions.assertEquals("1.0", ancestorPath.get(0).version());
+        Assertions.assertEquals("parent", ancestorPath.get(1).name());
+        Assertions.assertEquals("1.0", ancestorPath.get(1).version());
+
+        // Nested parent chain is wired
+        Assertions.assertNotNull(fetched.getParent());
+        Assertions.assertEquals("parent", fetched.getParent().getName());
+        Assertions.assertNotNull(fetched.getParent().getParent());
+        Assertions.assertEquals("grandparent", fetched.getParent().getParent().getName());
+        Assertions.assertNull(fetched.getParent().getParent().getParent());
+    }
+
 }

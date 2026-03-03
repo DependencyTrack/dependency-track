@@ -1722,8 +1722,35 @@ public class QueryManager extends AlpineQueryManager {
             depth++;
         }
 
-        // Build the ancestor path for each project using the complete map
-        projects.forEach(project -> project.setAncestorPath(buildAncestorPathFromMap(project, projectMap)));
+        // Build the ancestor path and wire the parent chain for each project
+        projects.forEach(project -> {
+            final List<Project.AncestorPathElement> path = buildAncestorPathFromMap(project, projectMap);
+            project.setAncestorPath(path);
+            wireParentChain(project, path, projectMap);
+        });
+    }
+
+    /**
+     * Wires the parent chain on the Project entities so that serialization produces a nested
+     * parent structure (parent containing parent containing ...) rather than a flat list.
+     * Path is ordered from root to immediate parent.
+     */
+    protected static void wireParentChain(Project project, List<Project.AncestorPathElement> path,
+                                         Map<UUID, Project> projectMap) {
+        if (path == null || path.size() < 2) {
+            return;
+        }
+        for (int i = path.size() - 1; i >= 1; i--) {
+            final Project ancestor = projectMap.get(path.get(i).uuid());
+            final Project ancestorParent = projectMap.get(path.get(i - 1).uuid());
+            if (ancestor != null && ancestorParent != null) {
+                ancestor.setParent(ancestorParent);
+            }
+        }
+        final Project root = projectMap.get(path.get(0).uuid());
+        if (root != null) {
+            root.setParent(null);
+        }
     }
 
     /**

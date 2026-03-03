@@ -228,6 +228,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setMetrics(getMostRecentProjectMetrics(project));
             // set ProjectVersions to minimize the number of round trips a client needs to make
             project.setVersions(getProjectVersions(project));
+            populateAncestorPaths(List.of(project));
         }
         return project;
     }
@@ -259,6 +260,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setMetrics(getMostRecentProjectMetrics(project));
             // set ProjectVersions to prevent extra round trip
             project.setVersions(getProjectVersions(project));
+            populateAncestorPaths(List.of(project));
         }
         return project;
     }
@@ -291,6 +293,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setMetrics(getMostRecentProjectMetrics(project));
             // set ProjectVersions to prevent extra round trip
             project.setVersions(getProjectVersions(project));
+            populateAncestorPaths(List.of(project));
         }
         return project;
     }

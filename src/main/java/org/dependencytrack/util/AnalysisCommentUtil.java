@@ -56,19 +56,35 @@ public final class AnalysisCommentUtil {
     }
 
     public static void makeRiskImpactComment(final QueryManager qm, final Analysis analysis, final String riskImpact, final String commenter) {
-        makeCommentIfChanged("Risk impact", qm, analysis, Objects.requireNonNullElse(analysis.getRiskImpact(), "NOT_SET"), riskImpact, commenter);
+        makeRiskImpactComment(qm, analysis, riskImpact, commenter, "Risk impact");
+    }
+
+    public static void makeRiskImpactComment(final QueryManager qm, final Analysis analysis, final String riskImpact, final String commenter, final String label) {
+        makeCommentIfChanged(label, qm, analysis, Objects.requireNonNullElse(analysis.getRiskImpact(), "NOT_SET"), riskImpact, commenter);
     }
 
     public static void makeRiskLikelihoodComment(final QueryManager qm, final Analysis analysis, final String riskLikelihood, final String commenter) {
-        makeCommentIfChanged("Risk likelihood", qm, analysis, Objects.requireNonNullElse(analysis.getRiskLikelihood(), "NOT_SET"), riskLikelihood, commenter);
+        makeRiskLikelihoodComment(qm, analysis, riskLikelihood, commenter, "Risk likelihood");
+    }
+
+    public static void makeRiskLikelihoodComment(final QueryManager qm, final Analysis analysis, final String riskLikelihood, final String commenter, final String label) {
+        makeCommentIfChanged(label, qm, analysis, Objects.requireNonNullElse(analysis.getRiskLikelihood(), "NOT_SET"), riskLikelihood, commenter);
     }
 
     public static void makeResidualRiskImpactComment(final QueryManager qm, final Analysis analysis, final String residualRiskImpact, final String commenter) {
-        makeCommentIfChanged("Residual risk impact", qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskImpact(), "NOT_SET"), residualRiskImpact, commenter);
+        makeResidualRiskImpactComment(qm, analysis, residualRiskImpact, commenter, "Residual risk impact");
+    }
+
+    public static void makeResidualRiskImpactComment(final QueryManager qm, final Analysis analysis, final String residualRiskImpact, final String commenter, final String label) {
+        makeCommentIfChanged(label, qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskImpact(), "NOT_SET"), residualRiskImpact, commenter);
     }
 
     public static void makeResidualRiskLikelihoodComment(final QueryManager qm, final Analysis analysis, final String residualRiskLikelihood, final String commenter) {
-        makeCommentIfChanged("Residual risk likelihood", qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskLikelihood(), "NOT_SET"), residualRiskLikelihood, commenter);
+        makeResidualRiskLikelihoodComment(qm, analysis, residualRiskLikelihood, commenter, "Residual risk likelihood");
+    }
+
+    public static void makeResidualRiskLikelihoodComment(final QueryManager qm, final Analysis analysis, final String residualRiskLikelihood, final String commenter, final String label) {
+        makeCommentIfChanged(label, qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskLikelihood(), "NOT_SET"), residualRiskLikelihood, commenter);
     }
 
     public static void makeRiskJustificationComment(final QueryManager qm, final Analysis analysis, final String riskJustification, final String commenter) {

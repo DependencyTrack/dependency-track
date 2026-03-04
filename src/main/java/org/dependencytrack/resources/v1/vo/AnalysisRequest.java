@@ -39,8 +39,8 @@ import jakarta.validation.constraints.Pattern;
  */
 public class AnalysisRequest {
 
-    private static final String RISK_IMPACT_PATTERN = "LOW|MEDIUM|HIGH|CRITICAL";
-    private static final String RISK_LIKELIHOOD_PATTERN = "VIRTUALLY_IMPOSSIBLE|UNLIKELY|POSSIBLE|LIKELY|ALMOST_CERTAIN";
+    private static final String RISK_IMPACT_PATTERN = "[A-Z][A-Z0-9_]{0,63}";
+    private static final String RISK_LIKELIHOOD_PATTERN = "[A-Z][A-Z0-9_]{0,63}";
 
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
     private final String project;

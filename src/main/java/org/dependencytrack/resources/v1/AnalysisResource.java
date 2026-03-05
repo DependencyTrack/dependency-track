@@ -231,6 +231,7 @@ public class AnalysisResource extends AlpineResource {
             AnalysisCommentUtil.makeResidualRiskImpactComment(qm, analysis, request.getResidualRiskImpact(), commenter, residualImpactLabel);
             AnalysisCommentUtil.makeResidualRiskLikelihoodComment(qm, analysis, request.getResidualRiskLikelihood(), commenter, residualLikelihoodLabel);
             AnalysisCommentUtil.makeRiskJustificationComment(qm, analysis, request.getRiskJustification(), commenter);
+            AnalysisCommentUtil.makeResidualRiskJustificationComment(qm, analysis, request.getResidualRiskJustification(), commenter);
             final var suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
             analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(),
                     request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed(),

@@ -91,9 +91,21 @@ public final class AnalysisCommentUtil {
         makeCommentIfChanged("Risk justification", qm, analysis, Objects.requireNonNullElse(analysis.getRiskJustification(), "NOT_SET"), riskJustification, commenter);
     }
 
+    public static void makeResidualRiskJustificationComment(final QueryManager qm, final Analysis analysis, final String residualRiskJustification, final String commenter) {
+        makeCommentIfChanged("Residual risk justification", qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskJustification(), "NOT_SET"), residualRiskJustification, commenter);
+    }
+
     static <T> boolean makeCommentIfChanged(final String prefix, final QueryManager qm, final Analysis analysis, final T currentValue, final T newValue, final String commenter) {
-        if (newValue == null || Objects.equals(newValue, currentValue)) {
+        if (Objects.equals(newValue, currentValue)) {
             return false;
+        }
+        if (newValue == null) {
+            // Field was cleared — only log if there was an actual value before (not already "NOT_SET")
+            if ("NOT_SET".equals(String.valueOf(currentValue))) {
+                return false;
+            }
+            qm.makeAnalysisComment(analysis, "%s: %s → (cleared)".formatted(prefix, currentValue), commenter);
+            return true;
         }
 
         qm.makeAnalysisComment(analysis, "%s: %s → %s".formatted(prefix, currentValue, newValue), commenter);
@@ -101,7 +113,15 @@ public final class AnalysisCommentUtil {
     }
 
     static void makeDetailsCommentIfChanged(final QueryManager qm, final Analysis analysis, final String currentValue, final String newValue, final String commenter) {
-        if (newValue == null || Objects.equals(newValue, currentValue)) {
+        if (Objects.equals(newValue, currentValue)) {
+            return;
+        }
+        if (newValue == null) {
+            // Details were cleared — only log if there was actual content before
+            if (currentValue == null || currentValue.isEmpty()) {
+                return;
+            }
+            qm.makeAnalysisComment(analysis, "Details: (cleared)", commenter);
             return;
         }
 

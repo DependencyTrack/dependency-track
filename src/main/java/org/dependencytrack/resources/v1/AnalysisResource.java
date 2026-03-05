@@ -49,8 +49,12 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
+import alpine.model.ConfigProperty;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.util.AnalysisCommentUtil;
+import org.dependencytrack.util.JsonUtil;
 import org.dependencytrack.util.NotificationUtil;
+import org.json.JSONObject;
 
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
@@ -194,11 +198,40 @@ public class AnalysisResource extends AlpineResource {
             AnalysisCommentUtil.makeJustificationComment(qm, analysis, request.getAnalysisJustification(), commenter);
             AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, request.getAnalysisResponse(), commenter);
             AnalysisCommentUtil.makeAnalysisDetailsComment(qm, analysis, request.getAnalysisDetails(), commenter);
-            AnalysisCommentUtil.makeRiskImpactComment(qm, analysis, request.getRiskImpact(), commenter);
-            AnalysisCommentUtil.makeRiskLikelihoodComment(qm, analysis, request.getRiskLikelihood(), commenter);
-            AnalysisCommentUtil.makeResidualRiskImpactComment(qm, analysis, request.getResidualRiskImpact(), commenter);
-            AnalysisCommentUtil.makeResidualRiskLikelihoodComment(qm, analysis, request.getResidualRiskLikelihood(), commenter);
+            // Resolve custom axis label names from risk matrix config (fall back to defaults)
+            String impactLabel = "Risk impact";
+            String likelihoodLabel = "Risk likelihood";
+            String residualImpactLabel = "Residual risk impact";
+            String residualLikelihoodLabel = "Residual risk likelihood";
+            final ConfigProperty riskMatrixProp = qm.getConfigProperty(
+                    ConfigPropertyConstants.RISK_MATRIX_CONFIG.getGroupName(),
+                    ConfigPropertyConstants.RISK_MATRIX_CONFIG.getPropertyName());
+            if (riskMatrixProp != null && !JsonUtil.isBlankJson(riskMatrixProp.getPropertyValue())) {
+                try {
+                    final JSONObject matrixConfig = new JSONObject(riskMatrixProp.getPropertyValue());
+                    if (matrixConfig.optBoolean("enabled", false)) {
+                        final JSONObject axisLabels = matrixConfig.optJSONObject("axisLabels");
+                        if (axisLabels != null) {
+                            final String impact = axisLabels.optString("impact", "").trim();
+                            final String likelihood = axisLabels.optString("likelihood", "").trim();
+                            if (!impact.isEmpty()) {
+                                impactLabel = "Risk " + impact.toLowerCase();
+                                residualImpactLabel = "Residual risk " + impact.toLowerCase();
+                            }
+                            if (!likelihood.isEmpty()) {
+                                likelihoodLabel = "Risk " + likelihood.toLowerCase();
+                                residualLikelihoodLabel = "Residual risk " + likelihood.toLowerCase();
+                            }
+                        }
+                    }
+                } catch (Exception ignored) { }
+            }
+            AnalysisCommentUtil.makeRiskImpactComment(qm, analysis, request.getRiskImpact(), commenter, impactLabel);
+            AnalysisCommentUtil.makeRiskLikelihoodComment(qm, analysis, request.getRiskLikelihood(), commenter, likelihoodLabel);
+            AnalysisCommentUtil.makeResidualRiskImpactComment(qm, analysis, request.getResidualRiskImpact(), commenter, residualImpactLabel);
+            AnalysisCommentUtil.makeResidualRiskLikelihoodComment(qm, analysis, request.getResidualRiskLikelihood(), commenter, residualLikelihoodLabel);
             AnalysisCommentUtil.makeRiskJustificationComment(qm, analysis, request.getRiskJustification(), commenter);
+            AnalysisCommentUtil.makeResidualRiskJustificationComment(qm, analysis, request.getResidualRiskJustification(), commenter);
             final var suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
             analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(),
                     request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed(),

@@ -233,7 +233,11 @@ public class Finding implements Serializable {
         optValue(analysis, "riskLikelihood", o[30]);
         optValue(analysis, "residualRiskImpact", o[31]);
         optValue(analysis, "residualRiskLikelihood", o[32]);
-        optValue(analysis, "riskJustification", o[33]);
+        if (o[33] instanceof final Clob clob) {
+            optValue(analysis, "riskJustification", toString(clob));
+        } else {
+            optValue(analysis, "riskJustification", o[33]);
+        }
         if (o.length > 34) {
             optValue(vulnerability, "published", o[34]);
             optValue(component, "projectName", o[36]);

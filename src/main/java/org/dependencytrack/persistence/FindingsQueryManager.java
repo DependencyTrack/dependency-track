@@ -220,44 +220,32 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
             analysis.setSuppressed(isSuppressed);
         }
 
-        final String normalizedRiskImpact = riskImpact != null ? StringUtils.trimToNull(riskImpact) : null;
-        final String normalizedRiskLikelihood = riskLikelihood != null ? StringUtils.trimToNull(riskLikelihood) : null;
-        final String normalizedResidualRiskImpact = residualRiskImpact != null ? StringUtils.trimToNull(residualRiskImpact) : null;
-        final String normalizedResidualRiskLikelihood = residualRiskLikelihood != null ? StringUtils.trimToNull(residualRiskLikelihood) : null;
-        final String normalizedRiskJustification = riskJustification != null ? StringUtils.trimToNull(riskJustification) : null;
-        final String normalizedResidualRiskJustification = residualRiskJustification != null ? StringUtils.trimToNull(residualRiskJustification) : null;
+        // Risk matrix fields are always updated unconditionally — the frontend sends the full
+        // current state on every save (including null when the user explicitly clears a field).
+        // Unlike analysisState/isSuppressed (which are omitted from requests that don't touch them),
+        // these fields must support being cleared back to null.
+        analysis.setRiskImpact(StringUtils.trimToNull(riskImpact));
+        analysis.setRiskLikelihood(StringUtils.trimToNull(riskLikelihood));
 
-        if (riskImpact != null) {
-            analysis.setRiskImpact(normalizedRiskImpact);
-        }
-        if (riskLikelihood != null) {
-            analysis.setRiskLikelihood(normalizedRiskLikelihood);
-        }
-        
-        // Calculate risk score if both impact and likelihood are set
+        // Calculate risk score if both impact and likelihood are set; clear it otherwise
         if (analysis.getRiskImpact() != null && analysis.getRiskLikelihood() != null) {
             analysis.setRiskScore(calculateRiskScore(analysis.getRiskImpact(), analysis.getRiskLikelihood()));
+        } else {
+            analysis.setRiskScore(null);
         }
-        
-        if (residualRiskImpact != null) {
-            analysis.setResidualRiskImpact(normalizedResidualRiskImpact);
-        }
-        if (residualRiskLikelihood != null) {
-            analysis.setResidualRiskLikelihood(normalizedResidualRiskLikelihood);
-        }
-        
-        // Calculate residual risk score if both impact and likelihood are set
+
+        analysis.setResidualRiskImpact(StringUtils.trimToNull(residualRiskImpact));
+        analysis.setResidualRiskLikelihood(StringUtils.trimToNull(residualRiskLikelihood));
+
+        // Calculate residual risk score if both impact and likelihood are set; clear it otherwise
         if (analysis.getResidualRiskImpact() != null && analysis.getResidualRiskLikelihood() != null) {
             analysis.setResidualRiskScore(calculateRiskScore(analysis.getResidualRiskImpact(), analysis.getResidualRiskLikelihood()));
+        } else {
+            analysis.setResidualRiskScore(null);
         }
-        
-        if (riskJustification != null) {
-            analysis.setRiskJustification(normalizedRiskJustification);
-        }
-        
-        if (residualRiskJustification != null) {
-            analysis.setResidualRiskJustification(normalizedResidualRiskJustification);
-        }
+
+        analysis.setRiskJustification(StringUtils.trimToNull(riskJustification));
+        analysis.setResidualRiskJustification(StringUtils.trimToNull(residualRiskJustification));
 
         analysis = persist(analysis);
         return getAnalysis(analysis.getComponent(), analysis.getVulnerability());

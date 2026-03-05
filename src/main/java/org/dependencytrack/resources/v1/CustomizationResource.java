@@ -12,6 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package org.dependencytrack.resources.v1;
 
@@ -26,9 +29,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.util.JsonUtil;
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
@@ -358,6 +367,75 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new JSONObject().put("error", e.getMessage()).toString())
                     .build();
+        }
+    }
+
+    /**
+     * Retrieves the active custom risk matrix configuration.
+     *
+     * @return A JSON response containing the risk matrix config, or {} if not configured
+     */
+    @GET
+    @Path("/risk-matrix")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Retrieve risk matrix configuration",
+               description = "Retrieves the active custom risk matrix configuration")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Risk matrix configuration retrieved successfully")
+    })
+    public Response getRiskMatrixConfig() {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final ConfigProperty prop = qm.getConfigProperty(
+                    ConfigPropertyConstants.RISK_MATRIX_CONFIG.getGroupName(),
+                    ConfigPropertyConstants.RISK_MATRIX_CONFIG.getPropertyName());
+            final String value = (prop != null) ? prop.getPropertyValue() : null;
+            if (JsonUtil.isBlankJson(value)) {
+                return Response.ok("{}").type(MediaType.APPLICATION_JSON).build();
+            }
+            return Response.ok(value).type(MediaType.APPLICATION_JSON).build();
+        }
+    }
+
+    /**
+     * Updates the active custom risk matrix configuration.
+     * Requires SYSTEM_CONFIGURATION permission.
+     *
+     * @param jsonInput The full risk matrix configuration JSON
+     * @return A 204 No Content response on success
+     */
+    @PUT
+    @Path("/risk-matrix")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    @Operation(summary = "Update risk matrix configuration",
+               description = "Updates the active custom risk matrix configuration")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Risk matrix configuration updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input provided"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
+    public Response updateRiskMatrixConfig(String jsonInput) {
+        if (JsonUtil.isBlankJson(jsonInput)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Risk matrix configuration cannot be empty").build();
+        }
+        try {
+            final JSONObject json = new JSONObject(jsonInput);
+            for (final String key : new String[]{"enabled", "impactValues", "likelihoodValues", "levels", "cells"}) {
+                if (!json.has(key)) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity("Missing required field: " + key).build();
+                }
+            }
+        } catch (JSONException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Invalid JSON: " + e.getMessage()).build();
+        }
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            updateConfigProperty(qm, ConfigPropertyConstants.RISK_MATRIX_CONFIG, jsonInput);
+            return Response.noContent().build();
         }
     }
 

@@ -56,28 +56,56 @@ public final class AnalysisCommentUtil {
     }
 
     public static void makeRiskImpactComment(final QueryManager qm, final Analysis analysis, final String riskImpact, final String commenter) {
-        makeCommentIfChanged("Risk impact", qm, analysis, Objects.requireNonNullElse(analysis.getRiskImpact(), "NOT_SET"), riskImpact, commenter);
+        makeRiskImpactComment(qm, analysis, riskImpact, commenter, "Risk impact");
+    }
+
+    public static void makeRiskImpactComment(final QueryManager qm, final Analysis analysis, final String riskImpact, final String commenter, final String label) {
+        makeCommentIfChanged(label, qm, analysis, Objects.requireNonNullElse(analysis.getRiskImpact(), "NOT_SET"), riskImpact, commenter);
     }
 
     public static void makeRiskLikelihoodComment(final QueryManager qm, final Analysis analysis, final String riskLikelihood, final String commenter) {
-        makeCommentIfChanged("Risk likelihood", qm, analysis, Objects.requireNonNullElse(analysis.getRiskLikelihood(), "NOT_SET"), riskLikelihood, commenter);
+        makeRiskLikelihoodComment(qm, analysis, riskLikelihood, commenter, "Risk likelihood");
+    }
+
+    public static void makeRiskLikelihoodComment(final QueryManager qm, final Analysis analysis, final String riskLikelihood, final String commenter, final String label) {
+        makeCommentIfChanged(label, qm, analysis, Objects.requireNonNullElse(analysis.getRiskLikelihood(), "NOT_SET"), riskLikelihood, commenter);
     }
 
     public static void makeResidualRiskImpactComment(final QueryManager qm, final Analysis analysis, final String residualRiskImpact, final String commenter) {
-        makeCommentIfChanged("Residual risk impact", qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskImpact(), "NOT_SET"), residualRiskImpact, commenter);
+        makeResidualRiskImpactComment(qm, analysis, residualRiskImpact, commenter, "Residual risk impact");
+    }
+
+    public static void makeResidualRiskImpactComment(final QueryManager qm, final Analysis analysis, final String residualRiskImpact, final String commenter, final String label) {
+        makeCommentIfChanged(label, qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskImpact(), "NOT_SET"), residualRiskImpact, commenter);
     }
 
     public static void makeResidualRiskLikelihoodComment(final QueryManager qm, final Analysis analysis, final String residualRiskLikelihood, final String commenter) {
-        makeCommentIfChanged("Residual risk likelihood", qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskLikelihood(), "NOT_SET"), residualRiskLikelihood, commenter);
+        makeResidualRiskLikelihoodComment(qm, analysis, residualRiskLikelihood, commenter, "Residual risk likelihood");
+    }
+
+    public static void makeResidualRiskLikelihoodComment(final QueryManager qm, final Analysis analysis, final String residualRiskLikelihood, final String commenter, final String label) {
+        makeCommentIfChanged(label, qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskLikelihood(), "NOT_SET"), residualRiskLikelihood, commenter);
     }
 
     public static void makeRiskJustificationComment(final QueryManager qm, final Analysis analysis, final String riskJustification, final String commenter) {
         makeCommentIfChanged("Risk justification", qm, analysis, Objects.requireNonNullElse(analysis.getRiskJustification(), "NOT_SET"), riskJustification, commenter);
     }
 
+    public static void makeResidualRiskJustificationComment(final QueryManager qm, final Analysis analysis, final String residualRiskJustification, final String commenter) {
+        makeCommentIfChanged("Residual risk justification", qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskJustification(), "NOT_SET"), residualRiskJustification, commenter);
+    }
+
     static <T> boolean makeCommentIfChanged(final String prefix, final QueryManager qm, final Analysis analysis, final T currentValue, final T newValue, final String commenter) {
-        if (newValue == null || Objects.equals(newValue, currentValue)) {
+        if (Objects.equals(newValue, currentValue)) {
             return false;
+        }
+        if (newValue == null) {
+            // Field was cleared — only log if there was an actual value before (not already "NOT_SET")
+            if ("NOT_SET".equals(String.valueOf(currentValue))) {
+                return false;
+            }
+            qm.makeAnalysisComment(analysis, "%s: %s → (cleared)".formatted(prefix, currentValue), commenter);
+            return true;
         }
 
         qm.makeAnalysisComment(analysis, "%s: %s → %s".formatted(prefix, currentValue, newValue), commenter);
@@ -85,7 +113,15 @@ public final class AnalysisCommentUtil {
     }
 
     static void makeDetailsCommentIfChanged(final QueryManager qm, final Analysis analysis, final String currentValue, final String newValue, final String commenter) {
-        if (newValue == null || Objects.equals(newValue, currentValue)) {
+        if (Objects.equals(newValue, currentValue)) {
+            return;
+        }
+        if (newValue == null) {
+            // Details were cleared — only log if there was actual content before
+            if (currentValue == null || currentValue.isEmpty()) {
+                return;
+            }
+            qm.makeAnalysisComment(analysis, "Details: (cleared)", commenter);
             return;
         }
 

@@ -907,6 +907,14 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().generateNextVulnerabilityId(projectName);
     }
 
+    public synchronized String previewNextVulnerabilityId(final String projectName) {
+        return getVulnerabilityQueryManager().previewNextVulnerabilityId(projectName);
+    }
+
+    public synchronized String allocateNextVulnerabilityIdInTransaction(final String projectName) {
+        return getVulnerabilityQueryManager().allocateNextVulnerabilityIdInTransaction(projectName);
+    }
+
     public boolean vulnerabilityIdExists(final String vulnerabilityId) {
         return getVulnerabilityQueryManager().vulnerabilityIdExists(vulnerabilityId);
     }

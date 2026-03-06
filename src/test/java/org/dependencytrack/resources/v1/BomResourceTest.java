@@ -20,6 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.util.UuidUtil;
 import alpine.model.IConfigProperty;
+import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import com.fasterxml.jackson.core.StreamReadConstraints;
@@ -945,6 +946,23 @@ class BomResourceTest extends ResourceTest {
         Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("token")));
         Project project = qm.getProject("Acme Example", "1.0");
         Assertions.assertNotNull(project);
+    }
+
+    @Test
+    void uploadBomAutoCreateWithAclDisabledAddsApiKeyTeamTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        // ACL is not enabled - updateNewProjectACL should still add the API key's team
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        BomSubmitRequest request = new BomSubmitRequest(null, "AclDisabled Example", "1.0", null, true, false, bomString);
+        Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Project project = qm.getProject("AclDisabled Example", "1.0");
+        Assertions.assertNotNull(project);
+        assertThat(project.getAccessTeams())
+                .extracting(Team::getName)
+                .containsOnly(team.getName());
     }
 
     @Test

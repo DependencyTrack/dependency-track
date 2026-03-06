@@ -27,6 +27,7 @@ import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthenticationFilter;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
@@ -410,10 +411,72 @@ class FindingResourceTest extends ResourceTest {
         Assertions.assertEquals(p1_child.getName() ,json.getJsonObject(3).getJsonObject("component").getString("projectName"));
         Assertions.assertEquals(p1_child.getVersion() ,json.getJsonObject(3).getJsonObject("component").getString("projectVersion"));
         Assertions.assertEquals(p1_child.getUuid().toString(), json.getJsonObject(3).getJsonObject("component").getString("project"));
+        // Child project has parent chain for tooltip
+        Assertions.assertNotNull(json.getJsonObject(3).getJsonObject("component").getJsonObject("parent"));
+        Assertions.assertEquals(p1.getUuid().toString(), json.getJsonObject(3).getJsonObject("component").getJsonObject("parent").getString("uuid"));
+        Assertions.assertEquals(p1.getName(), json.getJsonObject(3).getJsonObject("component").getJsonObject("parent").getString("name"));
+        Assertions.assertEquals(p1.getVersion(), json.getJsonObject(3).getJsonObject("component").getJsonObject("parent").getString("version"));
+        JsonObject directParent = json.getJsonObject(3).getJsonObject("component").getJsonObject("parent");
+        Assertions.assertTrue(
+                !directParent.containsKey("parent") || directParent.get("parent") == null
+                        || directParent.get("parent").getValueType() == JsonValue.ValueType.NULL,
+                "Direct parent should have no parent (2-level hierarchy)");
+        // Root projects have no parent (key absent or JSON null)
+        JsonObject rootComponent = json.getJsonObject(0).getJsonObject("component");
+        Assertions.assertTrue(
+                !rootComponent.containsKey("parent") || rootComponent.get("parent") == null
+                        || rootComponent.get("parent").getValueType() == JsonValue.ValueType.NULL,
+                "Root project component should have no parent");
         Assertions.assertEquals(date.getTime() ,json.getJsonObject(4).getJsonObject("vulnerability").getJsonNumber("published").longValue());
         Assertions.assertEquals(p2.getName() ,json.getJsonObject(4).getJsonObject("component").getString("projectName"));
         Assertions.assertEquals(p2.getVersion() ,json.getJsonObject(4).getJsonObject("component").getString("projectVersion"));
         Assertions.assertEquals(p2.getUuid().toString(), json.getJsonObject(4).getJsonObject("component").getString("project"));
+    }
+
+    @Test
+    void getAllFindingsReturnsFullAncestorChainForThreeLevelProjectHierarchy() {
+        // Create 3-level hierarchy: Root -> Project A -> API (leaf with vulnerability)
+        Project root = qm.createProject("Root", null, "1.0", null, null, null, true, false);
+        Project projectA = qm.createProject("Project A", null, null, null, root, null, true, false);
+        Project api = qm.createProject("API", null, "1.0", null, projectA, null, true, false);
+        Component c = createComponent(api, "xml2js", "0.4.23");
+        Vulnerability v = createVulnerability("GHSA-776f-qx25-q3cc", Severity.MEDIUM);
+        v.setPublished(new Date());
+        qm.persist(v);
+        qm.addVulnerability(v, c, AnalyzerIdentity.NONE);
+
+        Response response = jersey.target(V1_FINDING)
+                .queryParam("sortName", "component.projectName")
+                .queryParam("sortOrder", "asc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        Assertions.assertEquals(200, response.getStatus());
+        JsonArray json = parseJsonArray(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(1, json.size());
+
+        // Find the finding for the leaf project (API)
+        JsonObject component = json.getJsonObject(0).getJsonObject("component");
+        Assertions.assertEquals(api.getUuid().toString(), component.getString("project"));
+        Assertions.assertEquals("API", component.getString("projectName"));
+
+        // Assert full ancestor chain: parent (Project A) -> parent (Root) -> parent null
+        Assertions.assertNotNull(component.getJsonObject("parent"), "component.parent should be present");
+        JsonObject parentA = component.getJsonObject("parent");
+        Assertions.assertEquals(projectA.getUuid().toString(), parentA.getString("uuid"));
+        Assertions.assertEquals("Project A", parentA.getString("name"));
+
+        Assertions.assertNotNull(parentA.getJsonObject("parent"), "parent.parent (Root) should be present for 3-level hierarchy");
+        JsonObject parentRoot = parentA.getJsonObject("parent");
+        Assertions.assertEquals(root.getUuid().toString(), parentRoot.getString("uuid"));
+        Assertions.assertEquals("Root", parentRoot.getString("name"));
+        // Root has no parent: key absent or JSON null
+        Assertions.assertTrue(
+                !parentRoot.containsKey("parent") || parentRoot.get("parent") == null
+                        || parentRoot.get("parent").getValueType() == JsonValue.ValueType.NULL,
+                "Root should have no parent");
     }
 
     @Test

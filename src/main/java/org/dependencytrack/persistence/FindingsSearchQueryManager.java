@@ -27,6 +27,7 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.GroupedFinding;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.Vulnerability;
@@ -34,11 +35,15 @@ import org.dependencytrack.model.VulnerabilityAlias;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import org.dependencytrack.resources.v1.vo.AffectedProject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class FindingsSearchQueryManager extends QueryManager implements IQueryManager {
 
@@ -160,8 +165,35 @@ public class FindingsSearchQueryManager extends QueryManager implements IQueryMa
             }
             findings.add(finding);
         }
+        populateParentChains(findings);
         result.setObjects(findings);
         return result;
+    }
+
+    /**
+     * Populates the parent chain for each finding's project so the UI can render tooltips
+     * (e.g. "Root > Parent > Project" for nested project hierarchies).
+     */
+    private void populateParentChains(List<Finding> findings) {
+        final Set<UUID> projectUuids = findings.stream()
+                .map(f -> (String) f.getComponent().get("project"))
+                .filter(s -> s != null && !s.isBlank())
+                .map(UUID::fromString)
+                .collect(Collectors.toSet());
+        if (projectUuids.isEmpty()) {
+            return;
+        }
+        final Map<UUID, Project> projectMap = getProjectsWithAncestorPaths(projectUuids);
+        for (final Finding finding : findings) {
+            final String projectUuidStr = (String) finding.getComponent().get("project");
+            if (projectUuidStr == null) {
+                continue;
+            }
+            final Project project = projectMap.get(UUID.fromString(projectUuidStr));
+            if (project != null) {
+                finding.getComponent().put("parent", AffectedProject.buildParentInfo(project.getParent()));
+            }
+        }
     }
 
     /**

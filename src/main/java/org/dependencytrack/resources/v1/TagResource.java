@@ -43,6 +43,7 @@ import org.dependencytrack.persistence.TagQueryManager.TaggedProjectRow;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.problems.TagOperationProblemDetails;
+import org.dependencytrack.resources.v1.vo.AffectedProject;
 import org.dependencytrack.resources.v1.vo.TagListResponseItem;
 import org.dependencytrack.resources.v1.vo.TaggedCollectionProjectListResponseItem;
 import org.dependencytrack.resources.v1.vo.TaggedNotificationRuleListResponseItem;
@@ -62,8 +63,11 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import org.dependencytrack.model.Project;
 
 @Path("/v1/tag")
 @io.swagger.v3.oas.annotations.tags.Tag(name = "tag")
@@ -201,12 +205,24 @@ public class TagResource extends AlpineResource {
         //   Will likely need a migration to cleanup existing tags for this.
 
         final List<TaggedProjectRow> taggedProjectListRows;
+        final Map<UUID, Project> projectMap;
         try (final var qm = new QueryManager(getAlpineRequest())) {
             taggedProjectListRows = qm.getTaggedProjects(tagName);
+            final var uuids = taggedProjectListRows.stream()
+                    .map(row -> UUID.fromString(row.uuid()))
+                    .toList();
+            projectMap = qm.getProjectsWithAncestorPaths(uuids);
         }
 
         final List<TaggedProjectListResponseItem> tags = taggedProjectListRows.stream()
-                .map(row -> new TaggedProjectListResponseItem(UUID.fromString(row.uuid()), row.name(), row.version()))
+                .map(row -> {
+                    final var project = projectMap.get(UUID.fromString(row.uuid()));
+                    final var parent = project != null
+                            ? AffectedProject.buildParentInfo(project.getParent())
+                            : null;
+                    return new TaggedProjectListResponseItem(
+                            UUID.fromString(row.uuid()), row.name(), row.version(), parent);
+                })
                 .toList();
         final long totalCount = taggedProjectListRows.isEmpty() ? 0 : taggedProjectListRows.getFirst().totalCount();
         return Response.ok(tags).header(TOTAL_COUNT_HEADER, totalCount).build();
@@ -312,12 +328,24 @@ public class TagResource extends AlpineResource {
         //   Will likely need a migration to cleanup existing tags for this.
 
         final List<TagQueryManager.TaggedCollectionProjectRow> taggedCollectionProjectListRows;
+        final Map<UUID, Project> projectMap;
         try (final var qm = new QueryManager(getAlpineRequest())) {
             taggedCollectionProjectListRows = qm.getTaggedCollectionProjects(tagName);
+            final var uuids = taggedCollectionProjectListRows.stream()
+                    .map(row -> UUID.fromString(row.uuid()))
+                    .toList();
+            projectMap = qm.getProjectsWithAncestorPaths(uuids);
         }
 
         final List<TaggedCollectionProjectListResponseItem> tags = taggedCollectionProjectListRows.stream()
-                .map(row -> new TaggedCollectionProjectListResponseItem(UUID.fromString(row.uuid()), row.name(), row.version()))
+                .map(row -> {
+                    final var project = projectMap.get(UUID.fromString(row.uuid()));
+                    final var parent = project != null
+                            ? AffectedProject.buildParentInfo(project.getParent())
+                            : null;
+                    return new TaggedCollectionProjectListResponseItem(
+                            UUID.fromString(row.uuid()), row.name(), row.version(), parent);
+                })
                 .toList();
         final long totalCount = taggedCollectionProjectListRows.isEmpty() ? 0 : taggedCollectionProjectListRows.getFirst().totalCount();
         return Response.ok(tags).header(TOTAL_COUNT_HEADER, totalCount).build();

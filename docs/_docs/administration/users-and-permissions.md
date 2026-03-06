@@ -25,4 +25,4 @@ call. This page gives a short, non-exhaustive overview.
 | `VIEW_PORTFOLIO`            | Read projects, services, tags, vulnerabilities, BOMs, Dependency Graph, metrics; use Search   |
 | `VIEW_VULNERABILITY`        | Read analysis decisions and findings                                                          |
 | `VULNERABILITY_ANALYSIS`    | Record analysis decision                                                                      |
-| `VULNERABILITY_MANAGEMENT`  | Modify vunlerabilities                                                                        |
+| `VULNERABILITY_MANAGEMENT`  | Modify vulnerabilities                                                                        |

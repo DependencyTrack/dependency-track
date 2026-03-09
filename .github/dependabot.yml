@@ -19,7 +19,7 @@ updates:
     interval: weekly
 # Receive minor and patch updates on latest release branch.
 - package-ecosystem: maven
-  target-branch: 4.13.x
+  target-branch: 4.14.x
   directory: /
   schedule:
     interval: daily
@@ -28,7 +28,7 @@ updates:
     update-types:
     - version-update:semver-major
 - package-ecosystem: docker
-  target-branch: 4.13.x
+  target-branch: 4.14.x
   directory: /src/main/docker
   schedule:
     interval: daily

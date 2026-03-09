@@ -193,7 +193,7 @@ class FindingResourceTest extends ResourceTest {
         Assertions.assertEquals("Acme Example", json.getJsonObject("project").getString("name"));
         Assertions.assertEquals("1.0", json.getJsonObject("project").getString("version"));
         Assertions.assertEquals(p1.getUuid().toString(), json.getJsonObject("project").getString("uuid"));
-        Assertions.assertEquals("1.2", json.getString("version")); // FPF version
+        Assertions.assertEquals("1.3", json.getString("version")); // FPF version
         JsonArray findings = json.getJsonArray("findings");
         Assertions.assertEquals(3, findings.size());
         Assertions.assertEquals("Component A", findings.getJsonObject(0).getJsonObject("component").getString("name"));

@@ -60,7 +60,7 @@ class FindingPackagingFormatTest extends PersistenceCapableTest {
         Assertions.assertEquals(project.getDescription(), pjson.getString("description"));
         Assertions.assertEquals(project.getVersion(), pjson.getString("version"));
 
-        Assertions.assertEquals("1.2", root.getString("version"));
+        Assertions.assertEquals("1.3", root.getString("version"));
     }
 
     @Test

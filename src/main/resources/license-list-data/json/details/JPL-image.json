@@ -6,11 +6,11 @@
   "licenseId": "JPL-image",
   "crossRef": [
     {
-      "match": "true",
+      "match": "false",
       "url": "https://www.jpl.nasa.gov/jpl-image-use-policy",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:55:39Z",
+      "timestamp": "2026-02-20T20:52:52Z",
       "isWayBackLink": false,
       "order": 0
     }

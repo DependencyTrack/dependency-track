@@ -10,7 +10,7 @@
       "url": "https://fedoraproject.org/wiki/Licensing:MIT#OpenVision_Variant",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:54:22Z",
+      "timestamp": "2026-02-20T20:56:10Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -19,7 +19,7 @@
       "url": "https://web.mit.edu/kerberos/krb5-1.21/doc/mitK5license.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:54:23Z",
+      "timestamp": "2026-02-20T20:56:11Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -28,7 +28,7 @@
       "url": "https://github.com/krb5/krb5/blob/krb5-1.21.2-final/NOTICE#L66-L98",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:54:23Z",
+      "timestamp": "2026-02-20T20:56:11Z",
       "isWayBackLink": false,
       "order": 0
     }

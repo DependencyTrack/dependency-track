@@ -6,22 +6,22 @@
   "licenseId": "Unicode-TOU",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "http://web.archive.org/web/20140704074106/http://www.unicode.org/copyright.html",
-      "isValid": false,
-      "isLive": false,
-      "timestamp": "2025-07-01T14:54:53Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "false",
       "url": "http://www.unicode.org/copyright.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:54:53Z",
+      "timestamp": "2026-02-20T21:04:05Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "N/A",
+      "url": "http://web.archive.org/web/20140704074106/http://www.unicode.org/copyright.html",
+      "isValid": false,
+      "isLive": false,
+      "timestamp": "2026-02-20T21:04:05Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

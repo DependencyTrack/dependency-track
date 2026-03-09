@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright 2000, Mojam Media, Inc., all rights reserved. Author: Skip Montanaro\n\nCopyright 1999, Bioreason, Inc., all rights reserved. Author: Andrew Dalke\n\nCopyright 1995-1997, Automatrix, Inc., all rights reserved. Author: Skip Montanaro\n\nCopyright 1991-1995, Stichting Mathematisch Centrum, all rights reserved.\n\nPermission to use, copy, modify, and distribute this Python software and its\nassociated documentation for any purpose without fee is hereby granted,\nprovided that the above copyright notice appears in all copies, and that both\nthat copyright notice and this permission notice appear in supporting\ndocumentation, and that the name of neither Automatrix, Bioreason or Mojam\nMedia be used in advertising or publicity pertaining to distribution of the\nsoftware without specific, written prior permission.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 2000, Mojam Media, Inc., all rights reserved. Author: Skip Montanaro   Copyright 1999, Bioreason, Inc., all rights reserved. Author: Andrew Dalke   Copyright 1995-1997, Automatrix, Inc., all rights reserved. Author: Skip Montanaro   Copyright 1991-1995, Stichting Mathematisch Centrum, all rights reserved.  \";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to use, copy, modify, and distribute this Python software and its associated documentation for any purpose without fee is hereby granted, provided that the above copyright notice appears in all copies, and that both that copyright notice and this permission notice appear in supporting documentation, and that the name of neither Automatrix, Bioreason or Mojam Media be used in advertising or publicity pertaining to distribution of the software without specific, written prior permission.\n\n",
+  "name": "Historical Permission Notice and Disclaimer - SMC variant",
+  "licenseComments": "This license is very similar to the original HPND template but adds \"Python\" in front of software and has slightly different wording in the advertising part, which are not part of the existing HPND template variables.",
+  "comment": "This license is very similar to the original HPND template but adds \"Python\" in front of software and has slightly different wording in the advertising part, which are not part of the existing HPND template variables.",
+  "licenseId": "HPND-SMC",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://docs.python.org/3/license.html#execution-tracing",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:00:27Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://docs.python.org/3/license.html#execution-tracing"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003e\n            Copyright 2000, Mojam Media, Inc., all\n            rights reserved. Author: Skip Montanaro\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Copyright 1999, Bioreason, Inc., all\n            rights reserved. Author: Andrew Dalke\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Copyright 1995-1997, Automatrix, Inc., all\n            rights reserved. Author: Skip Montanaro\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            Copyright 1991-1995, Stichting\n            Mathematisch Centrum, all rights reserved.\n         \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            Permission to use, copy, modify, and distribute this Python\n            software and its associated documentation for any purpose without\n            fee is hereby granted, provided that the above copyright notice\n            appears in all copies, and that both that copyright notice and\n            this permission notice appear in supporting documentation, and\n            that the name of neither Automatrix, Bioreason or Mojam Media\n            be used in advertising or publicity pertaining to distribution\n            of the software without specific, written prior permission.\n         \u003c/p\u003e\n\n      "
+}

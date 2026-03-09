@@ -8,22 +8,22 @@
   "licenseId": "CC-PDM-1.0",
   "crossRef": [
     {
-      "match": "true",
-      "url": "https://creativecommons.org/publicdomain/mark/1.0/",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:02:11Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "false",
       "url": "https://creativecommons.org/share-your-work/cclicenses/",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:02:11Z",
+      "timestamp": "2026-02-20T20:53:21Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "true",
+      "url": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:53:21Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

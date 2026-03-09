@@ -8,11 +8,11 @@
   "licenseId": "OLFL-1.3",
   "crossRef": [
     {
-      "match": "true",
+      "match": "N/A",
       "url": "https://opensource.org/license/olfl-1-3/",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:54:54Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T20:54:27Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -21,7 +21,7 @@
       "url": "https://openlogisticsfoundation.org/licenses/",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:54:55Z",
+      "timestamp": "2026-02-20T20:54:27Z",
       "isWayBackLink": false,
       "order": 0
     }

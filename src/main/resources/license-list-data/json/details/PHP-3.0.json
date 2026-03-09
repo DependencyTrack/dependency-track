@@ -6,22 +6,22 @@
   "licenseId": "PHP-3.0",
   "crossRef": [
     {
-      "match": "false",
-      "url": "http://www.php.net/license/3_0.txt",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:55:02Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "https://opensource.org/licenses/PHP-3.0",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:55:03Z",
+      "timestamp": "2026-02-20T21:01:25Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://www.php.net/license/3_0.txt",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:01:25Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

@@ -8,21 +8,21 @@
   "crossRef": [
     {
       "match": "N/A",
-      "url": "https://opensource.org/licenses/EUDatagrid",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:56:24Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "N/A",
       "url": "http://eu-datagrid.web.cern.ch/eu-datagrid/license.html",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2025-07-01T14:56:24Z",
+      "timestamp": "2026-02-20T21:03:00Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/EUDatagrid",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T21:03:00Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

@@ -6,11 +6,11 @@
   "licenseId": "Symlinks",
   "crossRef": [
     {
-      "match": "N/A",
+      "match": "false",
       "url": "https://www.mail-archive.com/debian-bugs-rc@lists.debian.org/msg11494.html",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2025-07-01T15:01:25Z",
+      "isLive": true,
+      "timestamp": "2026-02-20T21:00:27Z",
       "isWayBackLink": false,
       "order": 0
     }

@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "(C) International Organization for Standardization 1986\nPermission to copy in any form is granted for use with\nconforming SGML systems and applications as defined \nin ISO 8879, provided this notice is included in all copies.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"(C) International Organization for Standardization 1986\";match\u003d\".{0,5000}\"\u003e\u003e\nPermission to copy in any form is granted for use with conforming \u003c\u003cvar;name\u003d\"name\";original\u003d\"SGML systems\";match\u003d\"SGML systems|to MHEG-3 engines\"\u003e\u003e and applications as defined \u003c\u003cvar;name\u003d\"defined\";original\u003d\"in ISO 8879,\";match\u003d\"in ISO 8879,|by this Recommendation\"\u003e\u003e provided this notice is included in all copies.\n\n",
+  "name": "ISO permission notice",
+  "licenseId": "ISO-permission",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://www.itu.int/ITU-T/formal-language/itu-t/t/t173/1997/ISOMHEG-sir.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:56:43Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://gitlab.com/agmartin/linuxdoc-tools/-/blob/master/iso-entities/COPYING?ref_type\u003dheads",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:56:44Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://gitlab.com/agmartin/linuxdoc-tools/-/blob/master/iso-entities/COPYING?ref_type\u003dheads",
+    "https://www.itu.int/ITU-T/formal-language/itu-t/t/t173/1997/ISOMHEG-sir.html"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            (C) International Organization for Standardization 1986\n         \u003c/span\u003e\u003c/var\u003e\n         \u003cp\u003e\n            Permission to copy in any form is granted for use with conforming \n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern SGML systems|to MHEG-3 engines\"\u003e SGML systems\u003c/span\u003e\u003c/var\u003e\n            and applications as defined \n            \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern in ISO 8879,|by this Recommendation\"\u003e in ISO 8879,\u003c/span\u003e\u003c/var\u003e\n            provided this notice is included in all copies.\n         \u003c/p\u003e\n\n      "
+}

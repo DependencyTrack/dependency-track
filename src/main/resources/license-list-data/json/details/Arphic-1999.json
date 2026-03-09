@@ -6,11 +6,11 @@
   "licenseId": "Arphic-1999",
   "crossRef": [
     {
-      "match": "true",
+      "match": "N/A",
       "url": "http://ftp.gnu.org/gnu/non-gnu/chinese-fonts-truetype/LICENSE",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:05:08Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T20:56:42Z",
       "isWayBackLink": false,
       "order": 0
     }

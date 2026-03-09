@@ -10,11 +10,11 @@
   "standardLicenseHeader": "Copyright (c) [Year] [name of copyright holder]\n\n[Software Name] is licensed under Mulan PSL v2.\n\nYou can use this software according to the terms and conditions of the Mulan PSL v2.\n\nYou may obtain a copy of Mulan PSL v2 at:\n\nhttp://license.coscl.org.cn/MulanPSL2\n\nTHIS SOFTWARE IS PROVIDED ON AN \"AS IS\" BASIS, WITHOUT WARRANTIES OF ANY KIND,\n\nEITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,\n\nMERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.\n\nSee the Mulan PSL v2 for more details.\n\n",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://license.coscl.org.cn/MulanPSL2",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:55:26Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T21:05:36Z",
       "isWayBackLink": false,
       "order": 0
     }

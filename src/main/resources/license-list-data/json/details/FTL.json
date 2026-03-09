@@ -9,20 +9,11 @@
   "licenseId": "FTL",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "http://gitlab.freedesktop.org/freetype/freetype/-/raw/master/docs/FTL.TXT",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2025-07-01T14:58:22Z",
-      "isWayBackLink": false,
-      "order": 2
-    },
-    {
       "match": "false",
       "url": "http://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:58:23Z",
+      "timestamp": "2026-02-20T20:57:19Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -31,9 +22,18 @@
       "url": "http://freetype.fis.uniroma2.it/FTL.TXT",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2025-07-01T14:59:02Z",
+      "timestamp": "2026-02-20T20:57:50Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "http://gitlab.freedesktop.org/freetype/freetype/-/raw/master/docs/FTL.TXT",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T20:57:50Z",
+      "isWayBackLink": false,
+      "order": 2
     }
   ],
   "seeAlso": [

@@ -6,20 +6,11 @@
   "licenseId": "Boehm-GC",
   "crossRef": [
     {
-      "match": "false",
-      "url": "https://github.com/uim/libgcroots/blob/master/COPYING",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:54:40Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "true",
       "url": "https://fedoraproject.org/wiki/Licensing:MIT#Another_Minimal_variant_(found_in_libatomic_ops)",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:54:41Z",
+      "timestamp": "2026-02-20T20:56:10Z",
       "isWayBackLink": false,
       "order": 0
     },
@@ -28,9 +19,18 @@
       "url": "https://github.com/ivmai/libatomic_ops/blob/master/LICENSE",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:54:42Z",
+      "timestamp": "2026-02-20T20:56:11Z",
       "isWayBackLink": false,
       "order": 2
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/uim/libgcroots/blob/master/COPYING",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:56:11Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

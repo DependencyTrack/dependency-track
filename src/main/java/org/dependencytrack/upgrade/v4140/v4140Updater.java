@@ -20,9 +20,14 @@ package org.dependencytrack.upgrade.v4140;
 
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
+import org.dependencytrack.tasks.NistMirrorTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -39,6 +44,27 @@ public class v4140Updater extends AbstractUpgradeItem {
     @Override
     public void executeUpgrade(AlpineQueryManager qm, Connection connection) throws Exception {
         resetVulnSourceWatermarks(connection);
+        deleteNvdFeedTimestampFiles();
+    }
+
+    private void deleteNvdFeedTimestampFiles() {
+        final Path nvdMirrorDir = NistMirrorTask.DEFAULT_NVD_MIRROR_DIR;
+        if (!Files.isDirectory(nvdMirrorDir)) {
+            return;
+        }
+
+        LOGGER.info("Deleting NVD feed timestamp files to force re-download");
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(nvdMirrorDir, "*.json.gz.ts")) {
+            for (final Path tsFile : stream) {
+                LOGGER.info("Deleting {}", tsFile.getFileName());
+                Files.delete(tsFile);
+            }
+        } catch (IOException e) {
+            LOGGER.warn("""
+                    Failed to delete NVD feed timestamp files. \
+                    You may need to delete them manually and restart Dependency-Track \
+                    to force a re-download.""", e);
+        }
     }
 
     private void resetVulnSourceWatermarks(Connection connection) throws SQLException {

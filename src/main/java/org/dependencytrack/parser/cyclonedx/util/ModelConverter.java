@@ -74,14 +74,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -836,9 +840,21 @@ public class ModelConverter {
 
     public static org.cyclonedx.model.vulnerability.Vulnerability convert(final QueryManager qm, final CycloneDXExporter.Variant variant,
                                                                           final Finding finding) {
-        final Component component = qm.getObjectByUuid(Component.class, (String)finding.getComponent().get("uuid"));
+        return convert(qm, variant, finding, null, null, null);
+    }
+
+    public static org.cyclonedx.model.vulnerability.Vulnerability convert(final QueryManager qm, final CycloneDXExporter.Variant variant,
+                                                                          final Finding finding,
+                                                                          final Map<String, Component> componentMap,
+                                                                          final Map<String, Vulnerability> vulnerabilityMap,
+                                                                          final Map<String, Analysis> analysisMap) {
+        final String compUuid = (String) finding.getComponent().get("uuid");
+        final String vulnUuid = (String) finding.getVulnerability().get("uuid");
+        final Component component = componentMap != null ? componentMap.get(compUuid) : qm.getObjectByUuid(Component.class, compUuid);
+        if (component == null) return null;
         final Project project = component.getProject();
-        final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, (String)finding.getVulnerability().get("uuid"));
+        final Vulnerability vulnerability = vulnerabilityMap != null ? vulnerabilityMap.get(vulnUuid) : qm.getObjectByUuid(Vulnerability.class, vulnUuid);
+        if (vulnerability == null) return null;
 
         final org.cyclonedx.model.vulnerability.Vulnerability cdxVulnerability = new org.cyclonedx.model.vulnerability.Vulnerability();
         cdxVulnerability.setBomRef(vulnerability.getUuid().toString());
@@ -927,10 +943,8 @@ public class ModelConverter {
         }
 
         if (CycloneDXExporter.Variant.VEX == variant || CycloneDXExporter.Variant.VDR == variant) {
-            final Analysis analysis = qm.getAnalysis(
-                    qm.getObjectByUuid(Component.class, component.getUuid()),
-                    qm.getObjectByUuid(Vulnerability.class, vulnerability.getUuid())
-            );
+            final String analysisKey = compUuid + "|" + vulnUuid;
+            final Analysis analysis = analysisMap != null ? analysisMap.get(analysisKey) : qm.getAnalysis(component, vulnerability);
             if (analysis != null) {
                 final org.cyclonedx.model.vulnerability.Vulnerability.Analysis cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
                 if (analysis.getAnalysisResponse() != null) {
@@ -960,9 +974,52 @@ public class ModelConverter {
         if (findings == null) {
             return Collections.emptyList();
         }
+
+        // Batch-load all Components and Vulnerabilities upfront to avoid N+1 queries.
+        // Without this, each finding triggers 5 individual DB queries (465 for 93 findings).
+        final Set<String> componentUuids = new HashSet<>();
+        final Set<String> vulnerabilityUuids = new HashSet<>();
+        for (final Finding finding : findings) {
+            componentUuids.add((String) finding.getComponent().get("uuid"));
+            vulnerabilityUuids.add((String) finding.getVulnerability().get("uuid"));
+        }
+
+        final Map<String, Component> componentMap = new HashMap<>();
+        for (final String uuid : componentUuids) {
+            final Component c = qm.getObjectByUuid(Component.class, uuid);
+            if (c != null) componentMap.put(uuid, c);
+        }
+
+        final Map<String, Vulnerability> vulnerabilityMap = new HashMap<>();
+        for (final String uuid : vulnerabilityUuids) {
+            final Vulnerability v = qm.getObjectByUuid(Vulnerability.class, uuid);
+            if (v != null) vulnerabilityMap.put(uuid, v);
+        }
+
+        // Pre-fetch all Analysis records for VEX/VDR variants
+        final Map<String, Analysis> analysisMap = new HashMap<>();
+        if (CycloneDXExporter.Variant.VEX == variant || CycloneDXExporter.Variant.VDR == variant) {
+            for (final Finding finding : findings) {
+                final String compUuid = (String) finding.getComponent().get("uuid");
+                final String vulnUuid = (String) finding.getVulnerability().get("uuid");
+                final Component comp = componentMap.get(compUuid);
+                final Vulnerability vuln = vulnerabilityMap.get(vulnUuid);
+                if (comp != null && vuln != null) {
+                    final String key = compUuid + "|" + vulnUuid;
+                    if (!analysisMap.containsKey(key)) {
+                        final Analysis analysis = qm.getAnalysis(comp, vuln);
+                        if (analysis != null) {
+                            analysisMap.put(key, analysis);
+                        }
+                    }
+                }
+            }
+        }
+
         final var vulnerabilitiesSeen = new HashSet<org.cyclonedx.model.vulnerability.Vulnerability>();
         return findings.stream()
-                .map(finding -> convert(qm, variant, finding))
+                .map(finding -> convert(qm, variant, finding, componentMap, vulnerabilityMap, analysisMap))
+                .filter(Objects::nonNull)
                 .filter(vulnerabilitiesSeen::add)
                 .toList();
     }

@@ -9,27 +9,27 @@
   "crossRef": [
     {
       "match": "true",
-      "url": "http://www.netlib.org/lapack/LICENSE.txt",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:04:52Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "true",
       "url": "https://www.open-mpi.org/community/license.php",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:04:53Z",
+      "timestamp": "2026-02-20T21:00:27Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "true",
+      "url": "http://www.netlib.org/lapack/LICENSE.txt",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:00:28Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [
     "https://www.open-mpi.org/community/license.php",
     "http://www.netlib.org/lapack/LICENSE.txt"
   ],
-  "isOsiApproved": false,
+  "isOsiApproved": true,
   "licenseTextHtml": "\n        \u003cp\u003eRedistribution and use in source and binary forms, with or without\n        modification, are permitted provided that the following conditions are\n        met:\u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n            \n\u003cli\u003e\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e -\u003c/span\u003e\u003c/var\u003e Redistributions of source code must retain the above copyright\n            notice, this list of conditions and the following disclaimer.\u003c/li\u003e\n\n\u003cli\u003e\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e -\u003c/span\u003e\u003c/var\u003e Redistributions in binary form must reproduce the above copyright\n            notice, this list of conditions and the following disclaimer listed\n            in this license in the documentation and/or other materials\n            provided with the distribution.\u003c/li\u003e\n\n\u003cli\u003e\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e -\u003c/span\u003e\u003c/var\u003e Neither the name of the copyright holders nor the names of its\n            contributors may be used to endorse or promote products derived from\n            this software without specific prior written permission.\u003c/li\u003e\n        \n\u003c/ul\u003e\n        \n        \u003cp\u003eThe copyright holders provide no reassurances that the source code\n        provided does not infringe any patent, copyright, or any other\n        intellectual property rights of third parties.  The copyright holders\n        disclaim any liability to any recipient for claims brought against\n        recipient by any third party for infringement of that parties\n        intellectual property rights.\u003c/p\u003e\n\n        \u003cp\u003eTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n        \u0026quot;AS IS\u0026quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n        LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\n        A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\n        OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\n        SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\n        LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\n        DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n        THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n        (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\u003c/p\u003e\n\n    "
 }

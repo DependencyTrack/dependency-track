@@ -7,22 +7,22 @@
   "licenseId": "EFL-2.0",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://opensource.org/licenses/EFL-2.0",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:03:34Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "false",
       "url": "http://www.eiffel-nice.org/license/eiffel-forum-license-2.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:03:35Z",
+      "timestamp": "2026-02-20T20:56:13Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/EFL-2.0",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T20:56:18Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

@@ -6,11 +6,20 @@
   "licenseId": "CDL-1.0",
   "crossRef": [
     {
+      "match": "N/A",
+      "url": "https://www.gnu.org/licenses/license-list.html#ACDL",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T20:54:23Z",
+      "isWayBackLink": false,
+      "order": 2
+    },
+    {
       "match": "true",
       "url": "https://fedoraproject.org/wiki/Licensing/Common_Documentation_License",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:58:11Z",
+      "timestamp": "2026-02-20T20:54:24Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -19,18 +28,9 @@
       "url": "http://www.opensource.apple.com/cdl/",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:58:12Z",
+      "timestamp": "2026-02-20T20:54:24Z",
       "isWayBackLink": false,
       "order": 0
-    },
-    {
-      "match": "N/A",
-      "url": "https://www.gnu.org/licenses/license-list.html#ACDL",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2025-07-01T14:58:20Z",
-      "isWayBackLink": false,
-      "order": 2
     }
   ],
   "seeAlso": [

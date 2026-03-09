@@ -7,22 +7,22 @@
   "licenseId": "ZPL-2.0",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://opensource.org/licenses/ZPL-2.0",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:02:22Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "true",
       "url": "http://old.zope.org/Resources/License/ZPL-2.0",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:02:22Z",
+      "timestamp": "2026-02-20T21:01:56Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/ZPL-2.0",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:01:57Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

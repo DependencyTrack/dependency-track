@@ -8,22 +8,22 @@
   "licenseId": "OpenSSL-standalone",
   "crossRef": [
     {
-      "match": "true",
-      "url": "https://hstechdocs.helpsystems.com/manuals/globalscape/archive/cuteftp6/open_ssl_license_agreement.htm",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:54:58Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "false",
       "url": "https://library.netapp.com/ecm/ecm_download_file/ECMP1196395",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:54:59Z",
+      "timestamp": "2026-02-20T20:59:25Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "true",
+      "url": "https://hstechdocs.helpsystems.com/manuals/globalscape/archive/cuteftp6/open_ssl_license_agreement.htm",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:59:25Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

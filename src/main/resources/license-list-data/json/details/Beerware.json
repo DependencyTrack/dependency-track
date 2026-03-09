@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://people.freebsd.org/~phk/",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:02:26Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "https://fedoraproject.org/wiki/Licensing/Beerware",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:02:27Z",
+      "timestamp": "2026-02-20T20:59:24Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://people.freebsd.org/~phk/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:59:24Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

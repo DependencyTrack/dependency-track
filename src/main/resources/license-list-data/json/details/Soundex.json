@@ -6,11 +6,11 @@
   "licenseId": "Soundex",
   "crossRef": [
     {
-      "match": "N/A",
+      "match": "false",
       "url": "https://metacpan.org/release/RJBS/Text-Soundex-3.05/source/Soundex.pm#L3-11",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2025-07-01T14:57:54Z",
+      "isLive": true,
+      "timestamp": "2026-02-20T21:01:57Z",
       "isWayBackLink": false,
       "order": 0
     }

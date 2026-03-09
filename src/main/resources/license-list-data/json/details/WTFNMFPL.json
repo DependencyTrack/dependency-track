@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "DO WHAT THE FUCK YOU WANT TO BUT IT\u0027S NOT MY FAULT PUBLIC LICENSE\n                    Version 1, October 2013\n\n Copyright (C) 2013 Ben McGinnes \u003cben@adversary.org\u003e\n\n Everyone is permitted to copy and distribute verbatim or modified\n copies of this license document, and changing it is allowed as long\n as the name is changed.\n\n   DO WHAT THE FUCK YOU WANT TO BUT IT\u0027S NOT MY FAULT PUBLIC LICENSE\n   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION\n\n  0. You just DO WHAT THE FUCK YOU WANT TO.\n\n  1. Do not hold the author(s), creator(s), developer(s) or\n     distributor(s) liable for anything that happens or goes wrong\n     with your use of the work.\n",
+  "standardLicenseTemplate": "\u003c\u003cbeginOptional\u003e\u003eDO WHAT THE FUCK YOU WANT TO BUT IT\u0027S NOT MY FAULT PUBLIC LICENSE\nVersion 1, October 2013\n\n\u003c\u003cendOptional\u003e\u003e \u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright (C) 2013 Ben McGinnes \u003cben@adversary.org\u003e  \";match\u003d\".{0,5000}\"\u003e\u003e\nEveryone is permitted to copy and distribute verbatim or modified copies of this license document, and changing it is allowed as long as the name is changed.\n\nDO WHAT THE FUCK YOU WANT TO BUT IT\u0027S NOT MY FAULT PUBLIC LICENSE\nTERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"0.\";match\u003d\".{0,20}\"\u003e\u003e\n   You just DO WHAT THE FUCK YOU WANT TO.\n\n   \u003c\u003cvar;name\u003d\"bullet\";original\u003d\"1.\";match\u003d\".{0,20}\"\u003e\u003e\n   Do not hold the author(s), creator(s), developer(s) or distributor(s) liable for anything that happens or goes wrong with your use of the work.\n   \n   ",
+  "name": "Do What The F*ck You Want To But It\u0027s Not My Fault Public License",
+  "licenseId": "WTFNMFPL",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://github.com/adversary-org/wtfnmf/raw/3f2cd8235a64350a57a51b9739715edaea63ec1a/COPYING.WTFNMFPL-utf8",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:03:00Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "true",
+      "url": "https://github.com/adversary-org/wtfnmf/raw/refs/tags/1.0/COPYING.WTFNMFPL",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:03:00Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/adversary-org/wtfnmf/raw/refs/tags/1.0/COPYING.WTFNMFPL",
+    "https://github.com/adversary-org/wtfnmf/raw/3f2cd8235a64350a57a51b9739715edaea63ec1a/COPYING.WTFNMFPL-utf8"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"optional-license-text\"\u003e \n            \u003cp\u003e\n               DO WHAT THE FUCK YOU WANT TO BUT IT\u0026apos;S\n               NOT MY FAULT PUBLIC LICENSE\u003cbr /\u003e\n\n               Version 1, October 2013\n            \u003c/p\u003e\n\n         \u003c/div\u003e\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n            \u003cp\u003e\n               Copyright (C) 2013 Ben McGinnes \u0026lt;ben@adversary.org\u0026gt;\n            \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            Everyone is permitted to copy and distribute verbatim\n            or modified copies of this license document, and\n            changing it is allowed as long as the name is changed.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            DO WHAT THE FUCK YOU WANT TO BUT IT\u0026apos;S\n            NOT MY FAULT PUBLIC LICENSE\u003cbr /\u003e\n\n            TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION\n         \u003c/p\u003e\n\n\u003cul style\u003d\"list-style:none\"\u003e\n            \n\u003cli\u003e\n               \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 0.\u003c/span\u003e\u003c/var\u003e\n               \u003cp\u003e\n                  You just DO WHAT THE FUCK YOU WANT TO.\n               \u003c/p\u003e\n\n            \u003c/li\u003e\n            \n\u003cli\u003e\n               \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,20}\"\u003e 1.\u003c/span\u003e\u003c/var\u003e\n               \u003cp\u003e\n                  Do not hold the author(s), creator(s), developer(s)\n                  or distributor(s) liable for anything that\n                  happens or goes wrong with your use of the work.\n               \u003c/p\u003e\n\n            \u003c/li\u003e\n         \n\u003c/ul\u003e\n      "
+}

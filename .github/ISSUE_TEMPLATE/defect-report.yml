@@ -73,7 +73,8 @@ body:
     - 4.13.4
     - 4.13.5
     - 4.13.6
-    - 4.14.0-SNAPSHOT
+    - 4.14.0
+    - 4.15.0-SNAPSHOT
   validations:
     required: true
 - type: dropdown

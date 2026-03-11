@@ -9,19 +9,17 @@ parameters:
 
 variables:
   acrserviceconnection: 'acr-dependencytracktest-connection'
-  appserviceconnection: 'acr-dependencytracktest-connection'  # Same service connection for App Service
+  appserviceconnection: 'acr-dependencytracktest-connection'
   acrname: 'acrdependencytracktest'
   imagebackend: 'dtrack-backend'
   dockerfilebackend: 'Dockerfile'
   appServiceName: 'app-dependencytrack-backend-test'
-  resourceGroupName: 'your-resource-group'
-  registryUrl: '$(acrname).azurecr.io'
+  resourceGroupName: 'rg-dependencytrack-backend-test'
 
 pool:
   vmImage: 'ubuntu-latest'
 
 stages:
-  # ===== STAGE 1: BUILD =====
   - stage: Build
     displayName: 'Build Docker Image'
     jobs:
@@ -43,7 +41,6 @@ stages:
                 $(Build.BuildId)
                 latest
 
-  # ===== STAGE 2: DEPLOY =====
   - stage: Deploy
     displayName: 'Deploy to App Service'
     dependsOn: Build
@@ -54,67 +51,14 @@ stages:
         environment: 'production'
         strategy:
           runOnce:
-            preDeploy:
-              steps:
-                - script: |
-                    echo "Starting Deployment"
-                    echo "App Service: $(appServiceName)"
-                    echo "Resource Group: $(resourceGroupName)"
-                    echo "Image: $(registryUrl)/$(imagebackend):$(Build.BuildId)"
-                  displayName: 'Pre-deployment info'
-
             deploy:
               steps:
-                # - task: AzureAppServiceManage@0
-                #   displayName: 'Stop App Service'
-                #   inputs:
-                #     azureSubscription: '$(appserviceconnection)'
-                #     action: 'Stop Azure App Service'
-                #     appType: 'webAppContainer'
-                #     appName: '$(appServiceName)'
-                #     resourceGroupName: '$(resourceGroupName)'
-                #
-                # - task: AzureRmWebAppDeployment@4
-                #   displayName: 'Update Docker Image in App Service'
-                #   inputs:
-                #     azureSubscription: '$(appserviceconnection)'
-                #     appType: 'webAppContainer'
-                #     appName: '$(appServiceName)'
-                #     resourceGroupName: '$(resourceGroupName)'
-                #     imageName: '$(registryUrl)/$(imagebackend):$(Build.BuildId)'
-                #     containerCommand: ''
-                #
-                # - task: AzureAppServiceManage@0
-                #   displayName: 'Start App Service'
-                #   inputs:
-                #     azureSubscription: '$(appserviceconnection)'
-                #     action: 'Start Azure App Service'
-                #     appType: 'webAppContainer'
-                #     appName: '$(appServiceName)'
-                #     resourceGroupName: '$(resourceGroupName)'
-                #
-                # - script: |
-                #     echo "Waiting for App Service to start..."
-                #     sleep 30
-                #     APP_URL="http://$(appServiceName).azurewebsites.net"
-                #     for i in {1..10}; do
-                #       if curl -f -s "$APP_URL/api/v1/about" > /dev/null 2>&1; then
-                #         echo "App Service is healthy"
-                #         exit 0
-                #       fi
-                #       echo "Attempt $i/10: App Service not ready"
-                #       sleep 10
-                #     done
-                #     exit 1
-                #   displayName: 'Health Check - Verify App Service'
-                #   continueOnError: true
-                #
-                # - script: |
-                #     echo "Deployment completed"
-                #     echo "App Service: $(appServiceName)"
-                #     echo "Image: $(registryUrl)/$(imagebackend):$(Build.BuildId)"
-                #   displayName: 'Post-deployment summary'
-                - script: |
-                    echo "Deployment tasks commented out pending service connection configuration"
-                  displayName: 'Placeholder'
+                - task: AzureAppServiceManage@0
+                  displayName: 'Restart Backend App Service'
+                  inputs:
+                    azureSubscription: '$(appserviceconnection)'
+                    action: 'Restart Azure App Service'
+                    appType: 'webAppContainer'
+                    appName: '$(appServiceName)'
+                    resourceGroupName: '$(resourceGroupName)'
 

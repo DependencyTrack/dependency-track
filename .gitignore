@@ -7,6 +7,7 @@ docs/Gemfile.lock
 
 # vscode
 .settings/
+.m2/
 target/
 .classpath
 .project

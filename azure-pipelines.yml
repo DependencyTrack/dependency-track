@@ -15,6 +15,7 @@ variables:
   dockerfilebackend: 'Dockerfile'
   appServiceName: 'app-dependencytrack-backend-test'
   resourceGroupName: 'rg-dependencytrack-backend-test'
+  registryUrl: '$(acrname).azurecr.io'
 
 pool:
   vmImage: 'ubuntu-latest'

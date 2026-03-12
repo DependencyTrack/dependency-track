@@ -107,9 +107,10 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             } catch (CpeParsingException e) {
                 LOGGER.warn("An error occurred while parsing: " + component.getCpe() + " - The CPE is invalid and will be discarded. " + e.getMessage());
             }
-        } else if (component.getPurl() != null) { 
+        }
+        if (component.getPurl() != null) {
             parsedPurl = component.getPurl();
-        } 
+        }
 
         List<VulnerableSoftware> vsList = Collections.emptyList();
 

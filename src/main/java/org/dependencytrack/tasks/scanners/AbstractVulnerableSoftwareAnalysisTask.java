@@ -37,6 +37,7 @@ import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.util.Relation;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -87,7 +88,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             Component component,
             VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         for (final VulnerableSoftware vs : vsList) {
-            if (comparePurlVersions(targetPurl, vs, targetVersion)) {
+            if (matchesPurl(vs, targetPurl) && comparePurlVersions(targetPurl, vs, targetVersion)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component,
@@ -107,8 +108,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             Component component,
             VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         for (final VulnerableSoftware vs : vsList) {
-            final Boolean isCpeMatch = maybeMatchCpe(vs, targetCpe, targetVersion);
-            if ((isCpeMatch == null || isCpeMatch) && compareCpeVersions(vs, targetVersion, component)) {
+            if (matchesCpe(vs, targetCpe, targetVersion) && compareCpeVersions(vs, targetVersion, component)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
@@ -123,9 +123,9 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         return string == null ? null : string.toLowerCase();
     }
 
-    private Boolean maybeMatchCpe(final VulnerableSoftware vs, final Cpe targetCpe, final String targetVersion) {
+    private boolean matchesCpe(final VulnerableSoftware vs, final Cpe targetCpe, final String targetVersion) {
         if (targetCpe == null || vs.getCpe23() == null) {
-            return null;
+            return false;
         }
 
         final List<Relation> relations = List.of(
@@ -159,6 +159,16 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         }
 
         return isMatch;
+    }
+
+    private boolean matchesPurl(VulnerableSoftware vs, PackageURL purl) {
+        if (purl == null) {
+            return false;
+        }
+
+        return Objects.equals(vs.getPurlType(), purl.getType())
+                && Objects.equals(vs.getPurlNamespace(), purl.getNamespace())
+                && Objects.equals(vs.getPurlName(), purl.getName());
     }
 
     private boolean comparePurlVersions(PackageURL componentPurl, VulnerableSoftware vs, String targetVersion) {

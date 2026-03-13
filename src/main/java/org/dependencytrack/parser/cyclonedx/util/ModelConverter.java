@@ -1107,6 +1107,8 @@ public class ModelConverter {
                 return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.NOT_AFFECTED;
             case RESOLVED:
                 return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.RESOLVED;
+            case RESOLVED_WITH_PEDIGREE:
+                return org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.RESOLVED_WITH_PEDIGREE;
             default:
                 return null;
         }
@@ -1127,6 +1129,8 @@ public class ModelConverter {
                 return AnalysisState.NOT_AFFECTED;
             case RESOLVED:
                 return AnalysisState.RESOLVED;
+            case RESOLVED_WITH_PEDIGREE:
+                return AnalysisState.RESOLVED_WITH_PEDIGREE;
             default:
                 return AnalysisState.NOT_SET;
         }

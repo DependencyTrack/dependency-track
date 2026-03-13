@@ -115,7 +115,7 @@ class VexResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setDirectDependencies("[]");
         componentWithVulnAndAnalysis = qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnB, componentWithVulnAndAnalysis, AnalyzerIdentity.INTERNAL_ANALYZER);
-        qm.makeAnalysis(componentWithVulnAndAnalysis, vulnB, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+        qm.makeAnalysis(componentWithVulnAndAnalysis, vulnB, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true, null);
 
         // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
         componentWithoutVuln.setDirectDependencies("""
@@ -251,9 +251,9 @@ class VexResourceTest extends ResourceTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln, false);
         qm.addVulnerability(vuln, componentAWithVuln, AnalyzerIdentity.NONE);
-        qm.makeAnalysis(componentAWithVuln, vuln, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+        qm.makeAnalysis(componentAWithVuln, vuln, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true, null);
         qm.addVulnerability(vuln, componentBWithVuln, AnalyzerIdentity.NONE);
-        qm.makeAnalysis(componentBWithVuln, vuln, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+        qm.makeAnalysis(componentBWithVuln, vuln, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true, null);
 
         qm.persist(project);
 
@@ -348,9 +348,9 @@ class VexResourceTest extends ResourceTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln, false);
         qm.addVulnerability(vuln, componentAWithVuln, AnalyzerIdentity.NONE);
-        qm.makeAnalysis(componentAWithVuln, vuln, AnalysisState.IN_TRIAGE, null, AnalysisResponse.UPDATE, null, true);
+        qm.makeAnalysis(componentAWithVuln, vuln, AnalysisState.IN_TRIAGE, null, AnalysisResponse.UPDATE, null, true, null);
         qm.addVulnerability(vuln, componentBWithVuln, AnalyzerIdentity.NONE);
-        qm.makeAnalysis(componentBWithVuln, vuln, AnalysisState.EXPLOITABLE, null, AnalysisResponse.UPDATE, null, true);
+        qm.makeAnalysis(componentBWithVuln, vuln, AnalysisState.EXPLOITABLE, null, AnalysisResponse.UPDATE, null, true, null);
 
         qm.persist(project);
 

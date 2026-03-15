@@ -675,7 +675,13 @@ public class BomUploadProcessingTask implements Subscriber {
         final var identitiesSeen = new HashSet<ComponentIdentity>();
         return service -> {
             final var componentIdentity = new ComponentIdentity(service);
-            identitiesByBomRef.putIfAbsent(service.getBomRef(), componentIdentity);
+            final boolean isBomRefUnique = identitiesByBomRef.putIfAbsent(service.getBomRef(), componentIdentity) == null;
+            if (!isBomRefUnique) {
+            LOGGER.warn("""
+                BOM ref %s is associated with multiple services in the BOM; \
+                BOM refs are required to be unique; Please report this to the vendor \
+                of the tool that generated the BOM""".formatted(service.getBomRef()));
+            }
             bomRefsByIdentity.put(componentIdentity, service.getBomRef());
             final boolean isSeenBefore = !identitiesSeen.add(componentIdentity);
             if (LOGGER.isDebugEnabled() && isSeenBefore) {

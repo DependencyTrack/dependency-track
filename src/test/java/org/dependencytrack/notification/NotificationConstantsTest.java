@@ -47,5 +47,6 @@ class NotificationConstantsTest {
         Assertions.assertEquals("Analysis Decision: Finding Suppressed", NotificationConstants.Title.ANALYSIS_DECISION_SUPPRESSED);
         Assertions.assertEquals("Analysis Decision: Finding UnSuppressed", NotificationConstants.Title.ANALYSIS_DECISION_UNSUPPRESSED);
         Assertions.assertEquals("Analysis Decision: Finding Resolved", NotificationConstants.Title.ANALYSIS_DECISION_RESOLVED);
+        Assertions.assertEquals("Analysis Decision: Finding Resolved By Pedigree", NotificationConstants.Title.ANALYSIS_DECISION_RESOLVED_WITH_PEDIGREE);
     }
 }

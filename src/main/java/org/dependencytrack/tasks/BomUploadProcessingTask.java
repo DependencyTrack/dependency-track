@@ -721,7 +721,7 @@ public class BomUploadProcessingTask implements Subscriber {
                 LOGGER.warn("""
                         Unable to resolve BOM ref %s to a component identity while processing direct \
                         dependencies of BOM ref %s; As a result, the dependency graph will likely be incomplete\
-                        """.formatted(dependencyBomRef, directDependencyBomRef));
+                        """.formatted(directDependencyBomRef, dependencyBomRef));
             }
         }
 

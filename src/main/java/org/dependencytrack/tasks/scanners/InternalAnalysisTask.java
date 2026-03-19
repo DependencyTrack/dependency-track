@@ -21,6 +21,7 @@ package org.dependencytrack.tasks.scanners;
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
+import com.github.packageurl.PackageURL;
 import org.dependencytrack.event.InternalAnalysisEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
@@ -28,10 +29,10 @@ import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.search.FuzzyVulnerableSoftwareSearchManager;
+import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -98,8 +99,8 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
                 (!component.isInternal() || !super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_EXCLUDE_INTERNAL));
         final boolean excludeComponentsWithPurl = super.isEnabled(ConfigPropertyConstants.SCANNER_INTERNAL_FUZZY_EXCLUDE_PURL);
 
-        com.github.packageurl.PackageURL parsedPurl = null;
-        us.springett.parsers.cpe.Cpe parsedCpe = null;
+        PackageURL parsedPurl = null;
+        Cpe parsedCpe = null;
 
         if (component.getCpe() != null) {
             try {
@@ -112,37 +113,7 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             parsedPurl = component.getPurl();
         }
 
-        List<VulnerableSoftware> vsList = Collections.emptyList();
-
-        String componentVersion = component.getVersion();
-        if (componentVersion == null || componentVersion.isBlank()) {
-            if (parsedCpe != null && parsedCpe.getVersion() != null && !parsedCpe.getVersion().isBlank()) {
-                componentVersion = parsedCpe.getVersion();
-            } else if (parsedPurl != null && parsedPurl.getVersion() != null && !parsedPurl.getVersion().isBlank()) {
-                componentVersion = parsedPurl.getVersion();
-            } else {
-                LOGGER.debug("Neither CPE, PURL, nor component version provide a version - skipping analysis");
-                return;
-            }
-        }
-        // In some cases, componentVersion may be null, such as when a Package URL does not have a version specified
-        if (componentVersion == null) {
-            return;
-        }
-        // https://github.com/DependencyTrack/dependency-track/issues/1574
-        // Some ecosystems use the "v" version prefix (e.g. v1.2.3) for their components.
-        // However, both the NVD and GHSA store versions without that prefix.
-        // For this reason, the prefix is stripped before running analyzeVersionRange.
-        //
-        // REVISIT THIS WHEN ADDING NEW VULNERABILITY SOURCES!
-        if (componentVersion.length() > 1 && componentVersion.startsWith("v")) {
-            if (componentVersion.matches("v0.0.0-\\d{14}-[a-f0-9]{12}")) {
-                componentVersion = componentVersion.substring(7,11) + "-" + componentVersion.substring(11,13) + "-" + componentVersion.substring(13,15);
-            } else {
-                componentVersion = componentVersion.substring(1);
-            }
-        }
-        
+        List<VulnerableSoftware> vsList;
         if (parsedCpe != null) {
             vsList = qm.getAllVulnerableSoftware(parsedCpe.getPart().getAbbreviation(), parsedCpe.getVendor(),
                     parsedCpe.getProduct(), component.getPurl());
@@ -154,7 +125,8 @@ public class InternalAnalysisTask extends AbstractVulnerableSoftwareAnalysisTask
             FuzzyVulnerableSoftwareSearchManager fm = new FuzzyVulnerableSoftwareSearchManager(excludeComponentsWithPurl);
             vsList = fm.fuzzyAnalysis(qm, component, parsedCpe);
         }
-        super.analyzeVersionRange(qm, vsList, parsedCpe, parsedPurl, componentVersion, component, vulnerabilityAnalysisLevel);
+
+        super.analyzeVersionRange(qm, vsList, parsedCpe, parsedPurl, component, vulnerabilityAnalysisLevel);
     }
 
 }

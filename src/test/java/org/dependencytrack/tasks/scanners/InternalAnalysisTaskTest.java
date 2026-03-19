@@ -134,6 +134,164 @@ class InternalAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testCpeVersionDiffersFromComponentVersion() throws Exception {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, Collections.emptyList(), false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("stm32l4_firmware");
+        component.setVersion("1.2.3");
+        component.setCpe("cpe:2.3:o:st:stm32l4_firmware:-:*:*:*:*:*:*:*");
+        component = qm.createComponent(component, false);
+
+        var vs = ModelConverter.convertCpe23UriToVulnerableSoftware(
+                "cpe:2.3:o:st:stm32l4_firmware:-:*:*:*:*:*:*:*");
+        vs = qm.persist(vs);
+
+        var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2023-00001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln = qm.createVulnerability(vuln, false);
+        vuln.setVulnerableSoftware(List.of(vs));
+
+        new InternalAnalysisTask().analyze(List.of(component));
+
+        final PaginatedResult vulns = qm.getVulnerabilities(component);
+        assertThat(vulns.getTotal()).isEqualTo(1);
+        assertThat(vulns.getList(Vulnerability.class).getFirst().getVulnId()).isEqualTo("CVE-2023-00001");
+    }
+
+    @Test
+    void testCpeVersionUsedInsteadOfComponentVersion() throws Exception {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, Collections.emptyList(), false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("product");
+        component.setVersion("1.5.0");
+        component.setCpe("cpe:2.3:a:vendor:product:5.0:*:*:*:*:*:*:*");
+        component = qm.createComponent(component, false);
+
+        var vs = ModelConverter.convertCpe23UriToVulnerableSoftware(
+                "cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*");
+        vs.setVersionStartIncluding("1.0.0");
+        vs.setVersionEndExcluding("2.0.0");
+        vs = qm.persist(vs);
+
+        var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2023-00002");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln = qm.createVulnerability(vuln, false);
+        vuln.setVulnerableSoftware(List.of(vs));
+
+        new InternalAnalysisTask().analyze(List.of(component));
+
+        final PaginatedResult vulns = qm.getVulnerabilities(component);
+        assertThat(vulns.getTotal()).isEqualTo(0);
+    }
+
+    @Test
+    void testPurlVersionDiffersFromComponentVersion() {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, Collections.emptyList(), false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("lib");
+        component.setVersion("1.0-SNAPSHOT");
+        component.setPurl("pkg:maven/com.example/lib@1.0.0");
+        component = qm.createComponent(component, false);
+
+        var vs = new VulnerableSoftware();
+        vs.setPurlType("maven");
+        vs.setPurlNamespace("com.example");
+        vs.setPurlName("lib");
+        vs.setVersionEndExcluding("1.0.1");
+        vs.setVulnerable(true);
+        vs = qm.persist(vs);
+
+        var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2023-00003");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln = qm.createVulnerability(vuln, false);
+        vuln.setVulnerableSoftware(List.of(vs));
+
+        new InternalAnalysisTask().analyze(List.of(component));
+
+        final PaginatedResult vulns = qm.getVulnerabilities(component);
+        assertThat(vulns.getTotal()).isEqualTo(1);
+        assertThat(vulns.getList(Vulnerability.class).getFirst().getVulnId()).isEqualTo("CVE-2023-00003");
+    }
+
+    @Test
+    void testCpeWithAnyVersionMatchesEverything() throws Exception {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, Collections.emptyList(), false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("product");
+        component.setVersion("2.5.0");
+        component.setCpe("cpe:2.3:a:vendor:product:*:*:*:*:*:*:*:*");
+        component = qm.createComponent(component, false);
+
+        var vs = ModelConverter.convertCpe23UriToVulnerableSoftware(
+                "cpe:2.3:a:vendor:product:2.5.0:*:*:*:*:*:*:*");
+        vs = qm.persist(vs);
+
+        var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2023-00004");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln = qm.createVulnerability(vuln, false);
+        vuln.setVulnerableSoftware(List.of(vs));
+
+        new InternalAnalysisTask().analyze(List.of(component));
+
+        final PaginatedResult vulns = qm.getVulnerabilities(component);
+        assertThat(vulns.getTotal()).isEqualTo(1);
+        assertThat(vulns.getList(Vulnerability.class).getFirst().getVulnId()).isEqualTo("CVE-2023-00004");
+    }
+
+    @Test
+    void testPurlWithNullVersionNoMatch() {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, Collections.emptyList(), false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("lib");
+        component.setVersion("1.0.0");
+        component.setPurl("pkg:maven/com.example/lib");
+        component = qm.createComponent(component, false);
+
+        var vs = new VulnerableSoftware();
+        vs.setPurlType("maven");
+        vs.setPurlNamespace("com.example");
+        vs.setPurlName("lib");
+        vs.setVersionEndExcluding("2.0.0");
+        vs.setVulnerable(true);
+        vs = qm.persist(vs);
+
+        var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2023-00005");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln = qm.createVulnerability(vuln, false);
+        vuln.setVulnerableSoftware(List.of(vs));
+
+        new InternalAnalysisTask().analyze(List.of(component));
+
+        final PaginatedResult vulns = qm.getVulnerabilities(component);
+        assertThat(vulns.getTotal()).isEqualTo(0);
+    }
+
+    @Test
     void testExactMatchWithNAUpdate() throws CpeParsingException, CpeEncodingException {
         var project = new Project();
         project.setName("acme-app");

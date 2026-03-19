@@ -35,7 +35,10 @@ public class InternalAnalysisTaskPurlMatchingTest extends PersistenceCapableTest
                 Arguments.of("pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1", WITHOUT_RANGE, DOES_NOT_MATCH, "pkg:npm/org.apache.xmlgraphics/batik-anim@1.9.1"),
                 Arguments.of("pkg:maven/org.apache.xmlgraphics/batik-anim@1.9.1", WITHOUT_RANGE, DOES_NOT_MATCH, "pkg:maven/com.example/batik-anim@1.9.1"),
                 Arguments.of("pkg:nuget/System.IO.Packaging", withRange().havingStartIncluding("8.0.0-preview.1.23110.8").havingEndIncluding("8.0.0"), MATCHES, "pkg:nuget/System.IO.Packaging@8.0.0"),
-                Arguments.of("pkg:nuget/System.IO.Packaging", withRange().havingStartIncluding("8.0.0-preview.1.23110.8").havingEndIncluding("8.0.0"), DOES_NOT_MATCH, "pkg:nuget/System.IO.Packaging@8.0.1")
+                Arguments.of("pkg:nuget/System.IO.Packaging", withRange().havingStartIncluding("8.0.0-preview.1.23110.8").havingEndIncluding("8.0.0"), DOES_NOT_MATCH, "pkg:nuget/System.IO.Packaging@8.0.1"),
+                Arguments.of("pkg:composer/typo3/cms-backend", withRange().havingStartIncluding("4.1.0").havingEndExcluding("4.1.13"), DOES_NOT_MATCH, "pkg:composer/typo3/cms-backend@v12.4.44"),
+                Arguments.of("pkg:composer/typo3/cms-backend", withRange().havingStartIncluding("4.3alpha1").havingEndExcluding("4.3beta2"), MATCHES, "pkg:composer/typo3/cms-backend@4.3beta1"),
+                Arguments.of("pkg:composer/typo3/cms-backend", withRange().havingStartIncluding("4.3alpha1").havingEndExcluding("4.3beta2"), DOES_NOT_MATCH, "pkg:composer/typo3/cms-backend@4.3.0")
         );
     }
 

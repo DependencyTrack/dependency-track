@@ -9,22 +9,22 @@
   "standardLicenseHeader": "Licensed under the Academic Free License version 3.0\n\n",
   "crossRef": [
     {
-      "match": "false",
-      "url": "http://www.rosenlaw.com/AFL3.0.htm",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:57:41Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "https://opensource.org/licenses/afl-3.0",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2025-07-01T14:57:41Z",
+      "timestamp": "2026-02-20T21:00:26Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://www.rosenlaw.com/AFL3.0.htm",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:00:27Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

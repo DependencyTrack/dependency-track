@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://sourceware.org/git/?p\u003dbinutils-gdb.git;a\u003dblob;f\u003dreadline/readline/support/wcwidth.c;h\u003d0f5ec995796f4813abbcf4972aec0378ab74722a;hb\u003dHEAD#l55",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:03:50Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "https://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:03:51Z",
+      "timestamp": "2026-02-20T20:58:20Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://sourceware.org/git/?p\u003dbinutils-gdb.git;a\u003dblob;f\u003dreadline/readline/support/wcwidth.c;h\u003d0f5ec995796f4813abbcf4972aec0378ab74722a;hb\u003dHEAD#l55",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:58:20Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

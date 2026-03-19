@@ -9,19 +9,10 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://github.com/ruby/ruby/commit/0a64817fb80016030c03518fb9459f63c11605ea#diff-ef5fa30838d6d0cecad9e675cc50b24628cfe2cb277c346053fafcc36c91c204",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:01:00Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "https://github.com/ruby/ruby/blob/9f6deaa6888a423720b4b127b5314f0ad26cc2e6/ext/pty/pty.c#L775-L786",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:01:01Z",
+      "timestamp": "2026-02-20T21:04:35Z",
       "isWayBackLink": false,
       "order": 0
     },
@@ -30,9 +21,18 @@
       "url": "https://github.com/ruby/ruby/commit/0a64817fb80016030c03518fb9459f63c11605ea#diff-fedf217c1ce44bda01f0a678d3ff8b198bed478754d699c527a698ad933979a0",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:01:01Z",
+      "timestamp": "2026-02-20T21:04:36Z",
       "isWayBackLink": false,
       "order": 2
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/ruby/ruby/commit/0a64817fb80016030c03518fb9459f63c11605ea#diff-ef5fa30838d6d0cecad9e675cc50b24628cfe2cb277c346053fafcc36c91c204",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:04:36Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

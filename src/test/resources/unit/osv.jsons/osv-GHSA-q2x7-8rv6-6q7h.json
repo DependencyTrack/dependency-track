@@ -1,0 +1,64 @@
+{
+  "id": "GHSA-q2x7-8rv6-6q7h",
+  "summary": "Test vulnerability with CVSSv4 severity",
+  "details": "A test vulnerability for verifying CVSSv4 parsing in OSV mirroring.",
+  "aliases": [
+    "CVE-2099-88888"
+  ],
+  "modified": "2024-06-01T00:00:00Z",
+  "published": "2024-05-01T00:00:00Z",
+  "database_specific": {
+    "severity": "CRITICAL",
+    "cwe_ids": [
+      "CWE-502"
+    ],
+    "github_reviewed": true
+  },
+  "references": [
+    {
+      "type": "ADVISORY",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2099-88888"
+    }
+  ],
+  "affected": [
+    {
+      "package": {
+        "name": "com.example:test-lib",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/com.example/test-lib"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "2.0.0"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "1.0.0",
+        "1.1.0",
+        "1.2.0"
+      ],
+      "database_specific": {
+        "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2024/05/GHSA-q2x7-8rv6-6q7h/GHSA-q2x7-8rv6-6q7h.json"
+      }
+    }
+  ],
+  "schema_version": "1.7.3",
+  "severity": [
+    {
+      "type": "CVSS_V4",
+      "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N"
+    },
+    {
+      "type": "CVSS_V3",
+      "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+    }
+  ]
+}

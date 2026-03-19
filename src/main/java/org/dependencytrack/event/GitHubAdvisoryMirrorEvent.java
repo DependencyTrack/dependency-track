@@ -18,7 +18,9 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.Event;
+import alpine.event.framework.SingletonCapableEvent;
+
+import java.util.UUID;
 
 /**
  * Defines an event used to start a mirror of GitHub Advisories.
@@ -26,6 +28,13 @@ import alpine.event.framework.Event;
  * @author Steve Springett
  * @since 4.4.0
  */
-public class GitHubAdvisoryMirrorEvent implements Event {
+public class GitHubAdvisoryMirrorEvent extends SingletonCapableEvent {
+
+    private static final UUID CHAIN_IDENTIFIER = UUID.fromString("bc3fbc70-7d80-4840-99c5-2d17d0c222da");
+
+    public GitHubAdvisoryMirrorEvent() {
+        setChainIdentifier(CHAIN_IDENTIFIER);
+        setSingleton(true);
+    }
 
 }

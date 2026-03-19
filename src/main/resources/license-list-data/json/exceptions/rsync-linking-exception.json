@@ -1,0 +1,12 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseExceptionText": "In addition, as a special exception, the copyright holders give\npermission to dynamically link rsync with the OpenSSL and xxhash\nlibraries when those libraries are being distributed in compliance\nwith their license terms, and to distribute a dynamically linked\ncombination of rsync and these libraries.  This is also considered\nto be covered under the GPL\u0027s System Libraries exception.\n",
+  "name": "rsync Linking Exception",
+  "licenseComments": "This exception has been used with GPL-3.0.",
+  "seeAlso": [
+    "https://github.com/RsyncProject/rsync/blob/master/COPYING"
+  ],
+  "licenseExceptionId": "rsync-linking-exception",
+  "licenseExceptionTemplate": "In addition, as a special exception, the copyright holders give permission to dynamically link rsync with the OpenSSL and xxhash libraries when those libraries are being distributed in compliance with their license terms, and to distribute a dynamically linked combination of rsync and these libraries. This is also considered to be covered under the GPL\u0027s System Libraries exception.\n\n",
+  "exceptionTextHtml": "\n\t\u003cp\u003eIn addition, as a special exception, the copyright holders give\n\tpermission to dynamically link rsync with the OpenSSL and xxhash\n\tlibraries when those libraries are being distributed in compliance\n\twith their license terms, and to distribute a dynamically linked\n\tcombination of rsync and these libraries.  This is also considered\n\tto be covered under the GPL\u0026apos;s System Libraries exception.\u003c/p\u003e\n\n\t"
+}

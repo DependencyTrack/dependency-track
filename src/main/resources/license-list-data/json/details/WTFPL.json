@@ -7,22 +7,22 @@
   "licenseId": "WTFPL",
   "crossRef": [
     {
-      "match": "true",
-      "url": "http://www.wtfpl.net/about/",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:58:57Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "false",
       "url": "http://sam.zoy.org/wtfpl/COPYING",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:58:58Z",
+      "timestamp": "2026-02-20T20:59:55Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "true",
+      "url": "http://www.wtfpl.net/about/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:59:56Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

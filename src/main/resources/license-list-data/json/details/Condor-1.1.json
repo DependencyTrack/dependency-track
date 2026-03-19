@@ -9,22 +9,22 @@
   "licenseId": "Condor-1.1",
   "crossRef": [
     {
-      "match": "false",
-      "url": "http://research.cs.wisc.edu/condor/license.html#condor",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:54:52Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "http://web.archive.org/web/20111123062036/http://research.cs.wisc.edu/condor/license.html#condor",
       "isValid": false,
       "isLive": false,
-      "timestamp": "2025-07-01T14:54:53Z",
+      "timestamp": "2026-02-20T21:03:00Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://research.cs.wisc.edu/condor/license.html#condor",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:03:00Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

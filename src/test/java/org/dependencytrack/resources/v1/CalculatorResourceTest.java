@@ -30,6 +30,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import us.springett.owasp.riskrating.Level;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+
 class CalculatorResourceTest extends ResourceTest {
 
     @RegisterExtension
@@ -71,6 +73,27 @@ class CalculatorResourceTest extends ResourceTest {
     }
 
     @Test
+    void getCvssScoresV4Test() {
+        Response response = jersey.target(V1_CALCULATOR + "/cvss")
+                .queryParam("vector", "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        Assertions.assertEquals(200, response.getStatus());
+        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
+        assertThatJson(parseJsonObject(response).toString()).isEqualTo(/* language=JSON */ """
+                {
+                  "baseScore": 9.3,
+                  "impactSubScore": "NaN",
+                  "exploitabilitySubScore": "NaN",
+                  "temporalScore": "NaN",
+                  "environmentalScore": "NaN",
+                  "modifiedImpactSubScore": "NaN"
+                }
+                """);
+    }
+
+    @Test
     void getCvssScoresInvalidTest() {
         Response response = jersey.target(V1_CALCULATOR + "/cvss")
                 .queryParam("vector", "foobar")
@@ -80,7 +103,7 @@ class CalculatorResourceTest extends ResourceTest {
         Assertions.assertEquals(400, response.getStatus());
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
-        Assertions.assertEquals("An invalid CVSSv2 or CVSSv3 vector submitted.", body);
+        Assertions.assertEquals("An invalid CVSSv2, CVSSv3, or CVSSv4 vector submitted.", body);
     }
 
     @Test

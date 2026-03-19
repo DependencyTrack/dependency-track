@@ -872,15 +872,16 @@ public class ModelConverter {
             }
             rating.setScore(vulnerability.getCvssV3BaseScore().doubleValue());
             rating.setVector(vulnerability.getCvssV3Vector());
-            if (rating.getScore() >= 9.0) {
-                rating.setSeverity(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.CRITICAL);
-            } else if (rating.getScore() >= 7.0) {
-                rating.setSeverity(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.HIGH);
-            } else if (rating.getScore() >= 4.0) {
-                rating.setSeverity(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.MEDIUM);
-            } else {
-                rating.setSeverity(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.LOW);
-            }
+            rating.setSeverity(convertCvss3Or4ScoreToCdxSeverity(rating.getScore()));
+            cdxVulnerability.addRating(rating);
+        }
+        if (vulnerability.getCvssV4Score() != null) {
+            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
+            rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.CVSSV4);
+            rating.setScore(vulnerability.getCvssV4Score().doubleValue());
+            rating.setVector(vulnerability.getCvssV4Vector());
+            rating.setSeverity(convertCvss3Or4ScoreToCdxSeverity(rating.getScore()));
             cdxVulnerability.addRating(rating);
         }
         if (vulnerability.getOwaspRRLikelihoodScore() != null && vulnerability.getOwaspRRTechnicalImpactScore() != null && vulnerability.getOwaspRRBusinessImpactScore() != null) {
@@ -891,7 +892,7 @@ public class ModelConverter {
             rating.setVector(vulnerability.getOwaspRRVector());
             cdxVulnerability.addRating(rating);
         }
-        if (vulnerability.getCvssV2BaseScore() == null && vulnerability.getCvssV3BaseScore() == null && vulnerability.getOwaspRRLikelihoodScore() == null) {
+        if (vulnerability.getCvssV2BaseScore() == null && vulnerability.getCvssV3BaseScore() == null && vulnerability.getCvssV4Score() == null && vulnerability.getOwaspRRLikelihoodScore() == null) {
             org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSeverity(convertDtSeverityToCdxSeverity(vulnerability.getSeverity()));
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
@@ -1017,6 +1018,18 @@ public class ModelConverter {
         return dependencies;
     }
 
+    private static org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity convertCvss3Or4ScoreToCdxSeverity(final double score) {
+        if (score >= 9.0) {
+            return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.CRITICAL;
+        } else if (score >= 7.0) {
+            return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.HIGH;
+        } else if (score >= 4.0) {
+            return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.MEDIUM;
+        } else {
+            return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.LOW;
+        }
+    }
+
     private static org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity convertDtSeverityToCdxSeverity(final Severity severity) {
         switch (severity) {
             case CRITICAL:
@@ -1043,7 +1056,7 @@ public class ModelConverter {
             case GITHUB:
                 cdxSource.setUrl("https://github.com/advisories"); break;
             case VULNDB:
-                cdxSource.setUrl("https://vulndb.cyberriskanalytics.com/"); break;
+                cdxSource.setUrl("https://vulndb.flashpoint.io"); break;
             case OSSINDEX:
                 cdxSource.setUrl("https://ossindex.sonatype.org/"); break;
             case RETIREJS:

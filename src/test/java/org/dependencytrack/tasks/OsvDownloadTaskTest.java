@@ -58,10 +58,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.apache.commons.io.IOUtils.resourceToByteArray;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
-import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_BASE_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GOOGLE_OSV_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_NVD_ENABLED;
 
 @WireMockTest
 class OsvDownloadTaskTest extends PersistenceCapableTest {
@@ -382,6 +382,7 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
     @Test
     void testUpdateDatasourceVulnerableVersionRanges() {
         var vs1 = new VulnerableSoftware();
+        vs1.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind");
         vs1.setPurlType("maven");
         vs1.setPurlNamespace("com.fasterxml.jackson.core");
         vs1.setPurlName("jackson-databind");
@@ -391,6 +392,7 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         vs1 = qm.persist(vs1);
 
         var vs2 = new VulnerableSoftware();
+        vs2.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind");
         vs2.setPurlType("maven");
         vs2.setPurlNamespace("com.fasterxml.jackson.core");
         vs2.setPurlName("jackson-databind");
@@ -399,6 +401,7 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         vs2 = qm.persist(vs2);
 
         var vs3 = new VulnerableSoftware();
+        vs3.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind");
         vs3.setPurlType("maven");
         vs3.setPurlNamespace("com.fasterxml.jackson.core");
         vs3.setPurlName("jackson-databind");
@@ -409,8 +412,8 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         var existingVuln = new Vulnerability();
         existingVuln.setVulnId("GHSA-57j2-w4cx-62h2");
         existingVuln.setSource(Vulnerability.Source.GITHUB);
-        existingVuln.setVulnerableSoftware(List.of(vs1, vs2, vs3));
         existingVuln = qm.createVulnerability(existingVuln, false);
+        existingVuln.setVulnerableSoftware(List.of(vs1, vs2, vs3));
         qm.updateAffectedVersionAttribution(existingVuln, vs1, Vulnerability.Source.GITHUB);
         qm.updateAffectedVersionAttribution(existingVuln, vs2, Vulnerability.Source.GITHUB);
         qm.updateAffectedVersionAttribution(existingVuln, vs3, Vulnerability.Source.OSV);
@@ -642,6 +645,30 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testCalculateOSVSeverityWithCvssV4() throws IOException {
+        final var task = new OsvDownloadTask();
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-q2x7-8rv6-6q7h.json");
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assertions.assertNotNull(advisory);
+        Assertions.assertNotNull(advisory.getCvssV4Vector());
+        Severity severity = task.calculateOSVSeverity(advisory);
+        Assertions.assertEquals(Severity.CRITICAL, severity);
+    }
+
+    @Test
+    void testParseAdvisoryToVulnerabilityWithCvssV4() throws IOException {
+        prepareJsonObject("src/test/resources/unit/osv.jsons/osv-GHSA-q2x7-8rv6-6q7h.json");
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assertions.assertNotNull(advisory);
+        final var task = new OsvDownloadTask();
+        Vulnerability vuln = task.mapAdvisoryToVulnerability(advisory);
+        Assertions.assertNotNull(vuln);
+        Assertions.assertEquals("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N", vuln.getCvssV4Vector());
+        Assertions.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", vuln.getCvssV3Vector());
+        Assertions.assertEquals(Severity.CRITICAL, vuln.getSeverity());
+    }
+
+    @Test
     void testCommitHashRangesAndVersions() throws IOException {
         final var task = new OsvDownloadTask();
 
@@ -685,8 +712,8 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         existingVuln.setDescription("Initial description");
         existingVuln.setSource(Vulnerability.Source.NVD);
         existingVuln.setSeverity(Severity.CRITICAL);
-        existingVuln.setVulnerableSoftware(List.of(vulnerableSoftware));
         existingVuln = qm.createVulnerability(existingVuln, false);
+        existingVuln.setVulnerableSoftware(List.of(vulnerableSoftware));
         qm.updateAffectedVersionAttribution(existingVuln, vulnerableSoftware, Vulnerability.Source.NVD);
 
         OsvAdvisory advisory = parser.parse(jsonObject);
@@ -761,8 +788,8 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         existingVuln.setDescription("Initial description");
         existingVuln.setSource(Vulnerability.Source.NVD);
         existingVuln.setSeverity(Severity.CRITICAL);
-        existingVuln.setVulnerableSoftware(List.of(vulnerableSoftware));
         existingVuln = qm.createVulnerability(existingVuln, false);
+        existingVuln.setVulnerableSoftware(List.of(vulnerableSoftware));
         qm.updateAffectedVersionAttribution(existingVuln, vulnerableSoftware, Vulnerability.Source.NVD);
 
         OsvAdvisory advisory = parser.parse(jsonObject);

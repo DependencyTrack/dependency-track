@@ -6,20 +6,11 @@
   "licenseId": "Cornell-Lossless-JPEG",
   "crossRef": [
     {
-      "match": "false",
-      "url": "https://gitlab.freedesktop.org/libopenraw/libopenraw/blob/master/lib/ljpegdecompressor.cpp#L32",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:57:27Z",
-      "isWayBackLink": false,
-      "order": 2
-    },
-    {
       "match": "N/A",
       "url": "https://www.mssl.ucl.ac.uk/~mcrw/src/20050920/proto.h",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2025-07-01T14:57:29Z",
+      "timestamp": "2026-02-20T20:58:21Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -28,9 +19,18 @@
       "url": "https://android.googlesource.com/platform/external/dng_sdk/+/refs/heads/master/source/dng_lossless_jpeg.cpp#16",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:57:29Z",
+      "timestamp": "2026-02-20T20:58:21Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/libopenraw/libopenraw/blob/master/lib/ljpegdecompressor.cpp#L32",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:58:23Z",
+      "isWayBackLink": false,
+      "order": 2
     }
   ],
   "seeAlso": [

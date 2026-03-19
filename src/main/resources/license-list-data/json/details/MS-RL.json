@@ -8,21 +8,21 @@
   "crossRef": [
     {
       "match": "N/A",
-      "url": "http://www.microsoft.com/opensource/licenses.mspx",
+      "url": "https://opensource.org/licenses/MS-RL",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2025-07-01T14:56:33Z",
+      "timestamp": "2026-02-20T20:52:52Z",
       "isWayBackLink": false,
-      "order": 0
+      "order": 1
     },
     {
       "match": "N/A",
-      "url": "https://opensource.org/licenses/MS-RL",
+      "url": "http://www.microsoft.com/opensource/licenses.mspx",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:56:33Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T20:52:52Z",
       "isWayBackLink": false,
-      "order": 1
+      "order": 0
     }
   ],
   "seeAlso": [

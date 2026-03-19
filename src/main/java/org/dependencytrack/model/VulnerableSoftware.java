@@ -18,14 +18,10 @@
  */
 package org.dependencytrack.model;
 
-import alpine.common.logging.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
-import io.github.nscuro.versatile.Comparator;
-import io.github.nscuro.versatile.Vers;
-import io.github.nscuro.versatile.version.KnownVersioningSchemes;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
@@ -44,8 +40,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_GENERIC;
-
 /**
  * The VulnerableSoftware is a model class for representing vulnerable software
  * as defined by CPE. In essence, it's a CPE which is directly associated to a
@@ -61,10 +55,10 @@ import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_G
 @Index(name = "VULNERABLESOFTWARE_CPE_PURL_PARTS_IDX", members = {"part", "vendor", "product", "purlType", "purlNamespace", "purlName"})
 @Index(name = "VULNERABLESOFTWARE_PURL_VERSION_RANGE_IDX", members = {"purl", "versionEndExcluding", "versionEndIncluding", "versionStartExcluding", "versionStartIncluding"})
 @Index(name = "VULNERABLESOFTWARE_PURL_TYPE_NS_NAME_IDX", members = {"purlType", "purlNamespace", "purlName"})
+@Index(name = "VULNERABLESOFTWARE_FULL_PURL_IDX", members = {"purlType", "purlNamespace", "purlName", "version"})
 public class VulnerableSoftware implements ICpe, Serializable {
 
     private static final long serialVersionUID = -3987946408457131098L;
-    private static final Logger LOGGER = Logger.getLogger(VulnerableSoftware.class);
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
@@ -184,76 +178,11 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     private transient List<AffectedVersionAttribution> affectedVersionAttributions;
 
-    private transient Vers vers;
-
-    private transient boolean versDirty = true;
-
-    private void invalidateVers(){
-        versDirty = true;
-        vers = null;
-    }
-
-    private Vers buildVersFromFields() {
-        final String scheme = KnownVersioningSchemes
-                .fromPurlType(getPurlType())
-                .orElse(SCHEME_GENERIC);
-        final Vers.Builder b = Vers.builder(scheme);
-
-        final String endExcluding = (getVersionEndExcluding() != null && !getVersionEndExcluding().isBlank())
-                ? getVersionEndExcluding()
-                : null;
-        final String endIncluding = (getVersionEndIncluding() != null && !getVersionEndIncluding().isBlank())
-                ? getVersionEndIncluding()
-                : null;
-        final String startExcluding = (getVersionStartExcluding() != null && !getVersionStartExcluding().isBlank())
-                ? getVersionStartExcluding()
-                : null;
-        final String startIncluding = (getVersionStartIncluding() != null && !getVersionStartIncluding().isBlank())
-                ? getVersionStartIncluding()
-                : null;
-
-        final String version = (getVersion() != null && !getVersion().isBlank()) ? getVersion() : null;
-
-        final boolean hasRange = (endExcluding != null) || (endIncluding != null)
-                || (startExcluding != null) || (startIncluding != null);
-
-        if (version == null && !hasRange) {
-            b.withConstraint(Comparator.WILDCARD, null);
-            return b.build().simplify();
-        }
-
-        if (startIncluding != null) {
-            b.withConstraint(Comparator.GREATER_THAN_OR_EQUAL, startIncluding);
-        }
-        if (startExcluding != null) {
-            b.withConstraint(Comparator.GREATER_THAN, startExcluding);
-        }
-
-        if (version != null && !hasRange) {
-            b.withConstraint(Comparator.EQUAL, version);
-        }
-
-        if (endIncluding != null) {
-            b.withConstraint(Comparator.LESS_THAN_OR_EQUAL, endIncluding);
-        }
-        if (endExcluding != null) {
-            b.withConstraint(Comparator.LESS_THAN, endExcluding);
-        }
-
-        return b.build().simplify();
-    }
-
-    public Vers getVers() {
-        if(versDirty){
-            vers = buildVersFromFields();
-            versDirty = false;
-        }
-        return vers;
-    }
-
-    public void setVers(Vers vers) {
-        this.vers = vers;
-        this.versDirty = false;
+    public boolean hasVersionRange() {
+        return (versionStartIncluding != null && !versionStartIncluding.isBlank())
+                || (versionStartExcluding != null && !versionStartExcluding.isBlank())
+                || (versionEndExcluding != null && !versionEndExcluding.isBlank())
+                || (versionEndIncluding != null && !versionEndIncluding.isBlank());
     }
 
     public long getId() {
@@ -278,7 +207,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     public void setPurlType(String purlType) {
         this.purlType = purlType;
-        invalidateVers();
     }
 
     public String getPurlNamespace() {
@@ -367,7 +295,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     public void setVersion(String version) {
         this.version = version;
-        invalidateVers();
     }
 
     public String getUpdate() {
@@ -432,7 +359,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     public void setVersionEndExcluding(String versionEndExcluding) {
         this.versionEndExcluding = versionEndExcluding;
-        invalidateVers();
     }
 
     public String getVersionEndIncluding() {
@@ -441,7 +367,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     public void setVersionEndIncluding(String versionEndIncluding) {
         this.versionEndIncluding = versionEndIncluding;
-        invalidateVers();
     }
 
     public String getVersionStartExcluding() {
@@ -450,7 +375,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     public void setVersionStartExcluding(String versionStartExcluding) {
         this.versionStartExcluding = versionStartExcluding;
-        invalidateVers();
     }
 
     public String getVersionStartIncluding() {
@@ -459,7 +383,6 @@ public class VulnerableSoftware implements ICpe, Serializable {
 
     public void setVersionStartIncluding(String versionStartIncluding) {
         this.versionStartIncluding = versionStartIncluding;
-        invalidateVers();
     }
 
     public boolean isVulnerable() {

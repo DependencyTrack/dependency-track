@@ -25,6 +25,10 @@ import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.notification.NotificationService;
 import alpine.notification.Subscription;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
 import org.awaitility.core.ConditionTimeoutException;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.BomUploadEvent;
@@ -53,11 +57,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
 
 import javax.jdo.JDOObjectNotFoundException;
 import java.io.StringReader;
@@ -147,26 +146,27 @@ class BomUploadProcessingTaskTest extends PersistenceCapableTest {
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
-        final VulnerableSoftware vs = new VulnerableSoftware();
+        var vs = new VulnerableSoftware();
         vs.setPurlType("maven");
         vs.setPurlNamespace("com.example");
         vs.setPurlName("xmlutil");
         vs.setVersion("1.0.0");
         vs.setVulnerable(true);
+        vs = qm.persist(vs);
 
-        final var vulnerability1 = new Vulnerability();
+        var vulnerability1 = new Vulnerability();
         vulnerability1.setVulnId("INT-001");
         vulnerability1.setSource(Vulnerability.Source.INTERNAL);
         vulnerability1.setSeverity(Severity.HIGH);
+        vulnerability1 = qm.createVulnerability(vulnerability1, false);
         vulnerability1.setVulnerableSoftware(List.of(vs));
-        qm.createVulnerability(vulnerability1, false);
 
-        final var vulnerability2 = new Vulnerability();
+        var vulnerability2 = new Vulnerability();
         vulnerability2.setVulnId("INT-002");
         vulnerability2.setSource(Vulnerability.Source.INTERNAL);
         vulnerability2.setSeverity(Severity.HIGH);
+        vulnerability2 = qm.createVulnerability(vulnerability2, false);
         vulnerability2.setVulnerableSoftware(List.of(vs));
-        qm.createVulnerability(vulnerability2, false);
 
         final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()),
                 resourceToByteArray("/unit/bom-1.xml"));

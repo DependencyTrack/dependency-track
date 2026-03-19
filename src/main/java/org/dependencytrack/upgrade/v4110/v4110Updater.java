@@ -122,6 +122,7 @@ public class v4110Updater extends AbstractUpgradeItem {
                 final Severity severity = VulnerabilityUtil.getSeverity(
                         rs.getBigDecimal(1),
                         rs.getBigDecimal(2),
+                        /* cvssV4Score */ null,
                         rs.getBigDecimal(3),
                         rs.getBigDecimal(4),
                         rs.getBigDecimal(5)

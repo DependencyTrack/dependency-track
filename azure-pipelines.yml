@@ -9,7 +9,7 @@ parameters:
 
 variables:
   acrserviceconnection: 'acr-dependencytracktest-connection'
-  appserviceconnection: 'acr-dependencytracktest-connection'
+  appserviceconnection: 'rg-dependencytrack-backend-test-connection'
   acrname: 'acrdependencytracktest'
   imagebackend: 'dtrack-backend'
   dockerfilebackend: 'Dockerfile'

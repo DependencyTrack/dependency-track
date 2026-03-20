@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1.vo;
 import alpine.common.validation.RegexSequence;
 import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +38,7 @@ import jakarta.validation.constraints.Pattern;
  * @author Steve Springett
  * @since 3.1.0
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AnalysisRequest {
 
     private static final String RISK_IMPACT_PATTERN = "[A-Z][A-Z0-9_]{0,63}";

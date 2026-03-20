@@ -812,7 +812,25 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         final Query<Component> query = pm.newQuery(Component.class);
         if (vs.getPurl() != null || (vs.getPurlType() != null && vs.getPurlName() != null)) {
             query.setFilter("purl != null");
-        } else if (vs.getCpe23() != null || vs.getCpe22() != null || (vs.getVendor() != null && vs.getProduct() != null)) {
+        } else if (vs.getVendor() != null && vs.getProduct() != null) {
+            // Pre-filter by vendor:product substring to avoid full table scan.
+            // The CPE 2.3 format is cpe:2.3:part:vendor:product:version:...
+            // Component CPEs may store special chars escaped (\+) or unescaped (+),
+            // so we search for both forms.
+            final String vendor = vs.getVendor().toLowerCase();
+            final String product = vs.getProduct().toLowerCase();
+            final String vendorProduct = ":" + vendor + ":" + product;
+            // Escape CPE special characters for the escaped-form search
+            final String escapedVendorProduct = ":" + escapeCpeValue(vendor) + ":" + escapeCpeValue(product);
+            if (vendorProduct.equals(escapedVendorProduct)) {
+                query.setFilter("cpe != null && cpe.toLowerCase().indexOf(:vendorProduct) >= 0");
+                query.setNamedParameters(java.util.Map.of("vendorProduct", vendorProduct));
+            } else {
+                query.setFilter("cpe != null && (cpe.toLowerCase().indexOf(:vendorProduct) >= 0 || cpe.toLowerCase().indexOf(:escapedVendorProduct) >= 0)");
+                query.setNamedParameters(java.util.Map.of("vendorProduct", vendorProduct, "escapedVendorProduct", escapedVendorProduct));
+            }
+            LOGGER.debug("Pre-filtering components by CPE vendor:product pattern: " + vendorProduct);
+        } else if (vs.getCpe23() != null || vs.getCpe22() != null) {
             query.setFilter("cpe != null");
         } else {
             LOGGER.debug("No PURL or CPE info available for matching");
@@ -820,10 +838,19 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         }
 
         try {
-            return (List<Component>) query.executeList();
+            return List.copyOf((List<Component>) query.executeList());
         } finally {
             query.closeAll();
         }
+    }
+
+    /**
+     * Escapes CPE 2.3 special characters with backslash.
+     * Per the CPE spec, characters like + ? * must be escaped with \ in the formatted string.
+     */
+    private static String escapeCpeValue(final String value) {
+        if (value == null) return null;
+        return value.replaceAll("([!\"#$%&'()+,/:;<=>@\\[\\]^`{|}~*?])", "\\\\$1");
     }
 
 }

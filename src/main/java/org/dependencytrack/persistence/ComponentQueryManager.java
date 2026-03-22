@@ -710,12 +710,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     public boolean hasComponents(final Project project) {
         final Query<Component> query = pm.newQuery(Component.class, "project == :project");
         query.setParameters(project);
-        query.setResult("count(this)");
-        try {
-            return query.executeResultUnique(Long.class) > 0;
-        } finally {
-            query.closeAll();
-        }
+        query.setRange(0, 1);
+        query.setResult("id");
+        return !executeAndCloseResultList(query, Long.class).isEmpty();
     }
 
     public void synchronizeComponentProperties(final Component component, final List<ComponentProperty> properties) {

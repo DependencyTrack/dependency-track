@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.Config;
 import alpine.common.logging.Logger;
 import alpine.model.ApiKey;
+import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.model.UserPrincipal;
 import alpine.security.ApiKeyDecoder;
@@ -38,13 +39,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.validation.ValidUuid;
-import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.resources.v1.vo.TeamSelfResponse;
-import org.dependencytrack.resources.v1.vo.VisibleTeams;
-import org.owasp.security.logging.SecurityMarkers;
-
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -56,9 +50,17 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.validation.ValidUuid;
+import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.resources.v1.vo.TeamSelfResponse;
+import org.dependencytrack.resources.v1.vo.VisibleTeams;
+import org.owasp.security.logging.SecurityMarkers;
+
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * JAX-RS resources for processing teams.
@@ -155,9 +157,12 @@ public class TeamResource extends AlpineResource {
         );
 
         try (QueryManager qm = new QueryManager()) {
-            final Team team = qm.createTeam(jsonTeam.getName());
-            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Team created: " + team.getName());
-            return Response.status(Response.Status.CREATED).entity(team).build();
+            final Team newTeam = qm.createTeam(jsonTeam.getName());
+
+            updatePermissions(qm, newTeam, jsonTeam.getPermissions());
+
+            super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Team created: " + newTeam.getName());
+            return Response.status(Response.Status.CREATED).entity(newTeam).build();
         }
     }
 
@@ -187,8 +192,8 @@ public class TeamResource extends AlpineResource {
             Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid());
             if (team != null) {
                 team.setName(jsonTeam.getName());
-                //todo: set permissions
-                team = qm.updateTeam(jsonTeam);
+                updatePermissions(qm, team, jsonTeam.getPermissions());
+                team = qm.updateTeam(team);
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT, "Team updated: " + team.getName());
                 return Response.ok(team).build();
             } else {
@@ -440,5 +445,28 @@ public class TeamResource extends AlpineResource {
         }
         // Authentication is not enabled, but we need to return a positive response without any principal data.
         return Response.ok().build();
+    }
+
+    /**
+     * Sets a team's permissions.
+     *
+     * @param qm                The QueryManager to use to retrieve permissions.
+     * @param team              The team to update.
+     * @param wantedPermissions The permissions to set on the team. If null, the permissions will not be updated.
+     */
+    private void updatePermissions(QueryManager qm, Team team, List<Permission> wantedPermissions) {
+        if (wantedPermissions == null) {
+            return;
+        }
+
+        final var permissions = wantedPermissions.stream()
+                .map(Permission::getName)
+                .distinct()
+                .map(qm::getPermission)
+                .filter(Objects::nonNull)
+                .toList();
+
+        team.setPermissions(permissions);
+        qm.persist(team);
     }
 }

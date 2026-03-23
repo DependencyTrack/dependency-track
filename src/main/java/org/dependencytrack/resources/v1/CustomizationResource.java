@@ -439,6 +439,64 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
         }
     }
 
+
+    @GET
+    @Path("/vulnerability-source")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Retrieve vulnerability source options",
+               description = "Retrieves the admin-configurable vulnerability source of discovery dropdown options")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Vulnerability source options retrieved successfully")
+    })
+    public Response getVulnerabilitySourceOptions() {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final ConfigProperty prop = qm.getConfigProperty(
+                    ConfigPropertyConstants.VULNERABILITY_SOURCE_OPTIONS.getGroupName(),
+                    ConfigPropertyConstants.VULNERABILITY_SOURCE_OPTIONS.getPropertyName());
+            final String value = (prop != null) ? prop.getPropertyValue() : null;
+            if (JsonUtil.isBlankJson(value)) {
+                final String defaultValue = ConfigPropertyConstants.VULNERABILITY_SOURCE_OPTIONS.getDefaultPropertyValue();
+                return Response.ok(defaultValue).type(MediaType.APPLICATION_JSON).build();
+            }
+            return Response.ok(value).type(MediaType.APPLICATION_JSON).build();
+        }
+    }
+
+    @PUT
+    @Path("/vulnerability-source")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @PermissionRequired(Permissions.Constants.SYSTEM_CONFIGURATION)
+    @Operation(summary = "Update vulnerability source options",
+               description = "Updates the admin-configurable vulnerability source of discovery dropdown options")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Vulnerability source options updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input provided"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
+    public Response updateVulnerabilitySourceOptions(String jsonInput) {
+        if (JsonUtil.isBlankJson(jsonInput)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Vulnerability source configuration cannot be empty").build();
+        }
+        try {
+            final JSONObject json = new JSONObject(jsonInput);
+            if (!json.has("enabled") || !json.has("values")) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("Missing required field: 'enabled' and 'values' are required").build();
+            }
+        } catch (JSONException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Invalid JSON: " + e.getMessage()).build();
+        }
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            updateConfigProperty(qm, ConfigPropertyConstants.VULNERABILITY_SOURCE_OPTIONS, jsonInput);
+            return Response.noContent().build();
+        }
+    }
+
+
     private String getConfigPropertyValue(final QueryManager qm, final ConfigPropertyConstants propertyConstant) {
         final ConfigProperty property = qm.getConfigProperty(
                 propertyConstant.getGroupName(),

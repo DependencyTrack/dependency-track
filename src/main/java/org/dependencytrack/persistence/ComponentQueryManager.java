@@ -793,13 +793,11 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     }
 
     /**
-     * Returns a list of Components that match the given VulnerableSoftware based on PURL or CPE.
-     * This is used to automatically link manually created vulnerabilities to existing components.
-     * The matching is done on type/namespace/name (for PURL) or vendor/product (for CPE),
-     * and version matching is performed separately by the caller.
+     * Returns candidate Components for a given VulnerableSoftware based on PURL or CPE presence.
+     * Final identity and version matching are performed by the caller using the shared matcher.
      * 
      * @param vs the VulnerableSoftware to match against
-     * @return a list of matching Component objects
+     * @return a list of candidate Component objects
      */
     @SuppressWarnings("unchecked")
     public List<Component> getComponentsMatchingVulnerableSoftware(final VulnerableSoftware vs) {
@@ -811,83 +809,48 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                      ", purlType=" + vs.getPurlType() + ", purlName=" + vs.getPurlName() +
                      ", vendor=" + vs.getVendor() + ", product=" + vs.getProduct());
 
-        List<Component> results = new ArrayList<>();
-
-        // Try matching by PURL
-        String purlType = vs.getPurlType();
-        String purlName = vs.getPurlName();
-        String purlNamespace = vs.getPurlNamespace();
-        
-        // If purlType/purlName not set but full purl is available, try to parse it
-        if ((purlType == null || purlName == null) && vs.getPurl() != null) {
-            try {
-                PackageURL parsedPurl = new PackageURL(vs.getPurl());
-                purlType = parsedPurl.getType();
-                purlName = parsedPurl.getName();
-                purlNamespace = parsedPurl.getNamespace();
-                LOGGER.debug("Parsed PURL: type=" + purlType + ", namespace=" + purlNamespace + ", name=" + purlName);
-            } catch (MalformedPackageURLException e) {
-                LOGGER.debug("Failed to parse PURL: " + vs.getPurl(), e);
+        final Query<Component> query = pm.newQuery(Component.class);
+        if (vs.getPurl() != null || (vs.getPurlType() != null && vs.getPurlName() != null)) {
+            query.setFilter("purl != null");
+        } else if (vs.getVendor() != null && vs.getProduct() != null) {
+            // Pre-filter by vendor:product substring to avoid full table scan.
+            // The CPE 2.3 format is cpe:2.3:part:vendor:product:version:...
+            // Component CPEs may store special chars escaped (\+) or unescaped (+),
+            // so we search for both forms.
+            final String vendor = vs.getVendor().toLowerCase();
+            final String product = vs.getProduct().toLowerCase();
+            final String vendorProduct = ":" + vendor + ":" + product;
+            // Escape CPE special characters for the escaped-form search
+            final String escapedVendorProduct = ":" + escapeCpeValue(vendor) + ":" + escapeCpeValue(product);
+            if (vendorProduct.equals(escapedVendorProduct)) {
+                query.setFilter("cpe != null && cpe.toLowerCase().indexOf(:vendorProduct) >= 0");
+                query.setNamedParameters(java.util.Map.of("vendorProduct", vendorProduct));
+            } else {
+                query.setFilter("cpe != null && (cpe.toLowerCase().indexOf(:vendorProduct) >= 0 || cpe.toLowerCase().indexOf(:escapedVendorProduct) >= 0)");
+                query.setNamedParameters(java.util.Map.of("vendorProduct", vendorProduct, "escapedVendorProduct", escapedVendorProduct));
             }
-        }
-
-        // Match by PURL (type, namespace, name) - version matching is done separately
-        if (purlType != null && purlName != null) {
-            // Build a PURL prefix to search for
-            StringBuilder purlPrefix = new StringBuilder("pkg:");
-            purlPrefix.append(purlType.toLowerCase());
-            purlPrefix.append("/");
-            if (purlNamespace != null && !purlNamespace.isEmpty()) {
-                purlPrefix.append(purlNamespace.toLowerCase());
-                purlPrefix.append("/");
-            }
-            purlPrefix.append(purlName.toLowerCase());
-            
-            String prefix = purlPrefix.toString();
-            LOGGER.debug("Searching for components with purl starting with: " + prefix);
-            
-            // Use startsWith for simpler matching
-            // Match purl that starts with prefix followed by @ (version start) or ? (qualifiers) or end
-            final Query<Component> query = pm.newQuery(Component.class);
-            query.setFilter("purl != null && (purl.toLowerCase().startsWith(:prefix1) || purl.toLowerCase().startsWith(:prefix2))");
-            query.setNamedParameters(Map.of(
-                "prefix1", prefix + "@",  // Has version
-                "prefix2", prefix + "?"   // Has qualifiers without version (unlikely but possible)
-            ));
-            
-            try {
-                List<Component> found = (List<Component>) query.executeList();
-                LOGGER.debug("Found " + found.size() + " components matching PURL prefix");
-                results.addAll(found);
-            } finally {
-                query.closeAll();
-            }
-        }
-        // Match by CPE (vendor, product) - version matching is done separately
-        else if (vs.getVendor() != null && vs.getProduct() != null) {
-            String vendor = vs.getVendor().toLowerCase();
-            String product = vs.getProduct().toLowerCase();
-            LOGGER.debug("Searching for components with CPE vendor=" + vendor + ", product=" + product);
-            
-            // CPE 2.3 format: cpe:2.3:part:vendor:product:version:...
-            // Search for components containing the vendor:product pattern
-            final Query<Component> query = pm.newQuery(Component.class);
-            query.setFilter("cpe != null && cpe.toLowerCase().indexOf(:vendorProduct) >= 0");
-            query.setNamedParameters(Map.of("vendorProduct", ":" + vendor + ":" + product + ":"));
-            
-            try {
-                List<Component> found = (List<Component>) query.executeList();
-                LOGGER.debug("Found " + found.size() + " components matching CPE vendor/product");
-                results.addAll(found);
-            } finally {
-                query.closeAll();
-            }
+            LOGGER.debug("Pre-filtering components by CPE vendor:product pattern: " + vendorProduct);
+        } else if (vs.getCpe23() != null || vs.getCpe22() != null) {
+            query.setFilter("cpe != null");
         } else {
             LOGGER.debug("No PURL or CPE info available for matching");
             return Collections.emptyList();
         }
 
-        return results;
+        try {
+            return List.copyOf((List<Component>) query.executeList());
+        } finally {
+            query.closeAll();
+        }
+    }
+
+    /**
+     * Escapes CPE 2.3 special characters with backslash.
+     * Per the CPE spec, characters like + ? * must be escaped with \ in the formatted string.
+     */
+    private static String escapeCpeValue(final String value) {
+        if (value == null) return null;
+        return value.replaceAll("([!\"#$%&'()+,/:;<=>@\\[\\]^`{|}~*?])", "\\\\$1");
     }
 
 }

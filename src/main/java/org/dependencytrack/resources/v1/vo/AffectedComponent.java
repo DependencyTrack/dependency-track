@@ -197,9 +197,21 @@ public class AffectedComponent {
 
     public VulnerableSoftware toVulnerableSoftware() {
         final VulnerableSoftware vs = new VulnerableSoftware();
-        if (IdentityType.CPE == this.identityType && this.identity != null) {
+        final boolean looksLikeCpe = this.identity != null && this.identity.startsWith("cpe:");
+        final boolean looksLikePurl = this.identity != null && this.identity.startsWith("pkg:");
+
+        if ((IdentityType.CPE == this.identityType || looksLikeCpe) && this.identity != null) {
             try {
-                final Cpe cpe = CpeParser.parse(this.identity);
+                Cpe cpe;
+                try {
+                    cpe = CpeParser.parse(this.identity);
+                } catch (CpeParsingException e) {
+                    // CPE 2.3 spec escapes special chars with backslash (e.g., visual_c\+\+).
+                    // The parser may not handle all escaped forms, so try unescaping first.
+                    final String unescaped = this.identity.replaceAll("\\\\([!\"#$%&'()+,/:;<=>@\\[\\]^`{|}~])", "$1");
+                    LOGGER.debug("Retrying CPE parse with unescaped value: " + unescaped);
+                    cpe = CpeParser.parse(unescaped);
+                }
                 vs.setCpe22(cpe.toCpe22Uri());
                 vs.setCpe23(cpe.toCpe23FS());
                 vs.setPart(cpe.getPart().getAbbreviation());
@@ -217,7 +229,7 @@ public class AffectedComponent {
                 LOGGER.warn("Error parsing CPE: " + this.identity + " (skipping)", e);
                 return null;
             }
-        } else if (IdentityType.PURL == this.identityType && this.identity != null) {
+        } else if ((IdentityType.PURL == this.identityType || looksLikePurl) && this.identity != null) {
             try {
                 final PackageURL purl = new PackageURL(this.identity);
                 vs.setPurl(purl.canonicalize());

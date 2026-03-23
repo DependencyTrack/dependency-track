@@ -56,6 +56,6 @@ stages:
               azureSubscription: '$(appserviceconnection)'
               action: 'Restart Azure App Service'
               appType: 'webAppContainer'
-              appName: '$(appServiceName)'
+              WebAppName: '$(appServiceName)'
               resourceGroupName: '$(resourceGroupName)'
 

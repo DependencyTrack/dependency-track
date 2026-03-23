@@ -42,8 +42,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
-import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
@@ -170,6 +170,21 @@ public class AnalysisResource extends AlpineResource {
                 return Response.status(Response.Status.NOT_FOUND).entity("The vulnerability could not be found.").build();
             }
 
+            List<Component> matchingComponents = new ArrayList<>();
+            if(request.isSuppressAllFlag()) {
+                List<Project> allProjects = qm.getProjects().getList(Project.class);
+                for (Project project1 : allProjects) {
+                    List<Component> components = qm.getAllComponents(project1);
+                    for (Component c : components) {
+                        if (c.getName().equals(component.getName()) && c.getVersion().compareTo(component.getVersion()) <= 0) {
+                            matchingComponents.add(c);
+                        }
+                    }
+                }
+            } else {
+                matchingComponents.add(component);
+            }
+
             String commenter = null;
             if (getPrincipal() instanceof UserPrincipal principal) {
                 commenter = principal.getUsername();
@@ -180,23 +195,29 @@ public class AnalysisResource extends AlpineResource {
                 commenter = String.join(", ", teamNames);
             }
 
-            Analysis analysis = qm.getAnalysis(component, vulnerability);
-            if (analysis == null) {
-                analysis = qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_SET, AnalysisJustification.NOT_SET, AnalysisResponse.NOT_SET, null, false);
-            }
-            final var analysisStateChange = AnalysisCommentUtil.makeStateComment(qm, analysis, request.getAnalysisState(), commenter);
-            AnalysisCommentUtil.makeJustificationComment(qm, analysis, request.getAnalysisJustification(), commenter);
-            AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, request.getAnalysisResponse(), commenter);
-            AnalysisCommentUtil.makeAnalysisDetailsComment(qm, analysis, request.getAnalysisDetails(), commenter);
-            final var suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
-            analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed());
+            List<Analysis> analysisList = new ArrayList<>();
+            for (Component currComp : matchingComponents) {
+                Analysis analysis = qm.getAnalysis(currComp, vulnerability);
+                if (analysis == null) {
+                    analysis = qm.makeAnalysis(currComp,vulnerability,AnalysisState.NOT_SET,AnalysisJustification.NOT_SET,AnalysisResponse.NOT_SET,null, false);
+                }
+                final var analysisStateChange = AnalysisCommentUtil.makeStateComment(qm,analysis,request.getAnalysisState(),commenter);
+                AnalysisCommentUtil.makeJustificationComment(qm, analysis, request.getAnalysisJustification(), commenter);
+                AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, request.getAnalysisResponse(), commenter);
+                AnalysisCommentUtil.makeAnalysisDetailsComment(qm, analysis, request.getAnalysisDetails(), commenter);
+                final var suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
+                analysis = qm.makeAnalysis(currComp, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(), request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed());
 
-            final String comment = StringUtils.trimToNull(request.getComment());
-            qm.makeAnalysisComment(analysis, comment, commenter);
-            analysis = qm.getAnalysis(component, vulnerability);
-            NotificationUtil.analyzeNotificationCriteria(qm, analysis, analysisStateChange, suppressionChange);
-            return Response.ok(analysis).build();
+
+                final String comment = StringUtils.trimToNull(request.getComment());
+                qm.makeAnalysisComment(analysis, comment, commenter);
+                analysis = qm.getAnalysis(currComp, vulnerability);
+                analysisList.add(analysis);
+                NotificationUtil.analyzeNotificationCriteria(qm, analysisList, analysisStateChange, suppressionChange);
+            }
+            Analysis trueAnalysis = qm.getAnalysis(component, vulnerability);
+            return Response.ok(trueAnalysis).build();
         }
     }
-
 }
+

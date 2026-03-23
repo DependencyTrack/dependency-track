@@ -47,19 +47,15 @@ stages:
     dependsOn: Build
     condition: and(succeeded(), eq(${{ parameters.enableDeployment }}, true))
     jobs:
-      - deployment: DeployBackend
+      - job: DeployBackend
         displayName: 'Deploy Backend to App Service'
-        environment: 'production'
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - task: AzureAppServiceManage@0
-                  displayName: 'Restart Backend App Service'
-                  inputs:
-                    azureSubscription: '$(appserviceconnection)'
-                    action: 'Restart Azure App Service'
-                    appType: 'webAppContainer'
-                    appName: '$(appServiceName)'
-                    resourceGroupName: '$(resourceGroupName)'
+        steps:
+          - task: AzureAppServiceManage@0
+            displayName: 'Restart Backend App Service'
+            inputs:
+              azureSubscription: '$(appserviceconnection)'
+              action: 'Restart Azure App Service'
+              appType: 'webAppContainer'
+              appName: '$(appServiceName)'
+              resourceGroupName: '$(resourceGroupName)'
 

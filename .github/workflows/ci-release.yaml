@@ -39,9 +39,7 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     permissions:
-      # Required for pushing changes via git command (rather than via GitHub API).
-      # TODO: Use bot credentials for git, or rewrite the "Commit Version" step to use API instead.
-      contents: write
+      contents: write # Required for pushing release branch and committing version via GitHub API
     needs:
       - prepare-release
 
@@ -65,7 +63,7 @@ jobs:
 
       - name: Commit Version
         env:
-          GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |-
           MESSAGE="prepare-release: set version to ${VERSION}"
           CONTENT=$(base64 -i pom.xml)
@@ -104,10 +102,13 @@ jobs:
           gh release create "${{ needs.prepare-release.outputs.version }}" \
             --target "${{ needs.prepare-release.outputs.release-branch }}" \
             --title "${{ needs.prepare-release.outputs.version }}" \
-            --generate-notes
+            --generate-notes \
+            --draft
 
   post-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to update pom.xml via GitHub API
     needs:
       - prepare-release
       - create-release
@@ -127,7 +128,7 @@ jobs:
 
       - name: Commit SNAPSHOT Version
         env:
-          GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |-
           MESSAGE="prepare-iteration: set version to ${NEXT_VERSION}"
           CONTENT=$(base64 -i pom.xml)

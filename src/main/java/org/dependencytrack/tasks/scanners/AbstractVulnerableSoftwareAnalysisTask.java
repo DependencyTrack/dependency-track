@@ -58,19 +58,22 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      *
      * @param qm            the QueryManager to use
      * @param vsList        a list of VulnerableSoftware objects
-     * @param targetVersion the version of the component
      * @param component     the component being analyzed
      */
-    protected void analyzeVersionRange(final QueryManager qm, final List<VulnerableSoftware> vsList,
-            final Cpe targetCpe, final PackageURL targetPURL, final String targetVersion, final Component component,
-            final VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
+    protected void analyzeVersionRange(
+            QueryManager qm,
+            List<VulnerableSoftware> vsList,
+            Cpe targetCpe,
+            PackageURL targetPURL,
+            Component component,
+            VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         boolean ran = false;
         if (targetCpe != null) {
-            analyzeCpeVersionRange(qm, vsList, targetCpe, targetVersion, component, vulnerabilityAnalysisLevel);
+            analyzeCpeVersionRange(qm, vsList, targetCpe, component, vulnerabilityAnalysisLevel);
             ran = true;
         }
         if (targetPURL != null) {
-            analyzePurlVersionRange(qm, vsList, targetPURL, targetVersion, component, vulnerabilityAnalysisLevel);
+            analyzePurlVersionRange(qm, vsList, targetPURL, component, vulnerabilityAnalysisLevel);
             ran = true;
         }
         if (!ran) {
@@ -84,11 +87,10 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             QueryManager qm,
             List<VulnerableSoftware> vsList,
             PackageURL targetPurl,
-            String targetVersion,
             Component component,
             VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         for (final VulnerableSoftware vs : vsList) {
-            if (matchesPurl(vs, targetPurl) && comparePurlVersions(targetPurl, vs, targetVersion)) {
+            if (matchesPurl(vs, targetPurl) && comparePurlVersions(targetPurl, vs)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component,
@@ -104,11 +106,10 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             QueryManager qm,
             List<VulnerableSoftware> vsList,
             Cpe targetCpe,
-            String targetVersion,
             Component component,
             VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel) {
         for (final VulnerableSoftware vs : vsList) {
-            if (matchesCpe(vs, targetCpe, targetVersion) && compareCpeVersions(vs, targetVersion, component)) {
+            if (matchesCpe(vs, targetCpe) && compareCpeVersions(vs, targetCpe, component)) {
                 if (vs.getVulnerabilities() != null) {
                     for (final Vulnerability vulnerability : vs.getVulnerabilities()) {
                         NotificationUtil.analyzeNotificationCriteria(qm, vulnerability, component, vulnerabilityAnalysisLevel);
@@ -123,7 +124,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         return string == null ? null : string.toLowerCase();
     }
 
-    private boolean matchesCpe(final VulnerableSoftware vs, final Cpe targetCpe, final String targetVersion) {
+    private boolean matchesCpe(final VulnerableSoftware vs, final Cpe targetCpe) {
         if (targetCpe == null || vs.getCpe23() == null) {
             return false;
         }
@@ -132,7 +133,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
                 Cpe.compareAttribute(vs.getPart(), toLowerCaseNullable(targetCpe.getPart().getAbbreviation())),
                 Cpe.compareAttribute(vs.getVendor(), toLowerCaseNullable(targetCpe.getVendor())),
                 Cpe.compareAttribute(vs.getProduct(), toLowerCaseNullable(targetCpe.getProduct())),
-                Cpe.compareAttribute(vs.getVersion(), targetVersion),
+                Cpe.compareAttribute(vs.getVersion(), targetCpe.getVersion()),
                 Cpe.compareAttribute(vs.getUpdate(), targetCpe.getUpdate()),
                 Cpe.compareAttribute(vs.getEdition(), targetCpe.getEdition()),
                 Cpe.compareAttribute(vs.getLanguage(), targetCpe.getLanguage()),
@@ -171,7 +172,11 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
                 && Objects.equals(vs.getPurlName(), purl.getName());
     }
 
-    private boolean comparePurlVersions(PackageURL componentPurl, VulnerableSoftware vs, String targetVersion) {
+    private boolean comparePurlVersions(PackageURL componentPurl, VulnerableSoftware vs) {
+        if (componentPurl.getVersion() == null) {
+            return false;
+        }
+
         final String componentDistroQualifier = PurlUtil.getDistroQualifier(componentPurl);
         final String vsDistroQualifier = PurlUtil.getDistroQualifier(vs.getPurl());
 
@@ -209,7 +214,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
                 .flatMap(KnownVersioningSchemes::fromPurl)
                 .orElse(KnownVersioningSchemes.SCHEME_GENERIC);
 
-        return compareWithVers(vs, targetVersion, versioningScheme);
+        return compareWithVers(vs, componentPurl.getVersion(), versioningScheme);
     }
 
     /**
@@ -218,19 +223,19 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
      * versionStartIncluding.
      *
      * @param vs            a reference to the vulnerable software to compare
-     * @param targetVersion the version to compare
+     * @param targetCpe the CPE to compare against
      * @return <code>true</code> if the target version is matched; otherwise
      * <code>false</code>
      * <p>
      * Ported from Dependency-Check v5.2.1
      */
-    private boolean compareCpeVersions(VulnerableSoftware vs, String targetVersion, Component component) {
+    private boolean compareCpeVersions(VulnerableSoftware vs, Cpe targetCpe, Component component) {
         // Modified from original by @nscuro.
         // Special cases for CPE matching of ANY (*) and NA (*) versions.
         // These don't make sense to use for version range comparison and
         // can be dealt with upfront based on the matching documentation:
         // https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf
-        if ("*".equals(targetVersion)) {
+        if ("*".equals(targetCpe.getVersion())) {
             // | No. | Source A-V     | Target A-V | Relation |
             // | :-- | :------------- | :--------- | :------- |
             // | 1   | ANY            | ANY        | EQUAL    |
@@ -238,7 +243,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             // | 13  | i              | ANY        | SUBSET   |
             // | 15  | m + wild cards | ANY        | SUBSET   |
             return true;
-        } else if ("-".equals(targetVersion)) {
+        } else if ("-".equals(targetCpe.getVersion())) {
             // | No. | Source A-V     | Target A-V | Relation |
             // | :-- | :------------- | :--------- | :------- |
             // | 2   | ANY            | NA         | SUPERSET |
@@ -252,7 +257,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
 
         // Modified from original by Steve Springett
         // Added null check: vs.getVersion() != null as purl sources that use version ranges may not have version populated.
-        if (!result && vs.getVersion() != null && Cpe.compareAttribute(vs.getVersion(), targetVersion) != Relation.DISJOINT) {
+        if (!result && vs.getVersion() != null && Cpe.compareAttribute(vs.getVersion(), targetCpe.getVersion()) != Relation.DISJOINT) {
             return true;
         }
 
@@ -262,7 +267,7 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
                 .flatMap(KnownVersioningSchemes::fromPurl)
                 .orElse(KnownVersioningSchemes.SCHEME_GENERIC);
 
-        return compareWithVers(vs, targetVersion, versioningScheme);
+        return compareWithVers(vs, targetCpe.getVersion(), versioningScheme);
     }
 
     private boolean compareWithVers(VulnerableSoftware vs, String targetVersion, String versioningScheme) {

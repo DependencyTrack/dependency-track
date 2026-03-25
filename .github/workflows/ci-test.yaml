@@ -34,6 +34,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up JDK
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # tag=v5.2.0
@@ -52,7 +54,7 @@ jobs:
       # https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
       - name: Publish test coverage
         if: ${{ github.event_name != 'pull_request' && github.repository_owner == 'DependencyTrack' }}
-        uses: codacy/codacy-coverage-reporter-action@v1.3.0
+        uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # tag=v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           language: Java

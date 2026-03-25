@@ -24,9 +24,12 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
     - name: Report Coverage to Codacy
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       run: |-
         bash <(curl -Ls https://coverage.codacy.com/get.sh) report \
-          --project-token ${{ secrets.CODACY_PROJECT_TOKEN }} \
-          --commit-uuid ${{ github.event.workflow_run.head_sha }} \
+          --project-token "${CODACY_PROJECT_TOKEN}" \
+          --commit-uuid "${HEAD_SHA}" \
           --coverage-reports ./target/jacoco-ut/jacoco.xml \
           --language Java

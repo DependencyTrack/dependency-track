@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up JDK
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # tag=v5.2.0
@@ -78,6 +80,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Download Artifacts
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # tag=v8.0.0
@@ -104,19 +108,22 @@ jobs:
 
       - name: Set Container Tags
         id: tags
+        env:
+          REF_NAME: ${{ inputs.ref-name }}
+          APP_VERSION: ${{ inputs.app-version }}
+          DISTRIBUTION: ${{ matrix.distribution }}
         run: |-
-          IMAGE_NAME="docker.io/dependencytrack/${{ matrix.distribution }}"
-          REF_NAME="${{ inputs.ref-name }}"
+          IMAGE_NAME="docker.io/dependencytrack/${DISTRIBUTION}"
           TAGS=""
           TAGS_ALPINE=""
-          
+
           if [[ $REF_NAME == feature-* ]]; then
             TAGS="${IMAGE_NAME}:${REF_NAME,,}"
             TAGS_ALPINE="${IMAGE_NAME}:${REF_NAME,,}-alpine"
           else
-            TAGS="${IMAGE_NAME}:${{ inputs.app-version }}"
-            TAGS_ALPINE="${IMAGE_NAME}:${{ inputs.app-version }}-alpine"
-            if [[ "${{ inputs.app-version }}" != "snapshot" ]]; then
+            TAGS="${IMAGE_NAME}:${APP_VERSION}"
+            TAGS_ALPINE="${IMAGE_NAME}:${APP_VERSION}-alpine"
+            if [[ "${APP_VERSION}" != "snapshot" ]]; then
               TAGS="${TAGS},${IMAGE_NAME}:latest"
               TAGS_ALPINE="${TAGS_ALPINE},${IMAGE_NAME}:latest-alpine"
             fi

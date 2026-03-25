@@ -101,3 +101,68 @@ The DefectDojo documentation says 'If no test_title is provided, the latest test
 * Dependency-Track v4.6.0 or higher
 ![Configure Project](/images/screenshots/defectdojo_global_reimport.png)
 Alternatively, you can turn on the above reimport feature for all projects in one click, by checking on 'Enable reimport' box as shown in the screenshot above.
+
+### Auto Context Creation (Optional)
+
+Instead of manually creating Products and Engagements in DefectDojo for each project, you can enable automatic context creation. When enabled, DefectDojo will automatically create the Product Type, Product, and Engagement if they don't already exist.
+
+#### Prerequisites
+* Manual `defectdojo.engagementId` configuration always takes precedence over auto-create
+* Auto-create is opt-in via global configuration
+
+#### Global Configuration
+
+Enable auto-create by setting the following configuration property:
+
+| Property Name | Default Value | Description |
+|--------------|---------------|-------------|
+| `defectdojo.autocreate.enabled` | `false` | Enable/disable auto context creation |
+| `defectdojo.autocreate.engagementName` | `dependencytrack` | Default engagement name for all projects |
+| `defectdojo.autocreate.productTypeName` | `Dependency Track` | Default product type name for all projects |
+
+#### Per-project Property Overrides (Optional)
+
+You can override the default names on a per-project basis:
+
+| Attribute      | Value                             |
+| ---------------| --------------------------------- |
+| Group Name     | `integrations`                    |
+| Property Name  | `defectdojo.autocreate.productName`         |
+| Property Value | Custom product name (defaults to project name if not set) |
+| Property Type  | `STRING`                          |
+
+| Attribute      | Value                             |
+| ---------------| --------------------------------- |
+| Group Name     | `integrations`                    |
+| Property Name  | `defectdojo.autocreate.engagementName`      |
+| Property Value | Custom engagement name (defaults to global config if not set) |
+| Property Type  | `STRING`                          |
+
+| Attribute      | Value                             |
+| ---------------| --------------------------------- |
+| Group Name     | `integrations`                    |
+| Property Name  | `defectdojo.autocreate.productTypeName`     |
+| Property Value | Custom product type name (defaults to global config if not set) |
+| Property Type  | `STRING`                          |
+
+#### Configuration Priority
+
+The configuration follows this priority order:
+
+1. **Manual `defectdojo.engagementId`** (highest priority) - Uses traditional flow with engagement ID
+2. **Auto-create with per-project overrides** - Uses auto-create with project-specific names
+3. **Auto-create with global defaults** - Uses auto-create with global configuration values
+
+#### Example: Using Auto-create
+
+1. Enable auto-create globally in Dependency-Track configuration:
+   - Set `defectdojo.autocreate.enabled` to `true`
+   - Optionally customize `defectdojo.autocreate.engagementName` and `defectdojo.autocreate.productTypeName`
+
+2. For each project, the system will automatically:
+   - Use the project name as the Product name (or override with `defectdojo.autocreate.productName`)
+   - Use the global engagement name (or override with `defectdojo.autocreate.engagementName`)
+   - Use the global product type name (or override with `defectdojo.autocreate.productTypeName`)
+   - Create these entities in DefectDojo if they don't exist
+
+3. No manual Product or Engagement creation in DefectDojo is required!

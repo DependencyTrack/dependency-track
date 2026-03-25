@@ -25,6 +25,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_ENGAGEMENT_NAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_PRODUCT_TYPE_NAME;
 
 class DefectDojoUploaderTest extends PersistenceCapableTest {
 
@@ -66,6 +69,182 @@ class DefectDojoUploaderTest extends PersistenceCapableTest {
         extension.setQueryManager(qm);
         Assertions.assertFalse(extension.isEnabled());
         Assertions.assertFalse(extension.isProjectConfigured(project));
+    }
+
+    @Test
+    void testAutoCreateEnabled() {
+        qm.createConfigProperty(
+                DEFECTDOJO_AUTOCREATE_ENABLED.getGroupName(),
+                DEFECTDOJO_AUTOCREATE_ENABLED.getPropertyName(),
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                null
+        );
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertTrue(extension.isAutoCreateEnabled());
+    }
+
+    @Test
+    void testAutoCreateDisabled() {
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertFalse(extension.isAutoCreateEnabled());
+    }
+
+    @Test
+    void testProjectConfiguredWithAutoCreate() {
+        qm.createConfigProperty(
+                DEFECTDOJO_AUTOCREATE_ENABLED.getGroupName(),
+                DEFECTDOJO_AUTOCREATE_ENABLED.getPropertyName(),
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                null
+        );
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertTrue(extension.isProjectConfigured(project));
+    }
+
+    @Test
+    void testGetProductNameDefault() {
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertEquals("ACME Example", extension.getProductName(project));
+    }
+
+    @Test
+    void testGetProductNameOverride() {
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        qm.createProjectProperty(
+                project,
+                DEFECTDOJO_ENABLED.getGroupName(),
+                "defectdojo.autocreate.productName",
+                "Custom Product Name",
+                IConfigProperty.PropertyType.STRING,
+                null
+        );
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertEquals("Custom Product Name", extension.getProductName(project));
+    }
+
+    @Test
+    void testGetEngagementNameDefault() {
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertEquals("dependencytrack", extension.getEngagementName(project));
+    }
+
+    @Test
+    void testGetEngagementNameGlobalConfig() {
+        qm.createConfigProperty(
+                DEFECTDOJO_AUTOCREATE_ENGAGEMENT_NAME.getGroupName(),
+                DEFECTDOJO_AUTOCREATE_ENGAGEMENT_NAME.getPropertyName(),
+                "global-engagement",
+                IConfigProperty.PropertyType.STRING,
+                null
+        );
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertEquals("global-engagement", extension.getEngagementName(project));
+    }
+
+    @Test
+    void testGetEngagementNameProjectOverride() {
+        qm.createConfigProperty(
+                DEFECTDOJO_AUTOCREATE_ENGAGEMENT_NAME.getGroupName(),
+                DEFECTDOJO_AUTOCREATE_ENGAGEMENT_NAME.getPropertyName(),
+                "global-engagement",
+                IConfigProperty.PropertyType.STRING,
+                null
+        );
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        qm.createProjectProperty(
+                project,
+                DEFECTDOJO_ENABLED.getGroupName(),
+                "defectdojo.autocreate.engagementName",
+                "project-engagement",
+                IConfigProperty.PropertyType.STRING,
+                null
+        );
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertEquals("project-engagement", extension.getEngagementName(project));
+    }
+
+    @Test
+    void testGetProductTypeNameDefault() {
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertEquals("Dependency Track", extension.getProductTypeName(project));
+    }
+
+    @Test
+    void testGetProductTypeNameGlobalConfig() {
+        qm.createConfigProperty(
+                DEFECTDOJO_AUTOCREATE_PRODUCT_TYPE_NAME.getGroupName(),
+                DEFECTDOJO_AUTOCREATE_PRODUCT_TYPE_NAME.getPropertyName(),
+                "Custom Product Type",
+                IConfigProperty.PropertyType.STRING,
+                null
+        );
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertEquals("Custom Product Type", extension.getProductTypeName(project));
+    }
+
+    @Test
+    void testGetProductTypeNameProjectOverride() {
+        qm.createConfigProperty(
+                DEFECTDOJO_AUTOCREATE_PRODUCT_TYPE_NAME.getGroupName(),
+                DEFECTDOJO_AUTOCREATE_PRODUCT_TYPE_NAME.getPropertyName(),
+                "Global Product Type",
+                IConfigProperty.PropertyType.STRING,
+                null
+        );
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        qm.createProjectProperty(
+                project,
+                DEFECTDOJO_ENABLED.getGroupName(),
+                "defectdojo.autocreate.productTypeName",
+                "Project Product Type",
+                IConfigProperty.PropertyType.STRING,
+                null
+        );
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertEquals("Project Product Type", extension.getProductTypeName(project));
+    }
+
+    @Test
+    void testManualEngagementIdTakesPrecedence() {
+        qm.createConfigProperty(
+                DEFECTDOJO_AUTOCREATE_ENABLED.getGroupName(),
+                DEFECTDOJO_AUTOCREATE_ENABLED.getPropertyName(),
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                null
+        );
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        qm.createProjectProperty(
+                project,
+                DEFECTDOJO_ENABLED.getGroupName(),
+                "defectdojo.engagementId",
+                "12345",
+                IConfigProperty.PropertyType.STRING,
+                null
+        );
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        // Project should be configured even with auto-create enabled
+        Assertions.assertTrue(extension.isProjectConfigured(project));
     }
 
 }

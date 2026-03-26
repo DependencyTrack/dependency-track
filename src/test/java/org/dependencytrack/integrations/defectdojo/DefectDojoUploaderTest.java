@@ -28,6 +28,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABL
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_ENGAGEMENT_NAME;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_PRODUCT_TYPE_NAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT;
 
 class DefectDojoUploaderTest extends PersistenceCapableTest {
 
@@ -245,6 +246,52 @@ class DefectDojoUploaderTest extends PersistenceCapableTest {
         extension.setQueryManager(qm);
         // Project should be configured even with auto-create enabled
         Assertions.assertTrue(extension.isProjectConfigured(project));
+    }
+
+    @Test
+    void testDeduplicationOnEngagementDefault() {
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertFalse(extension.isDeduplicationOnEngagementEnabled(project));
+    }
+
+    @Test
+    void testDeduplicationOnEngagementGlobalConfig() {
+        qm.createConfigProperty(
+                DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT.getGroupName(),
+                DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT.getPropertyName(),
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                null
+        );
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertTrue(extension.isDeduplicationOnEngagementEnabled(project));
+    }
+
+    @Test
+    void testDeduplicationOnEngagementProjectOverride() {
+        qm.createConfigProperty(
+                DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT.getGroupName(),
+                DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT.getPropertyName(),
+                "false",
+                IConfigProperty.PropertyType.BOOLEAN,
+                null
+        );
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        qm.createProjectProperty(
+                project,
+                DEFECTDOJO_ENABLED.getGroupName(),
+                "defectdojo.autocreate.deduplicationOnEngagement",
+                "true",
+                IConfigProperty.PropertyType.BOOLEAN,
+                null
+        );
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertTrue(extension.isDeduplicationOnEngagementEnabled(project));
     }
 
 }

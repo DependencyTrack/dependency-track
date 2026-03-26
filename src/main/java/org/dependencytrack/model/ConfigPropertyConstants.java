@@ -102,6 +102,7 @@ public enum ConfigPropertyConstants {
     DEFECTDOJO_AUTOCREATE_ENABLED("integrations", "defectdojo.autocreate.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable DefectDojo auto context creation"),
     DEFECTDOJO_AUTOCREATE_ENGAGEMENT_NAME("integrations", "defectdojo.autocreate.engagementName", "dependencytrack", PropertyType.STRING, "Default engagement name for DefectDojo auto context creation"),
     DEFECTDOJO_AUTOCREATE_PRODUCT_TYPE_NAME("integrations", "defectdojo.autocreate.productTypeName", "Dependency Track", PropertyType.STRING, "Default product type name for DefectDojo auto context creation"),
+    DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT("integrations", "defectdojo.autocreate.deduplicationOnEngagement", "false", PropertyType.BOOLEAN, "Flag to enable deduplication on engagement level instead of product level"),
     KENNA_ENABLED("integrations", "kenna.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable Kenna Security integration"),
     KENNA_API_URL("integrations", "kenna.api.url", "https://api.kennasecurity.com", PropertyType.STRING, "Kenna Security API URL"),
     KENNA_SYNC_CADENCE("integrations", "kenna.sync.cadence", "60", PropertyType.INTEGER, "The cadence (in minutes) to upload to Kenna Security"),

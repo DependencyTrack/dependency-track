@@ -41,6 +41,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMP
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_ENGAGEMENT_NAME;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_PRODUCT_TYPE_NAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT;
 
 public class DefectDojoUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 
@@ -53,6 +54,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     private static final String AUTOCREATE_PRODUCT_NAME_PROPERTY = "defectdojo.autocreate.productName";
     private static final String AUTOCREATE_ENGAGEMENT_NAME_PROPERTY = "defectdojo.autocreate.engagementName";
     private static final String AUTOCREATE_PRODUCT_TYPE_NAME_PROPERTY = "defectdojo.autocreate.productTypeName";
+    private static final String AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT_PROPERTY = "defectdojo.autocreate.deduplicationOnEngagement";
 
     public boolean isReimportConfigured(final Project project) {
         final ProjectProperty reimport = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), REIMPORT_PROPERTY);
@@ -127,6 +129,18 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         return "Dependency Track";
     }
 
+    public boolean isDeduplicationOnEngagementEnabled(final Project project) {
+        final ProjectProperty deduplicationOnEngagement = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT_PROPERTY);
+        if (deduplicationOnEngagement != null) {
+            return Boolean.parseBoolean(deduplicationOnEngagement.getPropertyValue());
+        }
+        final ConfigProperty globalDeduplicationOnEngagement = qm.getConfigProperty(DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT.getGroupName(), DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT.getPropertyName());
+        if (globalDeduplicationOnEngagement != null) {
+            return Boolean.parseBoolean(globalDeduplicationOnEngagement.getPropertyValue());
+        }
+        return false;
+    }
+
     @Override
     public String name() {
         return "DefectDojo";
@@ -191,6 +205,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                 final String productTypeName = getProductTypeName(project);
                 final String productName = getProductName(project);
                 final String engagementName = getEngagementName(project);
+                final boolean deduplicationOnEngagement = isDeduplicationOnEngagementEnabled(project);
 
                 try {
                     if (isReimportConfigured(project) || globalReimportEnabled) {
@@ -207,7 +222,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                             productTypeName,
                             productName,
                             engagementName,
-                            true // Enable auto-create context
+                            true, // Enable auto-create context
+                            deduplicationOnEngagement
                         );
                     } else {
                         // Use import-scan for first-time creation
@@ -221,7 +237,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                             productTypeName,
                             productName,
                             engagementName,
-                            true // Enable auto-create context
+                            true, // Enable auto-create context
+                            deduplicationOnEngagement
                         );
                     }
                     LOGGER.info("Successfully uploaded findings to DefectDojo with auto-created context");

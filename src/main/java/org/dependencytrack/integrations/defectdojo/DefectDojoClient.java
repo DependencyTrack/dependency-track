@@ -56,11 +56,11 @@ public class DefectDojoClient {
     }
 
     public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final Boolean verifyFindings, final String testTitle) {
-        uploadDependencyTrackFindings(token, engagementId, findingsJson, verifyFindings, testTitle, null, null, null, false);
+        uploadDependencyTrackFindings(token, engagementId, findingsJson, verifyFindings, testTitle, null, null, null, false, false);
     }
 
     public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final Boolean verifyFindings, final String testTitle,
-                                               final String productTypeName, final String productName, final String engagementName, final boolean autoCreateContext) {
+                                               final String productTypeName, final String productName, final String engagementName, final boolean autoCreateContext, final boolean deduplicationOnEngagement) {
         LOGGER.debug("Uploading Dependency-Track findings to DefectDojo");
         HttpPost request = new HttpPost(baseURL + "/api/v2/import-scan/");
         InputStreamBody inputStreamBody = new InputStreamBody(findingsJson, ContentType.APPLICATION_OCTET_STREAM, "findings.json");
@@ -80,6 +80,7 @@ public class DefectDojoClient {
         if (autoCreateContext) {
             // Use auto_create_context with product and engagement names
             builder.addPart("auto_create_context", new StringBody("true", ContentType.MULTIPART_FORM_DATA));
+            builder.addPart("deduplication_on_engagement", new StringBody(Boolean.toString(deduplicationOnEngagement), ContentType.MULTIPART_FORM_DATA));
             if (productTypeName != null) {
                 builder.addPart("product_type_name", new StringBody(productTypeName, ContentType.MULTIPART_FORM_DATA));
             }
@@ -183,7 +184,7 @@ public class DefectDojoClient {
     }
 
     public void reimportDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final String testId, final Boolean doNotReactivate, final Boolean verifyFindings, final String testTitle) {
-        reimportDependencyTrackFindings(token, engagementId, findingsJson, testId, doNotReactivate, verifyFindings, testTitle, null, null, null, false);
+        reimportDependencyTrackFindings(token, engagementId, findingsJson, testId, doNotReactivate, verifyFindings, testTitle, null, null, null, false, false);
     }
 
     /*
@@ -191,7 +192,7 @@ public class DefectDojoClient {
      * The Successfully reimport will also  increase the reimport counter by 1.
      */
     public void reimportDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final String testId, final Boolean doNotReactivate, final Boolean verifyFindings, final String testTitle,
-                                                 final String productTypeName, final String productName, final String engagementName, final boolean autoCreateContext) {
+                                                 final String productTypeName, final String productName, final String engagementName, final boolean autoCreateContext, final boolean deduplicationOnEngagement) {
         LOGGER.debug("Reimporting Dependency-Track findings to DefectDojo");
         HttpPost request = new HttpPost(baseURL + "/api/v2/reimport-scan/");
         InputStreamBody inputStreamBody = new InputStreamBody(findingsJson, ContentType.APPLICATION_OCTET_STREAM, "findings.json");
@@ -212,6 +213,7 @@ public class DefectDojoClient {
         if (autoCreateContext) {
             // Use auto_create_context with product and engagement names
             builder.addPart("auto_create_context", new StringBody("true", ContentType.MULTIPART_FORM_DATA));
+            builder.addPart("deduplication_on_engagement", new StringBody(Boolean.toString(deduplicationOnEngagement), ContentType.MULTIPART_FORM_DATA));
             if (productTypeName != null) {
                 builder.addPart("product_type_name", new StringBody(productTypeName, ContentType.MULTIPART_FORM_DATA));
             }

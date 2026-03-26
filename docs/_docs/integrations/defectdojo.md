@@ -119,6 +119,10 @@ Enable auto-create by setting the following configuration property:
 | `defectdojo.autocreate.enabled` | `false` | Enable/disable auto context creation |
 | `defectdojo.autocreate.engagementName` | `dependencytrack` | Default engagement name for all projects |
 | `defectdojo.autocreate.productTypeName` | `Dependency Track` | Default product type name for all projects |
+| `defectdojo.autocreate.deduplicationOnEngagement` | `false` | Enable deduplication at engagement level instead of product level |
+
+**About Deduplication:**
+By default, DefectDojo deduplicates findings at the **Product level**, meaning duplicate findings are identified across all engagements within a product. Setting `deduplicationOnEngagement` to `true` changes this to deduplicate at the **Engagement level** instead, isolating duplicate detection within each engagement.
 
 #### Per-project Property Overrides (Optional)
 
@@ -144,6 +148,13 @@ You can override the default names on a per-project basis:
 | Property Name  | `defectdojo.autocreate.productTypeName`     |
 | Property Value | Custom product type name (defaults to global config if not set) |
 | Property Type  | `STRING`                          |
+
+| Attribute      | Value                             |
+| ---------------| --------------------------------- |
+| Group Name     | `integrations`                    |
+| Property Name  | `defectdojo.autocreate.deduplicationOnEngagement`     |
+| Property Value | `true` or `false` (defaults to global config if not set) |
+| Property Type  | `BOOLEAN`                         |
 
 #### Configuration Priority
 

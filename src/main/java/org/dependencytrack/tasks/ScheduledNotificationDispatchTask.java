@@ -23,6 +23,7 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import alpine.server.util.DbUtil;
 import org.dependencytrack.event.ScheduledNotificationDispatchEvent;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
@@ -398,10 +399,13 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
             queryParams.put("projectId" + index, projectId);
         }
 
+        // MySQL and MariaDB do not support casting to BIGINT. Use SIGNED instead.
+        final String bigintCastTarget = DbUtil.isMysql() ? "SIGNED" : "BIGINT";
+
         final Query<?> query = qm.getPersistenceManager().newQuery(Query.SQL, /* language=SQL */ """
-                SELECT "COMPONENT"."PROJECT_ID" AS "projectId"
-                     , "COMPONENT"."ID" AS "componentId"
-                     , "COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID" AS "vulnabilityId"
+                SELECT CAST("COMPONENT"."PROJECT_ID" AS %1$s) AS "projectId"
+                     , CAST("COMPONENT"."ID" AS %1$s) AS "componentId"
+                     , CAST("COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID" AS %1$s) AS "vulnerabilityId"
                      , "FINDINGATTRIBUTION"."ANALYZERIDENTITY" AS "analyzerIdentity"
                      , "FINDINGATTRIBUTION"."ATTRIBUTED_ON" AS "attributedOn"
                      , "FINDINGATTRIBUTION"."REFERENCE_URL" AS "referenceUrl"
@@ -417,8 +421,8 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
                     ON "ANALYSIS"."COMPONENT_ID" = "COMPONENT"."ID"
                    AND "ANALYSIS"."VULNERABILITY_ID" = "COMPONENTS_VULNERABILITIES"."VULNERABILITY_ID"
                  WHERE "FINDINGATTRIBUTION"."ATTRIBUTED_ON" >= :sinceAttributedOn
-                   AND %s
-                """.formatted(projectIdCondition));
+                   AND %2$s
+                """.formatted(bigintCastTarget, projectIdCondition));
         query.setNamedParameters(queryParams);
         try {
             return List.copyOf(query.executeResultList(NewFinding.class));

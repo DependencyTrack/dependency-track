@@ -171,6 +171,9 @@ public final class NotificationUtil {
                     case RESOLVED:
                         title = NotificationConstants.Title.ANALYSIS_DECISION_RESOLVED;
                         break;
+                    case RESOLVED_WITH_PEDIGREE:
+                        title = NotificationConstants.Title.ANALYSIS_DECISION_RESOLVED_WITH_PEDIGREE;
+                        break;
                 }
             } else if (suppressionChange) {
                 if (analysis.isSuppressed()) {

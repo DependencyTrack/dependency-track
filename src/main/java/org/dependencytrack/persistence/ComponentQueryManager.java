@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -322,6 +323,13 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             component.getProject().getCpe();
             component.getProject().getUuid();
         }
+        // Populate ancestor paths for all component projects
+        final List<Project> componentProjects = result.getList(Component.class).stream()
+                .map(Component::getProject)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        populateAncestorPaths(componentProjects);
         return result;
     }
 

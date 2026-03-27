@@ -85,8 +85,9 @@ ENTRYPOINT ["/usr/bin/tini", "--"]
 # Launch Dependency-Track
 CMD [ \
     "/bin/sh", "-c", \
-    "exec java \
-        ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
+    "java_opts=\$(printf '%s' \"\$JAVA_OPTIONS\" | sed \"s/^['\\\"']//;s/['\\\"']\\$//\"); \
+    extra_opts=\$(printf '%s' \"\$EXTRA_JAVA_OPTIONS\" | sed \"s/^['\\\"']//;s/['\\\"']\\$//\"); \
+    exec java \$java_opts \$extra_opts \
         --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
         --sun-misc-unsafe-memory-access=allow \
         -Dlogback.configurationFile=${LOGGING_CONFIG_PATH} \

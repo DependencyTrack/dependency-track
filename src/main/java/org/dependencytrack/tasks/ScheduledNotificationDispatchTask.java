@@ -23,6 +23,7 @@ import alpine.event.framework.Event;
 import alpine.event.framework.Subscriber;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import alpine.persistence.PaginatedResult;
 import alpine.server.util.DbUtil;
 import org.dependencytrack.event.ScheduledNotificationDispatchEvent;
 import org.dependencytrack.model.AnalysisState;
@@ -32,6 +33,7 @@ import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.VulnIdAndSource;
 import org.dependencytrack.model.Vulnerability;
@@ -70,7 +72,6 @@ import static org.dependencytrack.common.MdcKeys.MDC_NOTIFICATION_RULE_UUID;
  * @since 4.13.0
  */
 public class ScheduledNotificationDispatchTask implements Subscriber {
-
     private static final Logger LOGGER = Logger.getLogger(ScheduledNotificationDispatchTask.class);
 
     @Override
@@ -152,9 +153,10 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
     }
 
     private Notification createNewVulnerabilitiesNotification(final QueryManager qm, final NotificationRule rule) {
-        if (rule.getProjects() == null || rule.getProjects().isEmpty()) {
+        if ((rule.getProjects() == null || rule.getProjects().isEmpty())
+                && (rule.getTags() == null || rule.getTags().isEmpty())) {
             throw new IllegalStateException(
-                    "Scheduled notifications for group %s must be limited to at least one project".formatted(
+                    "Scheduled notifications for group %s must be limited to at least one project or tag".formatted(
                             NotificationGroup.NEW_VULNERABILITIES_SUMMARY));
         }
 
@@ -243,9 +245,10 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
     }
 
     private Notification createNewPolicyViolationsNotification(final QueryManager qm, final NotificationRule rule) {
-        if (rule.getProjects() == null || rule.getProjects().isEmpty()) {
+        if ((rule.getProjects() == null || rule.getProjects().isEmpty())
+                && (rule.getTags() == null || rule.getTags().isEmpty())) {
             throw new IllegalStateException(
-                    "Scheduled notifications for group %s must be limited to at least one project".formatted(
+                    "Scheduled notifications for group %s must be limited to at least one project or tag".formatted(
                             NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY));
         }
 
@@ -326,7 +329,10 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
     }
 
     private Set<Long> getApplicableProjectIds(final QueryManager qm, final NotificationRule rule) {
-        if (rule.getProjects() == null || rule.getProjects().isEmpty()) {
+        final boolean hasProjects = rule.getProjects() != null && !rule.getProjects().isEmpty();
+        final boolean hasTags = rule.getTags() != null && !rule.getTags().isEmpty();
+
+        if (!hasProjects && !hasTags) {
             return Collections.emptySet();
         }
 
@@ -334,16 +340,50 @@ public class ScheduledNotificationDispatchTask implements Subscriber {
         //  but it's too much of a hassle getting it to work across
         //  all the RDBMSes we have to support still.
 
-        final var projectIds = new HashSet<Long>();
-        for (final Project project : rule.getProjects()) {
-            if (!project.isActive()) {
-                continue;
+        final Set<Long> projectIdsFromProjects;
+        if (hasProjects) {
+            projectIdsFromProjects = new HashSet<>();
+            for (final Project project : rule.getProjects()) {
+                if (!project.isActive()) {
+                    continue;
+                }
+
+                projectIdsFromProjects.add(project.getId());
+
+                if (rule.isNotifyChildren()) {
+                    projectIdsFromProjects.addAll(getActiveChildProjectIds(qm, project.getId()));
+                }
             }
+        } else {
+            projectIdsFromProjects = null;
+        }
 
-            projectIds.add(project.getId());
+        final Set<Long> projectIdsFromTags;
+        if (hasTags) {
+            projectIdsFromTags = getProjectIdsByTags(qm, rule.getTags(), rule.isNotifyChildren());
+        } else {
+            projectIdsFromTags = null;
+        }
 
-            if (rule.isNotifyChildren()) {
-                projectIds.addAll(getActiveChildProjectIds(qm, project.getId()));
+        // When both projects and tags are defined, return the intersection.
+        // When only one is defined, return that set.
+        if (projectIdsFromProjects != null && projectIdsFromTags != null) {
+            projectIdsFromProjects.retainAll(projectIdsFromTags);
+            return projectIdsFromProjects;
+        } else if (projectIdsFromProjects != null) {
+            return projectIdsFromProjects;
+        } else {
+            return projectIdsFromTags;
+        }
+    }
+
+    private Set<Long> getProjectIdsByTags(final QueryManager qm, final Set<Tag> tags, final boolean notifyChildren) {
+        final var projectIds = new HashSet<Long>();
+
+        for (final Tag tag : tags) {
+            PaginatedResult paginatedResult = qm.getProjects(tag, false, true, !notifyChildren);
+            for (Project project : paginatedResult.getList(Project.class)) {
+                projectIds.add(project.getId());
             }
         }
 

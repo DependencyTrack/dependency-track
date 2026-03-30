@@ -24,6 +24,8 @@ jobs:
           fi
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Parse Version from POM
         id: parse
@@ -55,6 +57,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Download Artifacts
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # tag=v8.0.0
@@ -76,20 +80,21 @@ jobs:
       - name: Update Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.read-version.outputs.version }}
         run: |-
           cat << EOF >> .github/default-release-notes.md
           \`\`\`text
           $(cat target/checksums.txt)
           \`\`\`
           EOF
-          
-          gh release view ${{ needs.read-version.outputs.version }} \
+
+          gh release view "${VERSION}" \
             --json body --jq .body >> .github/default-release-notes.md
 
-          gh release edit ${{ needs.read-version.outputs.version }} \
+          gh release edit "${VERSION}" \
             --notes-file ".github/default-release-notes.md"
 
-          gh release upload ${{ needs.read-version.outputs.version }} \
+          gh release upload "${VERSION}" \
             --clobber \
             target/dependency-track-apiserver.jar \
             target/dependency-track-bundled.jar \
@@ -99,6 +104,7 @@ jobs:
       - name: Publish Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.read-version.outputs.version }}
         run: |-
-          gh release edit ${{ needs.read-version.outputs.version }} \
+          gh release edit "${VERSION}" \
             --draft=false

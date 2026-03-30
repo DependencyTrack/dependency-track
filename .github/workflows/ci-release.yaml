@@ -21,11 +21,15 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Environment
         id: variables
+        env:
+          VERSION_OVERWRITE: ${{ github.event.inputs.version-overwrite }}
         run: |-
-          VERSION="${{ github.event.inputs.version-overwrite }}"
+          VERSION="${VERSION_OVERWRITE}"
           if [[ -z ${VERSION} ]]; then
             CURRENT_SNAPSHOT=`yq -p=xml '.project.version' pom.xml`
             VERSION=${CURRENT_SNAPSHOT%-SNAPSHOT}
@@ -98,10 +102,12 @@ jobs:
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_TOKEN }}
+          RELEASE_VERSION: ${{ needs.prepare-release.outputs.version }}
+          RELEASE_BRANCH: ${{ needs.prepare-release.outputs.release-branch }}
         run: |-
-          gh release create "${{ needs.prepare-release.outputs.version }}" \
-            --target "${{ needs.prepare-release.outputs.release-branch }}" \
-            --title "${{ needs.prepare-release.outputs.version }}" \
+          gh release create "${RELEASE_VERSION}" \
+            --target "${RELEASE_BRANCH}" \
+            --title "${RELEASE_VERSION}" \
             --generate-notes \
             --draft
 
@@ -122,6 +128,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
         with:
           ref: ${{ needs.prepare-release.outputs.release-branch }}
+          persist-credentials: false
 
       - name: Set SNAPSHOT Version after Release
         run: mvn -B --no-transfer-progress versions:set -DnewVersion=${NEXT_VERSION}

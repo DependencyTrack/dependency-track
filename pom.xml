@@ -598,6 +598,33 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.datanucleus</groupId>
+                <artifactId>datanucleus-maven-plugin</artifactId>
+                <configuration>
+                    <api>JDO</api>
+                    <metadataDirectory>${project.build.outputDirectory}</metadataDirectory>
+                    <metadataIncludes>org/dependencytrack/model/**/*.class</metadataIncludes>
+                    <verbose>true</verbose>
+                    <fork>false</fork>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>enhance-dependency-track-models</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>enhance</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                        <version>1.7.36</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>

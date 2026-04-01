@@ -252,6 +252,40 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
     }
 
     /**
+     * [CUSTOM: RISK-MATRIX-VEX-IMPORT]
+     * Updates only the risk matrix fields of an existing Analysis record.
+     * Used by VEX importer to restore risk ratings from imported VEX files.
+     * Analysis state, justification, response, and suppression are not modified.
+     */
+    public Analysis updateAnalysisRiskFields(Component component, Vulnerability vulnerability,
+                                              String riskImpact, String riskLikelihood,
+                                              String residualRiskImpact, String residualRiskLikelihood,
+                                              String riskJustification, String residualRiskJustification) {
+        Analysis analysis = getAnalysis(component, vulnerability);
+        if (analysis == null) {
+            return null;
+        }
+        analysis.setRiskImpact(StringUtils.trimToNull(riskImpact));
+        analysis.setRiskLikelihood(StringUtils.trimToNull(riskLikelihood));
+        if (analysis.getRiskImpact() != null && analysis.getRiskLikelihood() != null) {
+            analysis.setRiskScore(calculateRiskScore(analysis.getRiskImpact(), analysis.getRiskLikelihood()));
+        } else {
+            analysis.setRiskScore(null);
+        }
+        analysis.setResidualRiskImpact(StringUtils.trimToNull(residualRiskImpact));
+        analysis.setResidualRiskLikelihood(StringUtils.trimToNull(residualRiskLikelihood));
+        if (analysis.getResidualRiskImpact() != null && analysis.getResidualRiskLikelihood() != null) {
+            analysis.setResidualRiskScore(calculateRiskScore(analysis.getResidualRiskImpact(), analysis.getResidualRiskLikelihood()));
+        } else {
+            analysis.setResidualRiskScore(null);
+        }
+        analysis.setRiskJustification(StringUtils.trimToNull(riskJustification));
+        analysis.setResidualRiskJustification(StringUtils.trimToNull(residualRiskJustification));
+        analysis = persist(analysis);
+        return getAnalysis(analysis.getComponent(), analysis.getVulnerability());
+    }
+
+    /**
      * Adds a new analysis comment to the specified analysis.
      * @param analysis the analysis object to add a comment to
      * @param comment the comment to make

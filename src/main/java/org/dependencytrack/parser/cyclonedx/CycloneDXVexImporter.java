@@ -29,6 +29,7 @@ import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
@@ -170,5 +171,105 @@ public class CycloneDXVexImporter {
             }
         }
         qm.makeAnalysis(component, refreshedVuln, analysisState, analysisJustification, analysisResponse, analysisDetails, suppress);
+
+        // [CUSTOM: RISK-MATRIX-VEX-IMPORT] Parse custom risk rating if risk matrix is enabled
+        applyCustomRiskRating(qm, component, refreshedVuln, analysis, cdxVuln);
+    }
+
+    /**
+     * [CUSTOM: RISK-MATRIX-VEX-IMPORT]
+     * Parses the custom INTERNAL-RISK-ASSESSMENT rating from the VEX file and restores
+     * riskImpact, riskLikelihood, residualRiskImpact, residualRiskLikelihood, riskJustification,
+     * residualRiskJustification into the Analysis record.
+     *
+     * Only processes if the custom risk matrix is enabled in admin settings.
+     *
+     * Vector format: "Risk before mitigation:impact/likelihood:calculated; Risk after mitigation:impact/likelihood:calculated"
+     * Justification format: "Risk before mitigation:text; Risk after mitigation:text"
+     */
+    private static void applyCustomRiskRating(final QueryManager qm, final Component component,
+                                               final Vulnerability vuln, final Analysis analysis,
+                                               final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln) {
+        // Check if custom risk matrix is enabled
+        final var riskMatrixProp = qm.getConfigProperty(
+                ConfigPropertyConstants.RISK_MATRIX_CONFIG.getGroupName(),
+                ConfigPropertyConstants.RISK_MATRIX_CONFIG.getPropertyName());
+        if (riskMatrixProp == null || riskMatrixProp.getPropertyValue() == null) return;
+        try {
+            final jakarta.json.JsonObject matrixConfig = jakarta.json.Json.createReader(
+                    new java.io.StringReader(riskMatrixProp.getPropertyValue())).readObject();
+            if (!matrixConfig.getBoolean("enabled", false)) return;
+        } catch (Exception e) {
+            return;
+        }
+
+        if (cdxVuln.getRatings() == null) return;
+
+        // Find the INTERNAL-RISK-ASSESSMENT rating
+        final org.cyclonedx.model.vulnerability.Vulnerability.Rating customRating = cdxVuln.getRatings().stream()
+                .filter(r -> r.getSource() != null && "INTERNAL-RISK-ASSESSMENT".equals(r.getSource().getName()))
+                .findFirst()
+                .orElse(null);
+        if (customRating == null || customRating.getVector() == null) return;
+
+        // Parse vector: "Risk before mitigation:impact/likelihood:calculated; Risk after mitigation:impact/likelihood:calculated"
+        String riskImpact = null, riskLikelihood = null;
+        String residualRiskImpact = null, residualRiskLikelihood = null;
+
+        final String[] parts = customRating.getVector().split(";");
+        for (final String part : parts) {
+            final String trimmed = part.trim();
+            if (trimmed.startsWith("Risk before mitigation:")) {
+                final String data = trimmed.substring("Risk before mitigation:".length());
+                final String[] segments = data.split(":", 2);
+                if (segments.length >= 1) {
+                    final String[] impactLikelihood = segments[0].split("/", 2);
+                    if (impactLikelihood.length == 2) {
+                        riskImpact = trimToNull(impactLikelihood[0]);
+                        riskLikelihood = trimToNull(impactLikelihood[1]);
+                    }
+                }
+            } else if (trimmed.startsWith("Risk after mitigation:")) {
+                final String data = trimmed.substring("Risk after mitigation:".length());
+                final String[] segments = data.split(":", 2);
+                if (segments.length >= 1) {
+                    final String[] impactLikelihood = segments[0].split("/", 2);
+                    if (impactLikelihood.length == 2) {
+                        residualRiskImpact = trimToNull(impactLikelihood[0]);
+                        residualRiskLikelihood = trimToNull(impactLikelihood[1]);
+                    }
+                }
+            }
+        }
+
+        // Parse justification: "Risk before mitigation:text; Risk after mitigation:text"
+        String riskJustification = null, residualRiskJustification = null;
+        if (customRating.getJustification() != null) {
+            final String[] jParts = customRating.getJustification().split(";(?=\\s*Risk (before|after) mitigation:)");
+            for (final String jPart : jParts) {
+                final String jTrimmed = jPart.trim();
+                if (jTrimmed.startsWith("Risk before mitigation:")) {
+                    riskJustification = trimToNull(jTrimmed.substring("Risk before mitigation:".length()));
+                } else if (jTrimmed.startsWith("Risk after mitigation:")) {
+                    residualRiskJustification = trimToNull(jTrimmed.substring("Risk after mitigation:".length()));
+                }
+            }
+        }
+
+        // Apply to analysis via QueryManager
+        if (riskImpact != null || riskLikelihood != null) {
+            AnalysisCommentUtil.makeRiskImpactComment(qm, analysis, riskImpact, COMMENTER);
+            AnalysisCommentUtil.makeRiskLikelihoodComment(qm, analysis, riskLikelihood, COMMENTER);
+            AnalysisCommentUtil.makeResidualRiskImpactComment(qm, analysis, residualRiskImpact, COMMENTER);
+            AnalysisCommentUtil.makeResidualRiskLikelihoodComment(qm, analysis, residualRiskLikelihood, COMMENTER);
+            if (riskJustification != null) {
+                AnalysisCommentUtil.makeRiskJustificationComment(qm, analysis, riskJustification, COMMENTER);
+            }
+            if (residualRiskJustification != null) {
+                AnalysisCommentUtil.makeResidualRiskJustificationComment(qm, analysis, residualRiskJustification, COMMENTER);
+            }
+            qm.updateAnalysisRiskFields(component, vuln, riskImpact, riskLikelihood,
+                    residualRiskImpact, residualRiskLikelihood, riskJustification, residualRiskJustification);
+        }
     }
 }

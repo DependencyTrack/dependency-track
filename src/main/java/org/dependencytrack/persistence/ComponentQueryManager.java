@@ -845,6 +845,71 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     }
 
     /**
+     * Returns candidate Components that may be affected by the given list of VulnerableSoftware.
+     * Uses tight DB-level filtering (purlType + purlName for PURL, vendor:product for CPE)
+     * so only relevant components are returned. Deduplicates across multiple VS entries.
+     *
+     * @param vsList the VulnerableSoftware entries to find candidates for
+     * @return a deduplicated list of candidate Component objects
+     */
+    @SuppressWarnings("unchecked")
+    public List<Component> getCandidateComponentsForVulnerableSoftware(final List<VulnerableSoftware> vsList) {
+        if (vsList == null || vsList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Use a LinkedHashSet to deduplicate while preserving order
+        final java.util.LinkedHashSet<Component> candidates = new java.util.LinkedHashSet<>();
+
+        for (final VulnerableSoftware vs : vsList) {
+            final Query<Component> query = pm.newQuery(Component.class);
+
+            if (vs.getPurlType() != null && vs.getPurlName() != null) {
+                // [CUSTOM: REQF001-TIGHT-FILTER] Filter by purlType + purlName at DB level
+                // instead of broad "purl != null" — reduces candidates from thousands to tens
+                final String purlPrefix = "pkg:" + vs.getPurlType().toLowerCase() + "/";
+                final String purlName = vs.getPurlName().toLowerCase();
+                if (vs.getPurlNamespace() != null) {
+                    final String purlNamespace = vs.getPurlNamespace().toLowerCase();
+                    query.setFilter("purl != null && purl.toLowerCase().startsWith(:prefix) && purl.toLowerCase().indexOf(:ns) >= 0 && purl.toLowerCase().indexOf(:name) >= 0");
+                    query.setNamedParameters(java.util.Map.of("prefix", purlPrefix, "ns", purlNamespace + "/", "name", purlNamespace + "/" + purlName));
+                } else {
+                    query.setFilter("purl != null && purl.toLowerCase().startsWith(:prefix) && purl.toLowerCase().indexOf(:name) >= 0");
+                    query.setNamedParameters(java.util.Map.of("prefix", purlPrefix, "name", purlName));
+                }
+            } else if (vs.getVendor() != null && vs.getProduct() != null) {
+                // CPE: filter by vendor:product substring (same as existing logic)
+                final String vendor = vs.getVendor().toLowerCase();
+                final String product = vs.getProduct().toLowerCase();
+                final String vendorProduct = ":" + vendor + ":" + product;
+                final String escapedVendorProduct = ":" + escapeCpeValue(vendor) + ":" + escapeCpeValue(product);
+                if (vendorProduct.equals(escapedVendorProduct)) {
+                    query.setFilter("cpe != null && cpe.toLowerCase().indexOf(:vendorProduct) >= 0");
+                    query.setNamedParameters(java.util.Map.of("vendorProduct", vendorProduct));
+                } else {
+                    query.setFilter("cpe != null && (cpe.toLowerCase().indexOf(:vendorProduct) >= 0 || cpe.toLowerCase().indexOf(:escapedVendorProduct) >= 0)");
+                    query.setNamedParameters(java.util.Map.of("vendorProduct", vendorProduct, "escapedVendorProduct", escapedVendorProduct));
+                }
+            } else if (vs.getPurl() != null) {
+                // Fallback: PURL exists but no parsed type/name — use broad filter
+                query.setFilter("purl != null");
+            } else if (vs.getCpe23() != null || vs.getCpe22() != null) {
+                query.setFilter("cpe != null");
+            } else {
+                continue; // No identity info — skip this VS entry
+            }
+
+            try {
+                candidates.addAll((List<Component>) query.executeList());
+            } finally {
+                query.closeAll();
+            }
+        }
+
+        return new ArrayList<>(candidates);
+    }
+
+    /**
      * Escapes CPE 2.3 special characters with backslash.
      * Per the CPE spec, characters like + ? * must be escaped with \ in the formatted string.
      */

@@ -617,6 +617,10 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().getComponentsMatchingVulnerableSoftware(vs);
     }
 
+    public List<Component> getCandidateComponentsForVulnerableSoftware(final List<VulnerableSoftware> vsList) {
+        return getComponentQueryManager().getCandidateComponentsForVulnerableSoftware(vsList);
+    }
+
     public PaginatedResult getLicenses() {
         return getLicenseQueryManager().getLicenses();
     }
@@ -833,8 +837,8 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().removeVulnerability(vulnerability, component);
     }
 
-    public void linkVulnerabilityToMatchingComponents(Vulnerability vulnerability) {
-        getVulnerabilityQueryManager().linkVulnerabilityToMatchingComponents(vulnerability);
+    public void removeStaleInternalFindings(Vulnerability vulnerability) {
+        getVulnerabilityQueryManager().removeStaleInternalFindings(vulnerability);
     }
 
     public FindingAttribution getFindingAttribution(Vulnerability vulnerability, Component component) {
@@ -1141,6 +1145,16 @@ public class QueryManager extends AlpineQueryManager {
             analysisResponse, analysisDetails, isSuppressed, riskImpact, riskLikelihood,
             residualRiskImpact, residualRiskLikelihood, riskJustification, residualRiskJustification);
         }
+
+    // [CUSTOM: RISK-MATRIX-VEX-IMPORT]
+    public Analysis updateAnalysisRiskFields(Component component, Vulnerability vulnerability,
+                                              String riskImpact, String riskLikelihood,
+                                              String residualRiskImpact, String residualRiskLikelihood,
+                                              String riskJustification, String residualRiskJustification) {
+        return getFindingsQueryManager().updateAnalysisRiskFields(component, vulnerability,
+            riskImpact, riskLikelihood, residualRiskImpact, residualRiskLikelihood,
+            riskJustification, residualRiskJustification);
+    }
 
     public AnalysisComment makeAnalysisComment(Analysis analysis, String comment, String commenter) {
         return getFindingsQueryManager().makeAnalysisComment(analysis, comment, commenter);

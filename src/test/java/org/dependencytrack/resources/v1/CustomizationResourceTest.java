@@ -39,6 +39,8 @@ class CustomizationResourceTest extends ResourceTest {
 
     private static final String V1_CUSTOMIZATION_VULNERABILITY_ID = "/v1/customization/vulnerability-id";
     private static final String V1_CUSTOMIZATION_TEXT_PLACEHOLDERS  = "/v1/customization/text-placeholders";
+    private static final String V1_CUSTOMIZATION_RISK_MATRIX = "/v1/customization/risk-matrix";
+    private static final String V1_CUSTOMIZATION_VULN_SOURCE = "/v1/customization/vulnerability-source";
 
     @RegisterExtension
     public static JerseyTestExtension jersey = new JerseyTestExtension(
@@ -537,6 +539,385 @@ class CustomizationResourceTest extends ResourceTest {
                 .put(Entity.entity("""
                         {
                             "descriptionPlaceholder": "Should be rejected"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(403);
+    }
+
+    // =========================================================================
+    // GET /v1/customization/risk-matrix
+    // =========================================================================
+
+    @Test
+    void getRiskMatrixConfigReturnsEmptyObjectWhenNotConfigured() {
+        Response response = jersey.target(V1_CUSTOMIZATION_RISK_MATRIX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json).isEmpty();
+    }
+
+    @Test
+    void getRiskMatrixConfigReturnsStoredValue() {
+        final String matrixJson = """
+                {"enabled":true,"impactValues":["LOW","HIGH"],"likelihoodValues":["UNLIKELY","LIKELY"],"levels":[{"key":"LOW","label":"Low","color":"#00ff00","sortOrder":1},{"key":"HIGH","label":"High","color":"#ff0000","sortOrder":2}],"cells":{"UNLIKELY::LOW":{"levelKey":"LOW"},"LIKELY::HIGH":{"levelKey":"HIGH"}}}""";
+        qm.createConfigProperty(
+                ConfigPropertyConstants.RISK_MATRIX_CONFIG.getGroupName(),
+                ConfigPropertyConstants.RISK_MATRIX_CONFIG.getPropertyName(),
+                matrixJson,
+                IConfigProperty.PropertyType.STRING,
+                ConfigPropertyConstants.RISK_MATRIX_CONFIG.getDescription());
+
+        Response response = jersey.target(V1_CUSTOMIZATION_RISK_MATRIX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json.getBoolean("enabled")).isTrue();
+        assertThat(json.getJsonArray("impactValues")).hasSize(2);
+        assertThat(json.getJsonArray("likelihoodValues")).hasSize(2);
+        assertThat(json.getJsonArray("levels")).hasSize(2);
+    }
+
+    // =========================================================================
+    // PUT /v1/customization/risk-matrix – happy path
+    // =========================================================================
+
+    @Test
+    void updateRiskMatrixConfigSucceeds() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_RISK_MATRIX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "enabled": true,
+                            "impactValues": ["LOW", "MEDIUM", "HIGH"],
+                            "likelihoodValues": ["UNLIKELY", "LIKELY"],
+                            "levels": [{"key": "LOW", "label": "Low", "color": "#00ff00", "sortOrder": 1}],
+                            "cells": {"UNLIKELY::LOW": {"levelKey": "LOW"}}
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(204);
+    }
+
+    @Test
+    void updateRiskMatrixConfigRoundTrip() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        jersey.target(V1_CUSTOMIZATION_RISK_MATRIX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "enabled": false,
+                            "impactValues": ["LOW", "HIGH"],
+                            "likelihoodValues": ["UNLIKELY", "LIKELY"],
+                            "levels": [{"key": "INFO", "label": "Info", "color": "#0000ff", "sortOrder": 1}],
+                            "cells": {}
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        Response response = jersey.target(V1_CUSTOMIZATION_RISK_MATRIX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json.getBoolean("enabled")).isFalse();
+        assertThat(json.getJsonArray("impactValues")).hasSize(2);
+        assertThat(json.getJsonArray("levels")).hasSize(1);
+    }
+
+    // =========================================================================
+    // PUT /v1/customization/risk-matrix – validation errors (400)
+    // =========================================================================
+
+    @Test
+    void updateRiskMatrixConfigReturns400WhenEmpty() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_RISK_MATRIX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("", MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+    }
+
+    @Test
+    void updateRiskMatrixConfigReturns400WhenMissingEnabled() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_RISK_MATRIX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "impactValues": ["LOW"],
+                            "likelihoodValues": ["UNLIKELY"],
+                            "levels": [],
+                            "cells": {}
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).contains("enabled");
+    }
+
+    @Test
+    void updateRiskMatrixConfigReturns400WhenMissingLevels() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_RISK_MATRIX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "enabled": true,
+                            "impactValues": ["LOW"],
+                            "likelihoodValues": ["UNLIKELY"],
+                            "cells": {}
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).contains("levels");
+    }
+
+    @Test
+    void updateRiskMatrixConfigReturns400WhenMissingCells() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_RISK_MATRIX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "enabled": true,
+                            "impactValues": ["LOW"],
+                            "likelihoodValues": ["UNLIKELY"],
+                            "levels": []
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).contains("cells");
+    }
+
+    @Test
+    void updateRiskMatrixConfigReturns400WhenInvalidJson() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_RISK_MATRIX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("not valid json{{{", MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).contains("Invalid JSON");
+    }
+
+    // =========================================================================
+    // PUT /v1/customization/risk-matrix – authorization (403)
+    // =========================================================================
+
+    @Test
+    void updateRiskMatrixConfigReturns403WithoutPermission() {
+        Response response = jersey.target(V1_CUSTOMIZATION_RISK_MATRIX)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "enabled": true,
+                            "impactValues": [],
+                            "likelihoodValues": [],
+                            "levels": [],
+                            "cells": {}
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(403);
+    }
+
+    // =========================================================================
+    // GET /v1/customization/vulnerability-source
+    // =========================================================================
+
+    @Test
+    void getVulnerabilitySourceOptionsReturnsDefaultsWhenNotConfigured() {
+        Response response = jersey.target(V1_CUSTOMIZATION_VULN_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json.getBoolean("enabled")).isTrue();
+        assertThat(json.getJsonArray("values")).isNotEmpty();
+        // Default values include CUSTOMER, PEN_TEST, SONARQUBE, INTERNAL_RESEARCH, VENDOR_ADVISORY, OTHER
+        assertThat(json.getJsonArray("values")).hasSize(6);
+    }
+
+    @Test
+    void getVulnerabilitySourceOptionsReturnsStoredValue() {
+        final String sourceJson = """
+                {"enabled":false,"values":[{"key":"CUSTOM_SRC","label":"Custom Source"}]}""";
+        qm.createConfigProperty(
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_OPTIONS.getGroupName(),
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_OPTIONS.getPropertyName(),
+                sourceJson,
+                IConfigProperty.PropertyType.STRING,
+                ConfigPropertyConstants.VULNERABILITY_SOURCE_OPTIONS.getDescription());
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULN_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json.getBoolean("enabled")).isFalse();
+        assertThat(json.getJsonArray("values")).hasSize(1);
+    }
+
+    // =========================================================================
+    // PUT /v1/customization/vulnerability-source – happy path
+    // =========================================================================
+
+    @Test
+    void updateVulnerabilitySourceOptionsSucceeds() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULN_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "enabled": true,
+                            "values": [
+                                {"key": "SRC1", "label": "Source One"},
+                                {"key": "SRC2", "label": "Source Two"}
+                            ]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(204);
+    }
+
+    @Test
+    void updateVulnerabilitySourceOptionsRoundTrip() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        jersey.target(V1_CUSTOMIZATION_VULN_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "enabled": true,
+                            "values": [
+                                {"key": "PENTEST", "label": "Penetration Test"},
+                                {"key": "SCAN", "label": "Automated Scan"}
+                            ]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULN_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json.getBoolean("enabled")).isTrue();
+        assertThat(json.getJsonArray("values")).hasSize(2);
+    }
+
+    // =========================================================================
+    // PUT /v1/customization/vulnerability-source – validation errors (400)
+    // =========================================================================
+
+    @Test
+    void updateVulnerabilitySourceOptionsReturns400WhenEmpty() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULN_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("", MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+    }
+
+    @Test
+    void updateVulnerabilitySourceOptionsReturns400WhenMissingEnabled() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULN_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "values": [{"key": "X", "label": "X"}]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).contains("enabled");
+    }
+
+    @Test
+    void updateVulnerabilitySourceOptionsReturns400WhenMissingValues() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULN_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "enabled": true
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).contains("values");
+    }
+
+    @Test
+    void updateVulnerabilitySourceOptionsReturns400WhenInvalidJson() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        Response response = jersey.target(V1_CUSTOMIZATION_VULN_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("{broken json!!!", MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).contains("Invalid JSON");
+    }
+
+    // =========================================================================
+    // PUT /v1/customization/vulnerability-source – authorization (403)
+    // =========================================================================
+
+    @Test
+    void updateVulnerabilitySourceOptionsReturns403WithoutPermission() {
+        Response response = jersey.target(V1_CUSTOMIZATION_VULN_SOURCE)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                            "enabled": true,
+                            "values": []
                         }
                         """, MediaType.APPLICATION_JSON));
 

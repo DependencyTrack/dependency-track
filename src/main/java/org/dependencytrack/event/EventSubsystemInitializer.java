@@ -52,6 +52,7 @@ import org.dependencytrack.tasks.metrics.PortfolioMetricsUpdateTask;
 import org.dependencytrack.tasks.metrics.ProjectMetricsUpdateTask;
 import org.dependencytrack.tasks.metrics.VulnerabilityMetricsUpdateTask;
 import org.dependencytrack.tasks.repositories.RepositoryMetaAnalyzerTask;
+import org.dependencytrack.tasks.scanners.InternalAnalysisTask;
 
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -111,6 +112,8 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(EpssMirrorEvent.class, EpssMirrorTask.class);
         EVENT_SERVICE.subscribe(TelemetrySubmissionEvent.class, TelemetrySubmissionTask.class);
         EVENT_SERVICE.subscribe(ScheduledNotificationDispatchEvent.class, ScheduledNotificationDispatchTask.class);
+        // [CUSTOM: REQF001-ASYNC-LINKING] Register InternalAnalysisTask for direct event dispatch
+        EVENT_SERVICE.subscribe(InternalAnalysisEvent.class, InternalAnalysisTask.class);
 
         EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);
 
@@ -149,6 +152,7 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.unsubscribe(EpssMirrorTask.class);
         EVENT_SERVICE.unsubscribe(TelemetrySubmissionTask.class);
         EVENT_SERVICE.unsubscribe(ScheduledNotificationDispatchTask.class);
+        EVENT_SERVICE.unsubscribe(InternalAnalysisTask.class);
         EVENT_SERVICE.shutdown(DRAIN_TIMEOUT_DURATION);
 
         EVENT_SERVICE_ST.unsubscribe(IndexTask.class);

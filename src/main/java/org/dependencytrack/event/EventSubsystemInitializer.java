@@ -112,7 +112,6 @@ public class EventSubsystemInitializer implements ServletContextListener {
         EVENT_SERVICE.subscribe(EpssMirrorEvent.class, EpssMirrorTask.class);
         EVENT_SERVICE.subscribe(TelemetrySubmissionEvent.class, TelemetrySubmissionTask.class);
         EVENT_SERVICE.subscribe(ScheduledNotificationDispatchEvent.class, ScheduledNotificationDispatchTask.class);
-        // [CUSTOM: REQF001-ASYNC-LINKING] Register InternalAnalysisTask for direct event dispatch
         EVENT_SERVICE.subscribe(InternalAnalysisEvent.class, InternalAnalysisTask.class);
 
         EVENT_SERVICE_ST.subscribe(IndexEvent.class, IndexTask.class);

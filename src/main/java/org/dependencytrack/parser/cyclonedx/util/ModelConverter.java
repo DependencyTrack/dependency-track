@@ -47,7 +47,6 @@ import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentProperty;
@@ -83,7 +82,6 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
 
 import static java.util.Objects.requireNonNullElse;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -952,157 +950,9 @@ public class ModelConverter {
                 cdxVulnerability.setAnalysis(cdxAnalysis);
             }
 
-            // [CUSTOM: RISK-MATRIX-VEX-EXPORT] Add custom risk rating if risk matrix is enabled
-            addCustomRiskRating(qm, cdxVulnerability, analysis);
         }
 
         return cdxVulnerability;
-    }
-
-    /**
-     * [CUSTOM: RISK-MATRIX-VEX-EXPORT]
-     * Adds a custom risk rating entry to the CycloneDX vulnerability if the custom risk matrix is enabled.
-     * Uses method=OTHER and encodes risk assessment data in vector and justification fields.
-     *
-     * Format:
-     *   severity  = calculated risk label (e.g. "Very Low")
-     *   method    = "other"
-     *   vector    = "Risk before mitigation:impact/likelihood:calculatedRisk; Risk after mitigation:impact/likelihood:calculatedRisk"
-     *   justification = "Risk before mitigation:justificationText; Risk after mitigation:justificationText"
-     */
-    private static void addCustomRiskRating(final QueryManager qm,
-                                             final org.cyclonedx.model.vulnerability.Vulnerability cdxVulnerability,
-                                             final Analysis analysis) {
-        // Check if custom risk matrix is enabled
-        final var riskMatrixProp = qm.getConfigProperty(
-                ConfigPropertyConstants.RISK_MATRIX_CONFIG.getGroupName(),
-                ConfigPropertyConstants.RISK_MATRIX_CONFIG.getPropertyName());
-        if (riskMatrixProp == null || riskMatrixProp.getPropertyValue() == null) return;
-        jakarta.json.JsonObject matrixConfig = null;
-        try {
-            matrixConfig = jakarta.json.Json.createReader(
-                    new java.io.StringReader(riskMatrixProp.getPropertyValue())).readObject();
-            if (!matrixConfig.getBoolean("enabled", false)) return;
-        } catch (Exception e) {
-            return;
-        }
-
-        if (analysis == null) return;
-
-        final String riskImpact = analysis.getRiskImpact();
-        final String riskLikelihood = analysis.getRiskLikelihood();
-        final String residualRiskImpact = analysis.getResidualRiskImpact();
-        final String residualRiskLikelihood = analysis.getResidualRiskLikelihood();
-        final String riskJustification = analysis.getRiskJustification();
-        final String residualRiskJustification = analysis.getResidualRiskJustification();
-
-        // Only add rating if at least before-mitigation risk is set
-        if (riskImpact == null && riskLikelihood == null) return;
-
-        final org.cyclonedx.model.vulnerability.Vulnerability.Rating rating =
-                new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
-
-        rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.OTHER);
-
-        // Resolve level labels from matrix config cells (likelihood::impact -> levelKey -> label)
-        final String calculatedRisk = resolveLevelLabel(matrixConfig, riskLikelihood, riskImpact);
-        final String residualCalculatedRisk = resolveLevelLabel(matrixConfig, residualRiskLikelihood, residualRiskImpact);
-
-        // [CUSTOM: OWASP-SEVERITY-MAPPING] Use admin-configured owaspSeverityMapping for the VEX rating severity.
-        // Prefer residual risk when set (same priority as the findings badge).
-        // Falls back to UNKNOWN if no mapping is configured.
-        final String severityLikelihood = residualRiskLikelihood != null ? residualRiskLikelihood : riskLikelihood;
-        final String severityImpact = residualRiskImpact != null ? residualRiskImpact : riskImpact;
-        rating.setSeverity(resolveOwaspSeverityEnum(matrixConfig, severityLikelihood, severityImpact));
-
-        // Build vector string: "Risk before mitigation:impact/likelihood:calculatedRiskLabel; Risk after mitigation:impact/likelihood:calculatedRiskLabel"
-        final StringBuilder vector = new StringBuilder();
-        vector.append("Risk before mitigation:")
-              .append(riskImpact != null ? riskImpact : "")
-              .append("/")
-              .append(riskLikelihood != null ? riskLikelihood : "")
-              .append(":")
-              .append(calculatedRisk != null ? calculatedRisk : "");
-
-        if (residualRiskImpact != null || residualRiskLikelihood != null) {
-            vector.append("; Risk after mitigation:")
-                  .append(residualRiskImpact != null ? residualRiskImpact : "")
-                  .append("/")
-                  .append(residualRiskLikelihood != null ? residualRiskLikelihood : "")
-                  .append(":")
-                  .append(residualCalculatedRisk != null ? residualCalculatedRisk : "");
-        }
-        rating.setVector(vector.toString());
-
-        // Build justification string
-        final StringBuilder justification = new StringBuilder();
-        if (riskJustification != null && !riskJustification.isBlank()) {
-            justification.append("Risk before mitigation:").append(riskJustification);
-        }
-        if (residualRiskJustification != null && !residualRiskJustification.isBlank()) {
-            if (justification.length() > 0) justification.append("; ");
-            justification.append("Risk after mitigation:").append(residualRiskJustification);
-        }
-        if (justification.length() > 0) {
-            rating.setJustification(justification.toString());
-        }
-
-        // Mark source as INTERNAL-RISK-ASSESSMENT so importer can identify this rating
-        final org.cyclonedx.model.vulnerability.Vulnerability.Source ratingSource =
-                new org.cyclonedx.model.vulnerability.Vulnerability.Source();
-        ratingSource.setName("INTERNAL-RISK-ASSESSMENT");
-        rating.setSource(ratingSource);
-
-        cdxVulnerability.addRating(rating);
-    }
-
-    /**
-     * Resolves the level JsonObject from the matrix config for a given likelihood + impact combination.
-     * Looks up cells[likelihood::impact] -> levelKey, then levels[levelKey] -> level object.
-     * Returns null if the combination cannot be resolved.
-     */
-    private static jakarta.json.JsonObject resolveLevel(final jakarta.json.JsonObject matrixConfig,
-                                                        final String likelihood, final String impact) {
-        if (likelihood == null || impact == null || matrixConfig == null) return null;
-        try {
-            final jakarta.json.JsonObject cells = matrixConfig.getJsonObject("cells");
-            if (cells == null) return null;
-            final String cellKey = likelihood + "::" + impact;
-            if (!cells.containsKey(cellKey)) return null;
-            final jakarta.json.JsonObject cell = cells.getJsonObject(cellKey);
-            final String levelKey = cell.getString("levelKey", null);
-            if (levelKey == null) return null;
-            final jakarta.json.JsonArray levels = matrixConfig.getJsonArray("levels");
-            if (levels == null) return null;
-            for (int i = 0; i < levels.size(); i++) {
-                final jakarta.json.JsonObject level = levels.getJsonObject(i);
-                if (levelKey.equals(level.getString("key", null))) {
-                    return level;
-                }
-            }
-        } catch (Exception ignored) { }
-        return null;
-    }
-
-    private static String resolveLevelLabel(final jakarta.json.JsonObject matrixConfig,
-                                             final String likelihood, final String impact) {
-        final jakarta.json.JsonObject level = resolveLevel(matrixConfig, likelihood, impact);
-        return level != null ? level.getString("label", null) : null;
-    }
-
-    private static org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity resolveOwaspSeverityEnum(
-            final jakarta.json.JsonObject matrixConfig, final String likelihood, final String impact) {
-        final jakarta.json.JsonObject level = resolveLevel(matrixConfig, likelihood, impact);
-        if (level == null) return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.UNKNOWN;
-        final String mapping = level.getString("owaspSeverityMapping", null);
-        if (mapping == null) return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.UNKNOWN;
-        switch (mapping.toUpperCase()) {
-            case "CRITICAL": return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.CRITICAL;
-            case "HIGH":     return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.HIGH;
-            case "MEDIUM":   return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.MEDIUM;
-            case "LOW":      return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.LOW;
-            default:         return org.cyclonedx.model.vulnerability.Vulnerability.Rating.Severity.UNKNOWN;
-        }
     }
 
     public static List<org.cyclonedx.model.vulnerability.Vulnerability> generateVulnerabilities(final QueryManager qm, final CycloneDXExporter.Variant variant,

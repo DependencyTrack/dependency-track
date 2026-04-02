@@ -1146,7 +1146,6 @@ public class QueryManager extends AlpineQueryManager {
             residualRiskImpact, residualRiskLikelihood, riskJustification, residualRiskJustification);
         }
 
-    // [CUSTOM: RISK-MATRIX-VEX-IMPORT]
     public Analysis updateAnalysisRiskFields(Component component, Vulnerability vulnerability,
                                               String riskImpact, String riskLikelihood,
                                               String residualRiskImpact, String residualRiskLikelihood,

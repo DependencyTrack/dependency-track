@@ -74,10 +74,6 @@ class VulnerableSoftwareMatchUtilTest {
         assertThat(VulnerableSoftwareMatchUtil.isAffected(vs, component)).isTrue();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // REQF001 — Null / missing identity guard-rails
-    // ─────────────────────────────────────────────────────────────────────────────
-
     /** TC-R1-01: null VS must not throw and must return false. */
     @Test
     void isAffected_nullVulnerableSoftware_returnsFalse() {
@@ -108,10 +104,6 @@ class VulnerableSoftwareMatchUtilTest {
         component.setVersion("4.17.21"); // version present but no PURL/CPE
         assertThat(VulnerableSoftwareMatchUtil.isAffected(vs, component)).isFalse();
     }
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // REQF001 — PURL version range (startIncluding / endExcluding)
-    // ─────────────────────────────────────────────────────────────────────────────
 
     /** TC-R1-04: Component version inside affected range → match. */
     @Test
@@ -169,10 +161,6 @@ class VulnerableSoftwareMatchUtilTest {
         assertThat(VulnerableSoftwareMatchUtil.isAffected(vs, component)).isFalse();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // REQF001 — PURL name / namespace / type mismatch
-    // ─────────────────────────────────────────────────────────────────────────────
-
     /** TC-R1-08: Different package name → no match even if version is identical. */
     @Test
     void isAffected_purlDifferentName_returnsFalse() {
@@ -198,10 +186,6 @@ class VulnerableSoftwareMatchUtilTest {
         component.setPurl("pkg:npm/lodash@4.17.21");
         assertThat(VulnerableSoftwareMatchUtil.isAffected(vs, component)).isFalse();
     }
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // REQF001 — CPE version range
-    // ─────────────────────────────────────────────────────────────────────────────
 
     /** TC-R1-10: CPE component inside affected version range → match (Log4Shell scenario). */
     @Test
@@ -251,10 +235,6 @@ class VulnerableSoftwareMatchUtilTest {
         assertThat(VulnerableSoftwareMatchUtil.isAffected(vs, component)).isFalse();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // REQF001 — compareVersions edge cases
-    // ─────────────────────────────────────────────────────────────────────────────
-
     /** TC-R1-13: Wildcard VS version matches any component version. */
     @Test
     void compareVersions_wildcardMatchesAnyVersion() {
@@ -277,10 +257,6 @@ class VulnerableSoftwareMatchUtilTest {
     void compareVersions_nullVulnerableSoftware_returnsFalse() {
         assertThat(VulnerableSoftwareMatchUtil.compareVersions(null, "1.0.0")).isFalse();
     }
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // REQF001 — hasPurlIdentity / hasCpeIdentity
-    // ─────────────────────────────────────────────────────────────────────────────
 
     /** TC-R1-16: VS with purlType + purlName is recognised as PURL identity. */
     @Test
@@ -319,13 +295,6 @@ class VulnerableSoftwareMatchUtilTest {
     void hasCpeIdentity_noFields_returnsFalse() {
         assertThat(VulnerableSoftwareMatchUtil.hasCpeIdentity(new VulnerableSoftware())).isFalse();
     }
-
-    // ─────────────────────────────────────────────────────────────────────────────
-    // REQF002 — Tracking status derivation helper (affectedProjectCount)
-    // The tracking status is DERIVED at API level from affectedProjectCount:
-    //   count > 0  → TRACKED, count == 0 → UNTRACKED, non-INTERNAL → UNDEFINED
-    // These tests guard the extractComparableVersion path used to produce that count.
-    // ─────────────────────────────────────────────────────────────────────────────
 
     /**
      * TC-R2-01: extractComparableVersion returns null for component with no version

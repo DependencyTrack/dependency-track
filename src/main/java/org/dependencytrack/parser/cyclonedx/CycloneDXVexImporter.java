@@ -172,12 +172,10 @@ public class CycloneDXVexImporter {
         }
         qm.makeAnalysis(component, refreshedVuln, analysisState, analysisJustification, analysisResponse, analysisDetails, suppress);
 
-        // [CUSTOM: RISK-MATRIX-VEX-IMPORT] Parse custom risk rating if risk matrix is enabled
         applyCustomRiskRating(qm, component, refreshedVuln, analysis, cdxVuln);
     }
 
     /**
-     * [CUSTOM: RISK-MATRIX-VEX-IMPORT]
      * Parses the custom INTERNAL-RISK-ASSESSMENT rating from the VEX file and restores
      * riskImpact, riskLikelihood, residualRiskImpact, residualRiskLikelihood, riskJustification,
      * residualRiskJustification into the Analysis record.

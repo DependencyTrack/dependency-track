@@ -30,6 +30,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.JsonUtil;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -40,6 +41,9 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * JAX-RS resource for managing application customizations including vulnerability ID configuration.
@@ -486,6 +490,10 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity("Missing required field: 'enabled' and 'values' are required").build();
             }
+            final String validationError = validateVulnerabilitySourceOptions(json);
+            if (validationError != null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
+            }
         } catch (JSONException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Invalid JSON: " + e.getMessage()).build();
@@ -494,6 +502,41 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
             updateConfigProperty(qm, ConfigPropertyConstants.VULNERABILITY_SOURCE_OPTIONS, jsonInput);
             return Response.noContent().build();
         }
+    }
+
+    private String validateVulnerabilitySourceOptions(final JSONObject json) {
+        final JSONArray values = json.optJSONArray("values");
+        if (values == null) {
+            return "Invalid input: 'values' must be an array";
+        }
+
+        final Set<String> seenKeys = new HashSet<>();
+        final Set<String> seenLabels = new HashSet<>();
+
+        for (int i = 0; i < values.length(); i++) {
+            final JSONObject entry = values.optJSONObject(i);
+            if (entry == null) {
+                return "Invalid input: each vulnerability source must be an object";
+            }
+
+            final String key = entry.optString("key", "").trim();
+            final String label = entry.optString("label", "").trim();
+            if (key.isBlank()) {
+                return "Invalid input: source key cannot be empty";
+            }
+            if (label.isBlank()) {
+                return "Invalid input: source name cannot be empty";
+            }
+
+            if (!seenKeys.add(key.toLowerCase(Locale.ROOT))) {
+                return "A source with this key already exists. Please use a unique key.";
+            }
+            if (!seenLabels.add(label.toLowerCase(Locale.ROOT))) {
+                return "A source with this name already exists. Please use a unique name.";
+            }
+        }
+
+        return null;
     }
 
 

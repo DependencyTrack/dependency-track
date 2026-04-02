@@ -252,7 +252,6 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
     }
 
     /**
-     * [CUSTOM: RISK-MATRIX-VEX-IMPORT]
      * Updates only the risk matrix fields of an existing Analysis record.
      * Used by VEX importer to restore risk ratings from imported VEX files.
      * Analysis state, justification, response, and suppression are not modified.

@@ -865,8 +865,6 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             final Query<Component> query = pm.newQuery(Component.class);
 
             if (vs.getPurlType() != null && vs.getPurlName() != null) {
-                // [CUSTOM: REQF001-TIGHT-FILTER] Filter by purlType + purlName at DB level
-                // instead of broad "purl != null" — reduces candidates from thousands to tens
                 final String purlPrefix = "pkg:" + vs.getPurlType().toLowerCase() + "/";
                 final String purlName = vs.getPurlName().toLowerCase();
                 if (vs.getPurlNamespace() != null) {

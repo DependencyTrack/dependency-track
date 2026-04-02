@@ -133,7 +133,7 @@ public class VexResource extends AlpineResource {
             try {
                 if (download) {
                     return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
-                            .header("content-disposition", "attachment; filename=\"" + project.getUuid() + "-vex.cdx.json\"").build();
+                            .header("content-disposition", "attachment; filename=\"vex.json\"").build();
                 }
                 return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON, cdxOutputVersion),
                         CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();

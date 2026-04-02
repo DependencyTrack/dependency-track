@@ -232,8 +232,8 @@ class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testAnalyzeWithoutUser() {
-        configApiToken(null, API_TOKEN);
+    void testAnalyzeWithoutUser() throws Exception {
+        configApiToken(null, DataEncryption.encryptAsString(API_TOKEN));
         stubPOSTRequest();
 
         var project = configProject();
@@ -241,10 +241,53 @@ class OssIndexAnalysisTaskTest extends PersistenceCapableTest {
         var component = getComponent(project);
         qm.persist(component);
 
-        assertThatNoException().isThrownBy(() -> analysisTask.inform(new OssIndexAnalysisEvent(
-            List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
+        assertThatNoException().isThrownBy(
+                () -> analysisTask.inform(
+                        new OssIndexAnalysisEvent(
+                                List.of(component),
+                                VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
 
-        verify(0, getRequestedPost());
+        verify(0, postRequestedFor(urlPathEqualTo("/api/v3/component-report")));
+    }
+
+    @Test
+    void testAnalyzeWithBearerToken() throws Exception {
+        final String bearerToken = "sonatype_pat_testtoken123";
+        configApiToken(null, DataEncryption.encryptAsString(bearerToken));
+        stubPOSTRequest();
+
+        var project = configProject();
+        var component = getComponent(project);
+        qm.persist(component);
+
+        assertThatNoException().isThrownBy(
+                () -> analysisTask.inform(
+                        new OssIndexAnalysisEvent(
+                                List.of(component),
+                                VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
+
+        verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
+                .withHeader("Authorization", equalTo("Bearer " + bearerToken)));
+    }
+
+    @Test
+    void testAnalyzeWithBearerTokenAndUsername() throws Exception {
+        final String bearerToken = "sonatype_pat_testtoken123";
+        configApiToken(API_USER, DataEncryption.encryptAsString(bearerToken));
+        stubPOSTRequest();
+
+        var project = configProject();
+        var component = getComponent(project);
+        qm.persist(component);
+
+        assertThatNoException().isThrownBy(
+                () -> analysisTask.inform(
+                        new OssIndexAnalysisEvent(
+                                List.of(component),
+                                VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS)));
+
+        verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
+                .withHeader("Authorization", equalTo("Bearer " + bearerToken)));
     }
 
     private @NotNull Project configProject() {

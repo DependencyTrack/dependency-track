@@ -202,21 +202,22 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                     SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
                     SCANNER_OSSINDEX_API_TOKEN.getPropertyName()
             );
-            if (apiUsernameProperty == null
-                    || apiUsernameProperty.getPropertyValue() == null
-                    || apiTokenProperty == null
-                    || apiTokenProperty.getPropertyValue() == null) {
-                LOGGER.warn("An API username or token has not been specified for use with OSS Index; Skipping");
+            if (apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
+                LOGGER.warn("An API token has not been specified for use with OSS Index; Skipping");
                 return;
-            } else {
-                try {
-                    apiUsername = apiUsernameProperty.getPropertyValue();
-                    apiToken = DebugDataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
-                } catch (Exception ex) {
-                    // OSS Index will stop supporting unauthenticated requests
-                    LOGGER.error("An error occurred decrypting the OSS Index API Token; Skipping", ex);
+            }
+            try {
+                apiToken = DebugDataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
+            } catch (Exception ex) {
+                LOGGER.error("An error occurred decrypting the OSS Index API Token; Skipping", ex);
+                return;
+            }
+            if (!isBearerToken(apiToken)) {
+                if (apiUsernameProperty == null || apiUsernameProperty.getPropertyValue() == null) {
+                    LOGGER.warn("An API username has not been specified for use with OSS Index; Skipping");
                     return;
                 }
+                apiUsername = apiUsernameProperty.getPropertyValue();
             }
             aliasSyncEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ALIAS_SYNC_ENABLED);
         }
@@ -322,6 +323,10 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         return purl.getCoordinates().replaceFirst("@v", "@");
     }
 
+    private static boolean isBearerToken(final String token) {
+        return token != null && token.startsWith("sonatype_pat_");
+    }
+
     /**
      * Submits the payload to the Sonatype OSS Index service
      */
@@ -331,7 +336,9 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         request.addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
         request.addHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
         request.setEntity(new StringEntity(payload.toString()));
-        if (apiUsername != null && apiToken != null) {
+        if (isBearerToken(apiToken)) {
+            request.addHeader("Authorization", "Bearer " + apiToken);
+        } else if (apiUsername != null && apiToken != null) {
             request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(apiUsername, apiToken));
         }
         try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {

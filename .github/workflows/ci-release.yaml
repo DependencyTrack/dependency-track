@@ -42,8 +42,6 @@ jobs:
 
   create-release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # Required for pushing release branch and committing version via GitHub API
     needs:
       - prepare-release
 
@@ -54,6 +52,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          token: ${{ secrets.BOT_RELEASE_GITHUB_TOKEN }}
 
       - name: Set up JDK
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # tag=v5.2.0
@@ -62,46 +62,30 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Set Version
-        run: mvn -B --no-transfer-progress versions:set -DnewVersion=${VERSION}
-
-      - name: Commit Version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set Version and Commit
         run: |-
-          MESSAGE="prepare-release: set version to ${VERSION}"
-          CONTENT=$(base64 -i pom.xml)
+          git config user.name "dependencytrack-bot"
+          git config user.email "106437498+dependencytrack-bot@users.noreply.github.com"
 
-          if [[ -z `git ls-remote --quiet --heads origin "${BRANCH_NAME}"` ]]; then
-            SHA=$(git rev-parse ${GITHUB_REF#refs/heads/}:pom.xml)
-
-            # https://gist.github.com/swinton/03e84635b45c78353b1f71e41007fc7c
-            gh api --method PUT /repos/{owner}/{repo}/contents/pom.xml \
-              --field message="${MESSAGE}" \
-              --field content="${CONTENT}" \
-              --field encoding="base64" \
-              --field branch="${GITHUB_REF_NAME}" \
-              --field sha="${SHA}"
-
-            git fetch
-            git reset --hard "origin/${GITHUB_REF_NAME}"
+          if [[ -z $(git ls-remote --quiet --heads origin "${BRANCH_NAME}") ]]; then
             git checkout -b "${BRANCH_NAME}"
-            git push origin "${BRANCH_NAME}"
           else
+            git fetch origin "${BRANCH_NAME}"
             git checkout "${BRANCH_NAME}"
-            SHA=$(git rev-parse ${BRANCH_NAME}:pom.xml)
-
-            gh api --method PUT /repos/{owner}/{repo}/contents/pom.xml \
-              --field message="${MESSAGE}" \
-              --field content="${CONTENT}" \
-              --field encoding="base64" \
-              --field branch="${BRANCH_NAME}" \
-              --field sha="${SHA}"
           fi
+
+          mvn -B --no-transfer-progress versions:set -DnewVersion=${VERSION}
+
+          git add pom.xml
+          git commit -m "prepare-release: set version to ${VERSION}"
+          git push origin "${BRANCH_NAME}"
+
+          git tag "${VERSION}"
+          git push origin "${VERSION}"
 
       - name: Create GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ needs.prepare-release.outputs.version }}
           RELEASE_BRANCH: ${{ needs.prepare-release.outputs.release-branch }}
         run: |-
@@ -114,7 +98,7 @@ jobs:
   post-release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required to update pom.xml via GitHub API
+      contents: write # Required to push pom.xml update
     needs:
       - prepare-release
       - create-release
@@ -128,22 +112,21 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
         with:
           ref: ${{ needs.prepare-release.outputs.release-branch }}
-          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # tag=v5.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
 
       - name: Set SNAPSHOT Version after Release
-        run: mvn -B --no-transfer-progress versions:set -DnewVersion=${NEXT_VERSION}
-
-      - name: Commit SNAPSHOT Version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |-
-          MESSAGE="prepare-iteration: set version to ${NEXT_VERSION}"
-          CONTENT=$(base64 -i pom.xml)
-          SHA=$(git rev-parse ${BRANCH_NAME}:pom.xml)
+          git config user.name "dependencytrack-bot"
+          git config user.email "106437498+dependencytrack-bot@users.noreply.github.com"
 
-          gh api --method PUT /repos/{owner}/{repo}/contents/pom.xml \
-            --field message="${MESSAGE}" \
-            --field content="${CONTENT}" \
-            --field encoding="base64" \
-            --field branch="${BRANCH_NAME}" \
-            --field sha="${SHA}"
+          mvn -B --no-transfer-progress versions:set -DnewVersion=${NEXT_VERSION}
+
+          git add pom.xml
+          git commit -m "prepare-iteration: set version to ${NEXT_VERSION}"
+          git push origin "${BRANCH_NAME}"

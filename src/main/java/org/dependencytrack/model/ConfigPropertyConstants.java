@@ -72,6 +72,7 @@ public enum ConfigPropertyConstants {
     SCANNER_TRIVY_IGNORE_UNFIXED("scanner", "trivy.ignore.unfixed", "false", PropertyType.BOOLEAN, "Flag to ignore unfixed vulnerabilities"),
     SCANNER_TRIVY_SCAN_LIBRARY("scanner", "trivy.scanner.scanLibrary", "true", PropertyType.BOOLEAN, "Flag to enable library scanning"),
     SCANNER_TRIVY_SCAN_OS("scanner", "trivy.scanner.scanOs", "true", PropertyType.BOOLEAN, "Flag to enable os scanning"),
+    SCANNER_MSRC_ENABLED("scanner", "msrc.enabled", "false", PropertyType.BOOLEAN, "Flag to enable/disable MSRC Vulnerability Analysis"),
     VULNERABILITY_SOURCE_NVD_ENABLED("vuln-source", "nvd.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable National Vulnerability Database"),
     VULNERABILITY_SOURCE_NVD_FEEDS_URL("vuln-source", "nvd.feeds.url", "https://nvd.nist.gov/feeds", PropertyType.URL, "A base URL pointing to the hostname and path of the NVD feeds"),
     VULNERABILITY_SOURCE_NVD_API_ENABLED("vuln-source", "nvd.api.enabled", "false", PropertyType.BOOLEAN, "Whether to enable NVD mirroring via REST API"),

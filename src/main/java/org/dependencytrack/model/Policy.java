@@ -140,6 +140,13 @@ public class Policy implements Serializable {
     private Set<Tag> tags;
 
     /**
+     * If true, the policy will only match projects that do not have any of the specified tags.
+     */
+    @Persistent
+    @Column(name = "INVERT_TAG_MATCH", defaultValue = "false")
+    private boolean invertTagMatch;
+
+    /**
      * The unique identifier of the object.
      */
     @Persistent(customValueStrategy = "uuid")
@@ -224,6 +231,14 @@ public class Policy implements Serializable {
 
     public void setTags(Set<Tag> tags) {
         this.tags = tags;
+    }
+
+    public boolean isInvertTagMatch() {
+        return invertTagMatch;
+    }
+
+    public void setInvertTagMatch(boolean invertTagMatch) {
+        this.invertTagMatch = invertTagMatch;
     }
 
     public UUID getUuid() {

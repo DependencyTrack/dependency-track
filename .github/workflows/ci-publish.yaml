@@ -3,9 +3,9 @@
 name: Publish CI
 
 on:
-  release:
-    types:
-      - created
+  push:
+    tags:
+      - '[0-9]*'
   workflow_dispatch:
 
 permissions: { }

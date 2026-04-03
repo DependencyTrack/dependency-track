@@ -22,10 +22,13 @@ import alpine.common.logging.Logger;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.packageurl.PackageURL;
+import io.github.nscuro.versatile.VersionFactory;
+import io.github.nscuro.versatile.spi.InvalidVersionException;
+import io.github.nscuro.versatile.spi.Version;
+import io.github.nscuro.versatile.version.KnownVersioningSchemes;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
@@ -103,6 +106,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
      * specified a repo URL ending with index.json, it should be considered "fully qualified" and used as is to maximise
      * compatability with non-nuget.org repos such as Artifactory. If not, preserve the previous Dependency Track
      * behaviour of appending the nuget.org index to the supplied URL.
+     *
      * @param baseUrl the base URL to the repository
      */
     @Override
@@ -126,7 +130,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
      * @param registrationsBaseUrlStem Registrations URL to be set
      */
     public void setRegistrationsBaseUrl(String registrationsBaseUrlStem) {
-        if(registrationsBaseUrlStem == null || registrationsBaseUrlStem.isBlank()) {
+        if (registrationsBaseUrlStem == null || registrationsBaseUrlStem.isBlank()) {
             return;
         }
         this.registrationsBaseUrl = stripTrailingSlash(registrationsBaseUrlStem) + "/%s/%s.json";
@@ -158,7 +162,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
      */
     public MetaModel analyze(final Component component) {
 
-        if(component == null) {
+        if (component == null) {
             throw new IllegalArgumentException("Component cannot be null");
         }
 
@@ -174,7 +178,8 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * Attempts to find the latest version of the supplied component and return its published date, if one exists.
      * Ignores pre-release and unlisted versions.
-     * @param meta {@link MetaModel} to be updated with detected version information
+     *
+     * @param meta      {@link MetaModel} to be updated with detected version information
      * @param component {@link Component} to be looked up in the NuGet repo
      */
     private void performVersionCheck(final MetaModel meta, final Component component) {
@@ -189,7 +194,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         try {
             final var packageRegistrationRoot = fetchPackageRegistrationIndex(registrationsBaseUrl, component);
 
-            if(packageRegistrationRoot == null) {
+            if (packageRegistrationRoot == null) {
                 return;
             }
 
@@ -216,8 +221,9 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * Retrieves the package registration index for the specified component
      * (e.g. https://api.nuget.org/v3/registration5-gz-semver2/microsoft.data.sqlclient/index.json) and converts to JSON
+     *
      * @param registrationsBaseUrl Registration base URL to look up package info
-     * @param component Component for which retrieve package registration data should be retrieved
+     * @param component            Component for which retrieve package registration data should be retrieved
      * @return JSONObject containing package data if found or null if data not found
      * @throws IOException if HTTP request errors
      */
@@ -234,10 +240,14 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         }
     }
 
+    private record PageWithUpperBound(JSONObject page, String upperRaw, Version upperVersion) {
+    }
+
     /**
      * Parses the NuGet Registrations to find latest version information. Handles both inline items and paged items.
      * Sorts pages in descending order by the upper version number - if a listed, final version can be found in that
      * page, it will be returned or pages will be searched in descending order until a match is found.
+     *
      * @param registrationData Registrations to be searched
      * @return Version metadata if a suitable version found, or null if not
      * @throws IOException if network error occurs
@@ -250,23 +260,41 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
             return null;
         }
 
-        // Build a list of pages sorted by descending "upper" property.
-        final List<JSONObject> pageUpperBounds = new ArrayList<>();
+        // Pre-parse each page's upper version once, logging any failures exactly once per page.
+        final List<PageWithUpperBound> pageUpperBounds = new ArrayList<>(pages.length());
         for (int i = 0; i < pages.length(); i++) {
             final JSONObject page = pages.optJSONObject(i);
-            if (page != null && page.has(NUGET_KEY_UPPER)) {
-                pageUpperBounds.add(page);
+            if (page == null || !page.has(NUGET_KEY_UPPER)) {
+                continue;
             }
+
+            final String upperRaw = page.optString(NUGET_KEY_UPPER, "");
+            Version upperVersion = null;
+            try {
+                upperVersion = VersionFactory.forScheme(KnownVersioningSchemes.SCHEME_NUGET, upperRaw);
+            } catch (InvalidVersionException e) {
+                LOGGER.debug("Failed to parse NuGet page upper bound: " + upperRaw, e);
+            }
+
+            pageUpperBounds.add(new PageWithUpperBound(page, upperRaw, upperVersion));
         }
 
-        // Sort upper page bounds in descending order to get newest page first e.g, [ "6.1.0", "5.1.0" ]
-        pageUpperBounds.sort((pageOne, pageTwo) -> {
-            final ComparableVersion pageOneUpper = new ComparableVersion(pageOne.optString(NUGET_KEY_UPPER, "0"));
-            final ComparableVersion pageTwoUpper = new ComparableVersion(pageTwo.optString(NUGET_KEY_UPPER, "0"));
-            return pageTwoUpper.compareTo(pageOneUpper); // descending
+        // Sort by upper bound in descending order.
+        // Unparseable bounds sort last with lexicographic fallback.
+        pageUpperBounds.sort((a, b) -> {
+            if (a.upperVersion() != null && b.upperVersion() != null) {
+                return b.upperVersion().compareTo(a.upperVersion());
+            } else if (a.upperVersion() != null) {
+                return -1;
+            } else if (b.upperVersion() != null) {
+                return 1;
+            }
+
+            return b.upperRaw().compareToIgnoreCase(a.upperRaw());
         });
 
-        for (final JSONObject page : pageUpperBounds) {
+        for (final PageWithUpperBound pwub : pageUpperBounds) {
+            final JSONObject page = pwub.page();
             try {
                 final JSONArray leaves = resolveLeaves(page);
                 final AbridgedNugetCatalogEntry bestOnPage = findHighestVersionFromLeaves(leaves, includePreRelease);
@@ -286,9 +314,10 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * Parse the page JSON to find item leaves, retrieving data from the repo if needed. Returns null if neither
      * inline items nor a fetchable @id exist/succeed.
+     *
      * @param page Page to be parsed
      * @return JSONArray containing leaf data if available, null if not
-     * @throws IOException if network error occurs
+     * @throws IOException           if network error occurs
      * @throws MetaAnalyzerException if the repo returns an unexpected result
      */
     private JSONArray resolveLeaves(final JSONObject page) throws IOException, MetaAnalyzerException {
@@ -322,7 +351,8 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * Scan the supplied leaves to extract the latest listed version. NuGet does not guarantee release order
      * so scan the entire array although, anecdotally, the collection does generally appear to be in ascending order
-     * @param leaves Items to be scanned
+     *
+     * @param leaves            Items to be scanned
      * @param includePreRelease include pre-release versions in latest version lookup
      * @return {@link AbridgedNugetCatalogEntry containing the latest version found in the leaves collection
      */
@@ -333,7 +363,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         }
 
         AbridgedNugetCatalogEntry bestEntry = null;
-        ComparableVersion newestVersionFound = null;
+        Version newestVersionFound = null;
 
         for (int i = 0; i < leaves.length(); i++) {
             final JSONObject leaf = leaves.optJSONObject(i);
@@ -343,11 +373,21 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
                 entry = parseCatalogEntry(leaf.optJSONObject("catalogEntry"));
             }
 
-            if (entry == null || entry.getVersion() == null || (isPreRelease(entry.getVersion()) && !includePreRelease)) {
+            if (entry == null || entry.getVersion() == null) {
                 continue;
             }
 
-            final ComparableVersion entryVersion = new ComparableVersion(entry.getVersion());
+            final Version entryVersion;
+            try {
+                entryVersion = VersionFactory.forScheme(KnownVersioningSchemes.SCHEME_NUGET, entry.getVersion());
+            } catch (InvalidVersionException e) {
+                LOGGER.debug("Skipping NuGet catalog entry with unparseable version %s".formatted(entry.getVersion()), e);
+                continue;
+            }
+            if (!entryVersion.isStable() && !includePreRelease) {
+                continue;
+            }
+
             if (newestVersionFound == null || entryVersion.compareTo(newestVersionFound) > 0) {
                 newestVersionFound = entryVersion;
                 bestEntry = entry;
@@ -360,6 +400,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * Parse a single catalog entry to extract the version and published information. Could be extended to include other
      * fields (such as listed) if required. Returns null immediately if the entry is unlisted.
+     *
      * @param catalogEntry Catalog entry to be parsed
      * @return {@link AbridgedNugetCatalogEntry} if version is valid, null if not
      */
@@ -368,7 +409,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
         // Listed is optional so assume package is listed unless explicitly hidden
         boolean listed = catalogEntry.optBoolean("listed", true);
 
-        if(!listed) {
+        if (!listed) {
             return null;
         }
 
@@ -389,18 +430,8 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     /**
-     * NuGet considers a version string with any suffix after a hyphen to be pre-release according to <a
-     * href="https://learn.microsoft.com/en-us/nuget/concepts/package-versioning?tabs=semver20sort#pre-release-versions">
-     * the documentation</a>. This method could be expanded if we need to cover other rules.
-     * @param version Version string to be tested
-     * @return True if version matches pre-release conventions, false otherwise
-     */
-    private boolean isPreRelease(final String version) {
-        return version.contains("-");
-    }
-
-    /**
      * Connects to the NuGet repo, retrieves the service index and attempts to find the best RegistrationsBaseUrl
+     *
      * @return RegistrationsBaseUrl if found, null otherwise
      */
     private String findRegistrationsBaseUrl() {
@@ -436,6 +467,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
      * compression, SemVer 2 without compression then non-compressed, non-SemVer2.
      * See <a href="https://learn.microsoft.com/en-us/nuget/api/registration-base-url-resource>for versioning
      * details</a>
+     *
      * @param serviceIndexJson JSONArray containing the NuGet repo service index
      * @return RegistrationsBaseUrl or null if none found
      */
@@ -486,6 +518,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
      * The ISO_INSTANT formatter handles time with timezone and milliseconds ("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") and
      * UTC-only ("yyyy-MM-dd'T'HH:mm:ss'Z'"). A fallback LocalDateTime parser handles cases without a timezone
      * ("yyyy-MM-dd'T'HH:mm:ss").
+     *
      * @param nugetDateTimeString Date time string in one of NuGet's permitted formats
      * @return Date if input could be parsed, null if date could not be parsed
      */

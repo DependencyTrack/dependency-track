@@ -130,7 +130,7 @@ class CustomizationResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                            "orgCode": "TECAN",
+                            "orgCode": "ACME",
                             "projectCode": "myproj",
                             "template": "{ORG_CODE}-{PROJECT_NAME}-{YYYY}-{SEQUENCE}",
                             "resetPolicy": "YEARLY",
@@ -245,7 +245,7 @@ class CustomizationResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                            "orgCode": "TECAN",
+                            "orgCode": "ACME",
                             "resetPolicy": "YEARLY",
                             "sequencePadding": 5
                         }
@@ -264,7 +264,7 @@ class CustomizationResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                            "orgCode": "TECAN",
+                            "orgCode": "ACME",
                             "template": "{ORG_CODE}",
                             "sequencePadding": 5
                         }
@@ -283,7 +283,7 @@ class CustomizationResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                            "orgCode": "TECAN",
+                            "orgCode": "ACME",
                             "template": "{ORG_CODE}",
                             "resetPolicy": "WEEKLY",
                             "sequencePadding": 5
@@ -303,7 +303,7 @@ class CustomizationResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                            "orgCode": "TECAN",
+                            "orgCode": "ACME",
                             "template": "{ORG_CODE}",
                             "resetPolicy": "YEARLY",
                             "sequencePadding": 0
@@ -323,7 +323,7 @@ class CustomizationResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                            "orgCode": "TECAN",
+                            "orgCode": "ACME",
                             "template": "{ORG_CODE}",
                             "resetPolicy": "YEARLY",
                             "sequencePadding": 21
@@ -343,7 +343,7 @@ class CustomizationResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                            "orgCode": "TECAN",
+                            "orgCode": "ACME",
                             "projectCode": "   ",
                             "template": "{ORG_CODE}",
                             "resetPolicy": "YEARLY",
@@ -367,7 +367,7 @@ class CustomizationResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                            "orgCode": "TECAN",
+                            "orgCode": "ACME",
                             "template": "{ORG_CODE}",
                             "resetPolicy": "YEARLY",
                             "sequencePadding": 5

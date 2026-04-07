@@ -67,7 +67,7 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
                     content = @Content(mediaType = MediaType.APPLICATION_JSON,
                                       schema = @Schema(type = "object", example = """
                                           {
-                                              "orgCode": "TECAN",
+                                              "orgCode": "ORG",
                                               "projectCode": "myproject",
                                               "template": "{ORG_CODE}-{PROJECT_NAME}-{YYYY}-{SEQUENCE}",
                                               "resetPolicy": "YEARLY",

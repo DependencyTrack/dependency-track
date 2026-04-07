@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "LICENSE\nThe MITRE Corporation (MITRE) hereby grants you a non-exclusive, royalty-free license to use Common Attack Pattern Enumeration and Classification (CAPEC™) for research, development, and commercial purposes. Any copy you make for such purposes is authorized provided that you reproduce MITRE’s copyright designation and this license in any such copy.\n\nDISCLAIMERS\n\nALL DOCUMENTS AND THE INFORMATION CONTAINED THEREIN ARE PROVIDED ON AN \"AS IS\" BASIS AND THE CONTRIBUTOR, THE ORGANIZATION HE/SHE REPRESENTS OR IS SPONSORED BY (IF ANY), THE MITRE CORPORATION, ITS BOARD OF TRUSTEES, OFFICERS, AGENTS, AND EMPLOYEES, DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION THEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "standardLicenseTemplate": "LICENSE The MITRE Corporation (MITRE) hereby grants you a non-exclusive, royalty-free license to use Common Attack Pattern Enumeration and Classification (CAPEC™) for research, development, and commercial purposes. Any copy you make for such purposes is authorized provided that you reproduce MITRE\u0027s copyright designation and this license in any such copy.\n\nDISCLAIMERS ALL DOCUMENTS AND THE INFORMATION CONTAINED THEREIN ARE PROVIDED ON AN \"AS IS\" BASIS AND THE CONTRIBUTOR, THE ORGANIZATION HE/SHE REPRESENTS OR IS SPONSORED BY (IF ANY), THE MITRE CORPORATION, ITS BOARD OF TRUSTEES, OFFICERS, AGENTS, AND EMPLOYEES, DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION THEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "name": "Common Attack    Pattern Enumeration and Classification License",
+  "licenseId": "CAPEC-tou",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://capec.mitre.org/about/termsofuse.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:03:34Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://capec.mitre.org/about/termsofuse.html"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            LICENSE The MITRE Corporation (MITRE) hereby grants you a\n            non-exclusive, royalty-free license to use Common Attack\n            Pattern Enumeration and Classification (CAPEC™) for research,\n            development, and commercial purposes. Any copy you make for\n            such purposes is authorized provided that you reproduce MITRE\u0026apos;s\n            copyright designation and this license in any such copy.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            DISCLAIMERS ALL DOCUMENTS AND THE INFORMATION CONTAINED THEREIN\n            ARE PROVIDED ON AN \u0026quot;AS IS\u0026quot; BASIS AND THE CONTRIBUTOR, THE\n            ORGANIZATION HE/SHE REPRESENTS OR IS SPONSORED BY (IF ANY),\n            THE MITRE CORPORATION, ITS BOARD OF TRUSTEES, OFFICERS, AGENTS,\n            AND EMPLOYEES, DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED,\n            INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE\n            INFORMATION THEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED\n            WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.\n         \u003c/p\u003e\n\n      "
+}

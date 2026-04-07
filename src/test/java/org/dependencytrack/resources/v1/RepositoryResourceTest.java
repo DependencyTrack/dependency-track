@@ -172,7 +172,7 @@ class RepositoryResourceTest extends ResourceTest {
 
 
     @Test
-    void createRepositoryTest() {
+    void createRepositoryTestWithBasicAuth() {
         Repository repository = new Repository();
         repository.setAuthenticationRequired(true);
         repository.setEnabled(true);
@@ -199,6 +199,40 @@ class RepositoryResourceTest extends ResourceTest {
         Assertions.assertTrue(json.getJsonObject(13).getInt("resolutionOrder") > 0);
         Assertions.assertTrue(json.getJsonObject(13).getBoolean("authenticationRequired"));
         Assertions.assertEquals("testuser", json.getJsonObject(13).getString("username"));
+        Assertions.assertTrue(json.getJsonObject(13).getBoolean("enabled"));
+    }
+
+    @Test
+    public void createRepositoryTestWithBearerAuth() {
+        //Password field gets ignored during json serialization, so create the json ourselves
+        String repo = """
+            {
+                "identifier":"test2",
+                "url":"https://www.foobar2.com",
+                "internal":true,
+                "authenticationRequired":true,
+                "password":"letoken",
+                "enabled":true,
+                "type":"MAVEN"
+            }
+        """;
+
+        Response response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey)
+                .put(Entity.entity(repo, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(201, response.getStatus());
+
+        response = jersey.target(V1_REPOSITORY).request().header(X_API_KEY, apiKey).get(Response.class);
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(String.valueOf(18), response.getHeaderString(TOTAL_COUNT_HEADER));
+        JsonArray json = parseJsonArray(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals(18, json.size());
+        Assertions.assertEquals("MAVEN", json.getJsonObject(13).getString("type"));
+        Assertions.assertEquals("test2", json.getJsonObject(13).getString("identifier"));
+        Assertions.assertEquals("https://www.foobar2.com", json.getJsonObject(13).getString("url"));
+        Assertions.assertTrue(json.getJsonObject(13).getInt("resolutionOrder") > 0);
+        Assertions.assertTrue(json.getJsonObject(13).getBoolean("authenticationRequired"));
+        Assertions.assertFalse(json.getJsonObject(13).containsKey("username"));
         Assertions.assertTrue(json.getJsonObject(13).getBoolean("enabled"));
     }
 
@@ -261,7 +295,6 @@ class RepositoryResourceTest extends ResourceTest {
         Assertions.assertTrue(json.getJsonObject(13).getInt("resolutionOrder") > 0);
         Assertions.assertFalse(json.getJsonObject(13).getBoolean("authenticationRequired"));
         Assertions.assertTrue(json.getJsonObject(13).getBoolean("enabled"));
-
     }
 
     @Test
@@ -297,6 +330,5 @@ class RepositoryResourceTest extends ResourceTest {
                 }
             }
         }
-
     }
 }

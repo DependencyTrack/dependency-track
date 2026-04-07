@@ -6,11 +6,11 @@
   "licenseId": "any-OSI",
   "crossRef": [
     {
-      "match": "N/A",
+      "match": "false",
       "url": "https://metacpan.org/pod/Exporter::Tidy#LICENSE",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2025-07-01T14:54:37Z",
+      "isLive": true,
+      "timestamp": "2026-02-20T20:57:50Z",
       "isWayBackLink": false,
       "order": 0
     }

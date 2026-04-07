@@ -73,7 +73,7 @@ public class VulnDbClient {
             throw new UnsupportedEncodingException();
         }
 
-        return this.getResults(apiBaseUrl + "/api/v1/vulnerabilities/find_by_cpe?&cpe=" + encodedCpe, Vulnerability.class, size, page);
+        return this.getResults(apiBaseUrl + "/api/v1/vulnerabilities/find_by_cpe?cpe=" + encodedCpe, Vulnerability.class, size, page);
     }
 
     private Results getResults(String url, Class clazz, int size, int page) throws IOException,
@@ -89,6 +89,8 @@ public class VulnDbClient {
                     var jsonObject = new JSONObject(responseString);
                     results = vulnDbParser.parse(jsonObject, clazz);
                     return results;
+                } else if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+                    return new Results(); // 404 is used to indicate "no results".
                 } else {
                     results = new Results();
                     results.setErrorCondition("An unexpected response was returned from VulnDB. Request unsuccessful: " + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase());

@@ -48,11 +48,13 @@ will not result in a policy violation.
 
 ## Operational Violation
 Policy conditions can specify zero or more:
+* Age (publish date of the package version)
 * Coordinates (group, name, version)
 * Package URL
 * CPE
 * SWID Tag ID
 * Hash (MD5, SHA, SHA3, Blake2b, Blake3)
+* Version distance (used version vs latest available version)
 
 This allows organizations to create lists of allowable and/or prohibited components. Future versions
 of Dependency-Track will incorporate additional operational parameters into the policy framework.

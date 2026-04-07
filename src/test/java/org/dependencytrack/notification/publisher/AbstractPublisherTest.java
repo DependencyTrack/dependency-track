@@ -267,6 +267,35 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
                 .withMessage("Unexpected tag name \"include\" ({% include '/some/path' %}:1)");
     }
 
+    public final void baseTestInformWithNewVulnerabilityCustomUTF8TemplateNotification() throws Exception {
+        final var project = createProject();
+        final var component = createComponent(project);
+        final var vuln = createVulnerability();
+
+        final var subject = new NewVulnerabilityIdentified(vuln, component, Set.of(project),
+                VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS);
+
+
+        final var notification = new Notification()
+                .scope(NotificationScope.SYSTEM)
+                .group(NotificationGroup.NEW_VULNERABILITY)
+                .title(NotificationConstants.Title.NOTIFICATION_TEST)
+                .level(NotificationLevel.INFORMATIONAL)
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        final JsonObject defaultConfig = createConfig();
+        final String defaultTemplate = defaultConfig.getString(Publisher.CONFIG_TEMPLATE_KEY);
+        final String template = defaultTemplate.replaceAll("Vulnerability", "Vulnérabilité");
+
+        final JsonObject config = Json.createObjectBuilder(createConfig())
+                .add(Publisher.CONFIG_TEMPLATE_KEY, template)
+                .build();
+
+        assertThatNoException()
+                .isThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, config));
+    }
+
     public final void baseTestPublishWithScheduledNewVulnerabilitiesNotification() {
         final var project = createProject();
         final var component = createComponent(project);
@@ -361,6 +390,7 @@ abstract class AbstractPublisherTest<T extends Publisher> extends PersistenceCap
         vuln.setRecommendation("vulnerabilityRecommendation");
         vuln.setCvssV2BaseScore(BigDecimal.valueOf(5.5));
         vuln.setCvssV3BaseScore(BigDecimal.valueOf(6.6));
+        vuln.setCvssV4Score(BigDecimal.valueOf(7.7));
         vuln.setOwaspRRLikelihoodScore(BigDecimal.valueOf(1.1));
         vuln.setOwaspRRTechnicalImpactScore(BigDecimal.valueOf(2.2));
         vuln.setOwaspRRBusinessImpactScore(BigDecimal.valueOf(3.3));

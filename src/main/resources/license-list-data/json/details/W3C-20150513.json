@@ -10,31 +10,31 @@
   "standardLicenseHeader": "[$name_of_software: $distribution_URI] Copyright (c) [$date-of-software] World Wide Web Consortium, (Massachusetts Institute of Technology, European Research Consortium for Informatics and Mathematics, Keio University, Beihang). All Rights Reserved. This work is distributed under the W3C® Software License [1] in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. [1] http://www.w3.org/Consortium/Legal/copyright-software",
   "crossRef": [
     {
-      "match": "true",
-      "url": "https://www.w3.org/Consortium/Legal/2015/copyright-software-and-document",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:56:53Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
+      "match": "N/A",
       "url": "https://www.w3.org/copyright/software-license-2023/",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:56:54Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T21:01:56Z",
       "isWayBackLink": false,
       "order": 2
     },
     {
-      "match": "true",
+      "match": "N/A",
       "url": "https://www.w3.org/copyright/software-license-2015/",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:56:54Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T21:01:56Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "N/A",
+      "url": "https://www.w3.org/Consortium/Legal/2015/copyright-software-and-document",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T21:01:56Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

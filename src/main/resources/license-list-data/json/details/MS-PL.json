@@ -10,8 +10,8 @@
       "match": "N/A",
       "url": "https://opensource.org/licenses/MS-PL",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:06:26Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T20:53:53Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -20,7 +20,7 @@
       "url": "http://www.microsoft.com/opensource/licenses.mspx",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2025-07-01T15:06:26Z",
+      "timestamp": "2026-02-20T20:53:53Z",
       "isWayBackLink": false,
       "order": 0
     }

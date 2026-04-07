@@ -55,6 +55,7 @@ import java.util.UUID;
 @Index(name = "VULNERABLESOFTWARE_CPE_PURL_PARTS_IDX", members = {"part", "vendor", "product", "purlType", "purlNamespace", "purlName"})
 @Index(name = "VULNERABLESOFTWARE_PURL_VERSION_RANGE_IDX", members = {"purl", "versionEndExcluding", "versionEndIncluding", "versionStartExcluding", "versionStartIncluding"})
 @Index(name = "VULNERABLESOFTWARE_PURL_TYPE_NS_NAME_IDX", members = {"purlType", "purlNamespace", "purlName"})
+@Index(name = "VULNERABLESOFTWARE_FULL_PURL_IDX", members = {"purlType", "purlNamespace", "purlName", "version"})
 public class VulnerableSoftware implements ICpe, Serializable {
 
     private static final long serialVersionUID = -3987946408457131098L;
@@ -176,6 +177,13 @@ public class VulnerableSoftware implements ICpe, Serializable {
     private UUID uuid;
 
     private transient List<AffectedVersionAttribution> affectedVersionAttributions;
+
+    public boolean hasVersionRange() {
+        return (versionStartIncluding != null && !versionStartIncluding.isBlank())
+                || (versionStartExcluding != null && !versionStartExcluding.isBlank())
+                || (versionEndExcluding != null && !versionEndExcluding.isBlank())
+                || (versionEndIncluding != null && !versionEndIncluding.isBlank());
+    }
 
     public long getId() {
         return id;

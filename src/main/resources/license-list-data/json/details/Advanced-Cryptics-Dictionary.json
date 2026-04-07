@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "License text: Copyright (c) J Ross Beresford 1993-1999. All Rights Reserved.\n\nThe following restriction is placed on the use of this publication:\nif The UK Advanced Cryptics Dictionary is used in a software package\nor redistributed in any form, the copyright notice must be\nprominently displayed and the text of this document must be included\nverbatim.\n\nThere are no other restrictions: I would like to see the list\ndistributed as widely as possible.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"License text: Copyright (c) J Ross Beresford 1993-1999. All Rights Reserved.  \";match\u003d\".{0,5000}\"\u003e\u003e\nThe following restriction is placed on the use of this publication: if The UK Advanced Cryptics Dictionary is used in a software package or redistributed in any form, the copyright notice must be prominently displayed and the text of this document must be included verbatim.\n\nThere are no other restrictions: I would like to see the list distributed as widely as possible.\n\n",
+  "name": "Advanced Cryptics Dictionary License",
+  "licenseId": "Advanced-Cryptics-Dictionary",
+  "crossRef": [
+    {
+      "match": "N/A",
+      "url": "https://ftp.gnu.org/gnu/aspell/dict/en/aspell6-en-2020.12.07-0.tar.bz2",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T21:01:55Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://ftp.gnu.org/gnu/aspell/dict/en/aspell6-en-2020.12.07-0.tar.bz2"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cdiv class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e \n         \u003cp\u003e\n            License text: Copyright (c) J Ross\n            Beresford 1993-1999. All Rights Reserved.\n         \u003c/p\u003e\n\n         \u003c/span\u003e\u003c/div\u003e\n         \u003cp\u003e\n            The following restriction is placed on the use of this\n            publication: if The UK Advanced Cryptics Dictionary is\n            used in a software package or redistributed in any form,\n            the copyright notice must be prominently displayed and\n            the text of this document must be included verbatim.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            There are no other restrictions: I would like to\n            see the list distributed as widely as possible.\n         \u003c/p\u003e\n\n      "
+}

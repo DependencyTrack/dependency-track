@@ -212,7 +212,8 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
                 var name = component.getPurl().getName();
 
                 if (component.getPurl().getNamespace() != null) {
-                    if (PackageURL.StandardTypes.GOLANG.equals(component.getPurl().getType())) {
+                    if (PackageURL.StandardTypes.GOLANG.equals(component.getPurl().getType()) || 
+                            PackageURL.StandardTypes.NPM.equals(component.getPurl().getType())) {
                         name = component.getPurl().getNamespace() + "/" + name;
                     } else {
                         name = component.getPurl().getNamespace() + ":" + name;
@@ -244,15 +245,16 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
                         String arch = null;
                         Integer epoch = null;
 
-                        if (component.getPurl().getQualifiers() != null) {
-                            arch = component.getPurl().getQualifiers().get("arch");
+                        final var qualifiers = component.getPurl().getQualifiers();
+                        if (qualifiers != null) {
+                            arch = qualifiers.get("arch");
 
-                            String tmpEpoch = component.getPurl().getQualifiers().get("epoch");
+                            String tmpEpoch = qualifiers.get("epoch");
                             if (tmpEpoch != null) {
                                 epoch = Integer.parseInt(tmpEpoch);
                             }
 
-                            String distro = component.getPurl().getQualifiers().get("distro");
+                            String distro = qualifiers.get("distro");
 
                             if (distro != null) {
                                 pkgType = URLDecoder.decode(distro, StandardCharsets.UTF_8);
@@ -271,7 +273,7 @@ public class TrivyAnalysisTask extends BaseComponentAnalyzerTask implements Subs
                             } else if (!pkgType.contains("-") && property.getPropertyName().equals("trivy:PkgType")) {
                                 pkgType = property.getPropertyValue();
 
-                                String distro = component.getPurl().getQualifiers().get("distro");
+                                String distro = qualifiers == null ? null : qualifiers.get("distro");
 
                                 if (distro != null) {
                                     pkgType += "-" + URLDecoder.decode(distro, StandardCharsets.UTF_8);

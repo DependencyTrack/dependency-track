@@ -1803,12 +1803,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     "name", name
             ));
         }
-        query.setResult("count(this)");
-        try {
-            return query.executeResultUnique(Long.class) > 0;
-        } finally {
-            query.closeAll();
-        }
+        query.setRange(0, 1);
+        query.setResult("id");
+        return !executeAndCloseResultList(query, Long.class).isEmpty();
     }
 
     private static boolean isChildOf(Project project, UUID uuid) {

@@ -25,7 +25,7 @@ ARG UID=1000
 ARG GID=1000
 ARG WAR_FILENAME=dependency-track-apiserver.jar
 
-FROM eclipse-temurin:25_36-jdk-alpine@sha256:f4c0b771cfed29902e1dd2e5c183b9feca633c7686fb85e278a0486b03d27369 AS jre-build
+FROM eclipse-temurin:25.0.2_10-jdk-alpine@sha256:da683f4f02f9427597d8fa162b73b8222fe08596dcebaf23e4399576ff8b037e AS jre-build
 
 ARG WAR_FILENAME
 
@@ -36,7 +36,7 @@ COPY ./target/${WAR_FILENAME} ./
 
 RUN ./create-jre.sh -i "./${WAR_FILENAME}" -o ./jre
 
-FROM alpine:3.22@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
+FROM alpine:3.23@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
 
 ARG COMMIT_SHA
 ARG APP_VERSION
@@ -50,7 +50,7 @@ ENV TZ=Etc/UTC \
     # Dependency-Track's default logging level
     LOGGING_LEVEL=INFO \
     # JVM Options that are passed at runtime by default
-    JAVA_OPTIONS="-XX:+UseParallelGC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -XX:MaxRAMPercentage=90.0" \
+    JAVA_OPTIONS="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -XX:MaxRAMPercentage=80.0 -XX:MaxGCPauseMillis=250" \
     # JVM Options that can be passed at runtime, while maintaining also those set in JAVA_OPTIONS
     EXTRA_JAVA_OPTIONS="" \
     # The web context defaults to the root. To override, supply an alternative context which starts with a / but does not end with one
@@ -73,37 +73,41 @@ ENV TZ=Etc/UTC \
 # Create a user and assign home directory to a ${DATA_DIR}
 # Ensure UID 1000 & GID 1000 own all the needed directories
 RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
-    && addgroup -S -g ${GID} dtrack || true \
-    && adduser -S -D -G dtrack -H -h ${DATA_DIR} -g "dtrack user" -s /bin/false -u ${UID} dtrack || true \
+    && addgroup -S -g ${GID} dtrack \
+    && adduser -S -D -G dtrack -H -h ${DATA_DIR} -g "dtrack user" -s /bin/false -u ${UID} dtrack \
     && chown -R dtrack:0 ${DATA_DIR} ${APP_DIR} \
     && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
-    && apk add --no-cache tzdata
+    && apk add --no-cache curl tini tzdata
 
-# Copy JRE from temurin base image
-COPY --from=jre-build /work/jre ${JAVA_HOME}
-
-# Copy the compiled WAR to the application directory created above
-COPY ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ${APP_DIR}
-
-# Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)
 USER ${UID}
-
-# Specify the container working directory
 WORKDIR ${APP_DIR}
 
+COPY --from=jre-build --chown=${UID}:0 /work/jre ${JAVA_HOME}
+COPY --chown=${UID}:0 ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ./
+
+ENTRYPOINT ["/sbin/tini", "--"]
+
 # Launch Dependency-Track
-CMD exec java ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
-    --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
-    -Dlogback.configurationFile=${LOGGING_CONFIG_PATH} \
-    -DdependencyTrack.logging.level=${LOGGING_LEVEL} \
-    -jar ${WAR_FILENAME} \
-    -context ${CONTEXT}
+CMD [ \
+    "/bin/sh", "-c", \
+    "exec java \
+        ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
+        --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
+        --sun-misc-unsafe-memory-access=allow \
+        -Dlogback.configurationFile=${LOGGING_CONFIG_PATH} \
+        -DdependencyTrack.logging.level=${LOGGING_LEVEL} \
+        -jar ${WAR_FILENAME} \
+        -context ${CONTEXT}" \
+]
 
 # Specify which port Dependency-Track listens on
 EXPOSE 8080
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD wget -t 1 -T 3 --proxy off -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
+HEALTHCHECK --interval=30s --start-period=60s --timeout=5s CMD [ \
+    "/bin/sh", "-c", \
+    "curl -f -s --max-time 3 --noproxy '*' -o /dev/null http://127.0.0.1:8080${CONTEXT}health" \
+]
 
 # metadata labels
 LABEL \

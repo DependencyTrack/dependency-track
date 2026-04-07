@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://github.com/usnistgov/fipy/blob/86aaa5c2ba2c6f1be19593c5986071cf6568cc34/LICENSE.rst",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:04:07Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "https://github.com/usnistgov/jsip/blob/59700e6926cbe96c5cdae897d9a7d2656b42abe3/LICENSE",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:04:07Z",
+      "timestamp": "2026-02-20T20:55:36Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/usnistgov/fipy/blob/86aaa5c2ba2c6f1be19593c5986071cf6568cc34/LICENSE.rst",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:55:36Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

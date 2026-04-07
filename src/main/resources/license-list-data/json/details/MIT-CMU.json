@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://github.com/python-pillow/Pillow/blob/fffb426092c8db24a5f4b6df243a8a3c01fb63cd/LICENSE",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:56:45Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
-      "match": "false",
       "url": "https://fedoraproject.org/wiki/Licensing:MIT?rd\u003dLicensing/MIT#CMU_Style",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:56:46Z",
+      "timestamp": "2026-02-20T20:57:49Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/python-pillow/Pillow/blob/fffb426092c8db24a5f4b6df243a8a3c01fb63cd/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:57:50Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

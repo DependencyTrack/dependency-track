@@ -6,20 +6,11 @@
   "licenseId": "Unicode-DFS-2016",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "http://web.archive.org/web/20160823201924/http://www.unicode.org/copyright.html#License",
-      "isValid": false,
-      "isLive": false,
-      "timestamp": "2025-07-01T14:56:48Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "false",
       "url": "https://www.unicode.org/license.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:56:48Z",
+      "timestamp": "2026-02-20T21:01:25Z",
       "isWayBackLink": false,
       "order": 0
     },
@@ -28,9 +19,18 @@
       "url": "http://www.unicode.org/copyright.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:56:48Z",
+      "timestamp": "2026-02-20T21:01:26Z",
       "isWayBackLink": false,
       "order": 2
+    },
+    {
+      "match": "N/A",
+      "url": "http://web.archive.org/web/20160823201924/http://www.unicode.org/copyright.html#License",
+      "isValid": false,
+      "isLive": false,
+      "timestamp": "2026-02-20T21:01:26Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

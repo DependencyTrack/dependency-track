@@ -8,11 +8,11 @@
   "licenseId": "FSFAP-no-warranty-disclaimer",
   "crossRef": [
     {
-      "match": "N/A",
+      "match": "true",
       "url": "https://git.savannah.gnu.org/cgit/wget.git/tree/util/trunc.c?h\u003dv1.21.3\u0026id\u003d40747a11e44ced5a8ac628a41f879ced3e2ebce9#n6",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2025-07-01T15:04:25Z",
+      "isLive": true,
+      "timestamp": "2026-02-20T20:55:38Z",
       "isWayBackLink": false,
       "order": 0
     }

@@ -96,10 +96,11 @@ public class OsvAdvisoryParser {
                     final JSONObject cvss = cvssList.getJSONObject(i);
                     final String type = cvss.optString("type", null);
                     if (type == null) continue;
-                    if (type.equalsIgnoreCase("CVSS_V3")) {
+                    if (type.equalsIgnoreCase("CVSS_V4")) {
+                        advisory.setCvssV4Vector(cvss.optString("score", null));
+                    } else if (type.equalsIgnoreCase("CVSS_V3")) {
                         advisory.setCvssV3Vector(cvss.optString("score", null));
-                    }
-                    if (type.equalsIgnoreCase("CVSS_V2")) {
+                    } else if (type.equalsIgnoreCase("CVSS_V2")) {
                         advisory.setCvssV2Vector(cvss.optString("score", null));
                     }
                 }

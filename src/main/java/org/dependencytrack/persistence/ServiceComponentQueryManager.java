@@ -213,12 +213,9 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
     public boolean hasServiceComponents(final Project project) {
         final Query<ServiceComponent> query = pm.newQuery(ServiceComponent.class, "project == :project");
         query.setParameters(project);
-        query.setResult("count(this)");
-        try {
-            return query.executeResultUnique(Long.class) > 0;
-        } finally {
-            query.closeAll();
-        }
+        query.setRange(0, 1);
+        query.setResult("id");
+        return !executeAndCloseResultList(query, Long.class).isEmpty();
     }
 
     /**

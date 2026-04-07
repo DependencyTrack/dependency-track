@@ -18,8 +18,17 @@
  */
 package org.dependencytrack.event;
 
-import alpine.event.framework.Event;
+import alpine.event.framework.SingletonCapableEvent;
 
-public class VulnDbSyncEvent implements Event {
+import java.util.UUID;
+
+public class VulnDbSyncEvent extends SingletonCapableEvent {
+
+    private static final UUID CHAIN_IDENTIFIER = UUID.fromString("42697563-bc9d-4d3b-b1ed-8b27f3a5aac6");
+
+    public VulnDbSyncEvent() {
+        setChainIdentifier(CHAIN_IDENTIFIER);
+        setSingleton(true);
+    }
 
 }

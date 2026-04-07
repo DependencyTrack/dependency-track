@@ -6,11 +6,11 @@
   "licenseId": "BSD-Systemics",
   "crossRef": [
     {
-      "match": "N/A",
+      "match": "false",
       "url": "https://metacpan.org/release/DPARIS/Crypt-DES-2.07/source/COPYRIGHT",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2025-07-01T15:03:44Z",
+      "isLive": true,
+      "timestamp": "2026-02-20T20:59:54Z",
       "isWayBackLink": false,
       "order": 0
     }

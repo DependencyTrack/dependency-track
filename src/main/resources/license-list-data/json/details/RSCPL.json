@@ -9,8 +9,8 @@
       "match": "N/A",
       "url": "https://opensource.org/licenses/RSCPL",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:55:20Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T21:03:00Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -19,7 +19,7 @@
       "url": "http://wayback.archive.org/web/20060715140826/http://www.risource.org/RPL/RPL-1.0A.shtml",
       "isValid": false,
       "isLive": false,
-      "timestamp": "2025-07-01T14:55:20Z",
+      "timestamp": "2026-02-20T21:03:00Z",
       "isWayBackLink": false,
       "order": 0
     }

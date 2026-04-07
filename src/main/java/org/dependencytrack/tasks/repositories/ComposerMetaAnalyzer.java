@@ -18,15 +18,18 @@
  */
 package org.dependencytrack.tasks.repositories;
 
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.concurrent.TimeUnit;
-
+import alpine.common.logging.Logger;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.packageurl.PackageURL;
+import io.github.nscuro.versatile.VersionFactory;
+import io.github.nscuro.versatile.spi.InvalidVersionException;
+import io.github.nscuro.versatile.spi.Version;
+import io.github.nscuro.versatile.version.KnownVersioningSchemes;
+import jakarta.ws.rs.core.UriBuilder;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
-import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.dependencytrack.exception.MetaAnalyzerException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.RepositoryType;
@@ -34,12 +37,10 @@ import org.dependencytrack.util.JsonUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.packageurl.PackageURL;
-
-import alpine.common.logging.Logger;
-import jakarta.ws.rs.core.UriBuilder;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An IMetaAnalyzer implementation that supports Composer.
@@ -54,9 +55,9 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
     /**
      * @see <a href="https://packagist.org/apidoc#get-package-data">Packagist's API
-     *      doc for
-     *      "Getting package data - Using the Composer v1 metadata (DEPRECATED)"</a>
-     *      Example: https://repo.packagist.org/p/monolog/monolog.json
+     * doc for
+     * "Getting package data - Using the Composer v1 metadata (DEPRECATED)"</a>
+     * Example: https://repo.packagist.org/p/monolog/monolog.json
      */
     private static final String PACKAGE_META_DATA_PATH_PATTERN_V1 = "/p/%package%.json";
 
@@ -68,10 +69,10 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
      * Some of the properties of the root package.json are documented at
      * https://github.com/composer/composer/blob/main/doc/05-repositories.md
      * Properties to investigate / implement:
-     *
+     * <p>
      * - security-advisories: very relevant, but only in a VulnerabilityAnalyzer (or
      * mirrored VulnerabilitySource) context
-     *
+     * <p>
      * - providers-lazy-url: old v1 construct for which I haven't seen any example,
      * in v2 the metadata-url is used for this. seems like it's not relevant for DT
      * - list: returns only package names, seems like repo.packagist.org (and .com?)
@@ -226,7 +227,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             }
 
             final JSONObject newPackages = packages;
-            newPackages.names().forEach(name -> {
+            newPackages.keySet().forEach(name -> {
                 String packageName = (String) name;
                 JSONObject packageVersions = newPackages.getJSONObject(packageName);
 
@@ -236,7 +237,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
                 JSONObject includedPackage = repoRoot.getJSONObject("packages").getJSONObject(packageName);
                 final JSONObject finalPackageVersions = packageVersions;
-                finalPackageVersions.names().forEach(version -> {
+                finalPackageVersions.keySet().forEach(version -> {
                     includedPackage.put((String) version, finalPackageVersions.getJSONObject((String) version));
                 });
             });
@@ -244,7 +245,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
         if (data.has("includes")) {
             JSONObject includes = data.getJSONObject("includes");
-            includes.names().forEach(name -> {
+            includes.keySet().forEach(name -> {
                 String includeFilename = (String) name;
                 String includeUrl = UriBuilder.fromUri(baseUrl).path(includeFilename).build().toString();
                 try (final CloseableHttpResponse includeResponse = processHttpRequest(includeUrl)) {
@@ -275,7 +276,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private MetaModel analyzeFromMetadataUrl(final MetaModel meta, final Component component,
-            final String packageMetaDataPathPattern) {
+                                             final String packageMetaDataPathPattern) {
         final String composerPackageMetadataFilename = packageMetaDataPathPattern.replaceAll("%package%",
                 getComposerPackageName(component));
         final String url;
@@ -309,7 +310,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             if (!responsePackages.has(expectedResponsePackage)) {
                 // the package no longer exists - for v2 there's no example (yet), v1 example
                 // https://repo.packagist.org/p/magento/adobe-ims.json
-                LOGGER.debug("%s: Package no longer exists in repository %s.". formatted(component.getPurl(), this.repositoryId));
+                LOGGER.debug("%s: Package no longer exists in repository %s.".formatted(component.getPurl(), this.repositoryId));
                 return meta;
             }
 
@@ -345,7 +346,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
 
     private JSONObject expandPackages(JSONObject packages) {
         JSONObject result = new JSONObject();
-        packages.names().forEach(name -> {
+        packages.keySet().forEach(name -> {
             String packageName = (String) name;
             JSONArray packageVersionsMinified = packages.getJSONArray(packageName);
             JSONObject packageVersions = expandPackageVersions(packageVersionsMinified);
@@ -355,38 +356,40 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
     }
 
     private MetaModel analyzePackageVersions(final MetaModel meta, Component component, JSONObject packageVersions) {
-        final ComparableVersion latestVersion = new ComparableVersion(stripLeadingV(component.getPurl().getVersion()));
+        Version latestVersion = null;
         final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
         LOGGER.debug("%s: analyzing package versions in %s: ".formatted(component.getPurl(), this.repositoryId));
-        packageVersions.names().forEach(item -> {
-            JSONObject packageVersion = packageVersions.getJSONObject((String) item);
+        for (final String item : packageVersions.keySet()) {
+            final JSONObject packageVersion = packageVersions.getJSONObject(item);
             // Sometimes the JSON key differs from the the version inside the JSON value. The latter is leading.
-            String version = packageVersion.getString("version");
-            if (version.startsWith("dev-") || version.endsWith("-dev")) {
-                // dev versions are excluded, since they are not pinned but a VCS-branch.
-                // this case doesn't seem to happen anymore with V2, as dev (untagged) releases
-                // are not part of the response anymore
-                return;
-            }
+            final String version = packageVersion.getString("version");
 
             // Some (old?) repositories like composer.amasty.com/enterprise do not include a
-            // 'version_normalized' field
-            // TODO Should we attempt to normalize ourselves? The PHP code uses something
-            // that results in 4 parts instead of 3, i.e. 2.3.8.0 instead of 2.3.8. Not sure
-            // if that works with Semver4j
-            String version_normalized = packageVersion.getString("version");
+            // 'version_normalized' field. versatile handles both 3- and 4-part version
+            // strings (e.g. 2.3.8 and 2.3.8.0) natively, so falling back to the raw version
+            // is safe.
+            String version_normalized = version;
             if (packageVersion.has("version_normalized")) {
                 version_normalized = packageVersion.getString("version_normalized");
             }
 
-            ComparableVersion currentComparableVersion = new ComparableVersion(version_normalized);
-            if (currentComparableVersion.compareTo(latestVersion) < 0) {
-                // smaller version can be skipped
-                return;
+            final Version currentVersion;
+            try {
+                currentVersion = VersionFactory.forScheme(KnownVersioningSchemes.SCHEME_COMPOSER, version_normalized);
+            } catch (InvalidVersionException e) {
+                LOGGER.debug("%s: Skipping unparseable Composer version %s in repository %s".formatted(component.getPurl(), version_normalized, this.repositoryId), e);
+                continue;
+            }
+            if (!currentVersion.isStable()) {
+                continue;
             }
 
-            latestVersion.parseVersion(stripLeadingV(version_normalized));
+            if (latestVersion != null && currentVersion.compareTo(latestVersion) < 0) {
+                continue;
+            }
+
+            latestVersion = currentVersion;
             meta.setLatestVersion(version);
 
             if (packageVersion.has("time")) {
@@ -403,14 +406,8 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
                 // do not include the name field for a version, so print purl
                 LOGGER.warn("%s: Field 'time' not present in metadata in repository %s".formatted(component.getPurl(), this.repositoryId));
             }
-        });
+        }
         return meta;
-    }
-
-    private static String stripLeadingV(String s) {
-        return s.startsWith("v") || s.startsWith("V")
-                ? s.substring(1)
-                : s;
     }
 
     private static boolean isMinified(JSONObject data) {

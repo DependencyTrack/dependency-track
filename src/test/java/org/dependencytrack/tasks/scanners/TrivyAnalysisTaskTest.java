@@ -44,8 +44,8 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import trivy.proto.common.CVSS;
 import trivy.proto.common.DataSource;
@@ -227,6 +227,8 @@ class TrivyAnalysisTaskTest extends PersistenceCapableTest {
                                                         Map.entry("ghsa", CVSS.newBuilder()
                                                                 .setV3Vector("CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H")
                                                                 .setV3Score(6.5)
+                                                                .setV40Vector("CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N")
+                                                                .setV40Score(7.1)
                                                                 .build()),
                                                         Map.entry("nvd", CVSS.newBuilder()
                                                                 .setV3Vector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H")
@@ -296,6 +298,8 @@ class TrivyAnalysisTaskTest extends PersistenceCapableTest {
             assertThat(vuln.getCvssV2Vector()).isNull();
             assertThat(vuln.getCvssV3BaseScore()).isEqualByComparingTo("6.5");
             assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H");
+            assertThat(vuln.getCvssV4Score()).isEqualByComparingTo("7.1");
+            assertThat(vuln.getCvssV4Vector()).isEqualTo("CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N");
             assertThat(vuln.getSeverity()).isEqualTo(Severity.MEDIUM);
             assertThat(vuln.getCwes()).containsOnly(121, 787);
             assertThat(vuln.getPatchedVersions()).isEqualTo("6.4.0, 5.4.0");

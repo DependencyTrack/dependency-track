@@ -9,8 +9,8 @@
       "match": "N/A",
       "url": "https://opensource.org/licenses/OPL-2.1",
       "isValid": true,
-      "isLive": false,
-      "timestamp": "2025-07-01T14:55:27Z",
+      "isLive": true,
+      "timestamp": "2026-02-20T20:59:23Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -19,7 +19,7 @@
       "url": "http://www.osetfoundation.org/public-license",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:55:27Z",
+      "timestamp": "2026-02-20T20:59:24Z",
       "isWayBackLink": false,
       "order": 0
     }

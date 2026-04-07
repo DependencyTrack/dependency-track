@@ -1,0 +1,23 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "Copyright 1988,1990,1993 by Paul Vixie\nAll rights reserved\n\nDistribute freely, except: don\u0027t remove my name from the source or documentation (don\u0027t take credit for my work), mark your changes (don\u0027t get me blamed for your possible bugs), don\u0027t alter or remove this notice. May be sold if buildable source is provided to buyer. No warrantee of any kind, express or implied, is included with this software; use at your own risk, responsibility for damages (if any) to anyone resulting from the use of this software rests entirely with the user.\n",
+  "standardLicenseTemplate": "\u003c\u003cvar;name\u003d\"copyright\";original\u003d\"Copyright 1988,1990,1993 by Paul Vixie All rights reserved\";match\u003d\".{0,5000}\"\u003e\u003e\nDistribute freely, except: don\u0027t remove my name from the source or documentation (don\u0027t take credit for my work), mark your changes (don\u0027t get me blamed for your possible bugs), don\u0027t alter or remove this notice. May be sold if buildable source is provided to buyer. No warrantee of any kind, express or implied, is included with this software; use at your own risk, responsibility for damages (if any) to anyone resulting from the use of this software rests entirely with the user.\n\n",
+  "name": "Vixie Cron License",
+  "licenseId": "Vixie-Cron",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://github.com/vixie/cron/tree/545b3f5246824a9cda5905eeb7cf019c95e66995",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:01:56Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://github.com/vixie/cron/tree/545b3f5246824a9cda5905eeb7cf019c95e66995"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n\t\u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern .{0,5000}\"\u003e Copyright 1988,1990,1993 by Paul Vixie\u003cbr /\u003e\n\n\tAll rights reserved\u003c/span\u003e\u003c/var\u003e\n\n\t\u003cp\u003eDistribute freely, except: don\u0026apos;t remove my name from the source or\n\tdocumentation (don\u0026apos;t take credit for my work), mark your changes (don\u0026apos;t\n\tget me blamed for your possible bugs), don\u0026apos;t alter or remove this\n\tnotice.  May be sold if buildable source is provided to buyer.  No\n\twarrantee of any kind, express or implied, is included with this\n\tsoftware; use at your own risk, responsibility for damages (if any) to\n\tanyone resulting from the use of this software rests entirely with the\n\tuser.\u003c/p\u003e\n\n\t"
+}

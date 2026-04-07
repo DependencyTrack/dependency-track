@@ -6,22 +6,22 @@
   "licenseId": "PDDL-1.0",
   "crossRef": [
     {
-      "match": "true",
-      "url": "http://opendatacommons.org/licenses/pddl/1.0/",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:06:13Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "false",
       "url": "https://opendatacommons.org/licenses/pddl/",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:06:13Z",
+      "timestamp": "2026-02-20T21:05:05Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "true",
+      "url": "http://opendatacommons.org/licenses/pddl/1.0/",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:05:05Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

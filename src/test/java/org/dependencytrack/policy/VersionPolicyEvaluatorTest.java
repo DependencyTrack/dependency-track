@@ -150,4 +150,156 @@ class VersionPolicyEvaluatorTest extends PersistenceCapableTest {
         Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
     }
 
+        @Test
+    void testLessThanOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_LESS_THAN, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.1.0");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    void testLessThanOrEqualOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.1.0");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    void testEqualOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.0.0");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    void testNotEqualOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_NOT_EQUAL, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.0.0");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    void testGreaterThanOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_GREATER_THAN, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.1.0");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
+
+    @Test
+    void testGreaterThanOrEqualOperatorVers() {
+        final var policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION,
+                PolicyCondition.Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "1.1.1");
+
+        final var component = new Component();
+        component.setGroup("Acme");
+        component.setName("Test Component");
+
+        // Component version is lower
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:generic/example-component@1.0.0");
+
+        Assertions.assertEquals(0, evaluator.evaluate(policy, component).size());
+
+        // Component version is equal
+        component.setVersion("1.1.1");
+        component.setPurl("pkg:generic/example-component@1.1.1");
+
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+
+        // Component version is higher
+        component.setVersion("1.1.2");
+        component.setPurl("pkg:generic/example-component@1.1.2");
+        Assertions.assertEquals(1, evaluator.evaluate(policy, component).size());
+    }
 }

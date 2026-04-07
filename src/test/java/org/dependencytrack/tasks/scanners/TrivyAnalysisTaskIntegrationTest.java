@@ -34,6 +34,7 @@ import org.dependencytrack.tasks.VulnerabilityAnalysisTask;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -54,13 +55,14 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_SC
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_TRIVY_SCAN_OS;
 import static org.testcontainers.containers.wait.strategy.Wait.forLogMessage;
 
+@Disabled("Pulling Trivy images is unreliable until https://github.com/aquasecurity/trivy/discussions/10425 is fully resolved.")
 class TrivyAnalysisTaskIntegrationTest extends PersistenceCapableTest {
 
     public static Collection<Arguments> testParameters() {
         return Arrays.asList(
                 Arguments.of("0.51.1"), // Pre breaking change of Application#libraries -> Application#packages
                 Arguments.of("0.51.2"), // Post breaking change of Application#libraries -> Application#packages
-                Arguments.of("latest")
+                Arguments.of("0.69.3")
         );
     }
 

@@ -10,8 +10,8 @@
       "match": "N/A",
       "url": "https://opensource.org/licenses/NASA-1.3",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:59:14Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T21:05:36Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -20,7 +20,7 @@
       "url": "http://ti.arc.nasa.gov/opensource/nosa/",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:59:14Z",
+      "timestamp": "2026-02-20T21:05:36Z",
       "isWayBackLink": false,
       "order": 0
     }

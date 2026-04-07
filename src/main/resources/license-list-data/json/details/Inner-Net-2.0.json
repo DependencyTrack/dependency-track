@@ -6,22 +6,22 @@
   "licenseId": "Inner-Net-2.0",
   "crossRef": [
     {
-      "match": "true",
-      "url": "https://fedoraproject.org/wiki/Licensing/Inner_Net_License",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:57:22Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "false",
       "url": "https://sourceware.org/git/?p\u003dglibc.git;a\u003dblob;f\u003dLICENSES;h\u003d530893b1dc9ea00755603c68fb36bd4fc38a7be8;hb\u003dHEAD#l207",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:57:23Z",
+      "timestamp": "2026-02-20T20:56:42Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "true",
+      "url": "https://fedoraproject.org/wiki/Licensing/Inner_Net_License",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:56:43Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

@@ -8,22 +8,22 @@
   "licenseId": "magaz",
   "crossRef": [
     {
+      "match": "N/A",
+      "url": "https://mirrors.nic.cz/tex-archive/macros/latex/contrib/magaz/magaz.tex",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T20:54:54Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
       "match": "false",
       "url": "https://mirrors.ctan.org/macros/latex/contrib/version/version.sty",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:58:08Z",
+      "timestamp": "2026-02-20T20:54:55Z",
       "isWayBackLink": false,
       "order": 1
-    },
-    {
-      "match": "false",
-      "url": "https://mirrors.nic.cz/tex-archive/macros/latex/contrib/magaz/magaz.tex",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:58:09Z",
-      "isWayBackLink": false,
-      "order": 0
     }
   ],
   "seeAlso": [

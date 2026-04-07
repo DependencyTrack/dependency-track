@@ -90,12 +90,12 @@
       "name": "VulnDB",
       "description": "VulnDB is the most comprehensive and timely vulnerability intelligence available and provides actionable information about the latest in security vulnerabilities via an easy-to-use SaaS Portal, or a RESTful API that allows easy integration into GRC tools and ticketing systems. VulnDB allows organizations to search and be alerted on the latest vulnerabilities, both in end-user software and the 3rd Party Libraries or dependencies. A subscription to VulnDB provides organizations with simple to understand ratings and metrics on their vendors and products, and how each contributes to the organization’s risk-profile and cost of ownership.",
       "endpoints": [
-        "https://vulndb.cyberriskanalytics.com/api/v1/account_status",
-        "https://vulndb.cyberriskanalytics.com/api/v1/vendors/",
-        "https://vulndb.cyberriskanalytics.com/api/v1/products/",
-        "https://vulndb.cyberriskanalytics.com/api/v1/versions/by_product_id",
-        "https://vulndb.cyberriskanalytics.com/api/v1/vulnerabilities/",
-        "https://vulndb.cyberriskanalytics.com/api/v1/vulnerabilities/find_by_cpe"
+        "https://vulndb.flashpoint.io/api/v1/account_status",
+        "https://vulndb.flashpoint.io/api/v1/vendors/",
+        "https://vulndb.flashpoint.io/api/v1/products/",
+        "https://vulndb.flashpoint.io/api/v1/versions/by_product_id",
+        "https://vulndb.flashpoint.io/api/v1/vulnerabilities/",
+        "https://vulndb.flashpoint.io/api/v1/vulnerabilities/find_by_cpe"
       ],
       "authenticated": true,
       "x-trust-boundary": true,

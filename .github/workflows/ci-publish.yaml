@@ -3,9 +3,9 @@
 name: Publish CI
 
 on:
-  release:
-    types:
-      - released
+  push:
+    tags:
+      - '[0-9]*'
   workflow_dispatch:
 
 permissions: { }
@@ -23,7 +23,9 @@ jobs:
             exit 1
           fi
       - name: Checkout Repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # tag=v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Parse Version from POM
         id: parse
@@ -47,15 +49,19 @@ jobs:
 
   update-github-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to update GitHub release assets and notes
     needs:
       - read-version
       - call-build
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # tag=v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Download Artifacts
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # tag=v6.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # tag=v8.0.1
         with:
           name: assembled-wars
           path: target
@@ -73,23 +79,32 @@ jobs:
 
       - name: Update Release
         env:
-          GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.read-version.outputs.version }}
         run: |-
           cat << EOF >> .github/default-release-notes.md
           \`\`\`text
           $(cat target/checksums.txt)
           \`\`\`
           EOF
-          
-          gh release view ${{ needs.read-version.outputs.version }} \
+
+          gh release view "${VERSION}" \
             --json body --jq .body >> .github/default-release-notes.md
 
-          gh release edit ${{ needs.read-version.outputs.version }} \
+          gh release edit "${VERSION}" \
             --notes-file ".github/default-release-notes.md"
 
-          gh release upload ${{ needs.read-version.outputs.version }} \
+          gh release upload "${VERSION}" \
             --clobber \
             target/dependency-track-apiserver.jar \
             target/dependency-track-bundled.jar \
             target/checksums.txt \
             target/bom.json
+
+      - name: Publish Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.read-version.outputs.version }}
+        run: |-
+          gh release edit "${VERSION}" \
+            --draft=false

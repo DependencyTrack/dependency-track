@@ -8,20 +8,11 @@
   "licenseId": "man2html",
   "crossRef": [
     {
-      "match": "false",
-      "url": "https://github.com/hamano/man2html/blob/master/man2html.c",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:54:52Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "N/A",
       "url": "http://primates.ximian.com/~flucifredi/man/man-1.6g.tar.gz",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2025-07-01T14:54:52Z",
+      "timestamp": "2026-02-20T21:05:36Z",
       "isWayBackLink": false,
       "order": 0
     },
@@ -30,9 +21,18 @@
       "url": "https://docs.oracle.com/cd/E81115_01/html/E81116/licenses.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:54:52Z",
+      "timestamp": "2026-02-20T21:05:37Z",
       "isWayBackLink": false,
       "order": 2
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/hamano/man2html/blob/master/man2html.c",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:05:44Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

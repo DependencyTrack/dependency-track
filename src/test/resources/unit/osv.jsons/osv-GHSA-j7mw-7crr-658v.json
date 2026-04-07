@@ -1,0 +1,94 @@
+{
+  "affected": [
+    {
+      "database_specific": {
+        "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2022/05/GHSA-j7mw-7crr-658v/GHSA-j7mw-7crr-658v.json"
+      },
+      "package": {
+        "ecosystem": "Maven",
+        "name": "org.richfaces:richfaces-core",
+        "purl": "pkg:maven/org.richfaces/richfaces-core"
+      },
+      "ranges": [
+        {
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "3.3.4"
+            }
+          ],
+          "type": "ECOSYSTEM"
+        }
+      ],
+      "versions": []
+    }
+  ],
+  "aliases": [
+    "CVE-2018-14667"
+  ],
+  "database_specific": {
+    "cwe_ids": [
+      "CWE-94"
+    ],
+    "github_reviewed": true,
+    "github_reviewed_at": "2022-11-08T13:08:20Z",
+    "nvd_published_at": "2018-11-06T22:29:00Z",
+    "severity": "CRITICAL"
+  },
+  "details": "The RichFaces Framework 3.X through 3.3.4 is vulnerable to Expression Language (EL) injection via the UserResource resource. A remote, unauthenticated attacker could exploit this to execute arbitrary code using a chain of java serialized objects via `org.ajax4jsf.resource.UserResource$UriData`.",
+  "id": "GHSA-j7mw-7crr-658v",
+  "modified": "2025-10-22T17:36:28Z",
+  "published": "2022-05-13T01:17:53Z",
+  "references": [
+    {
+      "type": "ADVISORY",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2018-14667"
+    },
+    {
+      "type": "WEB",
+      "url": "https://github.com/richfaces/richfaces/commit/1372eb716c1a215a5af124198f21bde33fafad06"
+    },
+    {
+      "type": "WEB",
+      "url": "https://access.redhat.com/errata/RHSA-2018:3517"
+    },
+    {
+      "type": "WEB",
+      "url": "https://access.redhat.com/errata/RHSA-2018:3518"
+    },
+    {
+      "type": "WEB",
+      "url": "https://access.redhat.com/errata/RHSA-2018:3519"
+    },
+    {
+      "type": "WEB",
+      "url": "https://access.redhat.com/errata/RHSA-2018:3581"
+    },
+    {
+      "type": "WEB",
+      "url": "https://bugzilla.redhat.com/show_bug.cgi?id=CVE-2018-14667"
+    },
+    {
+      "type": "WEB",
+      "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog?field_cve=CVE-2018-14667"
+    },
+    {
+      "type": "WEB",
+      "url": "http://packetstormsecurity.com/files/156663/Richsploit-RichFaces-Exploitation-Toolkit.html"
+    },
+    {
+      "type": "WEB",
+      "url": "http://seclists.org/fulldisclosure/2020/Mar/21"
+    }
+  ],
+  "schema_version": "1.7.3",
+  "severity": [
+    {
+      "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H/E:H",
+      "type": "CVSS_V3"
+    }
+  ],
+  "summary": "Richfaces vulnerable to arbitrary code execution"
+}

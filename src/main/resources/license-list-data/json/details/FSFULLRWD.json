@@ -6,11 +6,11 @@
   "licenseId": "FSFULLRWD",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://lists.gnu.org/archive/html/autoconf/2012-04/msg00061.html",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:56:10Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T20:57:14Z",
       "isWayBackLink": false,
       "order": 0
     }

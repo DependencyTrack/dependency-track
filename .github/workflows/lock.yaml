@@ -15,7 +15,7 @@ jobs:
     # don't run on forks
     if: ${{ contains(github.repository, 'DependencyTrack/') }}
     steps:
-      - uses: dessant/lock-threads@be8aa5be94131386884a6da4189effda9b14aa21 # tag=v4.0.1
+      - uses: dessant/lock-threads@7266a7ce5c1df01b1c6db85bf8cd86c737dadbe7 # tag=v6.0.0
         with:
           github-token: ${{ github.token }}
           issue-inactive-days: '30'

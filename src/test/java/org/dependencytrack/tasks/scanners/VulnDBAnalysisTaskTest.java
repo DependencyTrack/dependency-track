@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.tasks.scanners;
 
-import alpine.model.IConfigProperty;
 import alpine.notification.Notification;
 import alpine.notification.NotificationService;
 import alpine.notification.Subscriber;
@@ -71,26 +70,30 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        qm.createConfigProperty(SCANNER_VULNDB_ENABLED.getGroupName(),
+        qm.createConfigProperty(
+                SCANNER_VULNDB_ENABLED.getGroupName(),
                 SCANNER_VULNDB_ENABLED.getPropertyName(),
                 "true",
-                IConfigProperty.PropertyType.BOOLEAN,
-                "vulndb");
-        qm.createConfigProperty(SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(),
+                SCANNER_VULNDB_ENABLED.getPropertyType(),
+                SCANNER_VULNDB_ENABLED.getDescription());
+        qm.createConfigProperty(
+                SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getGroupName(),
                 SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyName(),
                 "86400",
-                IConfigProperty.PropertyType.STRING,
-                "cache");
-        qm.createConfigProperty(SCANNER_VULNDB_OAUTH1_CONSUMER_KEY.getGroupName(),
+                SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getPropertyType(),
+                SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD.getDescription());
+        qm.createConfigProperty(
+                SCANNER_VULNDB_OAUTH1_CONSUMER_KEY.getGroupName(),
                 SCANNER_VULNDB_OAUTH1_CONSUMER_KEY.getPropertyName(),
-                DataEncryption.encryptAsString("secret"),
-                IConfigProperty.PropertyType.STRING,
-                "secret");
-        qm.createConfigProperty(SCANNER_VULNDB_OAUTH1_CONSUMER_SECRET.getGroupName(),
+                "secret",
+                SCANNER_VULNDB_OAUTH1_CONSUMER_KEY.getPropertyType(),
+                SCANNER_VULNDB_OAUTH1_CONSUMER_KEY.getDescription());
+        qm.createConfigProperty(
+                SCANNER_VULNDB_OAUTH1_CONSUMER_SECRET.getGroupName(),
                 SCANNER_VULNDB_OAUTH1_CONSUMER_SECRET.getPropertyName(),
                 DataEncryption.encryptAsString("secret"),
-                IConfigProperty.PropertyType.STRING,
-                "secret");
+                SCANNER_VULNDB_OAUTH1_CONSUMER_SECRET.getPropertyType(),
+                SCANNER_VULNDB_OAUTH1_CONSUMER_SECRET.getDescription());
     }
 
     @AfterEach
@@ -255,15 +258,7 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
                         .withHeader(new Header("X-User-Agent", "Dependency Track (https://github.com/DependencyTrack/dependency-track)"))
                         .withQueryStringParameter("cpe", "cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*"))
                 .respond(response()
-                        .withStatusCode(200)
-                        .withHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.api+json")
-                        .withBody("""                                
-                                {
-                                  "current_page": 1,
-                                  "total_entries": 1,
-                                  "results": []
-                                }
-                                """));
+                        .withStatusCode(404));
 
         var project = new Project();
         project.setName("acme-app");

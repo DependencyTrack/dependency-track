@@ -25,9 +25,9 @@ ARG UID=1000
 ARG GID=1000
 ARG WAR_FILENAME=dependency-track-apiserver.jar
 
-FROM eclipse-temurin:25_36-jre-jammy@sha256:78fdf7893e016b223576b290231288252c369aa21e443278af07ac04f7f592f7 AS jre-build
+FROM eclipse-temurin:25.0.2_10-jre-jammy@sha256:305fb0c3e5f47ea70ed6670845deb8bddbc362ad4c42354e85273ec9a31bd064 AS jre-build
 
-FROM debian:stable-slim@sha256:a771c85b2287eae7ce8fe0a4c2637d575c5d991555ae680c187c5572153648d9
+FROM debian:stable-slim@sha256:99fc6d2a0882fcbcdc452948d2d54eab91faafc7db037df82425edcdcf950e1f
 
 ARG COMMIT_SHA
 ARG APP_VERSION
@@ -41,7 +41,7 @@ ENV TZ=Etc/UTC \
     # Dependency-Track's default logging level
     LOGGING_LEVEL=INFO \
     # JVM Options that are passed at runtime by default
-    JAVA_OPTIONS="-XX:+UseParallelGC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -XX:MaxRAMPercentage=90.0" \
+    JAVA_OPTIONS="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -XX:MaxRAMPercentage=80.0 -XX:MaxGCPauseMillis=250" \
     # JVM Options that can be passed at runtime, while maintaining also those set in JAVA_OPTIONS
     EXTRA_JAVA_OPTIONS="" \
     # The web context defaults to the root. To override, supply an alternative context which starts with a / but does not end with one
@@ -64,41 +64,45 @@ ENV TZ=Etc/UTC \
 # Create a user and assign home directory to a ${DATA_DIR}
 # Ensure UID 1000 & GID 1000 own all the needed directories
 RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
-    && groupadd --system --gid ${GID} dtrack || true \
-    && useradd --system --no-user-group --gid dtrack --no-create-home --home-dir ${DATA_DIR} --comment "dtrack user" --shell /bin/false --uid ${UID} dtrack || true \
+    && groupadd --system --gid ${GID} dtrack \
+    && useradd --system --no-user-group --gid dtrack --no-create-home --home-dir ${DATA_DIR} --comment "dtrack user" --shell /bin/false --uid ${UID} dtrack \
     && chown -R dtrack:0 ${DATA_DIR} ${APP_DIR} \
     && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
     \
-    # Install wget for health check
+    # Install curl for health check
     && apt-get -yqq update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends wget \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yqq --no-install-recommends curl tini \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy JRE from temurin base image
-COPY --from=jre-build /opt/java/openjdk $JAVA_HOME
-
-# Copy the compiled WAR to the application directory created above
-COPY ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ${APP_DIR}
-
-# Specify the user to run as (in numeric format for compatibility with Kubernetes/OpenShift's SCC)
 USER ${UID}
-
-# Specify the container working directory
 WORKDIR ${APP_DIR}
 
+COPY --from=jre-build --chown=${UID}:0 /opt/java/openjdk $JAVA_HOME
+COPY --chown=${UID}:0 ./target/${WAR_FILENAME} ./src/main/docker/logback-json.xml ./
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+
 # Launch Dependency-Track
-CMD exec java ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
-    --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
-    -Dlogback.configurationFile=${LOGGING_CONFIG_PATH} \
-    -DdependencyTrack.logging.level=${LOGGING_LEVEL} \
-    -jar ${WAR_FILENAME} \
-    -context ${CONTEXT}
+CMD [ \
+    "/bin/sh", "-c", \
+    "exec java \
+        ${JAVA_OPTIONS} ${EXTRA_JAVA_OPTIONS} \
+        --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
+        --sun-misc-unsafe-memory-access=allow \
+        -Dlogback.configurationFile=${LOGGING_CONFIG_PATH} \
+        -DdependencyTrack.logging.level=${LOGGING_LEVEL} \
+        -jar ${WAR_FILENAME} \
+        -context ${CONTEXT}" \
+]
 
 # Specify which port Dependency-Track listens on
 EXPOSE 8080
 
 # Add a healthcheck using the Dependency-Track version API
-HEALTHCHECK --interval=30s --start-period=60s --timeout=3s CMD wget -t 1 -T 3 --no-proxy -q -O /dev/null http://127.0.0.1:8080${CONTEXT}health || exit 1
+HEALTHCHECK --interval=30s --start-period=60s --timeout=5s CMD [ \
+    "/bin/sh", "-c", \
+    "curl -f -s --max-time 3 --noproxy '*' -o /dev/null http://127.0.0.1:8080${CONTEXT}health" \
+]
 
 # metadata labels
 LABEL \

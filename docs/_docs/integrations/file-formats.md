@@ -35,11 +35,15 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
 > It removes the allBySource and the technical 'id' values, which were exposed unintentionally, in the aliases array of a vulnerability.
 > The example below shows how aliases are currently exported.
 
+> Finding Packaging Format v1.3 was introduced in Dependency-Track v4.14.0.
+> It adds optional `cvssV2Vector`, `cvssV3Vector`, `cvssV4Vector`, and `owaspRRVector` fields to `vulnerability` objects,
+> which are included when the corresponding scores or ratings are available and may be omitted otherwise.
+
 #### Example
 
 ```json
 {
-  "version": "1.1",
+  "version": "1.3",
   "meta" : {
     "application": "Dependency-Track",
     "version": "4.5.0",
@@ -69,6 +73,9 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
       "subtitle": "timespan",
       "severity": "LOW",
       "severityRank": 3,
+      "cvssV2Vector": "CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:P",
+      "cvssV3Vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+      "cvssV4Vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N",
       "cweId": 400,
       "cweName": "Uncontrolled Resource Consumption ('Resource Exhaustion')",
       "cwes": [

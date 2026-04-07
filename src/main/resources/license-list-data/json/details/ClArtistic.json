@@ -11,16 +11,16 @@
       "url": "http://www.ncftp.com/ncftp/doc/LICENSE.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:06:29Z",
+      "timestamp": "2026-02-20T21:01:25Z",
       "isWayBackLink": false,
       "order": 1
     },
     {
-      "match": "true",
+      "match": "N/A",
       "url": "http://gianluca.dellavedova.org/2011/01/03/clarified-artistic-license/",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:06:29Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T21:01:29Z",
       "isWayBackLink": false,
       "order": 0
     }

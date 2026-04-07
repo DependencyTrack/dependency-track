@@ -11,22 +11,22 @@
   "standardLicenseHeader": "Copyright (C) [$date-of-software] World Wide Web Consortium, (Massachusetts Institute of Technology, European Research Consortium for Informatics and Mathematics, Keio University). All Rights Reserved.\nThis work is distributed under the W3C® Software License in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
   "crossRef": [
     {
+      "match": "N/A",
+      "url": "https://opensource.org/licenses/W3C",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T21:01:24Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
       "match": "true",
       "url": "http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:00:28Z",
+      "timestamp": "2026-02-20T21:01:25Z",
       "isWayBackLink": false,
       "order": 0
-    },
-    {
-      "match": "N/A",
-      "url": "https://opensource.org/licenses/W3C",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:00:29Z",
-      "isWayBackLink": false,
-      "order": 1
     }
   ],
   "seeAlso": [

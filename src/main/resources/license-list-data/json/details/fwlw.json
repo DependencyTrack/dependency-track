@@ -8,11 +8,11 @@
   "licenseId": "fwlw",
   "crossRef": [
     {
-      "match": "false",
+      "match": "N/A",
       "url": "https://mirrors.nic.cz/tex-archive/macros/latex/contrib/fwlw/README",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:01:42Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T20:56:09Z",
       "isWayBackLink": false,
       "order": 0
     }

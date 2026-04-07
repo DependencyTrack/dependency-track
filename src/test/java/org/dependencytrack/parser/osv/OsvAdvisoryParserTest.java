@@ -149,6 +149,18 @@ class OsvAdvisoryParserTest {
     }
 
     @Test
+    void testParseOSVJsonWithCVSSv4() throws IOException {
+        String jsonFile = "src/test/resources/unit/osv.jsons/osv-GHSA-q2x7-8rv6-6q7h.json";
+        String jsonString = new String(Files.readAllBytes(Paths.get(jsonFile)));
+        JSONObject jsonObject = new JSONObject(jsonString);
+        OsvAdvisory advisory = parser.parse(jsonObject);
+        Assertions.assertNotNull(advisory);
+        Assertions.assertEquals("GHSA-q2x7-8rv6-6q7h", advisory.getId());
+        Assertions.assertEquals("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N", advisory.getCvssV4Vector());
+        Assertions.assertEquals("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", advisory.getCvssV3Vector());
+    }
+
+    @Test
         // https://github.com/DependencyTrack/dependency-track/issues/3185
     void testIssue3185() throws Exception {
         String jsonFile = "src/test/resources/unit/osv.jsons/osv-CVE-2016-10012.json";

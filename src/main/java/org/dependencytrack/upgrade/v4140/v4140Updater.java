@@ -22,11 +22,17 @@ import alpine.common.logging.Logger;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.upgrade.AbstractUpgradeItem;
 import alpine.server.util.DbUtil;
+import org.dependencytrack.tasks.NistMirrorTask;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Locale;
 
 public class v4140Updater extends AbstractUpgradeItem {
@@ -41,6 +47,8 @@ public class v4140Updater extends AbstractUpgradeItem {
     @Override
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
         addRiskMatrixColumns(connection);
+        resetVulnSourceWatermarks(connection);
+        deleteNvdFeedTimestampFiles();
     }
 
     private void addRiskMatrixColumns(final Connection connection) throws Exception {
@@ -112,6 +120,41 @@ public class v4140Updater extends AbstractUpgradeItem {
                                  final String tablePattern, final String columnPattern) throws SQLException {
         try (ResultSet columns = metaData.getColumns(catalog, schema, tablePattern, columnPattern)) {
             return columns.next();
+        }
+    }
+
+    private void deleteNvdFeedTimestampFiles() {
+        final Path nvdMirrorDir = NistMirrorTask.DEFAULT_NVD_MIRROR_DIR;
+        if (!Files.isDirectory(nvdMirrorDir)) {
+            return;
+        }
+
+        LOGGER.info("Deleting NVD feed timestamp files to force re-download");
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(nvdMirrorDir, "*.json.gz.ts")) {
+            for (final Path tsFile : stream) {
+                LOGGER.info("Deleting " + tsFile.getFileName());
+                Files.delete(tsFile);
+            }
+        } catch (IOException e) {
+            LOGGER.warn("Failed to delete NVD feed timestamp files. You may need to delete them manually and restart Dependency-Track to force a re-download.", e);
+        }
+    }
+
+    private void resetVulnSourceWatermarks(final Connection connection) throws SQLException {
+        LOGGER.info("Resetting watermarks for incremental vulnerability source mirroring. Sources will perform a full mirror for their next scheduled invocation.");
+        try (final Statement statement = connection.createStatement()) {
+            statement.execute(/* language=SQL */ """
+                    UPDATE "CONFIGPROPERTY"
+                       SET "PROPERTYVALUE" = NULL
+                     WHERE "GROUPNAME" = 'vuln-source'
+                       AND "PROPERTYNAME" = 'github.advisories.last.modified.epoch.seconds'
+                    """);
+            statement.execute(/* language=SQL */ """
+                    UPDATE "CONFIGPROPERTY"
+                       SET "PROPERTYVALUE" = NULL
+                     WHERE "GROUPNAME" = 'vuln-source'
+                       AND "PROPERTYNAME" = 'nvd.api.last.modified.epoch.seconds'
+                    """);
         }
     }
 }

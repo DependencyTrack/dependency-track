@@ -62,16 +62,22 @@ import org.dependencytrack.util.VulnerabilityUtil;
 import org.json.JSONObject;
 import org.metaeffekt.core.security.cvss.v2.Cvss2;
 import org.metaeffekt.core.security.cvss.v3.Cvss3;
+import org.metaeffekt.core.security.cvss.v4P0.Cvss4P0;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.dependencytrack.common.ConfigKey.OSSINDEX_RETRY_BACKOFF_INITIAL_DURATION_MS;
 import static org.dependencytrack.common.ConfigKey.OSSINDEX_RETRY_BACKOFF_MAX_DURATION_MS;
 import static org.dependencytrack.common.ConfigKey.OSSINDEX_RETRY_BACKOFF_MULTIPLIER;
 import static org.dependencytrack.common.ConfigKey.OSSINDEX_RETRY_MAX_ATTEMPTS;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_BASE_URL;
+import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_OSSINDEX_ENABLED;
 import static org.dependencytrack.util.RetryUtil.logRetryEventWith;
 import static org.dependencytrack.util.RetryUtil.maybeClosePreviousResult;
 import static org.dependencytrack.util.RetryUtil.withExponentialBackoff;
@@ -88,15 +94,33 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
 
     private static final String DEFAULT_API_BASE_URL = "https://ossindex.sonatype.org";
     private static final Logger LOGGER = Logger.getLogger(OssIndexAnalysisTask.class);
+    private static final Set<String> SUPPORTED_PURL_TYPES;
     private static final Retry RETRY;
 
-    private final String apiBaseUrl;
+    private String apiBaseUrl;
     private String apiUsername;
     private String apiToken;
     private boolean aliasSyncEnabled;
     private VulnerabilityAnalysisLevel vulnerabilityAnalysisLevel;
 
     static {
+        // https://ossindex.sonatype.org/ecosystems
+        SUPPORTED_PURL_TYPES = Set.of(
+                "cargo",
+                "cocoapods",
+                "composer",
+                "conan",
+                "conda",
+                "cran",
+                "gem",
+                "golang",
+                "maven",
+                "npm",
+                "nuget",
+                "pypi",
+                "rpm",
+                "swift");
+
         final RetryRegistry registry = RetryRegistry.of(RetryConfig.<CloseableHttpResponse>custom()
                 .intervalFunction(withExponentialBackoff(
                         OSSINDEX_RETRY_BACKOFF_INITIAL_DURATION_MS,
@@ -120,11 +144,38 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
     }
 
     public OssIndexAnalysisTask() {
-        this(DEFAULT_API_BASE_URL);
+        this(null);  // Let getApiBaseUrl() read from config
     }
 
     OssIndexAnalysisTask(final String apiBaseUrl) {
         this.apiBaseUrl = apiBaseUrl;
+    }
+
+    /**
+     * Retrieves the OSS Index API base URL from configuration.
+     * The URL is cached after first retrieval.
+     *
+     * @return The base URL for OSS Index API
+     */
+    private String getApiBaseUrl() {
+        if (apiBaseUrl == null) {
+            try (final var qm = new QueryManager()) {
+                final ConfigProperty property = qm.getConfigProperty(
+                        SCANNER_OSSINDEX_BASE_URL.getGroupName(),
+                        SCANNER_OSSINDEX_BASE_URL.getPropertyName()
+                );
+                if (property != null && property.getPropertyValue() != null && !property.getPropertyValue().trim().isEmpty()) {
+                    apiBaseUrl = property.getPropertyValue().trim();
+                    // Remove trailing slash to avoid double slashes in path concatenation
+                    if (apiBaseUrl.endsWith("/")) {
+                        apiBaseUrl = apiBaseUrl.substring(0, apiBaseUrl.length() - 1);
+                    }
+                } else {
+                    apiBaseUrl = DEFAULT_API_BASE_URL;
+                }
+            }
+        }
+        return apiBaseUrl;
     }
 
     public AnalyzerIdentity getAnalyzerIdentity() {
@@ -138,32 +189,35 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         if (!(e instanceof final OssIndexAnalysisEvent event)) {
             return;
         }
-        if (!super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ENABLED)) {
+        if (!super.isEnabled(SCANNER_OSSINDEX_ENABLED)) {
             return;
         }
 
         try (final var qm = new QueryManager()) {
             final ConfigProperty apiUsernameProperty = qm.getConfigProperty(
-                    ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
-                    ConfigPropertyConstants.SCANNER_OSSINDEX_API_USERNAME.getPropertyName()
+                    SCANNER_OSSINDEX_API_USERNAME.getGroupName(),
+                    SCANNER_OSSINDEX_API_USERNAME.getPropertyName()
             );
             final ConfigProperty apiTokenProperty = qm.getConfigProperty(
-                    ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
-                    ConfigPropertyConstants.SCANNER_OSSINDEX_API_TOKEN.getPropertyName()
+                    SCANNER_OSSINDEX_API_TOKEN.getGroupName(),
+                    SCANNER_OSSINDEX_API_TOKEN.getPropertyName()
             );
-            if (apiUsernameProperty == null || apiUsernameProperty.getPropertyValue() == null
-                    || apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
-                LOGGER.warn("An API username or token has not been specified for use with OSS Index; Skipping");
+            if (apiTokenProperty == null || apiTokenProperty.getPropertyValue() == null) {
+                LOGGER.warn("An API token has not been specified for use with OSS Index; Skipping");
                 return;
-            } else {
-                try {
-                    apiUsername = apiUsernameProperty.getPropertyValue();
-                    apiToken = DebugDataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
-                } catch (Exception ex) {
-                    // OSS Index will stop supporting unauthenticated requests
-                    LOGGER.error("An error occurred decrypting the OSS Index API Token; Skipping", ex);
+            }
+            try {
+                apiToken = DebugDataEncryption.decryptAsString(apiTokenProperty.getPropertyValue());
+            } catch (Exception ex) {
+                LOGGER.error("An error occurred decrypting the OSS Index API Token; Skipping", ex);
+                return;
+            }
+            if (!isBearerToken(apiToken)) {
+                if (apiUsernameProperty == null || apiUsernameProperty.getPropertyValue() == null) {
+                    LOGGER.warn("An API username has not been specified for use with OSS Index; Skipping");
                     return;
                 }
+                apiUsername = apiUsernameProperty.getPropertyValue();
             }
             aliasSyncEnabled = super.isEnabled(ConfigPropertyConstants.SCANNER_OSSINDEX_ALIAS_SYNC_ENABLED);
         }
@@ -183,7 +237,9 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * @return true if OssIndexAnalysisTask should analyze, false if not
      */
     public boolean isCapable(final Component component) {
-        return component.getPurl() != null
+        return !component.isInternal()
+                && component.getPurl() != null
+                && SUPPORTED_PURL_TYPES.contains(component.getPurl().getType())
                 && component.getPurl().getName() != null
                 && component.getPurl().getVersion() != null;
     }
@@ -195,7 +251,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * @return true if OssIndexAnalysisTask should analyze, false if not
      */
     public boolean shouldAnalyze(final PackageURL purl) {
-        return !isCacheCurrent(Vulnerability.Source.OSSINDEX, apiBaseUrl, purl.toString());
+        return !isCacheCurrent(Vulnerability.Source.OSSINDEX, getApiBaseUrl(), purl.getCoordinates());
     }
 
     /**
@@ -204,7 +260,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      * @param component component the Component to analyze from cache
      */
     public void applyAnalysisFromCache(final Component component) {
-        applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, apiBaseUrl, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
+        applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, getApiBaseUrl(), component.getPurl().getCoordinates(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel);
     }
 
     /**
@@ -214,10 +270,10 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
      */
     public void analyze(final List<Component> components) {
         Map<Boolean, List<Component>> componentsPartitionByCacheValidity = components.stream()
-                .filter(component -> !component.isInternal() && isCapable(component))
-                .collect(Collectors.partitioningBy(component -> isCacheCurrent(Vulnerability.Source.OSSINDEX, apiBaseUrl, component.getPurl().toString())));
+                .filter(this::isCapable)
+                .collect(Collectors.partitioningBy(component -> isCacheCurrent(Vulnerability.Source.OSSINDEX, getApiBaseUrl(), component.getPurl().getCoordinates())));
         List<Component> componentWithValidAnalysisFromCache = componentsPartitionByCacheValidity.get(true);
-        componentWithValidAnalysisFromCache.forEach(component -> applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, apiBaseUrl, component.getPurl().toString(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel));
+        componentWithValidAnalysisFromCache.forEach(component -> applyAnalysisFromCache(Vulnerability.Source.OSSINDEX, getApiBaseUrl(), component.getPurl().getCoordinates(), component, getAnalyzerIdentity(), vulnerabilityAnalysisLevel));
         List<Component> componentWithInvalidAnalysisFromCache = componentsPartitionByCacheValidity.get(false);
         final Pageable<Component> paginatedComponents = new Pageable<>(Config.getInstance().getPropertyAsInt(ConfigKey.OSSINDEX_REQUEST_MAX_PURL), componentWithInvalidAnalysisFromCache);
         while (!paginatedComponents.isPaginationComplete()) {
@@ -263,27 +319,26 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         if (purl == null) {
             return null;
         }
-        String p = purl.canonicalize();
-        p = p.replaceFirst("@v", "@");
-        if (p.contains("?")) {
-            p = p.substring(0, p.lastIndexOf("?"));
-        }
-        if (p.contains("#")) {
-            p = p.substring(0, p.lastIndexOf("#"));
-        }
-        return p;
+
+        return purl.getCoordinates().replaceFirst("@v", "@");
+    }
+
+    private static boolean isBearerToken(final String token) {
+        return token != null && token.startsWith("sonatype_pat_");
     }
 
     /**
      * Submits the payload to the Sonatype OSS Index service
      */
     private List<ComponentReport> submit(final JSONObject payload) throws Throwable {
-        HttpPost request = new HttpPost("%s/api/v3/component-report".formatted(apiBaseUrl));
+        HttpPost request = new HttpPost("%s/api/v3/component-report".formatted(getApiBaseUrl()));
         request.addHeader(HttpHeaders.ACCEPT, "application/json");
         request.addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
         request.addHeader(HttpHeaders.USER_AGENT, ManagedHttpClientFactory.getUserAgent());
         request.setEntity(new StringEntity(payload.toString()));
-        if (apiUsername != null && apiToken != null) {
+        if (isBearerToken(apiToken)) {
+            request.addHeader("Authorization", "Bearer " + apiToken);
+        } else if (apiUsername != null && apiToken != null) {
             request.addHeader("Authorization", HttpUtil.basicAuthHeaderValue(apiUsername, apiToken));
         }
         try (final CloseableHttpResponse response = RETRY.executeCheckedSupplier(() -> HttpClientPool.getClient().execute(request))) {
@@ -293,7 +348,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                 final OssIndexParser parser = new OssIndexParser();
                 return parser.parse(responseString);
             } else {
-                handleUnexpectedHttpResponse(LOGGER, apiBaseUrl, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                handleUnexpectedHttpResponse(LOGGER, getApiBaseUrl(), response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
             }
         }
         return new ArrayList<>();
@@ -359,7 +414,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
                                 addVulnerabilityToCache(component, vulnerability);
                             }
                         }
-                        updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, apiBaseUrl, component.getPurl().toString(), component.getCacheResult());
+                        updateAnalysisCacheStats(qm, Vulnerability.Source.OSSINDEX, getApiBaseUrl(), component.getPurl().getCoordinates(), component.getCacheResult());
                     }
                 }
             }
@@ -404,10 +459,12 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         if (reportedVuln.getCvssVector() != null) {
             final var cvss = CvssUtil.parse(reportedVuln.getCvssVector());
             if (cvss != null) {
-                if (cvss instanceof Cvss2) {
-                    vulnerability.applyV2Score(cvss);
+                if (cvss instanceof Cvss4P0) {
+                    vulnerability.applyV4Score(cvss);
                 } else if (cvss instanceof Cvss3) {
                     vulnerability.applyV3Score(cvss);
+                } else if (cvss instanceof Cvss2) {
+                    vulnerability.applyV2Score(cvss);
                 }
             }
         }
@@ -415,6 +472,7 @@ public class OssIndexAnalysisTask extends BaseComponentAnalyzerTask implements C
         vulnerability.setSeverity(VulnerabilityUtil.getSeverity(
                 vulnerability.getCvssV2BaseScore(),
                 vulnerability.getCvssV3BaseScore(),
+                vulnerability.getCvssV4Score(),
                 vulnerability.getOwaspRRLikelihoodScore(),
                 vulnerability.getOwaspRRTechnicalImpactScore(),
                 vulnerability.getOwaspRRBusinessImpactScore()

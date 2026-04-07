@@ -9,8 +9,8 @@
       "match": "N/A",
       "url": "https://opensource.org/licenses/OGTSL",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:01:44Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T21:03:38Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -19,7 +19,7 @@
       "url": "http://www.opengroup.org/testing/downloads/The_Open_Group_TSL.txt",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:01:45Z",
+      "timestamp": "2026-02-20T21:03:39Z",
       "isWayBackLink": false,
       "order": 0
     }

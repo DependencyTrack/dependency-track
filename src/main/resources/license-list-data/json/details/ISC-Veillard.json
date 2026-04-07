@@ -8,11 +8,20 @@
   "licenseId": "ISC-Veillard",
   "crossRef": [
     {
+      "match": "false",
+      "url": "https://raw.githubusercontent.com/GNOME/libxml2/4c2e7c651f6c2f0d1a74f350cbda95f7df3e7017/hash.c",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:58:52Z",
+      "isWayBackLink": false,
+      "order": 0
+    },
+    {
       "match": "N/A",
       "url": "https://sourceforge.net/p/ctrio/git/ci/master/tree/README",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2025-07-01T14:57:06Z",
+      "timestamp": "2026-02-20T20:58:52Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -21,18 +30,9 @@
       "url": "https://github.com/GNOME/libxml2/blob/master/dict.c",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:57:07Z",
+      "timestamp": "2026-02-20T20:58:53Z",
       "isWayBackLink": false,
       "order": 1
-    },
-    {
-      "match": "false",
-      "url": "https://raw.githubusercontent.com/GNOME/libxml2/4c2e7c651f6c2f0d1a74f350cbda95f7df3e7017/hash.c",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:57:08Z",
-      "isWayBackLink": false,
-      "order": 0
     }
   ],
   "seeAlso": [

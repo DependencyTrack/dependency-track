@@ -12,8 +12,8 @@
       "match": "N/A",
       "url": "https://opensource.org/licenses/OSL-3.0",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:54:17Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T20:58:19Z",
       "isWayBackLink": false,
       "order": 1
     },
@@ -22,7 +22,7 @@
       "url": "https://web.archive.org/web/20120101081418/http://rosenlaw.com:80/OSL3.0.htm",
       "isValid": false,
       "isLive": false,
-      "timestamp": "2025-07-01T14:54:17Z",
+      "timestamp": "2026-02-20T20:58:19Z",
       "isWayBackLink": false,
       "order": 0
     }

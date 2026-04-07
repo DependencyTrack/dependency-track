@@ -145,6 +145,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
     /**
      * @since 4.12.3
      */
+    @Override
     public VulnerableSoftware getVulnerableSoftwareByPurl(
             final String purlType,
             final String purlNamespace,
@@ -154,6 +155,32 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
             final String versionEndIncluding,
             final String versionStartExcluding,
             final String versionStartIncluding) {
+        return getVulnerableSoftwareByPurl(
+                purlType,
+                purlNamespace,
+                purlName,
+                /* purlQualifiers */ null,
+                version,
+                versionEndExcluding,
+                versionEndIncluding,
+                versionStartExcluding,
+                versionStartIncluding);
+    }
+
+    /**
+     * @since 4.14.0
+     */
+    @Override
+    public VulnerableSoftware getVulnerableSoftwareByPurl(
+            String purlType,
+            String purlNamespace,
+            String purlName,
+            String purlQualifiers,
+            String version,
+            String versionEndExcluding,
+            String versionEndIncluding,
+            String versionStartExcluding,
+            String versionStartIncluding) {
         final var queryFilterParts = new ArrayList<>(List.of(
                 "purlType == :purlType",
                 "purlName == :purlName"));
@@ -166,6 +193,12 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
         } else {
             queryFilterParts.add("purlNamespace == :purlNamespace");
             queryParams.put("purlNamespace", purlNamespace);
+        }
+        if (purlQualifiers != null) {
+            queryFilterParts.add("purlQualifiers == :purlQualifiers");
+            queryParams.put("purlQualifiers", purlQualifiers);
+        } else {
+            queryFilterParts.add("purlQualifiers == null");
         }
 
         if (version != null) {
@@ -548,6 +581,7 @@ final class VulnerableSoftwareQueryManager extends QueryManager implements IQuer
                             vs.getPurlType(),
                             vs.getPurlNamespace(),
                             vs.getPurlName(),
+                            vs.getPurlQualifiers(),
                             vs.getVersion(),
                             vs.getVersionEndExcluding(),
                             vs.getVersionEndIncluding(),

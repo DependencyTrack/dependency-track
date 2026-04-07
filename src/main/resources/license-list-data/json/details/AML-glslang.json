@@ -10,16 +10,16 @@
       "url": "https://github.com/KhronosGroup/glslang/blob/main/LICENSE.txt#L949",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:59:22Z",
+      "timestamp": "2026-02-20T20:53:54Z",
       "isWayBackLink": false,
       "order": 0
     },
     {
-      "match": "true",
+      "match": "N/A",
       "url": "https://docs.omniverse.nvidia.com/install-guide/latest/common/licenses.html",
       "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:59:22Z",
+      "isLive": false,
+      "timestamp": "2026-02-20T20:53:55Z",
       "isWayBackLink": false,
       "order": 1
     }

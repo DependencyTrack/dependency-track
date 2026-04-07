@@ -8,22 +8,22 @@
   "licenseId": "LZMA-SDK-9.11-to-9.20",
   "crossRef": [
     {
-      "match": "N/A",
-      "url": "https://sourceforge.net/projects/sevenzip/files/LZMA%20SDK/",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2025-07-01T14:57:46Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "false",
       "url": "https://www.7-zip.org/sdk.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:57:47Z",
+      "timestamp": "2026-02-20T20:55:40Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "N/A",
+      "url": "https://sourceforge.net/projects/sevenzip/files/LZMA%20SDK/",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T20:55:41Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

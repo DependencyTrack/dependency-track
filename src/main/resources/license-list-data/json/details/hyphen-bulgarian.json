@@ -1,0 +1,33 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "This software may be used, modified, copied, distributed, and sold,\nboth in source and binary form provided that the above copyright\nnotice and these terms are retained. The name of the author may not\nbe used to endorse or promote products derived from this software\nwithout prior permission.  THIS SOFTWARE IS PROVIDES \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED.  IN NO EVENT\nSHALL THE AUTHOR BE LIABLE FOR ANY DAMAGES ARISING IN ANY WAY OUT\nOF THE USE OF THIS SOFTWARE.\n",
+  "standardLicenseTemplate": "This software may be used, modified, copied, distributed, and sold, both in source and binary form provided that the above copyright notice and these terms are retained. The name of the author may not be used to endorse or promote products derived from this software without prior permission. THIS SOFTWARE IS \u003c\u003cvar;name\u003d\"provided\";original\u003d\"PROVIDED\";match\u003d\"PROVIDES|PROVIDED\"\u003e\u003e \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE.\n\n",
+  "name": "hyphen-bulgarian License",
+  "licenseId": "hyphen-bulgarian",
+  "crossRef": [
+    {
+      "match": "false",
+      "url": "https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config/-/blob/959538769bfad6a73bdf34275d46520ec0f9cbb5/COPYING#L176-185",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:00:26Z",
+      "isWayBackLink": false,
+      "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://ctan.math.illinois.edu/systems/texlive/tlnet/archive/hyphen-bulgarian.tar.xz",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:00:26Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://ctan.math.illinois.edu/systems/texlive/tlnet/archive/hyphen-bulgarian.tar.xz",
+    "https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config/-/blob/959538769bfad6a73bdf34275d46520ec0f9cbb5/COPYING#L176-185"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            This software may be used, modified, copied, distributed, and\n            sold, both in source and binary form provided that the above\n            copyright notice and these terms are retained. The name of the\n            author may not be used to endorse or promote products derived\n            from this software without prior permission. THIS SOFTWARE\n            IS \u003cvar class\u003d\"replaceable-license-text\"\u003e\u003cspan title\u003d\"can be replaced with the pattern PROVIDES|PROVIDED\"\u003e PROVIDED\u003c/span\u003e\u003c/var\u003e\n            \u0026quot;AS IS\u0026quot; AND ANY EXPRESS OR IMPLIED WARRANTIES ARE\n            DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY\n            DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE.\n         \u003c/p\u003e\n\n      "
+}

@@ -12,25 +12,35 @@
   "crossRef": [
     {
       "match": "N/A",
-      "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1-standalone.html",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2025-07-01T14:55:30Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "N/A",
       "url": "https://opensource.org/licenses/LGPL-2.1",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2025-07-01T14:55:30Z",
+      "timestamp": "2026-02-20T20:56:49Z",
+      "isWayBackLink": false,
+      "order": 2
+    },
+    {
+      "match": "N/A",
+      "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T20:57:19Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "N/A",
+      "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1-standalone.html",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T20:57:49Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [
     "https://www.gnu.org/licenses/old-licenses/lgpl-2.1-standalone.html",
+    "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
     "https://opensource.org/licenses/LGPL-2.1"
   ],
   "isOsiApproved": true,

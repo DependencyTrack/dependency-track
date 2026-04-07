@@ -24,6 +24,7 @@ import io.github.jeremylong.openvulnerability.client.nvd.CpeMatch;
 import io.github.jeremylong.openvulnerability.client.nvd.CveItem;
 import io.github.jeremylong.openvulnerability.client.nvd.CvssV2;
 import io.github.jeremylong.openvulnerability.client.nvd.CvssV3;
+import io.github.jeremylong.openvulnerability.client.nvd.CvssV4;
 import io.github.jeremylong.openvulnerability.client.nvd.LangString;
 import io.github.jeremylong.openvulnerability.client.nvd.Metrics;
 import io.github.jeremylong.openvulnerability.client.nvd.Node;
@@ -135,13 +136,14 @@ public final class ModelConverter {
             metrics.getCvssMetricV2().sort(comparingInt(metric -> metric.getType().ordinal()));
 
             for (final CvssV2 metric : metrics.getCvssMetricV2()) {
-                final var vector = metric.getCvssData().getVectorString();
-                final var cvss = CvssUtil.parse(vector);
-                vuln.setCvssV2Vector(cvss.toString());
-                vuln.setCvssV2BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
-                vuln.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
-                vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
-                break;
+                final var cvss = CvssUtil.parse(metric.getCvssData().getVectorString());
+                if (cvss != null) {
+                    vuln.setCvssV2Vector(cvss.toString());
+                    vuln.setCvssV2BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
+                    vuln.setCvssV2ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
+                    vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
+                    break;
+                }
             }
         }
 
@@ -150,28 +152,46 @@ public final class ModelConverter {
 
             for (final CvssV3 metric : metrics.getCvssMetricV31()) {
                 final var cvss = CvssUtil.parse(metric.getCvssData().getVectorString());
-                vuln.setCvssV3Vector(cvss.toString());
-                vuln.setCvssV3BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
-                vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
-                vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
-                break;
+                if (cvss != null) {
+                    vuln.setCvssV3Vector(cvss.toString());
+                    vuln.setCvssV3BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
+                    vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
+                    vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
+                    break;
+                }
             }
         } else if (metrics.getCvssMetricV30() != null && !metrics.getCvssMetricV30().isEmpty()) {
             metrics.getCvssMetricV30().sort(comparingInt(metric -> metric.getType().ordinal()));
 
             for (final CvssV3 metric : metrics.getCvssMetricV30()) {
                 final var cvss = CvssUtil.parse(metric.getCvssData().getVectorString());
-                vuln.setCvssV3Vector(cvss.toString());
-                vuln.setCvssV3BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
-                vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
-                vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
-                break;
+                if (cvss != null) {
+                    vuln.setCvssV3Vector(cvss.toString());
+                    vuln.setCvssV3BaseScore(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
+                    vuln.setCvssV3ExploitabilitySubScore(BigDecimal.valueOf(metric.getExploitabilityScore()));
+                    vuln.setCvssV3ImpactSubScore(BigDecimal.valueOf(metric.getImpactScore()));
+                    break;
+                }
+            }
+        }
+
+        if (metrics.getCvssMetricV40() != null && !metrics.getCvssMetricV40().isEmpty()) {
+            metrics.getCvssMetricV40().sort(comparingInt(metric -> metric.getType().ordinal()));
+
+            for (final CvssV4 metric : metrics.getCvssMetricV40()) {
+                final var cvss = CvssUtil.parse(metric.getCvssData().getVectorString());
+                if (cvss != null) {
+                    vuln.setCvssV4Vector(cvss.toString());
+                    vuln.setCvssV4Score(BigDecimal.valueOf(metric.getCvssData().getBaseScore()));
+                    break;
+                }
             }
         }
 
         vuln.setSeverity(VulnerabilityUtil.getSeverity(
                 vuln.getCvssV2BaseScore(),
                 vuln.getCvssV3BaseScore(),
+                vuln.getCvssV4Score(),
                 vuln.getOwaspRRLikelihoodScore(),
                 vuln.getOwaspRRTechnicalImpactScore(),
                 vuln.getOwaspRRBusinessImpactScore()

@@ -51,4 +51,5 @@ public final class ModelConverter {
         VulnerableSoftware vs = new VulnerableSoftware();
         return (VulnerableSoftware)convertCpe23Uri(vs, cpe23Uri);
     }
+
 }

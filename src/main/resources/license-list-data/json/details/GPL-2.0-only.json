@@ -11,29 +11,11 @@
   "standardLicenseHeader": "Copyright (C) yyyy name of author\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA .\n\n",
   "crossRef": [
     {
-      "match": "false",
-      "url": "https://github.com/openjdk/jdk/blob/6162e2c5213c5dd7c1127fd9616b543efa898962/LICENSE",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:59:38Z",
-      "isWayBackLink": false,
-      "order": 3
-    },
-    {
-      "match": "N/A",
-      "url": "https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html",
-      "isValid": true,
-      "isLive": false,
-      "timestamp": "2025-07-01T14:59:47Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "N/A",
       "url": "https://opensource.org/licenses/GPL-2.0",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2025-07-01T14:59:47Z",
+      "timestamp": "2026-02-20T20:56:11Z",
       "isWayBackLink": false,
       "order": 2
     },
@@ -42,9 +24,27 @@
       "url": "https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt",
       "isValid": true,
       "isLive": false,
-      "timestamp": "2025-07-01T14:59:55Z",
+      "timestamp": "2026-02-20T20:56:41Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/openjdk/jdk/blob/6162e2c5213c5dd7c1127fd9616b543efa898962/LICENSE",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:56:42Z",
+      "isWayBackLink": false,
+      "order": 3
+    },
+    {
+      "match": "N/A",
+      "url": "https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html",
+      "isValid": true,
+      "isLive": false,
+      "timestamp": "2026-02-20T20:57:12Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

@@ -6,22 +6,22 @@
   "licenseId": "Hippocratic-2.1",
   "crossRef": [
     {
-      "match": "false",
-      "url": "https://github.com/EthicalSource/hippocratic-license/blob/58c0e646d64ff6fbee275bfe2b9492f914e3ab2a/LICENSE.txt",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T14:54:41Z",
-      "isWayBackLink": false,
-      "order": 1
-    },
-    {
       "match": "true",
       "url": "https://firstdonoharm.dev/version/2/1/license.html",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T14:54:41Z",
+      "timestamp": "2026-02-20T20:56:10Z",
       "isWayBackLink": false,
       "order": 0
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/EthicalSource/hippocratic-license/blob/58c0e646d64ff6fbee275bfe2b9492f914e3ab2a/LICENSE.txt",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:56:10Z",
+      "isWayBackLink": false,
+      "order": 1
     }
   ],
   "seeAlso": [

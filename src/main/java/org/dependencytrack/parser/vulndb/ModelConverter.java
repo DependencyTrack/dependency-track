@@ -158,9 +158,11 @@ public final class ModelConverter {
                 break; // Always prefer use of the NVD scoring, if available
             }
         }
+        // TODO: Add CVSSv4 metric handling once VulnDB provides CVSSv4 data.
         vuln.setSeverity(VulnerabilityUtil.getSeverity(
                 vuln.getCvssV2BaseScore(),
                 vuln.getCvssV3BaseScore(),
+                vuln.getCvssV4Score(),
                 vuln.getOwaspRRLikelihoodScore(),
                 vuln.getOwaspRRTechnicalImpactScore(),
                 vuln.getOwaspRRBusinessImpactScore()

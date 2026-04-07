@@ -36,8 +36,30 @@ class FindingTest extends PersistenceCapableTest {
     private final Date attributedOn = new Date();
     private final Finding finding = new Finding(projectUuid, "component-uuid", "component-name", "component-group",
             "component-version", "Required","component-purl", "component-cpe", "vuln-uuid", "vuln-source", "vuln-vulnId", "vuln-title",
-            "vuln-subtitle", "vuln-description", "vuln-recommendation", Severity.HIGH, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-            "0.5", "0.9", null, AnalyzerIdentity.INTERNAL_ANALYZER, attributedOn, null, null, AnalysisState.NOT_AFFECTED, true);
+            "vuln-subtitle", "vuln-description", "vuln-recommendation",
+            Severity.HIGH, // 14
+            BigDecimal.valueOf(7.2), // 15
+            "CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:P", // 16
+            BigDecimal.valueOf(8.4), // 17
+            "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", // 18
+            BigDecimal.valueOf(9.2), // 19
+            "CVSS:4.0/...", // 20
+            BigDecimal.valueOf(1.25), // 21
+            BigDecimal.valueOf(1.75), // 22
+            BigDecimal.valueOf(1.3), // 23
+            "OWASP_VECTOR", // 24
+            BigDecimal.valueOf(0.5), // 25
+            BigDecimal.valueOf(0.9), // 26
+            "787,79", // 27
+            "vuln-references", // 28
+            attributedOn, // 29
+            AnalyzerIdentity.INTERNAL_ANALYZER, // 30
+            attributedOn, // 31
+            null, // 32
+            null, // 33
+            AnalysisState.NOT_AFFECTED, // 34
+            true // 35
+    );
 
     @Test
     void testComponent() {
@@ -60,12 +82,19 @@ class FindingTest extends PersistenceCapableTest {
         //Assertions.assertEquals("vuln-description", map.get("description"));
         //Assertions.assertEquals("vuln-recommendation", map.get("recommendation"));
         Assertions.assertEquals(BigDecimal.valueOf(7.2), map.get("cvssV2BaseScore"));
+        Assertions.assertEquals("CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:P", map.get("cvssV2Vector"));
         Assertions.assertEquals(BigDecimal.valueOf(8.4), map.get("cvssV3BaseScore"));
+        Assertions.assertEquals("CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", map.get("cvssV3Vector"));
+        Assertions.assertEquals(BigDecimal.valueOf(9.2), map.get("cvssV4Score"));
+        Assertions.assertEquals("CVSS:4.0/...", map.get("cvssV4Vector"));
         Assertions.assertEquals(BigDecimal.valueOf(1.25), map.get("owaspLikelihoodScore"));
         Assertions.assertEquals(BigDecimal.valueOf(1.75), map.get("owaspTechnicalImpactScore"));
         Assertions.assertEquals(BigDecimal.valueOf(1.3), map.get("owaspBusinessImpactScore"));
+        Assertions.assertEquals("OWASP_VECTOR", map.get("owaspRRVector"));
         Assertions.assertEquals(Severity.HIGH.name(), map.get("severity"));
         Assertions.assertEquals(1, map.get("severityRank"));
+        Assertions.assertEquals("vuln-references", map.get("references"));
+        Assertions.assertEquals(attributedOn, map.get("published"));
     }
 
     @Test
@@ -101,5 +130,4 @@ class FindingTest extends PersistenceCapableTest {
     void testGetCwesWhenInputIsNull() {
         assertThat(Finding.getCwes(null)).isNull();
     }
-
 }

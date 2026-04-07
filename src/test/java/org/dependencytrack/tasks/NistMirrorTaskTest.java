@@ -160,7 +160,9 @@ class NistMirrorTaskTest extends PersistenceCapableTest {
                     assertThat(vuln.getCvssV3ExploitabilitySubScore()).isEqualByComparingTo("0.9");
                     assertThat(vuln.getCvssV3ImpactSubScore()).isEqualByComparingTo("5.9");
                     assertThat(vuln.getCvssV3Vector()).isEqualTo("CVSS:3.1/AV:P/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
-                    assertThat(vuln.getSeverity()).isEqualTo(Severity.MEDIUM);
+                    assertThat(vuln.getCvssV4Score()).isEqualByComparingTo("7.0");
+                    assertThat(vuln.getCvssV4Vector()).startsWith("CVSS:4.0/");
+                    assertThat(vuln.getSeverity()).isEqualTo(Severity.HIGH);
                 }
         );
     }

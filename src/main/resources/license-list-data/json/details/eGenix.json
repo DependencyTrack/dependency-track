@@ -6,22 +6,22 @@
   "licenseId": "eGenix",
   "crossRef": [
     {
-      "match": "false",
-      "url": "http://www.egenix.com/products/eGenix.com-Public-License-1.1.0.pdf",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:03:53Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
       "match": "true",
       "url": "https://fedoraproject.org/wiki/Licensing/eGenix.com_Public_License_1.1.0",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:03:54Z",
+      "timestamp": "2026-02-20T21:04:36Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "http://www.egenix.com/products/eGenix.com-Public-License-1.1.0.pdf",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:04:37Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

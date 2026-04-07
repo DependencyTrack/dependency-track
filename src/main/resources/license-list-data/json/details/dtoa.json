@@ -7,21 +7,21 @@
   "crossRef": [
     {
       "match": "false",
-      "url": "https://github.com/SWI-Prolog/swipl-devel/blob/master/src/os/dtoa.c",
-      "isValid": true,
-      "isLive": true,
-      "timestamp": "2025-07-01T15:03:06Z",
-      "isWayBackLink": false,
-      "order": 0
-    },
-    {
-      "match": "false",
       "url": "https://sourceware.org/git/?p\u003dnewlib-cygwin.git;a\u003dblob;f\u003dnewlib/libc/stdlib/mprec.h;hb\u003dHEAD",
       "isValid": true,
       "isLive": true,
-      "timestamp": "2025-07-01T15:03:06Z",
+      "timestamp": "2026-02-20T21:00:27Z",
       "isWayBackLink": false,
       "order": 1
+    },
+    {
+      "match": "false",
+      "url": "https://github.com/SWI-Prolog/swipl-devel/blob/master/src/os/dtoa.c",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T21:00:28Z",
+      "isWayBackLink": false,
+      "order": 0
     }
   ],
   "seeAlso": [

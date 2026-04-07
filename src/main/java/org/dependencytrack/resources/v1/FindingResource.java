@@ -37,6 +37,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import org.apache.commons.text.WordUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.event.PolicyEvaluationEvent;
@@ -52,16 +62,6 @@ import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.HeaderParam;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -277,8 +277,12 @@ public class FindingResource extends AlpineResource {
                                    @QueryParam("cvssv2To") String cvssv2To,
                                    @Parameter(description = "Filter CVSSv3 from this value")
                                    @QueryParam("cvssv3From") String cvssv3From,
-                                   @Parameter(description = "Filter CVSSv3 from this Value")
+                                   @Parameter(description = "Filter CVSSv3 to this value")
                                    @QueryParam("cvssv3To") String cvssv3To,
+                                   @Parameter(description = "Filter CVSSv4 from this value")
+                                   @QueryParam("cvssv4From") String cvssv4From,
+                                   @Parameter(description = "Filter CVSSv4 to this value")
+                                   @QueryParam("cvssv4To") String cvssv4To,
                                    @Parameter(description = "Filter EPSS from this value")
                                    @QueryParam("epssFrom") String epssFrom,
                                    @Parameter(description = "Filter EPSS to this value")
@@ -302,6 +306,8 @@ public class FindingResource extends AlpineResource {
             filters.put("cvssv2To", cvssv2To);
             filters.put("cvssv3From", cvssv3From);
             filters.put("cvssv3To", cvssv3To);
+            filters.put("cvssv4From", cvssv4From);
+            filters.put("cvssv4To", cvssv4To);
             filters.put("epssFrom", epssFrom);
             filters.put("epssTo", epssTo);
             filters.put("epssPercentileFrom", epssPercentileFrom);
@@ -348,6 +354,10 @@ public class FindingResource extends AlpineResource {
                                    @QueryParam("cvssv3From") String cvssv3From,
                                    @Parameter(description = "Filter CVSSv3 to this value")
                                    @QueryParam("cvssv3To") String cvssv3To,
+                                   @Parameter(description = "Filter CVSSv4 from this value")
+                                   @QueryParam("cvssv4From") String cvssv4From,
+                                   @Parameter(description = "Filter CVSSv4 to this value")
+                                   @QueryParam("cvssv4To") String cvssv4To,
                                    @Parameter(description = "Filter EPSS from this value")
                                    @QueryParam("epssFrom") String epssFrom,
                                    @Parameter(description = "Filter EPSS to this value")
@@ -371,6 +381,8 @@ public class FindingResource extends AlpineResource {
             filters.put("cvssv2To", cvssv2To);
             filters.put("cvssv3From", cvssv3From);
             filters.put("cvssv3To", cvssv3To);
+            filters.put("cvssv4From", cvssv4From);
+            filters.put("cvssv4To", cvssv4To);
             filters.put("epssFrom", epssFrom);
             filters.put("epssTo", epssTo);
             filters.put("epssPercentileFrom", epssPercentileFrom);

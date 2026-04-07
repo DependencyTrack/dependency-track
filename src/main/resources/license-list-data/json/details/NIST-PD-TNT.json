@@ -1,0 +1,25 @@
+{
+  "isDeprecatedLicenseId": false,
+  "licenseText": "This software was developed at the National Institute of Standards and Technology (NIST) by employees of the Federal Government in the course of their official duties. Pursuant to title 17 Section 105 of the United States Code this software is not subject to copyright protection and is in the public domain. NIST assumes no responsibility whatsoever for its use by other parties, and makes no guarantees, expressed or implied, about its quality, reliability, or any other characteristic.\n\nWe would appreciate acknowledgement if the software is incorporated in redistributable libraries or applications.\n",
+  "standardLicenseTemplate": "This software was developed at the National Institute of Standards and Technology (NIST) by employees of the Federal Government in the course of their official duties. Pursuant to title 17 Section 105 of the United States Code this software is not subject to copyright protection and is in the public domain. NIST assumes no responsibility whatsoever for its use by other parties, and makes no guarantees, expressed or implied, about its quality, reliability, or any other characteristic.\n\nWe would appreciate acknowledgement if the software is incorporated in redistributable libraries or applications.\n\n",
+  "name": "NIST    Public Domain Notice TNT variant",
+  "licenseComments": "This is similar in spirit to NIST-PD, but has some different disclaimer or warranties and omits the last sentence in the first paragraph of NIST-PD",
+  "comment": "This is similar in spirit to NIST-PD, but has some different disclaimer or warranties and omits the last sentence in the first paragraph of NIST-PD",
+  "licenseId": "NIST-PD-TNT",
+  "crossRef": [
+    {
+      "match": "true",
+      "url": "https://math.nist.gov/tnt/download.html",
+      "isValid": true,
+      "isLive": true,
+      "timestamp": "2026-02-20T20:54:26Z",
+      "isWayBackLink": false,
+      "order": 0
+    }
+  ],
+  "seeAlso": [
+    "https://math.nist.gov/tnt/download.html"
+  ],
+  "isOsiApproved": false,
+  "licenseTextHtml": "\n         \u003cp\u003e\n            This software was developed at the National Institute of\n            Standards and Technology (NIST) by employees of the Federal\n            Government in the course of their official duties. Pursuant to\n            title 17 Section 105 of the United States Code this software\n            is not subject to copyright protection and is in the public\n            domain. NIST assumes no responsibility whatsoever for its use\n            by other parties, and makes no guarantees, expressed or implied,\n            about its quality, reliability, or any other characteristic.\n         \u003c/p\u003e\n\n         \u003cp\u003e\n            We would appreciate acknowledgement if the software is\n            incorporated in redistributable libraries or applications.\n         \u003c/p\u003e\n\n      "
+}

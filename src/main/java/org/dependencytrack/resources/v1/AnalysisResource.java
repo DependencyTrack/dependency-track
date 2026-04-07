@@ -236,8 +236,8 @@ public class AnalysisResource extends AlpineResource {
             AnalysisCommentUtil.makeRiskLikelihoodComment(qm, analysis, request.getRiskLikelihood(), commenter, likelihoodLabel);
             AnalysisCommentUtil.makeResidualRiskImpactComment(qm, analysis, request.getResidualRiskImpact(), commenter, residualImpactLabel);
             AnalysisCommentUtil.makeResidualRiskLikelihoodComment(qm, analysis, request.getResidualRiskLikelihood(), commenter, residualLikelihoodLabel);
-            AnalysisCommentUtil.makeRiskJustificationComment(qm, analysis, request.getRiskJustification(), commenter);
-            AnalysisCommentUtil.makeResidualRiskJustificationComment(qm, analysis, request.getResidualRiskJustification(), commenter);
+            AnalysisCommentUtil.makeRiskJustificationComment(qm, analysis, request.getRiskJustification(), commenter, effectiveRiskSection + " justification");
+            AnalysisCommentUtil.makeResidualRiskJustificationComment(qm, analysis, request.getResidualRiskJustification(), commenter, effectiveResidualSection + " justification");
             // Log derived calculated risk level (changes when impact or likelihood changes)
             AnalysisCommentUtil.makeCalculatedRiskComment(qm, analysis,
                     resolveCalculatedLevel(matrixConfig, analysis.getRiskImpact(), analysis.getRiskLikelihood()),

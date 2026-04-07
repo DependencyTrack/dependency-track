@@ -88,11 +88,19 @@ public final class AnalysisCommentUtil {
     }
 
     public static void makeRiskJustificationComment(final QueryManager qm, final Analysis analysis, final String riskJustification, final String commenter) {
-        makeCommentIfChanged("Risk justification", qm, analysis, Objects.requireNonNullElse(analysis.getRiskJustification(), "NOT_SET"), riskJustification, commenter);
+        makeRiskJustificationComment(qm, analysis, riskJustification, commenter, "Risk justification");
+    }
+
+    public static void makeRiskJustificationComment(final QueryManager qm, final Analysis analysis, final String riskJustification, final String commenter, final String label) {
+        makeCommentIfChanged(label, qm, analysis, Objects.requireNonNullElse(analysis.getRiskJustification(), "NOT_SET"), riskJustification, commenter);
     }
 
     public static void makeResidualRiskJustificationComment(final QueryManager qm, final Analysis analysis, final String residualRiskJustification, final String commenter) {
-        makeCommentIfChanged("Residual risk justification", qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskJustification(), "NOT_SET"), residualRiskJustification, commenter);
+        makeResidualRiskJustificationComment(qm, analysis, residualRiskJustification, commenter, "Residual risk justification");
+    }
+
+    public static void makeResidualRiskJustificationComment(final QueryManager qm, final Analysis analysis, final String residualRiskJustification, final String commenter, final String label) {
+        makeCommentIfChanged(label, qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskJustification(), "NOT_SET"), residualRiskJustification, commenter);
     }
 
     public static void makeCalculatedRiskComment(

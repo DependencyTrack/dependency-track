@@ -206,6 +206,7 @@ public class AnalysisResource extends AlpineResource {
             String residualLikelihoodLabel = "Residual risk likelihood";
             String effectiveRiskSection = "Risk";
             String effectiveResidualSection = "Residual risk";
+            String levelDefinitionsLabel = "calculated";
             JSONObject matrixConfig = null;
             final ConfigProperty riskMatrixProp = qm.getConfigProperty(
                     ConfigPropertyConstants.RISK_MATRIX_CONFIG.getGroupName(),
@@ -220,8 +221,10 @@ public class AnalysisResource extends AlpineResource {
                         final String residualSection = sectionLabels != null ? sectionLabels.optString("residualRisk", "").trim() : "";
                         final String impactAxis = axisLabels != null ? axisLabels.optString("impact", "impact").trim() : "impact";
                         final String likelihoodAxis = axisLabels != null ? axisLabels.optString("likelihood", "likelihood").trim() : "likelihood";
+                        final String customLevelLabel = matrixConfig.optString("levelDefinitionsLabel", "").trim();
                         effectiveRiskSection = riskSection.isEmpty() ? "Risk" : riskSection;
                         effectiveResidualSection = residualSection.isEmpty() ? "Residual risk" : residualSection;
+                        levelDefinitionsLabel = customLevelLabel.isEmpty() ? "calculated" : customLevelLabel;
                         impactLabel = effectiveRiskSection + " " + impactAxis;
                         likelihoodLabel = effectiveRiskSection + " " + likelihoodAxis;
                         residualImpactLabel = effectiveResidualSection + " " + impactAxis;
@@ -239,11 +242,11 @@ public class AnalysisResource extends AlpineResource {
             AnalysisCommentUtil.makeCalculatedRiskComment(qm, analysis,
                     resolveCalculatedLevel(matrixConfig, analysis.getRiskImpact(), analysis.getRiskLikelihood()),
                     resolveCalculatedLevel(matrixConfig, request.getRiskImpact(), request.getRiskLikelihood()),
-                    effectiveRiskSection + " calculated", commenter);
+                    effectiveRiskSection + " " + levelDefinitionsLabel, commenter);
             AnalysisCommentUtil.makeCalculatedRiskComment(qm, analysis,
                     resolveCalculatedLevel(matrixConfig, analysis.getResidualRiskImpact(), analysis.getResidualRiskLikelihood()),
                     resolveCalculatedLevel(matrixConfig, request.getResidualRiskImpact(), request.getResidualRiskLikelihood()),
-                    effectiveResidualSection + " calculated", commenter);
+                    effectiveResidualSection + " " + levelDefinitionsLabel, commenter);
             final var suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
             analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(),
                     request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed(),

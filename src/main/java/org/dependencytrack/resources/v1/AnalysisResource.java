@@ -54,6 +54,7 @@ import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.util.AnalysisCommentUtil;
 import org.dependencytrack.util.JsonUtil;
 import org.dependencytrack.util.NotificationUtil;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import jakarta.validation.Validator;
@@ -198,31 +199,33 @@ public class AnalysisResource extends AlpineResource {
             AnalysisCommentUtil.makeJustificationComment(qm, analysis, request.getAnalysisJustification(), commenter);
             AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, request.getAnalysisResponse(), commenter);
             AnalysisCommentUtil.makeAnalysisDetailsComment(qm, analysis, request.getAnalysisDetails(), commenter);
-            // Resolve custom axis label names from risk matrix config (fall back to defaults)
+            // Resolve custom label names from risk matrix config (section + axis labels, fall back to defaults)
             String impactLabel = "Risk impact";
             String likelihoodLabel = "Risk likelihood";
             String residualImpactLabel = "Residual risk impact";
             String residualLikelihoodLabel = "Residual risk likelihood";
+            String effectiveRiskSection = "Risk";
+            String effectiveResidualSection = "Residual risk";
+            JSONObject matrixConfig = null;
             final ConfigProperty riskMatrixProp = qm.getConfigProperty(
                     ConfigPropertyConstants.RISK_MATRIX_CONFIG.getGroupName(),
                     ConfigPropertyConstants.RISK_MATRIX_CONFIG.getPropertyName());
             if (riskMatrixProp != null && !JsonUtil.isBlankJson(riskMatrixProp.getPropertyValue())) {
                 try {
-                    final JSONObject matrixConfig = new JSONObject(riskMatrixProp.getPropertyValue());
+                    matrixConfig = new JSONObject(riskMatrixProp.getPropertyValue());
                     if (matrixConfig.optBoolean("enabled", false)) {
+                        final JSONObject sectionLabels = matrixConfig.optJSONObject("sectionLabels");
                         final JSONObject axisLabels = matrixConfig.optJSONObject("axisLabels");
-                        if (axisLabels != null) {
-                            final String impact = axisLabels.optString("impact", "").trim();
-                            final String likelihood = axisLabels.optString("likelihood", "").trim();
-                            if (!impact.isEmpty()) {
-                                impactLabel = "Risk " + impact.toLowerCase();
-                                residualImpactLabel = "Residual risk " + impact.toLowerCase();
-                            }
-                            if (!likelihood.isEmpty()) {
-                                likelihoodLabel = "Risk " + likelihood.toLowerCase();
-                                residualLikelihoodLabel = "Residual risk " + likelihood.toLowerCase();
-                            }
-                        }
+                        final String riskSection = sectionLabels != null ? sectionLabels.optString("riskAssessment", "").trim() : "";
+                        final String residualSection = sectionLabels != null ? sectionLabels.optString("residualRisk", "").trim() : "";
+                        final String impactAxis = axisLabels != null ? axisLabels.optString("impact", "impact").trim() : "impact";
+                        final String likelihoodAxis = axisLabels != null ? axisLabels.optString("likelihood", "likelihood").trim() : "likelihood";
+                        effectiveRiskSection = riskSection.isEmpty() ? "Risk" : riskSection;
+                        effectiveResidualSection = residualSection.isEmpty() ? "Residual risk" : residualSection;
+                        impactLabel = effectiveRiskSection + " " + impactAxis;
+                        likelihoodLabel = effectiveRiskSection + " " + likelihoodAxis;
+                        residualImpactLabel = effectiveResidualSection + " " + impactAxis;
+                        residualLikelihoodLabel = effectiveResidualSection + " " + likelihoodAxis;
                     }
                 } catch (Exception ignored) { }
             }
@@ -232,6 +235,15 @@ public class AnalysisResource extends AlpineResource {
             AnalysisCommentUtil.makeResidualRiskLikelihoodComment(qm, analysis, request.getResidualRiskLikelihood(), commenter, residualLikelihoodLabel);
             AnalysisCommentUtil.makeRiskJustificationComment(qm, analysis, request.getRiskJustification(), commenter);
             AnalysisCommentUtil.makeResidualRiskJustificationComment(qm, analysis, request.getResidualRiskJustification(), commenter);
+            // Log derived calculated risk level (changes when impact or likelihood changes)
+            AnalysisCommentUtil.makeCalculatedRiskComment(qm, analysis,
+                    resolveCalculatedLevel(matrixConfig, analysis.getRiskImpact(), analysis.getRiskLikelihood()),
+                    resolveCalculatedLevel(matrixConfig, request.getRiskImpact(), request.getRiskLikelihood()),
+                    effectiveRiskSection + " calculated", commenter);
+            AnalysisCommentUtil.makeCalculatedRiskComment(qm, analysis,
+                    resolveCalculatedLevel(matrixConfig, analysis.getResidualRiskImpact(), analysis.getResidualRiskLikelihood()),
+                    resolveCalculatedLevel(matrixConfig, request.getResidualRiskImpact(), request.getResidualRiskLikelihood()),
+                    effectiveResidualSection + " calculated", commenter);
             final var suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
             analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(),
                     request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed(),
@@ -245,6 +257,36 @@ public class AnalysisResource extends AlpineResource {
             NotificationUtil.analyzeNotificationCriteria(qm, analysis, analysisStateChange, suppressionChange);
             return Response.ok(analysis).build();
         }
+    }
+
+    /**
+     * Resolves the display label of the calculated risk level for a given impact + likelihood combination
+     * by looking up the cell in the risk matrix config, then finding the matching level's label.
+     *
+     * @param matrixConfig the parsed risk matrix JSON config (may be null)
+     * @param impactKey    the impact key (e.g., "HIGH")
+     * @param likelihoodKey the likelihood key (e.g., "POSSIBLE")
+     * @return the level label (e.g., "High Risk"), or null if not resolvable
+     */
+    private static String resolveCalculatedLevel(final JSONObject matrixConfig, final String impactKey, final String likelihoodKey) {
+        if (matrixConfig == null || impactKey == null || likelihoodKey == null) return null;
+        if (!matrixConfig.optBoolean("enabled", false)) return null;
+        final JSONObject cells = matrixConfig.optJSONObject("cells");
+        if (cells == null) return null;
+        // Cell key format: "LIKELIHOOD_KEY::IMPACT_KEY" (matches frontend lookupRiskEntry logic)
+        final JSONObject cell = cells.optJSONObject(likelihoodKey + "::" + impactKey);
+        if (cell == null) return null;
+        final String levelKey = cell.optString("levelKey", null);
+        if (levelKey == null) return null;
+        final JSONArray levels = matrixConfig.optJSONArray("levels");
+        if (levels == null) return null;
+        for (int i = 0; i < levels.length(); i++) {
+            final JSONObject level = levels.optJSONObject(i);
+            if (level != null && levelKey.equals(level.optString("key", null))) {
+                return level.optString("label", levelKey);
+            }
+        }
+        return null;
     }
 
 }

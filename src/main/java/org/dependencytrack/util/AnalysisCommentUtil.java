@@ -95,6 +95,17 @@ public final class AnalysisCommentUtil {
         makeCommentIfChanged("Residual risk justification", qm, analysis, Objects.requireNonNullElse(analysis.getResidualRiskJustification(), "NOT_SET"), residualRiskJustification, commenter);
     }
 
+    public static void makeCalculatedRiskComment(
+            final QueryManager qm, final Analysis analysis,
+            final String oldLevel, final String newLevel,
+            final String label, final String commenter) {
+        final String oldDisplay = (oldLevel == null || oldLevel.isBlank()) ? "none" : oldLevel;
+        final String newDisplay = (newLevel == null || newLevel.isBlank()) ? "none" : newLevel;
+        if (!oldDisplay.equals(newDisplay)) {
+            qm.makeAnalysisComment(analysis, "%s: %s → %s".formatted(label, oldDisplay, newDisplay), commenter);
+        }
+    }
+
     static <T> boolean makeCommentIfChanged(final String prefix, final QueryManager qm, final Analysis analysis, final T currentValue, final T newValue, final String commenter) {
         if (Objects.equals(newValue, currentValue)) {
             return false;

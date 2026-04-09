@@ -193,6 +193,17 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
                                  String analysisDetails, Boolean isSuppressed,
                                  String riskImpact, String riskLikelihood, String residualRiskImpact,
                                  String residualRiskLikelihood, String riskJustification, String residualRiskJustification) {
+        return makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse,
+                analysisDetails, isSuppressed, riskImpact, riskLikelihood, residualRiskImpact,
+                residualRiskLikelihood, riskJustification, residualRiskJustification, null, null);
+    }
+
+    public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
+                                 AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
+                                 String analysisDetails, Boolean isSuppressed,
+                                 String riskImpact, String riskLikelihood, String residualRiskImpact,
+                                 String residualRiskLikelihood, String riskJustification, String residualRiskJustification,
+                                 String riskCalculated, String residualRiskCalculated) {
         Analysis analysis = getAnalysis(component, vulnerability);
         if (analysis == null) {
             analysis = new Analysis();
@@ -246,6 +257,8 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
 
         analysis.setRiskJustification(StringUtils.trimToNull(riskJustification));
         analysis.setResidualRiskJustification(StringUtils.trimToNull(residualRiskJustification));
+        analysis.setRiskCalculated(StringUtils.trimToNull(riskCalculated));
+        analysis.setResidualRiskCalculated(StringUtils.trimToNull(residualRiskCalculated));
 
         analysis = persist(analysis);
         return getAnalysis(analysis.getComponent(), analysis.getVulnerability());

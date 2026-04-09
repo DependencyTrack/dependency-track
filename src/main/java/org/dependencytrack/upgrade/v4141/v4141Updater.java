@@ -40,12 +40,13 @@ public class v4141Updater extends AbstractUpgradeItem {
 
     @Override
     public void executeUpgrade(final AlpineQueryManager qm, final Connection connection) throws Exception {
-        addSourceOfDiscoveryColumns(connection);
+        addCalculatedRiskColumns(connection);
     }
 
-    private void addSourceOfDiscoveryColumns(final Connection connection) throws Exception {
-        LOGGER.info("Adding SOURCE_OF_DISCOVERY column to \"VULNERABILITY\" table");
-        addVarcharColumnIfMissing(connection, "VULNERABILITY", "SOURCE_OF_DISCOVERY", 255);
+    private void addCalculatedRiskColumns(final Connection connection) throws SQLException {
+        LOGGER.info("Adding calculated risk columns to \"ANALYSIS\" table");
+        addVarcharColumnIfMissing(connection, "ANALYSIS", "RISK_CALCULATED", 255);
+        addVarcharColumnIfMissing(connection, "ANALYSIS", "RESIDUAL_RISK_CALCULATED", 255);
     }
 
     private void addVarcharColumnIfMissing(final Connection connection, final String tableName,

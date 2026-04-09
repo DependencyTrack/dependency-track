@@ -1175,9 +1175,21 @@ public class QueryManager extends AlpineQueryManager {
                      String analysisDetails, Boolean isSuppressed,
                      String riskImpact, String riskLikelihood, String residualRiskImpact,
                      String residualRiskLikelihood, String riskJustification, String residualRiskJustification) {
+        return makeAnalysis(component, vulnerability, analysisState, analysisJustification, analysisResponse,
+            analysisDetails, isSuppressed, riskImpact, riskLikelihood, residualRiskImpact,
+            residualRiskLikelihood, riskJustification, residualRiskJustification, null, null);
+        }
+
+        public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
+                     AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
+                     String analysisDetails, Boolean isSuppressed,
+                     String riskImpact, String riskLikelihood, String residualRiskImpact,
+                     String residualRiskLikelihood, String riskJustification, String residualRiskJustification,
+                     String riskCalculated, String residualRiskCalculated) {
         return getFindingsQueryManager().makeAnalysis(component, vulnerability, analysisState, analysisJustification,
             analysisResponse, analysisDetails, isSuppressed, riskImpact, riskLikelihood,
-            residualRiskImpact, residualRiskLikelihood, riskJustification, residualRiskJustification);
+            residualRiskImpact, residualRiskLikelihood, riskJustification, residualRiskJustification,
+            riskCalculated, residualRiskCalculated);
         }
 
     public Analysis updateAnalysisRiskFields(Component component, Vulnerability vulnerability,

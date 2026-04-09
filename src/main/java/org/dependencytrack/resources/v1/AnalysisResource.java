@@ -248,11 +248,15 @@ public class AnalysisResource extends AlpineResource {
                     resolveCalculatedLevel(matrixConfig, request.getResidualRiskImpact(), request.getResidualRiskLikelihood()),
                     effectiveResidualSection + " " + levelDefinitionsLabel, commenter);
             final var suppressionChange = AnalysisCommentUtil.makeAnalysisSuppressionComment(qm, analysis, request.isSuppressed(), commenter);
+            // Compute calculated risk level keys to store in DB
+            final String newRiskCalculated = resolveCalculatedLevel(matrixConfig, request.getRiskImpact(), request.getRiskLikelihood());
+            final String newResidualRiskCalculated = resolveCalculatedLevel(matrixConfig, request.getResidualRiskImpact(), request.getResidualRiskLikelihood());
             analysis = qm.makeAnalysis(component, vulnerability, request.getAnalysisState(), request.getAnalysisJustification(),
                     request.getAnalysisResponse(), request.getAnalysisDetails(), request.isSuppressed(),
                     request.getRiskImpact(), request.getRiskLikelihood(),
                     request.getResidualRiskImpact(), request.getResidualRiskLikelihood(),
-                    request.getRiskJustification(), request.getResidualRiskJustification());
+                    request.getRiskJustification(), request.getResidualRiskJustification(),
+                    newRiskCalculated, newResidualRiskCalculated);
 
             final String comment = StringUtils.trimToNull(request.getComment());
             qm.makeAnalysisComment(analysis, comment, commenter);

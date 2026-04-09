@@ -119,6 +119,14 @@ public class Analysis implements Serializable {
     @Column(name = "RESIDUAL_RISK_SCORE", jdbcType = "DOUBLE", allowsNull = "true")
     private Double residualRiskScore;
 
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RISK_CALCULATED", allowsNull = "true")
+    private String riskCalculated;
+
+    @Persistent(defaultFetchGroup = "true")
+    @Column(name = "RESIDUAL_RISK_CALCULATED", allowsNull = "true")
+    private String residualRiskCalculated;
+
     @Persistent(mappedBy = "analysis", defaultFetchGroup = "true")
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "timestamp ASC"))
     private List<AnalysisComment> analysisComments;
@@ -251,6 +259,22 @@ public class Analysis implements Serializable {
 
     public void setResidualRiskScore(Double residualRiskScore) {
         this.residualRiskScore = residualRiskScore;
+    }
+
+    public String getRiskCalculated() {
+        return riskCalculated;
+    }
+
+    public void setRiskCalculated(String riskCalculated) {
+        this.riskCalculated = riskCalculated;
+    }
+
+    public String getResidualRiskCalculated() {
+        return residualRiskCalculated;
+    }
+
+    public void setResidualRiskCalculated(String residualRiskCalculated) {
+        this.residualRiskCalculated = residualRiskCalculated;
     }
 
     public List<AnalysisComment> getAnalysisComments() {

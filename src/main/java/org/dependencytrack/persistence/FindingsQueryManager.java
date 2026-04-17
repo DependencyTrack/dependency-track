@@ -224,9 +224,7 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
         if (analysisResponse != null) {
             analysis.setAnalysisResponse(analysisResponse);
         }
-        if (analysisDetails != null) {
-            analysis.setAnalysisDetails(analysisDetails);
-        }
+        analysis.setAnalysisDetails(analysisDetails);
         if (isSuppressed != null) {
             analysis.setSuppressed(isSuppressed);
         }

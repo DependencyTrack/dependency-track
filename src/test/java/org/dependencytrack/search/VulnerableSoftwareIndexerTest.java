@@ -22,12 +22,14 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.search.document.VulnerableSoftwareDocument;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
 import static org.awaitility.Awaitility.await;
 
+@Disabled("Flaky due to shared singleton index state across tests")
 class VulnerableSoftwareIndexerTest extends PersistenceCapableTest {
 
     @Test

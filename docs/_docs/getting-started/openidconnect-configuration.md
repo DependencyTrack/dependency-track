@@ -30,6 +30,52 @@ When someone authenticates using OIDC, the claims provided in the ID token or `/
 2. Create a group with the name used in the OIDC team claim configured below. The value _must_ match exactly, including case.
 3. If the team you want members of the OIDC group to join already exists, use the _Mapped Teams_ menu to select it. If the team does not exist, open _Administration_ -> _Access Management_ -> _Teams_ to create it and, after having done so, add the OIDC group to the _Mapped OpenID Connect Groups_ list.
 
+## Dependency-Track Permission Roles
+
+When mapping OIDC groups to Dependency-Track teams, it is important to understand what permissions each role grants. The following table describes 
+all available permissions in Dependency-Track and their purpose:
+
+| Permission | Description |
+|---|---|
+| ACCESS_MANAGEMENT | Allows management of users, teams, and permissions |
+| BOM_UPLOAD | Allows uploading of Bill of Materials (BOM) files |
+| POLICY_MANAGEMENT | Allows creation and management of security policies |
+| POLICY_VIOLATION_ANALYSIS | Allows analysis and auditing of policy violations |
+| PORTFOLIO_MANAGEMENT | Allows management of projects and portfolio structure |
+| PROJECT_CREATION_UPLOAD | Allows creation of new projects and upload of BOMs |
+| SYSTEM_CONFIGURATION | Allows modification of system-wide configuration settings |
+| TAG_MANAGEMENT | Allows creation and management of tags |
+| VIEW_BADGES | Allows viewing of project badges |
+| VIEW_POLICY_VIOLATION | Allows viewing of policy violations without auditing them |
+| VULNERABILITY_ANALYSIS | Allows analysis and auditing of vulnerabilities |
+| VULNERABILITY_MANAGEMENT | Allows management of vulnerabilities and findings |
+
+### Recommended Enterprise Role Structure
+
+For enterprise deployments, consider mapping OIDC groups to the following team structure:
+
+| Team | Recommended Permissions |
+|---|---|
+| Security Administrators | ACCESS_MANAGEMENT, SYSTEM_CONFIGURATION, POLICY_MANAGEMENT, PORTFOLIO_MANAGEMENT |
+| Security Analysts | VULNERABILITY_ANALYSIS, POLICY_VIOLATION_ANALYSIS, VIEW_POLICY_VIOLATION |
+| Developers | BOM_UPLOAD, PROJECT_CREATION_UPLOAD, VIEW_BADGES, VIEW_POLICY_VIOLATION |
+| Read Only | VIEW_BADGES, VIEW_POLICY_VIOLATION |
+
+### Mapping Roles in Common Identity Providers
+
+#### Microsoft Entra ID
+
+In Entra ID, create security groups matching your team names (e.g. `DT-Security-Admins`, `DT-Developers`) and assign users to them. 
+In Dependency-Track, navigate to _Administration_ -> _Access Management_ -> _OpenID Connect Groups_ and map each Entra group name to the corresponding Dependency-Track team. Note that Entra ID returns group UUIDs by default — ensure you configure group claims to return group names or use the UUID as the group name in Dependency-Track.
+
+#### Keycloak
+
+In Keycloak, create groups matching your desired team names and assign users accordingly. Use the protocol mapper configuration described in the Keycloak example below to include group memberships in the `groups` claim. Map these group names in Dependency-Track under _Administration_ -> _Access Management_ -> _OpenID Connect Groups_.
+
+#### Okta
+
+In Okta, create groups and assign users. Configure the groups claim in your Okta application to include group memberships. Map the Okta group names to Dependency-Track teams under _Administration_ -> _Access Management_ -> _OpenID Connect Groups_.
+
 ### Example Configurations
 
 Generally, Dependency-Track can be used with any identity provider that implements the [OpenID Connect](https://openid.net/connect/) standard.

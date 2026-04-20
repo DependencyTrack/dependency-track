@@ -37,7 +37,7 @@ import java.util.List;
  * Evaluates the {@link VersionDistance} between a {@link Component}'s current and it's latest
  * version against a {@link Policy}. This makes it possible to add a policy for checking outdated
  * components. The policy "greater than 0:1.?.?" for example means, a difference of only one
- * between the curren version's major number and the latest version's major number is allowed.
+ * between the current version's major number and the latest version's major number is allowed.
  *
  * VersionDistances can be combined in a policy. For example "greater than 1:1.?.?" means a
  * difference of only one epoch number or one major number is allowed. Or "greater than 1.1.?"

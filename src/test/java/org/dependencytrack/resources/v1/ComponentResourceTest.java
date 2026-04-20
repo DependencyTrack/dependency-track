@@ -70,7 +70,7 @@ class ComponentResourceTest extends ResourceTest {
 
     /**
      * Generate a project with different dependencies
-     * @return A project with 1000 dpendencies: <ul>
+     * @return A project with 1000 dependencies: <ul>
      * <li>200 outdated dependencies, 75 direct and 125 transitive</li>
      * <li>800 recent dependencies, 25 direct, 775 transitive</li>
      * @throws MalformedPackageURLException
@@ -87,9 +87,9 @@ class ComponentResourceTest extends ResourceTest {
             component.setVersion(String.valueOf(i)+".0");
             component.setPurl(new PackageURL(RepositoryType.MAVEN.toString(), "component-group", "component-name-"+i , String.valueOf(i)+".0", null, null));
             component = qm.createComponent(component, false);
-            // direct depencencies
+            // direct dependencies
             if (i < 100) {
-                // 100 direct depencencies, 900 transitive depencencies
+                // 100 direct dependencies, 900 transitive dependencies
                 directDepencencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
             }
             // Recent & Outdated
@@ -138,9 +138,9 @@ class ComponentResourceTest extends ResourceTest {
             component.setVersion(String.valueOf(i)+".0");
             component.setPurl(new PackageURL(RepositoryType.PYPI.toString(), null, "component-name-"+i , String.valueOf(i)+".0", null, null));
             component = qm.createComponent(component, false);
-            // direct depencencies
+            // direct dependencies
             if (i < 4) {
-                // 4 direct depencencies, 6 transitive depencencies
+                // 4 direct dependencies, 6 transitive dependencies
                 directDepencencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
             }
             // Recent & Outdated

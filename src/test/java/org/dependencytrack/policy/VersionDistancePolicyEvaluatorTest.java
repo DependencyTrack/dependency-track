@@ -71,7 +71,7 @@ class VersionDistancePolicyEvaluatorTest extends PersistenceCapableTest {
                 Arguments.of("1.2.3", "1.2.3", Operator.NUMERIC_NOT_EQUAL, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", false),
                 Arguments.of("1.2.3", "1.2.3", Operator.NUMERIC_LESS_THAN, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", false),
                 Arguments.of("1.2.3", "1.2.3", Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", true),
-                // Negative distanse.
+                // Negative distance.
                 Arguments.of("2.3.4", "1.2.3", Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true),
                 Arguments.of("2.3.4", "1.2.3", Operator.NUMERIC_GREATER_THAN, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false),
                 Arguments.of("2.3.4", "1.2.3", Operator.NUMERIC_EQUAL, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", true),
@@ -93,7 +93,7 @@ class VersionDistancePolicyEvaluatorTest extends PersistenceCapableTest {
                 Arguments.of("0.2.2", "1.0.0", Operator.NUMERIC_EQUAL, "{\"epoch\": \"0\", \"major\": \"0\", \"minor\": \"1\", \"patch\": \"1\" }", false),
                 // Unsupported operator.
                 Arguments.of("1.2.3", "2.1.1", Operator.MATCHES, "{ \"major\": \"1\", \"minor\": \"?\", \"patch\": \"?\" }", false),
-                // Invalid distanse format.
+                // Invalid distance format.
                 Arguments.of("1.2.3", "2.1.1", Operator.NUMERIC_EQUAL, "{ \"major\": \"1a\" }", false),
                 // No known latestVersion.
                 Arguments.of("1.2.3", null, Operator.NUMERIC_EQUAL, "{ \"major\": \"0\", \"minor\": \"0\", \"patch\": \"0\" }", false)

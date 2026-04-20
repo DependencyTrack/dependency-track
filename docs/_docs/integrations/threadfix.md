@@ -5,7 +5,7 @@ chapter: 6
 order: 9
 ---
 
-ThreadFix includes a *remote provider* for Dependency-Track which provides seemless and automatic integration.
+ThreadFix includes a *remote provider* for Dependency-Track which provides seamless and automatic integration.
 Vulnerabilities on a per-project basis in Dependency-Track are mapped to corresponding applications in ThreadFix
 along with details of every vulnerability.
 

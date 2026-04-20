@@ -74,7 +74,7 @@ Snyk REST API version is updated every 6 months and can be referred at
 ### Trivy Analyzer
 
 Trivy analyzer relies on a server trivy instance to perform the analysis using REST API.
-Trivy REST API is not publically documented so upgrading to a new version might lead to some issues.
+Trivy REST API is not publicly documented so upgrading to a new version might lead to some issues.
 
 ### Analysis Result Cache
 

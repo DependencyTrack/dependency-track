@@ -157,7 +157,7 @@ public class VersionDistance implements Comparable<VersionDistance>,  Serializab
     }
 
     /**
-     * Parse a string of combined {@link VersionDistance}s and return tham as a {@link VersionDistance} {@link List}
+     * Parse a string of combined {@link VersionDistance}s and return than as a {@link VersionDistance} {@link List}
      * @param combinedDistances combined version distance string, e.g 1:1.?.? -> (1:?.?.?, 0:1.?.?)
      * @return List of separate {@link VersionDistance}s
      * @throws NumberFormatException in case a version distance cannot be parsed

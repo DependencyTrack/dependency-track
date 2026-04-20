@@ -61,7 +61,7 @@ An internally managed user that has the ability to login to Dependency-Track.
 ### Package URL (PURL)
 PURL or Package URL is a lightweight specification that standardizes the ability to reliably identify and locate 
 software packages. PURL is a URI string used to identify and locate a software package in a mostly universal and 
-uniform way across programing languages, package managers, packaging conventions, tools, APIs and databases. 
+uniform way across programming languages, package managers, packaging conventions, tools, APIs and databases. 
 See: <https://github.com/package-url/purl-spec>
 
 ### Portfolio

@@ -132,7 +132,7 @@ jobs:
           echo "tags-alpine=${TAGS_ALPINE}" >> $GITHUB_OUTPUT
 
       - name: Build multi-arch Container Image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # tag=v7.0.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # tag=v7.1.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |-
@@ -145,7 +145,7 @@ jobs:
           file: src/main/docker/Dockerfile
 
       - name: Build Alpine multi-arch Container Image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # tag=v7.0.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # tag=v7.1.0
         with:
           tags: ${{ steps.tags.outputs.tags-alpine }}
           build-args: |-

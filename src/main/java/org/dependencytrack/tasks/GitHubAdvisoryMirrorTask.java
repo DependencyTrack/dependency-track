@@ -69,6 +69,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static io.github.jeremylong.openvulnerability.client.ghsa.GitHubSecurityAdvisoryClientBuilder.aGitHubSecurityAdvisoryClient;
+import static org.datanucleus.PropertyNames.PROPERTY_MANAGE_RELATIONSHIPS;
 import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_ID;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_GITHUB_ADVISORIES_ACCESS_TOKEN;
@@ -211,6 +212,15 @@ public class GitHubAdvisoryMirrorTask implements LoggableSubscriber {
         final List<VulnerableSoftware> vsList = modelConverter.convert(advisory.getVulnerabilities());
 
         try (final var qm = new QueryManager()) {
+            // Disable managed relationships to avoid excessive N+1 queries during VulnerableSoftware synchronization.
+            //
+            //   "For an M-N bidirectional relation, at persist you MUST set one side and the other side will
+            //   be populated at commit/flush to make them consistent."
+            //   https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#managed_relationships
+            //
+            // The "consistent" is referring to in-memory state, NOT database records.
+            // We don't need a fully consistent object graph here, in fact it's actively detrimental.
+            qm.getPersistenceManager().setProperty(PROPERTY_MANAGE_RELATIONSHIPS, "false");
             qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
             qm.getPersistenceManager().addInstanceLifecycleListener(
                     new IndexingInstanceLifecycleListener(Event::dispatch),

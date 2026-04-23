@@ -258,6 +258,66 @@ class ViolationAnalysisResourceTest extends ResourceTest {
     }
 
     @Test
+    void updateAnalysisCreateNewLogsSuppressedTest() throws Exception {
+        initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        final Policy policy = qm.createPolicy("Blacklisted Version", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition condition = qm.createPolicyCondition(policy, Subject.VERSION, Operator.NUMERIC_EQUAL, "1.0");
+
+        var violation = new PolicyViolation();
+        violation.setType(Type.OPERATIONAL);
+        violation.setComponent(component);
+        violation.setPolicyCondition(condition);
+        violation.setTimestamp(new Date());
+        violation = qm.persist(violation);
+
+        final var request = new ViolationAnalysisRequest(component.getUuid().toString(),
+                violation.getUuid().toString(), ViolationAnalysisState.APPROVED, "Some comment", true);
+
+        final Response response = jersey.target(V1_VIOLATION_ANALYSIS)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(request, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+
+        final JsonObject jsonObject = parseJsonObject(response);
+        assertThat(jsonObject).isNotNull();
+        assertThat(jsonObject.getString("analysisState")).isEqualTo("APPROVED");
+        assertThat(jsonObject.getBoolean("isSuppressed")).isTrue();
+
+        assertThat(jsonObject.getJsonArray("analysisComments")).hasSize(3);
+        assertThat(jsonObject.getJsonArray("analysisComments").getJsonObject(0))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("NOT_SET → APPROVED"))
+                .doesNotContainKey("commenter"); // Not set when authenticating via API key
+        assertThat(jsonObject.getJsonArray("analysisComments").getJsonObject(1))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppressed"))
+                .doesNotContainKey("commenter"); // Not set when authenticating via API key
+        assertThat(jsonObject.getJsonArray("analysisComments").getJsonObject(2))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Some comment"))
+                .doesNotContainKey("commenter"); // Not set when authenticating via API key;
+
+        assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));
+        final Notification projectNotification = NOTIFICATIONS.poll();
+        assertThat(projectNotification).isNotNull();
+        final Notification notification = NOTIFICATIONS.poll();
+        assertThat(notification).isNotNull();
+        assertThat(notification.getScope()).isEqualTo(NotificationScope.PORTFOLIO.name());
+        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
+        assertThat(notification.getLevel()).isEqualTo(NotificationLevel.INFORMATIONAL);
+        assertThat(notification.getTitle()).isEqualTo(NotificationUtil.generateNotificationTitle(NotificationConstants.Title.VIOLATIONANALYSIS_DECISION_APPROVED, project));
+        assertThat(notification.getContent()).isEqualTo("An violation analysis decision was made to a policy violation affecting a project");
+    }
+
+    @Test
     void updateAnalysisCreateNewWithEmptyRequestTest() throws Exception {
         initializeWithPermissions(Permissions.POLICY_VIOLATION_ANALYSIS);
 

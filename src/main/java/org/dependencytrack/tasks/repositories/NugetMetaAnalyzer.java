@@ -104,7 +104,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
     /**
      * Sets the repository base URL which will then be used to retrieve and parse the service index. If the user has
      * specified a repo URL ending with index.json, it should be considered "fully qualified" and used as is to maximise
-     * compatability with non-nuget.org repos such as Artifactory. If not, preserve the previous Dependency Track
+     * compatibility with non-nuget.org repos such as Artifactory. If not, preserve the previous Dependency Track
      * behaviour of appending the nuget.org index to the supplied URL.
      *
      * @param baseUrl the base URL to the repository

@@ -284,7 +284,7 @@ public class NotificationPublisherResource extends AlpineResource {
             return Response.ok().build();
         } catch (IOException ioException) {
             LOGGER.error(ioException.getMessage(), ioException);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while restoring default notification publisher templates.").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occurred while restoring default notification publisher templates.").build();
         }
     }
 
@@ -322,7 +322,7 @@ public class NotificationPublisherResource extends AlpineResource {
             return Response.ok().build();
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
             LOGGER.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending test mail notification.").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occurred while sending test mail notification.").build();
         }
     }
 

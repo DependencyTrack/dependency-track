@@ -433,7 +433,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     }
 
     /**
-     * Deletes a Component and all objects dependant on the component.
+     * Deletes a Component and all objects dependent on the component.
      * @param component the Component to delete
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      */

@@ -149,7 +149,7 @@ public class CoordinatesPolicyEvaluator extends AbstractPolicyEvaluator {
      * }
      * </pre>
      *
-     * @param condition teh condition to evaluate
+     * @param condition the condition to evaluate
      * @return the Coordinates
      */
     private Coordinates parseCoordinatesDefinition(final PolicyCondition condition) {

@@ -219,7 +219,7 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
     }
 
     /**
-     * Deletes a ServiceComponent and all objects dependant on the service.
+     * Deletes a ServiceComponent and all objects dependent on the service.
      * @param service the ServiceComponent to delete
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      */

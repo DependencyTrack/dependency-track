@@ -44,7 +44,7 @@ public class LicenseGroupPolicyEvaluator extends AbstractPolicyEvaluator {
 
     /**
      * A license group that does not exist in the database and is therefore verified based on its
-     * licenses list directly instad of a database check
+     * licenses list directly instead of a database check
      */
     private static class TemporaryLicenseGroup extends LicenseGroup {
         private static final long serialVersionUID = -1268650463377651000L;

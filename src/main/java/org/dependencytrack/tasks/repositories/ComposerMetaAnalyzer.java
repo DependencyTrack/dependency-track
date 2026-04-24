@@ -156,7 +156,7 @@ public class ComposerMetaAnalyzer extends AbstractMetaAnalyzer {
             return analyzeFromMetadataUrl(meta, component, packageMetaDataPathPattern);
         }
 
-        // initial batch of included pacakges is included in packages.json response
+        // initial batch of included packages is included in packages.json response
         if (isMinified(repoRoot)) {
             repoRoot.put("packages", expandPackages(repoRoot.getJSONObject("packages")));
         }

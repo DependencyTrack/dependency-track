@@ -776,7 +776,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                             clonedComponent.setProperties(clonedProperties);
                         }
 
-                        // Add vulnerabilties and finding attribution from the source component to the cloned component
+                        // Add vulnerabilities and finding attribution from the source component to the cloned component
                         for (Vulnerability vuln : sourceComponent.getVulnerabilities()) {
                             final FindingAttribution sourceAttribution = this.getFindingAttribution(vuln, sourceComponent);
                             this.addVulnerability(vuln, clonedComponent, sourceAttribution.getAnalyzerIdentity(), sourceAttribution.getAlternateIdentifier(), sourceAttribution.getReferenceUrl(), sourceAttribution.getAttributedOn());
@@ -943,7 +943,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
-     * Deletes a Project and all objects dependant on the project.
+     * Deletes a Project and all objects dependent on the project.
      * @param project the Project to delete
      * @param commitIndex specifies if the search index should be committed (an expensive operation)
      */

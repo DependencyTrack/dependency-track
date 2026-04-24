@@ -56,7 +56,7 @@ public interface IMetaAnalyzer {
     void setRepositoryUsernameAndPassword(String username, String password);
 
     /**
-     * Returns the type of repositry the analyzer supports.
+     * Returns the type of repository the analyzer supports.
      * @since 3.1.0
      */
     RepositoryType supportedRepositoryType();

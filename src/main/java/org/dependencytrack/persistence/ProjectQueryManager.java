@@ -1037,11 +1037,12 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
         // Collect parent collection projects that need metrics updates after deletion.
         // Exclude parents that are themselves being deleted.
+        final Set<UUID> deleteUuids = uuids instanceof Set ? (Set<UUID>) uuids : Set.copyOf(uuids);
         final Set<UUID> collectionParentUuids = projects.stream()
                 .map(Project::getParent)
                 .filter(parent -> parent != null
                         && parent.getCollectionLogic() != ProjectCollectionLogic.NONE
-                        && uuids.stream().noneMatch(u -> u.equals(parent.getUuid())))
+                        && !deleteUuids.contains(parent.getUuid()))
                 .map(Project::getUuid)
                 .collect(Collectors.toSet());
 

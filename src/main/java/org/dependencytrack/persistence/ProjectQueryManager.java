@@ -955,7 +955,17 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     @Override
     public void recursivelyDelete(final Project project, final boolean commitIndex) {
-        Project parent = project.getParent();
+        // Reload the parent with collectionLogic eagerly fetched before any deletions occur.
+        // collectionLogic is not in the default fetch group, so accessing it after the PM
+        // state is modified by cascading deletes risks a silent lazy-load failure (returning NONE).
+        final Project parent;
+        if (project.getParent() != null) {
+            try (var ignored = new ScopedCustomization(pm).withFetchGroup(Project.FetchGroup.METRICS_UPDATE.name())) {
+                parent = pm.getObjectById(Project.class, project.getParent().getId());
+            }
+        } else {
+            parent = null;
+        }
 
         if (project.getChildren() != null) {
             for (final Project child: project.getChildren()) {

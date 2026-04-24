@@ -146,14 +146,11 @@ class ProjectQueryManagerTest extends PersistenceCapableTest {
         try (MockedStatic<Event> mockedEvent = Mockito.mockStatic(Event.class)) {
             qm.deleteProjectsByUUIDs(List.of(child.getUuid()));
 
-            final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+            final ArgumentCaptor<ProjectMetricsUpdateEvent> eventCaptor =
+                    ArgumentCaptor.forClass(ProjectMetricsUpdateEvent.class);
             mockedEvent.verify(() -> Event.dispatch(eventCaptor.capture()), times(1));
 
-            final List<UUID> dispatchedUuids = eventCaptor.getAllValues().stream()
-                    .filter(e -> e instanceof ProjectMetricsUpdateEvent)
-                    .map(e -> ((ProjectMetricsUpdateEvent) e).getUuid())
-                    .toList();
-            assertThat(dispatchedUuids).containsExactly(collectionParent.getUuid());
+            assertThat(eventCaptor.getValue().getUuid()).isEqualTo(collectionParent.getUuid());
         }
     }
 

@@ -32,7 +32,9 @@ import alpine.event.framework.Event;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.times;
 
@@ -132,4 +134,42 @@ class ProjectQueryManagerTest extends PersistenceCapableTest {
         }
     }
 
+    @Test
+    void testDeleteProjectsByUUIDsDispatchesMetricsUpdateForCollectionParent() {
+        final Project collectionParent = qm.createProject("Collection", null, "1.0", null, null, null, true, false);
+        final Project detachedParent = qm.detach(Project.class, collectionParent.getId());
+        detachedParent.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.updateProject(detachedParent, false);
+
+        final Project child = qm.createProject("Child", null, "1.0", null, collectionParent, null, true, false);
+
+        try (MockedStatic<Event> mockedEvent = Mockito.mockStatic(Event.class)) {
+            qm.deleteProjectsByUUIDs(List.of(child.getUuid()));
+
+            final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+            mockedEvent.verify(() -> Event.dispatch(eventCaptor.capture()), times(1));
+
+            final List<UUID> dispatchedUuids = eventCaptor.getAllValues().stream()
+                    .filter(e -> e instanceof ProjectMetricsUpdateEvent)
+                    .map(e -> ((ProjectMetricsUpdateEvent) e).getUuid())
+                    .toList();
+            assertThat(dispatchedUuids).containsExactly(collectionParent.getUuid());
+        }
+    }
+
+    @Test
+    void testDeleteProjectsByUUIDsDoesNotDispatchMetricsUpdateWhenParentAlsoDeleted() {
+        final Project collectionParent = qm.createProject("Collection", null, "1.0", null, null, null, true, false);
+        final Project detachedParent = qm.detach(Project.class, collectionParent.getId());
+        detachedParent.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.updateProject(detachedParent, false);
+
+        final Project child = qm.createProject("Child", null, "1.0", null, collectionParent, null, true, false);
+
+        try (MockedStatic<Event> mockedEvent = Mockito.mockStatic(Event.class)) {
+            qm.deleteProjectsByUUIDs(List.of(collectionParent.getUuid(), child.getUuid()));
+
+            mockedEvent.verify(() -> Event.dispatch(Mockito.any(ProjectMetricsUpdateEvent.class)), times(0));
+        }
+    }
 }

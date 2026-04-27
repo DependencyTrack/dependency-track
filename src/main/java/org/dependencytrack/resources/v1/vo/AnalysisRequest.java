@@ -28,7 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
-import org.dependencytrack.model.Severity;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -92,8 +91,6 @@ public class AnalysisRequest {
 
     private final Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
 
-    private final Severity severity; // Optional. When set, updates vulnerability.severity (used by OWASP mapping).
-
     @JsonCreator
     public AnalysisRequest(@JsonProperty(value = "project") String project,
                            @JsonProperty(value = "component", required = true) String component,
@@ -109,8 +106,7 @@ public class AnalysisRequest {
                            @JsonProperty(value = "residualRiskLikelihood") String residualRiskLikelihood,
                            @JsonProperty(value = "riskJustification") String riskJustification,
                            @JsonProperty(value = "residualRiskJustification") String residualRiskJustification,
-                           @JsonProperty(value = "isSuppressed") Boolean suppressed,
-                           @JsonProperty(value = "severity") Severity severity) {
+                           @JsonProperty(value = "isSuppressed") Boolean suppressed) {
         this.project = project;
         this.component = component;
         this.vulnerability = vulnerability;
@@ -126,7 +122,6 @@ public class AnalysisRequest {
         this.riskJustification = riskJustification;
         this.residualRiskJustification = residualRiskJustification;
         this.suppressed = suppressed;
-        this.severity = severity;
     }
 
     public AnalysisRequest(String project,
@@ -139,7 +134,7 @@ public class AnalysisRequest {
                            String comment,
                            Boolean suppressed) {
         this(project, component, vulnerability, analysisState, analysisJustification, analysisResponse,
-                analysisDetails, comment, null, null, null, null, null, null, suppressed, null);
+                analysisDetails, comment, null, null, null, null, null, null, suppressed);
     }
 
     public String getProject() {
@@ -212,9 +207,5 @@ public class AnalysisRequest {
 
     public String getResidualRiskJustification() {
         return StringUtils.trimToNull(residualRiskJustification);
-    }
-
-    public Severity getSeverity() {
-        return severity;
     }
 }

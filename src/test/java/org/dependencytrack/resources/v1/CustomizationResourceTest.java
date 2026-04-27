@@ -391,7 +391,6 @@ class CustomizationResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
 
         JsonObject json = parseJsonObject(response);
-        assertThat(json.getBoolean("enabled")).isTrue();
         assertThat(json.getString("descriptionPlaceholder")).isNotBlank();
         assertThat(json.getString("detailPlaceholder")).isNotBlank();
         assertThat(json.getString("recommendationPlaceholder")).isNotBlank();
@@ -418,7 +417,6 @@ class CustomizationResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         JsonObject json = parseJsonObject(response);
-        assertThat(json.getBoolean("enabled")).isTrue();
         assertThat(json.getString("descriptionPlaceholder")).isEqualTo("Enter a description");
     }
 
@@ -435,7 +433,6 @@ class CustomizationResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                            "enabled": true,
                             "descriptionPlaceholder": "My custom description",
                             "commentPlaceholder": "My custom comment"
                         }
@@ -453,7 +450,6 @@ class CustomizationResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                            "enabled": false,
                             "descriptionPlaceholder": "Updated desc",
                             "riskJustificationPlaceholder": "Updated risk"
                         }
@@ -466,34 +462,8 @@ class CustomizationResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         JsonObject json = parseJsonObject(response);
-        assertThat(json.getBoolean("enabled")).isFalse();
         assertThat(json.getString("descriptionPlaceholder")).isEqualTo("Updated desc");
         assertThat(json.getString("riskJustificationPlaceholder")).isEqualTo("Updated risk");
-    }
-
-    @Test
-    void updateTextPlaceholderSettingsCanOnlyToggleEnabledState() {
-        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
-
-        Response response = jersey.target(V1_CUSTOMIZATION_TEXT_PLACEHOLDERS)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .put(Entity.entity("""
-                        {
-                            "enabled": false
-                        }
-                        """, MediaType.APPLICATION_JSON));
-
-        assertThat(response.getStatus()).isEqualTo(204);
-
-        response = jersey.target(V1_CUSTOMIZATION_TEXT_PLACEHOLDERS)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get(Response.class);
-
-        assertThat(response.getStatus()).isEqualTo(200);
-        final JsonObject json = parseJsonObject(response);
-        assertThat(json.getBoolean("enabled")).isFalse();
     }
 
     @Test
@@ -505,7 +475,6 @@ class CustomizationResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity("""
                         {
-                            "enabled": true,
                             "descriptionPlaceholder": "desc",
                             "detailPlaceholder": "detail",
                             "recommendationPlaceholder": "recommendation",

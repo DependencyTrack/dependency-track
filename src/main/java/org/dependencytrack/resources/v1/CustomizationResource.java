@@ -46,23 +46,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * JAX-RS resource for managing application customization settings.
- *
- * <p>All settings managed here are persisted in the standard {@code CONFIGPROPERTY} table using
- * the same group/name structure as the upstream {@code /v1/configProperty} API. These endpoints
- * are domain-specific facades over that storage layer and exist to provide:
- * <ul>
- *   <li>Strongly-typed, curated JSON responses (e.g. {@code orgCode}, {@code template}) instead
- *       of raw {@code ConfigProperty} model objects</li>
- *   <li>Business-rule validation before persistence (e.g. padding bounds, reset policy enum,
- *       required JSON structure for matrix/source configs)</li>
- *   <li>Atomic multi-property updates (vulnerability ID has 6 related properties saved together)</li>
- * </ul>
- *
- * <p>Note for upstream contributors: the underlying data can also be read and written via the
- * existing {@code GET/POST /v1/configProperty} endpoints using the group and property names
- * defined in {@link org.dependencytrack.model.ConfigPropertyConstants}. The two API surfaces
- * are fully compatible — both read from and write to the same database rows.
+ * JAX-RS resource for managing application customizations including vulnerability ID configuration.
  */
 @Path("/v1/customization")
 @Tag(name = "Customization", description = "Endpoints for managing application customizations")
@@ -134,15 +118,7 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
             response.put("sequencePadding", sequencePaddingProp != null
                     ? Integer.parseInt(sequencePaddingProp.getPropertyValue())
                     : Integer.parseInt(ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING.getDefaultPropertyValue()));
-
-            // Get use custom ID toggle
-            ConfigProperty useCustomProp = qm.getConfigProperty(
-                    ConfigPropertyConstants.VULNERABILITY_ID_USE_CUSTOM.getGroupName(),
-                    ConfigPropertyConstants.VULNERABILITY_ID_USE_CUSTOM.getPropertyName());
-            response.put("useCustomId", useCustomProp != null
-                    ? Boolean.parseBoolean(useCustomProp.getPropertyValue())
-                    : Boolean.parseBoolean(ConfigPropertyConstants.VULNERABILITY_ID_USE_CUSTOM.getDefaultPropertyValue()));
-
+            
             return Response.ok(response.toString()).build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -182,7 +158,6 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
     public Response getTextPlaceholderSettings() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final JSONObject response = new JSONObject();
-            response.put("enabled", Boolean.parseBoolean(getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_ENABLED)));
             response.put("descriptionPlaceholder", getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_DESCRIPTION));
             response.put("detailPlaceholder", getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_DETAIL));
             response.put("recommendationPlaceholder", getConfigPropertyValue(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_RECOMMENDATION));
@@ -294,13 +269,7 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
             // Update sequence padding
             updateConfigProperty(qm, ConfigPropertyConstants.VULNERABILITY_ID_SEQUENCE_PADDING,
                     String.valueOf(json.getInt("sequencePadding")));
-
-            // Update use custom ID toggle
-            if (json.has("useCustomId")) {
-                updateConfigProperty(qm, ConfigPropertyConstants.VULNERABILITY_ID_USE_CUSTOM,
-                        String.valueOf(json.getBoolean("useCustomId")));
-            }
-
+            
             return Response.noContent().build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -332,7 +301,6 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final JSONObject json = new JSONObject(jsonInput);
             final String[] supportedKeys = new String[] {
-                    "enabled",
                     "descriptionPlaceholder",
                     "detailPlaceholder",
                     "recommendationPlaceholder",
@@ -365,10 +333,6 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
                         .build();
             }
 
-            if (json.has("enabled")) {
-                updateConfigProperty(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_ENABLED,
-                        String.valueOf(json.getBoolean("enabled")));
-            }
             if (json.has("descriptionPlaceholder")) {
                 updateConfigProperty(qm, ConfigPropertyConstants.TEXT_PLACEHOLDER_CREATE_DESCRIPTION,
                         json.getString("descriptionPlaceholder"));
@@ -586,12 +550,9 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
     /**
      * Updates or creates a ConfigProperty with the given constant and value.
      *
-     * <p>This mirrors the persistence logic in {@code ConfigPropertyResource} — the same
-     * {@code CONFIGPROPERTY} row is written regardless of which API surface is used.
-     *
      * @param qm The QueryManager
-     * @param propertyConstant The ConfigPropertyConstants constant identifying the row
-     * @param value The new value to persist
+     * @param propertyConstant The ConfigPropertyConstants constant
+     * @param value The new value
      */
     private void updateConfigProperty(QueryManager qm, ConfigPropertyConstants propertyConstant,
                                       String value) {

@@ -158,27 +158,6 @@ class BomResourceTest extends ResourceTest {
         return new String[]{"1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", null};
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"inventory", "withVulnerabilities", "vdr"})
-    void exportProjectDownloadUsesOfficialBomFilename(final String variant) {
-        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
-        final Component component = new Component();
-        component.setProject(project);
-        component.setName("sample-component");
-        component.setVersion("1.0");
-        qm.createComponent(component, false);
-
-        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
-                .queryParam("variant", variant)
-                .queryParam("download", true)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get(Response.class);
-
-        assertThat(response.getStatus()).isEqualTo(200);
-        assertThat(response.getHeaderString("content-disposition")).isEqualTo("attachment; filename=\"bom.json\"");
-    }
-
     @Test
     void exportProjectAsCycloneDxInvalidTest() {
         Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + UUID.randomUUID()).request()

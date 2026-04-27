@@ -14,7 +14,8 @@ to ask questions and get in touch with other users and contributors. We provide 
 [here](https://dependencytrack.org/slack/invite). Please *do* create an issue if either channel link or invitation 
 do not work anymore.
 
-## Filing Issues
+## Filing Issues 
+
 
 ### Looking for existing Issues
 

@@ -198,7 +198,7 @@ public class BomResource extends AlpineResource {
             try {
                 if (download) {
                     return Response.ok(exporter.export(exporter.create(project), cdxOutputFormat, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
-                            .header("content-disposition","attachment; filename=\"" + parsedVariant + ".json\"").build();
+                            .header("content-disposition","attachment; filename=\"bom.json\"").build();
                 }
                 return Response.ok(exporter.export(exporter.create(project), cdxOutputFormat, cdxOutputVersion), cdxOutputMediaType).build();
 

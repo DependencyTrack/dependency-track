@@ -173,7 +173,8 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
     }
 
     private boolean comparePurlVersions(PackageURL componentPurl, VulnerableSoftware vs) {
-        if (componentPurl.getVersion() == null) {
+        final String componentVersion = PurlUtil.getEffectiveVersion(componentPurl);
+        if (componentVersion == null) {
             return false;
         }
 
@@ -209,12 +210,10 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             }
         }
 
-        final String versioningScheme = Optional
-                .ofNullable(componentPurl)
-                .flatMap(KnownVersioningSchemes::fromPurl)
+        final String versioningScheme = KnownVersioningSchemes.fromPurl(componentPurl)
                 .orElse(KnownVersioningSchemes.SCHEME_GENERIC);
 
-        return compareWithVers(vs, componentPurl.getVersion(), versioningScheme);
+        return compareWithVers(vs, componentVersion, versioningScheme);
     }
 
     /**

@@ -27,3 +27,10 @@ Alternatively, if the component name and version are known, then performing a se
 reveal a list of vulnerabilities, as well as a list of all projects that have a dependency on the component.
 
 ![incident response](/images/screenshots/vulnerable-component.png)
+
+The Components search page exposes two project-scope toggles to narrow results during incident response:
+
+- **Only active projects**: hides components that belong to projects flagged as inactive (typically used for archived projects).
+- **Only latest project versions**: hides components that belong to project versions other than the one flagged as latest.
+
+The toggles can be combined. They map to the `onlyActive` and `onlyLatestVersion` query parameters on `GET /api/v1/component/identity`.

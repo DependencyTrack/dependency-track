@@ -203,9 +203,9 @@ public class ComponentResource extends AlpineResource {
                                            @QueryParam("swidTagId") String swidTagId,
                                            @Parameter(description = "The project the component belongs to", schema = @Schema(type = "string", format = "uuid"))
                                            @QueryParam("project") @ValidUuid String projectUuid,
-                                           @Parameter(description = "Optionally restrict results to components belonging to active projects only")
+                                           @Parameter(description = "When true, only return components from active projects")
                                            @QueryParam("onlyActive") boolean onlyActive,
-                                           @Parameter(description = "Optionally restrict results to components belonging to projects flagged as latest version only")
+                                           @Parameter(description = "When true, only return components from projects flagged as the latest version")
                                            @QueryParam("onlyLatestVersion") boolean onlyLatestVersion) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Project project = null;

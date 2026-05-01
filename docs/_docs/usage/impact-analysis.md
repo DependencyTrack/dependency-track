@@ -28,9 +28,9 @@ reveal a list of vulnerabilities, as well as a list of all projects that have a 
 
 ![incident response](/images/screenshots/vulnerable-component.png)
 
-The Components search page exposes two project-scope toggles to narrow results during incident response:
+Two toggles on the Components search page narrow results during incident response:
 
-- **Only active projects**: hides components that belong to projects flagged as inactive (typically used for archived projects).
-- **Only latest project versions**: hides components that belong to project versions other than the one flagged as latest.
+- **Only active projects**: hides components from inactive projects (usually archived).
+- **Only latest project versions**: hides components from older project versions.
 
-The toggles can be combined. They map to the `onlyActive` and `onlyLatestVersion` query parameters on `GET /api/v1/component/identity`.
+Combine both to scope to active, latest-version projects only. They map to the `onlyActive` and `onlyLatestVersion` query parameters on `GET /api/v1/component/identity`.

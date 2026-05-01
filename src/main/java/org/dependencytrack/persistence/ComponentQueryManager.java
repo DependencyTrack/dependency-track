@@ -255,13 +255,13 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     }
 
     /**
-     * Returns Components by their identity, optionally restricting matches to components whose
-     * project is active and/or flagged as the latest version.
+     * Returns components by their identity, optionally scoped to active projects, latest-version
+     * projects, or both.
      * @param identity the ComponentIdentity to query against
-     * @param project The {@link Project} the {@link Component}s shall belong to
-     * @param includeMetrics whether or not to include component metrics or not
-     * @param onlyActive when {@code true}, only components belonging to active projects are returned
-     * @param onlyLatestVersion when {@code true}, only components belonging to projects flagged as latest are returned
+     * @param project the {@link Project} the {@link Component}s belong to
+     * @param includeMetrics whether to include component metrics
+     * @param onlyActive when {@code true}, return only components from active projects
+     * @param onlyLatestVersion when {@code true}, return only components from projects flagged as the latest version
      * @return a list of components
      */
     public PaginatedResult getComponents(ComponentIdentity identity, Project project, boolean includeMetrics,

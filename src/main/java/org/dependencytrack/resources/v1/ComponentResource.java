@@ -204,9 +204,9 @@ public class ComponentResource extends AlpineResource {
                                            @Parameter(description = "The project the component belongs to", schema = @Schema(type = "string", format = "uuid"))
                                            @QueryParam("project") @ValidUuid String projectUuid,
                                            @Parameter(description = "When true, only return components from active projects")
-                                           @QueryParam("onlyActive") boolean onlyActive,
+                                           @QueryParam("excludeInactiveProjects") boolean excludeInactiveProjects,
                                            @Parameter(description = "When true, only return components from projects flagged as the latest version")
-                                           @QueryParam("onlyLatestVersion") boolean onlyLatestVersion) {
+                                           @QueryParam("onlyLatestProjectVersion") boolean onlyLatestProjectVersion) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Project project = null;
             if (projectUuid != null) {
@@ -233,7 +233,7 @@ public class ComponentResource extends AlpineResource {
                     && identity.getPurl() == null && identity.getCpe() == null && identity.getSwidTagId() == null) {
                 return Response.ok().header(TOTAL_COUNT_HEADER, 0).build();
             } else {
-                final PaginatedResult result = qm.getComponents(identity, project, true, onlyActive, onlyLatestVersion);
+                final PaginatedResult result = qm.getComponents(identity, project, true, excludeInactiveProjects, onlyLatestProjectVersion);
                 return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
             }
         }

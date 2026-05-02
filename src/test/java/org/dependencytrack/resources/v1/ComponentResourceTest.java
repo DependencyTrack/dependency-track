@@ -519,7 +519,7 @@ class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    void getComponentByIdentityOnlyActiveTest() {
+    void getComponentByIdentityExcludeInactiveProjectsTest() {
         final Project activeProject = qm.createProject("activeProject", null, "1.0", null, null, null, true, false);
         var activeComponent = new Component();
         activeComponent.setProject(activeProject);
@@ -540,7 +540,7 @@ class ComponentResourceTest extends ResourceTest {
 
         final Response response = jersey.target(V1_COMPONENT + "/identity")
                 .queryParam("name", "library")
-                .queryParam("onlyActive", "true")
+                .queryParam("excludeInactiveProjects", "true")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -553,7 +553,7 @@ class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    void getComponentByIdentityOnlyLatestVersionTest() {
+    void getComponentByIdentityOnlyLatestProjectVersionTest() {
         final Project latestProject = qm.createProject("latestProject", null, "2.0", null, null, null, true, true, false);
         var latestComponent = new Component();
         latestComponent.setProject(latestProject);
@@ -574,7 +574,7 @@ class ComponentResourceTest extends ResourceTest {
 
         final Response response = jersey.target(V1_COMPONENT + "/identity")
                 .queryParam("name", "library")
-                .queryParam("onlyLatestVersion", "true")
+                .queryParam("onlyLatestProjectVersion", "true")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -587,7 +587,7 @@ class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
-    void getComponentByIdentityOnlyActiveAndLatestVersionTest() {
+    void getComponentByIdentityExcludeInactiveAndOnlyLatestProjectVersionTest() {
         final Project activeLatest = qm.createProject("activeLatest", null, "2.0", null, null, null, true, true, false);
         var activeLatestComponent = new Component();
         activeLatestComponent.setProject(activeLatest);
@@ -617,8 +617,8 @@ class ComponentResourceTest extends ResourceTest {
 
         final Response response = jersey.target(V1_COMPONENT + "/identity")
                 .queryParam("name", "library")
-                .queryParam("onlyActive", "true")
-                .queryParam("onlyLatestVersion", "true")
+                .queryParam("excludeInactiveProjects", "true")
+                .queryParam("onlyLatestProjectVersion", "true")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);

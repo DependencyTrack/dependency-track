@@ -33,4 +33,4 @@ Two toggles on the Components search page narrow results during incident respons
 - **Only active projects**: hides components from inactive projects (usually archived).
 - **Only latest project versions**: hides components from older project versions.
 
-Combine both to scope to active, latest-version projects only. They map to the `onlyActive` and `onlyLatestVersion` query parameters on `GET /api/v1/component/identity`.
+Combine both to scope to active, latest-version projects only. They map to the `excludeInactiveProjects` and `onlyLatestProjectVersion` query parameters on `GET /api/v1/component/identity`.

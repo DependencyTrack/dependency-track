@@ -260,12 +260,12 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @param identity the ComponentIdentity to query against
      * @param project the {@link Project} the {@link Component}s belong to
      * @param includeMetrics whether to include component metrics
-     * @param onlyActive when {@code true}, return only components from active projects
-     * @param onlyLatestVersion when {@code true}, return only components from projects flagged as the latest version
+     * @param excludeInactiveProjects when {@code true}, return only components from active projects
+     * @param onlyLatestProjectVersion when {@code true}, return only components from projects flagged as the latest version
      * @return a list of components
      */
     public PaginatedResult getComponents(ComponentIdentity identity, Project project, boolean includeMetrics,
-                                         boolean onlyActive, boolean onlyLatestVersion) {
+                                         boolean excludeInactiveProjects, boolean onlyLatestProjectVersion) {
         if (identity == null) {
             return null;
         }
@@ -277,10 +277,10 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             queryFilterElements.add(" project == :project ");
             queryParams.put("project", project);
         }
-        if (onlyActive) {
+        if (excludeInactiveProjects) {
             queryFilterElements.add(" project.active == true ");
         }
-        if (onlyLatestVersion) {
+        if (onlyLatestProjectVersion) {
             queryFilterElements.add(" project.isLatest == true ");
         }
 

@@ -30,7 +30,7 @@ reveal a list of vulnerabilities, as well as a list of all projects that have a 
 
 Two toggles on the Components search page narrow results during incident response:
 
-- **Only active projects**: hides components from inactive projects (usually archived).
-- **Only latest project versions**: hides components from older project versions.
+- **Show inactive projects**: when off, hides components from inactive projects (usually archived). On by default.
+- **Show all project versions**: when off, hides components from project versions not flagged as the latest. On by default.
 
-Combine both to scope to active, latest-version projects only. They map to the `excludeInactiveProjects` and `onlyLatestProjectVersion` query parameters on `GET /api/v1/component/identity`.
+Switch both off to scope to active, latest-version projects only. They map to the `excludeInactiveProjects` and `onlyLatestProjectVersion` query parameters on `GET /api/v1/component/identity`.

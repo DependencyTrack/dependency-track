@@ -137,20 +137,26 @@ the result is cached. By default, cache entries expire after 12 hours.
 
 Before reporting a false positive or false negative as a bug, work through the following steps.
 
-#### Step 1: Verify the component's identifiers in Dependency-Track
+#### Step 1: Identify which analyzer reported the finding
+
+On the project's *Vulnerability Audit* page, the *Analyzer* column shows which analyzer produced each finding.
+Use this to determine which upstream source to consult in the steps below, and to confirm that the expected
+analyzer is actually running for the affected component.
+
+#### Step 2: Verify the component's identifiers in Dependency-Track
 
 Navigate to the component in question and confirm it has a valid CPE and/or PURL, as required by the
 analyzer(s) you expect to produce results (see the table at the top of this page). A missing, empty, or
 malformed identifier causes the analyzer to silently skip the component and is the most common cause of
 unexpected results.
 
-#### Step 2: Check the vulnerability's affected ranges in Dependency-Track
+#### Step 3: Check the vulnerability's affected ranges in Dependency-Track
 
 Open the vulnerability in Dependency-Track and review the affected version ranges it lists. If the component's
 version does not fall within any listed range, Dependency-Track correctly does not match it — this is expected
 behavior, not a bug.
 
-#### Step 3: Compare with the upstream source
+#### Step 4: Compare with the upstream source
 
 * For the **Internal Analyzer**, cross-reference the relevant upstream source directly:
   [NVD](https://nvd.nist.gov), [GitHub Advisories](https://github.com/advisories), [OSV](https://osv.dev),

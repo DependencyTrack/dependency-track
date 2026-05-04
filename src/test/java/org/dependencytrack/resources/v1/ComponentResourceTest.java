@@ -574,7 +574,7 @@ class ComponentResourceTest extends ResourceTest {
 
         final Response response = jersey.target(V1_COMPONENT + "/identity")
                 .queryParam("name", "library")
-                .queryParam("onlyLatestProjectVersion", "true")
+                .queryParam("onlyLatestProjectVersions", "true")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -618,7 +618,7 @@ class ComponentResourceTest extends ResourceTest {
         final Response response = jersey.target(V1_COMPONENT + "/identity")
                 .queryParam("name", "library")
                 .queryParam("excludeInactiveProjects", "true")
-                .queryParam("onlyLatestProjectVersion", "true")
+                .queryParam("onlyLatestProjectVersions", "true")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);

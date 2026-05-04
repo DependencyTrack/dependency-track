@@ -206,7 +206,7 @@ public class ComponentResource extends AlpineResource {
                                            @Parameter(description = "When true, only return components from active projects")
                                            @QueryParam("excludeInactiveProjects") boolean excludeInactiveProjects,
                                            @Parameter(description = "When true, only return components from projects flagged as the latest version")
-                                           @QueryParam("onlyLatestProjectVersion") boolean onlyLatestProjectVersion) {
+                                           @QueryParam("onlyLatestProjectVersions") boolean onlyLatestProjectVersions) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Project project = null;
             if (projectUuid != null) {
@@ -233,7 +233,7 @@ public class ComponentResource extends AlpineResource {
                     && identity.getPurl() == null && identity.getCpe() == null && identity.getSwidTagId() == null) {
                 return Response.ok().header(TOTAL_COUNT_HEADER, 0).build();
             } else {
-                final PaginatedResult result = qm.getComponents(identity, project, true, excludeInactiveProjects, onlyLatestProjectVersion);
+                final PaginatedResult result = qm.getComponents(identity, project, true, excludeInactiveProjects, onlyLatestProjectVersions);
                 return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
             }
         }

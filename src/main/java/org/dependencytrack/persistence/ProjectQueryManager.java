@@ -463,6 +463,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (project.getParent() != null && !Boolean.TRUE.equals(project.getParent().isActive())){
             throw new IllegalArgumentException("An inactive Parent cannot be selected as parent");
         }
+        if (project.getCreated() == null) {
+            project.setCreated(new Date());
+        }
         final Project oldLatestProject = project.isLatest() ? getLatestProjectVersion(project.getName()) : null;
         final Project result = callInTransaction(() -> {
             // Remove isLatest flag from current latest project version, if the new project will be the latest
@@ -685,6 +688,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 oldLatestProject.set(null);
             }
             Project project = new Project();
+            project.setCreated(new Date());
             project.setAuthors(source.getAuthors());
             project.setManufacturer(source.getManufacturer());
             project.setSupplier(source.getSupplier());

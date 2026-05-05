@@ -27,6 +27,8 @@ Optionally indicate your interest by reacting with *thumbs up* (👍). Issues wi
 
 If you cannot find an existing issue for your bug or feature request, create a new issue using the guidelines below.
 
+New issues must be filed using one of the provided issue templates. **Issues that do not use a template will be closed.**
+
 ### Requesting Enhancements
 
 File a single issue per enhancement request. Do not list multiple enhancement requests in the same issue.
@@ -98,6 +100,7 @@ Before raising pull requests, please [file a defect](#reporting-defects) or [enh
 * Avoid new dependencies if the functionality that is being used is trivial to implement directly or is available in standard libraries.
 * Avoid checking in unrelated whitespace changes with code changes.
 * Commits must be [signed off](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt--s) to indicate agreement with [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
+* Pull requests must use the provided PR template and fill out all applicable sections. **Pull requests that do not use the template will be closed.**
 * Optionally include visualizations like screenshots, videos or [diagrams](https://github.blog/2022-02-14-include-diagrams-markdown-files-mermaid/) in the pull request description.
 
 ### Commit Messages

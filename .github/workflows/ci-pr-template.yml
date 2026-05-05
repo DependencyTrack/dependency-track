@@ -33,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ -z "${PR_BODY// }" ]]; then
+          if [[ -z "$(printf '%s' "$PR_BODY" | tr -d '[:space:]')" ]]; then
             echo "::error::PR body is empty. Please use the pull request template."
             exit 1
           fi

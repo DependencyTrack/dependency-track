@@ -20,14 +20,18 @@ package org.dependencytrack.dex.engine;
 
 import io.github.resilience4j.core.IntervalFunction;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.dependencytrack.dex.api.RetryPolicy;
+import org.dependencytrack.dex.api.failure.ApplicationFailureException;
 import org.dependencytrack.dex.engine.TaskEvent.ActivityTaskAbandonedEvent;
 import org.dependencytrack.dex.engine.TaskEvent.ActivityTaskCompletedEvent;
 import org.dependencytrack.dex.engine.TaskEvent.ActivityTaskFailedEvent;
 import org.dependencytrack.dex.engine.persistence.command.PollActivityTaskCommand;
 import org.dependencytrack.dex.proto.payload.v1.Payload;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
@@ -107,12 +111,20 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
                 final Payload result = activityMetadata.resultConverter().convertToPayload(activityResult);
                 engine.onTaskEvent(new ActivityTaskCompletedEvent(task, result));
             } catch (ExecutionException e) {
-                if (e.getCause() instanceof InterruptedException) {
+                final Throwable cause = e.getCause();
+                if (cause instanceof InterruptedException) {
                     logger.debug("Activity was interrupted; Abandoning task");
                     abandon(task);
                 } else {
-                    logger.warn("Failed to execute activity", e.getCause());
-                    engine.onTaskEvent(new ActivityTaskFailedEvent(task, e.getCause()));
+                    final Instant retryAt = computeRetryAt(task, cause);
+                    if (retryAt == null) {
+                        logger.warn("Activity failed terminally after {} attempt(s)", task.attempt(), cause);
+                    } else {
+                        logger.warn(
+                                "Activity failed; Next retry due at {} (attempt {}/{})",
+                                retryAt, task.attempt() + 1, task.retryPolicy().maxAttempts(), cause);
+                    }
+                    engine.onTaskEvent(new ActivityTaskFailedEvent(task, cause, retryAt));
                 }
             } catch (InterruptedException e) {
                 logger.debug("Interrupted while waiting for activity execution to complete; Abandoning task");
@@ -141,4 +153,35 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
         }
         super.close();
     }
+
+    private static @Nullable Instant computeRetryAt(ActivityTask task, Throwable cause) {
+        final RetryPolicy retryPolicy = task.retryPolicy();
+        final boolean isTerminal =
+                cause instanceof ApplicationFailureException afe
+                        && afe.isTerminal();
+        if (isTerminal || retryPolicy.maxAttempts() <= task.attempt()) {
+            return null;
+        }
+
+        final Duration retryAfter =
+                cause instanceof ApplicationFailureException afe
+                        ? afe.retryAfter()
+                        : null;
+
+        final Duration retryDelay;
+        if (retryAfter != null) {
+            retryDelay = retryAfter;
+        } else {
+            final var intervalFunc =
+                    IntervalFunction.ofExponentialRandomBackoff(
+                            retryPolicy.initialDelay(),
+                            retryPolicy.delayMultiplier(),
+                            retryPolicy.delayRandomizationFactor(),
+                            retryPolicy.maxDelay());
+            retryDelay = Duration.ofMillis(intervalFunc.apply(task.attempt() + 1));
+        }
+
+        return Instant.now().plus(retryDelay);
+    }
+
 }

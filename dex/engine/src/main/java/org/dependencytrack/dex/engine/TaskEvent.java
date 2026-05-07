@@ -49,10 +49,11 @@ sealed interface TaskEvent {
     record ActivityTaskFailedEvent(
             ActivityTask task,
             Throwable exception,
+            @Nullable Instant retryAt,
             Instant timestamp) implements TaskEvent {
 
-        ActivityTaskFailedEvent(ActivityTask task, Throwable exception) {
-            this(task, exception, Instant.now());
+        ActivityTaskFailedEvent(ActivityTask task, Throwable exception, @Nullable Instant retryAt) {
+            this(task, exception, retryAt, Instant.now());
         }
 
     }

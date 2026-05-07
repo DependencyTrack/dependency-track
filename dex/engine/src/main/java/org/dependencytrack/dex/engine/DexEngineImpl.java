@@ -21,7 +21,6 @@ package org.dependencytrack.dex.engine;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.protobuf.util.Timestamps;
-import io.github.resilience4j.core.IntervalFunction;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter.MeterProvider;
@@ -30,9 +29,7 @@ import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.PageIterator;
 import org.dependencytrack.dex.api.Activity;
-import org.dependencytrack.dex.api.RetryPolicy;
 import org.dependencytrack.dex.api.Workflow;
-import org.dependencytrack.dex.api.failure.ApplicationFailureException;
 import org.dependencytrack.dex.api.failure.InternalFailureException;
 import org.dependencytrack.dex.api.payload.PayloadConverter;
 import org.dependencytrack.dex.engine.TaskEvent.ActivityTaskAbandonedEvent;
@@ -1400,16 +1397,7 @@ final class DexEngineImpl implements DexEngine {
 
         for (final ActivityTaskFailedEvent event : events) {
             final ActivityTask task = event.task();
-            final RetryPolicy retryPolicy = event.task().retryPolicy();
-
-            final boolean isTerminal =
-                    event.exception() instanceof ApplicationFailureException afe
-                            && afe.isTerminal();
-            final boolean hasExceededMaxAttempts =
-                    retryPolicy.maxAttempts() > 0
-                            && retryPolicy.maxAttempts() <= task.attempt();
-
-            if (isTerminal || hasExceededMaxAttempts) {
+            if (event.retryAt() == null) {
                 tasksToDelete.add(task);
 
                 workflowMessageByTaskId.put(
@@ -1426,18 +1414,7 @@ final class DexEngineImpl implements DexEngine {
                                                 .build())
                                         .build()));
             } else {
-                final Duration retryAfter =
-                        event.exception() instanceof ApplicationFailureException afe
-                                ? afe.retryAfter()
-                                : null;
-                final Duration retryDelay = retryAfter == null
-                        ? getRetryDelay(retryPolicy, task.attempt() + 1)
-                        : retryAfter;
-                final Instant retryAt = event.timestamp().plus(retryDelay);
-
-                retriesToSchedule.add(
-                        new ScheduleActivityTaskRetryCommand(
-                                event.task(), retryAt));
+                retriesToSchedule.add(new ScheduleActivityTaskRetryCommand(task, event.retryAt()));
             }
         }
 
@@ -1706,15 +1683,6 @@ final class DexEngineImpl implements DexEngine {
 
         throw new IllegalStateException(
                 "Engine must be in state any of %s, but is %s".formatted(expectedStatuses, this.status));
-    }
-
-    private static Duration getRetryDelay(RetryPolicy retryPolicy, int attempt) {
-        final var intervalFunc = IntervalFunction.ofExponentialRandomBackoff(
-                retryPolicy.initialDelay(),
-                retryPolicy.delayMultiplier(),
-                retryPolicy.delayRandomizationFactor(),
-                retryPolicy.maxDelay());
-        return Duration.ofMillis(intervalFunc.apply(attempt));
     }
 
 }

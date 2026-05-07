@@ -494,6 +494,55 @@ class TrivyAnalysisTaskTest extends PersistenceCapableTest {
         assertThat(scanRequest.getOptions().getPkgTypes(0)).isEqualTo("library");
     }
 
+    @Test
+    void testAnalyzeComposerComponentUsesSlashSeparator() throws InvalidProtocolBufferException {
+        stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/protobuf")));
+
+        stubFor(post(urlPathEqualTo("/twirp/trivy.scanner.v1.Scanner/Scan"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/protobuf")
+                        .withBody(ScanResponse.newBuilder().build().toByteArray())));
+
+        stubFor(post(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/DeleteBlobs"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")));
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.createProject(project, null, false);
+
+        var component = new Component();
+        component.setProject(project);
+        component.setGroup("symfony");
+        component.setName("http-foundation");
+        component.setVersion("6.4.15");
+        component.setPurl("pkg:composer/symfony/http-foundation@6.4.15");
+        component = qm.createComponent(component, false);
+
+        new TrivyAnalysisTask().inform(new TrivyAnalysisEvent(
+                List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
+
+        // The PutBlob request body carries the composer coordinate sent to
+        // Trivy. Packagist indexes composer packages as "vendor/package"
+        // (slash), so DT must transmit "symfony/http-foundation" rather than
+        // "symfony:http-foundation" for the Trivy server to match.
+        var putBlobRequests = WireMock.findAll(postRequestedFor(
+                urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
+        assertThat(putBlobRequests).hasSize(1);
+
+        final trivy.proto.cache.v1.PutBlobRequest putBlobRequest =
+                trivy.proto.cache.v1.PutBlobRequest.parseFrom(putBlobRequests.get(0).getBody());
+        assertThat(putBlobRequest.getBlobInfo().getApplicationsList())
+                .anySatisfy(app -> assertThat(app.getPackagesList())
+                        .anySatisfy(pkg -> assertThat(pkg.getName())
+                                .isEqualTo("symfony/http-foundation")));
+    }
+
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();
 
     public static class NotificationSubscriber implements Subscriber {

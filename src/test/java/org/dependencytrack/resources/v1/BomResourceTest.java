@@ -246,7 +246,7 @@ class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setDirectDependencies("[]");
         componentWithVulnAndAnalysis = qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, AnalyzerIdentity.INTERNAL_ANALYZER);
-        qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+        qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true, null);
 
         // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
         componentWithoutVuln.setDirectDependencies("""
@@ -494,7 +494,7 @@ class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setDirectDependencies("[]");
         componentWithVulnAndAnalysis = qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, AnalyzerIdentity.INTERNAL_ANALYZER);
-        qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+        qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true, null);
 
         // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
         componentWithoutVuln.setDirectDependencies("""
@@ -688,7 +688,7 @@ class BomResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setDirectDependencies("[]");
         componentWithVulnAndAnalysis = qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnerability, componentWithVulnAndAnalysis, AnalyzerIdentity.INTERNAL_ANALYZER);
-        qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true);
+        qm.makeAnalysis(componentWithVulnAndAnalysis, vulnerability, AnalysisState.RESOLVED, null, AnalysisResponse.UPDATE, null, true, null);
 
         // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
         componentWithoutVuln.setDirectDependencies("""

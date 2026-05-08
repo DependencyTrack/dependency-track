@@ -21,8 +21,10 @@ package org.dependencytrack.resources.v1.vo;
 import alpine.common.validation.RegexSequence;
 import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
@@ -65,6 +67,10 @@ public class AnalysisRequest {
 
     private final Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
 
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @JsonFormat(shape = JsonFormat.Shape.NUMBER)
+    private final Long suppressionExpiration;
+
     @JsonCreator
     public AnalysisRequest(@JsonProperty(value = "project") String project,
                            @JsonProperty(value = "component", required = true) String component,
@@ -74,7 +80,8 @@ public class AnalysisRequest {
                            @JsonProperty(value = "analysisResponse") AnalysisResponse analysisResponse,
                            @JsonProperty(value = "analysisDetails") String analysisDetails,
                            @JsonProperty(value = "comment") String comment,
-                           @JsonProperty(value = "isSuppressed") Boolean suppressed) {
+                           @JsonProperty(value = "isSuppressed") Boolean suppressed,
+                           @JsonProperty(value = "suppressionExpiration") Long suppressionExpiration) {
         this.project = project;
         this.component = component;
         this.vulnerability = vulnerability;
@@ -84,6 +91,7 @@ public class AnalysisRequest {
         this.analysisDetails = analysisDetails;
         this.comment = comment;
         this.suppressed = suppressed;
+        this.suppressionExpiration = suppressionExpiration;
     }
 
     public String getProject() {
@@ -132,5 +140,9 @@ public class AnalysisRequest {
 
     public Boolean isSuppressed() {
         return suppressed;
+    }
+
+    public Long getSuppressionExpiration(){
+        return suppressionExpiration;
     }
 }

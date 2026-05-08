@@ -37,11 +37,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
 
 final class GithubPackageMetadataResolver implements PackageMetadataResolver {
 
+    private static final Pattern COMMIT_SHA_PATTERN = Pattern.compile("^[0-9a-fA-F]{7,40}$");
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
 
     private final ObjectMapper objectMapper;
@@ -72,13 +74,26 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
         final var resolvedAt = Instant.now();
 
         PackageArtifactMetadata artifactMetadata = null;
-        if (purl.getVersion() != null && purl.getVersion().equals(tagName)) {
-            artifactMetadata = extractArtifactMetadata(root, resolvedAt);
-        } else if (purl.getVersion() != null) {
-            final byte[] versionBody = fetchReleaseByTag(
-                    purl.getNamespace(), purl.getName(), purl.getVersion(), repository);
-            if (versionBody != null) {
-                artifactMetadata = extractArtifactMetadata(parseJson(versionBody), resolvedAt);
+        final String version = purl.getVersion();
+        if (version != null && version.equals(tagName)) {
+            artifactMetadata = extractReleaseArtifactMetadata(root, resolvedAt);
+        } else if (version != null) {
+            // NB: SHA-shaped versions are usually commits, but *can* also be hex-only release tags
+            // (e.g. "deadbeef"). Try the commit endpoint first, and on 404 fall through to the
+            // release-by-tag lookup, so legitimate hex tags still resolve.
+            if (COMMIT_SHA_PATTERN.matcher(version).matches()) {
+                final byte[] commitBody = fetchCommit(
+                        purl.getNamespace(), purl.getName(), version, repository);
+                if (commitBody != null) {
+                    artifactMetadata = extractCommitArtifactMetadata(parseJson(commitBody), resolvedAt);
+                }
+            }
+            if (artifactMetadata == null) {
+                final byte[] versionBody = fetchReleaseByTag(
+                        purl.getNamespace(), purl.getName(), version, repository);
+                if (versionBody != null) {
+                    artifactMetadata = extractReleaseArtifactMetadata(parseJson(versionBody), resolvedAt);
+                }
             }
         }
 
@@ -102,6 +117,15 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
         return fetch(url, repository);
     }
 
+    private byte @Nullable [] fetchCommit(
+            String owner,
+            String name,
+            String sha,
+            PackageRepository repository) throws InterruptedException {
+        final String url = UrlUtils.join(repository.url(), "repos", owner, name, "commits", sha);
+        return fetch(url, repository);
+    }
+
     private byte @Nullable [] fetch(String url, PackageRepository repository) throws InterruptedException {
         final HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -116,15 +140,33 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
         return cachingHttpClient.get(requestBuilder, repository);
     }
 
-    private static @Nullable PackageArtifactMetadata extractArtifactMetadata(JsonNode root, Instant resolvedAt) {
-        final String publishedAtStr = root.path("published_at").asText(null);
-        if (publishedAtStr == null) {
+    private static @Nullable PackageArtifactMetadata extractReleaseArtifactMetadata(JsonNode root, Instant resolvedAt) {
+        return parseArtifactDate(root.path("published_at").asText(null), resolvedAt);
+    }
+
+    private static @Nullable PackageArtifactMetadata extractCommitArtifactMetadata(JsonNode root, Instant resolvedAt) {
+        final JsonNode commit = root.path("commit");
+        if (commit.isMissingNode() || commit.isNull()) {
+            return null;
+        }
+
+        // NB: Prefer author date since it records when the code was authored.
+        // Committer date can be reset by rebase or cherry-pick, which is misleading.
+        String dateStr = commit.path("author").path("date").asText(null);
+        if (dateStr == null) {
+            dateStr = commit.path("committer").path("date").asText(null);
+        }
+
+        return parseArtifactDate(dateStr, resolvedAt);
+    }
+
+    private static @Nullable PackageArtifactMetadata parseArtifactDate(@Nullable String dateStr, Instant resolvedAt) {
+        if (dateStr == null) {
             return null;
         }
 
         try {
-            final Instant publishedAt = Instant.parse(publishedAtStr);
-            return new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of());
+            return new PackageArtifactMetadata(resolvedAt, Instant.parse(dateStr), Map.of());
         } catch (DateTimeParseException e) {
             return null;
         }

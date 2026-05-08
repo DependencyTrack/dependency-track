@@ -48,14 +48,51 @@ layout: null
 				preview = preview + "...";
 			}
 
-			// Highlight query parts
-			preview = preview.replace(new RegExp("(" + parts.join("|") + ")", "gi"), "<strong>$1</strong>");
+			// Return object with text and highlight info instead of HTML
+			return {
+				text: preview,
+				highlights: parts
+			};
 		} else {
 			// Use start of content if no match found
 			preview = content.substring(0, previewLength).trim() + (content.length > previewLength ? "..." : "");
+			return {
+				text: preview,
+				highlights: []
+			};
 		}
+	}
 
-		return preview;
+	function highlightText(element, text, highlights) {
+		element.textContent = ""; // Clear existing content
+		
+		if (highlights.length === 0) {
+			element.textContent = text;
+			return;
+		}
+		
+		// Create regex pattern for highlighting, escaping special regex characters
+		var escapedHighlights = highlights.map(function(h) {
+			return h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		});
+		var pattern = new RegExp("(" + escapedHighlights.join("|") + ")", "gi");
+		var parts = text.split(pattern);
+		
+		parts.forEach(function(part) {
+			if (part) {
+				var isHighlight = highlights.some(function(h) {
+					return h.toLowerCase() === part.toLowerCase();
+				});
+				
+				if (isHighlight) {
+					var strong = document.createElement("strong");
+					strong.textContent = part;
+					element.appendChild(strong);
+				} else {
+					element.appendChild(document.createTextNode(part));
+				}
+			}
+		});
 	}
 
 	function displaySearchResults(results, query) {
@@ -63,16 +100,36 @@ layout: null
 			searchProcessEl = document.getElementById("search-process");
 
 		if (results.length) {
-			var resultsHTML = "";
+			// Clear existing content safely
+			searchResultsEl.textContent = "";
+			
 			results.forEach(function (result) {
 				var item = window.data[result.ref],
 					contentPreview = getPreview(query, item.content, 170),
 					titlePreview = getPreview(query, item.title);
 
-				resultsHTML += "<li><h4><a href='{{ site.baseurl }}" + item.url.trim() + "'>" + titlePreview + "</a></h4><p><small>" + contentPreview + "</small></p></li>";
+				// Create DOM elements safely
+				var li = document.createElement("li");
+				var h4 = document.createElement("h4");
+				var a = document.createElement("a");
+				var p = document.createElement("p");
+				var small = document.createElement("small");
+
+				// Set safe attributes and content
+				a.href = "{{ site.baseurl }}" + item.url.trim();
+				
+				// Safely highlight text without innerHTML
+				highlightText(a, titlePreview.text, titlePreview.highlights);
+				highlightText(small, contentPreview.text, contentPreview.highlights);
+				
+				// Build DOM structure
+				h4.appendChild(a);
+				p.appendChild(small);
+				li.appendChild(h4);
+				li.appendChild(p);
+				searchResultsEl.appendChild(li);
 			});
 
-			searchResultsEl.innerHTML = resultsHTML;
 			searchProcessEl.innerText = "Showing";
 		} else {
 			searchResultsEl.style.display = "none";

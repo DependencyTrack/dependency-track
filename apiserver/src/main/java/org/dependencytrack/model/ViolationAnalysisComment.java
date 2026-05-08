@@ -61,7 +61,7 @@ public class ViolationAnalysisComment implements Serializable {
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "TIMESTAMP", allowsNull = "false")
     @NotNull
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date timestamp;
 
     @Persistent(defaultFetchGroup = "true")

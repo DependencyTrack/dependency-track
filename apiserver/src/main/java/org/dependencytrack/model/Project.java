@@ -276,7 +276,7 @@ public class Project implements Serializable {
     @Persistent
     @Index(name = "PROJECT_LASTBOMIMPORT_IDX")
     @Column(name = "LAST_BOM_IMPORTED")
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date lastBomImport;
 
     /**
@@ -297,13 +297,11 @@ public class Project implements Serializable {
 
     @Persistent
     @Column(name = "LAST_VULNERABILITY_ANALYSIS", allowsNull = "true")
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "UNIX epoch timestamp in milliseconds")
     private Date lastVulnerabilityAnalysis;
 
     @Persistent
     @Column(name = "INACTIVE_SINCE")
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY,
-            type = "integer", format = "int64", description = "UNIX epoch timestamp in milliseconds")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private Date inactiveSince;
 
     @Persistent(table = "PROJECT_ACCESS_TEAMS")

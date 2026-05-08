@@ -32,6 +32,7 @@
         <module>support/os-distro-metadata</module>
         <module>support/smallrye-config-secret-handler-file</module>
         <module>support/smallrye-config-source-memory</module>
+        <module>support/swagger-model-converters</module>
         <module>api</module>
         <module>alpine</module>
         <module>dex</module>

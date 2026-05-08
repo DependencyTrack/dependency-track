@@ -86,7 +86,7 @@ public class PolicyViolation implements Serializable {
 
     @Persistent
     @Column(name = "TIMESTAMP", allowsNull = "false")
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date timestamp;
 
     @Persistent

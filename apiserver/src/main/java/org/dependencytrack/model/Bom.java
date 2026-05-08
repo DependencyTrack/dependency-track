@@ -76,7 +76,7 @@ public class Bom implements Serializable {
     @Persistent
     @Column(name = "IMPORTED", allowsNull = "false")
     @NotNull
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date imported;
 
     @Persistent
@@ -109,7 +109,7 @@ public class Bom implements Serializable {
 
     @Persistent
     @Column(name = "GENERATED")
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date generated;
 
     public long getId() {

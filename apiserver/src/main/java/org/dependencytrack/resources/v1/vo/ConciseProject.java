@@ -48,7 +48,7 @@ public record ConciseProject(
         @Schema(description = "Collection logic for aggregating child metrics") ProjectCollectionLogic collectionLogic,
         @Schema(description = "Tags associated with the project") List<Tag> tags,
         @Schema(description = "Teams associated with the project") List<Team> teams,
-        @Schema(description = "Timestamp of the last BOM import", type = "number", example = "1719499619599") Date lastBomImport,
+        @Schema(description = "Timestamp of the last BOM import") Date lastBomImport,
         @Schema(description = "Format of the last imported BOM") String lastBomImportFormat,
         @Schema(description = "Last observed risk score") Double lastRiskScore,
         @Schema(description = "Whether the project has children", requiredMode = Schema.RequiredMode.REQUIRED) boolean hasChildren,

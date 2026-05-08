@@ -67,12 +67,12 @@ public class AffectedVersionAttribution implements Serializable {
 
     @Persistent
     @Column(name = "FIRST_SEEN", allowsNull = "false")
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date firstSeen;
 
     @Persistent
     @Column(name = "LAST_SEEN", allowsNull = "false")
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date lastSeen;
 
     @Persistent

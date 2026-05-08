@@ -53,9 +53,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_GENERIC;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 5.7.0
@@ -63,6 +65,7 @@ import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_G
 final class InternalVulnAnalyzer implements VulnAnalyzer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalVulnAnalyzer.class);
+    private static final Pattern EPOCH_PREFIX_PATTERN = Pattern.compile("^\\d+:");
     private static final String INTERNAL_VULN_ID_PROPERTY = "dependencytrack:internal:vulnerability-id";
 
     private final Jdbi jdbi;
@@ -369,7 +372,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
                 KnownVersioningSchemes.fromPurl(componentPurl)
                         .orElse(SCHEME_GENERIC);
 
-        return compareWithVers(criteria, componentPurl.getVersion(), versioningScheme);
+        return compareWithVers(criteria, effectiveVersionOf(componentPurl), versioningScheme);
     }
 
     private static boolean matchesPurl(PackageURL componentPurl, MatchingCriteria criteria) {
@@ -566,6 +569,44 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
 
         final Map<String, String> qualifiers = purl.getQualifiers();
         return qualifiers != null ? qualifiers.get("distro") : null;
+    }
+
+    /**
+     * Returns the PURL's version with any type-specific transformations applied to make it
+     * suitable for ecosystem-aware comparison. Returns the raw version when no transformation
+     * applies, or {@code null} if no version is set.
+     * <p>
+     * Applied transformations:
+     * <ul>
+     *   <li>{@code deb}/{@code rpm}: fold the {@code epoch} qualifier into the version as
+     *       {@code <epoch>:<version>} when not already encoded inline.</li>
+     * </ul>
+     */
+    private static String effectiveVersionOf(PackageURL purl) {
+        requireNonNull(purl, "purl must not be null");
+        requireNonNull(purl.getVersion(), "purl version must not be null");
+
+        final String version = purl.getVersion();
+        final String type = purl.getType();
+        if (!PackageURL.StandardTypes.DEBIAN.equals(type)
+                && !PackageURL.StandardTypes.RPM.equals(type)) {
+            return version;
+        }
+
+        if (EPOCH_PREFIX_PATTERN.matcher(version).find()) {
+            return version;
+        }
+
+        if (purl.getQualifiers() == null) {
+            return version;
+        }
+
+        final String epoch = purl.getQualifiers().get("epoch");
+        if (epoch == null || epoch.isBlank()) {
+            return version;
+        }
+
+        return epoch + ":" + version;
     }
 
     private record VulnMetadata(String vulnId, String source) {

@@ -187,7 +187,7 @@ public class NotificationRule implements Serializable {
      */
     @Persistent
     @Column(name = "SCHEDULE_LAST_TRIGGERED_AT")
-    @Schema(type = "integer", format = "int64", accessMode = Schema.AccessMode.READ_ONLY, description = "When the schedule last triggered, as UNIX epoch timestamp in milliseconds")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "When the schedule last triggered, as UNIX epoch timestamp in milliseconds")
     private Date scheduleLastTriggeredAt;
 
     /**
@@ -195,7 +195,7 @@ public class NotificationRule implements Serializable {
      */
     @Persistent
     @Column(name = "SCHEDULE_NEXT_TRIGGER_AT")
-    @Schema(type = "integer", format = "int64", accessMode = Schema.AccessMode.READ_ONLY, description = "When the schedule triggers next, as UNIX epoch timestamp in milliseconds")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY, description = "When the schedule triggers next, as UNIX epoch timestamp in milliseconds")
     private Date scheduleNextTriggerAt;
 
     /**

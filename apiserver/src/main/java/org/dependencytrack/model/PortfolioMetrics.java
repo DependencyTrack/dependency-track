@@ -69,11 +69,11 @@ public class PortfolioMetrics implements Serializable {
     private int policyViolationsOperationalUnaudited;
 
     @NotNull
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date firstOccurrence;
 
     @NotNull
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date lastOccurrence;
 
     public int getCritical() {

@@ -124,3 +124,5 @@ prettyPrint: true
 resourcePackages:
 - alpine.server.resources
 - org.dependencytrack.resources.v1
+modelConverterClasses:
+- org.dependencytrack.support.swagger.EpochMillisModelConverter

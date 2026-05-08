@@ -607,6 +607,13 @@
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-maven-plugin-jakarta</artifactId>
                 <version>${lib.swagger.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.dependencytrack</groupId>
+                        <artifactId>swagger-model-converters</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <id>resolve-openapi</id>

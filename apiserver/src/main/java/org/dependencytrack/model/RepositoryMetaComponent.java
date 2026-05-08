@@ -19,7 +19,6 @@
 package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.v3.oas.annotations.media.Schema;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Date;
@@ -31,7 +30,6 @@ public class RepositoryMetaComponent {
     private String namespace;
     private String name;
     private String latestVersion;
-    @Schema(type = "integer", format = "int64", description = "UNIX epoch timestamp in milliseconds")
     private Date lastCheck;
 
     public static @Nullable RepositoryMetaComponent of(PackageMetadata packageMetadata) {

@@ -55,7 +55,7 @@ public class FindingAttribution implements Serializable {
     @Persistent
     @Column(name = "ATTRIBUTED_ON", allowsNull = "false")
     @NotNull
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date attributedOn;
 
     @Persistent

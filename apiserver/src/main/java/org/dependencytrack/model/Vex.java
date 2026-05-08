@@ -75,7 +75,7 @@ public class Vex implements Serializable {
     @Persistent
     @Column(name = "IMPORTED", allowsNull = "false")
     @NotNull
-    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date imported;
 
     @Persistent

@@ -145,6 +145,57 @@ class PolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
+    void hasTagMatchPolicyWithExcludedTag() {
+        Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO);
+        policy.setInvertTagMatch(true);
+        qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
+        Tag commonTag = qm.createTag("Tag 1");
+        qm.bind(policy, List.of(commonTag));
+        Project project = qm.createProject("My Project", null, "1", List.of(commonTag), null, null, true, false);
+        Component component = new Component();
+        component.setName("Test Component");
+        component.setVersion("1.0");
+        component.setProject(project);
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId("12345");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(project);
+        qm.persist(component);
+        qm.persist(vulnerability);
+        qm.persist(policy);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        PolicyEngine policyEngine = new PolicyEngine();
+        List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
+        Assertions.assertEquals(0, violations.size());
+    }
+
+    @Test
+    void noTagMatchPolicyWithExcludedTag() {
+        Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO);
+        policy.setInvertTagMatch(true);
+        qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
+        qm.bind(policy, List.of(qm.createTag("Tag 1")));
+        Project project = qm.createProject("My Project", null, "1", List.of(qm.createTag("Tag 2")), null, null, true, false);
+        Component component = new Component();
+        component.setName("Test Component");
+        component.setVersion("1.0");
+        component.setProject(project);
+        Vulnerability vulnerability = new Vulnerability();
+        vulnerability.setVulnId("12345");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.CRITICAL);
+        qm.persist(project);
+        qm.persist(component);
+        qm.persist(vulnerability);
+        qm.addVulnerability(vulnerability, component, AnalyzerIdentity.INTERNAL_ANALYZER);
+        PolicyEngine policyEngine = new PolicyEngine();
+        List<PolicyViolation> violations = policyEngine.evaluate(List.of(component));
+        Assertions.assertEquals(1, violations.size());
+    }
+
+    
+    @Test
     void hasPolicyAssignedToParentProject() {
         Policy policy = qm.createPolicy("Test Policy", Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());

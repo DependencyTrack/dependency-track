@@ -196,6 +196,7 @@ public class PolicyResource extends AlpineResource {
                 policy.setViolationState(jsonPolicy.getViolationState());
                 policy.setIncludeChildren(jsonPolicy.isIncludeChildren());
                 policy.setOnlyLatestProjectVersion(jsonPolicy.isOnlyLatestProjectVersion());
+                policy.setInvertTagMatch(jsonPolicy.isInvertTagMatch());
                 policy = qm.persist(policy);
                 return Response.ok(policy).build();
             } else {

@@ -378,8 +378,9 @@ public class BomResource extends AlpineResource {
                             }
                         }
 
+                        final List<Tag> finalTagList = backwardCompatibleTagListValidation(request.getProjectTags()) ? request.getProjectTags() : null;
                         project = qm.createProject(trimmedProjectName, null,
-                                StringUtils.trimToNull(request.getProjectVersion()), request.getProjectTags(), parent,
+                                StringUtils.trimToNull(request.getProjectVersion()), finalTagList, parent,
                                 null, true, request.isLatest(), true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
@@ -492,7 +493,8 @@ public class BomResource extends AlpineResource {
                                         .build();
                             }
                         }
-                        project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, requestTags, parent, null, true, isLatest, true);
+                        final List<Tag> finalTagList = backwardCompatibleTagListValidation(requestTags) ? requestTags : null;
+                        project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, finalTagList, parent, null, true, isLatest, true);
                         Principal principal = getPrincipal();
                         qm.updateNewProjectACL(project, principal);
                     } else {
@@ -695,20 +697,29 @@ public class BomResource extends AlpineResource {
     }
 
     private void maybeBindTags(final QueryManager qm, final Project project, final List<Tag> tags) {
-        if (tags == null) {
-            return;
+        if(backwardCompatibleTagListValidation(tags)) {
+            // If the principal has the PROJECT_CREATION_UPLOAD permission,
+            // and a new project was created as part of this upload,
+            // the project might already have the requested tags.
+            final Set<String> existingTagNames = project.getTags() != null
+                    ? project.getTags().stream().map(Tag::getName).collect(Collectors.toSet())
+                    : Collections.emptySet();
+            final Set<String> requestTagNames = tags.stream().map(Tag::getName).collect(Collectors.toSet());
+
+            // Update tags only if the existing tags are different from the requested tags.
+            if (!Objects.equals(existingTagNames, requestTagNames)) {
+                final Set<Tag> resolvedTags = qm.resolveTags(tags);
+                qm.bind(project, resolvedTags);
+            }
+        }
+    }
+
+    private Boolean backwardCompatibleTagListValidation(List<Tag> requestTags) {
+        if (requestTags == null) {
+            return Boolean.FALSE;
         }
 
-        // If the principal has the PROJECT_CREATION_UPLOAD permission,
-        // and a new project was created as part of this upload,
-        // the project might already have the requested tags.
-        final Set<String> existingTagNames = project.getTags() != null
-                ? project.getTags().stream().map(Tag::getName).collect(Collectors.toSet())
-                : Collections.emptySet();
-        final Set<String> requestTagNames = tags.stream().map(Tag::getName).collect(Collectors.toSet());
-
-        if (!Objects.equals(existingTagNames, requestTagNames)
-            && !hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT)) {
+        if (!hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT)) {
             // Most CI integrations will use API keys with PROJECT_CREATION_UPLOAD permission,
             // but not PORTFOLIO_MANAGEMENT permission. They will not send different upload requests
             // though, after a project was first created. Failing the request would break those
@@ -717,11 +728,10 @@ public class BomResource extends AlpineResource {
                     Project tags were provided as part of the BOM upload request, \
                     but the authenticated principal is missing the %s permission; \
                     Tags will not be modified""".formatted(Permissions.Constants.PORTFOLIO_MANAGEMENT));
-            return;
+            return Boolean.FALSE;
         }
 
-        final Set<Tag> resolvedTags = qm.resolveTags(tags);
-        qm.bind(project, resolvedTags);
+        return Boolean.TRUE;
     }
 
     private static void dispatchBomValidationFailedNotification(final Project project, final String bom, final List<String> errors, final Bom.Format bomFormat) {

@@ -384,6 +384,25 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void getProjectByUuidExposesCreatedDateTest() {
+        // Issue #6094: GET /api/v1/project/<uuid> must return the project's creation timestamp.
+        final long beforeCreate = System.currentTimeMillis();
+        final Project project = qm.createProject("acme-app", null, "1.0.0", null, null, null, true, false);
+        final long afterCreate = System.currentTimeMillis();
+
+        final Response response = jersey.target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final JsonObject json = parseJsonObject(response);
+        assertThat(json.containsKey("created")).isTrue();
+        final long created = json.getJsonNumber("created").longValueExact();
+        assertThat(created).isBetween(beforeCreate, afterCreate);
+    }
+
+    @Test
     void getProjectByUuidNotPermittedTest() {
         enablePortfolioAccessControl();
 
@@ -643,7 +662,8 @@ class ProjectResourceTest extends ResourceTest {
                           "properties": [],
                           "tags": [],
                           "active": true,
-                          "isLatest":false
+                          "isLatest":false,
+                          "created": "${json-unit.any-number}"
                         }
                         """);
 
@@ -690,7 +710,8 @@ class ProjectResourceTest extends ResourceTest {
                           "properties": [],
                           "tags": [],
                           "active": true,
-                          "isLatest":false
+                          "isLatest":false,
+                          "created": "${json-unit.any-number}"
                         }
                         """);
 
@@ -732,7 +753,8 @@ class ProjectResourceTest extends ResourceTest {
                           "properties": [],
                           "tags": [],
                           "active": true,
-                          "isLatest":false
+                          "isLatest":false,
+                          "created": "${json-unit.any-number}"
                         }
                         """);
 
@@ -815,7 +837,8 @@ class ProjectResourceTest extends ResourceTest {
                           "properties": [],
                           "tags": [],
                           "active": true,
-                          "isLatest":false
+                          "isLatest":false,
+                          "created": "${json-unit.any-number}"
                         }
                         """);
 
@@ -926,7 +949,8 @@ class ProjectResourceTest extends ResourceTest {
                           "properties": [],
                           "tags": [],
                           "active": true,
-                          "isLatest":false
+                          "isLatest":false,
+                          "created": "${json-unit.any-number}"
                         }
                         """);
 
@@ -1606,7 +1630,8 @@ class ProjectResourceTest extends ResourceTest {
                           "active": false,
                           "isLatest":false,
                           "children": [],
-                          "collectionLogic":"NONE"
+                          "collectionLogic":"NONE",
+                          "created": "${json-unit.any-number}"
                         }
                         """);
     }
@@ -1680,7 +1705,8 @@ class ProjectResourceTest extends ResourceTest {
                           "tags": [],
                           "active": true,
                           "isLatest":false,
-                          "collectionLogic":"NONE"
+                          "collectionLogic":"NONE",
+                          "created": "${json-unit.any-number}"
                         }
                         """);
 
@@ -2311,7 +2337,8 @@ class ProjectResourceTest extends ResourceTest {
                       "uuid": "${json-unit.any-string}",
                       "active": true,
                       "isLatest":false,
-                      "collectionLogic":"NONE"
+                      "collectionLogic":"NONE",
+                      "created": "${json-unit.any-number}"
                     }
                   ],
                   "properties": [],
@@ -2319,6 +2346,7 @@ class ProjectResourceTest extends ResourceTest {
                   "active": true,
                   "isLatest":false,
                   "collectionLogic":"NONE",
+                  "created": "${json-unit.any-number}",
                   "versions": [
                     {
                       "uuid": "${json-unit.any-string}",
@@ -2351,6 +2379,7 @@ class ProjectResourceTest extends ResourceTest {
                   "active": true,
                   "isLatest":false,
                   "collectionLogic":"NONE",
+                  "created": "${json-unit.any-number}",
                   "versions": [
                     {
                       "uuid": "${json-unit.any-string}",

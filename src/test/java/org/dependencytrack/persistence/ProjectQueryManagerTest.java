@@ -33,10 +33,38 @@ import alpine.event.framework.Event;
 import java.util.Date;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.times;
 
 class ProjectQueryManagerTest extends PersistenceCapableTest {
+
+    @Test
+    void testCreateProjectSetsCreatedDate() {
+        final Date before = new Date();
+        Project project = qm.createProject("Example Project", null, "1.0", null, null, null, true, false);
+        final Date after = new Date();
+        assertThat(project.getCreated())
+                .isNotNull()
+                .isBetween(before, after);
+    }
+
+    @Test
+    void testCloneProjectSetsCreatedDate() throws Exception {
+        Project source = qm.createProject("Source", null, "1.0", null, null, null, true, false);
+        // Force an older created date on the source to verify the clone is independent.
+        source.setCreated(new Date(1700000000000L));
+        qm.persist(source);
+
+        final Date before = new Date();
+        Project cloned = qm.clone(source.getUuid(), "1.1.0", false, false,
+                false, false, false, false, false, false);
+        final Date after = new Date();
+
+        assertThat(cloned.getCreated())
+                .isNotNull()
+                .isBetween(before, after);
+    }
 
     @Test
     void testCloneProjectPreservesVulnerabilityAttributionDate() throws Exception {

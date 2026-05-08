@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.dependencytrack.model.Project;
+
 /**
  * Describes a project that is affected by a specific vulnerability, including a list of UUIDs of the components
  * affected by the vulnerability within this project.
@@ -42,13 +44,17 @@ public class AffectedProject {
 
     private final List<UUID> affectedComponentUuids;
 
-    public AffectedProject(UUID uuid, boolean dependencyGraphAvailable, String name, String version, boolean active, List<UUID> affectedComponentUuids) {
+    private final ProjectParentInfo parent;
+
+    public AffectedProject(UUID uuid, boolean dependencyGraphAvailable, String name, String version, boolean active,
+                          List<UUID> affectedComponentUuids, ProjectParentInfo parent) {
         this.uuid = uuid;
         this.dependencyGraphAvailable = dependencyGraphAvailable;
         this.name = name;
         this.version = version;
         this.active = active;
         this.affectedComponentUuids = affectedComponentUuids == null ? new ArrayList<>() : affectedComponentUuids;
+        this.parent = parent;
     }
 
     public UUID getUuid() {
@@ -58,6 +64,7 @@ public class AffectedProject {
     public boolean isDependencyGraphAvailable() {
         return dependencyGraphAvailable;
     }
+
     public String getName() {
         return name;
     }
@@ -72,5 +79,23 @@ public class AffectedProject {
 
     public List<UUID> getAffectedComponentUuids() {
         return affectedComponentUuids;
+    }
+
+    public ProjectParentInfo getParent() {
+        return parent;
+    }
+
+    /**
+     * Builds a nested ProjectParentInfo from a Project's parent chain (after it has been wired).
+     */
+    public static ProjectParentInfo buildParentInfo(Project project) {
+        if (project == null) {
+            return null;
+        }
+        return new ProjectParentInfo(
+                project.getUuid(),
+                project.getName(),
+                project.getVersion(),
+                buildParentInfo(project.getParent()));
     }
 }

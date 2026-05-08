@@ -516,9 +516,16 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Project project = getObjectByUuid(Project.class, transientProject.getUuid());
 
         Project oldParent = project.getParent();
+        // Resolve the new parent from DB before making scheduling decisions.
+        // transientProject.getParent() is a stub from the API request with only UUID populated,
+        // so getCollectionLogic() on it always returns NONE.
+        Project resolvedNewParent = null;
+        if (transientProject.getParent() != null && transientProject.getParent().getUuid() != null) {
+            resolvedNewParent = getObjectByUuid(Project.class, transientProject.getParent().getUuid());
+        }
         boolean scheduleProjectMetricsUpdate = this.needScheduleProjectMetricsUpdate(project, transientProject);
-        boolean scheduleParentMetricsUpdate = this.needScheduleParentMetricsUpdate(transientProject, scheduleProjectMetricsUpdate);
-        boolean scheduleOldParentMetricsUpdate = this.needScheduleOldParentMetricsUpdate(oldParent, transientProject);
+        boolean scheduleParentMetricsUpdate = this.needScheduleParentMetricsUpdate(resolvedNewParent, scheduleProjectMetricsUpdate);
+        boolean scheduleOldParentMetricsUpdate = this.needScheduleOldParentMetricsUpdate(oldParent, resolvedNewParent);
 
         project.setAuthors(transientProject.getAuthors());
         project.setPublisher(transientProject.getPublisher());
@@ -557,20 +564,19 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         project.setIsLatest(transientProject.isLatest());
 
-        if (transientProject.getParent() != null && transientProject.getParent().getUuid() != null) {
-            if (project.getUuid().equals(transientProject.getParent().getUuid())){
+        if (resolvedNewParent != null) {
+            if (project.getUuid().equals(resolvedNewParent.getUuid())){
                 throw new IllegalArgumentException("A project cannot select itself as a parent");
             }
-            Project parent = getObjectByUuid(Project.class, transientProject.getParent().getUuid());
-            if (!Boolean.TRUE.equals(parent.isActive())){
+            if (!Boolean.TRUE.equals(resolvedNewParent.isActive())){
                 throw new IllegalArgumentException("An inactive project cannot be selected as a parent");
-            } else if (isChildOf(parent, transientProject.getUuid())){
+            } else if (isChildOf(resolvedNewParent, transientProject.getUuid())){
                 throw new IllegalArgumentException("The new parent project cannot be a child of the current project.");
             } else {
-                project.setParent(parent);
+                project.setParent(resolvedNewParent);
             }
-            project.setParent(parent);
-        }else {
+            project.setParent(resolvedNewParent);
+        } else {
             project.setParent(null);
         }
 
@@ -621,17 +627,17 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     /**
      * if parent is collection schedule an update, unless this project itself is scheduled already since that will trigger a parent update, too
      */
-    private boolean needScheduleParentMetricsUpdate(Project transientProject, boolean scheduleProjectMetricsUpdate) {
+    private boolean needScheduleParentMetricsUpdate(Project newParent, boolean scheduleProjectMetricsUpdate) {
         return !scheduleProjectMetricsUpdate
-                && transientProject.getParent() != null
-                && transientProject.getParent().getCollectionLogic() != ProjectCollectionLogic.NONE;
+                && newParent != null
+                && newParent.getCollectionLogic() != ProjectCollectionLogic.NONE;
     }
 
     /**
      * if project gets a new parent and old parent was collection, we need to update old parent's metrics
      */
-    private boolean needScheduleOldParentMetricsUpdate(Project oldParent, Project transientProject) {
-        return oldParent != transientProject.getParent()
+    private boolean needScheduleOldParentMetricsUpdate(Project oldParent, Project newParent) {
+        return oldParent != newParent
                 && oldParent != null
                 && oldParent.getCollectionLogic() != ProjectCollectionLogic.NONE;
     }
@@ -949,7 +955,17 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     @Override
     public void recursivelyDelete(final Project project, final boolean commitIndex) {
-        Project parent = project.getParent();
+        // Reload the parent with collectionLogic eagerly fetched before any deletions occur.
+        // collectionLogic is not in the default fetch group, so accessing it after the PM
+        // state is modified by cascading deletes risks a silent lazy-load failure (returning NONE).
+        final Project parent;
+        if (project.getParent() != null) {
+            try (var ignored = new ScopedCustomization(pm).withFetchGroup(Project.FetchGroup.METRICS_UPDATE.name())) {
+                parent = pm.getObjectById(Project.class, project.getParent().getId());
+            }
+        } else {
+            parent = null;
+        }
 
         if (project.getChildren() != null) {
             for (final Project child: project.getChildren()) {
@@ -1018,6 +1034,17 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         if (!errorByUUID.isEmpty()) {
             throw ProjectOperationException.forDeletion(errorByUUID);
         }
+
+        // Collect parent collection projects that need metrics updates after deletion.
+        // Exclude parents that are themselves being deleted.
+        final Set<UUID> deleteUuids = uuids instanceof Set ? (Set<UUID>) uuids : Set.copyOf(uuids);
+        final Set<UUID> collectionParentUuids = projects.stream()
+                .map(Project::getParent)
+                .filter(parent -> parent != null
+                        && parent.getCollectionLogic() != ProjectCollectionLogic.NONE
+                        && !deleteUuids.contains(parent.getUuid()))
+                .map(Project::getUuid)
+                .collect(Collectors.toSet());
 
         Long[] projectIDsArray = accessibleProjectIds.toArray(Long[]::new);
         String commaSeparatedProjectIDs = accessibleProjectIds.stream().map(String::valueOf).collect(Collectors.joining(","));
@@ -1325,6 +1352,10 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 executeAndCloseWithArray(sqlQuery, queryParameter);
             }
         });
+
+        for (final UUID parentUuid : collectionParentUuids) {
+            Event.dispatch(new ProjectMetricsUpdateEvent(parentUuid));
+        }
     }
 
     /**

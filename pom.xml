@@ -181,6 +181,12 @@
             <artifactId>cyclonedx-core-java</artifactId>
             <version>${lib.cyclonedx-java.version}</version>
         </dependency>
+        <!-- HTML parsing -->
+         <dependency>
+             <groupId>org.jsoup</groupId>
+             <artifactId>jsoup</artifactId>
+             <version>1.22.1</version>
+        </dependency>
 
         <!-- org.json
         This was previously transitively included with Unirest. However, Unirest v3.x removed reliance on org.json

@@ -33,7 +33,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public interface ComponentMetaDao extends SqlObject {
 

@@ -23,7 +23,7 @@ import org.dependencytrack.init.InitTaskContext;
 import org.dependencytrack.migration.MigrationExecutor;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public final class DatabaseMigrationInitTask implements InitTask {
 

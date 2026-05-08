@@ -25,7 +25,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * @param extensionPointClass The {@link Class} of the {@link ExtensionPoint}.
  * @param name                The name of the extension.
- * @since 5.6.0
+ * @since 5.0.0
  */
 record ExtensionIdentity(Class<? extends ExtensionPoint> extensionPointClass, String name) {
 

@@ -28,7 +28,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * A {@link NotificationEmitter} that uses the JDBI API for database interactions.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class JdbiNotificationEmitter extends JdbcNotificationEmitter {
 

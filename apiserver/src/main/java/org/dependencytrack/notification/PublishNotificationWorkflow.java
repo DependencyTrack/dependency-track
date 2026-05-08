@@ -39,7 +39,7 @@ import java.util.LinkedHashMap;
 import static org.dependencytrack.common.MdcKeys.MDC_NOTIFICATION_ID;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @WorkflowSpec(name = "publish-notification")
 public final class PublishNotificationWorkflow implements Workflow<PublishNotificationWorkflowArg, Void> {

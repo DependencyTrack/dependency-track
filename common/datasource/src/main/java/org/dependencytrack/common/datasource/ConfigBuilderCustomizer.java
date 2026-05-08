@@ -23,7 +23,7 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 import io.smallrye.config.SmallRyeConfigBuilderCustomizer;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class ConfigBuilderCustomizer implements SmallRyeConfigBuilderCustomizer {
 

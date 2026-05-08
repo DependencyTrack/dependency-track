@@ -42,7 +42,7 @@ import static org.cyclonedx.proto.v1_7.ScoreMethod.SCORE_METHOD_CVSSV31;
 import static org.cyclonedx.proto.v1_7.ScoreMethod.SCORE_METHOD_CVSSV4;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class OssIndexModelConverter {
 

@@ -24,7 +24,7 @@ import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public final class DatabasePartitionMaintenanceInitTask implements InitTask {
 

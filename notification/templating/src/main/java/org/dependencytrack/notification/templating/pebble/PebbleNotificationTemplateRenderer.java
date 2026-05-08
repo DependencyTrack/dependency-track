@@ -59,7 +59,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * A {@link NotificationTemplateRenderer} powered by Pebble.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class PebbleNotificationTemplateRenderer implements NotificationTemplateRenderer {
 

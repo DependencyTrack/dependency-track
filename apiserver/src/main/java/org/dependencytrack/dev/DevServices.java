@@ -36,7 +36,7 @@ import static org.dependencytrack.common.ConfigKeys.DEV_SERVICES_IMAGE_POSTGRES;
 import static org.dependencytrack.common.ConfigKeys.DEV_SERVICES_PORT_FRONTEND;
 
 /**
- * @since 5.5.0
+ * @since 5.0.0
  */
 public class DevServices implements AutoCloseable {
 

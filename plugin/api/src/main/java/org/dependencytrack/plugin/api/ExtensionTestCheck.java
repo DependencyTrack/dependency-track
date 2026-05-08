@@ -26,7 +26,7 @@ import static java.util.Objects.requireNonNull;
  * @param name    Name of the check.
  * @param status  Status of the check.
  * @param message An optional, short, human-readable message.
- * @since 5.7.0
+ * @since 5.0.0
  */
 public record ExtensionTestCheck(
         String name,

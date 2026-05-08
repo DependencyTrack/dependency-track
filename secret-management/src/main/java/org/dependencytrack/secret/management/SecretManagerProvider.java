@@ -22,7 +22,7 @@ import org.dependencytrack.common.pagination.PageTokenEncoder;
 import org.eclipse.microprofile.config.Config;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface SecretManagerProvider {
 

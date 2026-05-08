@@ -58,7 +58,7 @@ import static java.util.function.Predicate.not;
 import static org.dependencytrack.vulndatasource.osv.CycloneDxPropertyNames.OSV_ECOSYSTEM;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class OsvVulnDataSource implements VulnDataSource {
 

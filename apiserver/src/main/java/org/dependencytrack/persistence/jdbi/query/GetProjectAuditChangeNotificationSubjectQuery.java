@@ -21,7 +21,7 @@ package org.dependencytrack.persistence.jdbi.query;
 import org.dependencytrack.model.AnalysisState;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public record GetProjectAuditChangeNotificationSubjectQuery(
         long componentId,

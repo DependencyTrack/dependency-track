@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.StringJoiner;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public class ProjectIsAccessibleByMethod implements SQLMethod {
 

@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class EmailNotificationPublisher implements NotificationPublisher {
 

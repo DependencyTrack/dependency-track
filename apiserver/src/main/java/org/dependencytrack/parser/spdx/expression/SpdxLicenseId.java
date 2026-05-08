@@ -28,7 +28,7 @@ import static java.util.Objects.requireNonNull;
  * @param id      The license identifier (e.g. {@code "GPL-2.0"})
  * @param orLater Whether this represents an or-later range (from {@code +}
  *                operator or {@code -or-later} suffix)
- * @since 5.7.0
+ * @since 5.0.0
  */
 record SpdxLicenseId(String id, boolean orLater) {
 

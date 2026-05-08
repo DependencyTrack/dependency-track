@@ -29,7 +29,7 @@ import java.util.HexFormat;
 import java.util.StringJoiner;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class CacheKeys {
 

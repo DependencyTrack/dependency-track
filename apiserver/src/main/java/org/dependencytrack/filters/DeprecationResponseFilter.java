@@ -30,7 +30,7 @@ import jakarta.ws.rs.ext.Provider;
 import java.lang.reflect.Method;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @Provider
 @Priority(Priorities.HEADER_DECORATOR)

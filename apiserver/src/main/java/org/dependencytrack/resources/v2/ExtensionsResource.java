@@ -70,7 +70,7 @@ import static org.dependencytrack.common.MdcKeys.MDC_EXTENSION_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_EXTENSION_POINT_NAME;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @Provider
 public class ExtensionsResource extends AbstractApiResource implements ExtensionsApi {

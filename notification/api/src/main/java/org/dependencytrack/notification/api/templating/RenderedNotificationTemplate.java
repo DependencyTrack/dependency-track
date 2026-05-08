@@ -25,7 +25,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @param content  Content of the rendered template.
  * @param mimeType MIME type of the rendered template.
- * @since 5.7.0
+ * @since 5.0.0
  */
 public record RenderedNotificationTemplate(String content, String mimeType) {
 

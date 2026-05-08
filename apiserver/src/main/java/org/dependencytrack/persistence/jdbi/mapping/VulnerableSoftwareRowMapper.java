@@ -33,7 +33,7 @@ import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.deseria
 import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public class VulnerableSoftwareRowMapper implements RowMapper<VulnerableSoftware> {
 

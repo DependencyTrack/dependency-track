@@ -33,7 +33,7 @@ import java.util.Properties;
 /**
  * A {@link ConfigSourceInterceptorFactory} that redirects property resolution to specific properties files.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class PropertyFileConfigSourceInterceptorFactory implements ConfigSourceInterceptorFactory {
 

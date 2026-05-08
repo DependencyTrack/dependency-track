@@ -26,7 +26,7 @@ import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
 import org.jspecify.annotations.Nullable;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @WorkflowSpec(name = "mirror-vuln-data-source")
 public final class MirrorVulnDataSourceWorkflow implements Workflow<MirrorVulnDataSourceArg, Void> {

@@ -87,7 +87,7 @@ import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_UNSPECIFIED;
 /**
  * Factory for notifications that the platform may emit.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class NotificationFactory {
 

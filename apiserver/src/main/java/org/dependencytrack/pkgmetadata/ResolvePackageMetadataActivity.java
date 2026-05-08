@@ -68,7 +68,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransactio
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @ActivitySpec(name = "resolve-purl-metadata", defaultTaskQueue = "package-metadata-resolutions")
 public final class ResolvePackageMetadataActivity implements Activity<ResolvePackageMetadataActivityArg, Void> {

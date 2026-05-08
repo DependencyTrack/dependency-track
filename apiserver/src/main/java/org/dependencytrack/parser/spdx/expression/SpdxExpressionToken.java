@@ -21,7 +21,7 @@ package org.dependencytrack.parser.spdx.expression;
 /**
  * A token produced by the lexical analysis phase of SPDX expression parsing.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 sealed interface SpdxExpressionToken {
 

@@ -40,7 +40,7 @@ public class AnalysisRequest {
     /**
      * @deprecated The project is inferred from {@link #component}. This value is ignored.
      */
-    @Deprecated(since = "5.7.0", forRemoval = true)
+    @Deprecated(since = "5.0.0", forRemoval = true)
     @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
     private final String project;
 

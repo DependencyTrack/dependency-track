@@ -59,7 +59,7 @@ import static org.dependencytrack.common.MdcKeys.MDC_VULN_ANALYZER_NAME;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @ActivitySpec(name = "prepare-vuln-analysis")
 public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAnalysisArg, PrepareVulnAnalysisRes> {

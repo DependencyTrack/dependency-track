@@ -32,7 +32,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class DataSourceFactory {
 

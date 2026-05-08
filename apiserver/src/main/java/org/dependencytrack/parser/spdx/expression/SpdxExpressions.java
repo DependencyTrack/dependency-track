@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class SpdxExpressions {
 

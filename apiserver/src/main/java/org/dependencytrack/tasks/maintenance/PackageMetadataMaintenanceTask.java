@@ -33,7 +33,7 @@ import static org.dependencytrack.util.LockProvider.executeWithLock;
 import static org.dependencytrack.util.TaskUtil.getLockConfigForTask;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public class PackageMetadataMaintenanceTask implements Subscriber {
 

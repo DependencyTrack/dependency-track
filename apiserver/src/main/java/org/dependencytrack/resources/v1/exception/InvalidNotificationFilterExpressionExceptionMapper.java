@@ -26,7 +26,7 @@ import org.dependencytrack.resources.v1.problems.InvalidNotificationFilterExpres
 import org.dependencytrack.resources.v1.vo.CelExpressionError;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @Provider
 public final class InvalidNotificationFilterExpressionExceptionMapper

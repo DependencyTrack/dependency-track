@@ -56,7 +56,7 @@ import static org.dependencytrack.common.MdcKeys.MDC_VULN_SOURCE;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @ActivitySpec(name = "mirror-vuln-data-source")
 public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDataSourceArg, Void> {

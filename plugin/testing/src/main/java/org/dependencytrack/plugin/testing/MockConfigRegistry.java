@@ -36,7 +36,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * An in-memory {@link MutableConfigRegistry} suitable for testing purposes.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class MockConfigRegistry implements MutableConfigRegistry {
 

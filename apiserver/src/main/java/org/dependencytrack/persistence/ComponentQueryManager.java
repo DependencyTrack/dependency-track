@@ -843,7 +843,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
     }
 
     /**
-     * @since 5.6.0
+     * @since 5.0.0
      */
     @Override
     public void synchronizeComponentOccurrences(final Component component, final Collection<ComponentOccurrence> occurrences) {

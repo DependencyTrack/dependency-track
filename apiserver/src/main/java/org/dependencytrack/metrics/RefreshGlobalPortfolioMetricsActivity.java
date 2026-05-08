@@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @ActivitySpec(name = "refresh-global-portfolio-metrics", defaultTaskQueue = "metrics-updates")
 public final class RefreshGlobalPortfolioMetricsActivity implements Activity<Void, Void> {

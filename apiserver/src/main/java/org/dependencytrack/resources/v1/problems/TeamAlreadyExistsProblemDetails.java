@@ -24,7 +24,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.UUID;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public class TeamAlreadyExistsProblemDetails extends ProblemDetails {
 

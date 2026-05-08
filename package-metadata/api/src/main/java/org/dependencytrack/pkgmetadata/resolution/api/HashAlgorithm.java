@@ -21,7 +21,7 @@ package org.dependencytrack.pkgmetadata.resolution.api;
 import java.util.regex.Pattern;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public enum HashAlgorithm {
 

@@ -32,7 +32,7 @@ import java.util.UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @ActivitySpec(name = "eval-project-policies", defaultTaskQueue = "policy-evaluations")
 public final class EvalProjectPoliciesActivity implements Activity<EvalProjectPoliciesArg, Void> {

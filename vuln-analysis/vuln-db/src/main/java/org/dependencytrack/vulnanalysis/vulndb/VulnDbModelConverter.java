@@ -45,7 +45,7 @@ import static org.cyclonedx.proto.v1_7.ScoreMethod.SCORE_METHOD_CVSSV2;
 import static org.cyclonedx.proto.v1_7.ScoreMethod.SCORE_METHOD_CVSSV3;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class VulnDbModelConverter {
 

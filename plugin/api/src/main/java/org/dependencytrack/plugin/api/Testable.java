@@ -25,7 +25,7 @@ import org.jspecify.annotations.Nullable;
  * Capability interface for {@link ExtensionFactory} implementations
  * that support testing whether the extension is operational.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface Testable {
 

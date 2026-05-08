@@ -69,7 +69,7 @@ import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.deseria
 import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
 
 /**
- * @since 5.5.0
+ * @since 5.0.0
  */
 @RegisterConstructorMapper(ProjectDao.ConciseProjectListRow.class)
 public interface ProjectDao extends SqlObject {
@@ -639,7 +639,7 @@ public interface ProjectDao extends SqlObject {
      * @return The {@link UUID} of the cloned project.
      * @throws NoSuchElementException When the source project does not exist.
      * @throws AlreadyExistsException When a project with the target version already exists.
-     * @since 5.7.0
+     * @since 5.0.0
      */
     default UUID cloneProject(final CloneProjectCommand command) {
         final Query query = getHandle().createQuery(/* language=SQL */ """
@@ -680,7 +680,7 @@ public interface ProjectDao extends SqlObject {
     }
 
     /**
-     * @since 5.7.0
+     * @since 5.0.0
      */
     @SqlUpdate("""
             UPDATE "PROJECT"

@@ -29,7 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class FileSecretKeysHandlerFactory implements SecretKeysHandlerFactory {
 

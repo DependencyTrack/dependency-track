@@ -29,7 +29,7 @@ import org.dependencytrack.plugin.api.ExtensionPointSpec;
  * Implementations receive a CycloneDX BOM representing a project's components,
  * and produce a Vulnerability Disclosure Report (VDR) describing discovered vulnerabilities.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 @ExtensionPointSpec(name = "vuln-analyzer", required = false)
 public interface VulnAnalyzer extends ExtensionPoint {

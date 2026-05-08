@@ -21,7 +21,7 @@ package org.dependencytrack.plugin.config;
 /**
  * An exception thrown when a secret reference cannot be resolved.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public class UnresolvableSecretException extends IllegalStateException {
 

@@ -30,7 +30,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow.Subscription;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class LimitedBodySubscriber implements HttpResponse.BodySubscriber<byte[]> {
 

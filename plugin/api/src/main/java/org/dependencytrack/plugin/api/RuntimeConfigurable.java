@@ -24,7 +24,7 @@ import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
  * Capability interface for {@link ExtensionFactory} implementations
  * that support runtime configuration.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface RuntimeConfigurable {
 

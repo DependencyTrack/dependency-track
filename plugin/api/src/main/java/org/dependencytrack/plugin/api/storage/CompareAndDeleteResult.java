@@ -23,7 +23,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Result of a compare-and-delete operation of an {@link KeyValueStore}.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public sealed interface CompareAndDeleteResult {
 

@@ -32,7 +32,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class WatermarkStore {
 

@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.Base64;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class SimplePageTokenEncoder implements PageTokenEncoder {
 

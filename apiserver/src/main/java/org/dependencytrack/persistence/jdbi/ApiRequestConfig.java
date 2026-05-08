@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * @since 5.5.0
+ * @since 5.0.0
  */
 public class ApiRequestConfig implements JdbiConfig<ApiRequestConfig> {
 

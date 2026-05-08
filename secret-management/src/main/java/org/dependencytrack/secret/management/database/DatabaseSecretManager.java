@@ -46,7 +46,7 @@ import static org.dependencytrack.secret.management.SecretManager.requireValidNa
 /**
  * A {@link SecretManager} that stores secrets in the database.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class DatabaseSecretManager implements SecretManager {
 

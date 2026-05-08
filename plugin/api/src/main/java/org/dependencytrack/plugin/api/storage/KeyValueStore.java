@@ -45,7 +45,7 @@ import static java.util.Objects.requireNonNull;
  * preferred over their singular counterparts, as they are more efficient.
  * They are however not concurrency-safe.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface KeyValueStore {
 

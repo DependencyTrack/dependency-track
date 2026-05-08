@@ -30,7 +30,7 @@ import java.io.OutputStream;
 import static org.dependencytrack.notification.api.publishing.NotificationPublisherFactory.loadDefaultTemplate;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class ConsoleNotificationPublisherFactory implements NotificationPublisherFactory {
 

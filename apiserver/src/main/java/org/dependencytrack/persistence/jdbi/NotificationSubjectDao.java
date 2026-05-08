@@ -561,7 +561,7 @@ public interface NotificationSubjectDao extends SqlObject {
     List<Project> getProjects(@Bind Collection<UUID> projectUuids);
 
     /**
-     * @since 5.7.0
+     * @since 5.0.0
      */
     default Map<Long, Project> getProjectsById(Collection<Long> ids) {
         if (ids.isEmpty()) {
@@ -595,7 +595,7 @@ public interface NotificationSubjectDao extends SqlObject {
     }
 
     /**
-     * @since 5.7.0
+     * @since 5.0.0
      */
     default Map<Long, Component> getComponentsById(Collection<Long> ids) {
         if (ids.isEmpty()) {
@@ -625,7 +625,7 @@ public interface NotificationSubjectDao extends SqlObject {
     }
 
     /**
-     * @since 5.7.0
+     * @since 5.0.0
      */
     default Map<FindingKey, Vulnerability> getVulnsByFindingKey(Collection<FindingKey> findingKeys) {
         if (findingKeys.isEmpty()) {

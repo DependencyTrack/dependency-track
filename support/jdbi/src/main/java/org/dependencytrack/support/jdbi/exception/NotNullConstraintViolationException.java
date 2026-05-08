@@ -21,7 +21,7 @@ package org.dependencytrack.support.jdbi.exception;
 import org.jspecify.annotations.Nullable;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class NotNullConstraintViolationException extends ConstraintViolationException {
 

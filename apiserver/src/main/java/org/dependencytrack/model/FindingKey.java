@@ -23,7 +23,7 @@ package org.dependencytrack.model;
  *
  * @param componentId ID of the affected component.
  * @param vulnDbId    ID of the vulnerability.
- * @since 5.7.0
+ * @since 5.0.0
  */
 public record FindingKey(long componentId, long vulnDbId) {
 

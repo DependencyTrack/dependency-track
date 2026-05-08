@@ -40,7 +40,7 @@ import static java.util.Comparator.reverseOrder;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public final class InitTaskExecutor {
 

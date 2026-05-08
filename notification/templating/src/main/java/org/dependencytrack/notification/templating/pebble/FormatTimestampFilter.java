@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class FormatTimestampFilter implements Filter {
 

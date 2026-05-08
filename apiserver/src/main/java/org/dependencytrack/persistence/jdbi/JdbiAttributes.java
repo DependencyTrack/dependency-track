@@ -21,7 +21,7 @@ package org.dependencytrack.persistence.jdbi;
 /**
  * Names of common attributes made available to JDBI query templates.
  *
- * @since 5.5.0
+ * @since 5.0.0
  */
 public final class JdbiAttributes {
 

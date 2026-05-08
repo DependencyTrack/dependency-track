@@ -36,7 +36,7 @@ import java.util.EnumSet;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class InternalVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfigurable {
 

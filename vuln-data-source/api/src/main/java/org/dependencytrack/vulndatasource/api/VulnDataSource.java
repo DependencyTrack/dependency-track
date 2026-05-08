@@ -84,7 +84,7 @@ import java.util.Iterator;
  * or to avoid rate limiting of external APIs.
  *
  * @see <a href="https://cyclonedx.org/capabilities/bov/">CycloneDX BOV</a>
- * @since 5.7.0
+ * @since 5.0.0
  */
 @ExtensionPointSpec(name = "vuln-data-source", required = false)
 public interface VulnDataSource extends ExtensionPoint, Iterator<Bom> {

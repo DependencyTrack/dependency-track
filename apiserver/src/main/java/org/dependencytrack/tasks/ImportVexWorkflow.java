@@ -38,7 +38,7 @@ import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
 import static org.dependencytrack.common.MdcKeys.MDC_VEX_UPLOAD_TOKEN;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @NullMarked
 @WorkflowSpec(name = "import-vex")

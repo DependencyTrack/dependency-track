@@ -24,7 +24,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 abstract class ProblemDetailsExceptionMapper<E extends Throwable, P extends ProblemDetails> implements ExceptionMapper<E> {
 

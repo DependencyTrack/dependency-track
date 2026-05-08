@@ -27,7 +27,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class FileStorageBinder extends AbstractBinder {
 

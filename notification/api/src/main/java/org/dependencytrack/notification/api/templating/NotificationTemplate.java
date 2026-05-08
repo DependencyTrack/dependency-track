@@ -21,7 +21,7 @@ package org.dependencytrack.notification.api.templating;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public record NotificationTemplate(String content, String mimeType) {
 

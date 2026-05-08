@@ -23,7 +23,7 @@ import java.util.Optional;
 /**
  * A {@link ConfigRegistry} that supports runtime config modification.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface MutableConfigRegistry extends ConfigRegistry {
 

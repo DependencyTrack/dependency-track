@@ -24,7 +24,7 @@ import java.time.Instant;
 import java.util.Locale;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 record NvdDataFeedMetadata(Instant lastModifiedAt, @Nullable String sha256) {
 

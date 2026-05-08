@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class DatabaseCache implements Cache {
 

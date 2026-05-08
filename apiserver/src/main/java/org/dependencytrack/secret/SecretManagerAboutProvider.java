@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class SecretManagerAboutProvider implements AboutProvider {
 

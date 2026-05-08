@@ -22,7 +22,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public interface TagDao extends SqlObject {
 

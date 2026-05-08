@@ -168,7 +168,7 @@ public class QueryManager extends AlpineQueryManager {
      * This is to ensure stable ordering in case {@link #orderBy} refers to a field that
      * allows duplicates.
      *
-     * @since 5.2.0
+     * @since 5.0.0
      */
     @Override
     public <T> Query<T> decorate(final Query<T> query) {

@@ -41,7 +41,7 @@ import static java.util.Objects.requireNonNull;
  * @param commenter     Name of the principal on which behalf audit trail entries will be created
  * @param comment       The comment to add to the audit trail
  * @param options       Additional options
- * @since 5.7.0
+ * @since 5.0.0
  */
 public record MakeAnalysisCommand(
         Component component,

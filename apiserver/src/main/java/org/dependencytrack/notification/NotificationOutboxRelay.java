@@ -65,7 +65,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction
 /**
  * Outbox relay of notifications.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class NotificationOutboxRelay implements Closeable {
 

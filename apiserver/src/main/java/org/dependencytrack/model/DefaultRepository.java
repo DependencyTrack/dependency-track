@@ -19,7 +19,7 @@
 package org.dependencytrack.model;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public enum DefaultRepository {
 

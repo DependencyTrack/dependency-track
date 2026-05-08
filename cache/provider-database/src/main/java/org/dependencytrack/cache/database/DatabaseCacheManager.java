@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 import static org.dependencytrack.cache.api.CacheManager.requireValidName;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class DatabaseCacheManager implements CacheManager {
 

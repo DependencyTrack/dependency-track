@@ -30,28 +30,28 @@ import org.dependencytrack.common.datasource.DataSourceRegistry;
 public class LockProvider {
 
     /**
-     * @since 5.6.0
+     * @since 5.0.0
      */
     public static void executeWithLock(final LockConfiguration lockConfiguration, final Runnable runnable) {
         newLockingTaskExecutor().executeWithLock(runnable, lockConfiguration);
     }
 
     /**
-     * @since 5.6.0
+     * @since 5.0.0
      */
     public static void executeWithLock(final LockConfiguration lockConfiguration, final Task task) throws Throwable {
         newLockingTaskExecutor().executeWithLock(task, lockConfiguration);
     }
 
     /**
-     * @since 5.6.0
+     * @since 5.0.0
      */
     public static <T> T executeWithLock(final LockConfiguration lockConfiguration, final TaskWithResult<T> task) throws Throwable {
         return newLockingTaskExecutor().executeWithLock(task, lockConfiguration).getResult();
     }
 
     /**
-     * @since 5.6.0
+     * @since 5.0.0
      */
     public static boolean isTaskLockToBeExtended(long cumulativeDurationInMillis, final Class<? extends Subscriber> taskClass) {
         final LockConfiguration lockConfiguration = TaskUtil.getLockConfigForTask(taskClass);

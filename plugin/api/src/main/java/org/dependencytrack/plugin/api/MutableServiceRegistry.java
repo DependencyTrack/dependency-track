@@ -25,7 +25,7 @@ import java.util.Optional;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class MutableServiceRegistry implements ServiceRegistry {
 

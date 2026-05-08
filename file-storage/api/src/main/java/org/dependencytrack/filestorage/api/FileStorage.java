@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public interface FileStorage extends Closeable {
 

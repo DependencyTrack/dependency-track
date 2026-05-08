@@ -24,7 +24,7 @@ import org.dependencytrack.api.v2.model.ProblemDetails;
 import java.util.NoSuchElementException;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @Provider
 public final class NoSuchElementExceptionMapper extends ProblemDetailsExceptionMapper<NoSuchElementException, ProblemDetails> {

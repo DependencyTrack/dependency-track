@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class KafkaNotificationPublisher implements NotificationPublisher {
 

@@ -31,7 +31,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public interface ConfigPropertyDao extends SqlObject {
 

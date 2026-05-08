@@ -22,7 +22,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.spi.JdbiPlugin;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class ExceptionTranslationPlugin extends JdbiPlugin.Singleton {
 

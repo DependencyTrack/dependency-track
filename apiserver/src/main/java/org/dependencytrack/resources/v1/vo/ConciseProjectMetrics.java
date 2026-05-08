@@ -22,7 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.dependencytrack.persistence.jdbi.ProjectDao.ConciseProjectMetricsRow;
 
 /**
- * @since 5.5.0
+ * @since 5.0.0
  */
 @Schema(description = "A concise representation of a project's metrics")
 public record ConciseProjectMetrics(

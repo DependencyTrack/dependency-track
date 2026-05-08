@@ -53,10 +53,10 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
  * This is to support the "delayed BOM processed notification" feature,
  * which was added temporarily, and is scheduled for removal.
  *
- * @since 5.7.0
+ * @since 5.0.0
  * @deprecated To be removed before GA release.
  */
-@Deprecated(since = "5.7.0", forRemoval = true)
+@Deprecated(since = "5.0.0", forRemoval = true)
 public final class DelayedBomProcessedNotificationEmitter implements WorkflowRunsCompletedEventListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DelayedBomProcessedNotificationEmitter.class);

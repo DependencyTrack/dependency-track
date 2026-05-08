@@ -21,7 +21,7 @@ package org.dependencytrack.plugin.api;
 import java.util.Collection;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public interface Plugin {
 

@@ -21,7 +21,7 @@ package org.dependencytrack.plugin.api.config;
 /**
  * Marker interface for an extension configuration that is modifiable at runtime.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface RuntimeConfig {
 }

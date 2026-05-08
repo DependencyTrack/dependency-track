@@ -31,7 +31,7 @@ import java.util.UUID;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @ActivitySpec(name = "update-project-metrics", defaultTaskQueue = "metrics-updates")
 public final class UpdateProjectMetricsActivity implements Activity<UpdateProjectMetricsArg, Void> {

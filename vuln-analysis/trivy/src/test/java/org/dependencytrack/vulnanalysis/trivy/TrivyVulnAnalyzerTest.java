@@ -29,6 +29,7 @@ import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import trivy.proto.cache.v1.PutBlobRequest;
 import trivy.proto.common.CVSS;
 import trivy.proto.common.DataSource;
 import trivy.proto.common.PkgIdentifier;
@@ -54,6 +55,7 @@ import static com.github.tomakehurst.wiremock.http.Fault.CONNECTION_RESET_BY_PEE
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.cyclonedx.proto.v1_7.Classification.CLASSIFICATION_LIBRARY;
 
 @WireMockTest
 class TrivyVulnAnalyzerTest {
@@ -82,7 +84,7 @@ class TrivyVulnAnalyzerTest {
                         .setGroup("com.fasterxml.woodstox")
                         .setVersion("5.0.0")
                         .setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?foo=bar#baz")
-                        .setType(Classification.CLASSIFICATION_LIBRARY)
+                        .setType(CLASSIFICATION_LIBRARY)
                         .build())
                 .build();
 
@@ -175,7 +177,7 @@ class TrivyVulnAnalyzerTest {
                         .setBomRef("1")
                         .setName("woodstox-core")
                         .setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0")
-                        .setType(Classification.CLASSIFICATION_LIBRARY)
+                        .setType(CLASSIFICATION_LIBRARY)
                         .build())
                 .build();
 
@@ -198,7 +200,7 @@ class TrivyVulnAnalyzerTest {
                         .setBomRef("1")
                         .setName("woodstox-core")
                         .setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0")
-                        .setType(Classification.CLASSIFICATION_LIBRARY)
+                        .setType(CLASSIFICATION_LIBRARY)
                         .build())
                 .build();
 
@@ -224,7 +226,7 @@ class TrivyVulnAnalyzerTest {
                         .setBomRef("1")
                         .setName("woodstox-core")
                         .setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0")
-                        .setType(Classification.CLASSIFICATION_LIBRARY)
+                        .setType(CLASSIFICATION_LIBRARY)
                         .build())
                 .build();
 
@@ -256,18 +258,18 @@ class TrivyVulnAnalyzerTest {
                         .setBomRef("1")
                         .setName("woodstox-core")
                         .setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0")
-                        .setType(Classification.CLASSIFICATION_LIBRARY)
+                        .setType(CLASSIFICATION_LIBRARY)
                         .build())
                 .addComponents(Component.newBuilder()
                         .setBomRef("2")
                         .setName("unknown-thing")
                         .setPurl("pkg:xxx/something@1.0.0")
-                        .setType(Classification.CLASSIFICATION_LIBRARY)
+                        .setType(CLASSIFICATION_LIBRARY)
                         .build())
                 .addComponents(Component.newBuilder()
                         .setName("no-bomref")
                         .setPurl("pkg:maven/foo/bar@1.0.0")
-                        .setType(Classification.CLASSIFICATION_LIBRARY)
+                        .setType(CLASSIFICATION_LIBRARY)
                         .build())
                 .addComponents(Component.newBuilder()
                         .setBomRef("4")
@@ -293,7 +295,7 @@ class TrivyVulnAnalyzerTest {
                         .setBomRef("1")
                         .setName("internal-lib")
                         .setPurl("pkg:maven/com.acme/internal-lib@1.0.0")
-                        .setType(Classification.CLASSIFICATION_LIBRARY)
+                        .setType(CLASSIFICATION_LIBRARY)
                         .addProperties(Property.newBuilder()
                                 .setName("dependencytrack:internal:is-internal-component")
                                 .setValue("true")
@@ -348,7 +350,7 @@ class TrivyVulnAnalyzerTest {
                         .setBomRef("1")
                         .setName("lib")
                         .setPurl("pkg:maven/com.example/lib@1.0.0")
-                        .setType(Classification.CLASSIFICATION_LIBRARY)
+                        .setType(CLASSIFICATION_LIBRARY)
                         .build())
                 .build();
 
@@ -389,7 +391,7 @@ class TrivyVulnAnalyzerTest {
                         .setName("libc6")
                         .setVersion("2.35-0ubuntu3.4")
                         .setPurl("pkg:deb/ubuntu/libc6@2.35-0ubuntu3.4?arch=amd64&distro=ubuntu-22.04")
-                        .setType(Classification.CLASSIFICATION_LIBRARY)
+                        .setType(CLASSIFICATION_LIBRARY)
                         .addProperties(Property.newBuilder()
                                 .setName("aquasecurity:trivy:SrcName").setValue("glibc").build())
                         .addProperties(Property.newBuilder()
@@ -416,7 +418,7 @@ class TrivyVulnAnalyzerTest {
                         .setBomRef("1")
                         .setName("some-lib")
                         .setPurl("pkg:maven/com.example/some-lib")
-                        .setType(Classification.CLASSIFICATION_LIBRARY)
+                        .setType(CLASSIFICATION_LIBRARY)
                         .build())
                 .build();
 
@@ -425,6 +427,38 @@ class TrivyVulnAnalyzerTest {
 
         // No Trivy API calls should be made.
         verify(exactly(0), postRequestedFor(anyUrl()));
+    }
+
+    @Test
+    void testAnalyzeComposerComponentUsesSlashSeparator() throws Exception {
+        stubTrivyEndpoints(ScanResponse.getDefaultInstance());
+
+        final Bom bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setGroup("symfony")
+                        .setName("http-foundation")
+                        .setVersion("6.4.15")
+                        .setPurl("pkg:composer/symfony/http-foundation@6.4.15")
+                        .setType(CLASSIFICATION_LIBRARY)
+                        .build())
+                .build();
+
+        analyzer.analyze(bom);
+
+        // The PutBlob request body carries the composer coordinate sent to
+        // Trivy. Packagist indexes composer packages as "vendor/package"
+        // (slash), so DT must transmit "symfony/http-foundation" rather than
+        // "symfony:http-foundation" for the Trivy server to match.
+        final var putBlobRequests = WireMock.findAll(
+                postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));
+        assertThat(putBlobRequests).hasSize(1);
+
+        final PutBlobRequest putBlobRequest = PutBlobRequest.parseFrom(putBlobRequests.get(0).getBody());
+        assertThat(putBlobRequest.getBlobInfo().getApplicationsList())
+                .anySatisfy(app -> assertThat(app.getPackagesList())
+                        .anySatisfy(pkg -> assertThat(pkg.getName())
+                                .isEqualTo("symfony/http-foundation")));
     }
 
     private void stubTrivyEndpoints(ScanResponse scanResponse) {

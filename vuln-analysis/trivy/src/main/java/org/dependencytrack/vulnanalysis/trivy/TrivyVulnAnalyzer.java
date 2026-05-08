@@ -172,7 +172,8 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
 
         String name = purl.getName();
         if (purl.getNamespace() != null) {
-            if (PackageURL.StandardTypes.GOLANG.equals(purl.getType())
+            if (PackageURL.StandardTypes.COMPOSER.equals(purl.getType())
+                    || PackageURL.StandardTypes.GOLANG.equals(purl.getType())
                     || PackageURL.StandardTypes.NPM.equals(purl.getType())) {
                 name = purl.getNamespace() + "/" + name;
             } else {

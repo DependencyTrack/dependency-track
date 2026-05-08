@@ -39,13 +39,56 @@
 | [Flyway](https://www.red-gate.com/products/flyway/)                                         | Database migrations       |
 | [MicroProfile Config](https://microprofile.io/specifications/microprofile-config/)          | Configuration             |
 | [Jetty](https://www.eclipse.org/jetty/)                                                     | Servlet container         |
-| [Apache Kafka](https://kafka.apache.org/)                                                   | Event streaming           |
 | [PostgreSQL](https://www.postgresql.org/)                                                   | Database                  |
 | [Testcontainers](https://testcontainers.com/)                                               | Integration testing       |
 | [Protocol Buffers](https://protobuf.dev/)                                                   | Serialization             |
 
-> [!NOTE]
-> We're currently in the process of phasing out Kafka.
+## Architecture Constraints
+
+The following constraints apply project-wide. They exist to keep the codebase coherent
+as it evolves and to avoid steering changes in directions we are actively moving away from.
+For substantial changes, see also the [Architecture Decision Record](./CONTRIBUTING.md#architecture-decision-records)
+process in `CONTRIBUTING.md`.
+
+### REST API v1 is in maintenance mode
+
+New endpoints must be added to API v2, which lives in the [`api`](./api) module and follows
+a spec-first OpenAPI workflow. API v1 (in [`apiserver/src/main/java/org/dependencytrack/resources/v1`](./apiserver/src/main/java/org/dependencytrack/resources/v1))
+is code-first and uses Swagger annotations on JAX-RS resources. Touch v1 only when extending
+or fixing existing endpoints.
+
+API v1 also reuses persistence models as REST DTOs. Do not propagate that pattern into v2.
+New endpoints must keep the API contract decoupled from the persistence layer.
+
+### Persistence: prefer JDBI and raw SQL
+
+JDO and DataNucleus are being phased out. New persistence code should use [JDBI](https://jdbi.org/)
+with raw SQL. Avoid touching JDO entities unless the change genuinely requires it, and do not
+build new features on top of the JDO layer.
+
+### Throughput over latency
+
+The system processes large volumes of components, vulnerabilities, and analyses. Optimize
+for throughput. Batch work, minimize network round trips, and avoid per-record hot paths
+that issue one query, request, or message at a time.
+
+### Strong consistency by default
+
+Default to strong consistency. Eventual consistency is acceptable only when the use case
+explicitly demands it (typically for scale or availability reasons) and the trade-off is
+documented.
+
+### Simple and pragmatic over speculative future-proofing
+
+Solve the problem in front of you. Avoid extra abstractions, configuration knobs, or
+extension points introduced for hypothetical future needs. It is cheaper to add an
+abstraction when a second concrete use case appears than to maintain one that has none.
+
+### Strong cohesion, loose coupling
+
+Modules should be small and focused, with narrow, intentional interfaces between them.
+Reach across module boundaries through well-defined APIs rather than by importing
+internals. The ongoing modularization effort moves the codebase in this direction.
 
 ## Building
 
@@ -105,7 +148,7 @@ make test-e2e
 
 ## Dev Mode
 
-Dev mode launches the API server with auto-provisioned containers for PostgreSQL, Kafka,
+Dev mode launches the API server with auto-provisioned containers for PostgreSQL
 and the frontend. Containers are created on startup and disposed of on shutdown.
 
 ```shell
@@ -113,7 +156,7 @@ make apiserver-dev
 ```
 
 The API server will be available at `http://localhost:8080`.
-Frontend, Kafka, and PostgreSQL ports are logged during startup.
+Frontend and PostgreSQL ports are logged during startup.
 
 Dev mode specific configuration can be made in [`application-dev.properties`](apiserver/src/main/resources/application-dev.properties).
 

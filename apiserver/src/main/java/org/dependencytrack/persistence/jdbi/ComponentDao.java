@@ -254,6 +254,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             final String componentVersion,
             final HashType componentHashType,
             final String componentHash,
+            final Boolean projectActive,
+            final Boolean projectIsLatest,
             final int limit,
             final String pageToken,
             final String sortBy,
@@ -294,6 +296,16 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             whereConditions.add("LOWER(\"C\".\"SWIDTAGID\") LIKE ('%' || LOWER(:componentSwidTagId) || '%')");
             queryParams.put("componentSwidTagId", componentSwidTagId);
         }
+        if (projectActive != null) {
+            whereConditions.add(projectActive
+                    ? "\"PROJECT\".\"INACTIVE_SINCE\" IS NULL"
+                    : "\"PROJECT\".\"INACTIVE_SINCE\" IS NOT NULL");
+        }
+        if (projectIsLatest != null) {
+            whereConditions.add(projectIsLatest
+                    ? "\"PROJECT\".\"IS_LATEST\""
+                    : "NOT \"PROJECT\".\"IS_LATEST\"");
+        }
         if (componentHashType != null && componentHash != null) {
             final String hashColumn = switch (componentHashType) {
                 case MD5 -> "\"C\".\"MD5\"";
@@ -316,10 +328,14 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
         if (decodedPageToken != null) {
             totalCount = decodedPageToken.totalCount();
         } else {
+            final String projectJoin = (projectActive != null || projectIsLatest != null)
+                    ? "INNER JOIN \"PROJECT\" ON \"C\".\"PROJECT_ID\" = \"PROJECT\".\"ID\""
+                    : "";
             totalCount = getBoundedTotalCountWithProjectAcl("""
                             FROM "COMPONENT" "C"
+                            %s
                             WHERE %s
-                            """.formatted(String.join(" AND ", whereConditions)),
+                            """.formatted(projectJoin, String.join(" AND ", whereConditions)),
                     queryParams,
                     10000,
                     "\"C\".\"PROJECT_ID\"");

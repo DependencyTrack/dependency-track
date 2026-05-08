@@ -300,15 +300,15 @@ class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
         final DependencyMetrics metrics = qm.getMostRecentDependencyMetrics(component);
         assertThat(metrics.getCritical()).isZero();
         assertThat(metrics.getHigh()).isEqualTo(1); // INTERNAL-001
-        assertThat(metrics.getMedium()).isEqualTo(1); // GHSA-002
-        assertThat(metrics.getLow()).isZero();
+        assertThat(metrics.getMedium()).isEqualTo(2); // GHSA-002, SONATYPE-003
+        assertThat(metrics.getLow()).isEqualTo(1); // VULNDB-004
         assertThat(metrics.getUnassigned()).isZero();
-        assertThat(metrics.getVulnerabilities()).isEqualTo(2);
+        assertThat(metrics.getVulnerabilities()).isEqualTo(4);
         assertThat(metrics.getSuppressed()).isEqualTo(0);
-        assertThat(metrics.getFindingsTotal()).isEqualTo(2);
+        assertThat(metrics.getFindingsTotal()).isEqualTo(4);
         assertThat(metrics.getFindingsAudited()).isEqualTo(0);
-        assertThat(metrics.getFindingsUnaudited()).isEqualTo(2);
-        assertThat(metrics.getInheritedRiskScore()).isEqualTo(8.0);
+        assertThat(metrics.getFindingsUnaudited()).isEqualTo(4);
+        assertThat(metrics.getInheritedRiskScore()).isEqualTo(12.0);
         assertThat(metrics.getPolicyViolationsFail()).isZero();
         assertThat(metrics.getPolicyViolationsWarn()).isZero();
         assertThat(metrics.getPolicyViolationsInfo()).isZero();
@@ -326,7 +326,7 @@ class ComponentMetricsUpdateTaskTest extends AbstractMetricsUpdateTaskTest {
         assertThat(metrics.getPolicyViolationsOperationalUnaudited()).isZero();
 
         qm.getPersistenceManager().refresh(component);
-        assertThat(component.getLastInheritedRiskScore()).isEqualTo(8.0);
+        assertThat(component.getLastInheritedRiskScore()).isEqualTo(12.0);
     }
 
 }

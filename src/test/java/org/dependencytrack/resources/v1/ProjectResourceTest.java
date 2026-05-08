@@ -933,6 +933,22 @@ class ProjectResourceTest extends ResourceTest {
         assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(team.getName()));
     }
+
+    @Test
+    void createProjectWithAclDisabledAddsApiKeyTeamTest() {
+        // ACL is not enabled - updateNewProjectACL should still add the API key's team
+        Project project = new Project();
+        project.setName("acme-app-acl-disabled");
+        project.setVersion("1.0");
+        Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(project, MediaType.APPLICATION_JSON));
+        assertThat(response.getStatus()).isEqualTo(201);
+        assertThat(qm.getProject("acme-app-acl-disabled", "1.0")).satisfies(created ->
+                assertThat(created.getAccessTeams()).extracting(Team::getName).containsOnly(team.getName()));
+    }
+
     @Test
     void createProjectAsLatestTest() {
         Project project = new Project();

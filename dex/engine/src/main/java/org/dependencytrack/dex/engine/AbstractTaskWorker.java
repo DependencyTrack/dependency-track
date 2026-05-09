@@ -21,6 +21,7 @@ package org.dependencytrack.dex.engine;
 import io.github.resilience4j.core.IntervalFunction;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter.MeterProvider;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -53,6 +54,7 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
     private final String name;
     private final long minPollIntervalMillis;
     private final IntervalFunction pollBackoffFunction;
+    private final int maxConcurrency;
     private final Semaphore semaphore;
     private final MeterRegistry meterRegistry;
     private final Lock statusLock;
@@ -79,6 +81,7 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
         this.pollBackoffFunction = requireNonNull(pollBackoffFunction, "pollBackoffFunction must not be null");
         this.meterRegistry = requireNonNull(meterRegistry, "meterRegistry must not be null");
         this.statusLock = new ReentrantLock();
+        this.maxConcurrency = maxConcurrency;
         this.semaphore = new Semaphore(maxConcurrency);
         this.logger = LoggerFactory.getLogger(getClass());
     }
@@ -126,6 +129,15 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
                 .builder("dt.dex.engine.task.worker.process.latency")
                 .tags(commonMeterTags)
                 .withRegistry(meterRegistry);
+        Gauge
+                .builder(
+                        "dt.dex.engine.task.worker.concurrency.utilization",
+                        this,
+                        worker -> 1.0 - ((double) worker.semaphore.availablePermits() / worker.maxConcurrency))
+                .description("Fraction (0-1) of the worker's concurrency slots currently in use")
+                .tags(commonMeterTags)
+                .tag("name", name)
+                .register(meterRegistry);
 
         pollThread.start();
 

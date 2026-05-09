@@ -33,6 +33,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 
 @Testcontainers
@@ -242,6 +243,89 @@ class DexEngineMetricsCollectorTest {
     }
 
     @Test
+    void shouldCollectActivityBacklog() {
+        jdbi.useHandle(handle -> {
+            handle.execute("select dex_create_workflow_task_queue('default', cast(100 as smallint))");
+            handle.execute("select dex_create_activity_task_queue('act-queue-a', cast(30 as smallint))");
+            handle.execute("select dex_create_activity_task_queue('act-queue-b', cast(60 as smallint))");
+            handle.execute("select dex_create_activity_task_queue('act-queue-empty', cast(10 as smallint))");
+
+            handle.execute("""
+                    insert into dex_workflow_run(id, workflow_name, workflow_version, task_queue_name, status, created_at)
+                    values ('a0000000-0000-0000-0000-000000000001', 'wf-a', 1, 'default', 'RUNNING', now())
+                         , ('a0000000-0000-0000-0000-000000000002', 'wf-a', 1, 'default', 'RUNNING', now())
+                    """);
+            
+            handle.execute("""
+                    insert into dex_activity_task(queue_name, workflow_run_id, created_event_id, activity_name, priority, retry_policy, status, visible_from, created_at)
+                    values ('act-queue-a', 'a0000000-0000-0000-0000-000000000001', 1, 'act-a', 0, ''::bytea, 'CREATED', now() - interval '1 second', now())
+                         , ('act-queue-a', 'a0000000-0000-0000-0000-000000000001', 2, 'act-a', 0, ''::bytea, 'CREATED', now() - interval '2 seconds', now())
+                         , ('act-queue-a', 'a0000000-0000-0000-0000-000000000001', 3, 'act-a', 0, ''::bytea, 'CREATED', now() + interval '1 hour', now())
+                         , ('act-queue-a', 'a0000000-0000-0000-0000-000000000002', 1, 'act-a', 0, ''::bytea, 'QUEUED', now(), now())
+                         , ('act-queue-b', 'a0000000-0000-0000-0000-000000000002', 2, 'act-b', 0, ''::bytea, 'CREATED', now(), now())
+                    """);
+        });
+
+        try (final var collector = new DexEngineMetricsCollector(
+                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+            collector.start();
+
+            await("Collection")
+                    .atMost(Duration.ofSeconds(5))
+                    .ignoreException(MeterNotFoundException.class)
+                    .untilAsserted(() -> {
+                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.backlog")
+                                .tag("queueName", "act-queue-a")
+                                .gauge().value()).isEqualTo(2.0);
+                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.backlog")
+                                .tag("queueName", "act-queue-b")
+                                .gauge().value()).isEqualTo(1.0);
+                        assertThat(meterRegistry.find("dt.dex.engine.activity.task.queue.backlog")
+                                .tag("queueName", "act-queue-empty")
+                                .gauge()).isNull();
+                    });
+        }
+    }
+
+    @Test
+    void shouldCollectActivityBacklogAge() {
+        jdbi.useHandle(handle -> {
+            handle.execute("select dex_create_workflow_task_queue('default', cast(100 as smallint))");
+            handle.execute("select dex_create_activity_task_queue('act-queue-a', cast(30 as smallint))");
+            handle.execute("select dex_create_activity_task_queue('act-queue-b', cast(60 as smallint))");
+
+            handle.execute("""
+                    insert into dex_workflow_run(id, workflow_name, workflow_version, task_queue_name, status, created_at)
+                    values ('a0000000-0000-0000-0000-000000000001', 'wf-a', 1, 'default', 'RUNNING', now())
+                    """);
+
+            handle.execute("""
+                    insert into dex_activity_task(queue_name, workflow_run_id, created_event_id, activity_name, priority, retry_policy, status, visible_from, created_at)
+                    values ('act-queue-a', 'a0000000-0000-0000-0000-000000000001', 1, 'act-a', 0, ''::bytea, 'CREATED', now() - interval '5 seconds', now())
+                         , ('act-queue-a', 'a0000000-0000-0000-0000-000000000001', 2, 'act-a', 0, ''::bytea, 'CREATED', now() - interval '1 second', now())
+                         , ('act-queue-b', 'a0000000-0000-0000-0000-000000000001', 3, 'act-b', 0, ''::bytea, 'CREATED', now() - interval '2 seconds', now())
+                    """);
+        });
+
+        try (final var collector = new DexEngineMetricsCollector(
+                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+            collector.start();
+
+            await("Collection")
+                    .atMost(Duration.ofSeconds(5))
+                    .ignoreException(MeterNotFoundException.class)
+                    .untilAsserted(() -> {
+                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.backlog.age")
+                                .tag("queueName", "act-queue-a")
+                                .gauge().value()).isCloseTo(5.0, within(2.0));
+                        assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.backlog.age")
+                                .tag("queueName", "act-queue-b")
+                                .gauge().value()).isCloseTo(2.0, within(2.0));
+                    });
+        }
+    }
+
+    @Test
     void shouldHandleEmptyDatabase() {
         try (final var collector = new DexEngineMetricsCollector(
                 jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
@@ -255,6 +339,8 @@ class DexEngineMetricsCollectorTest {
                         assertThat(meterRegistry.find("dt.dex.engine.workflow.runs.current").gauge()).isNull();
                         assertThat(meterRegistry.find("dt.dex.engine.workflow.task.queue.depth").gauge()).isNull();
                         assertThat(meterRegistry.find("dt.dex.engine.activity.task.queue.depth").gauge()).isNull();
+                        assertThat(meterRegistry.find("dt.dex.engine.activity.task.queue.backlog").gauge()).isNull();
+                        assertThat(meterRegistry.find("dt.dex.engine.activity.task.queue.backlog.age").gauge()).isNull();
                     });
         }
     }

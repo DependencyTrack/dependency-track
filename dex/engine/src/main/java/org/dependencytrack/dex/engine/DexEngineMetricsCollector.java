@@ -23,12 +23,14 @@ import io.micrometer.core.instrument.MultiGauge;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -38,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 final class DexEngineMetricsCollector implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DexEngineMetricsCollector.class);
+    private static final int ACTIVITY_TASK_QUEUE_BACKLOG_COUNT_CAP = 10_000;
 
     private final Jdbi jdbi;
     private final Duration initialDelay;
@@ -47,6 +50,8 @@ final class DexEngineMetricsCollector implements Closeable {
     private final MultiGauge workflowTaskQueueDepthGauge;
     private final MultiGauge activityTaskQueueCapacityGauge;
     private final MultiGauge activityTaskQueueDepthGauge;
+    private final MultiGauge activityTaskQueueBacklogGauge;
+    private final MultiGauge activityTaskQueueBacklogAgeGauge;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private @Nullable ScheduledExecutorService executor;
 
@@ -73,6 +78,15 @@ final class DexEngineMetricsCollector implements Closeable {
         this.activityTaskQueueDepthGauge = MultiGauge
                 .builder("dt.dex.engine.activity.task.queue.depth")
                 .description("Depth of activity task queues by name")
+                .register(meterRegistry);
+        this.activityTaskQueueBacklogGauge = MultiGauge
+                .builder("dt.dex.engine.activity.task.queue.backlog")
+                .description("Approximate count of unqueued, ready-to-schedule activity tasks per queue (capped at %d)".formatted(ACTIVITY_TASK_QUEUE_BACKLOG_COUNT_CAP))
+                .register(meterRegistry);
+        this.activityTaskQueueBacklogAgeGauge = MultiGauge
+                .builder("dt.dex.engine.activity.task.queue.backlog.age")
+                .description("Age of the oldest unqueued, ready-to-schedule activity task per queue")
+                .baseUnit("seconds")
                 .register(meterRegistry);
     }
 
@@ -122,6 +136,7 @@ final class DexEngineMetricsCollector implements Closeable {
         collectRunMetrics();
         collectWorkflowTaskQueueMetrics();
         collectActivityTaskQueueMetrics();
+        collectActivityTaskQueueBacklogMetrics();
     }
 
     private void collectRunMetrics() {
@@ -200,6 +215,60 @@ final class DexEngineMetricsCollector implements Closeable {
                                 rs.getLong(2)))
                         .list());
         activityTaskQueueDepthGauge.register(activityTaskQueueDepthRows, /* overwrite */ true);
+    }
+
+    public record TaskQueueBacklogRow(
+            String queueName,
+            long backlog,
+            @Nullable Duration age) {
+    }
+
+    private void collectActivityTaskQueueBacklogMetrics() {
+        final List<TaskQueueBacklogRow> rows = jdbi.withHandle(handle -> handle
+                .createQuery("""
+                        select tq.name as queue_name
+                             , coalesce((
+                                 select count(*)
+                                   from (
+                                     select 1
+                                       from dex_activity_task
+                                      where queue_name = tq.name
+                                        and status != 'QUEUED'
+                                        and visible_from <= now()
+                                      limit :cap
+                                   ) as capped
+                               ), 0) as backlog
+                             , now() - (
+                                 select min(visible_from)
+                                   from dex_activity_task
+                                  where queue_name = tq.name
+                                    and status != 'QUEUED'
+                                    and visible_from <= now()
+                               ) as age
+                          from dex_activity_task_queue as tq
+                         where tq.status = 'ACTIVE'
+                        """)
+                .bind("cap", ACTIVITY_TASK_QUEUE_BACKLOG_COUNT_CAP)
+                .map(ConstructorMapper.of(TaskQueueBacklogRow.class))
+                .list());
+
+        // Drop queues with no eligible work, so that drained queues stop producing metrics.
+        final var backlogRows = new ArrayList<MultiGauge.Row<Number>>(rows.size());
+        final var ageRows = new ArrayList<MultiGauge.Row<Number>>(rows.size());
+        for (final TaskQueueBacklogRow row : rows) {
+            if (row.backlog() == 0 && row.age() == null) {
+                continue;
+            }
+
+            final Tags tags = Tags.of("queueName", row.queueName());
+            backlogRows.add(MultiGauge.Row.of(tags, row.backlog()));
+            if (row.age() != null) {
+                ageRows.add(MultiGauge.Row.of(tags, row.age().toMillis() / 1000.0));
+            }
+        }
+
+        activityTaskQueueBacklogGauge.register(backlogRows, /* overwrite */ true);
+        activityTaskQueueBacklogAgeGauge.register(ageRows, /* overwrite */ true);
     }
 
 }

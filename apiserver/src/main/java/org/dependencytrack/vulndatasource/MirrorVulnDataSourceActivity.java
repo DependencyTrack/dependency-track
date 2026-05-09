@@ -41,6 +41,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -185,10 +186,11 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             qm.runInTransaction(() -> {
                 for (final Vulnerability vuln : vulns) {
                     LOGGER.debug("Synchronizing vulnerability {}", vuln.getVulnId());
-                    final Vulnerability existingVuln = qm.getVulnerabilityByVulnId(vuln.getSource(), vuln.getVulnId());
+                    final Vulnerability existingVuln = getExistingVuln(qm, vuln.getSource(), vuln.getVulnId());
                     final Vulnerability persistentVuln = existingVuln == null
                             ? qm.createVulnerability(vuln)
                             : qm.updateVulnerability(existingVuln, vuln);
+
                     final List<VulnerableSoftware> vsList = vsListByVulnId.get(persistentVuln.getVulnId());
                     qm.synchronizeVulnerableSoftware(persistentVuln, vsList, source);
                 }
@@ -202,6 +204,22 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
 
         for (final Bom bov : bovs) {
             dataSource.markProcessed(bov);
+        }
+    }
+
+    private static @Nullable Vulnerability getExistingVuln(
+            QueryManager qm,
+            String source,
+            String vulnId) {
+        final Query<Vulnerability> query = qm.getPersistenceManager().newQuery(
+                Vulnerability.class, "source == :source && vulnId == :vulnId");
+        query.getFetchPlan().addGroup(Vulnerability.FetchGroup.VULNERABLE_SOFTWARE.name());
+        query.setParameters(source, vulnId);
+        query.setRange(0, 1);
+        try {
+            return query.executeUnique();
+        } finally {
+            query.closeAll();
         }
     }
 

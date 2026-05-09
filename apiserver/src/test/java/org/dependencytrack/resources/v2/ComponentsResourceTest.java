@@ -506,6 +506,152 @@ public class ComponentsResourceTest extends ResourceTest {
                 """);
     }
 
+    @Test
+    public void listComponentsWithInvalidProjectStateTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Response response = jersey
+                .target("/components")
+                .queryParam("project_state", "invalid")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_BAD_REQUEST);
+        assertThatJson(parseJsonObject(response).toString()).isEqualTo(/* language=JSON */ """
+                {
+                  "type": "about:blank",
+                  "status": 400,
+                  "title": "Bad Request",
+                  "detail": "The request could not be processed because it failed validation.",
+                  "errors": [
+                    {
+                      "path": "project_state",
+                      "message": "Invalid parameter value."
+                    }
+                  ]
+                }
+                """);
+    }
+
+    @Test
+    public void listComponentsByProjectStateAndLatestVersionTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var activeLatestProject = new Project();
+        activeLatestProject.setName("activeLatestProject");
+        activeLatestProject.setIsLatest(true);
+        qm.persist(activeLatestProject);
+        final var activeLatest = new Component();
+        activeLatest.setProject(activeLatestProject);
+        activeLatest.setName("activeLatest");
+        qm.persist(activeLatest);
+
+        final var activeNotLatestProject = new Project();
+        activeNotLatestProject.setName("activeNotLatestProject");
+        qm.persist(activeNotLatestProject);
+        final var activeNotLatest = new Component();
+        activeNotLatest.setProject(activeNotLatestProject);
+        activeNotLatest.setName("activeNotLatest");
+        qm.persist(activeNotLatest);
+
+        final var inactiveLatestProject = new Project();
+        inactiveLatestProject.setName("inactiveLatestProject");
+        inactiveLatestProject.setIsLatest(true);
+        inactiveLatestProject.setInactiveSince(new java.util.Date());
+        qm.persist(inactiveLatestProject);
+        final var inactiveLatest = new Component();
+        inactiveLatest.setProject(inactiveLatestProject);
+        inactiveLatest.setName("inactiveLatest");
+        qm.persist(inactiveLatest);
+
+        final var inactiveNotLatestProject = new Project();
+        inactiveNotLatestProject.setName("inactiveNotLatestProject");
+        inactiveNotLatestProject.setInactiveSince(new java.util.Date());
+        qm.persist(inactiveNotLatestProject);
+        final var inactiveNotLatest = new Component();
+        inactiveNotLatest.setProject(inactiveNotLatestProject);
+        inactiveNotLatest.setName("inactiveNotLatest");
+        qm.persist(inactiveNotLatest);
+
+        Response response = jersey
+                .target("/components")
+                .queryParam("project_state", "ACTIVE")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(parseJsonObject(response).toString())
+                .inPath("$.items[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("activeLatest", "activeNotLatest");
+
+        response = jersey
+                .target("/components")
+                .queryParam("project_state", "INACTIVE")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(parseJsonObject(response).toString())
+                .inPath("$.items[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("inactiveLatest", "inactiveNotLatest");
+
+        response = jersey
+                .target("/components")
+                .queryParam("project_latest_version", "true")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(parseJsonObject(response).toString())
+                .inPath("$.items[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("activeLatest", "inactiveLatest");
+
+        response = jersey
+                .target("/components")
+                .queryParam("project_latest_version", "false")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(parseJsonObject(response).toString())
+                .inPath("$.items[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("activeNotLatest", "inactiveNotLatest");
+
+        response = jersey
+                .target("/components")
+                .queryParam("project_state", "ACTIVE")
+                .queryParam("project_latest_version", "false")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(parseJsonObject(response).toString())
+                .inPath("$.items[*].name")
+                .isArray()
+                .containsExactly("activeNotLatest");
+
+        response = jersey
+                .target("/components")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(parseJsonObject(response).toString())
+                .inPath("$.items[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("activeLatest", "activeNotLatest", "inactiveLatest", "inactiveNotLatest");
+    }
+
     private void prepareComponents() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 

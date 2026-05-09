@@ -68,8 +68,6 @@ import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.dependencytrack.util.PurlUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,8 +90,6 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
         @SecurityRequirement(name = "BearerAuth")
 })
 public class ComponentResource extends AbstractApiResource {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ComponentResource.class);
 
     @GET
     @Path("/project/{uuid}")
@@ -197,7 +193,9 @@ public class ComponentResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns a list of components that have the specified component identity. This resource accepts coordinates (group, name, version) or purl, cpe, or swidTagId",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+            description = """
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>
+                    <p><strong>Deprecated</strong>! Use <code>/api/v2/components</code> instead.</p>"""
     )
     @PaginatedApi
     @ApiResponses(value = {
@@ -213,6 +211,7 @@ public class ComponentResource extends AbstractApiResource {
                     description = "Access to the requested project is forbidden",
                     content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON))
     })
+    @Deprecated(since = "5.0.0", forRemoval = true)
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByIdentity(@Parameter(description = "The group of the component")
                                            @QueryParam("group") String group,
@@ -227,7 +226,11 @@ public class ComponentResource extends AbstractApiResource {
                                            @Parameter(description = "The swidTagId of the component")
                                            @QueryParam("swidTagId") String swidTagId,
                                            @Parameter(description = "The project the component belongs to", schema = @Schema(format = "uuid"))
-                                           @QueryParam("project") @ValidUuid String projectUuid) {
+                                           @QueryParam("project") @ValidUuid String projectUuid,
+                                           @Parameter(description = "When true, only return components from active projects")
+                                           @QueryParam("excludeInactiveProjects") boolean excludeInactiveProjects,
+                                           @Parameter(description = "When true, only return components from projects flagged as the latest version")
+                                           @QueryParam("onlyLatestProjectVersions") boolean onlyLatestProjectVersions) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Project project = null;
             if (projectUuid != null) {
@@ -252,7 +255,12 @@ public class ComponentResource extends AbstractApiResource {
                 && identity.getPurl() == null && identity.getCpe() == null && identity.getSwidTagId() == null) {
                 return Response.ok().header(TOTAL_COUNT_HEADER, 0).build();
             } else {
-                final PaginatedResult result = qm.getComponents(identity, project, true);
+                final PaginatedResult result = qm.getComponents(
+                        identity,
+                        project,
+                        /* includeMetrics */ true,
+                        excludeInactiveProjects,
+                        onlyLatestProjectVersions);
                 return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
             }
         }
@@ -263,7 +271,9 @@ public class ComponentResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns a list of components that have the specified hash value",
-            description = "<p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"
+            description = """
+                    <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>
+                    <p><strong>Deprecated</strong>! Use <code>/api/v2/components</code> instead.</p>"""
     )
     @PaginatedApi
     @ApiResponses(value = {
@@ -275,6 +285,7 @@ public class ComponentResource extends AbstractApiResource {
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
+    @Deprecated(since = "5.0.0", forRemoval = true)
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByHash(
             @Parameter(description = "The MD5, SHA-1, SHA-256, SHA-384, SHA-512, SHA3-256, SHA3-384, SHA3-512, BLAKE2b-256, BLAKE2b-384, BLAKE2b-512, or BLAKE3 hash of the component to retrieve", required = true)

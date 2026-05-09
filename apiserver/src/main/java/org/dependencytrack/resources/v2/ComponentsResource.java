@@ -34,6 +34,7 @@ import org.dependencytrack.api.v2.ComponentsApi;
 import org.dependencytrack.api.v2.model.CreateComponentRequest;
 import org.dependencytrack.api.v2.model.ListComponentsResponse;
 import org.dependencytrack.api.v2.model.ListComponentsResponseItem;
+import org.dependencytrack.api.v2.model.ProjectState;
 import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.pagination.Page;
@@ -110,7 +111,8 @@ public class ComponentsResource extends AbstractApiResource implements Component
     @Override
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response listComponents(String groupContains, String nameContains, String versionContains, String purlPrefix, String cpe,
-                                   String swidTagIdContains, String hashType, String hash, Integer limit, String pageToken, SortDirection sortDirection, String sortBy) {
+                                   String swidTagIdContains, String hashType, String hash, ProjectState projectState, Boolean projectLatestVersion,
+                                   Integer limit, String pageToken, SortDirection sortDirection, String sortBy) {
         return inJdbiTransaction(getAlpineRequest(), handle -> {
             PackageURL packageURL = null;
             if (purlPrefix != null) {
@@ -135,10 +137,29 @@ public class ComponentsResource extends AbstractApiResource implements Component
                     throw new BadRequestException("Invalid Hash type: %s".formatted(hashType));
                 }
             }
+
             final Page<Component> componentsPage = handle.attach(ComponentDao.class)
-                    .listComponents(null, true, packageURL != null ? packageURL.canonicalize().toLowerCase() : null, StringUtils.trimToNull(cpe),
-                            StringUtils.trimToNull(swidTagIdContains), StringUtils.trimToNull(groupContains), StringUtils.trimToNull(nameContains),
-                            StringUtils.trimToNull(versionContains), hashTypeEnum, StringUtils.trimToNull(hash), limit, pageToken, sortBy, mapSortDirection(sortDirection));
+                    .listComponents(
+                            /* projectId */ null,
+                            /* includeMetrics */ true,
+                            packageURL != null ? packageURL.canonicalize().toLowerCase() : null,
+                            StringUtils.trimToNull(cpe),
+                            StringUtils.trimToNull(swidTagIdContains),
+                            StringUtils.trimToNull(groupContains),
+                            StringUtils.trimToNull(nameContains),
+                            StringUtils.trimToNull(versionContains),
+                            hashTypeEnum,
+                            StringUtils.trimToNull(hash),
+                            switch (projectState) {
+                                case ACTIVE -> Boolean.TRUE;
+                                case INACTIVE -> Boolean.FALSE;
+                                case null -> null;
+                            },
+                            projectLatestVersion,
+                            limit,
+                            pageToken,
+                            sortBy,
+                            mapSortDirection(sortDirection));
 
             final var response = ListComponentsResponse.builder()
                     .items(componentsPage.items().stream()

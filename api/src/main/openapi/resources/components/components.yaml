@@ -137,6 +137,24 @@ get:
         Requires `hash_type` to be set.
       schema:
         type: string
+    - name: project_state
+      in: query
+      description: |-
+        Filter by the state of the project that the component belongs to.
+
+        Omit to include components from projects in any state.
+      schema:
+        $ref: "../../shared/schemas/project-state.yaml"
+    - name: project_latest_version
+      in: query
+      description: |-
+        Filter by whether the project the component belongs to is flagged as the latest version.
+
+        When `true`, only components from latest-version projects are returned.
+        When `false`, only components from non-latest projects are returned.
+        Omit to include components regardless of the flag.
+      schema:
+        type: boolean
     - $ref: "../../shared/parameters/pagination-limit.yaml"
     - $ref: "../../shared/parameters/page-token.yaml"
     - $ref: "../../shared/parameters/sort-direction.yaml"

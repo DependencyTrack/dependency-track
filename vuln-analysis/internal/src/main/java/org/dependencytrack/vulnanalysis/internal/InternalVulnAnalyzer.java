@@ -389,7 +389,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
             // do not strictly follow versioning schemes. Fall back to the generic scheme to
             // prevent false negatives.
             if (!SCHEME_GENERIC.equals(versioningScheme)) {
-                LOGGER.warn(
+                LOGGER.debug(
                         "Failed to compare {} against {} with scheme {}: {}; retrying with scheme {}",
                         targetVersion, criteria, versioningScheme, e.getMessage(), SCHEME_GENERIC);
                 try {

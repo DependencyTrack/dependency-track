@@ -35,7 +35,6 @@ import javax.jdo.annotations.Unique;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Model class for tracking the attribution of versions affected by a given {@link Vulnerability}.
@@ -90,11 +89,6 @@ public class AffectedVersionAttribution implements Serializable {
     @Column(name = "VULNERABLE_SOFTWARE", allowsNull = "false")
     @JsonIgnore
     private VulnerableSoftware vulnerableSoftware;
-
-    @Persistent(customValueStrategy = "uuid")
-    @Unique(name = "AFFECTEDVERSIONATTRIBUTION_UUID_IDX")
-    @Column(name = "UUID", sqlType = "UUID", allowsNull = "false")
-    private UUID uuid;
 
     public AffectedVersionAttribution() {
     }
@@ -153,14 +147,6 @@ public class AffectedVersionAttribution implements Serializable {
 
     public void setVulnerableSoftware(final VulnerableSoftware vulnerableSoftware) {
         this.vulnerableSoftware = vulnerableSoftware;
-    }
-
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(final UUID uuid) {
-        this.uuid = uuid;
     }
 
 }

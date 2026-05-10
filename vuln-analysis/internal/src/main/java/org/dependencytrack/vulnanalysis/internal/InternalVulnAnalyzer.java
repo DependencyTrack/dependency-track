@@ -52,7 +52,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -91,52 +90,42 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
             }
         }
 
+        final var cpeCoordinates = new ArrayList<CpeCoordinate>();
+        final var purlCoordinates = new ArrayList<PurlCoordinate>();
+        for (final Coordinate coordinate : candidatesByCoordinate.keySet()) {
+            switch (coordinate) {
+                case CpeCoordinate it -> cpeCoordinates.add(it);
+                case PurlCoordinate it -> purlCoordinates.add(it);
+            }
+        }
+
         final var findingsByVuln = new HashMap<Long, Set<Long>>();
         final var vulnMetadata = new HashMap<Long, VulnMetadata>();
 
-        final List<List<Coordinate>> coordinatePartitions = partition(List.copyOf(candidatesByCoordinate.keySet()));
-        for (final var coordinatePartition : coordinatePartitions) {
+        for (final List<CpeCoordinate> batch : partition(cpeCoordinates)) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before all components could be analyzed");
             }
 
-            LOGGER.debug("Querying matching criteria for {} coordinates", coordinatePartition.size());
-            final Map<Coordinate, List<MatchingCriteria>> criteriaListByCoordinate =
-                    queryMatchingCriteria(coordinatePartition);
+            LOGGER.debug("Querying matching criteria for {} CPE coordinates", batch.size());
+            processCriteria(
+                    queryCpeMatchingCriteria(batch),
+                    candidatesByCoordinate,
+                    findingsByVuln,
+                    vulnMetadata);
+        }
 
-            for (final var entry : criteriaListByCoordinate.entrySet()) {
-                final Coordinate coordinate = entry.getKey();
-                final List<MatchingCriteria> criteriaList = entry.getValue();
-
-                final Set<CandidateComponent> criteriaCandidates = candidatesByCoordinate.get(coordinate);
-                if (criteriaCandidates == null || criteriaCandidates.isEmpty()) {
-                    LOGGER.warn("No candidates found for {}", coordinate);
-                    continue;
-                }
-
-                for (final MatchingCriteria criteria : criteriaList) {
-                    for (final var candidate : criteriaCandidates) {
-                        final var affectedComponentIds = findingsByVuln.get(criteria.vulnDbId());
-                        if (affectedComponentIds != null && affectedComponentIds.contains(candidate.id())) {
-                            // Already matched, no need to check another criteria.
-                            continue;
-                        }
-
-                        final boolean affected = switch (coordinate) {
-                            case CpeCoordinate ignored -> isAffectedByCpe(candidate, criteria);
-                            case PurlCoordinate ignored -> isAffectedByPurl(candidate, criteria);
-                        };
-                        if (affected) {
-                            findingsByVuln
-                                    .computeIfAbsent(criteria.vulnDbId(), k -> new HashSet<>())
-                                    .add(candidate.id());
-                            vulnMetadata.putIfAbsent(
-                                    criteria.vulnDbId(),
-                                    new VulnMetadata(criteria.vulnId(), criteria.vulnSource()));
-                        }
-                    }
-                }
+        for (final List<PurlCoordinate> batch : partition(purlCoordinates)) {
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Interrupted before all components could be analyzed");
             }
+
+            LOGGER.debug("Querying matching criteria for {} PURL coordinates", batch.size());
+            processCriteria(
+                    queryPurlMatchingCriteria(batch),
+                    candidatesByCoordinate,
+                    findingsByVuln,
+                    vulnMetadata);
         }
 
         final var vulnerabilities = new ArrayList<Vulnerability>();
@@ -166,144 +155,159 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
                 .build();
     }
 
-    private Map<Coordinate, List<MatchingCriteria>> queryMatchingCriteria(List<Coordinate> coordinates) {
-        final var queries = new ArrayList<String>();
-        final var params = new HashMap<String, Object>();
+    private Map<Coordinate, List<MatchingCriteria>> queryCpeMatchingCriteria(List<CpeCoordinate> coordinates) {
+        final var parts = new String[coordinates.size()];
+        final var vendors = new String[coordinates.size()];
+        final var products = new String[coordinates.size()];
+        final var indexes = new int[coordinates.size()];
 
         for (int i = 0; i < coordinates.size(); i++) {
-            final Coordinate coordinate = coordinates.get(i);
-
-            switch (coordinate) {
-                case CpeCoordinate(String part, String vendor, String product) -> {
-                    final var partParam = "cpePart" + i;
-                    final var vendorParam = "cpeVendor" + i;
-                    final var productParam = "cpeProduct" + i;
-
-                    var queryBuilder = new StringJoiner(" ").add(/* language=SQL */ """
-                            SELECT vs.*
-                                 , v."ID" AS vuln_db_id
-                                 , v."VULNID" AS vuln_id
-                                 , v."SOURCE" AS vuln_source
-                                 , %d AS coordinate_index
-                              FROM "VULNERABLESOFTWARE" AS vs
-                             INNER JOIN "VULNERABLESOFTWARE_VULNERABILITIES" AS vsv
-                                ON vsv."VULNERABLESOFTWARE_ID" = vs."ID"
-                             INNER JOIN "VULNERABILITY" AS v
-                                ON v."ID" = vsv."VULNERABILITY_ID"
-                             WHERE TRUE
-                            """.formatted(i));
-
-                    // The query composition below represents a partial implementation of the CPE
-                    // matching logic. It makes references to table 6-2 of the CPE name matching
-                    // specification: https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf
-                    //
-                    // In CPE matching terms, the parameters of this method represent the target,
-                    // and the `VulnerableSoftware`s in the database represent the source.
-                    //
-                    // While the source *can* contain wildcards ("*", "?"), there is currently (Oct. 2023)
-                    // no occurrence of part, vendor, or product with wildcards in the NVD database.
-                    // Evaluating wildcards in the source can only be done in-memory. If we wanted to do that,
-                    // we'd have to fetch *all* records, which is not practical.
-
-                    if (!"*".equals(part) && !"-".equals(part)) {
-                        // | No. | Source A-V      | Target A-V | Relation             |
-                        // | :-- | :-------------- | :--------- | :------------------- |
-                        // | 3   | ANY             | i          | SUPERSET             |
-                        // | 7   | NA              | i          | DISJOINT             |
-                        // | 9   | i               | i          | EQUAL                |
-                        // | 10  | i               | k          | DISJOINT             |
-                        // | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
-                        queryBuilder.add("AND \"PART\" IN ('*', :%s)".formatted(partParam));
-                        params.put(partParam, part);
-
-                        // NOTE: Target *could* include wildcard, but the relation
-                        // for those cases is undefined:
-                        //
-                        // | No. | Source A-V      | Target A-V      | Relation   |
-                        // | :-- | :-------------- | :-------------- | :--------- |
-                        // | 4   | ANY             | m + wild cards  | undefined  |
-                        // | 8   | NA              | m + wild cards  | undefined  |
-                        // | 11  | i               | m + wild cards  | undefined  |
-                        // | 17  | m1 + wild cards | m2 + wild cards | undefined  |
-                    } else if ("-".equals(part)) {
-                        // | No. | Source A-V     | Target A-V | Relation |
-                        // | :-- | :------------- | :--------- | :------- |
-                        // | 2   | ANY            | NA         | SUPERSET |
-                        // | 6   | NA             | NA         | EQUAL    |
-                        // | 12  | i              | NA         | DISJOINT |
-                        // | 16  | m + wild cards | NA         | DISJOINT |
-                        queryBuilder.add("AND \"PART\" IN ('*', '-')");
-                    } else {
-                        // | No. | Source A-V     | Target A-V | Relation |
-                        // | :-- | :------------- | :--------- | :------- |
-                        // | 1   | ANY            | ANY        | EQUAL    |
-                        // | 5   | NA             | ANY        | SUBSET   |
-                        // | 13  | i              | ANY        | SUBSET   |
-                        // | 15  | m + wild cards | ANY        | SUBSET   |
-                        queryBuilder.add("AND \"PART\" IS NOT NULL");
-                    }
-
-                    if (!"*".equals(vendor) && !"-".equals(vendor)) {
-                        queryBuilder.add("AND \"VENDOR\" IN ('*', :%s)".formatted(vendorParam));
-                        params.put(vendorParam, vendor);
-                    } else if ("-".equals(vendor)) {
-                        queryBuilder.add("AND \"VENDOR\" IN ('*', '-')");
-                    } else {
-                        queryBuilder.add("AND \"VENDOR\" IS NOT NULL");
-                    }
-
-                    if (!"*".equals(product) && !"-".equals(product)) {
-                        queryBuilder.add("AND \"PRODUCT\" IN ('*', :%s)".formatted(productParam));
-                        params.put(productParam, product);
-                    } else if ("-".equals(product)) {
-                        queryBuilder.add("AND \"PRODUCT\" IN ('*', '-')");
-                    } else {
-                        queryBuilder.add("AND \"PRODUCT\" IS NOT NULL");
-                    }
-
-                    queries.add(queryBuilder.toString());
-                }
-                case PurlCoordinate(String type, String namespace, String name) -> {
-                    final var typeParam = "purlType" + i;
-                    final var namespaceParam = "purlNamespace" + i;
-                    final var nameParam = "purlName" + i;
-
-                    var query = /* language=SQL */ """
-                            SELECT vs.*
-                                 , v."ID" AS vuln_db_id
-                                 , v."VULNID" AS vuln_id
-                                 , v."SOURCE" AS vuln_source
-                                 , %d AS coordinate_index
-                              FROM "VULNERABLESOFTWARE" AS vs
-                             INNER JOIN "VULNERABLESOFTWARE_VULNERABILITIES" AS vsv
-                                ON vsv."VULNERABLESOFTWARE_ID" = vs."ID"
-                             INNER JOIN "VULNERABILITY" AS v
-                                ON v."ID" = vsv."VULNERABILITY_ID"
-                             WHERE "PURL_TYPE" = :%s
-                               AND "PURL_NAME" = :%s
-                            """.formatted(i, typeParam, nameParam);
-
-                    params.put(typeParam, type);
-                    params.put(nameParam, name);
-
-                    if (namespace == null) {
-                        query += "AND \"PURL_NAMESPACE\" IS NULL";
-                    } else {
-                        query += "AND \"PURL_NAMESPACE\" = :%s".formatted(namespaceParam);
-                        params.put(namespaceParam, namespace);
-                    }
-
-                    queries.add(query);
-                }
-            }
+            final CpeCoordinate coordinate = coordinates.get(i);
+            parts[i] = coordinate.part();
+            vendors[i] = coordinate.vendor();
+            products[i] = coordinate.product();
+            indexes[i] = i;
         }
 
+        // The query composition below represents a partial implementation of the CPE
+        // matching logic. It makes references to table 6-2 of the CPE name matching
+        // specification: https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf
+        //
+        // In CPE matching terms, the parameters of this method represent the target,
+        // and the VULNERABLESOFTWARE records in the database represent the source.
+        //
+        // While the source *can* contain wildcards ("*", "?"), there is currently (Oct. 2023)
+        // no occurrence of part, vendor, or product with wildcards in the NVD database.
+        // Evaluating wildcards in the source can only be done in-memory. If we wanted to do that,
+        // we'd have to fetch *all* records, which is not practical.
+
         return jdbi.withHandle(handle -> handle
-                .createQuery(String.join(" UNION ALL ", queries))
-                .bindMap(params)
+                .createQuery(/* language=SQL */ """
+                        SELECT vs.*
+                             , v."ID" AS vuln_db_id
+                             , v."VULNID" AS vuln_id
+                             , v."SOURCE" AS vuln_source
+                             , t.idx AS coordinate_index
+                          FROM UNNEST(:parts, :vendors, :products, :indexes)
+                            AS t(part, vendor, product, idx)
+                         INNER JOIN "VULNERABLESOFTWARE" AS vs
+                            ON (
+                                -- | No. | Source A-V     | Target A-V | Relation |
+                                -- | :-- | :------------- | :--------- | :------- |
+                                -- | 1   | ANY            | ANY        | EQUAL    |
+                                -- | 5   | NA             | ANY        | SUBSET   |
+                                -- | 13  | i              | ANY        | SUBSET   |
+                                -- | 15  | m + wild cards | ANY        | SUBSET   |
+                                (t.part = '*' AND vs."PART" IS NOT NULL)
+                                -- | No. | Source A-V      | Target A-V | Relation             |
+                                -- | :-- | :-------------- | :--------- | :------------------- |
+                                -- | 2   | ANY             | NA         | SUPERSET             |
+                                -- | 6   | NA              | NA         | EQUAL                |
+                                -- | 12  | i               | NA         | DISJOINT             |
+                                -- | 16  | m + wild cards  | NA         | DISJOINT             |
+                                -- | 3   | ANY             | i          | SUPERSET             |
+                                -- | 7   | NA              | i          | DISJOINT             |
+                                -- | 9   | i               | i          | EQUAL                |
+                                -- | 10  | i               | k          | DISJOINT             |
+                                -- | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
+                                OR vs."PART" IN ('*', t.part)
+                               )
+                           -- VENDOR and PRODUCT follow the same matching logic as PART above.
+                           AND ((t.vendor  = '*' AND vs."VENDOR" IS NOT NULL) OR vs."VENDOR" IN ('*', t.vendor))
+                           AND ((t.product = '*' AND vs."PRODUCT" IS NOT NULL) OR vs."PRODUCT" IN ('*', t.product))
+                         INNER JOIN "VULNERABLESOFTWARE_VULNERABILITIES" AS vsv
+                            ON vsv."VULNERABLESOFTWARE_ID" = vs."ID"
+                         INNER JOIN "VULNERABILITY" AS v
+                            ON v."ID" = vsv."VULNERABILITY_ID"
+                        """)
+                .bind("parts", parts)
+                .bind("vendors", vendors)
+                .bind("products", products)
+                .bind("indexes", indexes)
                 .mapTo(MatchingCriteria.class)
                 .collect(Collectors.groupingBy(
                         criteria -> coordinates.get(criteria.coordinateIndex()))));
+    }
+
+    private Map<Coordinate, List<MatchingCriteria>> queryPurlMatchingCriteria(List<PurlCoordinate> coordinates) {
+        final var types = new String[coordinates.size()];
+        final var namespaces = new String[coordinates.size()];
+        final var names = new String[coordinates.size()];
+        final var indexes = new int[coordinates.size()];
+
+        for (int i = 0; i < coordinates.size(); i++) {
+            final PurlCoordinate coordinate = coordinates.get(i);
+            types[i] = coordinate.type();
+            namespaces[i] = coordinate.namespace();
+            names[i] = coordinate.name();
+            indexes[i] = i;
+        }
+
+        return jdbi.withHandle(handle -> handle
+                .createQuery(/* language=SQL */ """
+                        SELECT vs.*
+                             , v."ID" AS vuln_db_id
+                             , v."VULNID" AS vuln_id
+                             , v."SOURCE" AS vuln_source
+                             , t.idx AS coordinate_index
+                          FROM UNNEST(:types, :namespaces, :names, :indexes)
+                            AS t(purl_type, purl_namespace, purl_name, idx)
+                         INNER JOIN "VULNERABLESOFTWARE" AS vs
+                            ON vs."PURL_TYPE" = t.purl_type
+                           AND vs."PURL_NAMESPACE" IS NOT DISTINCT FROM t.purl_namespace
+                           AND vs."PURL_NAME" = t.purl_name
+                         INNER JOIN "VULNERABLESOFTWARE_VULNERABILITIES" AS vsv
+                            ON vsv."VULNERABLESOFTWARE_ID" = vs."ID"
+                         INNER JOIN "VULNERABILITY" AS v
+                            ON v."ID" = vsv."VULNERABILITY_ID"
+                        """)
+                .bind("types", types)
+                .bind("namespaces", namespaces)
+                .bind("names", names)
+                .bind("indexes", indexes)
+                .mapTo(MatchingCriteria.class)
+                .collect(Collectors.groupingBy(
+                        criteria -> coordinates.get(criteria.coordinateIndex()))));
+    }
+
+    private void processCriteria(
+            Map<Coordinate, List<MatchingCriteria>> criteriaListByCoordinate,
+            Map<Coordinate, Set<CandidateComponent>> candidatesByCoordinate,
+            Map<Long, Set<Long>> findingsByVuln,
+            Map<Long, VulnMetadata> vulnMetadata) {
+        for (final var entry : criteriaListByCoordinate.entrySet()) {
+            final Coordinate coordinate = entry.getKey();
+            final List<MatchingCriteria> criteriaList = entry.getValue();
+
+            final Set<CandidateComponent> criteriaCandidates = candidatesByCoordinate.get(coordinate);
+            if (criteriaCandidates == null || criteriaCandidates.isEmpty()) {
+                LOGGER.warn("No candidates found for {}", coordinate);
+                continue;
+            }
+
+            for (final MatchingCriteria criteria : criteriaList) {
+                for (final var candidate : criteriaCandidates) {
+                    final var affectedComponentIds = findingsByVuln.get(criteria.vulnDbId());
+                    if (affectedComponentIds != null && affectedComponentIds.contains(candidate.id())) {
+                        // Already matched, no need to check another criteria.
+                        continue;
+                    }
+
+                    final boolean affected = switch (coordinate) {
+                        case CpeCoordinate ignored -> isAffectedByCpe(candidate, criteria);
+                        case PurlCoordinate ignored -> isAffectedByPurl(candidate, criteria);
+                    };
+                    if (affected) {
+                        findingsByVuln
+                                .computeIfAbsent(criteria.vulnDbId(), k -> new HashSet<>())
+                                .add(candidate.id());
+                        vulnMetadata.putIfAbsent(
+                                criteria.vulnDbId(),
+                                new VulnMetadata(criteria.vulnId(), criteria.vulnSource()));
+                    }
+                }
+            }
+        }
     }
 
     private boolean isAffectedByCpe(CandidateComponent component, MatchingCriteria criteria) {

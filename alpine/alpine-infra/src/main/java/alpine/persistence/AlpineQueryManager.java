@@ -787,11 +787,11 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
                 .filter("name == :permissionName && users.contains(user) && user.id == :userId")
                 .variables("alpine.model.User user")
                 .setParameters(permissionName, user.getId())
-                .result("count(id)");
+                .range(0, 1)
+                .result("id");
 
-        final long count = query.executeResultUnique(Long.class);
-
-        return count > 0 || (includeTeams && user.getTeams().stream()
+        return !executeAndCloseResultList(query, Long.class).isEmpty()
+                || (includeTeams && user.getTeams().stream()
                 .anyMatch(team -> hasPermission(team, permissionName)));
     }
 
@@ -806,8 +806,9 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
         final Query<Permission> query = pm.newQuery(Permission.class, "name == :permissionName && teams.contains(team) && team.id == :teamId");
         query.declareVariables("alpine.model.Team team");
         query.setParameters(permissionName, team.getId());
-        query.setResult("count(id)");
-        return executeAndCloseResultUnique(query, Long.class) > 0;
+        query.setRange(0, 1);
+        query.setResult("id");
+        return !executeAndCloseResultList(query, Long.class).isEmpty();
     }
 
     /**

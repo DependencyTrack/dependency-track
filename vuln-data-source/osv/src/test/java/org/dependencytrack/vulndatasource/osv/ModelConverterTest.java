@@ -515,6 +515,47 @@ class ModelConverterTest {
         }
 
         @Test
+        void shouldDiscardEnumeratedVersionsWhenWildcardRangeIsAuthoritative() throws IOException {
+            final var advisory = MAPPER.readValue(/* language=JSON */ """
+                    {
+                      "id": "UBUNTU-CVE-2024-99999",
+                      "affected": [
+                        {
+                          "package": {
+                            "name": "linux",
+                            "ecosystem": "Ubuntu:24.04:LTS",
+                            "purl": "pkg:deb/ubuntu/linux?arch=source&distro=noble"
+                          },
+                          "ranges": [
+                            {
+                              "type": "ECOSYSTEM",
+                              "events": [
+                                { "introduced": "0" }
+                              ]
+                            }
+                          ],
+                          "versions": [
+                            "6.8.0-31.31",
+                            "6.8.0-35.35",
+                            "6.8.0-39.39"
+                          ]
+                        }
+                      ]
+                    }
+                    """, Osv.class);
+
+            final Bom bov = new ModelConverter(MAPPER).convert(advisory, false, "Ubuntu");
+
+            assertThatBov(bov)
+                    .inPath("$.vulnerabilities[0].affects[0].versions")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              { "range": "vers:deb/*" }
+                            ]
+                            """);
+        }
+
+        @Test
         void shouldResolveConflictingUpperBounds() throws IOException {
             final Bom bov = new ModelConverter(MAPPER).convert(
                     loadOsvAdvisory("osv-git-conflict-upper-bound-range.json"), false, DEFAULT_SOURCE_ECOSYSTEM);

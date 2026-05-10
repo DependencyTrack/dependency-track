@@ -194,8 +194,9 @@ final class ModelConverter {
         final List<Affected> affected = osv.getAffected();
         if (affected != null && !affected.isEmpty()) {
             final var purlToBomRef = new HashMap<String, String>();
+            final boolean isMalware = isOsvMalwareIdentifier(id);
             for (final Affected entry : affected) {
-                final VulnerabilityAffects affects = convertAffected(id, entry, bom, purlToBomRef);
+                final VulnerabilityAffects affects = convertAffected(id, entry, bom, purlToBomRef, isMalware);
                 if (affects != null) {
                     vuln.addAffects(affects);
                 }
@@ -428,7 +429,8 @@ final class ModelConverter {
             @Nullable String vulnId,
             Affected entry,
             Bom.Builder bom,
-            Map<String, String> purlToBomRef) {
+            Map<String, String> purlToBomRef,
+            boolean isMalware) {
         final Package pkg = entry.getPackage();
         if (pkg == null) {
             return null;
@@ -458,7 +460,7 @@ final class ModelConverter {
 
         return VulnerabilityAffects.newBuilder()
                 .setRef(bomRef)
-                .addAllVersions(convertVersions(entry))
+                .addAllVersions(convertVersions(entry, isMalware))
                 .build();
     }
 
@@ -504,7 +506,7 @@ final class ModelConverter {
         return builder.build();
     }
 
-    private List<VulnerabilityAffectedVersions> convertVersions(Affected entry) {
+    private List<VulnerabilityAffectedVersions> convertVersions(Affected entry, boolean isMalware) {
         final List<Range> ranges = entry.getRanges();
         final var parsedRanges = new ArrayList<VulnerabilityAffectedVersions>();
         if (ranges != null) {
@@ -515,15 +517,27 @@ final class ModelConverter {
         }
 
         // OSV typically provides BOTH ranges (introduced/fixed events) and a redundant `versions` array
-        // expanded from those ranges. Consume the ranges by default, and fall back to discrete versions only
-        // when no usable range was parsed, or when only wildcard ranges (e.g. `>=0`) survived. The latter
-        // case mirrors advisories like https://osv-vulnerabilities.storage.googleapis.com/npm/MAL-2023-995.json,
-        // where the wildcard range alongside an exact version would otherwise produce false positives.
-        final boolean onlyWildcardRanges = !parsedRanges.isEmpty() && parsedRanges.stream()
-                .map(VulnerabilityAffectedVersions::getRange)
-                .allMatch(WILDCARD_VERS_PATTERN.asPredicate());
+        // expanded from those ranges. Consume the ranges by default, and fall back to discrete versions
+        // only when no usable range was parsed.
+        //
+        // For malware advisories (MAL-*), also fall back to discrete versions when only wildcard ranges
+        // (e.g. `>=0`) survived. Such records pair a wildcard range with a precise list of malicious
+        // versions and trusting the wildcard would flag every legitimate release as malware. See
+        // https://osv-vulnerabilities.storage.googleapis.com/npm/MAL-2023-995.json.
+        //
+        // Outside of malware, wildcard-only ranges are authoritative ("all versions affected"), even
+        // when the advisory enumerates known versions alongside them. This is common for unfixed distro
+        // CVEs, where Debian / Ubuntu list every historical release of a source package under
+        // `introduced=0`. Expanding those into per-version VulnerableSoftware records produces tens of
+        // thousands of redundant rows per advisory without adding matching information.
         final List<String> exactVersions = entry.getVersions();
-        if ((parsedRanges.isEmpty() || onlyWildcardRanges)
+        final boolean noUsableRange = parsedRanges.isEmpty();
+        final boolean malwareWildcardOnly = isMalware
+                && !parsedRanges.isEmpty()
+                && parsedRanges.stream()
+                        .map(VulnerabilityAffectedVersions::getRange)
+                        .allMatch(WILDCARD_VERS_PATTERN.asPredicate());
+        if ((noUsableRange || malwareWildcardOnly)
                 && exactVersions != null
                 && !exactVersions.isEmpty()) {
             final var fallback = new ArrayList<VulnerabilityAffectedVersions>(exactVersions.size());

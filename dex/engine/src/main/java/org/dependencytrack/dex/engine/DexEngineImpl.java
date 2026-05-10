@@ -635,8 +635,10 @@ final class DexEngineImpl implements DexEngine {
                 return Collections.emptyList();
             }
             if (createdRunIdByRequestId.size() != createWorkflowRunCommands.size()) {
+                // Drop messages targeting runs that were not created due to instance ID conflict.
+                // Keeping them would cause a foreign key violation when inserting into the inbox.
                 messagesToCreate.removeIf(
-                        command -> createdRunIdByRequestId.containsValue(command.recipientRunId()));
+                        message -> !createdRunIdByRequestId.containsValue(message.recipientRunId()));
             }
 
             handle.afterCommit(() -> {
@@ -957,7 +959,7 @@ final class DexEngineImpl implements DexEngine {
             }
 
             final var historyRequests = new ArrayList<GetWorkflowRunHistoryRequest>(polledTaskByRunId.size());
-            final var cachedHistoryByRunId = new HashMap<UUID, List<WorkflowEvent>>(polledTaskByRunId.size());
+            final var cachedHistoryByRunId = new HashMap<UUID, CachedWorkflowRunHistory>(polledTaskByRunId.size());
 
             // Try to populate event histories from cache first.
             for (final var entry : polledTaskByRunId.entrySet()) {
@@ -968,7 +970,7 @@ final class DexEngineImpl implements DexEngine {
                 if (cachedHistory == null) {
                     historyRequests.add(new GetWorkflowRunHistoryRequest(runId, -1));
                 } else {
-                    cachedHistoryByRunId.put(runId, cachedHistory.events());
+                    cachedHistoryByRunId.put(runId, cachedHistory);
                     historyRequests.add(new GetWorkflowRunHistoryRequest(runId, cachedHistory.maxSequenceNumber()));
                 }
             }
@@ -978,7 +980,10 @@ final class DexEngineImpl implements DexEngine {
             return polledTaskByRunId.values().stream()
                     .map(polledTask -> {
                         final PolledWorkflowEvents polledEvents = polledEventsByRunId.get(polledTask.runId());
-                        final List<WorkflowEvent> cachedHistoryEvents = cachedHistoryByRunId.get(polledTask.runId());
+                        final CachedWorkflowRunHistory cachedHistory = cachedHistoryByRunId.get(polledTask.runId());
+                        final List<WorkflowEvent> cachedHistoryEvents = cachedHistory != null
+                                ? cachedHistory.events()
+                                : null;
 
                         var historySize = polledEvents.history().size();
                         if (cachedHistoryEvents != null) {
@@ -991,13 +996,20 @@ final class DexEngineImpl implements DexEngine {
                         }
                         history.addAll(polledEvents.history());
 
+                        // Preserve the previously cached max sequence number when no new history events
+                        // were polled. Otherwise, the cache would be left with a non-empty event list but
+                        // a max of -1, causing the next poll to refetch the full history and double-apply
+                        // the already-cached events.
+                        final int maxSequenceNumber =
+                                polledEvents.history().isEmpty() && cachedHistory != null
+                                        ? cachedHistory.maxSequenceNumber()
+                                        : polledEvents.maxHistorySequenceNumber();
+
                         runHistoryCache.put(
                                 new WorkflowRunHistoryCacheKey(
                                         polledTask.runId(),
                                         polledTask.continuedAsNewGeneration()),
-                                new CachedWorkflowRunHistory(
-                                        history,
-                                        polledEvents.maxHistorySequenceNumber()));
+                                new CachedWorkflowRunHistory(history, maxSequenceNumber));
 
                         return WorkflowTask.of(
                                 polledTask,

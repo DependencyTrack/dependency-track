@@ -55,6 +55,9 @@ public final class ConfigFactory extends SmallRyeConfigFactory {
                 //   * Secrets support: https://smallrye.io/smallrye-config/Main/config/secret-keys/
                 //   * Logging support: https://smallrye.io/smallrye-config/Main/extensions/logging/
                 .addDefaultInterceptors()
+                // Enable secret key handlers discovered via SPI.
+                // https://smallrye.io/smallrye-config/Main/config/secret-keys/
+                .addDiscoveredSecretKeysHandlers()
                 // Allow applications to customize the Config via SPI.
                 // https://smallrye.io/smallrye-config/Main/config/customizer/
                 .addDiscoveredCustomizers()

@@ -125,7 +125,7 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
             }
         }
 
-        return new PackageMetadata(latest.version(), resolvedAt, artifactMetadata);
+        return new PackageMetadata(latest.version(), latest.publishedAt, resolvedAt, artifactMetadata);
     }
 
     private @Nullable String discoverRegistrationsBaseUrl(PackageRepository repository) throws InterruptedException {

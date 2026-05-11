@@ -103,6 +103,7 @@ class ComposerPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.2.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo("2024-10-11T08:11:39Z");
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().publishedAt()).isEqualTo("2020-04-29T19:51:20Z");
     }
@@ -135,6 +136,7 @@ class ComposerPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("3.8.1");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo("2024-12-05T17:15:07Z");
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().publishedAt()).isEqualTo("2024-11-01T10:00:00Z");
     }
@@ -166,6 +168,7 @@ class ComposerPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v2.0.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo("2024-10-11T08:11:39Z");
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().publishedAt()).isEqualTo("2024-10-11T08:11:39Z");
     }
@@ -219,6 +222,7 @@ class ComposerPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.3.8");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo("2024-12-20T06:16:51Z");
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().publishedAt()).isEqualTo("2024-12-10T12:14:27Z");
 
@@ -444,6 +448,7 @@ class ComposerPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("9.9.9");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo("2025-01-01T00:00:00Z");
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().publishedAt()).isEqualTo("2024-12-01T12:00:00Z");
     }
@@ -624,6 +629,7 @@ class ComposerPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.5.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo("2023-06-01T00:00:00Z");
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().publishedAt()).isEqualTo("2020-01-01T00:00:00Z");
     }

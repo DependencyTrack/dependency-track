@@ -81,26 +81,17 @@ final class CpanPackageMetadataResolver implements PackageMetadataResolver {
         // The /v1/release/{name} endpoint returns the latest release only.
         // Version metadata is only available when the queried version matches the latest.
         final var resolvedAt = Instant.now();
+        final var publishedAt = getPublishedAt(root);
 
         PackageArtifactMetadata artifactMetadata = null;
         if (purl.getVersion() != null && purl.getVersion().equals(latestVersion)) {
-            artifactMetadata = extractArtifactMetadata(root, resolvedAt);
+            artifactMetadata = extractArtifactMetadata(root, resolvedAt, publishedAt);
         }
 
-        return new PackageMetadata(latestVersion, resolvedAt, artifactMetadata);
+        return new PackageMetadata(latestVersion, publishedAt, resolvedAt, artifactMetadata);
     }
 
-    private static @Nullable PackageArtifactMetadata extractArtifactMetadata(JsonNode root, Instant resolvedAt) {
-        Instant publishedAt = null;
-        final String date = root.path("date").asText(null);
-        if (date != null) {
-            try {
-                // CPAN dates are in ISO local date-time format without timezone (UTC implied).
-                publishedAt = LocalDateTime.parse(date).toInstant(ZoneOffset.UTC);
-            } catch (DateTimeParseException ignored) {
-            }
-        }
-
+    private static @Nullable PackageArtifactMetadata extractArtifactMetadata(JsonNode root, Instant resolvedAt, Instant publishedAt) {
         final var hashes = new EnumMap<HashAlgorithm, String>(HashAlgorithm.class);
         final String sha256 = root.path("checksum_sha256").asText(null);
         if (sha256 != null && HashAlgorithm.SHA256.isValid(sha256)) {
@@ -112,6 +103,19 @@ final class CpanPackageMetadataResolver implements PackageMetadataResolver {
         }
 
         return new PackageArtifactMetadata(resolvedAt, publishedAt, hashes);
+    }
+
+    private static @Nullable Instant getPublishedAt(JsonNode root) {
+        Instant publishedAt = null;
+        final String date = root.path("date").asText(null);
+        if (date != null) {
+            try {
+                // CPAN dates are in ISO local date-time format without timezone (UTC implied).
+                publishedAt = LocalDateTime.parse(date).toInstant(ZoneOffset.UTC);
+            } catch (DateTimeParseException ignored) {
+            }
+        }
+        return publishedAt;
     }
 
     private JsonNode parseJson(byte[] body) {

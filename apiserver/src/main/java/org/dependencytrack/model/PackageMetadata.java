@@ -33,6 +33,7 @@ import static java.util.Objects.requireNonNull;
 public record PackageMetadata(
         PackageURL purl,
         @Nullable String latestVersion,
+        @Nullable Instant latestVersionPublishedAt,
         Instant resolvedAt,
         @Nullable String resolvedFrom,
         @Nullable String resolvedBy) {

@@ -51,7 +51,7 @@ final class NixpkgsPackageMetadataResolver implements PackageMetadataResolver {
 
         final byte[] cached = cache.get(cacheKey);
         if (cached != null) {
-            return new PackageMetadata(new String(cached, StandardCharsets.UTF_8), Instant.now(), null);
+            return new PackageMetadata(new String(cached, StandardCharsets.UTF_8), null, Instant.now(), null);
         }
 
         final String version = packageIndex.getVersion(purl.getName(), repository.url());
@@ -60,7 +60,7 @@ final class NixpkgsPackageMetadataResolver implements PackageMetadataResolver {
         }
 
         cache.put(cacheKey, version.getBytes(StandardCharsets.UTF_8));
-        return new PackageMetadata(version, Instant.now(), null);
+        return new PackageMetadata(version, null, Instant.now(), null);
     }
 
 }

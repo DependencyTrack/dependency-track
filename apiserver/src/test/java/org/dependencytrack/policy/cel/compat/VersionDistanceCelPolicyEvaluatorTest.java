@@ -139,6 +139,7 @@ public class VersionDistanceCelPolicyEvaluatorTest extends PersistenceCapableTes
                     new PackageMetadata(
                             packagePurl,
                             latestVersion != null ? latestVersion : "6.6.6",
+                            null,
                             Instant.now(),
                             null,
                             null)));

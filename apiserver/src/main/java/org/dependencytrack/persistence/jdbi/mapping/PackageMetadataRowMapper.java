@@ -49,10 +49,12 @@ public final class PackageMetadataRowMapper implements RowMapper<PackageMetadata
     @Override
     public PackageMetadata map(ResultSet rs, StatementContext ctx) throws SQLException {
         requireNonNull(purlColumnMapper);
+        final var latestVersionPublishedAt = rs.getTimestamp("LATEST_VERSION_PUBLISHED_AT");
 
         return new PackageMetadata(
                 purlColumnMapper.map(rs, "PURL", ctx),
                 rs.getString("LATEST_VERSION"),
+                latestVersionPublishedAt != null ? latestVersionPublishedAt.toInstant() : null,
                 rs.getTimestamp("RESOLVED_AT").toInstant(),
                 rs.getString("RESOLVED_FROM"),
                 rs.getString("RESOLVED_BY"));

@@ -359,6 +359,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             final var packageMetadata = new org.dependencytrack.model.PackageMetadata(
                     packagePurl,
                     resolvedMetadata.latestVersion(),
+                    resolvedMetadata.latestVersionPublishedAt(),
                     resolvedAt,
                     repositoryIdentifier,
                     resolverName);
@@ -401,7 +402,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             final PackageURL packagePurl = PurlUtil.silentPurlPackageOnly(purl);
             pkgMetadataByPurl.merge(
                     packagePurl.canonicalize(),
-                    new org.dependencytrack.model.PackageMetadata(packagePurl, null, resolvedAt, null, null),
+                    new org.dependencytrack.model.PackageMetadata(packagePurl, null, null, resolvedAt, null, null),
                     (existing, incoming) -> existing.latestVersion() != null ? existing : incoming);
             artifactMetadataByPurl.putIfAbsent(
                     purl.toString(),

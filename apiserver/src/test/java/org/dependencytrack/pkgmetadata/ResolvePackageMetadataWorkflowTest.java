@@ -150,6 +150,7 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
 
         mockResolveFnRef.set(purl -> new PackageMetadata(
                 "9.9.9",
+                Instant.now(),
                 resolvedAt,
                 new PackageArtifactMetadata(
                         resolvedAt,
@@ -186,7 +187,7 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
 
         final List<Map<String, Object>> pkgMetadata = withJdbiHandle(handle -> handle
                 .createQuery("""
-                        SELECT "PURL", "LATEST_VERSION", "RESOLVED_BY"
+                        SELECT "PURL", "LATEST_VERSION", "LATEST_VERSION_PUBLISHED_AT", "RESOLVED_BY"
                           FROM "PACKAGE_METADATA"
                          ORDER BY "PURL"
                         """)
@@ -196,11 +197,13 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
                 row -> {
                     assertThat(row).containsEntry("purl", "pkg:maven/org.acme/bar");
                     assertThat(row).containsEntry("latest_version", "9.9.9");
+                    assertThat(row).containsKey("latest_version_published_at");
                     assertThat(row).containsEntry("resolved_by", "mock");
                 },
                 row -> {
                     assertThat(row).containsEntry("purl", "pkg:maven/org.acme/foo");
                     assertThat(row).containsEntry("latest_version", "9.9.9");
+                    assertThat(row).containsKey("latest_version_published_at");
                     assertThat(row).containsEntry("resolved_by", "mock");
                 });
 
@@ -244,7 +247,7 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
 
         final List<Map<String, Object>> pkgMetadata = withJdbiHandle(handle -> handle
                 .createQuery("""
-                        SELECT "PURL", "LATEST_VERSION"
+                        SELECT "PURL", "LATEST_VERSION", "LATEST_VERSION_PUBLISHED_AT"
                           FROM "PACKAGE_METADATA"
                         """)
                 .mapToMap()
@@ -252,6 +255,7 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
         assertThat(pkgMetadata).satisfiesExactly(row -> {
             assertThat(row).containsEntry("purl", "pkg:npm/foo");
             assertThat(row).containsEntry("latest_version", null);
+            assertThat(row).containsEntry("latest_version_published_at", null);
         });
 
         final List<Map<String, Object>> versionMetadata = withJdbiHandle(handle -> handle

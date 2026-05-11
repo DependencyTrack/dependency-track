@@ -272,6 +272,7 @@ public class ComponentResourcePostgresTest extends ResourceTest {
                 packageMetadataList.add(new PackageMetadata(
                         PurlUtil.silentPurlPackageOnly(component.getPurl()),
                         String.valueOf(i + 1) + ".0",
+                        null,
                         Instant.now(),
                         null,
                         null));
@@ -284,6 +285,7 @@ public class ComponentResourcePostgresTest extends ResourceTest {
                 packageMetadataList.add(new PackageMetadata(
                         PurlUtil.silentPurlPackageOnly(component.getPurl()),
                         String.valueOf(i) + ".0",
+                        null,
                         Instant.now(),
                         null,
                         null));

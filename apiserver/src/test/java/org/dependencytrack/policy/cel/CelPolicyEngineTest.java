@@ -201,6 +201,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/componentGroup/componentName"),
                             "1.0.0",
+                            null,
                             Instant.now(),
                             null,
                             null)));
@@ -440,6 +441,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
+                            null,
                             Instant.now(),
                             null,
                             null)));
@@ -478,6 +480,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/foo/bar"),
                             "1.3.1",
+                            null,
                             Instant.now(),
                             null,
                             null)));
@@ -532,6 +535,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
+                            null,
                             Instant.now(),
                             null,
                             null)));
@@ -576,6 +580,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
+                            null,
                             Instant.now(),
                             null,
                             null)));
@@ -617,6 +622,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
+                            null,
                             Instant.now(),
                             null,
                             null)));
@@ -658,6 +664,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
+                            null,
                             Instant.now(),
                             null,
                             null)));
@@ -702,6 +709,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
+                            null,
                             Instant.now(),
                             null,
                             null)));

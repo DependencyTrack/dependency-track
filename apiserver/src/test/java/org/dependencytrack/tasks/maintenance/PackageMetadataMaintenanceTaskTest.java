@@ -60,12 +60,14 @@ public class PackageMetadataMaintenanceTaskTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/com.acme/acme-lib"),
                             "2.0.0",
+                            now.minus(20, ChronoUnit.DAYS),
                             now.minus(29, ChronoUnit.DAYS),
                             null,
                             null),
                     new PackageMetadata(
                             new PackageURL("pkg:maven/foo/bar"),
                             "3.2.1",
+                            now.minus(20, ChronoUnit.DAYS),
                             now.minus(31, ChronoUnit.DAYS),
                             null,
                             null)));

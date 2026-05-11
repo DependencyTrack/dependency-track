@@ -84,6 +84,7 @@ final class GemPackageMetadataResolver implements PackageMetadataResolver {
         if (latestVersion == null) {
             return null;
         }
+        Instant latestVersionPublishedAt = getCreatedAt(root.get(0));
 
         final String requestedVersion = purl.getVersion();
         JsonNode matchingEntry = null;
@@ -96,25 +97,32 @@ final class GemPackageMetadataResolver implements PackageMetadataResolver {
 
         final var resolvedAt = Instant.now();
         if (matchingEntry == null) {
-            return new PackageMetadata(latestVersion, resolvedAt, null);
+            return new PackageMetadata(latestVersion, latestVersionPublishedAt, resolvedAt, null);
         }
 
-        Instant publishedAt = null;
-        final String createdAt = matchingEntry.path("created_at").asText(null);
-        if (createdAt != null) {
-            try {
-                publishedAt = Instant.parse(createdAt);
-            } catch (DateTimeParseException e) {
-                LOGGER.debug("Failed to parse created_at '{}'", createdAt, e);
-            }
-        }
+        Instant publishedAt = latestVersion.equals(requestedVersion)
+                ? latestVersionPublishedAt
+                : getCreatedAt(matchingEntry);
 
         return new PackageMetadata(
                 latestVersion,
+                latestVersionPublishedAt,
                 resolvedAt,
                 publishedAt != null
                         ? new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of())
                         : null);
+    }
+
+    private @Nullable Instant getCreatedAt(JsonNode entry) {
+        final String createdAt = entry.path("created_at").asText(null);
+        if (createdAt != null) {
+            try {
+                return Instant.parse(createdAt);
+            } catch (DateTimeParseException e) {
+                LOGGER.debug("Failed to parse created_at '{}'", createdAt, e);
+            }
+        }
+        return null;
     }
 
     private static void maybeApplyAuth(HttpRequest.Builder builder, PackageRepository repository) {

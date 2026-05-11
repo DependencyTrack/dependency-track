@@ -156,6 +156,7 @@ public class ComponentResourceTest extends ResourceTest {
                 new PackageMetadata(
                         new PackageURL("pkg:maven/org.acme/abc"),
                         "2.0.0",
+                        null,
                         resolvedAt.toInstant(),
                         null,
                         null))));
@@ -191,6 +192,7 @@ public class ComponentResourceTest extends ResourceTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/org.acme/abc"),
                             "2.0.0",
+                            null,
                             resolvedAt.toInstant(),
                             null,
                             null)));
@@ -337,17 +339,20 @@ public class ComponentResourceTest extends ResourceTest {
                         new PackageURL("pkg:maven/org.acme/component1"),
                         "2.0.0",
                         Instant.now(),
+                        Instant.now(),
                         null,
                         null),
                 new PackageMetadata(
                         new PackageURL("pkg:maven/org.acme/component1_1"),
                         "3.0.0",
                         Instant.now(),
+                        Instant.now(),
                         null,
                         null),
                 new PackageMetadata(
                         new PackageURL("pkg:maven/org.acme/component1_1_1"),
                         "4.0.0",
+                        Instant.now(),
                         Instant.now(),
                         null,
                         null))));

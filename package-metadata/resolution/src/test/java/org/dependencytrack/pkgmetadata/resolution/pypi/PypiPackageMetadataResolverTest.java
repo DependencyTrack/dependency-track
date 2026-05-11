@@ -39,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.http.HttpClient;
+import java.time.Instant;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -61,12 +62,14 @@ class PypiPackageMetadataResolverTest {
               "releases": {
                 "1.0.0": [{
                   "filename": "mypackage-1.0.0.tar.gz",
+                  "upload_time_iso_8601": "2015-06-14T14:38:05.875222Z",
                   "digests": {
                     "md5": "aaaa1111bbbb2222cccc3333dddd4444",
                     "sha256": "aaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222"
                   }
                 }, {
                   "filename": "mypackage-1.0.0-py3-none-any.whl",
+                  "upload_time_iso_8601": "2015-06-14T14:37:56.383366Z",
                   "digests": {
                     "md5": "bbbb2222cccc3333dddd4444eeee5555",
                     "sha256": "bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222cccc3333"
@@ -74,6 +77,7 @@ class PypiPackageMetadataResolverTest {
                 }],
                 "2.0.0": [{
                   "filename": "mypackage-2.0.0.tar.gz",
+                  "upload_time_iso_8601": "2024-11-06T22:37:09.220617Z",
                   "digests": {
                     "md5": "1111222233334444555566667777aaaa",
                     "sha256": "1111222233334444555566667777aaaa8888bbbb9999cccc0000ddddeeee1111"
@@ -129,6 +133,7 @@ class PypiPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-11-06T22:37:09.220617Z"));
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().hashes())
                 .containsEntry(HashAlgorithm.MD5, "aaaa1111bbbb2222cccc3333dddd4444")
@@ -152,6 +157,7 @@ class PypiPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-11-06T22:37:09.220617Z"));
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().hashes())
                 .containsEntry(HashAlgorithm.MD5, "bbbb2222cccc3333dddd4444eeee5555")
@@ -174,6 +180,7 @@ class PypiPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-11-06T22:37:09.220617Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 
@@ -194,6 +201,7 @@ class PypiPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-11-06T22:37:09.220617Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 
@@ -215,6 +223,7 @@ class PypiPackageMetadataResolverTest {
         final PackageMetadata secondResult = resolver.resolve(purl, repo);
         assertThat(secondResult).isNotNull();
         assertThat(secondResult.latestVersion()).isEqualTo("2.0.0");
+        assertThat(secondResult.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-11-06T22:37:09.220617Z"));
         assertThat(secondResult.artifactMetadata()).isNull();
 
         verify(1, getRequestedFor(urlPathEqualTo("/pypi/mypackage/json")));
@@ -299,6 +308,7 @@ class PypiPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-11-06T22:37:09.220617Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 

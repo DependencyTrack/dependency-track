@@ -93,6 +93,7 @@ public class ComponentAgeCelPolicyTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/foo/bar"),
                             "1.2.3",
+                            null,
                             Instant.now(),
                             null,
                             null)));

@@ -29,6 +29,7 @@ import static java.util.Objects.requireNonNull;
  */
 public record PackageMetadata(
         @Nullable String latestVersion,
+        @Nullable Instant latestVersionPublishedAt,
         Instant resolvedAt,
         @Nullable PackageArtifactMetadata artifactMetadata) {
 

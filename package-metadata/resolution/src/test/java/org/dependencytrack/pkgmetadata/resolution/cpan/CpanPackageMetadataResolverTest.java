@@ -91,6 +91,8 @@ class CpanPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.2206");
+        assertThat(result.latestVersionPublishedAt())
+                .isEqualTo(Instant.parse("2022-06-02T18:29:43Z"));
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().publishedAt())
                 .isEqualTo(Instant.parse("2022-06-02T18:29:43Z"));
@@ -121,6 +123,8 @@ class CpanPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.2206");
+        assertThat(result.latestVersionPublishedAt())
+                .isEqualTo(Instant.parse("2022-06-02T18:29:43Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 

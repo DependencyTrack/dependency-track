@@ -241,6 +241,7 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/com.example/xmlutil"),
                             "1.0.0",
+                            null,
                             Instant.now(),
                             null,
                             null)));

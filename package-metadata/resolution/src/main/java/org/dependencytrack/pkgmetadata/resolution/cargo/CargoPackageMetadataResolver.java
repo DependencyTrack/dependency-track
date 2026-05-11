@@ -83,19 +83,28 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
         }
 
         final var resolvedAt = Instant.now();
+        Instant latestVersionPublishedAt = null;
 
         Version requestedVersion = null;
         if (crateDoc.versions() != null) {
             for (final Version crateVersion : crateDoc.versions()) {
+                if (latestVersion.equals(crateVersion.num())) {
+                    if (crateVersion.createdAt() != null) {
+                        try {
+                            latestVersionPublishedAt = Instant.parse(crateVersion.createdAt());
+                        } catch (DateTimeParseException ignored) {
+                        }
+                    }
+                }
                 if (purl.getVersion().equals(crateVersion.num())) {
                     requestedVersion = crateVersion;
-                    break;
                 }
             }
         }
 
         return new PackageMetadata(
                 latestVersion,
+                latestVersionPublishedAt,
                 resolvedAt,
                 buildArtifactMetadata(resolvedAt, requestedVersion));
     }

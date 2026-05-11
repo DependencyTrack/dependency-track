@@ -92,6 +92,8 @@ class HexPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.7.14");
+        assertThat(result.latestVersionPublishedAt())
+                .isEqualTo(Instant.parse("2024-08-01T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().publishedAt())
                 .isEqualTo(Instant.parse("2024-05-01T10:00:00Z"));
@@ -119,6 +121,8 @@ class HexPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.7.14");
+        assertThat(result.latestVersionPublishedAt())
+                .isEqualTo(Instant.parse("2024-08-01T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 

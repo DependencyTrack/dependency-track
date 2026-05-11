@@ -187,6 +187,7 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                 new PackageMetadata(
                         new PackageURL("pkg:maven/componentGroup/componentName"),
                         "1.0.0",
+                        null,
                         Instant.now(),
                         null,
                         null))));

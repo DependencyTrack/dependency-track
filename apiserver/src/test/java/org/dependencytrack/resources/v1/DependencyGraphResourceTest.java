@@ -166,6 +166,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
             packageMetadataList.add(new PackageMetadata(
                     new PackageURL(String.format("pkg:maven/%s/%s", namespace, name)),
                     latestVersion,
+                    null,
                     Instant.now(),
                     null,
                     null));
@@ -328,6 +329,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
             packageMetadataList.add(new PackageMetadata(
                     new PackageURL(String.format("pkg:maven/%s/%s", namespace, name)),
                     latestVersion,
+                    null,
                     Instant.now(),
                     null,
                     null));
@@ -395,6 +397,7 @@ public class DependencyGraphResourceTest extends ResourceTest {
                 new PackageMetadata(
                         new PackageURL("pkg:pypi/acme-lib-a"),
                         "2.0.2",
+                        null,
                         Instant.now(),
                         null,
                         null))));

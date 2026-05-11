@@ -137,6 +137,7 @@ public class RepositoryResourceTest extends ResourceTest {
                         new PackageURL("pkg:maven/org.acme/example-component"),
                         "2.0.0",
                         resolvedAt.toInstant(),
+                        resolvedAt.toInstant(),
                         null,
                         null))));
         Response response = jersey.target(V1_REPOSITORY + "/latest")
@@ -153,6 +154,7 @@ public class RepositoryResourceTest extends ResourceTest {
         Assertions.assertEquals("example-component", json.getString("name"));
         Assertions.assertEquals("2.0.0", json.getString("latestVersion"));
         Assertions.assertEquals(resolvedAt.getTime(), json.getJsonNumber("lastCheck").longValue());
+        Assertions.assertEquals(resolvedAt.getTime(), json.getJsonNumber("latestVersionPublishedAt").longValue());
     }
 
     @Test
@@ -161,6 +163,7 @@ public class RepositoryResourceTest extends ResourceTest {
                 new PackageMetadata(
                         new PackageURL("pkg:maven/org.acme/example-component"),
                         "2.0.0",
+                        null,
                         Instant.now(),
                         null,
                         null))));
@@ -179,6 +182,7 @@ public class RepositoryResourceTest extends ResourceTest {
                 new PackageMetadata(
                         new PackageURL("pkg:maven/org.acme/example-component"),
                         "2.0.0",
+                        null,
                         Instant.now(),
                         null,
                         null))));

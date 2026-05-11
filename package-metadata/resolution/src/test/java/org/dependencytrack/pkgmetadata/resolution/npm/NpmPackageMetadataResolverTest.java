@@ -113,6 +113,7 @@ class NpmPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo("2024-01-01T12:00:00.000Z");
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().publishedAt()).isNotNull();
         assertThat(result.artifactMetadata().hashes()).containsKey(HashAlgorithm.SHA1);
@@ -164,6 +165,7 @@ class NpmPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo("2024-01-01T12:00:00.000Z");
     }
 
     @Test
@@ -182,6 +184,7 @@ class NpmPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo("2024-01-01T12:00:00.000Z");
         assertThat(result.artifactMetadata()).isNull();
     }
 
@@ -237,6 +240,7 @@ class NpmPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
+        assertThat(result.latestVersionPublishedAt()).isEqualTo("2024-01-01T12:00:00.000Z");
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().publishedAt()).isEqualTo("2023-06-15T10:30:00Z");
         assertThat(result.artifactMetadata().hashes())

@@ -256,13 +256,17 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
         }
 
         final var resolvedAt = Instant.now();
+        final VersionMetadata versionMetadata = findVersionMetadata(
+                packageVersions,
+                latestVersion,
+                purl.getVersion(),
+                resolvedAt);
 
-        PackageArtifactMetadata artifactMetadata = null;
-        if (purl.getVersion() != null) {
-            artifactMetadata = findArtifactMetadata(packageVersions, purl.getVersion(), resolvedAt);
-        }
-
-        return new PackageMetadata(latestVersion, resolvedAt, artifactMetadata);
+        return new PackageMetadata(
+                latestVersion,
+                versionMetadata.latestVersionPublishedAt(),
+                resolvedAt,
+                versionMetadata.artifactMetadata());
     }
 
     private static @Nullable String findLatestVersion(JsonNode packageVersions) {
@@ -306,48 +310,83 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
         return highestStableRaw != null ? highestStableRaw : highestAnyRaw;
     }
 
-    private static @Nullable PackageArtifactMetadata findArtifactMetadata(
+    private static VersionMetadata findVersionMetadata(
             JsonNode packageVersions,
-            String requestedVersion,
+            @Nullable String latestVersion,
+            @Nullable String requestedVersion,
             Instant resolvedAt) {
-        final Version requested;
-        try {
-            requested = VersionFactory.forScheme(SCHEME_COMPOSER, requestedVersion);
-        } catch (InvalidVersionException e) {
-            return null;
+        Version requested = null;
+        Version requestedLatest = null;
+        if (requestedVersion != null) {
+            try {
+                requested = VersionFactory.forScheme(SCHEME_COMPOSER, requestedVersion);
+            } catch (InvalidVersionException ignored) {}
         }
+        if (latestVersion != null) {
+            try {
+                requestedLatest = VersionFactory.forScheme(SCHEME_COMPOSER, latestVersion);
+            } catch (InvalidVersionException ignored) {}
+        }
+
+        Instant latestVersionPublishedAt = null;
+        PackageArtifactMetadata artifactMetadata = null;
 
         for (final JsonNode entry : versionEntries(packageVersions)) {
             final String entryVersion = entry.path("version").asText(null);
             if (entryVersion == null) {
                 continue;
             }
+
             try {
-                if (requested.equals(VersionFactory.forScheme(SCHEME_COMPOSER, entryVersion))) {
-                    return extractArtifactMetadata(entry, resolvedAt);
+                if (requestedLatest != null && requestedLatest.equals(VersionFactory.forScheme(SCHEME_COMPOSER, entryVersion))) {
+                    latestVersionPublishedAt = extractPublishedAt(entry);
+                }
+            } catch (InvalidVersionException ignored) {
+            }
+
+            try {
+                if (requested != null && requested.equals(VersionFactory.forScheme(SCHEME_COMPOSER, entryVersion))) {
+                    artifactMetadata = extractArtifactMetadata(entry, resolvedAt);
+                    if (latestVersionPublishedAt != null) {
+                        break;
+                    }
                 }
             } catch (InvalidVersionException ignored) {
             }
         }
-        return null;
+
+        return new VersionMetadata(latestVersionPublishedAt, artifactMetadata);
     }
 
     private static Iterable<JsonNode> versionEntries(JsonNode packageVersions) {
         return packageVersions.isArray() ? packageVersions : packageVersions::elements;
     }
 
-    private static @Nullable PackageArtifactMetadata extractArtifactMetadata(JsonNode entry, Instant resolvedAt) {
+    private static @Nullable Instant extractPublishedAt(JsonNode entry) {
         final String time = entry.path("time").asText(null);
         if (time == null) {
             return null;
         }
 
         try {
-            final Instant publishedAt = OffsetDateTime.parse(time).toInstant();
-            return new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of());
+            return OffsetDateTime.parse(time).toInstant();
         } catch (DateTimeParseException e) {
             return null;
         }
+    }
+
+    private static @Nullable PackageArtifactMetadata extractArtifactMetadata(JsonNode entry, Instant resolvedAt) {
+        final Instant publishedAt = extractPublishedAt(entry);
+        if (publishedAt == null) {
+            return null;
+        }
+
+        return new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of());
+    }
+
+    private record VersionMetadata(
+            @Nullable Instant latestVersionPublishedAt,
+            @Nullable PackageArtifactMetadata artifactMetadata) {
     }
 
     private static @Nullable String buildUrl(PackageRepository repository, String urlPattern, String packageKey) {

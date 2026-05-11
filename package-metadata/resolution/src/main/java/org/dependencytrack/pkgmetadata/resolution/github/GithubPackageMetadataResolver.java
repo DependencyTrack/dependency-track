@@ -70,6 +70,7 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
         if (tagName == null) {
             return null;
         }
+        final var latestVersionPublishedAt = parseArtifactDate(root.path("published_at").asText(null));
 
         final var resolvedAt = Instant.now();
 
@@ -97,7 +98,7 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
             }
         }
 
-        return new PackageMetadata(tagName, resolvedAt, artifactMetadata);
+        return new PackageMetadata(tagName, latestVersionPublishedAt, resolvedAt, artifactMetadata);
     }
 
     private byte @Nullable [] fetchLatestRelease(
@@ -141,7 +142,8 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
     }
 
     private static @Nullable PackageArtifactMetadata extractReleaseArtifactMetadata(JsonNode root, Instant resolvedAt) {
-        return parseArtifactDate(root.path("published_at").asText(null), resolvedAt);
+        var artifactDate = parseArtifactDate(root.path("published_at").asText(null));
+        return artifactDate != null ? new PackageArtifactMetadata(resolvedAt, artifactDate, Map.of()) :  null;
     }
 
     private static @Nullable PackageArtifactMetadata extractCommitArtifactMetadata(JsonNode root, Instant resolvedAt) {
@@ -157,16 +159,16 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
             dateStr = commit.path("committer").path("date").asText(null);
         }
 
-        return parseArtifactDate(dateStr, resolvedAt);
+        var artifactDate = parseArtifactDate(dateStr);
+        return artifactDate != null ? new PackageArtifactMetadata(resolvedAt, artifactDate, Map.of()) :  null;
     }
 
-    private static @Nullable PackageArtifactMetadata parseArtifactDate(@Nullable String dateStr, Instant resolvedAt) {
+    private static @Nullable Instant parseArtifactDate(@Nullable String dateStr) {
         if (dateStr == null) {
             return null;
         }
-
         try {
-            return new PackageArtifactMetadata(resolvedAt, Instant.parse(dateStr), Map.of());
+            return Instant.parse(dateStr);
         } catch (DateTimeParseException e) {
             return null;
         }

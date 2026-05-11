@@ -32,7 +32,7 @@ class PackageMetadataTest {
         final var purl = new PackageURL("pkg:maven/com.acme/acme-lib@1.0.0");
 
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> new PackageMetadata(purl, "2.0.0", Instant.now(), null, null));
+                .isThrownBy(() -> new PackageMetadata(purl, "2.0.0", null, Instant.now(), null, null));
     }
 
 }

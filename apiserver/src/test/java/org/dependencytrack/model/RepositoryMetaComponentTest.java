@@ -31,7 +31,7 @@ class RepositoryMetaComponentTest {
     void shouldConvertFromPackageMetadata() throws Exception {
         final var purl = new PackageURL("pkg:maven/com.acme/acme-lib");
         final var resolvedAt = Instant.now();
-        final var packageMetadata = new PackageMetadata(purl, "2.0.0", resolvedAt, null, null);
+        final var packageMetadata = new PackageMetadata(purl, "2.0.0", resolvedAt, resolvedAt, null, null);
 
         final var repoMetaComponent = RepositoryMetaComponent.of(packageMetadata);
         assertThat(repoMetaComponent.getRepositoryType()).isEqualTo(RepositoryType.MAVEN);
@@ -39,6 +39,7 @@ class RepositoryMetaComponentTest {
         assertThat(repoMetaComponent.getName()).isEqualTo("acme-lib");
         assertThat(repoMetaComponent.getLatestVersion()).isEqualTo("2.0.0");
         assertThat(repoMetaComponent.getLastCheck()).isNotNull();
+        assertThat(repoMetaComponent.getLatestVersionPublishedAt()).isNotNull();
     }
 
 }

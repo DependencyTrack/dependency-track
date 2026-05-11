@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.pkgmetadata.resolution.pypi;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -30,7 +31,9 @@ record PypiPackageDocument(
     record Info(@Nullable String version) {
     }
 
-    record ReleaseFile(@Nullable String filename, @Nullable Digests digests) {
+    record ReleaseFile(@Nullable String filename,
+                       @JsonProperty("upload_time_iso_8601") @Nullable String uploadTime,
+                       @Nullable Digests digests) {
     }
 
     record Digests(@Nullable String md5, @Nullable String sha256) {

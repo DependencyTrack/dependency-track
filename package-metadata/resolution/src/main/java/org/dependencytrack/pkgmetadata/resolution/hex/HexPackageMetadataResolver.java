@@ -80,26 +80,33 @@ final class HexPackageMetadataResolver implements PackageMetadataResolver {
         if (latestVersion == null) {
             return null;
         }
-
+        final var latestVersionPublishedAt = extractPublishedAt(releases.get(0));
         final var resolvedAt = Instant.now();
 
         PackageArtifactMetadata artifactMetadata = null;
         if (purl.getVersion() != null) {
             for (final JsonNode release : releases) {
                 if (purl.getVersion().equals(release.path("version").asText(null))) {
-                    final String insertedAt = release.path("inserted_at").asText(null);
-                    if (insertedAt != null) {
-                        try {
-                            artifactMetadata = new PackageArtifactMetadata(resolvedAt, Instant.parse(insertedAt), Map.of());
-                        } catch (DateTimeParseException ignored) {
-                        }
-                    }
+                    final var publishedAt = extractPublishedAt(release);
+                    artifactMetadata = publishedAt != null
+                            ? new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of())
+                            : null;
                     break;
                 }
             }
         }
 
-        return new PackageMetadata(latestVersion, resolvedAt, artifactMetadata);
+        return new PackageMetadata(latestVersion, latestVersionPublishedAt, resolvedAt, artifactMetadata);
+    }
+
+    private @Nullable Instant extractPublishedAt(JsonNode release) {
+        final String insertedAt = release.path("inserted_at").asText(null);
+        if (insertedAt != null) {
+            try {
+                return Instant.parse(insertedAt);
+            } catch (DateTimeParseException ignored) {}
+        }
+        return null;
     }
 
     private JsonNode parseJson(byte[] body) {

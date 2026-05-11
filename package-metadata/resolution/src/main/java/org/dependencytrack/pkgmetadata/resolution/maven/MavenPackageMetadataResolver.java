@@ -84,13 +84,21 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
             throw new InterruptedException();
         }
 
-        if (purl.getVersion() == null) {
-            return new PackageMetadata(latestVersion, resolvedAt, null);
+        String artifactUrl = join(baseUrl, latestVersion, formatArtifactFileName(purl, latestVersion));
+        final var latestVersionPublishedAt = resolvePublishedAt(artifactUrl, repository);
+        if (Thread.interrupted()) {
+            throw new InterruptedException();
         }
 
-        final String artifactUrl = join(baseUrl, purl.getVersion(), formatArtifactFileName(purl));
+        if (purl.getVersion() == null) {
+            return new PackageMetadata(latestVersion, latestVersionPublishedAt, resolvedAt, null);
+        }
 
-        final Instant publishedAt = resolvePublishedAt(artifactUrl, repository);
+        artifactUrl = join(baseUrl, purl.getVersion(), formatArtifactFileName(purl, null));
+
+        final var publishedAt = purl.getVersion().equals(latestVersion)
+                ? latestVersionPublishedAt
+                : resolvePublishedAt(artifactUrl, repository);
         if (Thread.interrupted()) {
             throw new InterruptedException();
         }
@@ -103,6 +111,7 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
 
         return new PackageMetadata(
                 latestVersion,
+                latestVersionPublishedAt,
                 resolvedAt,
                 !hashes.isEmpty() || publishedAt != null
                         ? new PackageArtifactMetadata(resolvedAt, publishedAt, hashes)
@@ -225,7 +234,7 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
         builder.header("Authorization", authHeaderValue);
     }
 
-    private static String formatArtifactFileName(PackageURL purl) {
+    private static String formatArtifactFileName(PackageURL purl, String versionOverride) {
         final Map<String, String> qualifiers = purl.getQualifiers();
 
         final String extension = qualifiers != null
@@ -238,7 +247,7 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
         final var sb = new StringBuilder()
                 .append(purl.getName())
                 .append('-')
-                .append(purl.getVersion());
+                .append(versionOverride == null ? purl.getVersion() :  versionOverride);
         if (classifier != null) {
             sb.append('-').append(classifier);
         }

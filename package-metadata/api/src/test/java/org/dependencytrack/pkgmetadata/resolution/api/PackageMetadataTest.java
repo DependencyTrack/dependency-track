@@ -27,7 +27,7 @@ class PackageMetadataTest {
     @Test
     void shouldThrowWhenResolvedAtIsNull() {
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> new PackageMetadata("1.2.3", /* resolvedAt */ null, null))
+                .isThrownBy(() -> new PackageMetadata("1.2.3", null, /* resolvedAt */ null, null))
                 .withMessage("resolvedAt must not be null");
     }
 

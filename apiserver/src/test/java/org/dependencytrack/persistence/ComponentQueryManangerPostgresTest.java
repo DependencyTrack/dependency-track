@@ -122,6 +122,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
                 metadataList.add(new PackageMetadata(
                         PurlUtil.silentPurlPackageOnly(component.getPurl()),
                         String.valueOf(i + 1) + ".0",
+                        null,
                         Instant.now(),
                         null,
                         null));
@@ -134,6 +135,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
                 metadataList.add(new PackageMetadata(
                         PurlUtil.silentPurlPackageOnly(component.getPurl()),
                         String.valueOf(i) + ".0",
+                        null,
                         Instant.now(),
                         null,
                         null));
@@ -240,6 +242,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
                     new PackageMetadata(
                             new PackageURL("pkg:maven/a/b"),
                             "2.0",
+                            Instant.ofEpochMilli(220),
                             Instant.ofEpochMilli(222),
                             null,
                             null)));
@@ -288,6 +291,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
                 metadataList.add(new PackageMetadata(
                         PurlUtil.silentPurlPackageOnly(component.getPurl()),
                         String.valueOf(i+1)+".0",
+                        null,
                         Instant.now(),
                         null,
                         null));
@@ -295,6 +299,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
                 metadataList.add(new PackageMetadata(
                         PurlUtil.silentPurlPackageOnly(component.getPurl()),
                         String.valueOf(i)+".0",
+                        null,
                         Instant.now(),
                         null,
                         null));

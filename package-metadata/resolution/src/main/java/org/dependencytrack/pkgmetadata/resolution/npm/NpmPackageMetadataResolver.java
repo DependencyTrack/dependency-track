@@ -74,7 +74,10 @@ final class NpmPackageMetadataResolver implements PackageMetadataResolver {
 
         final Instant resolvedAt = Instant.now();
         final VersionInfo versionInfo = doc.versions().get(purl.getVersion());
-        return buildResult(doc.latestVersion(), resolvedAt, versionInfo);
+        final var latestVersionPublishedAt = (doc.latestVersion() != null && doc.versions().containsKey(doc.latestVersion()))
+                ? doc.versions().get(doc.latestVersion()).publishedAt()
+                : null;
+        return buildResult(doc.latestVersion(), latestVersionPublishedAt, resolvedAt, versionInfo);
     }
 
     private static String formatPackageName(PackageURL purl) {
@@ -111,6 +114,7 @@ final class NpmPackageMetadataResolver implements PackageMetadataResolver {
 
     private static @Nullable PackageMetadata buildResult(
             @Nullable String latestVersion,
+            @Nullable Instant latestVersionPublishedAt,
             Instant resolvedAt,
             @Nullable VersionInfo versionInfo) {
         Instant publishedAt = null;
@@ -141,6 +145,7 @@ final class NpmPackageMetadataResolver implements PackageMetadataResolver {
 
         return new PackageMetadata(
                 latestVersion,
+                latestVersionPublishedAt,
                 resolvedAt,
                 artifactMetadata);
     }

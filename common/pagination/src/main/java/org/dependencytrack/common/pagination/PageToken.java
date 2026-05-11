@@ -23,7 +23,7 @@ package org.dependencytrack.common.pagination;
  * <p>
  * To be used in conjunction with {@link PageTokenEncoder}.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface PageToken {
 }

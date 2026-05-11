@@ -53,7 +53,7 @@ import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_UNSPECIFIED;
 /**
  * A {@link NotificationEmitter} that uses the JDBC API for database interactions.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 class JdbcNotificationEmitter implements NotificationEmitter {
 

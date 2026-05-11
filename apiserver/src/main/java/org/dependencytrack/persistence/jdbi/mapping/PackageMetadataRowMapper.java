@@ -34,7 +34,7 @@ import java.sql.SQLException;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @NullMarked
 public final class PackageMetadataRowMapper implements RowMapper<PackageMetadata> {

@@ -26,7 +26,7 @@ import java.util.Map;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public record PackageArtifactMetadata(
         Instant resolvedAt,

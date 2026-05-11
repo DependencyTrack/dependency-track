@@ -25,7 +25,7 @@ import jakarta.ws.rs.ext.Provider;
 import java.util.Map;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 @Provider
 public final class ClientErrorExceptionMapper extends ProblemDetailsExceptionMapper<ClientErrorException, ProblemDetails> {

@@ -36,7 +36,7 @@ import org.slf4j.MDC;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @WorkflowSpec(name = "analyze-project")
 public final class AnalyzeProjectWorkflow implements Workflow<AnalyzeProjectWorkflowArg, Void> {

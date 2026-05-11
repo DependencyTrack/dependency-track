@@ -24,7 +24,7 @@ import java.util.Optional;
 /**
  * Registry for accessing platform services provided by the host application.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface ServiceRegistry {
 

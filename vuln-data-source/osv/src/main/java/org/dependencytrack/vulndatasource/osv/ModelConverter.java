@@ -86,7 +86,7 @@ import static org.cyclonedx.proto.v1_7.Severity.SEVERITY_NONE;
 import static org.cyclonedx.proto.v1_7.Severity.SEVERITY_UNKNOWN;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class ModelConverter {
 

@@ -27,7 +27,7 @@ import javax.sql.DataSource;
  *
  * @param config     A {@link Config} instance to read application configuration.
  * @param dataSource A {@link DataSource} which may be used for database interactions.
- * @since 5.6.0
+ * @since 5.0.0
  */
 public record InitTaskContext(Config config, DataSource dataSource) {
 }

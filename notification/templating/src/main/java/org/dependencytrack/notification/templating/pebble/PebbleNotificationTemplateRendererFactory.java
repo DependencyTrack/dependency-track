@@ -39,7 +39,7 @@ import static java.util.Objects.requireNonNull;
  * It maintains an instance of the Pebble template engine, the reuse of
  * which ensures efficient caching of compiled templates.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class PebbleNotificationTemplateRendererFactory {
 

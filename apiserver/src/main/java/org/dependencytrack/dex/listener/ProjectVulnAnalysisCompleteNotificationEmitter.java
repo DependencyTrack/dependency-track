@@ -54,7 +54,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
  * A {@link DexEngineEventListener} that emits {@code PROJECT_VULN_ANALYSIS_COMPLETE}
  * notifications upon completion of {@link VulnAnalysisWorkflow} runs.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class ProjectVulnAnalysisCompleteNotificationEmitter implements WorkflowRunsCompletedEventListener {
 

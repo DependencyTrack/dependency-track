@@ -23,7 +23,7 @@ import java.time.Instant;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 record WatermarkRecord(String ecosystem, Instant value, Long version) {
 

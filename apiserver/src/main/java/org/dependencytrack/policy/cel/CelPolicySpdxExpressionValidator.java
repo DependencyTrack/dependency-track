@@ -36,7 +36,7 @@ import static org.dependencytrack.policy.cel.CelPolicyLibrary.Function.SPDX_EXPR
 import static org.dependencytrack.policy.cel.CelPolicyLibrary.Function.SPDX_EXPR_REQUIRES_ANY;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class CelPolicySpdxExpressionValidator {
 

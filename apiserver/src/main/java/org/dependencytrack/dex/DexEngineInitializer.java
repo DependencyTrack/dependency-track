@@ -114,7 +114,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class DexEngineInitializer implements ServletContextListener {
 

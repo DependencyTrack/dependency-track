@@ -35,7 +35,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 @PersistenceCapable(table = "COMPONENT_OCCURRENCE")
 @JsonInclude(JsonInclude.Include.NON_NULL)

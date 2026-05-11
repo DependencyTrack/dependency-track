@@ -24,7 +24,7 @@ import org.glassfish.jersey.micrometer.server.DefaultJerseyTagsProvider;
 import org.glassfish.jersey.micrometer.server.MetricsApplicationEventListener;
 
 /**
- * @since 5.5.0
+ * @since 5.0.0
  */
 @Provider
 public class JerseyMetricsApplicationEventListener extends MetricsApplicationEventListener {

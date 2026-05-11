@@ -39,7 +39,7 @@ import java.util.List;
 import static org.dependencytrack.common.MdcKeys.MDC_PKG_METADATA_RESOLVER_NAME;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @WorkflowSpec(name = "resolve-package-metadata")
 public final class ResolvePackageMetadataWorkflow implements Workflow<Void, Void> {

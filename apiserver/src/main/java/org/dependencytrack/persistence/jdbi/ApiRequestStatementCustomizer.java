@@ -58,7 +58,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_
  *     <li>{@link org.dependencytrack.persistence.ProjectQueryManager#preprocessACLs(Query, String, Map)}</li>
  * </ul>
  *
- * @since 5.5.0
+ * @since 5.0.0
  */
 class ApiRequestStatementCustomizer implements StatementCustomizer {
 

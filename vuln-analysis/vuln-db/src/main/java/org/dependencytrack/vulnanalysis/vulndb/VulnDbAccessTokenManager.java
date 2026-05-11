@@ -34,7 +34,7 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class VulnDbAccessTokenManager {
 

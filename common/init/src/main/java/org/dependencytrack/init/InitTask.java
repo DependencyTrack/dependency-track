@@ -21,7 +21,7 @@ package org.dependencytrack.init;
 /**
  * A task to be run on application startup.
  *
- * @since 5.6.0
+ * @since 5.0.0
  */
 public interface InitTask {
 

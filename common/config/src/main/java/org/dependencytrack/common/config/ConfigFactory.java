@@ -24,7 +24,7 @@ import io.smallrye.config.SmallRyeConfigFactory;
 import io.smallrye.config.SmallRyeConfigProviderResolver;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class ConfigFactory extends SmallRyeConfigFactory {
 

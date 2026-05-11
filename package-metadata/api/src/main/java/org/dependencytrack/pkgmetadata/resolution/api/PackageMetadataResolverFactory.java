@@ -25,7 +25,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * An {@link ExtensionFactory} for creating {@link PackageMetadataResolver} instances.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface PackageMetadataResolverFactory extends ExtensionFactory<PackageMetadataResolver> {
 

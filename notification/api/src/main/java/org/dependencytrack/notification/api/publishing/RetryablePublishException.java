@@ -26,7 +26,7 @@ import java.time.Duration;
 /**
  * Exception for publish failures that may be retried.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public class RetryablePublishException extends RuntimeException {
 

@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public abstract class AbstractExtensionFactoryTest<T extends ExtensionPoint, U extends ExtensionFactory<T>> {
 

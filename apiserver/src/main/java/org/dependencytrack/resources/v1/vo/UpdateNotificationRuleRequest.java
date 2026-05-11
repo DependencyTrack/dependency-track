@@ -34,7 +34,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record UpdateNotificationRuleRequest(

@@ -26,7 +26,7 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 @Provider
 public class ProjectAccessDeniedExceptionMapper implements ExceptionMapper<ProjectAccessDeniedException> {

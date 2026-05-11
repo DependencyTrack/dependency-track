@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * A {@link ProxySelector} based on Alpine's {@link ProxyConfig}.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public class ProxySelector extends java.net.ProxySelector {
 

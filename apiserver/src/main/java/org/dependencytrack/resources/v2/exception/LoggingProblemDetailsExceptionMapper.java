@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import jakarta.ws.rs.ServerErrorException;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 abstract class LoggingProblemDetailsExceptionMapper<E extends Exception, P extends ProblemDetails> extends ProblemDetailsExceptionMapper<E, P> {
 

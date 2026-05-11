@@ -23,7 +23,7 @@ import org.dependencytrack.api.v2.model.ProblemDetails;
 import org.dependencytrack.exception.ProjectAccessDeniedException;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 @Provider
 public class ProjectAccessDeniedExceptionMapper extends ProblemDetailsExceptionMapper<ProjectAccessDeniedException, ProblemDetails> {

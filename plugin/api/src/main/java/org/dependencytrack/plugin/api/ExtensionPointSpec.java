@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
 /**
  * Specification of an {@link ExtensionPoint}.
  *
- * @since 5.6.0
+ * @since 5.0.0
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

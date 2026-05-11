@@ -30,7 +30,7 @@ import java.sql.SQLException;
 import java.util.Map;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @Readiness
 public final class DataSourceHealthCheck implements HealthCheck {

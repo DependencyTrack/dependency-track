@@ -31,7 +31,7 @@ import java.util.Optional;
  * <p>
  * Namespacing is based on the extension point's, and the extension's name.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface DeploymentConfig {
 

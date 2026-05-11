@@ -26,7 +26,7 @@ import org.eclipse.microprofile.health.Liveness;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @Liveness
 public final class DexEngineHealthCheck implements HealthCheck {

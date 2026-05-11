@@ -23,7 +23,7 @@ package org.dependencytrack.common.health;
  *
  * @see <a href="https://download.eclipse.org/microprofile/microprofile-health-3.1/microprofile-health-spec-3.1.html#_different_kinds_of_health_checks">MicroProfile Health Specification</a>
  * @see <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/">Probes in Kubernetes</a>
- * @since 5.7.0
+ * @since 5.0.0
  */
 public enum HealthCheckType {
 

@@ -23,7 +23,7 @@ import org.dependencytrack.api.v2.model.ProblemDetails;
 import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @Provider
 public final class InvalidRuntimeConfigExceptionMapper extends ProblemDetailsExceptionMapper<InvalidRuntimeConfigException, ProblemDetails> {

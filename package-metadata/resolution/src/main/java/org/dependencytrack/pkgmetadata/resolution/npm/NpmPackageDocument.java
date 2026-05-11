@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 record NpmPackageDocument(
         @Nullable String latestVersion,

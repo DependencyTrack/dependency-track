@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Set;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 @Provider
 public final class ConstraintViolationExceptionMapper extends ProblemDetailsExceptionMapper<ConstraintViolationException, InvalidRequestProblemDetails> {

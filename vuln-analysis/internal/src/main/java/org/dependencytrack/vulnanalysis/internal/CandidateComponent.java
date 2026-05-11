@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
 import us.springett.parsers.cpe.Cpe;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 record CandidateComponent(
         long id,

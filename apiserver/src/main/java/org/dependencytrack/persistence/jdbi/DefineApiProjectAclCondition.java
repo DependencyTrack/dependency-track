@@ -39,7 +39,7 @@ import static org.dependencytrack.persistence.jdbi.ApiRequestStatementCustomizer
 import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_PROJECT_ACL_CONDITION;
 
 /**
- * @since 5.5.0
+ * @since 5.0.0
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

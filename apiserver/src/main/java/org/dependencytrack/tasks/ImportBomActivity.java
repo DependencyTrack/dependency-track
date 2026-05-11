@@ -107,7 +107,7 @@ import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @NullMarked
 @ActivitySpec(name = "import-bom", defaultTaskQueue = "artifact-imports")

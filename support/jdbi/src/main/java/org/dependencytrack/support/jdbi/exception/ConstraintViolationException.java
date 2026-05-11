@@ -23,7 +23,7 @@ import org.postgresql.util.PSQLException;
 import org.postgresql.util.ServerErrorMessage;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public sealed class ConstraintViolationException extends RuntimeException
         permits UniqueConstraintViolationException,

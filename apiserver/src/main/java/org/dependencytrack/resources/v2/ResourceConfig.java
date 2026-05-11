@@ -43,7 +43,7 @@ import static org.glassfish.jersey.server.ServerProperties.PROVIDER_SCANNING_REC
 import static org.glassfish.jersey.server.ServerProperties.WADL_FEATURE_DISABLE;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public final class ResourceConfig extends org.glassfish.jersey.server.ResourceConfig {
 

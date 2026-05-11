@@ -23,7 +23,7 @@ import com.networknt.schema.JsonSchema;
 import java.util.Set;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 record RuntimeConfigSchema(
         JsonSchema jsonSchema,

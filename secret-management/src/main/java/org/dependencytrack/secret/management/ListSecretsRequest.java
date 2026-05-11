@@ -26,7 +26,7 @@ import org.jspecify.annotations.Nullable;
  *                   "starts with" semantics on the secret name.
  * @param pageToken  Optional page token to retrieve the next page of results.
  * @param limit      The maximum number of secrets to return.
- * @since 5.7.0
+ * @since 5.0.0
  */
 public record ListSecretsRequest(
         @Nullable String searchText,

@@ -56,7 +56,7 @@ import java.util.stream.IntStream;
 import static java.util.Objects.requireNonNull;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @NullMarked
 final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeConfigurable, Testable {

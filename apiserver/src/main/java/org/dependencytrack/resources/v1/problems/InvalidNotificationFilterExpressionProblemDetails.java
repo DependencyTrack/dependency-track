@@ -24,7 +24,7 @@ import org.dependencytrack.resources.v1.vo.CelExpressionError;
 import java.util.List;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class InvalidNotificationFilterExpressionProblemDetails extends ProblemDetails {
 

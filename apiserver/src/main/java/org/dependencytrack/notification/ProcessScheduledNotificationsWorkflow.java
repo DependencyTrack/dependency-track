@@ -37,7 +37,7 @@ import java.util.LinkedHashMap;
 import static org.dependencytrack.common.MdcKeys.MDC_NOTIFICATION_RULE_NAME;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @WorkflowSpec(name = "process-scheduled-notifications")
 public final class ProcessScheduledNotificationsWorkflow

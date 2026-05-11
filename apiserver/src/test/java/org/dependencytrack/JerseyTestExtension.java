@@ -44,7 +44,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public class JerseyTestExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback {
 

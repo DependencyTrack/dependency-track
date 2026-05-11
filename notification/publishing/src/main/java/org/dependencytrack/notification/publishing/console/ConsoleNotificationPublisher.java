@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class ConsoleNotificationPublisher implements NotificationPublisher {
 

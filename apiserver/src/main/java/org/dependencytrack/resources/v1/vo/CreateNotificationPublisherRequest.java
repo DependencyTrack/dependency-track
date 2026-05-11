@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record CreateNotificationPublisherRequest(

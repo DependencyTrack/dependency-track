@@ -29,7 +29,7 @@ import static java.util.Objects.requireNonNull;
  * <p>
  * Note that the availability of fields depends on the {@link SecretManager} implementation.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public record SecretMetadata(
         String name,

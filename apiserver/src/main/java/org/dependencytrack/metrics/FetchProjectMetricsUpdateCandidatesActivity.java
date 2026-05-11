@@ -30,7 +30,7 @@ import java.util.UUID;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @ActivitySpec(name = "fetch-projects-for-metrics-update", defaultTaskQueue = "metrics-updates")
 public final class FetchProjectMetricsUpdateCandidatesActivity implements Activity<Void, FetchProjectMetricsUpdateCandidatesRes> {

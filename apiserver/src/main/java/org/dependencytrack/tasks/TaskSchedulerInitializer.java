@@ -77,7 +77,7 @@ import static org.dependencytrack.util.TaskUtil.getCronScheduleForTask;
 import static org.dependencytrack.util.TaskUtil.getCronScheduleFromConfig;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class TaskSchedulerInitializer implements ServletContextListener {
 

@@ -26,7 +26,7 @@ import org.dependencytrack.api.v2.model.ProblemDetails;
 import jakarta.ws.rs.ext.Provider;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 @Provider
 public class JsonProcessingExceptionMapper extends LoggingProblemDetailsExceptionMapper<JsonProcessingException, ProblemDetails> {

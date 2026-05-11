@@ -50,7 +50,7 @@ import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_ANALYZER_NAME;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @WorkflowSpec(name = "vuln-analysis")
 public final class VulnAnalysisWorkflow implements Workflow<VulnAnalysisWorkflowArg, Void> {

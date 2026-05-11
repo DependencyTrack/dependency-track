@@ -77,7 +77,7 @@ public class AnalysisQueryManager extends QueryManager implements IQueryManager 
     }
 
     /**
-     * @since 5.7.0
+     * @since 5.0.0
      */
     @Override
     public long makeAnalysis(final MakeAnalysisCommand command) {

@@ -1003,7 +1003,7 @@ public class ProjectResource extends AbstractApiResource {
 
     @PUT
     @Path("/clone")
-    @Deprecated(since = "5.7.0")
+    @Deprecated(since = "5.0.0")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(

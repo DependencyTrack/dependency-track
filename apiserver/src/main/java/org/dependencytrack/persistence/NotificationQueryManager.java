@@ -335,7 +335,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
 
     /**
      * @return All notifications in the notification outbox.
-     * @since 5.7.0
+     * @since 5.0.0
      */
     @Override
     public List<Notification> getNotificationOutbox() {
@@ -357,7 +357,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
     }
 
     /**
-     * @since 5.7.0
+     * @since 5.0.0
      */
     @Override
     public void truncateNotificationOutbox() {

@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * @since 5.5.0
+ * @since 5.0.0
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "A concise representation of a project")

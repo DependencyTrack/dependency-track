@@ -47,7 +47,7 @@ import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_ANALYZER_NAME;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @ActivitySpec(name = "invoke-vuln-analyzer", defaultTaskQueue = "vuln-analyses")
 public final class InvokeVulnAnalyzerActivity implements Activity<InvokeVulnAnalyzerArg, InvokeVulnAnalyzerRes> {

@@ -62,7 +62,7 @@ import static java.util.Objects.requireNonNull;
  * prefer using the global instance available via {@link #getInstance()},
  * instead of creating new instances ad-hoc.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class RuntimeConfigMapper {
 

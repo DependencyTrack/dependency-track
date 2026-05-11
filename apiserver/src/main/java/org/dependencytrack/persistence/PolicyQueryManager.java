@@ -313,7 +313,7 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
     }
 
     /**
-     * @since 5.7.0
+     * @since 5.0.0
      */
     public long makeViolationAnalysis(final MakeViolationAnalysisCommand command) {
         assertPersistent(command.component(), "component must be persistent");

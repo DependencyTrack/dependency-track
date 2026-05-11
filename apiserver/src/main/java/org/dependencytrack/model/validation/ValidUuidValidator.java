@@ -23,7 +23,7 @@ import jakarta.validation.ConstraintValidatorContext;
 import java.util.UUID;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public class ValidUuidValidator implements ConstraintValidator<ValidUuid, String> {
 

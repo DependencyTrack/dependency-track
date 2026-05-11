@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public class EpssCelPolicyScriptSourceBuilder implements CelPolicyScriptSourceBuilder {
 

@@ -51,7 +51,7 @@ import java.util.stream.Stream;
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_DEFAULT_OBJECTS_VERSION;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public final class DatabaseSeedingInitTask implements InitTask {
 

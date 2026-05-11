@@ -19,7 +19,7 @@
 package org.dependencytrack.plugin.api.config;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface RuntimeConfigValidator<T extends RuntimeConfig> {
 

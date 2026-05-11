@@ -23,7 +23,7 @@ import org.dependencytrack.notification.publishing.http.AbstractHttpNotification
 import java.net.http.HttpClient;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class SlackNotificationPublisher extends AbstractHttpNotificationPublisher {
 

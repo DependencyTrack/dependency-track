@@ -46,7 +46,7 @@ import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_POLICY_NAME;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class AnalysisReconciler {
 

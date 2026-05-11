@@ -27,7 +27,7 @@ package org.dependencytrack.cache.api;
  * <p>
  * It is not intended to be exposed to callers.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class CacheMissException extends RuntimeException {
 

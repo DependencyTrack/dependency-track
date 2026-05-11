@@ -84,7 +84,7 @@ import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_SYSTEM;
 /**
  * Factory for test notifications.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class TestNotificationFactory {
 

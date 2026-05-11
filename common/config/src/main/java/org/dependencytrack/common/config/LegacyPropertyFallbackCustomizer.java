@@ -36,7 +36,7 @@ import java.util.Set;
  *   <li>For all other properties: {@code dt.X} falls back to {@code X} (prefix stripped)</li>
  * </ul>
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class LegacyPropertyFallbackCustomizer implements SmallRyeConfigBuilderCustomizer {
 

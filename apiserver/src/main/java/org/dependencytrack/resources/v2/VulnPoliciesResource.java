@@ -90,7 +90,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @Provider
 public final class VulnPoliciesResource extends AbstractApiResource implements VulnPoliciesApi {

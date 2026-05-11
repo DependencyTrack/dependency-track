@@ -35,7 +35,7 @@ import java.net.http.HttpClient;
 import java.util.Set;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeConfigurable {
 

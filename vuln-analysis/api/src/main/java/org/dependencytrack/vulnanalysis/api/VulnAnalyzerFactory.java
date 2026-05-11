@@ -25,7 +25,7 @@ import java.util.EnumSet;
 /**
  * An {@link ExtensionFactory} for creating {@link VulnAnalyzer} instances.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface VulnAnalyzerFactory extends ExtensionFactory<VulnAnalyzer> {
 

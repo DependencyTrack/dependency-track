@@ -49,7 +49,7 @@ import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public class OpenApiValidationClientResponseFilter implements ClientResponseFilter {
 

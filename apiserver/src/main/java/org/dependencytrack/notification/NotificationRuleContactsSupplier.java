@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class NotificationRuleContactsSupplier implements Supplier<Set<NotificationRuleContact>> {
 

@@ -53,7 +53,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class SnykVulnAnalyzer implements VulnAnalyzer {
 

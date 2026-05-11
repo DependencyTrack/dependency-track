@@ -22,7 +22,7 @@ import org.jdbi.v3.core.Handle;
 import org.jspecify.annotations.Nullable;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class ExtensionConfigDao {
 

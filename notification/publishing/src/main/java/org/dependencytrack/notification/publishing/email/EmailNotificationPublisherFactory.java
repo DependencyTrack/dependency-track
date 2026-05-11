@@ -50,7 +50,7 @@ import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.notification.api.publishing.NotificationPublisherFactory.loadDefaultTemplate;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class EmailNotificationPublisherFactory implements NotificationPublisherFactory, RuntimeConfigurable, Testable {
 

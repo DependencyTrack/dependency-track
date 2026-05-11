@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Contact associated with a notification rule.
  *
- * @since 5.7.0
+ * @since 5.0.0
  */
 public record NotificationRuleContact(
         String username,

@@ -45,7 +45,7 @@ import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.filestorage.api.FileStorage.requireValidFileName;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 final class LocalFileStorage implements FileStorage {
 

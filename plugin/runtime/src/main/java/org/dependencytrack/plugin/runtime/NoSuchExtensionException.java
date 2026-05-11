@@ -21,7 +21,7 @@ package org.dependencytrack.plugin.runtime;
 import java.util.NoSuchElementException;
 
 /**
- * @since 5.6.0
+ * @since 5.0.0
  */
 public final class NoSuchExtensionException extends NoSuchElementException {
 

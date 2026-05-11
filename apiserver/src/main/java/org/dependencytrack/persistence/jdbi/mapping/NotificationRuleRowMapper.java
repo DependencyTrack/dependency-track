@@ -37,7 +37,7 @@ import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSe
 import static org.jdbi.v3.core.generic.GenericTypes.parameterizeClass;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class NotificationRuleRowMapper implements RowMapper<NotificationRule> {
 

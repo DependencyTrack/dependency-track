@@ -21,7 +21,7 @@ package org.dependencytrack.persistence.jdbi.query;
 import org.jspecify.annotations.Nullable;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public record ListAdvisoriesForProjectQuery(
         long projectId,

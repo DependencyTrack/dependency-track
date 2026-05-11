@@ -36,7 +36,7 @@ import java.util.List;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @WorkflowSpec(name = "update-portfolio-metrics")
 public final class UpdatePortfolioMetricsWorkflow implements Workflow<Void, Void> {

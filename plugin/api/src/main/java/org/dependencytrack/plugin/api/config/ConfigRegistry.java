@@ -24,7 +24,7 @@ import java.util.Optional;
 /**
  * A read-only registry for accessing application configuration.
  *
- * @since 5.6.0
+ * @since 5.0.0
  */
 public interface ConfigRegistry {
 
@@ -32,7 +32,7 @@ public interface ConfigRegistry {
      * Retrieve the deployment config.
      *
      * @return The deployment config.
-     * @since 5.7.0
+     * @since 5.0.0
      */
     DeploymentConfig getDeploymentConfig();
 
@@ -40,7 +40,7 @@ public interface ConfigRegistry {
      * Retrieve the runtime config.
      *
      * @return The runtime config.
-     * @since 5.7.0
+     * @since 5.0.0
      */
     Optional<RuntimeConfig> getOptionalRuntimeConfig();
 
@@ -52,7 +52,7 @@ public interface ConfigRegistry {
      * @return The runtime config.
      * @throws ClassCastException When the config object can not be cast to the provided {@code configClass}.
      * @see #getOptionalRuntimeConfig()
-     * @since 5.7.0
+     * @since 5.0.0
      */
     default <T extends RuntimeConfig> Optional<T> getOptionalRuntimeConfig(Class<T> configClass) {
         return getOptionalRuntimeConfig().map(configClass::cast);
@@ -66,7 +66,7 @@ public interface ConfigRegistry {
      * @return The runtime config.
      * @throws NoSuchElementException When no runtime config exists.
      * @see #getOptionalRuntimeConfig(Class)
-     * @since 5.7.0
+     * @since 5.0.0
      */
     default <T extends RuntimeConfig> T getRuntimeConfig(Class<T> configClass) {
         return getOptionalRuntimeConfig()

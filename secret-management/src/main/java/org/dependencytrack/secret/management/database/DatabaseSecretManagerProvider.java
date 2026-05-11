@@ -27,7 +27,7 @@ import org.eclipse.microprofile.config.Config;
 import javax.sql.DataSource;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class DatabaseSecretManagerProvider implements SecretManagerProvider {
 

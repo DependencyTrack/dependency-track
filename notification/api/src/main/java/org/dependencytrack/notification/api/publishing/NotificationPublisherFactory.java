@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public interface NotificationPublisherFactory extends ExtensionFactory<NotificationPublisher> {
 

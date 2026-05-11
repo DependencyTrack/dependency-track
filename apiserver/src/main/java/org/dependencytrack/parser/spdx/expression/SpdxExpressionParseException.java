@@ -19,7 +19,7 @@
 package org.dependencytrack.parser.spdx.expression;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 public final class SpdxExpressionParseException extends RuntimeException {
 

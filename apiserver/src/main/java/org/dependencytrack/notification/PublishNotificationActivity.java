@@ -59,7 +59,7 @@ import static org.dependencytrack.common.MdcKeys.MDC_NOTIFICATION_RULE_NAME;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 @ActivitySpec(name = "publish-notification", defaultTaskQueue = "notifications")
 public final class PublishNotificationActivity implements Activity<PublishNotificationActivityArg, Void> {

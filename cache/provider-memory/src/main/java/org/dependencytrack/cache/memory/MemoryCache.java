@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * @since 5.7.0
+ * @since 5.0.0
  */
 final class MemoryCache implements Cache {
 

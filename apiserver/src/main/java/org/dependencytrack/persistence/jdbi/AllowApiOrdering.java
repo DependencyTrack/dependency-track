@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
 
 /**
- * @since 5.5.0
+ * @since 5.0.0
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

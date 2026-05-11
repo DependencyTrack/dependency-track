@@ -38,6 +38,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
+import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
@@ -284,11 +285,9 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                         new VulnerabilityKey("CVE-001", Vulnerability.Source.NVD),
                         Set.of(new VulnerabilityKey("GHSA-001", Vulnerability.Source.GITHUB))));
 
-        final var epss = new Epss();
-        epss.setCve("CVE-001");
-        epss.setScore(BigDecimal.valueOf(0.6));
-        epss.setPercentile(BigDecimal.valueOf(0.2));
-        qm.persist(epss);
+        useJdbiHandle(handle -> handle.attach(EpssDao.class)
+                .createOrUpdateAll(List.of(new Epss(
+                        "CVE-001", BigDecimal.valueOf(0.6), BigDecimal.valueOf(0.2)))));
 
         final var requirements = new HashSetValuedHashMap<CelType, String>();
         requirements.putAll(TYPE_VULNERABILITY, org.dependencytrack.proto.policy.v1.Vulnerability.getDescriptor().getFields().stream()

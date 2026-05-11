@@ -18,40 +18,18 @@
  */
 package org.dependencytrack.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import javax.jdo.annotations.Column;
-import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.PersistenceCapable;
-import javax.jdo.annotations.Persistent;
-import javax.jdo.annotations.PrimaryKey;
-import jakarta.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
 import static java.util.Objects.requireNonNull;
 
-@PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Epss implements Serializable {
 
-    @PrimaryKey
-    @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
-    @JsonIgnore
-    private long id;
-
-    @Persistent
-    @Column(name = "CVE", allowsNull = "false")
-    @NotBlank
     private String cve;
-
-    @Persistent
-    @Column(name = "SCORE", scale = 5)
     private BigDecimal score;
-
-    @Persistent
-    @Column(name = "PERCENTILE", scale = 5)
     private BigDecimal percentile;
 
     public Epss() {
@@ -59,16 +37,8 @@ public class Epss implements Serializable {
 
     public Epss(final String cve, final BigDecimal score, final BigDecimal percentile) {
         this.cve = requireNonNull(cve, "cve must not be null");
-        this.score = requireNonNull(score, "score must not be null");
-        this.percentile = requireNonNull(percentile, "percentile must not be null");
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
+        this.score = score;
+        this.percentile = percentile;
     }
 
     public String getCve() {

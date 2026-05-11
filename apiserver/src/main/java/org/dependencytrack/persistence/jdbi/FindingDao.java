@@ -201,8 +201,36 @@ public interface FindingDao {
                 ON c."ID" = cv."COMPONENT_ID"
              INNER JOIN "VULNERABILITY" AS v
                 ON cv."VULNERABILITY_ID" = v."ID"
-              LEFT JOIN "EPSS" AS e
-                ON v."VULNID" = e."CVE"
+              LEFT JOIN LATERAL (
+                SELECT "CVE"
+                     , "SCORE"
+                     , "PERCENTILE"
+                  FROM (
+                    SELECT ee."CVE"
+                         , ee."SCORE"
+                         , ee."PERCENTILE"
+                      FROM "EPSS" AS ee
+                     WHERE v."SOURCE" = 'NVD'
+                       AND ee."CVE" = v."VULNID"
+                    UNION ALL
+                    SELECT ee."CVE"
+                         , ee."SCORE"
+                         , ee."PERCENTILE"
+                      FROM "VULNERABILITY_ALIAS" AS va
+                     INNER JOIN "VULNERABILITY_ALIAS" AS cve_a
+                        ON cve_a."GROUP_ID" = va."GROUP_ID"
+                       AND cve_a."SOURCE" = 'NVD'
+                     INNER JOIN "EPSS" AS ee
+                        ON ee."CVE" = cve_a."VULN_ID"
+                     WHERE v."SOURCE" != 'NVD'
+                       AND va."SOURCE" = v."SOURCE"
+                       AND va."VULN_ID" = v."VULNID"
+                  ) candidates
+                 ORDER BY "SCORE" DESC NULLS LAST
+                        , "PERCENTILE" DESC NULLS LAST
+                        , "CVE"
+                 LIMIT 1
+              ) AS e ON TRUE
              INNER JOIN LATERAL (
                SELECT *
                  FROM "FINDINGATTRIBUTION" AS fa
@@ -360,8 +388,36 @@ public interface FindingDao {
                 ON c."ID" = cv."COMPONENT_ID"
              INNER JOIN "VULNERABILITY" AS v
                 ON cv."VULNERABILITY_ID" = v."ID"
-             LEFT JOIN "EPSS" AS ep
-                ON v."VULNID" = ep."CVE"
+             LEFT JOIN LATERAL (
+                SELECT "CVE"
+                     , "SCORE"
+                     , "PERCENTILE"
+                  FROM (
+                    SELECT ee."CVE"
+                         , ee."SCORE"
+                         , ee."PERCENTILE"
+                      FROM "EPSS" AS ee
+                     WHERE v."SOURCE" = 'NVD'
+                       AND ee."CVE" = v."VULNID"
+                    UNION ALL
+                    SELECT ee."CVE"
+                         , ee."SCORE"
+                         , ee."PERCENTILE"
+                      FROM "VULNERABILITY_ALIAS" AS va
+                     INNER JOIN "VULNERABILITY_ALIAS" AS cve_a
+                        ON cve_a."GROUP_ID" = va."GROUP_ID"
+                       AND cve_a."SOURCE" = 'NVD'
+                     INNER JOIN "EPSS" AS ee
+                        ON ee."CVE" = cve_a."VULN_ID"
+                     WHERE v."SOURCE" != 'NVD'
+                       AND va."SOURCE" = v."SOURCE"
+                       AND va."VULN_ID" = v."VULNID"
+                  ) candidates
+                 ORDER BY "SCORE" DESC NULLS LAST
+                        , "PERCENTILE" DESC NULLS LAST
+                        , "CVE"
+                 LIMIT 1
+             ) AS ep ON TRUE
              INNER JOIN LATERAL (
                SELECT *
                  FROM "FINDINGATTRIBUTION" AS fa
@@ -485,8 +541,36 @@ public interface FindingDao {
                        , fa."ID"
                 LIMIT 1
              ) AS fa ON TRUE
-              LEFT JOIN "EPSS" AS ep
-                ON ep."CVE" = v."VULNID"
+              LEFT JOIN LATERAL (
+                SELECT "CVE"
+                     , "SCORE"
+                     , "PERCENTILE"
+                  FROM (
+                    SELECT ee."CVE"
+                         , ee."SCORE"
+                         , ee."PERCENTILE"
+                      FROM "EPSS" AS ee
+                     WHERE v."SOURCE" = 'NVD'
+                       AND ee."CVE" = v."VULNID"
+                    UNION ALL
+                    SELECT ee."CVE"
+                         , ee."SCORE"
+                         , ee."PERCENTILE"
+                      FROM "VULNERABILITY_ALIAS" AS va
+                     INNER JOIN "VULNERABILITY_ALIAS" AS cve_a
+                        ON cve_a."GROUP_ID" = va."GROUP_ID"
+                       AND cve_a."SOURCE" = 'NVD'
+                     INNER JOIN "EPSS" AS ee
+                        ON ee."CVE" = cve_a."VULN_ID"
+                     WHERE v."SOURCE" != 'NVD'
+                       AND va."SOURCE" = v."SOURCE"
+                       AND va."VULN_ID" = v."VULNID"
+                  ) candidates
+                 ORDER BY "SCORE" DESC NULLS LAST
+                        , "PERCENTILE" DESC NULLS LAST
+                        , "CVE"
+                 LIMIT 1
+              ) AS ep ON TRUE
               LEFT JOIN "ANALYSIS" AS a
                 ON c."ID" = a."COMPONENT_ID"
                AND v."ID" = a."VULNERABILITY_ID"

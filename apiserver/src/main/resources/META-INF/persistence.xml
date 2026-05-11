@@ -38,7 +38,6 @@
     <class>org.dependencytrack.model.Component</class>
     <class>org.dependencytrack.model.ComponentOccurrence</class>
     <class>org.dependencytrack.model.ComponentProperty</class>
-    <class>org.dependencytrack.model.Epss</class>
     <class>org.dependencytrack.model.FindingAttribution</class>
     <class>org.dependencytrack.model.License</class>
     <class>org.dependencytrack.model.LicenseGroup</class>

@@ -47,6 +47,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -1467,15 +1468,13 @@ public class FindingResourceTest extends ResourceTest {
     private Vulnerability createVulnerabilityWithEpss(String vulnId, Severity severity, BigDecimal epssScore) {
         Vulnerability vulnerability = new Vulnerability();
         vulnerability.setVulnId(vulnId);
-        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSource(Vulnerability.Source.NVD);
         vulnerability.setSeverity(severity);
         vulnerability.setCwes(List.of(80, 666));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        var epss = new Epss();
-        epss.setCve(vulnId);
-        epss.setScore(epssScore);
-        qm.persist(epss);
+        useJdbiHandle(handle -> handle.attach(EpssDao.class)
+                .createOrUpdateAll(List.of(new Epss(vulnId, epssScore, null))));
 
         return vulnerability;
     }
@@ -1483,15 +1482,13 @@ public class FindingResourceTest extends ResourceTest {
     private Vulnerability createVulnerabilityWithEpssPercentile(String vulnId, Severity severity, BigDecimal epssPercentile) {
         Vulnerability vulnerability = new Vulnerability();
         vulnerability.setVulnId(vulnId);
-        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSource(Vulnerability.Source.NVD);
         vulnerability.setSeverity(severity);
         vulnerability.setCwes(List.of(80, 666));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        var epss = new Epss();
-        epss.setCve(vulnId);
-        epss.setPercentile(epssPercentile);
-        qm.persist(epss);
+        useJdbiHandle(handle -> handle.attach(EpssDao.class)
+                .createOrUpdateAll(List.of(new Epss(vulnId, null, epssPercentile))));
 
         return vulnerability;
     }

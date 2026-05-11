@@ -19,46 +19,134 @@
 package org.dependencytrack.persistence;
 
 import org.dependencytrack.model.Epss;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityKey;
+import org.jspecify.annotations.Nullable;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 final class EpssQueryManager extends QueryManager implements IQueryManager {
 
-    /**
-     * Constructs a new QueryManager.
-     *
-     * @param pm a PersistenceManager object
-     */
     EpssQueryManager(final PersistenceManager pm) {
         super(pm);
     }
 
-    /**
-     * Returns a Epss record by its CVE id.
-     * @param cveId the CVE id of the record
-     * @return the matching Epss object, or null if not found
-     */
-    public Epss getEpssByCveId(String cveId) {
-        final Query<Epss> query = pm.newQuery(Epss.class, "cve == :cveId");
-        query.setRange(0, 1);
-        return singleResult(query.execute(cveId));
+    public @Nullable Epss getEffectiveEpssForVuln(String source, String vulnId) {
+        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
+                SELECT "CVE"
+                     , "SCORE"
+                     , "PERCENTILE"
+                  FROM (
+                    SELECT ee."CVE"
+                         , ee."SCORE"
+                         , ee."PERCENTILE"
+                      FROM "EPSS" AS ee
+                     WHERE ? = 'NVD'
+                       AND ee."CVE" = ?
+                    UNION ALL
+                    SELECT ee."CVE"
+                         , ee."SCORE"
+                         , ee."PERCENTILE"
+                      FROM "VULNERABILITY_ALIAS" AS va
+                     INNER JOIN "VULNERABILITY_ALIAS" AS cve_a
+                        ON cve_a."GROUP_ID" = va."GROUP_ID"
+                       AND cve_a."SOURCE" = 'NVD'
+                     INNER JOIN "EPSS" AS ee
+                        ON ee."CVE" = cve_a."VULN_ID"
+                     WHERE ? != 'NVD'
+                       AND va."SOURCE" = ?
+                       AND va."VULN_ID" = ?
+                  ) candidates
+                 ORDER BY "SCORE" DESC NULLS LAST
+                        , "PERCENTILE" DESC NULLS LAST
+                        , "CVE"
+                 LIMIT 1
+                """);
+        query.setParameters(source, vulnId, source, source, vulnId);
+        return executeAndCloseResultUnique(query, Epss.class);
     }
 
-    /**
-     * Returns a map of Epss records matching list of CVE ids.
-     *
-     * @param cveIds List of CVE ids to match
-     * @return the map of CVE ids and Epss records
-     */
-    public Map<String, Epss> getEpssForCveIds(List<String> cveIds) {
-        final Query<Epss> query = pm.newQuery(Epss.class);
-        query.setFilter(":cveList.contains(cve)");
-        return ((List<Epss>) query.execute(cveIds)).stream()
-                .collect(Collectors.toMap(Epss::getCve, Function.identity()));
+    public record EffectiveEpssRow(
+            String vulnSource,
+            String vulnId,
+            String cve,
+            BigDecimal score,
+            BigDecimal percentile) {
     }
+
+    public Map<VulnerabilityKey, Epss> getEffectiveEpssForVulns(Collection<VulnerabilityKey> keys) {
+        if (keys.isEmpty()) {
+            return Map.of();
+        }
+
+        final var sources = new String[keys.size()];
+        final var vulnIds = new String[keys.size()];
+
+        int i = 0;
+        for (final VulnerabilityKey key : keys) {
+            sources[i] = key.source().name();
+            vulnIds[i] = key.vulnId();
+            i++;
+        }
+
+        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
+                SELECT t."VULN_SOURCE" AS "vulnSource"
+                     , t."VULN_ID" AS "vulnId"
+                     , best."CVE" AS "cve"
+                     , best."SCORE" AS "score"
+                     , best."PERCENTILE" AS "percentile"
+                  FROM UNNEST(?, ?)
+                    AS t("VULN_SOURCE", "VULN_ID")
+                  LEFT JOIN LATERAL (
+                    SELECT "CVE"
+                         , "SCORE"
+                         , "PERCENTILE"
+                      FROM (
+                        SELECT ee."CVE"
+                             , ee."SCORE"
+                             , ee."PERCENTILE"
+                          FROM "EPSS" AS ee
+                         WHERE t."VULN_SOURCE" = 'NVD'
+                           AND ee."CVE" = t."VULN_ID"
+                        UNION ALL
+                        SELECT ee."CVE"
+                             , ee."SCORE"
+                             , ee."PERCENTILE"
+                          FROM "VULNERABILITY_ALIAS" AS va
+                         INNER JOIN "VULNERABILITY_ALIAS" AS cve_a
+                            ON cve_a."GROUP_ID" = va."GROUP_ID"
+                           AND cve_a."SOURCE" = 'NVD'
+                         INNER JOIN "EPSS" AS ee
+                            ON ee."CVE" = cve_a."VULN_ID"
+                         WHERE t."VULN_SOURCE" != 'NVD'
+                           AND va."SOURCE" = t."VULN_SOURCE"
+                           AND va."VULN_ID" = t."VULN_ID"
+                      ) candidates
+                     ORDER BY "SCORE" DESC NULLS LAST
+                            , "PERCENTILE" DESC NULLS LAST
+                            , "CVE"
+                     LIMIT 1
+                  ) AS best ON TRUE
+                 WHERE best."CVE" IS NOT NULL
+                """);
+        query.setParameters(sources, vulnIds);
+        final List<EffectiveEpssRow> rows = executeAndCloseResultList(query, EffectiveEpssRow.class);
+
+        final var result = new HashMap<VulnerabilityKey, Epss>(rows.size());
+        for (final EffectiveEpssRow row : rows) {
+            final var key = new VulnerabilityKey(
+                    row.vulnId(),
+                    Vulnerability.Source.valueOf(row.vulnSource()));
+            result.put(key, new Epss(row.cve(), row.score(), row.percentile()));
+        }
+
+        return result;
+    }
+
 }

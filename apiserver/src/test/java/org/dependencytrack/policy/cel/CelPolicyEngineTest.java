@@ -42,6 +42,7 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
@@ -257,11 +258,9 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                                 new VulnerabilityKey("SONATYPE-001", Vulnerability.Source.OSSINDEX),
                                 new VulnerabilityKey("VULNDB-001", Vulnerability.Source.VULNDB))));
 
-        final var epss = new Epss();
-        epss.setCve("CVE-001");
-        epss.setScore(BigDecimal.valueOf(0.6));
-        epss.setPercentile(BigDecimal.valueOf(0.2));
-        qm.persist(epss);
+        useJdbiHandle(handle -> handle.attach(EpssDao.class)
+                .createOrUpdateAll(List.of(new Epss(
+                        "CVE-001", BigDecimal.valueOf(0.6), BigDecimal.valueOf(0.2)))));
 
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ALL, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """

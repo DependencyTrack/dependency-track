@@ -35,6 +35,7 @@ import org.dependencytrack.plugin.runtime.NoSuchExtensionException;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
 import org.dependencytrack.util.VulnerabilityUtil;
+import org.dependencytrack.vulnanalysis.VulnerabilityUpdatePolicy;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
 import org.jspecify.annotations.Nullable;
@@ -99,6 +100,8 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
                     "Data source %s is not enabled".formatted(arg.getDataSourceName()));
         }
 
+        final var updatePolicy = new VulnerabilityUpdatePolicy(pluginManager);
+
         try (final VulnDataSource dataSource = dataSourceFactory.create()) {
             final var bovBatch = new ArrayList<Bom>(25);
             while (dataSource.hasNext()) {
@@ -111,7 +114,7 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
                 if (!bov.getVulnerabilities(0).hasRejected()) {
                     bovBatch.add(bov);
                     if (bovBatch.size() == 25) {
-                        processBatch(dataSource, bovBatch, source, arg.getDataSourceName());
+                        processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
                         bovBatch.clear();
                     }
                 } else {
@@ -124,7 +127,7 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
 
             if (!bovBatch.isEmpty()) {
                 ctx.maybeHeartbeat();
-                processBatch(dataSource, bovBatch, source, arg.getDataSourceName());
+                processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
                 bovBatch.clear();
             }
         }
@@ -136,7 +139,8 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             VulnDataSource dataSource,
             Collection<Bom> bovs,
             Vulnerability.Source source,
-            String dataSourceName) {
+            String dataSourceName,
+            VulnerabilityUpdatePolicy updatePolicy) {
         LOGGER.debug("Processing batch of {} BOVs", bovs.size());
 
         final var vulns = new ArrayList<Vulnerability>(bovs.size());
@@ -185,8 +189,16 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
 
             qm.runInTransaction(() -> {
                 for (final Vulnerability vuln : vulns) {
-                    LOGGER.debug("Synchronizing vulnerability {}", vuln.getVulnId());
                     final Vulnerability existingVuln = getExistingVuln(qm, vuln.getSource(), vuln.getVulnId());
+                    if (!updatePolicy.isUpdatableByDataSource(
+                            vuln.getSource(), dataSourceName, existingVuln != null)) {
+                        LOGGER.debug(
+                                "Skipping vulnerability {} from source {}: authoritative source is enabled",
+                                vuln.getVulnId(), vuln.getSource());
+                        continue;
+                    }
+
+                    LOGGER.debug("Synchronizing vulnerability {}", vuln.getVulnId());
                     final Vulnerability persistentVuln = existingVuln == null
                             ? qm.createVulnerability(vuln)
                             : qm.updateVulnerability(existingVuln, vuln);

@@ -59,6 +59,11 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
     }
 
     private PluginManager createPluginManager(String extensionName, VulnDataSource dataSource) {
+        return createPluginManager(List.of(
+                new TestVulnDataSourceFactory(extensionName, () -> dataSource)));
+    }
+
+    private PluginManager createPluginManager(List<VulnDataSourceFactory> factories) {
         pluginManager = new PluginManager(
                 new SmallRyeConfigBuilder().build(),
                 new NoopCacheManager(),
@@ -66,8 +71,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
                 List.of(VulnDataSource.class));
-        pluginManager.loadPlugins(List.of(
-                () -> List.of(new TestVulnDataSourceFactory(extensionName, () -> dataSource))));
+        pluginManager.loadPlugins(List.of(() -> List.copyOf(factories)));
         return pluginManager;
     }
 
@@ -125,6 +129,139 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
 
         assertThatExceptionOfType(TerminalApplicationFailureException.class)
                 .isThrownBy(() -> activity.execute(mock(ActivityContext.class), arg));
+    }
+
+    @Test
+    void shouldNotOverwriteExistingVulnWhenAuthoritativeMirrorEnabled() throws Exception {
+        final var existing = new Vulnerability();
+        existing.setVulnId("GHSA-fxwm-579q-49qq");
+        existing.setSource(Vulnerability.Source.GITHUB);
+        existing.setDescription("Authoritative GHSA description");
+        qm.createVulnerability(existing);
+
+        final var bovJson = """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "GHSA-fxwm-579q-49qq",
+                      "source": { "name": "GITHUB" },
+                      "description": "Republished by OSV."
+                    }
+                  ]
+                }
+                """;
+
+        final Bom bov = generateBomFromJson(bovJson);
+
+        final var osvDataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false).when(osvDataSourceMock).hasNext();
+        doReturn(bov).when(osvDataSourceMock).next();
+
+        final var pluginManager = createPluginManager(List.of(
+                new TestVulnDataSourceFactory("osv", () -> osvDataSourceMock),
+                new TestVulnDataSourceFactory("github", () -> mock(VulnDataSource.class))));
+
+        final var activity = new MirrorVulnDataSourceActivity(pluginManager);
+        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("osv").setSourceName("OSV").build());
+
+        verify(osvDataSourceMock).markProcessed(eq(bov));
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-fxwm-579q-49qq");
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getDescription()).isEqualTo("Authoritative GHSA description");
+    }
+
+    @Test
+    void shouldCreateMissingVulnWhenAuthoritativeMirrorEnabled() throws Exception {
+        final var bovJson = """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "GHSA-fxwm-579q-49qq",
+                      "source": { "name": "GITHUB" },
+                      "description": "Republished by OSV."
+                    }
+                  ]
+                }
+                """;
+
+        final Bom bov = generateBomFromJson(bovJson);
+
+        final var osvDataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false).when(osvDataSourceMock).hasNext();
+        doReturn(bov).when(osvDataSourceMock).next();
+
+        final var pluginManager = createPluginManager(List.of(
+                new TestVulnDataSourceFactory("osv", () -> osvDataSourceMock),
+                new TestVulnDataSourceFactory("github", () -> mock(VulnDataSource.class))));
+
+        final var activity = new MirrorVulnDataSourceActivity(pluginManager);
+        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("osv").setSourceName("OSV").build());
+
+        verify(osvDataSourceMock).markProcessed(eq(bov));
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-fxwm-579q-49qq");
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getDescription()).isEqualTo("Republished by OSV.");
+    }
+
+    @Test
+    void shouldProcessBovWhenAuthoritativeMirrorAbsent() throws Exception {
+        final var bovJson = """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "GHSA-fxwm-579q-49qq",
+                      "source": { "name": "GITHUB" },
+                      "description": "Republished by OSV."
+                    }
+                  ]
+                }
+                """;
+
+        final Bom bov = generateBomFromJson(bovJson);
+
+        final var osvDataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false).when(osvDataSourceMock).hasNext();
+        doReturn(bov).when(osvDataSourceMock).next();
+
+        final var pluginManager = createPluginManager(List.of(
+                new TestVulnDataSourceFactory("osv", () -> osvDataSourceMock)));
+
+        final var activity = new MirrorVulnDataSourceActivity(pluginManager);
+        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("osv").setSourceName("OSV").build());
+
+        verify(osvDataSourceMock).markProcessed(eq(bov));
+        assertThat(qm.getVulnerabilityByVulnId("GITHUB", "GHSA-fxwm-579q-49qq")).isNotNull();
+    }
+
+    @Test
+    void shouldSkipBovFromInternalSource() throws Exception {
+        final var bovJson = """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "INT-001",
+                      "source": { "name": "INTERNAL" },
+                      "description": "Should never be overwritten by a mirror."
+                    }
+                  ]
+                }
+                """;
+
+        final Bom bov = generateBomFromJson(bovJson);
+
+        final var osvDataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false).when(osvDataSourceMock).hasNext();
+        doReturn(bov).when(osvDataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("osv", osvDataSourceMock));
+        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("osv").setSourceName("OSV").build());
+
+        verify(osvDataSourceMock).markProcessed(eq(bov));
+        assertThat(qm.getVulnerabilityByVulnId("INTERNAL", "INT-001")).isNull();
     }
 
     @Test

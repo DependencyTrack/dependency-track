@@ -43,7 +43,7 @@ services:
     restart: unless-stopped
 
   apiserver:
-    image: "ghcr.io/dependencytrack/hyades-apiserver:${DT_APISERVER_VERSION:-snapshot}"
+    image: "ghcr.io/dependencytrack/apiserver:${DT_APISERVER_VERSION:-5-snapshot}"
     labels:
       traefik.enable: "true"
       traefik.http.routers.apiserver.rule: "PathPrefix(`/api`)"

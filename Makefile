@@ -41,7 +41,7 @@ build-dist:
 
 build-image: build
 	docker build \
-		-t ghcr.io/dependencytrack/hyades-apiserver:local \
+		-t ghcr.io/dependencytrack/apiserver:local \
 		-f apiserver/src/main/docker/Dockerfile \
 		apiserver
 .PHONY: build-image

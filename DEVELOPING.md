@@ -112,7 +112,7 @@ Build a container image:
 make build-image
 ```
 
-This produces the image `ghcr.io/dependencytrack/hyades-apiserver:local`.
+This produces the image `ghcr.io/dependencytrack/apiserver:local`.
 
 ## Testing
 

@@ -45,7 +45,7 @@ import java.util.Set;
 abstract class AbstractE2ET {
 
     protected static DockerImageName POSTGRES_IMAGE = DockerImageName.parse("postgres:14-alpine");
-    protected static DockerImageName API_SERVER_IMAGE = DockerImageName.parse("ghcr.io/dependencytrack/hyades-apiserver")
+    protected static DockerImageName API_SERVER_IMAGE = DockerImageName.parse("ghcr.io/dependencytrack/apiserver")
             .withTag(Optional.ofNullable(System.getenv("APISERVER_VERSION")).orElse("local"));
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());

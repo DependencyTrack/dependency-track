@@ -72,7 +72,7 @@ public final class TestDatabaseManager {
 
             final Path lockFile = Path.of(
                     System.getProperty("java.io.tmpdir"),
-                    "hyades-apiserver-postgres-testcontainer.lock");
+                    "apiserver-postgres-testcontainer.lock");
             try (final var channel = FileChannel.open(lockFile, CREATE, WRITE);
                  var _ = channel.lock()) {
                 container.start();

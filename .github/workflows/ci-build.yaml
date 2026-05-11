@@ -33,6 +33,12 @@ on:
       - '**/*.md'
       - 'docs/**'
   workflow_dispatch:
+    inputs:
+      app-version:
+        type: string
+        required: false
+        default: ""
+        description: "Override the derived app-version (e.g. 5.0.0 or 5.0.0-rc.1). Leave empty to use the derived snapshot tag (e.g. 5-snapshot)."
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -41,10 +47,37 @@ concurrency:
 permissions: { }
 
 jobs:
+  read-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      major: ${{ steps.parse.outputs.major }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # tag=v5.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'maven'
+
+      - name: Parse Version from POM
+        id: parse
+        run: |-
+          VERSION=$(mvn -q -Dexec.skip=true help:evaluate -Dexpression=project.version -DforceStdout)
+          MAJOR="${VERSION%%.*}"
+          echo "major=${MAJOR}" >> "$GITHUB_OUTPUT"
+
   call-build:
+    needs:
+      - read-version
     uses: ./.github/workflows/_meta-build.yaml
     with:
-      app-version: "snapshot"
+      app-version: ${{ inputs.app-version || format('{0}-snapshot', needs.read-version.outputs.major) }}
       publish-container: ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'feature-') }}
       ref-name: ${{ github.ref_name }}
     permissions:

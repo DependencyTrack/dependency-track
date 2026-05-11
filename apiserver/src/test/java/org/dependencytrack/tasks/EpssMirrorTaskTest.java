@@ -22,6 +22,8 @@ import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.event.EpssMirrorEvent;
 import org.dependencytrack.model.Epss;
+import org.dependencytrack.persistence.jdbi.EpssDao;
+import org.jdbi.v3.core.mapper.reflect.BeanMapper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,8 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_EPSS_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_EPSS_FEEDS_URL;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class EpssMirrorTaskTest extends PersistenceCapableTest {
 
@@ -96,12 +100,12 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
 
         // Create an existing EPSS record for CVE-1999-0001.
         // It must be updated as part of the mirroring operation.
-        qm.persist(new Epss("CVE-1999-0001", BigDecimal.ONE, BigDecimal.ZERO));
+        useJdbiHandle(handle -> handle.attach(EpssDao.class)
+                .createOrUpdateAll(List.of(new Epss("CVE-1999-0001", BigDecimal.ONE, BigDecimal.ZERO))));
 
         new EpssMirrorTask(httpClient).inform(new EpssMirrorEvent());
 
-        qm.getPersistenceManager().evictAll();
-        final List<Epss> epssRecords = qm.getPersistenceManager().newQuery(Epss.class).executeList();
+        final List<Epss> epssRecords = findAllEpss();
 
         assertThat(epssRecords).satisfiesExactlyInAnyOrder(
                 epssRecord -> {
@@ -152,8 +156,7 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
 
         new EpssMirrorTask(httpClient).inform(new EpssMirrorEvent());
 
-        final List<Epss> epssRecords = qm.getPersistenceManager().newQuery(Epss.class).executeList();
-        assertThat(epssRecords).isEmpty();
+        assertThat(findAllEpss()).isEmpty();
     }
 
     @Test
@@ -173,8 +176,18 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
 
         new EpssMirrorTask(httpClient).inform(new EpssMirrorEvent());
 
-        final List<Epss> epssRecords = qm.getPersistenceManager().newQuery(Epss.class).executeList();
-        assertThat(epssRecords).isEmpty();
+        assertThat(findAllEpss()).isEmpty();
+    }
+
+    private static List<Epss> findAllEpss() {
+        return withJdbiHandle(handle -> handle.createQuery("""
+                        SELECT "CVE" AS "cve"
+                             , "SCORE" AS "score"
+                             , "PERCENTILE" AS "percentile"
+                          FROM "EPSS"
+                        """)
+                .map(BeanMapper.of(Epss.class))
+                .list());
     }
 
 }

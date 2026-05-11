@@ -306,8 +306,36 @@ public final class CelPolicyDao {
                          INNER JOIN "COMPONENT" AS c
                             ON c."ID" = cv."COMPONENT_ID"
                         <#if shouldFetchEpss!false>
-                          LEFT JOIN "EPSS" AS ep
-                            ON v."VULNID" = ep."CVE"
+                          LEFT JOIN LATERAL (
+                            SELECT "CVE"
+                                 , "SCORE"
+                                 , "PERCENTILE"
+                              FROM (
+                                SELECT ee."CVE"
+                                     , ee."SCORE"
+                                     , ee."PERCENTILE"
+                                  FROM "EPSS" AS ee
+                                 WHERE v."SOURCE" = 'NVD'
+                                   AND ee."CVE" = v."VULNID"
+                                UNION ALL
+                                SELECT ee."CVE"
+                                     , ee."SCORE"
+                                     , ee."PERCENTILE"
+                                  FROM "VULNERABILITY_ALIAS" AS va
+                                 INNER JOIN "VULNERABILITY_ALIAS" AS cve_a
+                                    ON cve_a."GROUP_ID" = va."GROUP_ID"
+                                   AND cve_a."SOURCE" = 'NVD'
+                                 INNER JOIN "EPSS" AS ee
+                                    ON ee."CVE" = cve_a."VULN_ID"
+                                 WHERE v."SOURCE" != 'NVD'
+                                   AND va."SOURCE" = v."SOURCE"
+                                   AND va."VULN_ID" = v."VULNID"
+                              ) candidates
+                             ORDER BY "SCORE" DESC NULLS LAST
+                                    , "PERCENTILE" DESC NULLS LAST
+                                    , "CVE"
+                             LIMIT 1
+                          ) AS ep ON TRUE
                         </#if>
                          WHERE c."PROJECT_ID" = :projectId
                            AND EXISTS (
@@ -700,8 +728,36 @@ public final class CelPolicyDao {
                         </#if>
                           FROM "VULNERABILITY" AS v
                         <#if needsEpss!false>
-                          LEFT JOIN "EPSS" AS ep
-                            ON v."VULNID" = ep."CVE"
+                          LEFT JOIN LATERAL (
+                            SELECT "CVE"
+                                 , "SCORE"
+                                 , "PERCENTILE"
+                              FROM (
+                                SELECT ee."CVE"
+                                     , ee."SCORE"
+                                     , ee."PERCENTILE"
+                                  FROM "EPSS" AS ee
+                                 WHERE v."SOURCE" = 'NVD'
+                                   AND ee."CVE" = v."VULNID"
+                                UNION ALL
+                                SELECT ee."CVE"
+                                     , ee."SCORE"
+                                     , ee."PERCENTILE"
+                                  FROM "VULNERABILITY_ALIAS" AS va
+                                 INNER JOIN "VULNERABILITY_ALIAS" AS cve_a
+                                    ON cve_a."GROUP_ID" = va."GROUP_ID"
+                                   AND cve_a."SOURCE" = 'NVD'
+                                 INNER JOIN "EPSS" AS ee
+                                    ON ee."CVE" = cve_a."VULN_ID"
+                                 WHERE v."SOURCE" != 'NVD'
+                                   AND va."SOURCE" = v."SOURCE"
+                                   AND va."VULN_ID" = v."VULNID"
+                              ) candidates
+                             ORDER BY "SCORE" DESC NULLS LAST
+                                    , "PERCENTILE" DESC NULLS LAST
+                                    , "CVE"
+                             LIMIT 1
+                          ) AS ep ON TRUE
                         </#if>
                          WHERE v."ID" = ANY(:ids)
                         """)

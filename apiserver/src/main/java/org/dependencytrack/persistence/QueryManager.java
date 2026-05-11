@@ -64,6 +64,7 @@ import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationLevel;
@@ -1212,12 +1213,12 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().getComponentsByPurl(purl);
     }
 
-    public Epss getEpssByCveId(String cveId) {
-        return getEpssQueryManager().getEpssByCveId(cveId);
+    public Epss getEffectiveEpssForVuln(String source, String vulnId) {
+        return getEpssQueryManager().getEffectiveEpssForVuln(source, vulnId);
     }
 
-    public Map<String, Epss> getEpssForCveIds(List<String> cveIds) {
-        return getEpssQueryManager().getEpssForCveIds(cveIds);
+    public Map<VulnerabilityKey, Epss> getEffectiveEpssForVulns(Collection<VulnerabilityKey> keys) {
+        return getEpssQueryManager().getEffectiveEpssForVulns(keys);
     }
 
     public Set<Tag> resolveTags(final Collection<Tag> tags) {

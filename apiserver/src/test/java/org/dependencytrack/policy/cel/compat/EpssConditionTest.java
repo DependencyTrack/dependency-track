@@ -26,11 +26,13 @@ import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyCondition.Operator;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.policy.cel.CelPolicyEngine;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.PolicyCondition.Operator.MATCHES;
@@ -40,6 +42,7 @@ import static org.dependencytrack.model.PolicyCondition.Operator.NUMERIC_GREATER
 import static org.dependencytrack.model.PolicyCondition.Operator.NUMERIC_LESSER_THAN_OR_EQUAL;
 import static org.dependencytrack.model.PolicyCondition.Operator.NUMERIC_LESS_THAN;
 import static org.dependencytrack.model.PolicyCondition.Operator.NUMERIC_NOT_EQUAL;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class EpssConditionTest extends PersistenceCapableTest {
 
@@ -109,10 +112,11 @@ public class EpssConditionTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        final var epss = new Epss();
-        epss.setCve("CVE-123");
-        epss.setScore(vulnEpssScore != null ? BigDecimal.valueOf(vulnEpssScore) : null);
-        qm.persist(epss);
+        useJdbiHandle(handle -> handle.attach(EpssDao.class)
+                .createOrUpdateAll(List.of(new Epss(
+                        "CVE-123",
+                        vulnEpssScore != null ? BigDecimal.valueOf(vulnEpssScore) : null,
+                        null))));
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         if (expectViolation) {

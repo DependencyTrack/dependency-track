@@ -53,6 +53,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     private static final String DO_NOT_REACTIVATE_PROPERTY = "defectdojo.doNotReactivate";
     private static final String VERIFIED_PROPERTY = "defectdojo.verified";
     private static final String TEST_TITLE_PROPERTY = "defectdojo.testTitle";
+    private static final String GROUP_BY_PROPERTY = "defectdojo.groupBy";
 
     private final HttpClient httpClient;
     private final SecretManager secretManager;
@@ -94,6 +95,14 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         final ProjectProperty testName = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), TEST_TITLE_PROPERTY);
         if (testName != null && testName.getPropertyValue() != null) {
             return testName.getPropertyValue();
+        }
+        return null;
+    }
+
+    public String getGroupBy(final Project project) {
+        final ProjectProperty groupBy = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), GROUP_BY_PROPERTY);
+        if (groupBy != null && groupBy.getPropertyValue() != null) {
+            return groupBy.getPropertyValue();
         }
         return null;
     }
@@ -142,6 +151,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         final boolean globalReimportEnabled = qm.isEnabled(DEFECTDOJO_REIMPORT_ENABLED);
         final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
         final boolean verifyFindings = isVerifiedConfigured(project);
+        final String testTitle = getTestTitle(project);
+        final String groupBy = getGroupBy(project);
         try {
             final String apiKeyValue = secretManager.getSecretValue(apiKeySecretName);
             if (apiKeyValue == null) {
@@ -160,7 +171,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                             engagementId.getPropertyValue(),
                             payload,
                             verifyFindings,
-                            testTitle);
+                            testTitle,
+                            groupBy);
                 } else {
                     client.reimportDependencyTrackFindings(
                             apiKeyValue,
@@ -169,7 +181,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                             testId,
                             isDoNotReactivateConfigured(project),
                             verifyFindings,
-                            testTitle);
+                            testTitle,
+                            groupBy);
                 }
             } else {
                 client.uploadDependencyTrackFindings(
@@ -177,7 +190,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                         engagementId.getPropertyValue(),
                         payload,
                         verifyFindings,
-                        testTitle);
+                        testTitle,
+                        groupBy);
             }
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to DefectDojo", e);

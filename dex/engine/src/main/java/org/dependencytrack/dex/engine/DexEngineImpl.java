@@ -1486,8 +1486,9 @@ final class DexEngineImpl implements DexEngine {
     }
 
     private void processActivityTaskHeartbeats(List<ActivityTaskHeartbeat> heartbeats) {
-        // TODO: Complete all futures exceptionally when transaction fails.
-        final Map<ActivityTaskId, TaskLock> lockByTaskId = jdbi.inTransaction(handle -> {
+        final Map<ActivityTaskId, TaskLock> lockByTaskId;
+        try {
+            lockByTaskId = jdbi.inTransaction(handle -> {
             final Update update = handle.createUpdate("""
                     update dex_activity_task as task
                        set locked_until = locked_until + t.lock_timeout
@@ -1540,7 +1541,13 @@ final class DexEngineImpl implements DexEngine {
                                     ctx.findColumnMapperFor(Instant.class).orElseThrow().map(rs, "locked_until", ctx),
                                     rs.getInt("lock_version"))))
                     .collectToMap(Map.Entry::getKey, Map.Entry::getValue);
-        });
+            });
+        } catch (RuntimeException e) {
+            for (final ActivityTaskHeartbeat heartbeat : heartbeats) {
+                heartbeat.future().completeExceptionally(e);
+            }
+            throw e;
+        }
 
         final Map<ActivityTaskId, CompletableFuture<TaskLock>> futureByTaskId = heartbeats.stream()
                 .collect(Collectors.toMap(

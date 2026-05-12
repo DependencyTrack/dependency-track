@@ -46,6 +46,13 @@ build-image: build
 		apiserver
 .PHONY: build-image
 
+build-v4-migrator-image: build
+	docker build \
+		-t ghcr.io/dependencytrack/v4-migrator:local \
+		-f support/v4-migrator/src/main/docker/Dockerfile \
+		support/v4-migrator
+.PHONY: build-v4-migrator-image
+
 datanucleus-enhance:
 	$(MVND) $(MVN_FLAGS) -q -Pquick -pl alpine/alpine-model,apiserver process-classes
 .PHONY: datanucleus-enhance

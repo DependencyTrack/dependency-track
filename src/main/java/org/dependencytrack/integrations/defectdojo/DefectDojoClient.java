@@ -185,8 +185,7 @@ public class DefectDojoClient {
                 .addPart("push_to_jira", new StringBody("false", ContentType.MULTIPART_FORM_DATA))
                 .addPart("do_not_reactivate", new StringBody(doNotReactivate.toString(), ContentType.MULTIPART_FORM_DATA))
                 .addPart("test", new StringBody(testId, ContentType.MULTIPART_FORM_DATA))
-                .addPart("scan_date", new StringBody(DATE_FORMAT.format(new Date()), ContentType.MULTIPART_FORM_DATA))
-                .build();
+                .addPart("scan_date", new StringBody(DATE_FORMAT.format(new Date()), ContentType.MULTIPART_FORM_DATA));
         if (testTitle != null) {
             builder.addPart("test_title", new StringBody(testTitle, ContentType.MULTIPART_FORM_DATA));
         }

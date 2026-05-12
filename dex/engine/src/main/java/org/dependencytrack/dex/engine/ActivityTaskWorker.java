@@ -22,6 +22,7 @@ import io.github.resilience4j.core.IntervalFunction;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.dependencytrack.dex.api.RetryPolicy;
 import org.dependencytrack.dex.api.failure.ApplicationFailureException;
+import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.dex.engine.TaskEvent.ActivityTaskAbandonedEvent;
 import org.dependencytrack.dex.engine.TaskEvent.ActivityTaskCompletedEvent;
 import org.dependencytrack.dex.engine.TaskEvent.ActivityTaskFailedEvent;
@@ -94,7 +95,19 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
             }
 
             final var ctx = new ActivityContextImpl(engine, task, activityMetadata.lockTimeout());
-            final var arg = activityMetadata.argumentConverter().convertFromPayload(task.argument());
+
+            final Object arg;
+            try {
+                arg = activityMetadata.argumentConverter().convertFromPayload(task.argument());
+            } catch (RuntimeException e) {
+                logger.warn("Failed to deserialize activity argument; Failing task terminally", e);
+                engine.onTaskEvent(
+                        new ActivityTaskFailedEvent(
+                                task,
+                                new TerminalApplicationFailureException(e),
+                                /* retryAt */ null));
+                return;
+            }
 
             final Future<Object> future;
             try {
@@ -108,7 +121,18 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
 
             try {
                 final Object activityResult = future.get();
-                final Payload result = activityMetadata.resultConverter().convertToPayload(activityResult);
+                final Payload result;
+                try {
+                    result = activityMetadata.resultConverter().convertToPayload(activityResult);
+                } catch (RuntimeException e) {
+                    logger.warn("Failed to serialize activity result; Failing task terminally", e);
+                    engine.onTaskEvent(
+                            new ActivityTaskFailedEvent(
+                                    task,
+                                    new TerminalApplicationFailureException(e),
+                                    /* retryAt */ null));
+                    return;
+                }
                 engine.onTaskEvent(new ActivityTaskCompletedEvent(task, result));
             } catch (ExecutionException e) {
                 final Throwable cause = e.getCause();

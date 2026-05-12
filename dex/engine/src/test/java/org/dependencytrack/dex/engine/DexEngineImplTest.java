@@ -54,6 +54,7 @@ import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
 import org.dependencytrack.dex.engine.api.request.UpdateTaskQueueRequest;
 import org.dependencytrack.dex.engine.api.response.CreateWorkflowRunResponse;
 import org.dependencytrack.dex.proto.event.v1.WorkflowEvent;
+import org.dependencytrack.dex.proto.payload.v1.Payload;
 import org.eclipse.microprofile.health.HealthCheckResponse;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
@@ -1056,6 +1057,115 @@ class DexEngineImplTest {
                 entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
                 entry -> {
                     assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_FAILED);
+                },
+                entry -> {
+                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                    assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                },
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+    }
+
+    @Test
+    void shouldFailActivityTerminallyOnArgumentDeserializationError() {
+        final PayloadConverter<String> throwingArgumentConverter = new PayloadConverter<>() {
+            @Override
+            public Payload convertToPayload(String value) {
+                return stringConverter().convertToPayload(value);
+            }
+
+            @Override
+            public String convertFromPayload(Payload payload) {
+                throw new RuntimeException("boom");
+            }
+        };
+
+        final var activityInvocations = new AtomicInteger(0);
+
+        registerWorkflow("test", (ctx, arg) -> {
+            ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, "input", stringConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
+            return null;
+        });
+        registerActivity("abc", throwingArgumentConverter, stringConverter(), (ctx, arg) -> {
+            activityInvocations.incrementAndGet();
+            return arg;
+        });
+        registerWorkflowWorker("workflow-worker", 1);
+        registerTaskWorker("activity-worker", 1);
+        engine.start();
+
+        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+
+        awaitRunStatus(runId, WorkflowRunStatus.FAILED);
+
+        assertThat(activityInvocations).hasValue(0);
+
+        final List<WorkflowEvent> historyEvents = engine
+                .listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(20))
+                .items()
+                .stream()
+                .map(WorkflowRunHistoryEntry::event)
+                .toList();
+        assertThat(historyEvents).satisfiesExactly(
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                entry -> {
+                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_FAILED);
+                    assertThat(entry.getActivityTaskFailed().getAttempts()).isEqualTo(1);
+                },
+                entry -> {
+                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                    assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                },
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+    }
+
+    @Test
+    void shouldFailActivityTerminallyOnResultSerializationError() {
+        final PayloadConverter<String> throwingResultConverter = new PayloadConverter<>() {
+            @Override
+            public Payload convertToPayload(String value) {
+                throw new RuntimeException("boom");
+            }
+
+            @Override
+            public String convertFromPayload(Payload payload) {
+                return stringConverter().convertFromPayload(payload);
+            }
+        };
+
+        registerWorkflow("test", (ctx, arg) -> {
+            ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
+            return null;
+        });
+        registerActivity("abc", voidConverter(), throwingResultConverter, (ctx, arg) -> "result");
+        registerWorkflowWorker("workflow-worker", 1);
+        registerTaskWorker("activity-worker", 1);
+        engine.start();
+
+        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+
+        awaitRunStatus(runId, WorkflowRunStatus.FAILED);
+
+        final List<WorkflowEvent> historyEvents = engine
+                .listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(20))
+                .items()
+                .stream()
+                .map(WorkflowRunHistoryEntry::event)
+                .toList();
+        assertThat(historyEvents).satisfiesExactly(
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                entry -> {
+                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_FAILED);
+                    assertThat(entry.getActivityTaskFailed().getAttempts()).isEqualTo(1);
                 },
                 entry -> {
                     assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);

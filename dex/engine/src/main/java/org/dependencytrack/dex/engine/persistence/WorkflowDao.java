@@ -430,11 +430,19 @@ public final class WorkflowDao extends AbstractDao {
             int limit) {
         final Query query = jdbiHandle.createQuery("""
                 with
+                cte_poll_req as (
+                  select *
+                    from unnest(:workflowNames, :lockTimeouts)
+                      as t(workflow_name, lock_timeout)
+                ),
                 cte_poll as (
-                  select workflow_run_id
+                  select task.workflow_run_id
+                       , cte_poll_req.lock_timeout
                     from dex_workflow_task as task
                    inner join dex_workflow_task_queue as queue
                       on queue.name = task.queue_name
+                   inner join cte_poll_req
+                      on cte_poll_req.workflow_name = task.workflow_name
                    where task.queue_name = :queueName
                      and queue.status = 'ACTIVE'
                      and (
@@ -452,12 +460,7 @@ public final class WorkflowDao extends AbstractDao {
                 cte_locked as (
                   update dex_workflow_task as task
                      set locked_by = :engineInstanceId
-                       , locked_until = now() + (
-                           select t.lock_timeout
-                             from unnest(:workflowNames, :lockTimeouts) as t(workflow_name, lock_timeout)
-                            where t.workflow_name = task.workflow_name
-                            limit 1
-                         )
+                       , locked_until = now() + cte_poll.lock_timeout
                        , lock_version = lock_version + 1
                    from cte_poll
                   where task.queue_name = :queueName

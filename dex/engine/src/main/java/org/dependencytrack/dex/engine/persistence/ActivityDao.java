@@ -235,12 +235,14 @@ public final class ActivityDao extends AbstractDao {
                       as t(activity_name, lock_timeout)
                 ),
                 cte_poll as (
-                  select workflow_run_id
-                       , created_event_id
-                       , activity_name
+                  select dat.workflow_run_id
+                       , dat.created_event_id
+                       , dat.activity_name
                     from dex_activity_task as dat
                    inner join dex_activity_task_queue as queue
                       on queue.name = dat.queue_name
+                   inner join cte_poll_req
+                      on cte_poll_req.activity_name = dat.activity_name
                    where dat.queue_name = :queueName
                      and queue.status = 'ACTIVE'
                      and dat.status = 'QUEUED'

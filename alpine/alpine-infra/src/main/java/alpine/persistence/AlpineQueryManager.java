@@ -783,32 +783,31 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
      * @since 1.0.0
      */
     public boolean hasPermission(final User user, String permissionName, boolean includeTeams) {
-        Query<Permission> query = pm.newQuery(Permission.class)
-                .filter("name == :permissionName && users.contains(user) && user.id == :userId")
-                .variables("alpine.model.User user")
-                .setParameters(permissionName, user.getId())
-                .range(0, 1)
-                .result("id");
-
-        return !executeAndCloseResultList(query, Long.class).isEmpty()
-                || (includeTeams && user.getTeams().stream()
-                .anyMatch(team -> hasPermission(team, permissionName)));
-    }
-
-    /**
-     * Determines if the specified Team has been assigned the specified permission.
-     * @param team the Team to query
-     * @param permissionName the name of the permission
-     * @return true if the team has the permission assigned, false if not
-     * @since 1.0.0
-     */
-    public boolean hasPermission(final Team team, String permissionName) {
-        final Query<Permission> query = pm.newQuery(Permission.class, "name == :permissionName && teams.contains(team) && team.id == :teamId");
-        query.declareVariables("alpine.model.Team team");
-        query.setParameters(permissionName, team.getId());
-        query.setRange(0, 1);
-        query.setResult("id");
-        return !executeAndCloseResultList(query, Long.class).isEmpty();
+        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
+                SELECT EXISTS (
+                  SELECT 1
+                    FROM "USERS_PERMISSIONS" up
+                   INNER JOIN "PERMISSION" p
+                      ON p."ID" = up."PERMISSION_ID"
+                   WHERE up."USER_ID" = :userId
+                     AND p."NAME" = :permissionName
+                  UNION ALL
+                  SELECT 1
+                    FROM "USERS_TEAMS" ut
+                   INNER JOIN "TEAMS_PERMISSIONS" tp
+                      ON tp."TEAM_ID" = ut."TEAM_ID"
+                   INNER JOIN "PERMISSION" p
+                      ON p."ID" = tp."PERMISSION_ID"
+                   WHERE :includeTeams = TRUE
+                     AND ut."USER_ID" = :userId
+                     AND p."NAME" = :permissionName
+                )
+                """);
+        query.setNamedParameters(Map.of(
+                "userId", user.getId(),
+                "permissionName", permissionName,
+                "includeTeams", includeTeams));
+        return executeAndCloseResultUnique(query, Boolean.class);
     }
 
     /**
@@ -819,18 +818,22 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
      * @since 1.1.1
      */
     public boolean hasPermission(final ApiKey apiKey, String permissionName) {
-        if (apiKey.getTeams() == null) {
-            return false;
-        }
-        for (final Team team: apiKey.getTeams()) {
-            final List<Permission> teamPermissions = getObjectById(Team.class, team.getId()).getPermissions();
-            for (final Permission permission: teamPermissions) {
-                if (permission.getName().equals(permissionName)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
+                SELECT EXISTS (
+                  SELECT 1
+                    FROM "APIKEYS_TEAMS" at
+                   INNER JOIN "TEAMS_PERMISSIONS" tp
+                      ON tp."TEAM_ID" = at."TEAM_ID"
+                   INNER JOIN "PERMISSION" p
+                      ON p."ID" = tp."PERMISSION_ID"
+                   WHERE at."APIKEY_ID" = :apiKeyId
+                     AND p."NAME" = :permissionName
+                )
+                """);
+        query.setNamedParameters(Map.of(
+                "apiKeyId", apiKey.getId(),
+                "permissionName", permissionName));
+        return executeAndCloseResultUnique(query, Boolean.class);
     }
 
     /**

@@ -41,6 +41,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 import static java.util.Objects.requireNonNull;
 
@@ -60,8 +61,9 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
             final MetadataRegistry metadataRegistry,
             final String queueName,
             final int maxConcurrency,
-            final MeterRegistry meterRegistry) {
-        super(name, minPollInterval, pollBackoffIntervalFunction, maxConcurrency, meterRegistry);
+            final MeterRegistry meterRegistry,
+            final BooleanSupplier downstreamAcceptsWork) {
+        super(name, minPollInterval, pollBackoffIntervalFunction, maxConcurrency, meterRegistry, downstreamAcceptsWork);
         this.engine = requireNonNull(engine, "engine must not be null");
         this.metadataRegistry = requireNonNull(metadataRegistry, "metadataRegistry must not be null");
         this.queueName = requireNonNull(queueName, "queueName must not be null");

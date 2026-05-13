@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.dex.engine.support;
 
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Gauge;
@@ -41,6 +43,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static io.github.resilience4j.circuitbreaker.CallNotPermittedException.createCallNotPermittedException;
 
 public final class Buffer<T> implements Closeable {
 
@@ -84,6 +88,7 @@ public final class Buffer<T> implements Closeable {
     private final ReentrantLock flushLock;
     private final ReentrantLock statusLock;
     private final MeterRegistry meterRegistry;
+    private final CircuitBreaker circuitBreaker;
     private volatile Status status = Status.CREATED;
     private @Nullable DistributionSummary batchSizeDistribution;
     private @Nullable Timer itemWaitLatencyTimer;
@@ -95,8 +100,10 @@ public final class Buffer<T> implements Closeable {
             Consumer<List<T>> batchConsumer,
             Duration flushInterval,
             int maxBatchSize,
-            MeterRegistry meterRegistry) {
-        this(name, batchConsumer, flushInterval, maxBatchSize, Duration.ofSeconds(5), meterRegistry);
+            MeterRegistry meterRegistry,
+            CircuitBreakerRegistry circuitBreakerRegistry) {
+        this(name, batchConsumer, flushInterval, maxBatchSize, Duration.ofSeconds(5),
+                meterRegistry, circuitBreakerRegistry);
     }
 
     Buffer(
@@ -105,7 +112,8 @@ public final class Buffer<T> implements Closeable {
             Duration flushInterval,
             int maxBatchSize,
             Duration itemsQueueTimeout,
-            MeterRegistry meterRegistry) {
+            MeterRegistry meterRegistry,
+            CircuitBreakerRegistry circuitBreakerRegistry) {
         this.name = name;
         this.batchConsumer = batchConsumer;
         this.maxBatchSize = maxBatchSize;
@@ -126,6 +134,7 @@ public final class Buffer<T> implements Closeable {
         this.flushLock = new ReentrantLock();
         this.statusLock = new ReentrantLock();
         this.meterRegistry = meterRegistry;
+        this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("dt.dex.engine.buffer." + name);
     }
 
     public String name() {
@@ -134,6 +143,14 @@ public final class Buffer<T> implements Closeable {
 
     public Status status() {
         return status;
+    }
+
+    public boolean acceptsWork() {
+        // NB: In the future we might want to include itemsQueue depth here.
+        // A queue at capacity won't accept new items, so calls to #add() may
+        // time out.
+        return status == Status.RUNNING
+                && circuitBreaker.getState() != CircuitBreaker.State.OPEN;
     }
 
     public void start() {
@@ -263,18 +280,55 @@ public final class Buffer<T> implements Closeable {
         }
 
         try {
-            if (itemsQueue.isEmpty()) {
+            // NB: tryAcquirePermission drives state transitions (e.g. OPEN -> HALF_OPEN),
+            // so it must be called on every tick to enable recovery, including when the
+            // queue is empty. Otherwise, once workers back off via acceptsWork():
+            //   1. no items arrive
+            //   2. no permission is ever attempted
+            //   3. the breaker stays OPEN indefinitely
+            //   4. workers never resume polling
+            // When permission is denied, we still drain up to maxBatchSize and fail
+            // those futures fast with CallNotPermittedException, so producers don't sit on
+            // Buffer#add until timeout and the queue doesn't grow unboundedly while the breaker is open.
+            final boolean permitted = circuitBreaker.tryAcquirePermission();
+            itemsQueue.drainTo(currentBatch, maxBatchSize);
+
+            if (currentBatch.isEmpty()) {
+                if (permitted) {
+                    // We acquired a permission but have no work to drive a probe.
+                    // Release so the next tick with work can acquire instead.
+                    circuitBreaker.releasePermission();
+                }
                 LOGGER.debug("{}: Buffer is empty; Nothing to flush", name);
                 return;
             }
 
-            itemsQueue.drainTo(currentBatch, maxBatchSize);
-            batchSizeDistribution.record(currentBatch.size());
+            if (!permitted) {
+                if (status == Status.RUNNING) {
+                    LOGGER.debug("{}: Circuit breaker rejected flush", name);
+                }
+                final long nowNanos = System.nanoTime();
 
+                for (final BufferedItem<T> item : currentBatch) {
+                    item.future().completeExceptionally(
+                            createCallNotPermittedException(circuitBreaker));
+                    itemWaitLatencyTimer.record(
+                            nowNanos - item.addedAtNanos(),
+                            TimeUnit.NANOSECONDS);
+                }
+
+                currentBatch.clear();
+                return;
+            }
+
+            batchSizeDistribution.record(currentBatch.size());
             LOGGER.debug("{}: Flushing batch of {} items", name, currentBatch.size());
             final Timer.Sample flushLatencySample = Timer.start();
+            final long startNanos = System.nanoTime();
             try {
-                batchConsumer.accept(currentBatch.stream().map(BufferedItem::item).collect(Collectors.toList()));
+                final List<T> batchItems = currentBatch.stream().map(BufferedItem::item).collect(Collectors.toList());
+                batchConsumer.accept(batchItems);
+                circuitBreaker.onSuccess(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
 
                 final long nowNanos = System.nanoTime();
                 for (final BufferedItem<T> item : currentBatch) {
@@ -284,6 +338,8 @@ public final class Buffer<T> implements Closeable {
                             TimeUnit.NANOSECONDS);
                 }
             } catch (Throwable e) {
+                circuitBreaker.onError(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS, e);
+
                 final long nowNanos = System.nanoTime();
                 for (final BufferedItem<T> item : currentBatch) {
                     item.future().completeExceptionally(e);

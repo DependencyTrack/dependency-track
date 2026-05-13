@@ -33,6 +33,7 @@ import org.slf4j.MDC;
 import java.time.Duration;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.BooleanSupplier;
 
 import static java.util.Objects.requireNonNull;
 
@@ -51,8 +52,9 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
             final Duration minPollInterval,
             final IntervalFunction pollBackoffIntervalFunction,
             final int maxConcurrency,
-            final MeterRegistry meterRegistry) {
-        super(name, minPollInterval, pollBackoffIntervalFunction, maxConcurrency, meterRegistry);
+            final MeterRegistry meterRegistry,
+            final BooleanSupplier downstreamAcceptsWork) {
+        super(name, minPollInterval, pollBackoffIntervalFunction, maxConcurrency, meterRegistry, downstreamAcceptsWork);
         this.engine = requireNonNull(engine, "engine must not be null");
         this.metadataRegistry = requireNonNull(metadataRegistry, "metadataRegistry must not be null");
         this.queueName = requireNonNull(queueName, "queueName must not be null");

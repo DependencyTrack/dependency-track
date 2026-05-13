@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -57,6 +58,7 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
     private final int maxConcurrency;
     private final Semaphore semaphore;
     private final MeterRegistry meterRegistry;
+    private final BooleanSupplier downstreamAcceptsWork;
     private final Lock statusLock;
     final Logger logger;
 
@@ -66,6 +68,7 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
     private @Nullable ExecutorService taskExecutor;
     private @Nullable Timer pollLatencyTimer;
     private @Nullable Counter pollsCounter;
+    private @Nullable Counter backpressureSkipsCounter;
     private @Nullable MeterProvider<DistributionSummary> polledTasksDistribution;
     private @Nullable MeterProvider<Counter> processedCounter;
     private @Nullable MeterProvider<Timer> processLatencyTimer;
@@ -75,11 +78,13 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
             final Duration minPollInterval,
             final IntervalFunction pollBackoffFunction,
             final int maxConcurrency,
-            final MeterRegistry meterRegistry) {
+            final MeterRegistry meterRegistry,
+            final BooleanSupplier downstreamAcceptsWork) {
         this.name = name;
         this.minPollIntervalMillis = requireNonNull(minPollInterval, "minPollInterval must not be null").toMillis();
         this.pollBackoffFunction = requireNonNull(pollBackoffFunction, "pollBackoffFunction must not be null");
         this.meterRegistry = requireNonNull(meterRegistry, "meterRegistry must not be null");
+        this.downstreamAcceptsWork = requireNonNull(downstreamAcceptsWork, "downstreamAcceptsWork must not be null");
         this.statusLock = new ReentrantLock();
         this.maxConcurrency = maxConcurrency;
         this.semaphore = new Semaphore(maxConcurrency);
@@ -115,6 +120,10 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
                 .register(meterRegistry);
         pollsCounter = Counter
                 .builder("dt.dex.engine.task.worker.polls")
+                .tags(commonMeterTags)
+                .register(meterRegistry);
+        backpressureSkipsCounter = Counter
+                .builder("dt.dex.engine.task.worker.poll.skipped.backpressure")
                 .tags(commonMeterTags)
                 .register(meterRegistry);
         polledTasksDistribution = DistributionSummary
@@ -204,6 +213,7 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
         long nextPollDueInMillis;
         int pollsWithoutResults = 0;
         int consecutiveErrors = 0;
+        int consecutiveBackpressureSkips = 0;
 
         while (!status.isStoppingOrStopped() && !Thread.currentThread().isInterrupted()) {
             try {
@@ -213,16 +223,19 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
                 }
 
                 // Start backing off after 2 poll attempts that did not yield any results,
-                // OR if errors occurred previously. It doesn't make sense to keep polling
-                // at high frequency if the system sits idle or is experiencing issues.
-                if (pollsWithoutResults < 3 && consecutiveErrors == 0) {
+                // OR if errors occurred previously, OR if downstream is unhealthy. It doesn't
+                // make sense to keep polling at high frequency if the system sits idle, is
+                // experiencing issues, or cannot process results.
+                if (pollsWithoutResults < 3 && consecutiveErrors == 0 && consecutiveBackpressureSkips == 0) {
                     nowMillis = System.currentTimeMillis();
                     nextPollAtMillis = lastPolledAtMillis + minPollIntervalMillis;
                     nextPollDueInMillis = nextPollAtMillis > nowMillis
                             ? nextPollAtMillis - nowMillis
                             : 0;
                 } else {
-                    final int backoffAttempts = Math.max(pollsWithoutResults - 2, consecutiveErrors);
+                    final int backoffAttempts = Math.max(
+                            Math.max(pollsWithoutResults - 2, consecutiveErrors),
+                            consecutiveBackpressureSkips);
                     nextPollDueInMillis = Math.max(
                             pollBackoffFunction.apply(backoffAttempts),
                             minPollIntervalMillis);
@@ -264,6 +277,14 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
                     continue;
                 }
 
+                if (!downstreamAcceptsWork.getAsBoolean()) {
+                    logger.debug("Skipping poll: downstream is not accepting work");
+                    backpressureSkipsCounter.increment();
+                    consecutiveBackpressureSkips++;
+                    lastPolledAtMillis = System.currentTimeMillis();
+                    continue;
+                }
+
                 logger.debug("Polling for up to {} tasks", tasksToPoll);
                 lastPolledAtMillis = System.currentTimeMillis();
                 pollsCounter.increment();
@@ -275,6 +296,8 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
                 } finally {
                     pollLatencySample.stop(pollLatencyTimer);
                 }
+
+                consecutiveBackpressureSkips = 0;
 
                 if (polledTasks.isEmpty()) {
                     pollsWithoutResults++;
@@ -322,6 +345,7 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
                 }
             } catch (Throwable t) {
                 consecutiveErrors++;
+                consecutiveBackpressureSkips = 0;
                 logger.error("Unexpected error occurred while polling for tasks (attempt {})", consecutiveErrors, t);
             }
         }

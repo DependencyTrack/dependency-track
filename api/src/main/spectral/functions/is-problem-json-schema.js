@@ -25,7 +25,7 @@ type: object
 properties:
   type:
     type: string
-    format: uri
+    format: uri-reference
   title:
     type: string
   status:
@@ -42,8 +42,8 @@ const assertProblemSchema = (schema) => {
         throw "Problem json must have type 'object'";
     }
     const type = (schema.properties || {}).type || {};
-    if (type.type !== 'string' || type.format !== 'uri') {
-        throw "Problem json must have property 'type' with type 'string' and format 'uri'";
+    if (type.type !== 'string' || type.format !== 'uri-reference') {
+        throw "Problem json must have property 'type' with type 'string' and format 'uri-reference'";
     }
     const title = (schema.properties || {}).title || {};
     if (title.type !== 'string') {

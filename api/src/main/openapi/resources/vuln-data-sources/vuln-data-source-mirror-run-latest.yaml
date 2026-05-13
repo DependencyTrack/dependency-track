@@ -1,0 +1,52 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+get:
+  operationId: getLatestVulnDataSourceMirrorRun
+  summary: Get the latest vulnerability data source mirror run
+  description: |-
+    Returns the status of the most recent mirror run for a given
+    vulnerability data source.
+
+    Returns 404 if no mirror run is available
+    (e.g. none has been triggered yet, or the most recent run
+    is no longer retained), or if the data source is unknown.
+
+    Requires permission `SYSTEM_CONFIGURATION` or `SYSTEM_CONFIGURATION_READ`.
+  tags:
+    - Vuln Data Sources
+  parameters:
+    - name: name
+      in: path
+      description: Name of the vulnerability data source (e.g. `nvd`, `osv`, `github`).
+      required: true
+      schema:
+        type: string
+  responses:
+    "200":
+      description: Mirror run status
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/vuln-data-source-mirror-status.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    "404":
+      $ref: "../../shared/responses/generic-not-found-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"

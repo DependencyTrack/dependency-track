@@ -47,10 +47,8 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ScheduledNotificationDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
-import org.dependencytrack.plugin.runtime.NoSuchExtensionException;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.policy.vulnerability.SyncVulnPolicyBundleWorkflow;
-import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
 import org.dependencytrack.proto.internal.workflow.v1.ProcessScheduledNotificationsWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.tasks.maintenance.MetricsMaintenanceTask;
@@ -58,9 +56,7 @@ import org.dependencytrack.tasks.maintenance.PackageMetadataMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.ProjectMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.TagMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.VulnerabilityDatabaseMaintenanceTask;
-import org.dependencytrack.vulndatasource.MirrorVulnDataSourceWorkflow;
-import org.dependencytrack.vulndatasource.api.VulnDataSource;
-import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
+import org.dependencytrack.vulndatasource.VulnDataSourceMirrorService;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
@@ -112,6 +108,8 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
         final var pluginManager = (PluginManager) event.getServletContext().getAttribute(PluginManager.class.getName());
         requireNonNull(pluginManager, "pluginManager has not been initialized");
 
+        final var vulnDataSourceMirrorService = new VulnDataSourceMirrorService(pluginManager, dexEngine);
+
         scheduler
                 .schedule(
                         "Package Metadata Maintenance",
@@ -145,7 +143,7 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                 .schedule(
                         "GitHub Advisories Mirror",
                         getCronScheduleFromConfig(config, "dt.task.git.hub.advisory.mirror.cron"),
-                        () -> maybeCreateVulnDataSourceMirrorWorkflowRun(pluginManager, dexEngine, "github", "GITHUB"),
+                        () -> vulnDataSourceMirrorService.trigger("github", null),
                         /* triggerOnFirstRun */ true)
                 .schedule(
                         "Internal Component Identification",
@@ -173,12 +171,12 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                 .schedule(
                         "NVD Mirror",
                         getCronScheduleFromConfig(config, "dt.task.nist.mirror.cron"),
-                        () -> maybeCreateVulnDataSourceMirrorWorkflowRun(pluginManager, dexEngine, "nvd", "NVD"),
+                        () -> vulnDataSourceMirrorService.trigger("nvd", null),
                         /* triggerOnFirstRun */ true)
                 .schedule(
                         "OSV Mirror",
                         getCronScheduleFromConfig(config, "dt.task.osv.mirror.cron"),
-                        () -> maybeCreateVulnDataSourceMirrorWorkflowRun(pluginManager, dexEngine, "osv", "OSV"),
+                        () -> vulnDataSourceMirrorService.trigger("osv", null),
                         /* triggerOnFirstRun */ true)
                 .schedule(
                         "Package Metadata Resolution",
@@ -265,31 +263,6 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
     public void contextDestroyed(ServletContextEvent sce) {
         LOGGER.info("Stopping task scheduler");
         scheduler.close();
-    }
-
-    private static void maybeCreateVulnDataSourceMirrorWorkflowRun(
-            PluginManager pluginManager,
-            DexEngine dexEngine,
-            String dataSourceName,
-            String sourceName) {
-        final VulnDataSourceFactory factory;
-        try {
-            factory = pluginManager.getFactory(VulnDataSource.class, dataSourceName);
-        } catch (NoSuchExtensionException e) {
-            return;
-        }
-
-        if (!factory.isDataSourceEnabled()) {
-            return;
-        }
-
-        dexEngine.createRun(
-                new CreateWorkflowRunRequest<>(MirrorVulnDataSourceWorkflow.class)
-                        .withWorkflowInstanceId("mirror-vuln-data-source:" + dataSourceName)
-                        .withArgument(MirrorVulnDataSourceArg.newBuilder()
-                                .setDataSourceName(dataSourceName)
-                                .setSourceName(sourceName)
-                                .build()));
     }
 
 }

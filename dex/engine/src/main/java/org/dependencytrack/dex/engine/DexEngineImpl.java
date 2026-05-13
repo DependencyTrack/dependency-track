@@ -21,6 +21,10 @@ package org.dependencytrack.dex.engine;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.protobuf.util.Timestamps;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.micrometer.tagged.TaggedCircuitBreakerMetrics;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter.MeterProvider;
@@ -75,6 +79,7 @@ import org.dependencytrack.dex.engine.persistence.model.PolledWorkflowEvents;
 import org.dependencytrack.dex.engine.persistence.model.PolledWorkflowTask;
 import org.dependencytrack.dex.engine.persistence.request.GetWorkflowRunHistoryRequest;
 import org.dependencytrack.dex.engine.support.Buffer;
+import org.dependencytrack.dex.engine.support.CircuitBreakerStateTransitionLogger;
 import org.dependencytrack.dex.proto.event.v1.ActivityTaskCompleted;
 import org.dependencytrack.dex.proto.event.v1.ActivityTaskFailed;
 import org.dependencytrack.dex.proto.event.v1.ChildRunFailed;
@@ -164,6 +169,7 @@ final class DexEngineImpl implements DexEngine {
     private @Nullable Buffer<ExternalEvent> externalEventBuffer;
     private @Nullable Buffer<TaskEvent> taskEventBuffer;
     private @Nullable Buffer<ActivityTaskHeartbeat> activityTaskHeartbeatBuffer;
+    private @Nullable CircuitBreakerRegistry bufferFlushCircuitBreakerRegistry;
     private @Nullable MaintenanceWorker maintenanceWorker;
     private @Nullable Cache<WorkflowRunHistoryCacheKey, CachedWorkflowRunHistory> runHistoryCache;
 
@@ -268,13 +274,47 @@ final class DexEngineImpl implements DexEngine {
             LOGGER.debug("Not starting task schedulers because leader election is disabled");
         }
 
+        LOGGER.debug("Initializing buffer flush circuit breaker registry");
+        bufferFlushCircuitBreakerRegistry = CircuitBreakerRegistry.of(
+                // NB: Config is hardcoded for now because exposing it significantly
+                // increases config surface. We can always add that later if necessary.
+                CircuitBreakerConfig.custom()
+                        .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                        // A sliding window of 20 calls is ~2s of history assuming a ~100ms flush interval,
+                        // which keeps detection responsive without flipping on a single hiccup.
+                        .slidingWindowSize(20)
+                        // Calculate failure rate only after at least 10 calls.
+                        // Avoids opening on cold starts before the window has settled.
+                        .minimumNumberOfCalls(10)
+                        // Transition to open state when at least 50% of calls failed.
+                        .failureRateThreshold(50.0f)
+                        // Calls slower than this are considered slow.
+                        // 5s is ~50x a healthy flush, and should be sufficient padding
+                        // to account for GC pauses or comparable blips.
+                        .slowCallDurationThreshold(Duration.ofSeconds(5))
+                        // Transition to open state when at least 80% of calls were slow.
+                        .slowCallRateThreshold(80.0f)
+                        .permittedNumberOfCallsInHalfOpenState(1)
+                        .waitIntervalFunctionInOpenState(
+                                IntervalFunction.ofExponentialRandomBackoff(
+                                        /* initialInterval */ Duration.ofSeconds(1),
+                                        /* multiplier */ 2.0,
+                                        /* randomizationFactor */ 0.3,
+                                        /* maxInterval */ Duration.ofSeconds(30)))
+                        .build());
+        TaggedCircuitBreakerMetrics
+                .ofCircuitBreakerRegistry(bufferFlushCircuitBreakerRegistry)
+                .bindTo(config.metrics().meterRegistry());
+        CircuitBreakerStateTransitionLogger.attach(bufferFlushCircuitBreakerRegistry);
+
         LOGGER.debug("Starting external event buffer");
         externalEventBuffer = new Buffer<>(
                 "external-event",
                 this::flushExternalEvents,
                 config.externalEventBuffer().flushInterval(),
                 config.externalEventBuffer().maxBatchSize(),
-                config.metrics().meterRegistry());
+                config.metrics().meterRegistry(),
+                bufferFlushCircuitBreakerRegistry);
         externalEventBuffer.start();
 
         // The buffer's flush interval should be long enough to allow
@@ -289,7 +329,8 @@ final class DexEngineImpl implements DexEngine {
                 this::flushTaskEvents,
                 config.taskEventBuffer().flushInterval(),
                 config.taskEventBuffer().maxBatchSize(),
-                config.metrics().meterRegistry());
+                config.metrics().meterRegistry(),
+                bufferFlushCircuitBreakerRegistry);
         taskEventBuffer.start();
 
         LOGGER.debug("Starting activity task heartbeat buffer");
@@ -298,7 +339,8 @@ final class DexEngineImpl implements DexEngine {
                 this::processActivityTaskHeartbeats,
                 config.activityTaskHeartbeatBuffer().flushInterval(),
                 config.activityTaskHeartbeatBuffer().maxBatchSize(),
-                config.metrics().meterRegistry());
+                config.metrics().meterRegistry(),
+                bufferFlushCircuitBreakerRegistry);
         activityTaskHeartbeatBuffer.start();
 
         if (config.leaderElection().isEnabled()) {
@@ -421,6 +463,10 @@ final class DexEngineImpl implements DexEngine {
             isUp &= taskEventBuffer.status() == Buffer.Status.RUNNING;
             responseBuilder.withData("buffer:" + taskEventBuffer.name(), taskEventBuffer.status().name());
         }
+        if (activityTaskHeartbeatBuffer != null) {
+            isUp &= activityTaskHeartbeatBuffer.status() == Buffer.Status.RUNNING;
+            responseBuilder.withData("buffer:" + activityTaskHeartbeatBuffer.name(), activityTaskHeartbeatBuffer.status().name());
+        }
 
         for (final Map.Entry<String, TaskWorker> entry : taskWorkerByName.entrySet()) {
             isUp &= entry.getValue().status() == TaskWorker.Status.RUNNING;
@@ -514,7 +560,9 @@ final class DexEngineImpl implements DexEngine {
                 metadataRegistry,
                 options.queueName(),
                 options.maxConcurrency(),
-                config.metrics().meterRegistry());
+                config.metrics().meterRegistry(),
+                () -> (taskEventBuffer == null || taskEventBuffer.acceptsWork())
+                        && (activityTaskHeartbeatBuffer == null || activityTaskHeartbeatBuffer.acceptsWork()));
 
         if (taskWorkerByName.putIfAbsent("activity/" + options.name(), worker) != null) {
             throw new IllegalStateException(
@@ -541,7 +589,8 @@ final class DexEngineImpl implements DexEngine {
                 options.minPollInterval(),
                 options.pollBackoffFunction(),
                 options.maxConcurrency(),
-                config.metrics().meterRegistry());
+                config.metrics().meterRegistry(),
+                () -> taskEventBuffer == null || taskEventBuffer.acceptsWork());
 
         if (taskWorkerByName.putIfAbsent("workflow/" + options.name(), worker) != null) {
             throw new IllegalStateException(
@@ -1489,58 +1538,58 @@ final class DexEngineImpl implements DexEngine {
         final Map<ActivityTaskId, TaskLock> lockByTaskId;
         try {
             lockByTaskId = jdbi.inTransaction(handle -> {
-            final Update update = handle.createUpdate("""
-                    update dex_activity_task as task
-                       set locked_until = locked_until + t.lock_timeout
-                         , lock_version = task.lock_version + 1
-                         , updated_at = now()
-                      from unnest(:queueNames, :workflowRunIds, :createdEventIds, :lockTimeouts, :lockVersions)
-                        as t(queue_name, workflow_run_id, created_event_id, lock_timeout, lock_version)
-                     where task.queue_name = t.queue_name
-                       and task.workflow_run_id = t.workflow_run_id
-                       and task.created_event_id = t.created_event_id
-                       and task.locked_by = :engineInstanceId
-                       and task.lock_version = t.lock_version
-                    returning task.queue_name
-                            , task.workflow_run_id
-                            , task.created_event_id
-                            , task.locked_until
-                            , task.lock_version
-                    """);
+                final Update update = handle.createUpdate("""
+                        update dex_activity_task as task
+                           set locked_until = locked_until + t.lock_timeout
+                             , lock_version = task.lock_version + 1
+                             , updated_at = now()
+                          from unnest(:queueNames, :workflowRunIds, :createdEventIds, :lockTimeouts, :lockVersions)
+                            as t(queue_name, workflow_run_id, created_event_id, lock_timeout, lock_version)
+                         where task.queue_name = t.queue_name
+                           and task.workflow_run_id = t.workflow_run_id
+                           and task.created_event_id = t.created_event_id
+                           and task.locked_by = :engineInstanceId
+                           and task.lock_version = t.lock_version
+                        returning task.queue_name
+                                , task.workflow_run_id
+                                , task.created_event_id
+                                , task.locked_until
+                                , task.lock_version
+                        """);
 
-            final var queueNames = new String[heartbeats.size()];
-            final var workflowRunIds = new UUID[heartbeats.size()];
-            final var createdEventIds = new int[heartbeats.size()];
-            final var lockTimeouts = new Duration[heartbeats.size()];
-            final var lockVersions = new int[heartbeats.size()];
+                final var queueNames = new String[heartbeats.size()];
+                final var workflowRunIds = new UUID[heartbeats.size()];
+                final var createdEventIds = new int[heartbeats.size()];
+                final var lockTimeouts = new Duration[heartbeats.size()];
+                final var lockVersions = new int[heartbeats.size()];
 
-            int i = 0;
-            for (final ActivityTaskHeartbeat heartbeat : heartbeats) {
-                queueNames[i] = heartbeat.taskId().queueName();
-                workflowRunIds[i] = heartbeat.taskId().workflowRunId();
-                createdEventIds[i] = heartbeat.taskId().createdEventId();
-                lockTimeouts[i] = heartbeat.lockTimeout();
-                lockVersions[i] = heartbeat.lock().version();
-                i++;
-            }
+                int i = 0;
+                for (final ActivityTaskHeartbeat heartbeat : heartbeats) {
+                    queueNames[i] = heartbeat.taskId().queueName();
+                    workflowRunIds[i] = heartbeat.taskId().workflowRunId();
+                    createdEventIds[i] = heartbeat.taskId().createdEventId();
+                    lockTimeouts[i] = heartbeat.lockTimeout();
+                    lockVersions[i] = heartbeat.lock().version();
+                    i++;
+                }
 
-            return update
-                    .bind("engineInstanceId", config.instanceId())
-                    .bind("queueNames", queueNames)
-                    .bind("workflowRunIds", workflowRunIds)
-                    .bind("createdEventIds", createdEventIds)
-                    .bind("lockTimeouts", lockTimeouts)
-                    .bind("lockVersions", lockVersions)
-                    .executeAndReturnGeneratedKeys("locked_until")
-                    .map((rs, ctx) -> Map.entry(
-                            new ActivityTaskId(
-                                    rs.getString("queue_name"),
-                                    rs.getObject("workflow_run_id", UUID.class),
-                                    rs.getInt("created_event_id")),
-                            new TaskLock(
-                                    ctx.findColumnMapperFor(Instant.class).orElseThrow().map(rs, "locked_until", ctx),
-                                    rs.getInt("lock_version"))))
-                    .collectToMap(Map.Entry::getKey, Map.Entry::getValue);
+                return update
+                        .bind("engineInstanceId", config.instanceId())
+                        .bind("queueNames", queueNames)
+                        .bind("workflowRunIds", workflowRunIds)
+                        .bind("createdEventIds", createdEventIds)
+                        .bind("lockTimeouts", lockTimeouts)
+                        .bind("lockVersions", lockVersions)
+                        .executeAndReturnGeneratedKeys("locked_until")
+                        .map((rs, ctx) -> Map.entry(
+                                new ActivityTaskId(
+                                        rs.getString("queue_name"),
+                                        rs.getObject("workflow_run_id", UUID.class),
+                                        rs.getInt("created_event_id")),
+                                new TaskLock(
+                                        ctx.findColumnMapperFor(Instant.class).orElseThrow().map(rs, "locked_until", ctx),
+                                        rs.getInt("lock_version"))))
+                        .collectToMap(Map.Entry::getKey, Map.Entry::getValue);
             });
         } catch (RuntimeException e) {
             for (final ActivityTaskHeartbeat heartbeat : heartbeats) {

@@ -31,7 +31,9 @@ module org.dependencytrack.dex.engine {
     requires com.github.benmanes.caffeine;
     requires com.google.protobuf.util;
     requires com.google.protobuf;
+    requires io.github.resilience4j.circuitbreaker;
     requires io.github.resilience4j.core;
+    requires io.github.resilience4j.micrometer;
     requires java.sql;
     requires micrometer.core;
     requires org.jdbi.v3.core;

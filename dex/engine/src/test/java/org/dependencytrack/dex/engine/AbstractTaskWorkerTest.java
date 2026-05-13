@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -57,10 +58,34 @@ class AbstractTaskWorkerTest {
     }
 
     @Test
+    void shouldSkipPollWhenDownstreamDoesNotAcceptWork() throws Exception {
+        final var downstreamAccepts = new AtomicBoolean(false);
+        final var processGate = new CountDownLatch(1);
+        final var processStarted = new CountDownLatch(1);
+        worker = new TestWorker("test", 1, meterRegistry, processGate, processStarted, downstreamAccepts::get);
+        worker.start();
+
+        worker.queueTwoTasks();
+
+        await("Backpressure skips increment")
+                .atMost(Duration.ofSeconds(2))
+                .untilAsserted(() -> assertThat(meterRegistry.get("dt.dex.engine.task.worker.poll.skipped.backpressure")
+                        .tag("workerType", "TestWorker")
+                        .counter().count()).isGreaterThan(0.0));
+
+        assertThat(processStarted.getCount()).isEqualTo(1);
+
+        downstreamAccepts.set(true);
+
+        assertThat(processStarted.await(5, TimeUnit.SECONDS)).isTrue();
+        processGate.countDown();
+    }
+
+    @Test
     void shouldExposeConcurrencyUtilizationGauge() throws Exception {
         final var processGate = new CountDownLatch(1);
         final var processStarted = new CountDownLatch(2);
-        worker = new TestWorker("test", 4, meterRegistry, processGate, processStarted);
+        worker = new TestWorker("test", 4, meterRegistry, processGate, processStarted, () -> true);
         worker.start();
 
         assertThat(meterRegistry.get("dt.dex.engine.task.worker.concurrency.utilization")
@@ -100,13 +125,15 @@ class AbstractTaskWorkerTest {
                 int maxConcurrency,
                 MeterRegistry meterRegistry,
                 CountDownLatch processGate,
-                CountDownLatch processStarted) {
+                CountDownLatch processStarted,
+                java.util.function.BooleanSupplier downstreamAcceptsWork) {
             super(
                     name,
                     Duration.ofMillis(10),
                     IntervalFunction.of(Duration.ofMillis(10)),
                     maxConcurrency,
-                    meterRegistry);
+                    meterRegistry,
+                    downstreamAcceptsWork);
             this.processGate = processGate;
             this.processStarted = processStarted;
         }

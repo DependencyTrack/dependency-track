@@ -1917,6 +1917,7 @@ class DexEngineImplTest {
             assertThat(response.getData().get()).containsExactlyInAnyOrderEntriesOf(
                     Map.ofEntries(
                             Map.entry("internalStatus", "RUNNING"),
+                            Map.entry("buffer:activity-task-heartbeat", "RUNNING"),
                             Map.entry("buffer:external-event", "RUNNING"),
                             Map.entry("buffer:task-event", "RUNNING")));
         }

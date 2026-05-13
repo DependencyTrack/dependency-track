@@ -82,7 +82,7 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
         final NotificationRule webhookRule = apiClient.createNotificationRule(new CreateNotificationRuleRequest(
                 "foo", "PORTFOLIO", "INFORMATIONAL", new CreateNotificationRuleRequest.Publisher(webhookPublisher.uuid())));
         apiClient.updateNotificationRule(new UpdateNotificationRuleRequest(webhookRule.uuid(), webhookRule.name(), true, "PORTFOLIO",
-                "INFORMATIONAL", Set.of("BOM_PROCESSED", "PROJECT_VULN_ANALYSIS_COMPLETE"), /* language=JSON */ """
+                "INFORMATIONAL", Set.of("BOM_PROCESSED"), /* language=JSON */ """
                 {
                   "destinationUrl": "http://host.testcontainers.internal:%d/notification"
                 }
@@ -109,10 +109,6 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
         await("BOM_PROCESSED webhook notification")
                 .atMost(Duration.ofSeconds(15))
                 .untilAsserted(this::verifyBomProcessedWebhookNotification);
-
-        await("PROJECT_VULN_ANALYSIS_COMPLETE webhook notification")
-                .atMost(Duration.ofSeconds(15))
-                .untilAsserted(this::verifyProjectVulnAnalysisCompleteNotification);
     }
 
     private void verifyBomProcessedWebhookNotification() {
@@ -146,54 +142,4 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
                         }
                         """)));
     }
-
-    private void verifyProjectVulnAnalysisCompleteNotification() {
-        wireMock.verify(1, postRequestedFor(urlPathEqualTo("/notification"))
-                .withRequestBody(equalToJson("""
-                        {
-                           "notification" : {
-                             "id" : "${json-unit.any-string}",
-                             "level" : "LEVEL_INFORMATIONAL",
-                             "scope" : "SCOPE_PORTFOLIO",
-                             "group" : "GROUP_PROJECT_VULN_ANALYSIS_COMPLETE",
-                             "timestamp" : "${json-unit.regex}(^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\\\.[0-9]{3}Z$)",
-                             "title" : "Project vulnerability analysis complete",
-                             "content" : "${json-unit.any-string}",
-                             "subject" : {
-                               "token": "${json-unit.any-string}",
-                               "project" : {
-                                 "uuid": "${json-unit.any-string}",
-                                 "name" : "foo",
-                                 "version" : "bar",
-                                 "purl": "pkg:maven/org.dependencytrack/dependency-track@4.5.0?type=war",
-                                 "isActive" : true
-                               },
-                               "findings" : [ {
-                                 "component" : {
-                                   "uuid": "${json-unit.any-string}",
-                                   "group" : "com.fasterxml.jackson.core",
-                                   "name" : "jackson-databind",
-                                   "version" : "2.13.2.2",
-                                   "purl" : "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.2.2?type=jar",
-                                   "md5" : "055c97cb488b0956801e13abcc2a0cfe",
-                                   "sha1" : "ffeb635597d093509f33e1e94274d14be610f933",
-                                   "sha256" : "efb86b148712a838b94b3cfc95769785a116b3461f709b4cc510055a58b804b2",
-                                   "sha512" : "0e9398591d86f80f16fc2d6ff0dda3e7821033e2c59472981eaab61443be3d77198655682905b85260fb2186a2cf0f33988aff689a49bb54e56c07e02f607e8a"
-                                 },
-                                 "vulnerabilities" : [ {
-                                   "uuid": "${json-unit.any-string}",
-                                   "vulnId" : "INT-123",
-                                   "source" : "INTERNAL",
-                                   "severity" : "CRITICAL",
-                                   "cvssv3": 10.0,
-                                   "cvssV3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H"
-                                 } ]
-                               } ],
-                               "status" : "PROJECT_VULN_ANALYSIS_STATUS_COMPLETED"
-                             }
-                           }
-                         }
-                        """)));
-    }
-
 }

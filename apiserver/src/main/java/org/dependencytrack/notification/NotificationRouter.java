@@ -33,7 +33,6 @@ import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.PolicyViolationAnalysisDecisionChangeSubject;
 import org.dependencytrack.notification.proto.v1.PolicyViolationSubject;
 import org.dependencytrack.notification.proto.v1.Project;
-import org.dependencytrack.notification.proto.v1.ProjectVulnAnalysisCompleteSubject;
 import org.dependencytrack.notification.proto.v1.UserSubject;
 import org.dependencytrack.notification.proto.v1.VexConsumedOrProcessedSubject;
 import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject;
@@ -366,7 +365,6 @@ final class NotificationRouter {
             case PolicyViolationAnalysisDecisionChangeSubject it -> it.getProject();
             case VulnerabilityAnalysisDecisionChangeSubject it -> it.getProject();
             case Project it -> it;
-            case ProjectVulnAnalysisCompleteSubject it -> it.getProject();
             case VexConsumedOrProcessedSubject it -> it.getProject();
             case null, default -> null;
         };
@@ -404,8 +402,6 @@ final class NotificationRouter {
                                     notification.getGroup(), notification.getSubject().getTypeUrl()));
                 }
                 case GROUP_PROJECT_CREATED -> notification.getSubject().unpack(Project.class);
-                case GROUP_PROJECT_VULN_ANALYSIS_COMPLETE -> notification.getSubject().unpack(
-                        ProjectVulnAnalysisCompleteSubject.class);
                 case GROUP_VEX_CONSUMED, GROUP_VEX_PROCESSED -> notification.getSubject().unpack(
                         VexConsumedOrProcessedSubject.class);
                 case GROUP_USER_CREATED, GROUP_USER_DELETED -> notification.getSubject().unpack(

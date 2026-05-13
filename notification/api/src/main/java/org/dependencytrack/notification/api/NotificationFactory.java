@@ -30,7 +30,6 @@ import org.dependencytrack.notification.proto.v1.BomConsumedOrProcessedSubject;
 import org.dependencytrack.notification.proto.v1.BomProcessingFailedSubject;
 import org.dependencytrack.notification.proto.v1.BomValidationFailedSubject;
 import org.dependencytrack.notification.proto.v1.Component;
-import org.dependencytrack.notification.proto.v1.ComponentVulnAnalysisCompleteSubject;
 import org.dependencytrack.notification.proto.v1.Group;
 import org.dependencytrack.notification.proto.v1.Level;
 import org.dependencytrack.notification.proto.v1.NewPolicyViolationsSummarySubject;
@@ -43,8 +42,6 @@ import org.dependencytrack.notification.proto.v1.PolicyViolationAnalysis;
 import org.dependencytrack.notification.proto.v1.PolicyViolationAnalysisDecisionChangeSubject;
 import org.dependencytrack.notification.proto.v1.PolicyViolationSubject;
 import org.dependencytrack.notification.proto.v1.Project;
-import org.dependencytrack.notification.proto.v1.ProjectVulnAnalysisCompleteSubject;
-import org.dependencytrack.notification.proto.v1.ProjectVulnAnalysisStatus;
 import org.dependencytrack.notification.proto.v1.Scope;
 import org.dependencytrack.notification.proto.v1.UserSubject;
 import org.dependencytrack.notification.proto.v1.VexConsumedOrProcessedSubject;
@@ -70,7 +67,6 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERAB
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_POLICY_VIOLATION;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_CREATED;
-import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_VULN_ANALYSIS_COMPLETE;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_UNSPECIFIED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_USER_CREATED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_USER_DELETED;
@@ -443,29 +439,6 @@ public final class NotificationFactory {
                 .setTitle("Project Added")
                 .setContent(project.getName() + " was created")
                 .setSubject(Any.pack(project))
-                .build();
-    }
-
-    public static Notification createProjectVulnerabilityAnalysisCompleteNotification(
-            Project project,
-            Collection<ComponentVulnAnalysisCompleteSubject> findings,
-            ProjectVulnAnalysisStatus status,
-            String token) {
-        requireNonNull(project, "project must not be null");
-        requireNonNull(findings, "findings must not be null");
-        requireNonNull(status, "status must not be null");
-        requireNonNull(token, "token must not be null");
-
-        return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_PROJECT_VULN_ANALYSIS_COMPLETE, LEVEL_INFORMATIONAL)
-                .setTitle("Project vulnerability analysis complete")
-                .setContent("The vulnerability analysis of a project has completed")
-                .setSubject(Any.pack(
-                        ProjectVulnAnalysisCompleteSubject.newBuilder()
-                                .setProject(project)
-                                .addAllFindings(findings)
-                                .setStatus(status)
-                                .setToken(token)
-                                .build()))
                 .build();
     }
 

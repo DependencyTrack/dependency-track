@@ -20,7 +20,6 @@ package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.model.FindingKey;
 import org.dependencytrack.notification.proto.v1.Component;
-import org.dependencytrack.notification.proto.v1.ComponentVulnAnalysisCompleteSubject;
 import org.dependencytrack.notification.proto.v1.NewVulnerabilitySubject;
 import org.dependencytrack.notification.proto.v1.NewVulnerableDependencySubject;
 import org.dependencytrack.notification.proto.v1.Policy;
@@ -419,126 +418,6 @@ public interface NotificationSubjectDao extends SqlObject {
                 .bind("suppressions", suppressions)
                 .map(new NotificationSubjectProjectAuditChangeRowMapper())
                 .list();
-    }
-
-    default Map<UUID, List<ComponentVulnAnalysisCompleteSubject>> getForProjectVulnAnalysisComplete(
-            Collection<UUID> projectUuids) {
-        if (projectUuids.isEmpty()) {
-            return Map.of();
-        }
-
-        final var componentRowMapper = new NotificationComponentRowMapper();
-        final var vulnerabilityRowMapper = new NotificationVulnerabilityRowMapper();
-        final var subjectByComponentByProject =
-                new HashMap<UUID, HashMap<String, ComponentVulnAnalysisCompleteSubject.Builder>>(projectUuids.size());
-
-        getHandle()
-                .createQuery("""
-                        SELECT p."UUID" AS "projectUuid"
-                             , c."UUID" AS "componentUuid"
-                             , c."GROUP" AS "componentGroup"
-                             , c."NAME" AS "componentName"
-                             , c."VERSION" AS "componentVersion"
-                             , c."PURL" AS "componentPurl"
-                             , c."MD5" AS "componentMd5"
-                             , c."SHA1" AS "componentSha1"
-                             , c."SHA_256" AS "componentSha256"
-                             , c."SHA_512" AS "componentSha512"
-                             , v."UUID" AS "vulnUuid"
-                             , v."VULNID" AS "vulnId"
-                             , v."SOURCE" AS "vulnSource"
-                             , v."TITLE" AS "vulnTitle"
-                             , v."SUBTITLE" AS "vulnSubTitle"
-                             , v."DESCRIPTION" AS "vulnDescription"
-                             , v."RECOMMENDATION" AS "vulnRecommendation"
-                             , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV2SCORE"
-                                 ELSE v."CVSSV2BASESCORE"
-                               END AS "vulnCvssV2BaseScore"
-                             , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV3SCORE"
-                                 ELSE v."CVSSV3BASESCORE"
-                               END AS "vulnCvssV3BaseScore"
-                             , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV4SCORE"
-                                 ELSE v."CVSSV4SCORE"
-                               END AS "vulnCvssV4Score"
-                             , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV2VECTOR"
-                                 ELSE v."CVSSV2VECTOR"
-                               END AS "vulnCvssV2Vector"
-                             , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV3VECTOR"
-                                 ELSE v."CVSSV3VECTOR"
-                               END AS "vulnCvssV3Vector"
-                             , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV4VECTOR"
-                                 ELSE v."CVSSV4VECTOR"
-                               END AS "vulnCvssV4Vector"
-                             , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPSCORE"
-                                 ELSE v."OWASPRRBUSINESSIMPACTSCORE"
-                               END AS "vulnOwaspRrBusinessImpactScore"
-                             , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPSCORE"
-                                 ELSE v."OWASPRRLIKELIHOODSCORE"
-                               END AS "vulnOwaspRrLikelihoodScore"
-                             , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPSCORE"
-                                 ELSE v."OWASPRRTECHNICALIMPACTSCORE"
-                               END AS "vulnOwaspRrTechnicalImpactScore"
-                             , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPVECTOR"
-                                 ELSE v."OWASPRRVECTOR"
-                               END AS "vulnOwaspRrVector"
-                             , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"
-                             , STRING_TO_ARRAY(v."CWES", ',') AS "vulnCwes"
-                             , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
-                          FROM "COMPONENT" AS c
-                         INNER JOIN "PROJECT" AS p
-                            ON p."ID" = c."PROJECT_ID"
-                         INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
-                            ON cv."COMPONENT_ID" = c."ID"
-                         INNER JOIN "VULNERABILITY" AS v
-                            ON v."ID" = cv."VULNERABILITY_ID"
-                          LEFT JOIN "ANALYSIS" AS a
-                            ON a."COMPONENT_ID" = c."ID"
-                           AND a."VULNERABILITY_ID" = v."ID"
-                         WHERE p."UUID" = ANY(:projectUuids)
-                           AND EXISTS(
-                                 SELECT 1
-                                   FROM "FINDINGATTRIBUTION" AS fa
-                                  WHERE fa."COMPONENT_ID" = c."ID"
-                                    AND fa."VULNERABILITY_ID" = v."ID"
-                                    AND fa."DELETED_AT" IS NULL
-                               )
-                           AND a."SUPPRESSED" IS DISTINCT FROM TRUE
-                        """)
-                .bindArray("projectUuids", UUID.class, projectUuids)
-                .reduceResultSet(subjectByComponentByProject, (accumulator, rs, ctx) -> {
-                    final var projectUuid = rs.getObject("projectUuid", UUID.class);
-                    final Component component = componentRowMapper.map(rs, ctx);
-                    final Vulnerability vulnerability = vulnerabilityRowMapper.map(rs, ctx);
-
-                    accumulator
-                            .computeIfAbsent(projectUuid, k -> new HashMap<>())
-                            .computeIfAbsent(
-                                    component.getUuid(),
-                                    k -> ComponentVulnAnalysisCompleteSubject.newBuilder()
-                                            .setComponent(component))
-                            .addVulnerabilities(vulnerability);
-
-                    return accumulator;
-                });
-
-        final var result = new HashMap<UUID, List<ComponentVulnAnalysisCompleteSubject>>(subjectByComponentByProject.size());
-        subjectByComponentByProject.forEach((projectUuid, componentMap) -> {
-            final var findings = new ArrayList<ComponentVulnAnalysisCompleteSubject>(componentMap.size());
-            componentMap.values().forEach(builder -> findings.add(builder.build()));
-            result.put(projectUuid, findings);
-        });
-
-        return result;
     }
 
     @SqlQuery("""

@@ -52,7 +52,6 @@ enum Group {
   GROUP_POLICY_VIOLATION = 15;
   GROUP_PROJECT_CREATED = 16;
   GROUP_BOM_PROCESSING_FAILED = 17;
-  GROUP_PROJECT_VULN_ANALYSIS_COMPLETE = 18;
   GROUP_USER_CREATED = 19;
   GROUP_USER_DELETED = 20;
   GROUP_BOM_VALIDATION_FAILED = 21;
@@ -71,6 +70,10 @@ enum Group {
   // https://github.com/DependencyTrack/hyades/issues/661
   reserved 5;
   reserved "GROUP_INDEXING_SERVICE";
+
+  // PROJECT_VULN_ANALYSIS_COMPLETE notification removed.
+  reserved 18;
+  reserved "GROUP_PROJECT_VULN_ANALYSIS_COMPLETE";
 }
 
 message BackReference {
@@ -232,27 +235,9 @@ message Vulnerability {
   }
 }
 
-message ComponentVulnAnalysisCompleteSubject {
-  Component component = 1;
-  repeated Vulnerability vulnerabilities = 2;
-}
-
-message ProjectVulnAnalysisCompleteSubject {
-  Project project = 1;
-  repeated ComponentVulnAnalysisCompleteSubject findings = 2;
-  ProjectVulnAnalysisStatus status = 3;
-  string token = 4;
-}
-
 message UserSubject {
   string username = 1;
   optional string email = 2;
-}
-
-enum ProjectVulnAnalysisStatus {
-  PROJECT_VULN_ANALYSIS_STATUS_UNSPECIFIED = 0;
-  PROJECT_VULN_ANALYSIS_STATUS_FAILED = 1;
-  PROJECT_VULN_ANALYSIS_STATUS_COMPLETED = 2;
 }
 
 message VulnerabilityAnalysis {

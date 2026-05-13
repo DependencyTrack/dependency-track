@@ -95,7 +95,7 @@ described in [ADR-002]. This will take care of queueing, observability, and resi
 #### Payload size
 
 As noted in [ADR-001], notifications can be large: `BOM_CONSUMED` and `BOM_PROCESSED` notifications include the entire
-BOM in Base64-encoded format. `PROJECT_VULN_ANALYSIS_COMPLETE` notifications include all vulnerabilities of a project.
+BOM in Base64-encoded format.
 While Postgres *can* store large columns (see [TOAST]), it comes with penalties affecting performance, maintenance,
 and backups. Potent compression (e.g. using `zstd`) will most definitely be necessary for all solutions.
 Postgres itself will compress large values, too, but using a less effective algorithm (`pglz`).

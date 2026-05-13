@@ -102,7 +102,7 @@ The DefectDojo documentation says 'If no test_title is provided, the latest test
 ![Configure Project](/images/screenshots/defectdojo_global_reimport.png)
 Alternatively, you can turn on the above reimport feature for all projects in one click, by checking on 'Enable reimport' box as shown in the screenshot above.
 
-### Step 11: Add per project configuration for finding groups
+#### Step 11: Add per project configuration for finding groups
 
 * Not supported in any release yet
 

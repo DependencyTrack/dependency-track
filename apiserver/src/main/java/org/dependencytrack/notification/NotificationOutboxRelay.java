@@ -292,7 +292,7 @@ final class NotificationOutboxRelay implements Closeable {
 
                 // Large payloads have the potential to slow down the dex engine,
                 // as they're stored in the workflow history. Some notifications
-                // can be large, e.g. BOM_CONSUMED or PROJECT_VULN_ANALYSIS_COMPLETED.
+                // can be large, e.g. BOM_CONSUMED.
                 //
                 // If a notification exceeds the configured size threshold,
                 // offload it to file storage and send the file's metadata

@@ -66,7 +66,6 @@ public final class NotificationModelConverter {
             case POLICY_VIOLATION -> Group.GROUP_POLICY_VIOLATION;
             case PROJECT_AUDIT_CHANGE -> Group.GROUP_PROJECT_AUDIT_CHANGE;
             case PROJECT_CREATED -> Group.GROUP_PROJECT_CREATED;
-            case PROJECT_VULN_ANALYSIS_COMPLETE -> Group.GROUP_PROJECT_VULN_ANALYSIS_COMPLETE;
             case REPOSITORY -> Group.GROUP_REPOSITORY;
             case USER_CREATED -> Group.GROUP_USER_CREATED;
             case USER_DELETED -> Group.GROUP_USER_DELETED;
@@ -94,7 +93,6 @@ public final class NotificationModelConverter {
             case GROUP_POLICY_VIOLATION -> NotificationGroup.POLICY_VIOLATION;
             case GROUP_PROJECT_AUDIT_CHANGE -> NotificationGroup.PROJECT_AUDIT_CHANGE;
             case GROUP_PROJECT_CREATED -> NotificationGroup.PROJECT_CREATED;
-            case GROUP_PROJECT_VULN_ANALYSIS_COMPLETE -> NotificationGroup.PROJECT_VULN_ANALYSIS_COMPLETE;
             case GROUP_REPOSITORY -> NotificationGroup.REPOSITORY;
             case GROUP_USER_CREATED -> NotificationGroup.USER_CREATED;
             case GROUP_USER_DELETED -> NotificationGroup.USER_DELETED;

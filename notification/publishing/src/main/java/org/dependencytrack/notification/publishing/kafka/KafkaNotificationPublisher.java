@@ -37,7 +37,6 @@ import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.PolicyViolationAnalysisDecisionChangeSubject;
 import org.dependencytrack.notification.proto.v1.PolicyViolationSubject;
 import org.dependencytrack.notification.proto.v1.Project;
-import org.dependencytrack.notification.proto.v1.ProjectVulnAnalysisCompleteSubject;
 import org.dependencytrack.notification.proto.v1.UserSubject;
 import org.dependencytrack.notification.proto.v1.VexConsumedOrProcessedSubject;
 import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject;
@@ -173,11 +172,6 @@ final class KafkaNotificationPublisher implements NotificationPublisher {
                 requireSubjectOfTypeAnyOf(notification, List.of(Project.class));
                 final var subject = notification.getSubject().unpack(Project.class);
                 yield subject.getUuid();
-            }
-            case GROUP_PROJECT_VULN_ANALYSIS_COMPLETE -> {
-                requireSubjectOfTypeAnyOf(notification, List.of(ProjectVulnAnalysisCompleteSubject.class));
-                final var subject = notification.getSubject().unpack(ProjectVulnAnalysisCompleteSubject.class);
-                yield subject.getProject().getUuid();
             }
             case GROUP_VEX_CONSUMED, GROUP_VEX_PROCESSED -> {
                 requireSubjectOfTypeAnyOf(notification, List.of(VexConsumedOrProcessedSubject.class));

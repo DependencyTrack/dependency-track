@@ -38,7 +38,6 @@ import org.dependencytrack.dex.engine.api.TaskType;
 import org.dependencytrack.dex.engine.api.TaskWorkerOptions;
 import org.dependencytrack.dex.engine.api.request.CreateTaskQueueRequest;
 import org.dependencytrack.dex.listener.DelayedBomProcessedNotificationEmitter;
-import org.dependencytrack.dex.listener.ProjectVulnAnalysisCompleteNotificationEmitter;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.metrics.FetchProjectMetricsUpdateCandidatesActivity;
 import org.dependencytrack.metrics.RefreshGlobalPortfolioMetricsActivity;
@@ -345,8 +344,6 @@ public final class DexEngineInitializer implements ServletContextListener {
                 engine.registerTaskWorker(workerOptions);
             }
         }
-
-        engine.addEventListener(new ProjectVulnAnalysisCompleteNotificationEmitter());
         if (config
                 .getOptionalValue("dt.tmp.delay.bom.processed.notification", boolean.class)
                 .orElse(false)) {

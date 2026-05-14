@@ -19,6 +19,8 @@
 package org.dependencytrack.migration;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.configuration.FluentConfiguration;
+import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
 
@@ -29,15 +31,22 @@ public final class MigrationExecutor {
     private final Flyway flyway;
 
     public MigrationExecutor(DataSource dataSource) {
-        this.flyway = Flyway.configure()
+        this(dataSource, null);
+    }
+
+    public MigrationExecutor(DataSource dataSource, @Nullable String targetVersion) {
+        final FluentConfiguration cfg = Flyway.configure()
                 .dataSource(dataSource)
                 .baselineVersion("202605022031")
                 .baselineOnMigrate(true)
                 .cleanDisabled(true)
                 .placeholderReplacement(false)
                 .locations("classpath:" + LOCATION)
-                .loggers("slf4j")
-                .load();
+                .loggers("slf4j");
+        if (targetVersion != null) {
+            cfg.target(targetVersion);
+        }
+        this.flyway = cfg.load();
     }
 
     public void execute() {

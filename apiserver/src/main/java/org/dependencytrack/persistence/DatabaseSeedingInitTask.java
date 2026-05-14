@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.INTERNAL_DEFAULT_OBJECTS_VERSION;
@@ -165,6 +166,7 @@ public final class DatabaseSeedingInitTask implements InitTask {
                          team_name
                        , GEN_RANDOM_UUID()
                     FROM cte_team_permission
+                  ON CONFLICT ("NAME") DO NOTHING
                   RETURNING "ID" AS id
                           , "NAME" AS name
                 )
@@ -193,30 +195,36 @@ public final class DatabaseSeedingInitTask implements InitTask {
     }
 
     public static void seedDefaultUsers(final Handle jdbiHandle) {
-        final long adminUserId = jdbiHandle.createUpdate("""
+        final Optional<Long> adminUserId = jdbiHandle.createUpdate("""
                         INSERT INTO "USER" (
                           "TYPE", "USERNAME", "EMAIL", "PASSWORD", "LAST_PASSWORD_CHANGE"
                         , "FORCE_PASSWORD_CHANGE", "NON_EXPIRY_PASSWORD", "SUSPENDED")
                         VALUES ('MANAGED', 'admin', 'admin@localhost', :password, NOW(), TRUE, TRUE, FALSE)
+                        ON CONFLICT ("USERNAME") DO NOTHING
                         RETURNING "ID"
                         """)
                 .bind("password", new String(PasswordService.createHash("admin".toCharArray())))
                 .executeAndReturnGeneratedKeys()
                 .mapTo(Long.class)
-                .one();
+                .findOne();
+
+        if (adminUserId.isEmpty()) {
+            LOGGER.debug("Default 'admin' user already exists; skipping team/permission seeding");
+            return;
+        }
 
         jdbiHandle.createUpdate("""
                         INSERT INTO "USERS_TEAMS" ("USER_ID", "TEAM_ID")
                         SELECT :adminUserId, (SELECT "ID" FROM "TEAM" WHERE "NAME" = 'Administrators')
                         """)
-                .bind("adminUserId", adminUserId)
+                .bind("adminUserId", adminUserId.get())
                 .execute();
 
         jdbiHandle.createUpdate("""
                         INSERT INTO "USERS_PERMISSIONS" ("USER_ID", "PERMISSION_ID")
                         SELECT :adminUserId, "PERMISSION"."ID" FROM "PERMISSION"
                         """)
-                .bind("adminUserId", adminUserId)
+                .bind("adminUserId", adminUserId.get())
                 .execute();
     }
 
@@ -277,6 +285,8 @@ public final class DatabaseSeedingInitTask implements InitTask {
     }
 
     public static void seedDefaultLicenseGroups(final Handle jdbiHandle) {
+        // NB: LICENSEGROUP has no UNIQUE constraint on NAME (only on UUID),
+        // so ON CONFLICT can't be used. Guard with WHERE NOT EXISTS instead.
         final Update update = jdbiHandle.createUpdate("""
                 WITH cte_group_license AS (
                   SELECT *
@@ -289,6 +299,8 @@ public final class DatabaseSeedingInitTask implements InitTask {
                        , group_risk_weight
                        , GEN_RANDOM_UUID()
                     FROM cte_group_license
+                   WHERE NOT EXISTS (
+                       SELECT 1 FROM "LICENSEGROUP" lg WHERE lg."NAME" = cte_group_license.group_name)
                   RETURNING "ID" AS id, "NAME" AS name
                 )
                 INSERT INTO "LICENSEGROUP_LICENSE" ("LICENSEGROUP_ID", "LICENSE_ID")

@@ -91,6 +91,13 @@ jobs:
           path: |-
             apiserver/target/bom.json
 
+      - name: Upload v4-migrator JAR
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        with:
+          name: v4-migrator-jar
+          path: |-
+            support/v4-migrator/target/v4-migrator.jar
+
       - name: Extract OpenAPI Specs
         run: |-
           mkdir -p openapi-spec/v1 openapi-spec/v2
@@ -104,26 +111,41 @@ jobs:
           path: openapi-spec/
 
   build-container:
+    name: Build Container (${{ matrix.name }})
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       packages: write # Required to push images to ghcr.io
     needs:
       - build-java
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: apiserver
+            image: hyades-apiserver
+            context: apiserver
+            artifact: assembled-dist
+            prepare-cmd: tar xzf apiserver/target/dependency-track-apiserver-dist.tar.gz -C apiserver/target
+          - name: v4-migrator
+            image: v4-migrator
+            context: support/v4-migrator
+            artifact: v4-migrator-jar
+            prepare-cmd: ":" # no-op
     steps:
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
         with:
           persist-credentials: false
 
-      - name: Download Artifacts
+      - name: Download build artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # tag=v8.0.1
         with:
-          name: assembled-dist
-          path: apiserver/target
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.context }}/target
 
-      - name: Extract Distribution Archive
-        run: tar xzf apiserver/target/dependency-track-apiserver-dist.tar.gz -C apiserver/target
+      - name: Prepare image context
+        run: ${{ matrix.prepare-cmd }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # tag=v4.0.0
@@ -147,8 +169,9 @@ jobs:
         env:
           REF_NAME: ${{ inputs.ref-name }}
           APP_VERSION: ${{ inputs.app-version }}
+          IMAGE: ${{ matrix.image }}
         run: |-
-          IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/hyades-apiserver"
+          IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${IMAGE}"
           TAGS=""
 
           if [[ $REF_NAME == feature-* ]]; then
@@ -170,5 +193,5 @@ jobs:
             COMMIT_SHA=${{ github.sha }}
           platforms: linux/amd64,linux/arm64
           push: ${{ inputs.publish-container }}
-          context: ./apiserver
-          file: ./apiserver/src/main/docker/Dockerfile
+          context: ./${{ matrix.context }}
+          file: ./${{ matrix.context }}/src/main/docker/Dockerfile

@@ -118,7 +118,7 @@
         <lib.datanucleus-api-jdo.version>6.0.5</lib.datanucleus-api-jdo.version>
         <lib.datanucleus-core.version>6.0.11</lib.datanucleus-core.version>
         <lib.datanucleus-javax-jdo.version>3.2.1</lib.datanucleus-javax-jdo.version>
-        <lib.datanucleus-rdbms.version>6.0.10</lib.datanucleus-rdbms.version>
+        <lib.datanucleus-rdbms.version>6.0.11</lib.datanucleus-rdbms.version>
         <lib.flyway.version>12.5.0</lib.flyway.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.greenmail.version>2.1.8</lib.greenmail.version>

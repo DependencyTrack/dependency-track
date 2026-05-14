@@ -73,7 +73,7 @@ public final class SessionTokenAuthenticationService implements AuthenticationSe
 
             this.tokenHash = hashedToken;
 
-            return session.getUser();
+            return qm.detach(session.getUser());
         }
     }
 

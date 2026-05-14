@@ -19,6 +19,10 @@
 package alpine.server.auth;
 
 import alpine.model.ManagedUser;
+import alpine.model.OidcUser;
+import alpine.model.Permission;
+import alpine.model.Team;
+import alpine.model.User;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.persistence.PersistenceManagerFactory;
 import io.smallrye.config.SmallRyeConfigBuilder;
@@ -161,6 +165,43 @@ class SessionTokenAuthenticationServiceTest {
 
         assertThat(authService.isSpecified()).isTrue();
         assertThat(authService.authenticate()).isNull();
+    }
+
+    @Test
+    void shouldReturnDetachedUserWithTeamsAndPermissionsLoaded() throws Exception {
+        final String rawToken;
+        try (final var qm = new AlpineQueryManager()) {
+            final OidcUser user = qm.callInTransaction(() -> {
+                // NB: Use a non-ManagedUser here to ensure that DN
+                // correctly resolves the user type via discriminator column.
+                final OidcUser created = qm.createOidcUser("testuser");
+
+                final Team team = qm.createTeam("team-a");
+                qm.addUserToTeam(created, team);
+
+                final Permission permission = qm.createPermission("FOO", null);
+                created.setPermissions(List.of(permission));
+
+                return created;
+            });
+
+            rawToken = new SessionTokenService().createSession(user.getId());
+        }
+
+        final var request = mock(ContainerRequest.class);
+        when(request.getRequestHeader("Authorization")).thenReturn(List.of("Bearer " + rawToken));
+        final var authService = new SessionTokenAuthenticationService(request);
+
+        final Principal principal = authService.authenticate();
+        assertThat(principal).isInstanceOf(User.class);
+
+        final var user = (User) principal;
+        assertThat(user.getTeams())
+                .extracting(Team::getName)
+                .containsExactly("team-a");
+        assertThat(user.getPermissions())
+                .extracting(Permission::getName)
+                .containsExactly("FOO");
     }
 
     @Test

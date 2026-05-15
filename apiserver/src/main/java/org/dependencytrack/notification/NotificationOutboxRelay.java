@@ -33,6 +33,7 @@ import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.notification.proto.v1.Notification;
+import org.dependencytrack.persistence.jdbi.AdvisoryLocks;
 import org.dependencytrack.persistence.jdbi.NotificationOutboxDao;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
 import org.jdbi.v3.core.Handle;
@@ -224,7 +225,7 @@ final class NotificationOutboxRelay implements Closeable {
             // emitted. Work-stealing polling with FOR UPDATE SKIP LOCKED would mess with ordering.
             //
             // The lack of concurrency is in part mitigated by processing notifications in batches.
-            final boolean lockAcquired = tryAcquireAdvisoryLock(handle);
+            final boolean lockAcquired = AdvisoryLocks.tryAcquire(handle, ADVISORY_LOCK_ID);
             if (!lockAcquired) {
                 LOGGER.debug("Lock already acquired by another instance");
                 return RelayCycleOutcome.SKIPPED;
@@ -267,15 +268,6 @@ final class NotificationOutboxRelay implements Closeable {
 
             return RelayCycleOutcome.COMPLETED;
         });
-    }
-
-    private boolean tryAcquireAdvisoryLock(Handle handle) {
-        return handle.createQuery("""
-                        SELECT pg_try_advisory_xact_lock(:lockId)
-                        """)
-                .bind("lockId", ADVISORY_LOCK_ID)
-                .mapTo(boolean.class)
-                .one();
     }
 
     private void sendAll(Collection<NotificationRouter.Result> routerResults) {

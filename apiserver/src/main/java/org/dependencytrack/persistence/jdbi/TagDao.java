@@ -19,6 +19,7 @@
 package org.dependencytrack.persistence.jdbi;
 
 import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 /**
@@ -29,19 +30,33 @@ public interface TagDao extends SqlObject {
     @SqlUpdate("""
             DELETE
               FROM "TAG"
-             WHERE NOT EXISTS(
-                 SELECT 1
-                   FROM "PROJECTS_TAGS"
-                  WHERE "PROJECTS_TAGS"."TAG_ID" = "TAG"."ID")
-               AND NOT EXISTS(
-                  SELECT 1
-                    FROM "POLICY_TAGS"
-                   WHERE "POLICY_TAGS"."TAG_ID" = "TAG"."ID")
-               AND NOT EXISTS(
-                  SELECT 1
-                    FROM "VULNERABILITIES_TAGS"
-                   WHERE "VULNERABILITIES_TAGS"."TAG_ID" = "TAG"."ID")
+             WHERE "ID" IN (
+               SELECT "ID"
+                 FROM "TAG" AS t
+                WHERE TRUE
+                  AND NOT EXISTS(
+                    SELECT 1
+                      FROM "NOTIFICATIONRULE_TAGS" AS nrt
+                     WHERE nrt."TAG_ID" = t."ID"
+                  )
+                  AND NOT EXISTS(
+                    SELECT 1
+                      FROM "PROJECTS_TAGS" AS prt
+                     WHERE prt."TAG_ID" = t."ID"
+                  )
+                  AND NOT EXISTS(
+                    SELECT 1
+                      FROM "POLICY_TAGS" AS pot
+                     WHERE pot."TAG_ID" = t."ID"
+                  )
+                  AND NOT EXISTS(
+                    SELECT 1
+                      FROM "VULNERABILITIES_TAGS" AS vt
+                     WHERE vt."TAG_ID" = t."ID"
+                  )
+                LIMIT :batchSize
+             )
             """)
-    int deleteUnused();
+    int deleteUnused(@Bind int batchSize);
 
 }

@@ -31,10 +31,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_TAGS_DELETE_UNUSED;
 
-public class TagMaintenanceTaskTest extends PersistenceCapableTest {
+class TagMaintenanceTaskTest extends PersistenceCapableTest {
 
     @Test
-    public void test() {
+    void test() {
         qm.createConfigProperty(
                 MAINTENANCE_TAGS_DELETE_UNUSED.getGroupName(),
                 MAINTENANCE_TAGS_DELETE_UNUSED.getPropertyName(),
@@ -73,7 +73,7 @@ public class TagMaintenanceTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testWithDeleteUnusedDisabled() {
+    void testWithDeleteUnusedDisabled() {
         qm.createConfigProperty(
                 MAINTENANCE_TAGS_DELETE_UNUSED.getGroupName(),
                 MAINTENANCE_TAGS_DELETE_UNUSED.getPropertyName(),

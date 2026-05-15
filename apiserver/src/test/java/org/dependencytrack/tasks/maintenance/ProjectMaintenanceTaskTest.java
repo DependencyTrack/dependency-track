@@ -37,10 +37,10 @@ import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJ
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_VERSIONS;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
-public class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
+class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
     @Test
-    public void testWithRetentionTypeAge() {
+    void testWithRetentionTypeAge() {
         qm.createConfigProperty(
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
@@ -77,7 +77,7 @@ public class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testWithRetentionTypeVersionsForSameProject() {
+    void testWithRetentionTypeVersionsForSameProject() {
         qm.createConfigProperty(
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
@@ -134,7 +134,7 @@ public class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testWithRetentionTypeVersionsForDifferentProjects() {
+    void testWithRetentionTypeVersionsForDifferentProjects() {
         qm.createConfigProperty(
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
@@ -200,7 +200,7 @@ public class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testWithProjectRetentionDisabled() {
+    void testWithProjectRetentionDisabled() {
         qm.createConfigProperty(
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),
@@ -222,7 +222,7 @@ public class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testWithProjectRetentionDisabledWithEmptyValue() {
+    void testWithProjectRetentionDisabledWithEmptyValue() {
         qm.createConfigProperty(
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getGroupName(),
                 MAINTENANCE_PROJECTS_RETENTION_TYPE.getPropertyName(),

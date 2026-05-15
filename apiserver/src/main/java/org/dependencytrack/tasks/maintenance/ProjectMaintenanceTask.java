@@ -82,23 +82,15 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
                         .attach(ConfigPropertyDao.class)
                         .getValue(MAINTENANCE_PROJECTS_RETENTION_VERSIONS, Integer.class));
 
-        final int[] deletedVersions = new int[1];
-
-        runBatched(BATCH_SIZE, handle -> {
-            final var projectDao = handle.attach(ProjectDao.class);
-            final List<String> projectBatch = projectDao.getDistinctProjects(versionCountThreshold, BATCH_SIZE);
-
-            for (final String projectName : projectBatch) {
-                final List<ProjectDao.DeletedProject> deleted =
-                        projectDao.retainLastXInactiveProjects(projectName, versionCountThreshold);
-                deletedVersions[0] += deleted.size();
-                logDeletedProjects(deleted);
-            }
-
-            return projectBatch.size();
+        final int deleted = runBatched(BATCH_SIZE, handle -> {
+            final List<ProjectDao.DeletedProject> deletedProjects = handle
+                    .attach(ProjectDao.class)
+                    .deleteExcessProjectVersions(versionCountThreshold, BATCH_SIZE);
+            logDeletedProjects(deletedProjects);
+            return deletedProjects.size();
         });
 
-        return "deleted %d excess project versions".formatted(deletedVersions[0]);
+        return "deleted %d excess project versions".formatted(deleted);
     }
 
     private static void logDeletedProjects(List<ProjectDao.DeletedProject> deletedProjects) {

@@ -581,32 +581,27 @@ public interface ProjectDao extends SqlObject {
     }
 
     @SqlQuery("""
+            WITH cte_candidates AS (
+              SELECT "ID"
+                FROM (
+                  SELECT "ID"
+                       , ROW_NUMBER() OVER (PARTITION BY "NAME" ORDER BY "INACTIVE_SINCE" DESC) AS rn
+                    FROM "PROJECT"
+                   WHERE "INACTIVE_SINCE" IS NOT NULL
+                ) AS ranked
+               WHERE rn > :versionCountThreshold
+               LIMIT :batchSize
+            )
             DELETE
-             FROM "PROJECT"
-             WHERE "PROJECT"."INACTIVE_SINCE" IS NOT NULL
-             AND "PROJECT"."NAME" = :projectName
-             AND "PROJECT"."ID" NOT IN (
-                 SELECT "PROJECT"."ID"
-                  FROM "PROJECT"
-                  WHERE "PROJECT"."INACTIVE_SINCE" IS NOT NULL
-                  AND "PROJECT"."NAME" = :projectName
-                  ORDER BY "PROJECT"."INACTIVE_SINCE" DESC
-                  LIMIT :versionCountThreshold
-                 )
-             RETURNING "NAME", "VERSION", "INACTIVE_SINCE", "UUID"
+              FROM "PROJECT"
+             WHERE "ID" IN (SELECT "ID" FROM cte_candidates)
+            RETURNING "NAME"
+                    , "VERSION"
+                    , "INACTIVE_SINCE"
+                    , "UUID"
             """)
     @RegisterConstructorMapper(DeletedProject.class)
-    List<DeletedProject> retainLastXInactiveProjects(@Bind final String projectName, @Bind final int versionCountThreshold);
-
-    @SqlQuery("""
-            SELECT "PROJECT"."NAME"
-              FROM "PROJECT"
-              WHERE "INACTIVE_SINCE" IS NOT NULL
-              GROUP BY "NAME"
-              HAVING COUNT(*) > :versionCountThreshold
-              LIMIT :batchSize
-            """)
-    List<String> getDistinctProjects(@Bind final int versionCountThreshold, @Bind final int batchSize);
+    List<DeletedProject> deleteExcessProjectVersions(@Bind int versionCountThreshold, @Bind int batchSize);
 
     record ProjectInfoRow(long id, boolean isCollection) {
     }

@@ -149,6 +149,7 @@
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>4.1.1</lib.pebble.version>
         <lib.postgresql.version>42.7.11</lib.postgresql.version>
+        <lib.prometheus.version>1.6.1</lib.prometheus.version>
         <lib.protobuf-java.version>4.34.1</lib.protobuf-java.version>
         <lib.resilience4j.version>2.4.0</lib.resilience4j.version>
         <lib.s3mock.version>5.0.0</lib.s3mock.version>
@@ -466,6 +467,14 @@
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${lib.postgresql.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.prometheus</groupId>
+                <artifactId>prometheus-metrics-bom</artifactId>
+                <version>${lib.prometheus.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
             <dependency>

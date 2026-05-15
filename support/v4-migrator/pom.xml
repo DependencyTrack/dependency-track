@@ -35,7 +35,7 @@
         <project.parentBaseDir>${project.basedir}/../..</project.parentBaseDir>
 
         <lib.mssql-jdbc.version>13.4.0.jre11</lib.mssql-jdbc.version>
-        <lib.picocli.version>4.7.6</lib.picocli.version>
+        <lib.picocli.version>4.7.7</lib.picocli.version>
     </properties>
 
     <dependencies>

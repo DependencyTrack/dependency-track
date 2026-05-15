@@ -38,7 +38,7 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectMaintenanceTask.class);
     private static final long ADVISORY_LOCK_ID = 7102463598274163180L;
-    private static final int BATCH_SIZE = 100;
+    private static final int BATCH_SIZE = 25;
     private static final int MAX_ITERATIONS = 1000;
 
     public ProjectMaintenanceTask() {

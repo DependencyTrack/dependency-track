@@ -23,6 +23,7 @@ import org.jdbi.v3.core.Handle;
 
 import java.sql.Timestamp;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @since 5.0.0
@@ -33,6 +34,31 @@ public final class PackageArtifactMetadataDao {
 
     public PackageArtifactMetadataDao(Handle jdbiHandle) {
         this.jdbiHandle = jdbiHandle;
+    }
+
+    public List<PackageArtifactMetadata> getAll(Collection<String> purls) {
+        if (purls == null || purls.isEmpty()) {
+            return List.of();
+        }
+
+        return jdbiHandle
+                .createQuery(/* language=SQL */ """
+                        SELECT "PURL"
+                             , "PACKAGE_PURL"
+                             , "HASH_MD5"
+                             , "HASH_SHA1"
+                             , "HASH_SHA256"
+                             , "HASH_SHA512"
+                             , "PUBLISHED_AT"
+                             , "RESOLVED_BY"
+                             , "RESOLVED_FROM"
+                             , "RESOLVED_AT"
+                          FROM "PACKAGE_ARTIFACT_METADATA"
+                         WHERE "PURL" = ANY(:purls)
+                        """)
+                .bindArray("purls", String.class, purls)
+                .mapTo(PackageArtifactMetadata.class)
+                .list();
     }
 
     public int upsertAll(Collection<PackageArtifactMetadata> metadata) {

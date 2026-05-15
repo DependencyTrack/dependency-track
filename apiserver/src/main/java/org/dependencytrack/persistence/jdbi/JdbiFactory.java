@@ -26,6 +26,7 @@ import io.micrometer.core.instrument.Metrics;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.pagination.SimplePageTokenEncoder;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.mapping.PackageArtifactMetadataRowMapper;
 import org.dependencytrack.persistence.jdbi.mapping.PackageMetadataRowMapper;
 import org.dependencytrack.support.jdbi.exception.ExceptionTranslationPlugin;
 import org.dependencytrack.support.jdbi.mapping.PurlColumnMapper;
@@ -179,7 +180,8 @@ public class JdbiFactory {
                 .registerArrayType(Date.class, "TIMESTAMPTZ")
                 .registerArrayType(Timestamp.class, "TIMESTAMPTZ")
                 .registerColumnMapper(new PurlColumnMapper())
-                .registerRowMapper(new PackageMetadataRowMapper());
+                .registerRowMapper(new PackageMetadataRowMapper())
+                .registerRowMapper(new PackageArtifactMetadataRowMapper());
 
         preparedJdbi
                 .getConfig(PaginationConfig.class)

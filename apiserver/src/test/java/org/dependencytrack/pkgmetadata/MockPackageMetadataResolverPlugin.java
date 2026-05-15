@@ -18,7 +18,9 @@
  */
 package org.dependencytrack.pkgmetadata;
 
+import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolverFactory;
@@ -35,13 +37,16 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+
 final class MockPackageMetadataResolverPlugin implements Plugin {
 
     private final MockPackageMetadataResolverFactory factory;
 
     MockPackageMetadataResolverPlugin(
-            AtomicReference<Function<PackageURL, PackageMetadata>> resolveFnRef) {
-        this.factory = new MockPackageMetadataResolverFactory(resolveFnRef);
+            AtomicReference<Function<PackageURL, PackageMetadata>> resolveFnRef,
+            AtomicReference<PackageArtifactMetadata> lastSeenPriorRef) {
+        this.factory = new MockPackageMetadataResolverFactory(resolveFnRef, lastSeenPriorRef);
     }
 
     @Override
@@ -52,13 +57,21 @@ final class MockPackageMetadataResolverPlugin implements Plugin {
     private static final class MockPackageMetadataResolver implements PackageMetadataResolver {
 
         private final AtomicReference<Function<PackageURL, PackageMetadata>> resolveFnRef;
+        private final AtomicReference<PackageArtifactMetadata> lastSeenPriorRef;
 
-        MockPackageMetadataResolver(AtomicReference<Function<PackageURL, PackageMetadata>> resolveFnRef) {
+        MockPackageMetadataResolver(
+                AtomicReference<Function<PackageURL, PackageMetadata>> resolveFnRef,
+                AtomicReference<PackageArtifactMetadata> lastSeenPriorRef) {
             this.resolveFnRef = resolveFnRef;
+            this.lastSeenPriorRef = lastSeenPriorRef;
         }
 
         @Override
-        public @Nullable PackageMetadata resolve(PackageURL purl, @Nullable PackageRepository repository) {
+        public @Nullable PackageMetadata resolve(
+                PackageURL purl,
+                @Nullable PackageRepository repository,
+                @Nullable PackageArtifactMetadata prior) {
+            lastSeenPriorRef.set(prior);
             return resolveFnRef.get().apply(purl);
         }
 
@@ -67,9 +80,13 @@ final class MockPackageMetadataResolverPlugin implements Plugin {
     private static final class MockPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
         private final AtomicReference<Function<PackageURL, PackageMetadata>> resolveFnRef;
+        private final AtomicReference<PackageArtifactMetadata> lastSeenPriorRef;
 
-        MockPackageMetadataResolverFactory(AtomicReference<Function<PackageURL, PackageMetadata>> resolveFnRef) {
+        MockPackageMetadataResolverFactory(
+                AtomicReference<Function<PackageURL, PackageMetadata>> resolveFnRef,
+                AtomicReference<PackageArtifactMetadata> lastSeenPriorRef) {
             this.resolveFnRef = resolveFnRef;
+            this.lastSeenPriorRef = lastSeenPriorRef;
         }
 
         @Override
@@ -88,15 +105,35 @@ final class MockPackageMetadataResolverPlugin implements Plugin {
 
         @Override
         public PackageMetadataResolver create() {
-            return new MockPackageMetadataResolver(resolveFnRef);
+            return new MockPackageMetadataResolver(resolveFnRef, lastSeenPriorRef);
         }
 
         @Override
         public @Nullable PackageURL normalize(PackageURL purl) {
-            if ("maven".equals(purl.getType())) {
+            if (!"maven".equals(purl.getType())) {
+                return null;
+            }
+            if (purl.getQualifiers() != null && purl.getQualifiers().containsKey("type")) {
                 return purl;
             }
-            return null;
+
+            try {
+                final var builder = aPackageURL()
+                        .withType(purl.getType())
+                        .withNamespace(purl.getNamespace())
+                        .withName(purl.getName())
+                        .withVersion(purl.getVersion())
+                        .withQualifier("type", "jar");
+                if (purl.getQualifiers() != null) {
+                    for (final var qualifier : purl.getQualifiers().entrySet()) {
+                        builder.withQualifier(qualifier.getKey(), qualifier.getValue());
+                    }
+                }
+
+                return builder.build();
+            } catch (MalformedPackageURLException e) {
+                return purl;
+            }
         }
 
         @Override

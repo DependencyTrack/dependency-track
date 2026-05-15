@@ -67,6 +67,7 @@ public final class CachingHttpClient {
     private final Duration freshnessCap;
     private final long maxBytes;
     private final Clock clock;
+    private final RateLimitGate rateLimitGate;
 
     public CachingHttpClient(HttpClient httpClient, Cache cache, Duration freshnessCap, long maxBytes) {
         this(httpClient, cache, freshnessCap, maxBytes, Clock.systemUTC());
@@ -84,6 +85,7 @@ public final class CachingHttpClient {
         }
         this.maxBytes = maxBytes;
         this.clock = requireNonNull(clock, "clock must not be null");
+        this.rateLimitGate = new RateLimitGate(clock);
     }
 
     public byte @Nullable [] get(
@@ -99,6 +101,12 @@ public final class CachingHttpClient {
 
         if (entry != null && isFresh(entry)) {
             return decodedBodyOf(entry);
+        }
+
+        final byte[] staleResponseBody =
+                shortCircuitIfRateLimited(uri, entry, this::staleBody);
+        if (staleResponseBody != null) {
+            return staleResponseBody;
         }
 
         applyValidators(requestBuilderCopy, entry);
@@ -125,6 +133,12 @@ public final class CachingHttpClient {
 
         if (entry != null && isFresh(entry)) {
             return isPositiveHeadEntry(entry) ? rebuildHeaders(entry) : null;
+        }
+
+        final HttpHeaders staleResponseHeaders =
+                shortCircuitIfRateLimited(uri, entry, CachingHttpClient::staleHeaders);
+        if (staleResponseHeaders != null) {
+            return staleResponseHeaders;
         }
 
         applyValidators(requestBuilderCopy, entry);
@@ -167,12 +181,38 @@ public final class CachingHttpClient {
         if (entry != null) {
             final T stale = staleExtractor.apply(entry);
             if (stale != null) {
-                LOGGER.warn("Revalidation failed for {}; serving stale cached value", uri, cause);
+                LOGGER.debug("Revalidation failed for {}; serving stale cached value", uri, cause);
                 return stale;
             }
         }
 
         throw rethrow.get();
+    }
+
+    private <T> @Nullable T shortCircuitIfRateLimited(
+            URI uri,
+            @Nullable CacheEntry entry,
+            Function<CacheEntry, @Nullable T> staleExtractor) {
+        final Instant rateLimitedUntil = rateLimitGate.checkRateLimited(uri);
+        if (rateLimitedUntil == null) {
+            return null;
+        }
+
+        if (entry != null) {
+            final T stale = staleExtractor.apply(entry);
+            if (stale != null) {
+                LOGGER.debug(
+                        "Host {} is rate-limited until {}; serving stale cached value",
+                        uri.getAuthority(), rateLimitedUntil);
+                return stale;
+            }
+        }
+
+        final Duration remaining = Duration.between(clock.instant(), rateLimitedUntil);
+        throw new RetryableResolutionException(
+                "Host %s gated until %s".formatted(uri.getAuthority(), rateLimitedUntil),
+                null,
+                remaining.isPositive() ? remaining : null);
     }
 
     private static void applyValidators(HttpRequest.Builder requestBuilderCopy, @Nullable CacheEntry entry) {
@@ -312,7 +352,10 @@ public final class CachingHttpClient {
         return throwUnexpected(response);
     }
 
-    private void cacheNegative(@Nullable CacheEntry entry, String cacheKey, CacheControl cacheControl) {
+    private void cacheNegative(
+            @Nullable CacheEntry entry,
+            String cacheKey,
+            CacheControl cacheControl) {
         // Negative responses are cached so that repeated lookups for the same PURL
         // do not hammer the registry.
         if (cacheControl.noStore()) {
@@ -332,8 +375,17 @@ public final class CachingHttpClient {
         }
     }
 
-    private static <T> T throwUnexpected(HttpResponse<?> response) {
-        RetryableResolutionException.throwIfRetryableError(response);
+    private <T> T throwUnexpected(HttpResponse<?> response) {
+        try {
+            RetryableResolutionException.throwIfRetryableError(response, clock);
+        } catch (RetryableResolutionException e) {
+            final Duration effectiveBackoff =
+                    rateLimitGate.recordRateLimit(
+                            response.request().uri(), e.retryAfter());
+            throw new RetryableResolutionException(
+                    e.getMessage(), e.getCause(), effectiveBackoff);
+        }
+
         throw new UncheckedIOException(new IOException(
                 "Unexpected status code %d for %s".formatted(response.statusCode(), response.request().uri())));
     }
@@ -415,11 +467,15 @@ public final class CachingHttpClient {
         return isPositiveHeadEntry(entry) ? rebuildHeaders(entry) : null;
     }
 
-    private Timestamp freshUntilTs(CacheControl cacheControl, @Nullable CacheEntry previousEntry) {
+    private Timestamp freshUntilTs(
+            CacheControl cacheControl,
+            @Nullable CacheEntry previousEntry) {
         return fromInstant(computeFreshUntil(cacheControl, previousEntry));
     }
 
-    private Instant computeFreshUntil(CacheControl cacheControl, @Nullable CacheEntry previousEntry) {
+    private Instant computeFreshUntil(
+            CacheControl cacheControl,
+            @Nullable CacheEntry previousEntry) {
         if (cacheControl.noCache()) {
             // Cache the body so that validators are available, but force the next call to
             // revalidate. RFC 7234 requires servers to perform validation before

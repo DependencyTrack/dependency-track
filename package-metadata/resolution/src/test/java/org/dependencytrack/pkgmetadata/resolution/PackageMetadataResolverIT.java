@@ -88,7 +88,7 @@ class PackageMetadataResolverIT {
             final PackageMetadataResolver resolver = factory.create();
             final var purl = new PackageURL(purlString);
             final var repo = new PackageRepository(factory.extensionName(), repoUrl, null, null);
-            final PackageMetadata result = resolver.resolve(purl, repo);
+            final PackageMetadata result = resolver.resolve(purl, repo, null);
 
             assertThat(result)
                     .as("%s: %s", factory.extensionName(), purl)

@@ -88,7 +88,7 @@ class HexPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("hex", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.7.14");
@@ -117,7 +117,7 @@ class HexPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("hex", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.7.14");
@@ -138,7 +138,7 @@ class HexPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("hex", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNull();
     }
@@ -152,7 +152,7 @@ class HexPackageMetadataResolverTest {
                 .build();
 
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null));
+                .isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -168,7 +168,7 @@ class HexPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("hex", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo))
+                .isThrownBy(() -> resolver.resolve(purl, repo, null))
                 .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(30));
     }
 
@@ -185,7 +185,7 @@ class HexPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("hex", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo));
+                .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
 
 }

@@ -58,8 +58,10 @@ final class GemPackageMetadataResolver implements PackageMetadataResolver {
     }
 
     @Override
-    public @Nullable PackageMetadata resolve(PackageURL purl, @Nullable PackageRepository repository)
-            throws InterruptedException {
+    public @Nullable PackageMetadata resolve(
+            PackageURL purl,
+            @Nullable PackageRepository repository,
+            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String url = UrlUtils.join(repository.url(), "api", "v1", "versions", purl.getName() + ".json");

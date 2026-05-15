@@ -34,6 +34,8 @@ import org.dependencytrack.dex.testing.WorkflowTestExtension;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
+import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
+import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.pkgmetadata.resolution.api.HashAlgorithm;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
@@ -59,6 +61,7 @@ import java.util.function.Function;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.protoConverter;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.voidConverter;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
@@ -70,10 +73,12 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
     private PluginManager pluginManager;
     private final AtomicReference<Function<PackageURL, PackageMetadata>> mockResolveFnRef =
             new AtomicReference<>(purl -> null);
+    private final AtomicReference<PackageArtifactMetadata> mockLastSeenPriorRef =
+            new AtomicReference<>(null);
 
     @BeforeEach
     void beforeEach() {
-        final var mockPlugin = new MockPackageMetadataResolverPlugin(mockResolveFnRef);
+        final var mockPlugin = new MockPackageMetadataResolverPlugin(mockResolveFnRef, mockLastSeenPriorRef);
 
         pluginManager = new PluginManager(
                 new SmallRyeConfigBuilder().build(),
@@ -272,6 +277,56 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
     }
 
     @Test
+    void shouldPassPriorArtifactMetadataToResolverWhenAvailable() {
+        useJdbiTransaction(handle -> {
+            new PackageMetadataDao(handle).upsertAll(List.of(
+                    new org.dependencytrack.model.PackageMetadata(
+                            parsePurl("pkg:maven/org.acme/foo"),
+                            "1.0",
+                            Instant.parse("2024-06-15T12:00:00Z"),
+                            Instant.parse("2024-06-15T12:00:00Z"),
+                            null,
+                            "mock")));
+            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
+                    new org.dependencytrack.model.PackageArtifactMetadata(
+                            parsePurl("pkg:maven/org.acme/foo@1.0"),
+                            parsePurl("pkg:maven/org.acme/foo"),
+                            null,
+                            "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+                            null,
+                            null,
+                            Instant.parse("2024-06-15T12:00:00Z"),
+                            "mock",
+                            null,
+                            Instant.parse("2024-06-15T12:00:00Z"))));
+        });
+
+        final Instant resolvedAt = Instant.now();
+        mockResolveFnRef.set(purl -> new PackageMetadata("9.9.9", Instant.now(), resolvedAt, null));
+
+        var project = new Project();
+        project.setName("test-project");
+        project = qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setGroup("org.acme");
+        component.setName("foo");
+        component.setVersion("1.0");
+        component.setPurl("pkg:maven/org.acme/foo@1.0");
+        qm.persist(component);
+
+        final UUID runId = workflowTest.getEngine().createRun(
+                new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        final PackageArtifactMetadata seenPrior = mockLastSeenPriorRef.get();
+        assertThat(seenPrior).isNotNull();
+        assertThat(seenPrior.publishedAt()).isEqualTo(Instant.parse("2024-06-15T12:00:00Z"));
+        assertThat(seenPrior.hashes()).containsEntry(HashAlgorithm.SHA1, "da39a3ee5e6b4b0d3255bfef95601890afd80709");
+    }
+
+    @Test
     void shouldHandleResolverFailureGracefully() {
         mockResolveFnRef.set(purl -> {
             throw new RuntimeException("Simulated resolver failure");
@@ -304,6 +359,14 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
             assertThat(row).containsEntry("purl", "pkg:maven/org.acme/foo");
             assertThat(row).containsEntry("latest_version", null);
         });
+    }
+
+    private static PackageURL parsePurl(String purl) {
+        try {
+            return new PackageURL(purl);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

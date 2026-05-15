@@ -50,14 +50,13 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.time.Instant;
-import java.util.Collection;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -111,10 +110,18 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
         try (var ignoredMdcResolver = MDC.putCloseable(MDC_PKG_METADATA_RESOLVER_NAME, resolverName)) {
             final PackageMetadataResolverFactory resolverFactory = getResolverFactory(resolverName);
 
-            // Determine which PURLs have already been resolved. In case the activity was
-            // restarted (i.e. retry or previously interrupted), it may already have made
-            // progress in this batch.
-            final Set<String> recentlyResolvedPurls = getRecentlyResolvedPurls(purlStrings);
+            // Surface previously-resolved artifact metadata as an opt-in hint to resolvers.
+            // Resolvers that can short-circuit on it (e.g. Maven for stable versions) will
+            // skip the corresponding HTTP fetches. The per-repository match is enforced
+            // before resolvers are called.
+            final Map<String, org.dependencytrack.model.PackageArtifactMetadata> priorArtifactMetadataByPurl =
+                    withJdbiHandle(handle -> new PackageArtifactMetadataDao(handle)
+                            .getAll(purlStrings)
+                            .stream()
+                            .collect(Collectors.toMap(
+                                    pam -> pam.purl().canonicalize(),
+                                    Function.identity(),
+                                    (a, b) -> a)));
 
             final var repoByPurlType = new HashMap<String, List<Repository>>();
             final var passwordByRepoTypeAndName = new HashMap<String, Optional<String>>();
@@ -134,11 +141,6 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
 
                     MDC.put(MDC_PURL, purlStr);
                     try {
-                        if (recentlyResolvedPurls.contains(purlStr)) {
-                            LOGGER.debug("PURL already resolved recently; Skipping");
-                            continue;
-                        }
-
                         processPurl(
                                 purlStr,
                                 resolverFactory,
@@ -146,6 +148,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
                                 repoByPurlType,
                                 passwordByRepoTypeAndName,
                                 isInternalFunc,
+                                priorArtifactMetadataByPurl,
                                 resultBuffer);
                     } catch (InterruptedException e) {
                         resultBuffer.flush();
@@ -177,6 +180,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             Map<String, List<Repository>> repoByPurlType,
             Map<String, Optional<String>> passwordByRepoTypeAndName,
             Function<PackageURL, Boolean> isInternalFunc,
+            Map<String, org.dependencytrack.model.PackageArtifactMetadata> priorArtifactMetadataByPurl,
             ResultBuffer buffer) throws Exception {
         final PackageURL purl;
         try {
@@ -195,13 +199,21 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             return;
         }
 
+        // NB: prior is stored under the original PURL, so look up by the original PURL
+        // and NOT the normalized one. Resolvers that inject qualifiers during normalization
+        // (e.g. Maven's type=jar) would otherwise miss prior rows persisted under the unqualified
+        // component PURL.
+        final org.dependencytrack.model.PackageArtifactMetadata priorArtifactMetadata =
+                priorArtifactMetadataByPurl.get(purl.canonicalize());
+
         final ResolutionResult result = resolve(
                 normalizedPurl,
                 resolverFactory,
                 resolver,
                 repoByPurlType,
                 passwordByRepoTypeAndName,
-                isInternalFunc);
+                isInternalFunc,
+                priorArtifactMetadata);
         if (result != null) {
             buffer.addResult(purl, result);
         } else {
@@ -221,7 +233,8 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             PackageMetadataResolver resolver,
             Map<String, List<Repository>> repoByPurlType,
             Map<String, Optional<String>> passwordByRepoTypeAndName,
-            Function<PackageURL, Boolean> isInternalFunc) throws Exception {
+            Function<PackageURL, Boolean> isInternalFunc,
+            org.dependencytrack.model.@Nullable PackageArtifactMetadata priorArtifactMetadata) throws Exception {
         if (resolverFactory.requiresRepository()) {
             final List<Repository> repos = repoByPurlType.computeIfAbsent(
                     normalizedPurl.getType(),
@@ -271,8 +284,19 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
                             password);
 
 
+                    // Only surface priorArtifactMetadata to the resolver if it was originally resolved
+                    // from the repository currently being attempted. Cross-repo reuse is unsafe
+                    // (publishedAt timestamps can differ across mirrors / proxies).
+                    final PackageArtifactMetadata effectivePriorArtifactMetadata =
+                            (priorArtifactMetadata != null && Objects.equals(priorArtifactMetadata.resolvedFrom(), repo.getIdentifier()))
+                                    ? convert(priorArtifactMetadata)
+                                    : null;
+
                     LOGGER.debug("Resolving metadata from repository");
-                    final PackageMetadata result = resolver.resolve(normalizedPurl, packageRepository);
+                    final PackageMetadata result = resolver.resolve(
+                            normalizedPurl,
+                            packageRepository,
+                            effectivePriorArtifactMetadata);
                     if (result != null) {
                         return new ResolutionResult(result, repo.getIdentifier(), resolverFactory.extensionName());
                     }
@@ -280,13 +304,39 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             }
         } else {
             LOGGER.debug("Resolving metadata");
-            final PackageMetadata result = resolver.resolve(normalizedPurl, null);
+            final PackageMetadata result = resolver.resolve(
+                    normalizedPurl,
+                    /* repository */ null,
+                    priorArtifactMetadata != null ? convert(priorArtifactMetadata) : null);
             if (result != null) {
                 return new ResolutionResult(result, null, resolverFactory.extensionName());
             }
         }
 
         return null;
+    }
+
+    private static PackageArtifactMetadata convert(org.dependencytrack.model.PackageArtifactMetadata internal) {
+        final var hashes = new EnumMap<HashAlgorithm, String>(HashAlgorithm.class);
+        if (internal.md5() != null) {
+            hashes.put(HashAlgorithm.MD5, internal.md5());
+        }
+        if (internal.sha1() != null) {
+            hashes.put(HashAlgorithm.SHA1, internal.sha1());
+        }
+        if (internal.sha256() != null) {
+            hashes.put(HashAlgorithm.SHA256, internal.sha256());
+        }
+        if (internal.sha512() != null) {
+            hashes.put(HashAlgorithm.SHA512, internal.sha512());
+        }
+
+        return new PackageArtifactMetadata(
+                internal.resolvedAt() != null
+                        ? internal.resolvedAt()
+                        : Instant.EPOCH,
+                internal.publishedAt(),
+                hashes);
     }
 
     private PackageMetadataResolverFactory getResolverFactory(String resolverName) {
@@ -315,19 +365,6 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
                 .bind("type", repoType.name())
                 .mapToBean(Repository.class)
                 .list());
-    }
-
-    private static Set<String> getRecentlyResolvedPurls(Collection<String> purls) {
-        return withJdbiHandle(handle -> handle
-                .createQuery(/* language=SQL */ """
-                        SELECT "PURL"
-                          FROM "PACKAGE_ARTIFACT_METADATA"
-                         WHERE "PURL" = ANY(:purls)
-                           AND "RESOLVED_AT" > NOW() - INTERVAL '5 minutes'
-                        """)
-                .bindArray("purls", String.class, purls)
-                .mapTo(String.class)
-                .collect(Collectors.toSet()));
     }
 
     private static boolean isInternal(

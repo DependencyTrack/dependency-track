@@ -99,7 +99,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.2.0");
@@ -132,7 +132,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("v1", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("3.8.1");
@@ -164,7 +164,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v2.0.0");
@@ -185,7 +185,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("dummy", wmRuntimeInfo.getHttpBaseUrl() + "/therepo", null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.18.0");
@@ -199,7 +199,7 @@ class ComposerPackageMetadataResolverTest {
                 .withName("something")
                 .withVersion("1.0.0")
                 .build();
-        assertThat(resolver.resolve(purl2, repo)).isNull();
+        assertThat(resolver.resolve(purl2, repo, null)).isNull();
 
         verify(1, getRequestedFor(urlPathEqualTo("/therepo/packages.json")));
     }
@@ -218,7 +218,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("includes-repo", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.3.8");
@@ -245,7 +245,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("metadata-repo", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("6.6.6");
@@ -270,10 +270,10 @@ class ComposerPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
 
-        resolver.resolve(purl, repo);
+        resolver.resolve(purl, repo, null);
         verify(1, getRequestedFor(urlPathEqualTo("/packages.json")));
 
-        resolver.resolve(purl, repo);
+        resolver.resolve(purl, repo, null);
         verify(1, getRequestedFor(urlPathEqualTo("/packages.json")));
         verify(1, getRequestedFor(urlPathEqualTo("/p2/typo3/class-alias-loader.json")));
     }
@@ -293,9 +293,9 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("empty", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo)).isNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNull();
 
-        assertThat(resolver.resolve(purl, repo)).isNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNull();
         verify(1, getRequestedFor(urlPathEqualTo("/packages.json")));
     }
 
@@ -322,7 +322,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("drupal", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo)).isNotNull()
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull()
                 .satisfies(r -> assertThat(r.latestVersion()).isEqualTo("2.2.1"));
 
         final var nonMatching = aPackageURL()
@@ -331,7 +331,7 @@ class ComposerPackageMetadataResolverTest {
                 .withName("phpunit")
                 .withVersion("1.0.0")
                 .build();
-        assertThat(resolver.resolve(nonMatching, repo)).isNull();
+        assertThat(resolver.resolve(nonMatching, repo, null)).isNull();
 
         verify(1, getRequestedFor(urlPathEqualTo("/packages.json")));
         verify(1, getRequestedFor(urlPathEqualTo("/files/packages/8/p2/drupal/mollie.json")));
@@ -361,7 +361,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("available", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo)).isNotNull()
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull()
                 .satisfies(r -> assertThat(r.latestVersion()).isEqualTo("v1.2.0"));
 
         final var nonListed = aPackageURL()
@@ -370,7 +370,7 @@ class ComposerPackageMetadataResolverTest {
                 .withName("phpunit")
                 .withVersion("1.0.0")
                 .build();
-        assertThat(resolver.resolve(nonListed, repo)).isNull();
+        assertThat(resolver.resolve(nonListed, repo, null)).isNull();
 
         verify(1, getRequestedFor(urlPathEqualTo("/packages.json")));
         verify(1, getRequestedFor(urlPathEqualTo("/repository/p2/io/captain-hook.json")));
@@ -400,7 +400,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("patterns", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo)).isNotNull()
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull()
                 .satisfies(r -> assertThat(r.latestVersion()).isEqualTo("v1.2.0"));
 
         final var nonMatching = aPackageURL()
@@ -409,7 +409,7 @@ class ComposerPackageMetadataResolverTest {
                 .withName("phpunit")
                 .withVersion("1.0.0")
                 .build();
-        assertThat(resolver.resolve(nonMatching, repo)).isNull();
+        assertThat(resolver.resolve(nonMatching, repo, null)).isNull();
     }
 
     @Test
@@ -428,7 +428,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo)).isNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNull();
     }
 
     @Test
@@ -444,7 +444,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("metadata-repo", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("9.9.9");
@@ -476,7 +476,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v2.0.0-beta.2");
@@ -506,7 +506,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo)).isNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNull();
     }
 
     @Test
@@ -523,7 +523,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo)).isNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNull();
     }
 
     @Test
@@ -541,7 +541,7 @@ class ComposerPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo))
+                .isThrownBy(() -> resolver.resolve(purl, repo, null))
                 .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(30));
     }
 
@@ -560,7 +560,7 @@ class ComposerPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo));
+                .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
 
     @Test
@@ -573,7 +573,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null));
+                .isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -592,7 +592,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v2.0.0");
@@ -625,7 +625,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.5.0");
@@ -648,7 +648,7 @@ class ComposerPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("broken", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(UncheckedIOException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo));
+                .isThrownBy(() -> resolver.resolve(purl, repo, null));
 
         verify(1, getRequestedFor(urlPathEqualTo("/packages.json")));
     }
@@ -675,7 +675,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.0");
@@ -704,7 +704,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("v1", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo)).isNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNull();
     }
 
     @Test
@@ -721,8 +721,8 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("repo", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo)).isNull();
-        assertThat(resolver.resolve(purl, repo)).isNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNull();
 
         verify(1, getRequestedFor(urlPathEqualTo("/p2/space/cowboy.json")));
         verify(1, getRequestedFor(urlPathEqualTo("/packages.json")));
@@ -742,7 +742,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("mixed", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.3.8");
@@ -774,7 +774,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("patterns", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.0");
@@ -795,7 +795,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("evil", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo)).isNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNull();
     }
 
     @Test
@@ -821,7 +821,7 @@ class ComposerPackageMetadataResolverTest {
 
         stubFor(get(urlPathEqualTo("/p/vendor/package.json"))
                 .willReturn(aResponse().withStatus(404)));
-        assertThat(resolver.resolve(purl, repo)).isNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNull();
 
         verify(0, getRequestedFor(urlPathEqualTo("/etc/passwd")));
         verify(0, getRequestedFor(urlPathEqualTo("../../etc/passwd")));
@@ -852,7 +852,7 @@ class ComposerPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(UncheckedIOException.class)
-                .isThrownBy(() -> smallResolver.resolve(purl, repo));
+                .isThrownBy(() -> smallResolver.resolve(purl, repo, null));
     }
 
     @Test
@@ -868,7 +868,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), "user", "secret");
-        assertThat(resolver.resolve(purl, repo)).isNotNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
         final String expected = "Basic " + Base64.getEncoder().encodeToString(
                 "user:secret".getBytes(StandardCharsets.UTF_8));
@@ -891,7 +891,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, "token");
-        assertThat(resolver.resolve(purl, repo)).isNotNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
         verify(getRequestedFor(urlPathEqualTo("/packages.json"))
                 .withHeader("Authorization", equalTo("Bearer token")));

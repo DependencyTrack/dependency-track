@@ -42,9 +42,9 @@ would survive to revalidate with. This is Renovate's [soft / hard TTL][renovate-
 
 ### Negative responses
 
-`404` and `410` are cached as bodyless entries under the same freshness rules. Resolution starts from a PURL asserted
-to exist upstream, so a not-found typically reflects a misconfigured or wrong registry, not a transient state worth
-revalidating per call.
+`404` and `410` are cached as bodyless entries under the resolver's freshness cap. Resolution starts from a PURL
+asserted to exist upstream, so a not-found typically reflects a misconfigured or wrong registry, not a transient
+state worth revalidating per call.
 
 ### Storage
 
@@ -52,6 +52,25 @@ The cache reuses the existing [`cache`](../../cache) module.
 Validators are deliberately not added to `PACKAGE_METADATA` or `PACKAGE_ARTIFACT_METADATA`
 (see [ADR-015](./015-package-metadata.md)) since those tables model domain data, not HTTP responses, and resolvers do not
 all map one row to one URL.
+
+### Resolver-side reuse of prior domain data
+
+Domain tables (see [ADR-015](./015-package-metadata.md)) already persist publish timestamps and hashes for previously resolved versions.
+For immutable artifacts those values cannot change, so refetching them per cycle is wasted work, even with conditional
+revalidation in place.
+
+The orchestration layer surfaces the prior artifact metadata to the resolver as an opt-in hint. Orchestration
+owns repository identity: it only forwards the hint when the prior was resolved from the repository currently
+being attempted, since publish timestamps can legitimately differ across mirrors. The resolver owns version
+stability: it decides whether the hint is safe to reuse for the requested version.
+
+This benefits ecosystems that split latest-version and per-version metadata into separate requests.
+Ecosystems that fetch a single document containing both must still fetch on every cycle and ignore the hint.
+
+The boundary with ADR-015 is preserved: domain tables carry no HTTP validators, and resolvers retain
+request-shape knowledge. The trade-off being that a resolver bug that produced wrong values won't self-heal
+on the next refresh, requiring a one-time re-resolution or row purge to recover. This risk is outweighed by
+the benefit of fewer requests to public infrastructure.
 
 ### Adoption
 
@@ -72,20 +91,35 @@ deadline is not refreshed on fallback, so the next call still attempts revalidat
 stale window. The [RFC 9111][rfc9111] `stale-if-error` directive is not parsed because major registries do not emit it
 and the eviction TTL is already authoritative.
 
+### Rate-limit backoff
+
+`429`, `503`, and `504` gate the host until `Retry-After` elapses (default 30s, capped at 5m). `Retry-After` accepts
+delay-seconds or an HTTP-date per [RFC 9110][rfc9110]. Calls during the window serve stale cached values when possible,
+and otherwise surface a retryable failure.
+
+The gate is in-memory. Singleton workflow execution (see [ADR-015]) makes cross-instance coordination unnecessary,
+although we may revisit this in the future.
+
+Failover loses gate state and can re-trigger one burst, which is acceptable for an anti-thrashing aid.
+Renovate ships the same pattern in [`lib/util/http/retry-after.ts`][renovate-retry-after].
+
 ## Consequences
 
 Refreshes that would have transferred a full metadata document now exchange a conditional request and a small `304`
-when nothing has changed. This reduces bandwidth, conserves rate-limited quotas at registries where `304` responses
-are exempt from throttling, and avoids re-parsing unchanged bodies.
+when nothing has changed. This reduces bandwidth and avoids re-parsing unchanged bodies. Whether `304` responses
+actually count against rate-limit quotas depends on each registry's implementation. The prior-resolution hint described
+above is what eliminates the per-cycle request entirely for stable artifacts, independent of registry policy.
 
 Each adopting resolver previously kept a short-lived cache of parsed metadata structures. That cache becomes
 redundant once the URL cache is in place, since both cover the same access pattern. Adopting resolvers drop the parsed
 cache and re-derive structures from the cached body on each call. This removes a class of drift bug between parsed and
 raw representations. The cost is microseconds of redundant parsing work per duplicated PURL within a batch.
 
+[ADR-015]: ./015-package-metadata.md
 [open-not-costless]: https://www.sonatype.com/blog/open-is-not-costless-reclaiming-sustainable-infrastructure
 [renovate-hard-ttl]: https://docs.renovatebot.com/self-hosted-configuration/#cachehardttlminutes
 [renovate-pkg-cache]: https://github.com/renovatebot/renovate/blob/main/lib/util/http/cache/package-http-cache-provider.ts
+[renovate-retry-after]: https://github.com/renovatebot/renovate/blob/main/lib/util/http/retry-after.ts
 [renovate-soft-hard-cache]: https://docs.mend.io/wsk/renovate-soft-and-hard-package-cache-behavior
 [rfc9110]: https://www.rfc-editor.org/rfc/rfc9110
 [rfc9111]: https://www.rfc-editor.org/rfc/rfc9111

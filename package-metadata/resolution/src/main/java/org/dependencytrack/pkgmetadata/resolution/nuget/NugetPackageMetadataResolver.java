@@ -83,7 +83,8 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
     @Override
     public @Nullable PackageMetadata resolve(
             PackageURL purl,
-            @Nullable PackageRepository repository) throws InterruptedException {
+            @Nullable PackageRepository repository,
+            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String registrationsBaseUrl = discoverRegistrationsBaseUrl(repository);
@@ -119,7 +120,14 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
         final Instant resolvedAt = Instant.now();
         PackageArtifactMetadata artifactMetadata = null;
         if (purl.getVersion() != null) {
-            final Instant publishedAt = findPublishedAt(pages, repository, purl.getVersion());
+            final Instant publishedAt;
+            if (prior != null && prior.publishedAt() != null && isStableVersion(purl.getVersion())) {
+                // Stable NuGet versions are immutable. Reuse the prior publishedAt and skip
+                // the per-version lookup, is it would otherwise trigger leaf page fetches.
+                publishedAt = prior.publishedAt();
+            } else {
+                publishedAt = findPublishedAt(pages, repository, purl.getVersion());
+            }
             if (publishedAt != null) {
                 artifactMetadata = new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of());
             }
@@ -429,6 +437,14 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
     }
 
     private record CatalogEntry(String version, @Nullable Instant publishedAt) {
+    }
+
+    private static boolean isStableVersion(String version) {
+        try {
+            return VersionFactory.forScheme(SCHEME_NUGET, version).isStable();
+        } catch (InvalidVersionException e) {
+            return false;
+        }
     }
 
 }

@@ -91,7 +91,7 @@ class GemPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("rubygems", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("7.1.3");
@@ -114,7 +114,7 @@ class GemPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("rubygems", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNull();
     }
@@ -128,7 +128,7 @@ class GemPackageMetadataResolverTest {
                 .build();
 
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null));
+                .isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -149,7 +149,7 @@ class GemPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("rubygems", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("7.1.3");
@@ -178,7 +178,7 @@ class GemPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("rubygems", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("7.1.3");
@@ -200,7 +200,7 @@ class GemPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("rubygems", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo))
+                .isThrownBy(() -> resolver.resolve(purl, repo, null))
                 .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(30));
     }
 
@@ -217,7 +217,7 @@ class GemPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("rubygems", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo));
+                .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
 
     @Test
@@ -234,7 +234,7 @@ class GemPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("rubygems", wmRuntimeInfo.getHttpBaseUrl(), "user", "secret");
-        assertThat(resolver.resolve(purl, repo)).isNotNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
         final String expected = "Basic " + Base64.getEncoder().encodeToString(
                 "user:secret".getBytes(StandardCharsets.UTF_8));

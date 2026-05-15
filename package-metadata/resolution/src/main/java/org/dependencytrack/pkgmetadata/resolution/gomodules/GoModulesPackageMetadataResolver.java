@@ -57,7 +57,8 @@ final class GoModulesPackageMetadataResolver implements PackageMetadataResolver 
     @Override
     public @Nullable PackageMetadata resolve(
             PackageURL purl,
-            @Nullable PackageRepository repository) throws InterruptedException {
+            @Nullable PackageRepository repository,
+            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         String modulePath = purl.getName();
@@ -85,6 +86,10 @@ final class GoModulesPackageMetadataResolver implements PackageMetadataResolver 
         if (purl.getVersion().equals(latestVersion)) {
             artifactMetadata = latestVersionPublishedAt != null
                     ? new PackageArtifactMetadata(resolvedAt, latestVersionPublishedAt, Map.of()) : null;
+        } else if (prior != null && prior.publishedAt() != null) {
+            // Go module versions are immutable by proxy contract,
+            // so any prior publishedAt for this PURL is safe to reuse.
+            artifactMetadata = new PackageArtifactMetadata(resolvedAt, prior.publishedAt(), Map.of());
         } else {
             final byte[] versionBody = fetchVersionInfo(modulePath, purl.getVersion(), repository);
             if (versionBody != null) {

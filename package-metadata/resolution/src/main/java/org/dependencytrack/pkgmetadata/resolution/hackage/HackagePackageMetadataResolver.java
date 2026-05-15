@@ -21,6 +21,7 @@ package org.dependencytrack.pkgmetadata.resolution.hackage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.packageurl.PackageURL;
+import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
@@ -52,7 +53,8 @@ final class HackagePackageMetadataResolver implements PackageMetadataResolver {
     @Override
     public @Nullable PackageMetadata resolve(
             PackageURL purl,
-            @Nullable PackageRepository repository) throws InterruptedException {
+            @Nullable PackageRepository repository,
+            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String url = UrlUtils.join(repository.url(), "package", purl.getName(), "preferred");

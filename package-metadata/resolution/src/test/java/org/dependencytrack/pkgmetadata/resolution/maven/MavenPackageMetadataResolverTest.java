@@ -25,6 +25,7 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.memory.MemoryCacheProvider;
 import org.dependencytrack.pkgmetadata.resolution.api.HashAlgorithm;
+import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
@@ -37,6 +38,8 @@ import org.dependencytrack.plugin.testing.MockKeyValueStore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
@@ -55,6 +58,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.dependencytrack.pkgmetadata.resolution.maven.MavenPackageMetadataResolver.isSnapshotVersion;
 
 @WireMockTest
 class MavenPackageMetadataResolverTest {
@@ -116,7 +120,7 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
@@ -156,7 +160,7 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersionPublishedAt()).isNull();
@@ -201,7 +205,7 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("3.0.0");
@@ -245,7 +249,7 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
@@ -266,7 +270,7 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNull();
     }
@@ -281,7 +285,7 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null));
+                .isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -311,7 +315,7 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.artifactMetadata()).isNotNull();
@@ -345,7 +349,7 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.0");
@@ -381,7 +385,7 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.0");
@@ -408,7 +412,7 @@ class MavenPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo))
+                .isThrownBy(() -> resolver.resolve(purl, repo, null))
                 .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(20));
     }
 
@@ -426,7 +430,7 @@ class MavenPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo));
+                .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
 
     @Test
@@ -457,8 +461,8 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata firstResult = resolver.resolve(purl, repo);
-        final PackageMetadata secondResult = resolver.resolve(purl, repo);
+        final PackageMetadata firstResult = resolver.resolve(purl, repo, null);
+        final PackageMetadata secondResult = resolver.resolve(purl, repo, null);
 
         assertThat(firstResult).isNotNull();
         assertThat(firstResult.latestVersion()).isEqualTo("2.0.0");
@@ -494,7 +498,7 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
@@ -523,7 +527,7 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), "user", "secret");
-        assertThat(resolver.resolve(purl, repo)).isNotNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
         final String expected = "Basic " + Base64.getEncoder().encodeToString(
                 "user:secret".getBytes(StandardCharsets.UTF_8));
@@ -553,10 +557,136 @@ class MavenPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, "token");
-        assertThat(resolver.resolve(purl, repo)).isNotNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
         verify(getRequestedFor(urlPathEqualTo("/com/example/mylib/maven-metadata.xml"))
                 .withHeader("Authorization", equalTo("Bearer token")));
+    }
+
+    @Test
+    void shouldUsePriorPublishedAtAndSha1WhenAvailable(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/com/example/mylib/maven-metadata.xml"))
+                .willReturn(aResponse().withStatus(200).withBody(/* language=XML */ """
+                        <?xml version="1.0" encoding="UTF-8"?>
+                        <metadata>
+                          <versioning><latest>2.0.0</latest></versioning>
+                        </metadata>
+                        """)));
+
+        final var purl = PackageURLBuilder.aPackageURL()
+                .withType("maven")
+                .withNamespace("com.example")
+                .withName("mylib")
+                .withVersion("1.0.0")
+                .build();
+        final var prior = new PackageArtifactMetadata(
+                Instant.parse("2023-01-01T00:00:00Z"),
+                Instant.parse("2023-06-15T12:00:00Z"),
+                Map.of(HashAlgorithm.SHA1, "da39a3ee5e6b4b0d3255bfef95601890afd80709"));
+
+        final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
+        final PackageMetadata result = resolver.resolve(purl, repo, prior);
+
+        assertThat(result).isNotNull();
+        assertThat(result.artifactMetadata()).isNotNull();
+        assertThat(result.artifactMetadata().publishedAt())
+                .isEqualTo(Instant.parse("2023-06-15T12:00:00Z"));
+        assertThat(result.artifactMetadata().hashes())
+                .containsEntry(HashAlgorithm.SHA1, "da39a3ee5e6b4b0d3255bfef95601890afd80709");
+
+        verify(0, headRequestedFor(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar")));
+        verify(0, getRequestedFor(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar.sha1")));
+    }
+
+    @Test
+    void shouldRefetchSnapshotVersionsEvenWithPrior(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/com/example/mylib/maven-metadata.xml"))
+                .willReturn(aResponse().withStatus(200).withBody(/* language=XML */ """
+                        <?xml version="1.0" encoding="UTF-8"?>
+                        <metadata>
+                          <versioning><latest>2.0.0</latest></versioning>
+                        </metadata>
+                        """)));
+        stubFor(head(urlPathEqualTo("/com/example/mylib/1.0-SNAPSHOT/mylib-1.0-SNAPSHOT.jar"))
+                .willReturn(aResponse().withStatus(200)
+                        .withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")));
+        stubFor(get(urlPathEqualTo("/com/example/mylib/1.0-SNAPSHOT/mylib-1.0-SNAPSHOT.jar.sha1"))
+                .willReturn(aResponse().withStatus(200)
+                        .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
+
+        final var purl = PackageURLBuilder.aPackageURL()
+                .withType("maven")
+                .withNamespace("com.example")
+                .withName("mylib")
+                .withVersion("1.0-SNAPSHOT")
+                .build();
+        final var prior = new PackageArtifactMetadata(
+                Instant.parse("2023-01-01T00:00:00Z"),
+                Instant.parse("2023-01-01T00:00:00Z"),
+                Map.of(HashAlgorithm.SHA1, "0000000000000000000000000000000000000000"));
+
+        final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
+        resolver.resolve(purl, repo, prior);
+
+        verify(1, headRequestedFor(urlPathEqualTo("/com/example/mylib/1.0-SNAPSHOT/mylib-1.0-SNAPSHOT.jar")));
+        verify(1, getRequestedFor(urlPathEqualTo("/com/example/mylib/1.0-SNAPSHOT/mylib-1.0-SNAPSHOT.jar.sha1")));
+    }
+
+    @Test
+    void shouldRefetchSha1WhenPriorMissesIt(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/com/example/mylib/maven-metadata.xml"))
+                .willReturn(aResponse().withStatus(200).withBody(/* language=XML */ """
+                        <?xml version="1.0" encoding="UTF-8"?>
+                        <metadata>
+                          <versioning><latest>2.0.0</latest></versioning>
+                        </metadata>
+                        """)));
+        stubFor(get(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar.sha1"))
+                .willReturn(aResponse().withStatus(200)
+                        .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
+
+        final var purl = PackageURLBuilder.aPackageURL()
+                .withType("maven")
+                .withNamespace("com.example")
+                .withName("mylib")
+                .withVersion("1.0.0")
+                .build();
+        final var prior = new PackageArtifactMetadata(
+                Instant.parse("2023-01-01T00:00:00Z"),
+                Instant.parse("2023-06-15T12:00:00Z"),
+                Map.of() /* no SHA1 */);
+
+        final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
+        resolver.resolve(purl, repo, prior);
+
+        verify(0, headRequestedFor(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar")));
+        verify(1, getRequestedFor(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar.sha1")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "1.0-SNAPSHOT",
+            "1.2.3-SNAPSHOT",
+            "1.0-snapshot",
+            "1.0-Snapshot"
+    })
+    void shouldClassifySnapshotVersions(String version) {
+        assertThat(isSnapshotVersion(version)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "1.0",
+            "1.2.3",
+            "5.7.0",
+            "1.0-1",
+            "1.0-alpha",
+            "2.0.0-rc1",
+            "1.0.0.Final",
+            "1.0-20231215.123456-1"
+    })
+    void shouldClassifyNonSnapshotVersions(String version) {
+        assertThat(isSnapshotVersion(version)).isFalse();
     }
 
 }

@@ -102,7 +102,7 @@ class CargoPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("crates-io", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.200");
@@ -144,7 +144,7 @@ class CargoPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("crates-io", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.200");
@@ -177,7 +177,7 @@ class CargoPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("crates-io", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.200");
@@ -198,7 +198,7 @@ class CargoPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("crates-io", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNull();
     }
@@ -212,7 +212,7 @@ class CargoPackageMetadataResolverTest {
                 .build();
 
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null));
+                .isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -234,7 +234,7 @@ class CargoPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("crates-io", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.artifactMetadata()).isNotNull();
@@ -262,7 +262,7 @@ class CargoPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("crates-io", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.artifactMetadata()).isNotNull();
@@ -284,7 +284,7 @@ class CargoPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("crates-io", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo))
+                .isThrownBy(() -> resolver.resolve(purl, repo, null))
                 .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(30));
     }
 
@@ -301,7 +301,7 @@ class CargoPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("crates-io", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo));
+                .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
 
     @Test
@@ -321,7 +321,7 @@ class CargoPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("crates-io", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNull();
     }
@@ -337,7 +337,7 @@ class CargoPackageMetadataResolverTest {
                 .withType("cargo").withName("serde").withVersion("1.0.0").build();
 
         final var repo = new PackageRepository("crates", wmRuntimeInfo.getHttpBaseUrl(), "user", "secret");
-        assertThat(resolver.resolve(purl, repo)).isNotNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
         final String expected = "Basic " + Base64.getEncoder().encodeToString(
                 "user:secret".getBytes(StandardCharsets.UTF_8));
@@ -356,7 +356,7 @@ class CargoPackageMetadataResolverTest {
                 .withType("cargo").withName("serde").withVersion("1.0.0").build();
 
         final var repo = new PackageRepository("crates", wmRuntimeInfo.getHttpBaseUrl(), null, "token");
-        assertThat(resolver.resolve(purl, repo)).isNotNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
         verify(getRequestedFor(urlPathEqualTo("/api/v1/crates/serde"))
                 .withHeader("Authorization", equalTo("Bearer token")));

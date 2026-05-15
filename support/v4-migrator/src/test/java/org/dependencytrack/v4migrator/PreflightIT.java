@@ -21,6 +21,7 @@ package org.dependencytrack.v4migrator;
 import org.dependencytrack.v4migrator.config.GlobalOptions;
 import org.dependencytrack.v4migrator.config.SourceOptions;
 import org.dependencytrack.v4migrator.preflight.Preflight;
+import org.dependencytrack.v4migrator.preflight.Preflight.Mode;
 import org.dependencytrack.v4migrator.preflight.PreflightResult;
 import org.dependencytrack.v4migrator.testsupport.V5TargetContainer;
 import org.junit.jupiter.api.AfterAll;
@@ -120,6 +121,27 @@ class PreflightIT {
             assertThat(result.ok()).isFalse();
             assertThat(result.failures()).anyMatch(f -> f.contains("PROJECT") && f.contains("not empty"));
             assertThat(result.exitCode()).isEqualTo(ExitCode.PREFLIGHT_FAILED);
+        } finally {
+            target.jdbi().useHandle(h -> h.execute("TRUNCATE \"PROJECT\" CASCADE"));
+        }
+    }
+
+    @Test
+    void shouldAcceptPopulatedV5InPostLoadMode() {
+        final GlobalOptions opts = new GlobalOptions();
+        opts.targetUrl = target.jdbcUrl();
+        opts.targetUser = target.username();
+        opts.targetPass = target.password();
+        opts.stagingSchema = "dt_v4_migration_post_load";
+        opts.logLevel = "INFO";
+
+        target.jdbi().useHandle(h -> h.execute(
+            "INSERT INTO \"PROJECT\" (\"NAME\", \"UUID\") VALUES ('test', gen_random_uuid())"));
+        try {
+            final PreflightResult result = new Preflight(target.jdbi(), null, opts, Mode.POST_LOAD).run();
+            assertThat(result.ok())
+                .as("POST_LOAD preflight must tolerate populated v5 tables; failures: %s", result.failures())
+                .isTrue();
         } finally {
             target.jdbi().useHandle(h -> h.execute("TRUNCATE \"PROJECT\" CASCADE"));
         }

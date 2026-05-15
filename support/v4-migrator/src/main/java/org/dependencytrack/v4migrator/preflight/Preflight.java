@@ -54,7 +54,12 @@ public final class Preflight {
      */
     public enum Mode {
         DEFAULT,
-        PRE_BOOTSTRAP
+        PRE_BOOTSTRAP,
+        /**
+         * Same as {@link #DEFAULT} but skips the "target tables must be empty" gate.
+         * Used by {@code verify}, which by definition runs after a successful load.
+         */
+        POST_LOAD
     }
 
     private final Jdbi targetJdbi;
@@ -79,11 +84,13 @@ public final class Preflight {
         final List<String> warnings = new ArrayList<>();
 
         checkTargetVersion(failures);
-        if (mode == Mode.DEFAULT) {
+        if (mode != Mode.PRE_BOOTSTRAP) {
             checkTargetExtensions(failures);
             if (isV5SchemaApplied(failures)) {
                 checkFlywayHead(failures);
-                checkTargetEmpty(failures);
+                if (mode == Mode.DEFAULT) {
+                    checkTargetEmpty(failures);
+                }
             }
         }
         checkTargetSettings(warnings);

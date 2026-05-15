@@ -19,6 +19,7 @@
 package org.dependencytrack.v4migrator.cli;
 
 import org.dependencytrack.v4migrator.ExitCode;
+import org.dependencytrack.v4migrator.preflight.Preflight.Mode;
 import org.dependencytrack.v4migrator.verify.VerifyPhase;
 import org.jdbi.v3.core.Jdbi;
 import picocli.CommandLine.Command;
@@ -30,6 +31,11 @@ public final class VerifyCommand extends AbstractMigratorCommand {
     protected int execute(final Jdbi target) throws Exception {
         new VerifyPhase(global, target).run();
         return ExitCode.OK;
+    }
+
+    @Override
+    protected Mode preflightMode() {
+        return Mode.POST_LOAD;
     }
 
     @Override

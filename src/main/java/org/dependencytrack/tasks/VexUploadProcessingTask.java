@@ -29,7 +29,6 @@ import org.dependencytrack.event.VexUploadEvent;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vex;
-import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
@@ -37,12 +36,12 @@ import org.dependencytrack.notification.vo.VexConsumedOrProcessed;
 import org.dependencytrack.parser.cyclonedx.CycloneDXVexImporter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.CompressUtil;
-import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import org.slf4j.MDC;
 
 import java.util.Base64;
 import java.util.Date;
-import java.util.List;
+
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 
 /**
  * Subscriber task that performs processing of VEX when it is uploaded.
@@ -58,66 +57,63 @@ public class VexUploadProcessingTask implements Subscriber {
      * {@inheritDoc}
      */
     public void inform(final Event e) {
-        if (e instanceof VexUploadEvent) {
-            final VexUploadEvent event = (VexUploadEvent) e;
+        if (e instanceof final VexUploadEvent event) {
             final byte[] vexBytes = CompressUtil.optionallyDecompress(event.getVex());
-            try(final QueryManager qm = new QueryManager()) {
+            try (final QueryManager qm = new QueryManager()) {
                 final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());
-                try (var mdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString())) {
-                final List<Vulnerability> vulnerabilities;
+                try (var ignoredMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString())) {
+                    final Vex.Format vexFormat;
+                    final String vexSpecVersion;
+                    final Integer vexVersion;
+                    final String serialNumber;
+                    org.cyclonedx.model.Bom cycloneDxBom;
 
-                // Holds a list of all Components that are existing dependencies of the specified project
-                final List<Vulnerability> existingProjectVulnerabilities = qm.getVulnerabilities(project, true);
-                final Vex.Format vexFormat;
-                final String vexSpecVersion;
-                final Integer vexVersion;
-                final String serialNumber;
-                org.cyclonedx.model.Bom cycloneDxBom = null;
-                if (BomParserFactory.looksLikeCycloneDX(vexBytes)) {
-                    if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
-                        LOGGER.info("Processing CycloneDX VEX uploaded.");
-                        vexFormat = Vex.Format.CYCLONEDX;
-                        final Parser parser = BomParserFactory.createParser(vexBytes);
-                        cycloneDxBom = parser.parse(vexBytes);
-                        vexSpecVersion = cycloneDxBom.getSpecVersion();
-                        vexVersion = cycloneDxBom.getVersion();
-                        serialNumber = cycloneDxBom.getSerialNumber();
-                        final CycloneDXVexImporter vexImporter = new CycloneDXVexImporter();
-                        vexImporter.applyVex(qm, cycloneDxBom, project);
-                        LOGGER.info("Completed processing of CycloneDX VEX.");
+                    if (BomParserFactory.looksLikeCycloneDX(vexBytes)) {
+                        if (qm.isEnabled(ConfigPropertyConstants.ACCEPT_ARTIFACT_CYCLONEDX)) {
+                            LOGGER.info("Processing CycloneDX VEX uploaded.");
+                            vexFormat = Vex.Format.CYCLONEDX;
+                            final Parser parser = BomParserFactory.createParser(vexBytes);
+                            cycloneDxBom = parser.parse(vexBytes);
+                            vexSpecVersion = cycloneDxBom.getSpecVersion();
+                            vexVersion = cycloneDxBom.getVersion();
+                            serialNumber = cycloneDxBom.getSerialNumber();
+                            final CycloneDXVexImporter vexImporter = new CycloneDXVexImporter();
+                            final org.cyclonedx.model.Bom finalCycloneDxBom = cycloneDxBom;
+                            qm.runInTransaction(() -> vexImporter.applyVex(qm, finalCycloneDxBom, project));
+                            LOGGER.info("Completed processing of CycloneDX VEX.");
+                        } else {
+                            LOGGER.warn("A CycloneDX VEX was uploaded but accepting CycloneDX format is disabled. Aborting");
+                            return;
+                        }
+                        // TODO: Add support for CSAF
                     } else {
-                        LOGGER.warn("A CycloneDX VEX was uploaded but accepting CycloneDX format is disabled. Aborting");
+                        LOGGER.warn("The VEX uploaded is not in a supported format. Supported formats include CycloneDX XML and JSON");
                         return;
                     }
-                    // TODO: Add support for CSAF
-                } else {
-                    LOGGER.warn("The VEX uploaded is not in a supported format. Supported formats include CycloneDX XML and JSON");
-                    return;
+                    final Project copyOfProject = qm.detach(Project.class, qm.getObjectById(Project.class, project.getId()).getId());
+                    Notification.dispatch(new Notification()
+                            .scope(NotificationScope.PORTFOLIO)
+                            .group(NotificationGroup.VEX_CONSUMED)
+                            .title(NotificationConstants.Title.VEX_CONSUMED)
+                            .level(NotificationLevel.INFORMATIONAL)
+                            .content("A " + vexFormat.getFormatShortName() + " VEX was consumed and will be processed")
+                            .subject(new VexConsumedOrProcessed(copyOfProject, Base64.getEncoder().encodeToString(vexBytes), vexFormat, vexSpecVersion)));
+
+                    qm.createVex(project, new Date(), vexFormat, vexSpecVersion, vexVersion, serialNumber);
+
+                    final Project detachedProject = qm.detach(Project.class, project.getId());
+
+                    Notification.dispatch(new Notification()
+                            .scope(NotificationScope.PORTFOLIO)
+                            .group(NotificationGroup.VEX_PROCESSED)
+                            .title(NotificationConstants.Title.VEX_PROCESSED)
+                            .level(NotificationLevel.INFORMATIONAL)
+                            .content("A " + vexFormat.getFormatShortName() + " VEX was processed")
+                            .subject(new VexConsumedOrProcessed(detachedProject, Base64.getEncoder().encodeToString(vexBytes), vexFormat, vexSpecVersion)));
+                } catch (Exception ex) {
+                    LOGGER.error("Error while processing vex", ex);
                 }
-                final Project copyOfProject = qm.detach(Project.class, qm.getObjectById(Project.class, project.getId()).getId());
-                Notification.dispatch(new Notification()
-                        .scope(NotificationScope.PORTFOLIO)
-                        .group(NotificationGroup.VEX_CONSUMED)
-                        .title(NotificationConstants.Title.VEX_CONSUMED)
-                        .level(NotificationLevel.INFORMATIONAL)
-                        .content("A " + vexFormat.getFormatShortName() + " VEX was consumed and will be processed")
-                        .subject(new VexConsumedOrProcessed(copyOfProject, Base64.getEncoder().encodeToString(vexBytes), vexFormat, vexSpecVersion)));
-
-                qm.createVex(project, new Date(), vexFormat, vexSpecVersion, vexVersion, serialNumber);
-
-                final Project detachedProject = qm.detach(Project.class, project.getId());
-
-                Notification.dispatch(new Notification()
-                        .scope(NotificationScope.PORTFOLIO)
-                        .group(NotificationGroup.VEX_PROCESSED)
-                        .title(NotificationConstants.Title.VEX_PROCESSED)
-                        .level(NotificationLevel.INFORMATIONAL)
-                        .content("A " + vexFormat.getFormatShortName() + " VEX was processed")
-                        .subject(new VexConsumedOrProcessed(detachedProject, Base64.getEncoder().encodeToString(vexBytes), vexFormat, vexSpecVersion)));
-            } catch (Exception ex) {
-                LOGGER.error("Error while processing vex", ex);
             }
-        }
         }
     }
 }

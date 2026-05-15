@@ -22,7 +22,6 @@ import alpine.common.logging.Logger;
 import org.apache.commons.collections4.CollectionUtils;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.util.BomLink;
-import org.cyclonedx.util.ObjectLocator;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
@@ -33,11 +32,15 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.util.AnalysisCommentUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
+import static java.util.Objects.requireNonNullElse;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
 
@@ -52,16 +55,20 @@ public class CycloneDXVexImporter {
             LOGGER.info("The uploaded VEX does not contain any vulnerabilities; Skipping VEX import");
             return;
         }
-        if (qm.getVulnerabilityCount(project, true) == 0) {
-            LOGGER.info("The project %s does not have any vulnerabilities; Skipping VEX import".formatted(project));
-            return;
-        }
 
         final List<org.cyclonedx.model.vulnerability.Vulnerability> vexVulns = getApplicableVexVulnerabilities(bom.getVulnerabilities());
         if (vexVulns.isEmpty()) {
             LOGGER.info("The uploaded VEX does not contain any applicable vulnerabilities; Skipping VEX import");
             return;
         }
+
+        if (!qm.hasVulnerabilities(project)) {
+            LOGGER.info("The project %s does not have any vulnerabilities; Skipping VEX import".formatted(project));
+            return;
+        }
+
+        final Map<String, BomRefTarget> targetByBomRef = indexComponents(bom);
+        final Map<String, List<Component>> componentsByBomRef = new HashMap<>();
 
         for (final org.cyclonedx.model.vulnerability.Vulnerability vexVuln : vexVulns) {
             final Vulnerability dtVuln = qm.getVulnerabilityByVulnId(vexVuln.getSource().getName(), vexVuln.getId());
@@ -73,31 +80,39 @@ public class CycloneDXVexImporter {
                 continue;
             }
 
+            List<Component> vulnerableComponents = null;
+
             for (org.cyclonedx.model.vulnerability.Vulnerability.Affect affect : vexVuln.getAffects()) {
-                final ObjectLocator ol = new ObjectLocator(bom, affect.getRef()).locate();
-                if ((ol.found() && ol.isMetadataComponent()) || (!ol.found() && BomLink.isBomLink(affect.getRef()))) {
-                    // Affects the project itself
-                    List<Component> components = qm.getAllVulnerableComponents(project, dtVuln, true);
+                final String affectedBomRef = affect.getRef();
+                final BomRefTarget affectedBomRefTarget = affectedBomRef != null
+                        ? targetByBomRef.get(affectedBomRef)
+                        : null;
+
+                final boolean isProjectScoped =
+                        (affectedBomRefTarget != null && affectedBomRefTarget.isMetadataComponent())
+                                || (affectedBomRefTarget == null && affectedBomRef != null && BomLink.isBomLink(affectedBomRef));
+
+                if (isProjectScoped) {
+                    if (vulnerableComponents == null) {
+                        vulnerableComponents = qm.getAllVulnerableComponents(project, dtVuln);
+                    }
+                    for (final Component component : vulnerableComponents) {
+                        updateAnalysis(qm, component, dtVuln, vexVuln);
+                    }
+                } else if (affectedBomRefTarget != null) {
+                    final List<Component> components = componentsByBomRef.computeIfAbsent(affectedBomRef, ignored -> {
+                        final var cid = new ComponentIdentity(affectedBomRefTarget.component());
+                        return qm.matchIdentity(project, cid);
+                    });
                     for (final Component component : components) {
                         updateAnalysis(qm, component, dtVuln, vexVuln);
                     }
-                } else if (ol.found() && ol.isComponent()) {
-                    // Affects an individual component
-                    final org.cyclonedx.model.Component cdxComponent = (org.cyclonedx.model.Component) ol.getObject();
-                    final ComponentIdentity cid = new ComponentIdentity(cdxComponent);
-                    List<Component> components = qm.matchIdentity(project, cid);
-                    for (final Component component : components) {
-                        updateAnalysis(qm, component, dtVuln, vexVuln);
-                    }
-                } else if (ol.found() && ol.isService()) {
-                    // Affects an individual service
-                    // TODO add VEX support for services
                 } else {
                     LOGGER.warn("""
-                            Unable to locate affected element (metadata.component, components[].component, \
-                            or services[].service) based on the BOM reference %s. The vulnerability.affects[].ref \
+                            Unable to locate affected element (metadata.component or components[].component) \
+                            based on the BOM reference %s. The vulnerability.affects[].ref \
                             node of %s/%s is not resolvable; Skipping it\
-                            """.formatted(affect.getRef(), vexVuln.getSource().getName(), vexVuln.getId()));
+                            """.formatted(affectedBomRef, vexVuln.getSource().getName(), vexVuln.getId()));
                 }
             }
         }
@@ -106,8 +121,8 @@ public class CycloneDXVexImporter {
     private static List<org.cyclonedx.model.vulnerability.Vulnerability> getApplicableVexVulnerabilities(
             final List<org.cyclonedx.model.vulnerability.Vulnerability> vexVulns) {
         final var applicableVulns = new ArrayList<org.cyclonedx.model.vulnerability.Vulnerability>();
-        for (final var vexVuln : vexVulns) {
-            final int vexVulnPos = vexVulns.indexOf(vexVuln);
+        for (int vexVulnPos = 0; vexVulnPos < vexVulns.size(); vexVulnPos++) {
+            final var vexVuln = vexVulns.get(vexVulnPos);
             if (isBlank(vexVuln.getId()) || vexVuln.getSource() == null || isBlank(vexVuln.getSource().getName())) {
                 LOGGER.warn("VEX vulnerability at position #%d does not have an ID and / or source; Skipping it".formatted(vexVulnPos));
                 continue;
@@ -115,7 +130,7 @@ public class CycloneDXVexImporter {
 
             final String vexVulnId = vexVuln.getId();
             final String vexVulnSource = vexVuln.getSource().getName();
-            if (!Vulnerability.Source.isKnownSource(vexVuln.getSource().getName())) {
+            if (!Vulnerability.Source.isKnownSource(vexVulnSource)) {
                 LOGGER.warn("VEX vulnerability %s/%s at position #%d is from an unsupported source; Skipping it"
                         .formatted(vexVulnSource, vexVulnId, vexVulnPos));
                 continue;
@@ -137,38 +152,115 @@ public class CycloneDXVexImporter {
         return applicableVulns;
     }
 
-    private static void updateAnalysis(final QueryManager qm, final Component component, final Vulnerability vuln,
-                                       final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln) {
-        // The vulnerability object is detached, so refresh it.
-        final Vulnerability refreshedVuln = qm.getObjectByUuid(Vulnerability.class, vuln.getUuid());
-        Analysis analysis = qm.getAnalysis(component, refreshedVuln);
-        AnalysisState analysisState = null;
-        AnalysisJustification analysisJustification = null;
-        String analysisDetails = null;
-        AnalysisResponse analysisResponse = null;
-        boolean suppress = false;
-        if (analysis == null) {
-            analysis = qm.makeAnalysis(component, refreshedVuln, AnalysisState.NOT_SET, null, null, null, null);
+    private record BomRefTarget(org.cyclonedx.model.Component component, boolean isMetadataComponent) {
+    }
+
+    private static Map<String, BomRefTarget> indexComponents(Bom bom) {
+        final Map<String, BomRefTarget> targetByBomRef = new HashMap<>();
+        if (bom == null) {
+            return targetByBomRef;
         }
-        if (cdxVuln.getAnalysis().getState() != null) {
-            analysisState = ModelConverter.convertCdxVulnAnalysisStateToDtAnalysisState(cdxVuln.getAnalysis().getState());
-            suppress = (AnalysisState.FALSE_POSITIVE == analysisState || AnalysisState.NOT_AFFECTED == analysisState || AnalysisState.RESOLVED == analysisState);
-            AnalysisCommentUtil.makeStateComment(qm, analysis, analysisState, COMMENTER);
+
+        if (bom.getMetadata() != null && bom.getMetadata().getComponent() != null) {
+            indexComponents(List.of(bom.getMetadata().getComponent()), targetByBomRef, true);
         }
-        if (cdxVuln.getAnalysis().getJustification() != null) {
-            analysisJustification = ModelConverter.convertCdxVulnAnalysisJustificationToDtAnalysisJustification(cdxVuln.getAnalysis().getJustification());
-            AnalysisCommentUtil.makeJustificationComment(qm, analysis, analysisJustification, COMMENTER);
+
+        indexComponents(bom.getComponents(), targetByBomRef, false);
+        return targetByBomRef;
+    }
+
+    private static void indexComponents(
+            List<org.cyclonedx.model.Component> components,
+            Map<String, BomRefTarget> targetByBomRef,
+            boolean metadataComponent) {
+        if (components == null) {
+            return;
         }
-        if (trimToNull(cdxVuln.getAnalysis().getDetail()) != null) {
-            analysisDetails = cdxVuln.getAnalysis().getDetail().trim();
-            AnalysisCommentUtil.makeAnalysisDetailsComment(qm, analysis, cdxVuln.getAnalysis().getDetail().trim(), COMMENTER);
-        }
-        if (cdxVuln.getAnalysis().getResponses() != null) {
-            for (org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response cdxRes : cdxVuln.getAnalysis().getResponses()) {
-                analysisResponse = ModelConverter.convertCdxVulnAnalysisResponseToDtAnalysisResponse(cdxRes);
-                AnalysisCommentUtil.makeAnalysisResponseComment(qm, analysis, analysisResponse, COMMENTER);
+
+        for (final var component : components) {
+            if (component.getBomRef() != null) {
+                targetByBomRef.putIfAbsent(
+                        component.getBomRef(),
+                        new BomRefTarget(component, metadataComponent));
+            }
+
+            if (component.getComponents() != null && !component.getComponents().isEmpty()) {
+                indexComponents(component.getComponents(), targetByBomRef, false);
             }
         }
-        qm.makeAnalysis(component, refreshedVuln, analysisState, analysisJustification, analysisResponse, analysisDetails, suppress);
+    }
+
+    private static void updateAnalysis(final QueryManager qm, final Component component, final Vulnerability dtVuln,
+                                       final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln) {
+        final org.cyclonedx.model.vulnerability.Vulnerability.Analysis cdxAnalysis = cdxVuln.getAnalysis();
+
+        final Analysis existing = qm.getAnalysis(component, dtVuln);
+        final AnalysisState oldState = existing != null
+                ? requireNonNullElse(existing.getAnalysisState(), AnalysisState.NOT_SET)
+                : AnalysisState.NOT_SET;
+        final AnalysisJustification oldJustification = existing != null
+                ? requireNonNullElse(existing.getAnalysisJustification(), AnalysisJustification.NOT_SET)
+                : AnalysisJustification.NOT_SET;
+        final AnalysisResponse oldResponse = existing != null
+                ? requireNonNullElse(existing.getAnalysisResponse(), AnalysisResponse.NOT_SET)
+                : AnalysisResponse.NOT_SET;
+        final String oldDetails = existing != null
+                ? requireNonNullElse(existing.getAnalysisDetails(), "")
+                : "";
+
+        AnalysisState newState = null;
+        boolean suppress = false;
+        if (cdxAnalysis.getState() != null) {
+            newState = ModelConverter.convertCdxVulnAnalysisStateToDtAnalysisState(cdxAnalysis.getState());
+            suppress = AnalysisState.FALSE_POSITIVE == newState
+                    || AnalysisState.NOT_AFFECTED == newState
+                    || AnalysisState.RESOLVED == newState;
+        }
+
+        AnalysisJustification newJustification = null;
+        if (cdxAnalysis.getJustification() != null) {
+            newJustification = ModelConverter.convertCdxVulnAnalysisJustificationToDtAnalysisJustification(cdxAnalysis.getJustification());
+        }
+
+        String newDetails = null;
+        if (trimToNull(cdxAnalysis.getDetail()) != null) {
+            newDetails = cdxAnalysis.getDetail().trim();
+        }
+
+        AnalysisResponse newResponse = null;
+        final List<AnalysisResponse> responseTrail;
+        if (cdxAnalysis.getResponses() != null && !cdxAnalysis.getResponses().isEmpty()) {
+            responseTrail = new ArrayList<>(cdxAnalysis.getResponses().size());
+            for (var cdxRes : cdxAnalysis.getResponses()) {
+                final AnalysisResponse response = ModelConverter.convertCdxVulnAnalysisResponseToDtAnalysisResponse(cdxRes);
+                responseTrail.add(response);
+                newResponse = response;
+            }
+        } else {
+            responseTrail = Collections.emptyList();
+        }
+
+        final Analysis updated;
+        if (existing != null) {
+            updated = qm.updateAnalysis(existing, newState, newJustification, newResponse, newDetails, suppress);
+        } else {
+            final AnalysisState createState = newState != null ? newState : AnalysisState.NOT_SET;
+            updated = qm.makeAnalysis(component, dtVuln, createState, newJustification, newResponse, newDetails, suppress);
+        }
+
+        if (newState != null && !Objects.equals(newState, oldState)) {
+            qm.makeAnalysisComment(updated, "Analysis: %s → %s".formatted(oldState, newState), COMMENTER);
+        }
+        if (newJustification != null && !Objects.equals(newJustification, oldJustification)) {
+            qm.makeAnalysisComment(updated, "Justification: %s → %s".formatted(oldJustification, newJustification), COMMENTER);
+        }
+        if (newDetails != null && !Objects.equals(newDetails, oldDetails)) {
+            qm.makeAnalysisComment(updated, "Details: %s".formatted(newDetails), COMMENTER);
+        }
+        for (final AnalysisResponse response : responseTrail) {
+            if (response != null && !Objects.equals(response, oldResponse)) {
+                qm.makeAnalysisComment(updated, "Vendor Response: %s → %s".formatted(oldResponse, response), COMMENTER);
+            }
+        }
     }
 }

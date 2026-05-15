@@ -44,6 +44,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
+
 public class FindingsQueryManager extends QueryManager implements IQueryManager {
 
 
@@ -183,35 +185,66 @@ public class FindingsQueryManager extends QueryManager implements IQueryManager 
     public Analysis makeAnalysis(Component component, Vulnerability vulnerability, AnalysisState analysisState,
                                  AnalysisJustification analysisJustification, AnalysisResponse analysisResponse,
                                  String analysisDetails, Boolean isSuppressed) {
-        Analysis analysis = getAnalysis(component, vulnerability);
-        if (analysis == null) {
-            analysis = new Analysis();
-            analysis.setComponent(component);
-            analysis.setVulnerability(vulnerability);
-        }
+        return callInTransaction(() -> {
+            Analysis analysis = getAnalysis(component, vulnerability);
+            if (analysis == null) {
+                analysis = new Analysis();
+                analysis.setComponent(component);
+                analysis.setVulnerability(vulnerability);
+            }
 
-        // In case we're updating an existing analysis, setting any of the fields
-        // to null will wipe them. That is not the expected behavior when an AnalysisRequest
-        // has some fields unset (so they're null). If fields are not set, there shouldn't
-        // be any modifications to the existing data.
-        if (analysisState != null) {
-            analysis.setAnalysisState(analysisState);
-        }
-        if (analysisJustification != null) {
-            analysis.setAnalysisJustification(analysisJustification);
-        }
-        if (analysisResponse != null) {
-            analysis.setAnalysisResponse(analysisResponse);
-        }
-        if (analysisDetails != null) {
-            analysis.setAnalysisDetails(analysisDetails);
-        }
-        if (isSuppressed != null) {
-            analysis.setSuppressed(isSuppressed);
-        }
+            // In case we're updating an existing analysis, setting any of the fields
+            // to null will wipe them. That is not the expected behavior when an AnalysisRequest
+            // has some fields unset (so they're null). If fields are not set, there shouldn't
+            // be any modifications to the existing data.
+            if (analysisState != null) {
+                analysis.setAnalysisState(analysisState);
+            }
+            if (analysisJustification != null) {
+                analysis.setAnalysisJustification(analysisJustification);
+            }
+            if (analysisResponse != null) {
+                analysis.setAnalysisResponse(analysisResponse);
+            }
+            if (analysisDetails != null) {
+                analysis.setAnalysisDetails(analysisDetails);
+            }
+            if (isSuppressed != null) {
+                analysis.setSuppressed(isSuppressed);
+            }
 
-        analysis = persist(analysis);
-        return getAnalysis(analysis.getComponent(), analysis.getVulnerability());
+            return persist(analysis);
+        });
+    }
+
+    @Override
+    public Analysis updateAnalysis(
+            Analysis analysis,
+            AnalysisState analysisState,
+            AnalysisJustification analysisJustification,
+            AnalysisResponse analysisResponse,
+            String analysisDetails,
+            Boolean isSuppressed) {
+        assertPersistent(analysis, "analysis must be persistent");
+        return callInTransaction(() -> {
+            if (analysisState != null) {
+                analysis.setAnalysisState(analysisState);
+            }
+            if (analysisJustification != null) {
+                analysis.setAnalysisJustification(analysisJustification);
+            }
+            if (analysisResponse != null) {
+                analysis.setAnalysisResponse(analysisResponse);
+            }
+            if (analysisDetails != null) {
+                analysis.setAnalysisDetails(analysisDetails);
+            }
+            if (isSuppressed != null) {
+                analysis.setSuppressed(isSuppressed);
+            }
+
+            return analysis;
+        });
     }
 
     /**

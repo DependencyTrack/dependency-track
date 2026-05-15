@@ -5,9 +5,12 @@ import org.cyclonedx.exception.ParseException;
 import org.cyclonedx.parsers.BomParserFactory;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisJustification;
+import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.tasks.scanners.AnalyzerIdentity;
@@ -16,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import javax.jdo.Query;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -126,6 +130,65 @@ class CycloneDXVexImporterTest extends PersistenceCapableTest {
             });
             Assertions.assertThat(analysis.getAnalysisDetails()).isEqualTo("Unit test");
         });
+    }
+
+    @Test
+    void shouldPersistLastResponseAndCommentEach() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(component));
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, component, AnalyzerIdentity.NONE);
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": {
+                      "type": "application",
+                      "bom-ref": "project",
+                      "name": "Acme Example",
+                      "version": "1.0"
+                    }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0001",
+                      "source": { "name": "NVD" },
+                      "analysis": {
+                        "response": ["will_not_fix", "update"]
+                      },
+                      "affects": [{ "ref": "project" }]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+
+        vexImporter.applyVex(qm, vex, project);
+
+        final Analysis analysis = qm.getAnalysis(component, vuln);
+        Assertions.assertThat(analysis.getAnalysisResponse()).isEqualTo(AnalysisResponse.UPDATE);
+        Assertions.assertThat(analysis.getAnalysisComments())
+                .extracting(AnalysisComment::getComment)
+                .containsExactlyInAnyOrder(
+                        "Vendor Response: NOT_SET → WILL_NOT_FIX",
+                        "Vendor Response: NOT_SET → UPDATE");
     }
 
 }

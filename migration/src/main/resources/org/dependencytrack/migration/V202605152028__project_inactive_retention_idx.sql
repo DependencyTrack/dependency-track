@@ -1,0 +1,4 @@
+-- Supports version-based project retention enforcement.
+CREATE INDEX IF NOT EXISTS "PROJECT_INACTIVE_RETENTION_IDX"
+    ON "PROJECT" ("NAME", "INACTIVE_SINCE" DESC)
+ WHERE "INACTIVE_SINCE" IS NOT NULL;

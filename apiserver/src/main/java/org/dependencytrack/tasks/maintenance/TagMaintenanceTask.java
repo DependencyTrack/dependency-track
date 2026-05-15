@@ -18,74 +18,43 @@
  */
 package org.dependencytrack.tasks.maintenance;
 
-import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
 import org.dependencytrack.event.maintenance.TagMaintenanceEvent;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.TagDao;
-import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
-
-import static net.javacrumbs.shedlock.core.LockAssert.assertLocked;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_TAGS_DELETE_UNUSED;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
-import static org.dependencytrack.util.LockProvider.executeWithLock;
-import static org.dependencytrack.util.TaskUtil.getLockConfigForTask;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
  * @since 5.0.0
  */
-public class TagMaintenanceTask implements Subscriber {
+public final class TagMaintenanceTask extends AbstractBatchingMaintenanceTask<TagMaintenanceEvent> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TagMaintenanceTask.class);
+    private static final long ADVISORY_LOCK_ID = 5827314498267091435L;
+    private static final int BATCH_SIZE = 1000;
+    private static final int MAX_ITERATIONS = 1000;
+
+    public TagMaintenanceTask() {
+        super(
+                TagMaintenanceEvent.class,
+                "tag maintenance",
+                ADVISORY_LOCK_ID,
+                MAX_ITERATIONS);
+    }
 
     @Override
-    public void inform(final Event event) {
-        if (!(event instanceof TagMaintenanceEvent)) {
-            return;
+    String doRun() {
+        final boolean deleteUnusedEnabled = withJdbiHandle(handle -> handle
+                .attach(ConfigPropertyDao.class)
+                .getValue(MAINTENANCE_TAGS_DELETE_UNUSED, Boolean.class));
+        if (!deleteUnusedEnabled) {
+            return "unused tag deletion is disabled";
         }
 
-        final long startTimeNs = System.nanoTime();
-        try (final Handle jdbiHandle = openJdbiHandle()) {
-            LOGGER.info("Starting tag maintenance");
-            final Statistics statistics = executeWithLock(
-                    getLockConfigForTask(TagMaintenanceTask.class),
-                    () -> informLocked(jdbiHandle));
-            if (statistics == null) {
-                LOGGER.info("Task is locked by another instance; Skipping");
-                return;
-            }
-
-            final var taskDuration = Duration.ofNanos(System.nanoTime() - startTimeNs);
-            LOGGER.info("Completed in %s: %s".formatted(taskDuration, statistics));
-        } catch (Throwable e) {
-            final var taskDuration = Duration.ofNanos(System.nanoTime() - startTimeNs);
-            LOGGER.error("Failed to complete after %s".formatted(taskDuration), e);
-        }
-    }
-
-    private record Statistics(int deletedUnused) {
-    }
-
-    private Statistics informLocked(final Handle jdbiHandle) {
-        assertLocked();
-
-        final var configPropertyDao = jdbiHandle.attach(ConfigPropertyDao.class);
-        final var tagDao = jdbiHandle.attach(TagDao.class);
-
-        int numDeleted = 0;
-        if (configPropertyDao.getValue(MAINTENANCE_TAGS_DELETE_UNUSED, Boolean.class)) {
-            numDeleted = tagDao.deleteUnused();
-        } else {
-            LOGGER.info("Not deleting unused tags because %s:%s is disabled".formatted(
-                    MAINTENANCE_TAGS_DELETE_UNUSED.getGroupName(),
-                    MAINTENANCE_TAGS_DELETE_UNUSED.getPropertyName()));
-        }
-
-        return new Statistics(numDeleted);
+        final int deleted = runBatched(
+                BATCH_SIZE,
+                handle -> handle.attach(TagDao.class).deleteUnused(BATCH_SIZE));
+        return "deleted %d unused tags".formatted(deleted);
     }
 
 }

@@ -38,10 +38,10 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
-public class PackageMetadataMaintenanceTaskTest extends PersistenceCapableTest {
+class PackageMetadataMaintenanceTaskTest extends PersistenceCapableTest {
 
     @Test
-    public void test() throws Exception {
+    void test() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);

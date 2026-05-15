@@ -162,6 +162,19 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
+     * @since 5.0.0
+     */
+    public boolean tryAcquireAdvisoryLock(long lockId) {
+        if (!pm.currentTransaction().isActive()) {
+            throw new IllegalStateException("Advisory locks can only be acquired within an active JDO transaction");
+        }
+
+        final Query<?> query = pm.newQuery(Query.SQL, "SELECT pg_try_advisory_xact_lock(?)");
+        query.setParameters(lockId);
+        return executeAndCloseResultUnique(query, Boolean.class);
+    }
+
+    /**
      * Override of {@link AbstractAlpineQueryManager#decorate(Query)} to modify the
      * method's behavior such that it always sorts by ID, in addition to whatever field
      * is requested to be sorted by via {@link #orderBy}.

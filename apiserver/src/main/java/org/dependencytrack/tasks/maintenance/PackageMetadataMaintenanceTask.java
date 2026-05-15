@@ -18,87 +18,75 @@
  */
 package org.dependencytrack.tasks.maintenance;
 
-import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
 import org.dependencytrack.event.maintenance.PackageMetadataMaintenanceEvent;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.time.Duration;
-
-import static net.javacrumbs.shedlock.core.LockAssert.assertLocked;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
-import static org.dependencytrack.util.LockProvider.executeWithLock;
-import static org.dependencytrack.util.TaskUtil.getLockConfigForTask;
 
 /**
  * @since 5.0.0
  */
-public class PackageMetadataMaintenanceTask implements Subscriber {
+public final class PackageMetadataMaintenanceTask
+        extends AbstractBatchingMaintenanceTask<PackageMetadataMaintenanceEvent> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PackageMetadataMaintenanceTask.class);
+    private static final long ADVISORY_LOCK_ID = 3179468540126812349L;
+    private static final int BATCH_SIZE = 1000;
+    private static final int MAX_ITERATIONS = 1000;
+
+    public PackageMetadataMaintenanceTask() {
+        super(
+                PackageMetadataMaintenanceEvent.class,
+                "package metadata maintenance",
+                ADVISORY_LOCK_ID,
+                MAX_ITERATIONS);
+    }
 
     @Override
-    public void inform(final Event event) {
-        if (!(event instanceof PackageMetadataMaintenanceEvent)) {
-            return;
-        }
-
-        final long startTimeNs = System.nanoTime();
-        try (final Handle jdbiHandle = openJdbiHandle()) {
-            LOGGER.info("Starting component metadata maintenance");
-            final Statistics statistics = executeWithLock(
-                    getLockConfigForTask(PackageMetadataMaintenanceTask.class),
-                    () -> informLocked(jdbiHandle));
-            if (statistics == null) {
-                LOGGER.info("Task is locked by another instance; Skipping");
-                return;
-            }
-
-            final var taskDuration = Duration.ofNanos(System.nanoTime() - startTimeNs);
-            LOGGER.info("Completed in %s: %s".formatted(taskDuration, statistics));
-        } catch (Throwable e) {
-            final var taskDuration = Duration.ofNanos(System.nanoTime() - startTimeNs);
-            LOGGER.error("Failed to complete after %s".formatted(taskDuration), e);
-        }
+    protected String doRun() {
+        final int deletedArtifactMetadata = runBatched(
+                BATCH_SIZE, PackageMetadataMaintenanceTask::deleteOrphanedArtifactMetadata);
+        final int deletedPackageMetadata = runBatched(
+                BATCH_SIZE, PackageMetadataMaintenanceTask::deleteOrphanedPackageMetadata);
+        return "deleted %d orphan PACKAGE_ARTIFACT_METADATA rows, %d orphan PACKAGE_METADATA rows"
+                .formatted(deletedArtifactMetadata, deletedPackageMetadata);
     }
 
-    private record Statistics(
-            int deletedIntegrityMetadata,
-            int deletedRepositoryMetadata) {
-    }
-
-    private Statistics informLocked(final Handle jdbiHandle) {
-        assertLocked();
-
-        final int numDeletedPackageVersionMetadata = jdbiHandle
+    private static int deleteOrphanedArtifactMetadata(Handle handle) {
+        return handle
                 .createUpdate("""
                         DELETE
-                          FROM "PACKAGE_ARTIFACT_METADATA" AS pam
-                         WHERE NOT EXISTS (
-                           SELECT 1
-                             FROM "COMPONENT" AS c
-                            WHERE c."PURL" = pam."PURL"
-                         )
-                        """)
-                .execute();
-
-        final int numDeletedPackageMetadata = jdbiHandle
-                .createUpdate("""
-                        DELETE
-                          FROM "PACKAGE_METADATA" AS pm
-                         WHERE NOT EXISTS (
-                           SELECT 1
+                          FROM "PACKAGE_ARTIFACT_METADATA"
+                         WHERE "PURL" IN (
+                           SELECT "PURL"
                              FROM "PACKAGE_ARTIFACT_METADATA" AS pam
-                            WHERE pam."PACKAGE_PURL" = pm."PURL"
+                            WHERE NOT EXISTS (
+                              SELECT 1
+                                FROM "COMPONENT" AS c
+                               WHERE c."PURL" = pam."PURL"
+                            )
+                            LIMIT :batchSize
                          )
                         """)
+                .bind("batchSize", BATCH_SIZE)
                 .execute();
+    }
 
-        return new Statistics(
-                numDeletedPackageVersionMetadata,
-                numDeletedPackageMetadata);
+    private static int deleteOrphanedPackageMetadata(Handle handle) {
+        return handle
+                .createUpdate("""
+                        DELETE
+                          FROM "PACKAGE_METADATA"
+                         WHERE "PURL" IN (
+                           SELECT "PURL"
+                             FROM "PACKAGE_METADATA" AS pm
+                            WHERE NOT EXISTS (
+                              SELECT 1
+                                FROM "PACKAGE_ARTIFACT_METADATA" AS pam
+                               WHERE pam."PACKAGE_PURL" = pm."PURL"
+                            )
+                            LIMIT :batchSize
+                         )
+                        """)
+                .bind("batchSize", BATCH_SIZE)
+                .execute();
     }
 
 }

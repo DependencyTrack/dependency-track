@@ -150,41 +150,41 @@ public class v4110Updater extends AbstractUpgradeItem {
     }
 
     private static void extendPurlColumnLengths(final Connection connection) throws Exception {
-        LOGGER.info("Extending length of PURL and PURLCOORDINATES columns from 255 to 786");
+        LOGGER.info("Extending length of PURL and PURLCOORDINATES columns from 786 to 4096");
         if (DbUtil.isH2() || DbUtil.isPostgreSQL()) {
             try (final Statement statement = connection.createStatement()) {
                 statement.addBatch("""
-                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURL" SET DATA TYPE VARCHAR(786)""");
+                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURL" SET DATA TYPE VARCHAR(4096)""");
                 statement.addBatch("""
-                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURLCOORDINATES" SET DATA TYPE VARCHAR(786)""");
+                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURLCOORDINATES" SET DATA TYPE VARCHAR(4096)""");
                 statement.addBatch("""
-                        ALTER TABLE "COMPONENTANALYSISCACHE" ALTER COLUMN "TARGET" SET DATA TYPE VARCHAR(786)""");
+                        ALTER TABLE "COMPONENTANALYSISCACHE" ALTER COLUMN "TARGET" SET DATA TYPE VARCHAR(4096)""");
                 statement.addBatch("""
-                        ALTER TABLE "PROJECT" ALTER COLUMN "PURL" SET DATA TYPE VARCHAR(786)""");
+                        ALTER TABLE "PROJECT" ALTER COLUMN "PURL" SET DATA TYPE VARCHAR(4096)""");
                 statement.executeBatch();
             }
         } else if (DbUtil.isMssql()) {
             try (final Statement statement = connection.createStatement()) {
                 statement.addBatch("""
-                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURL" VARCHAR(786) NULL""");
+                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURL" VARCHAR(4096) NULL""");
                 statement.addBatch("""
-                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURLCOORDINATES" VARCHAR(786) NULL""");
+                        ALTER TABLE "COMPONENT" ALTER COLUMN "PURLCOORDINATES" VARCHAR(4096) NULL""");
                 statement.addBatch("""
-                        ALTER TABLE "COMPONENTANALYSISCACHE" ALTER COLUMN "TARGET" VARCHAR(786) NOT NULL""");
+                        ALTER TABLE "COMPONENTANALYSISCACHE" ALTER COLUMN "TARGET" VARCHAR(4096) NOT NULL""");
                 statement.addBatch("""
-                        ALTER TABLE "PROJECT" ALTER COLUMN "PURL" VARCHAR(786) NULL""");
+                        ALTER TABLE "PROJECT" ALTER COLUMN "PURL" VARCHAR(4096) NULL""");
                 statement.executeBatch();
             }
         } else if (DbUtil.isMysql()) {
             try (final Statement statement = connection.createStatement()) {
                 statement.addBatch("""
-                        ALTER TABLE "COMPONENT" MODIFY COLUMN "PURL" VARCHAR(786)""");
+                        ALTER TABLE "COMPONENT" MODIFY COLUMN "PURL" VARCHAR(4096)""");
                 statement.addBatch("""
-                        ALTER TABLE "COMPONENT" MODIFY COLUMN "PURLCOORDINATES" VARCHAR(786)""");
+                        ALTER TABLE "COMPONENT" MODIFY COLUMN "PURLCOORDINATES" VARCHAR(4096)""");
                 statement.addBatch("""
-                        ALTER TABLE "COMPONENTANALYSISCACHE" MODIFY COLUMN "TARGET" VARCHAR(786)""");
+                        ALTER TABLE "COMPONENTANALYSISCACHE" MODIFY COLUMN "TARGET" VARCHAR(4096)""");
                 statement.addBatch("""
-                        ALTER TABLE "PROJECT" MODIFY COLUMN "PURL" VARCHAR(786)""");
+                        ALTER TABLE "PROJECT" MODIFY COLUMN "PURL" VARCHAR(4096)""");
                 statement.executeBatch();
             }
         } else {

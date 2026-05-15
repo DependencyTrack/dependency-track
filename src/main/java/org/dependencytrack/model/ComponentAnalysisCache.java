@@ -84,7 +84,7 @@ public class ComponentAnalysisCache implements Serializable {
     private String targetType;
 
     @Persistent
-    @Column(name = "TARGET", allowsNull = "false", length = 786)
+    @Column(name = "TARGET", allowsNull = "false", length = 4096)
     @NotNull
     private String target;
 

@@ -36,6 +36,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
@@ -131,7 +132,7 @@ final class NixpkgsPackageIndex {
         }
 
         try (final InputStream body = response.body()) {
-            RetryableResolutionException.throwIfRetryableError(response);
+            RetryableResolutionException.throwIfRetryableError(response, Clock.systemUTC());
             if (response.statusCode() != 200) {
                 throw new UncheckedIOException(new IOException(
                         "Unexpected status code %d for %s".formatted(response.statusCode(), url)));

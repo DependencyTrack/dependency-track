@@ -65,7 +65,8 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
     @Override
     public @Nullable PackageMetadata resolve(
             PackageURL purl,
-            @Nullable PackageRepository repository) throws InterruptedException {
+            @Nullable PackageRepository repository,
+            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String baseUrl = join(repository.url(),
@@ -84,8 +85,18 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
             throw new InterruptedException();
         }
 
-        String artifactUrl = join(baseUrl, latestVersion, formatArtifactFileName(purl, latestVersion));
-        final var latestVersionPublishedAt = resolvePublishedAt(artifactUrl, repository);
+        // Prior is only trustworthy for stable versions of the same PURL.
+        // Snapshot versions are mutable, so artifact metadata can change.
+        final boolean canUsePrior = prior != null
+                && purl.getVersion() != null
+                && !isSnapshotVersion(purl.getVersion());
+        final boolean priorMatchesLatest =
+                canUsePrior && purl.getVersion().equals(latestVersion);
+
+        final String latestArtifactUrl = join(baseUrl, latestVersion, formatArtifactFileName(purl, latestVersion));
+        final Instant latestVersionPublishedAt = (priorMatchesLatest && prior.publishedAt() != null)
+                ? prior.publishedAt()
+                : resolvePublishedAt(latestArtifactUrl, repository);
         if (Thread.interrupted()) {
             throw new InterruptedException();
         }
@@ -94,16 +105,26 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
             return new PackageMetadata(latestVersion, latestVersionPublishedAt, resolvedAt, null);
         }
 
-        artifactUrl = join(baseUrl, purl.getVersion(), formatArtifactFileName(purl, null));
+        final String artifactUrl = join(baseUrl, purl.getVersion(), formatArtifactFileName(purl, null));
 
-        final var publishedAt = purl.getVersion().equals(latestVersion)
-                ? latestVersionPublishedAt
-                : resolvePublishedAt(artifactUrl, repository);
+        final Instant publishedAt;
+        if (purl.getVersion().equals(latestVersion)) {
+            publishedAt = latestVersionPublishedAt;
+        } else if (canUsePrior && prior.publishedAt() != null) {
+            publishedAt = prior.publishedAt();
+        } else {
+            publishedAt = resolvePublishedAt(artifactUrl, repository);
+        }
         if (Thread.interrupted()) {
             throw new InterruptedException();
         }
 
-        final String sha1 = fetchSha1Hash(artifactUrl, repository);
+        final String priorSha1 = canUsePrior
+                ? prior.hashes().get(HashAlgorithm.SHA1)
+                : null;
+        final String sha1 = priorSha1 == null
+                ? fetchSha1Hash(artifactUrl, repository)
+                : priorSha1;
         var hashes = new EnumMap<HashAlgorithm, String>(HashAlgorithm.class);
         if (sha1 != null) {
             hashes.put(HashAlgorithm.SHA1, sha1);
@@ -173,15 +194,6 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
                 .orElse(null);
     }
 
-    private static @Nullable Instant parseHttpDate(String value) {
-        try {
-            return ZonedDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant();
-        } catch (DateTimeParseException e) {
-            LOGGER.debug("Failed to parse Last-Modified header: {}", value, e);
-            return null;
-        }
-    }
-
     private @Nullable String fetchSha1Hash(
             String artifactUrl,
             PackageRepository repository) throws InterruptedException {
@@ -234,7 +246,9 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
         builder.header("Authorization", authHeaderValue);
     }
 
-    private static String formatArtifactFileName(PackageURL purl, String versionOverride) {
+    private static String formatArtifactFileName(
+            PackageURL purl,
+            @Nullable String versionOverride) {
         final Map<String, String> qualifiers = purl.getQualifiers();
 
         final String extension = qualifiers != null
@@ -247,12 +261,25 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
         final var sb = new StringBuilder()
                 .append(purl.getName())
                 .append('-')
-                .append(versionOverride == null ? purl.getVersion() :  versionOverride);
+                .append(versionOverride == null ? purl.getVersion() : versionOverride);
         if (classifier != null) {
             sb.append('-').append(classifier);
         }
 
         return sb.append('.').append(extension).toString();
+    }
+
+    static boolean isSnapshotVersion(String version) {
+        return version.toLowerCase().endsWith("-snapshot");
+    }
+
+    private static @Nullable Instant parseHttpDate(String value) {
+        try {
+            return ZonedDateTime.parse(value, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant();
+        } catch (DateTimeParseException e) {
+            LOGGER.debug("Failed to parse Last-Modified header: {}", value, e);
+            return null;
+        }
     }
 
 }

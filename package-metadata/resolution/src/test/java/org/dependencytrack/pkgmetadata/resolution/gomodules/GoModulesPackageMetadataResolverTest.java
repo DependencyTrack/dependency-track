@@ -23,6 +23,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.api.NoopCacheManager;
+import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
@@ -91,7 +92,7 @@ class GoModulesPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("go-proxy", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v0.21.0");
@@ -128,7 +129,7 @@ class GoModulesPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("go-proxy", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v0.21.0");
@@ -152,7 +153,7 @@ class GoModulesPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("go-proxy", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNull();
     }
@@ -167,7 +168,7 @@ class GoModulesPackageMetadataResolverTest {
                 .build();
 
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null));
+                .isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -184,7 +185,7 @@ class GoModulesPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("go-proxy", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo))
+                .isThrownBy(() -> resolver.resolve(purl, repo, null))
                 .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(30));
     }
 
@@ -202,7 +203,59 @@ class GoModulesPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("go-proxy", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo));
+                .isThrownBy(() -> resolver.resolve(purl, repo, null));
+    }
+
+    @Test
+    void shouldUsePriorPublishedAtForOlderVersionWhenAvailable(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/golang.org/x/text/@latest"))
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
+                        {"Version": "v0.21.0", "Time": "2024-10-01T12:00:00Z"}
+                        """)));
+
+        final var purl = PackageURLBuilder.aPackageURL()
+                .withType("golang")
+                .withNamespace("golang.org/x")
+                .withName("text")
+                .withVersion("v0.19.0")
+                .build();
+        final var prior = new PackageArtifactMetadata(
+                Instant.parse("2023-01-01T00:00:00Z"),
+                Instant.parse("2024-06-15T08:00:00Z"),
+                Map.of());
+
+        final var repo = new PackageRepository("go-proxy", wmRuntimeInfo.getHttpBaseUrl(), null, null);
+        final PackageMetadata result = resolver.resolve(purl, repo, prior);
+
+        assertThat(result).isNotNull();
+        assertThat(result.artifactMetadata()).isNotNull();
+        assertThat(result.artifactMetadata().publishedAt())
+                .isEqualTo(Instant.parse("2024-06-15T08:00:00Z"));
+        verify(0, getRequestedFor(urlPathEqualTo("/golang.org/x/text/@v/v0.19.0.info")));
+    }
+
+    @Test
+    void shouldFetchVersionInfoWhenPriorAbsent(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/golang.org/x/text/@latest"))
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
+                        {"Version": "v0.21.0", "Time": "2024-10-01T12:00:00Z"}
+                        """)));
+        stubFor(get(urlPathEqualTo("/golang.org/x/text/@v/v0.19.0.info"))
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
+                        {"Version": "v0.19.0", "Time": "2024-06-15T08:00:00Z"}
+                        """)));
+
+        final var purl = PackageURLBuilder.aPackageURL()
+                .withType("golang")
+                .withNamespace("golang.org/x")
+                .withName("text")
+                .withVersion("v0.19.0")
+                .build();
+
+        final var repo = new PackageRepository("go-proxy", wmRuntimeInfo.getHttpBaseUrl(), null, null);
+        resolver.resolve(purl, repo, null);
+
+        verify(1, getRequestedFor(urlPathEqualTo("/golang.org/x/text/@v/v0.19.0.info")));
     }
 
     @Test
@@ -220,7 +273,7 @@ class GoModulesPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("go-proxy", wmRuntimeInfo.getHttpBaseUrl(), "user", "secret");
-        assertThat(resolver.resolve(purl, repo)).isNotNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
         final String expected = "Basic " + Base64.getEncoder().encodeToString(
                 "user:secret".getBytes(StandardCharsets.UTF_8));
@@ -243,7 +296,7 @@ class GoModulesPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("go-proxy", wmRuntimeInfo.getHttpBaseUrl(), null, "token");
-        assertThat(resolver.resolve(purl, repo)).isNotNull();
+        assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
         verify(getRequestedFor(urlPathEqualTo("/golang.org/x/text/@latest"))
                 .withHeader("Authorization", equalTo("Bearer token")));

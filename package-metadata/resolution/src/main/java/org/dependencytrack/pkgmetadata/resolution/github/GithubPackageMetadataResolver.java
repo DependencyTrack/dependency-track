@@ -57,7 +57,8 @@ final class GithubPackageMetadataResolver implements PackageMetadataResolver {
     @Override
     public @Nullable PackageMetadata resolve(
             PackageURL purl,
-            @Nullable PackageRepository repository) throws InterruptedException {
+            @Nullable PackageRepository repository,
+            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final byte[] latestBody = fetchLatestRelease(purl.getNamespace(), purl.getName(), repository);

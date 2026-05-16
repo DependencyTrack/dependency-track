@@ -20,6 +20,7 @@ package org.dependencytrack.pkgmetadata.resolution.nixpkgs;
 
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.cache.api.Cache;
+import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
@@ -44,7 +45,8 @@ final class NixpkgsPackageMetadataResolver implements PackageMetadataResolver {
     @Override
     public @Nullable PackageMetadata resolve(
             PackageURL purl,
-            @Nullable PackageRepository repository) throws InterruptedException {
+            @Nullable PackageRepository repository,
+            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String cacheKey = CacheKeys.build(repository, purl.getName());

@@ -56,8 +56,10 @@ final class CpanPackageMetadataResolver implements PackageMetadataResolver {
     }
 
     @Override
-    public @Nullable PackageMetadata resolve(PackageURL purl, @Nullable PackageRepository repository)
-            throws InterruptedException {
+    public @Nullable PackageMetadata resolve(
+            PackageURL purl,
+            @Nullable PackageRepository repository,
+            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String url = UrlUtils.join(repository.url(), "v1", "release", purl.getName());

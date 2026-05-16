@@ -24,6 +24,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.api.NoopCacheManager;
+import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
@@ -40,6 +41,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
 
@@ -97,7 +99,7 @@ class NugetPackageMetadataResolverTest {
                         "nuget/https---nuget.org.registration-semver2.mds.index-inline-pages.json")));
 
         final PackageMetadata result = resolver.resolve(nugetPurl("Microsoft.Data.SqlClient", "5.0.1"),
-                new PackageRepository("test", wm.baseUrl(), null, null));
+                new PackageRepository("test", wm.baseUrl(), null, null), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("6.0.2");
@@ -110,7 +112,7 @@ class NugetPackageMetadataResolverTest {
         stubArtifactoryPage(ARTIFACTORY_PAGE2, "page2");
 
         final PackageMetadata result = resolver.resolve(
-                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo());
+                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("6.0.2");
@@ -123,7 +125,7 @@ class NugetPackageMetadataResolverTest {
         stubArtifactoryPage(ARTIFACTORY_PAGE2, "page2-check-pre-release");
 
         final PackageMetadata result = resolver.resolve(
-                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo());
+                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("5.1.2");
@@ -136,7 +138,7 @@ class NugetPackageMetadataResolverTest {
         stubArtifactoryPage(ARTIFACTORY_PAGE1, "page1");
 
         final PackageMetadata result = resolver.resolve(
-                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo());
+                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("5.1.0");
@@ -149,7 +151,7 @@ class NugetPackageMetadataResolverTest {
         stubArtifactoryPage(ARTIFACTORY_PAGE1, "page1");
 
         final PackageMetadata result = resolver.resolve(
-                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo());
+                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("5.1.0");
@@ -165,7 +167,7 @@ class NugetPackageMetadataResolverTest {
 
         final PackageMetadata result = resolver.resolve(
                 nugetPurl("OpenTelemetry.Instrumentation.SqlClient", "1.12.0-beta.2"),
-                new PackageRepository("test", wm.baseUrl(), null, null));
+                new PackageRepository("test", wm.baseUrl(), null, null), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.12.0-beta.2");
@@ -179,7 +181,7 @@ class NugetPackageMetadataResolverTest {
         stubArtifactoryPage(ARTIFACTORY_PAGE1, "page1");
 
         assertThatExceptionOfType(RuntimeException.class).isThrownBy(() ->
-                resolver.resolve(nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo()));
+                resolver.resolve(nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null));
     }
 
     @Test
@@ -209,7 +211,7 @@ class NugetPackageMetadataResolverTest {
                         """)));
 
         final PackageMetadata result = resolver.resolve(nugetPurl("MyPackage", "1.0.0"),
-                new PackageRepository("test", wm.baseUrl(), null, null));
+                new PackageRepository("test", wm.baseUrl(), null, null), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.0");
@@ -233,7 +235,7 @@ class NugetPackageMetadataResolverTest {
                         """)));
 
         final PackageMetadata result = resolver.resolve(nugetPurl("MyPackage", "1.0.0"),
-                new PackageRepository("test", wm.baseUrl(), null, null));
+                new PackageRepository("test", wm.baseUrl(), null, null), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.0");
@@ -252,7 +254,7 @@ class NugetPackageMetadataResolverTest {
                         """)));
 
         final PackageMetadata result = resolver.resolve(nugetPurl("MyPackage", "1.0.0"),
-                new PackageRepository("test", wm.baseUrl() + "/custom/v3/index.json", null, null));
+                new PackageRepository("test", wm.baseUrl() + "/custom/v3/index.json", null, null), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.0");
@@ -266,7 +268,7 @@ class NugetPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(404)));
 
         final PackageMetadata result = resolver.resolve(nugetPurl("nonexistent", "1.0.0"),
-                new PackageRepository("test", wm.baseUrl(), null, null));
+                new PackageRepository("test", wm.baseUrl(), null, null), null);
 
         assertThat(result).isNull();
     }
@@ -277,7 +279,7 @@ class NugetPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(200).withBody("{\"resources\":[]}")));
 
         final PackageMetadata result = resolver.resolve(nugetPurl("MyPackage", "1.0.0"),
-                new PackageRepository("test", wm.baseUrl(), null, null));
+                new PackageRepository("test", wm.baseUrl(), null, null), null);
 
         assertThat(result).isNull();
     }
@@ -285,7 +287,7 @@ class NugetPackageMetadataResolverTest {
     @Test
     void shouldThrowWhenRepositoryIsNull() {
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(nugetPurl("MyPackage", "1.0.0"), null));
+                .isThrownBy(() -> resolver.resolve(nugetPurl("MyPackage", "1.0.0"), null, null));
     }
 
     @Test
@@ -295,7 +297,7 @@ class NugetPackageMetadataResolverTest {
 
         final PackageRepository repo = new PackageRepository("test", wm.baseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(nugetPurl("MyPackage", "1.0.0"), repo))
+                .isThrownBy(() -> resolver.resolve(nugetPurl("MyPackage", "1.0.0"), repo, null))
                 .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(10));
     }
 
@@ -306,7 +308,7 @@ class NugetPackageMetadataResolverTest {
 
         final PackageRepository repo = new PackageRepository("test", wm.baseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(nugetPurl("MyPackage", "1.0.0"), repo));
+                .isThrownBy(() -> resolver.resolve(nugetPurl("MyPackage", "1.0.0"), repo, null));
     }
 
     @Test
@@ -319,7 +321,7 @@ class NugetPackageMetadataResolverTest {
                         """)));
 
         final PackageRepository repo = new PackageRepository("test", wm.baseUrl(), "user", "pass");
-        resolver.resolve(nugetPurl("MyPackage", "1.0.0"), repo);
+        resolver.resolve(nugetPurl("MyPackage", "1.0.0"), repo, null);
 
         final String expected = "Basic " + Base64.getEncoder()
                 .encodeToString("user:pass".getBytes(StandardCharsets.UTF_8));
@@ -339,7 +341,7 @@ class NugetPackageMetadataResolverTest {
                         """)));
 
         final PackageRepository repo = new PackageRepository("test", wm.baseUrl(), null, "tkn");
-        resolver.resolve(nugetPurl("MyPackage", "1.0.0"), repo);
+        resolver.resolve(nugetPurl("MyPackage", "1.0.0"), repo, null);
 
         verify(getRequestedFor(urlPathEqualTo("/v3/registration5-gz-semver2/mypackage/index.json"))
                 .withHeader("Authorization", equalTo("Bearer tkn")));
@@ -364,7 +366,7 @@ class NugetPackageMetadataResolverTest {
                             """)));
 
             final PackageRepository repo = new PackageRepository("test", wm.baseUrl(), null, "tkn");
-            final PackageMetadata result = resolver.resolve(nugetPurl("MyPackage", "1.0.0"), repo);
+            final PackageMetadata result = resolver.resolve(nugetPurl("MyPackage", "1.0.0"), repo, null);
 
             assertThat(result).isNotNull();
             assertThat(result.latestVersion()).isEqualTo("1.0.0");
@@ -400,6 +402,66 @@ class NugetPackageMetadataResolverTest {
     @ValueSource(strings = {"   ", "not-a-date", "2025-13-99"})
     void shouldReturnNullForBlankOrInvalidPublishedDate(String input) {
         assertThat(NugetPackageMetadataResolver.parsePublished(input)).isNull();
+    }
+
+    @Test
+    void shouldUsePriorPublishedAtForStableVersion() throws Exception {
+        stubFor(get(urlPathEqualTo("/v3/index.json"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                        {"resources":[{"@id":"{{request.baseUrl}}/reg/","@type":"RegistrationsBaseUrl/3.6.0"}]}
+                        """)));
+        stubFor(get(urlPathEqualTo("/reg/mypackage/index.json"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                        {"items":[{"upper":"1.0.0","items":[
+                          {"catalogEntry":{"version":"1.0.0","listed":true,"published":"2020-01-01T00:00:00Z"}}
+                        ]}]}
+                        """)));
+
+        // Prior carries a different publishedAt to prove the resolver uses it instead of
+        // re-reading the value from the registration response.
+        final var prior = new PackageArtifactMetadata(
+                Instant.parse("2024-01-01T00:00:00Z"),
+                Instant.parse("2024-06-15T12:00:00Z"),
+                Map.of());
+
+        final PackageMetadata result = resolver.resolve(
+                nugetPurl("MyPackage", "1.0.0"),
+                new PackageRepository("test", wm.baseUrl(), null, null),
+                prior);
+
+        assertThat(result).isNotNull();
+        assertThat(result.artifactMetadata()).isNotNull();
+        assertThat(result.artifactMetadata().publishedAt())
+                .isEqualTo(Instant.parse("2024-06-15T12:00:00Z"));
+    }
+
+    @Test
+    void shouldRefetchForPreReleaseVersionEvenWithPrior() throws Exception {
+        stubFor(get(urlPathEqualTo("/v3/index.json"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                        {"resources":[{"@id":"{{request.baseUrl}}/reg/","@type":"RegistrationsBaseUrl/3.6.0"}]}
+                        """)));
+        stubFor(get(urlPathEqualTo("/reg/mypackage/index.json"))
+                .willReturn(aResponse().withStatus(200).withBody("""
+                        {"items":[{"upper":"1.0.0-alpha","items":[
+                          {"catalogEntry":{"version":"1.0.0-alpha","listed":true,"published":"2020-01-01T00:00:00Z"}}
+                        ]}]}
+                        """)));
+
+        final var prior = new PackageArtifactMetadata(
+                Instant.parse("2024-01-01T00:00:00Z"),
+                Instant.parse("2024-06-15T12:00:00Z"),
+                Map.of());
+
+        final PackageMetadata result = resolver.resolve(
+                nugetPurl("MyPackage", "1.0.0-alpha"),
+                new PackageRepository("test", wm.baseUrl(), null, null),
+                prior);
+
+        assertThat(result).isNotNull();
+        assertThat(result.artifactMetadata()).isNotNull();
+        assertThat(result.artifactMetadata().publishedAt())
+                .isEqualTo(Instant.parse("2020-01-01T00:00:00Z"));
     }
 
     private static PackageURL nugetPurl(String name, String version) throws Exception {

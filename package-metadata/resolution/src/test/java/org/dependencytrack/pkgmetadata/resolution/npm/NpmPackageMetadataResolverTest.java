@@ -109,7 +109,7 @@ class NpmPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
@@ -131,7 +131,7 @@ class NpmPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNull();
     }
@@ -145,7 +145,7 @@ class NpmPackageMetadataResolverTest {
                 .build();
 
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null));
+                .isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -161,7 +161,7 @@ class NpmPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
@@ -180,7 +180,7 @@ class NpmPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
@@ -236,7 +236,7 @@ class NpmPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
@@ -261,7 +261,7 @@ class NpmPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo))
+                .isThrownBy(() -> resolver.resolve(purl, repo, null))
                 .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(60));
     }
 
@@ -278,7 +278,7 @@ class NpmPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo));
+                .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
 
     @Test
@@ -293,7 +293,7 @@ class NpmPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, "my-token");
-        resolver.resolve(purl, repo);
+        resolver.resolve(purl, repo, null);
 
         verify(getRequestedFor(urlPathEqualTo("/mypackage"))
                 .withHeader("Authorization", equalTo("Bearer my-token")));

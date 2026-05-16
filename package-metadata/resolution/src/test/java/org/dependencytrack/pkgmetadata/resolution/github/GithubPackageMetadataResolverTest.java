@@ -97,7 +97,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
@@ -126,7 +126,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
@@ -160,7 +160,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
@@ -186,7 +186,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
@@ -213,7 +213,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, "ghp_testtoken123");
-        resolver.resolve(purl, repo);
+        resolver.resolve(purl, repo, null);
 
         verify(getRequestedFor(urlPathEqualTo("/repos/acme/project/releases/latest"))
                 .withHeader("Authorization", equalTo("Bearer ghp_testtoken123")));
@@ -229,7 +229,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null));
+                .isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -245,7 +245,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNull();
     }
@@ -264,7 +264,7 @@ class GithubPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo))
+                .isThrownBy(() -> resolver.resolve(purl, repo, null))
                 .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(60));
     }
 
@@ -297,7 +297,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
@@ -337,7 +337,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
@@ -371,7 +371,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.artifactMetadata()).isNotNull();
@@ -405,7 +405,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
@@ -432,7 +432,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
@@ -461,7 +461,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v2.0.0");
@@ -488,7 +488,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("v1.5.0");
@@ -511,7 +511,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("abcdef1");
@@ -542,7 +542,7 @@ class GithubPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, "ghp_testtoken123");
-        resolver.resolve(purl, repo);
+        resolver.resolve(purl, repo, null);
 
         verify(getRequestedFor(urlPathEqualTo("/repos/acme/project/commits/4359dee1b7bd29ee25bc78e358a1254a0277ee96"))
                 .withHeader("Authorization", equalTo("Bearer ghp_testtoken123")));
@@ -562,7 +562,7 @@ class GithubPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("github", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo));
+                .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
 
 }

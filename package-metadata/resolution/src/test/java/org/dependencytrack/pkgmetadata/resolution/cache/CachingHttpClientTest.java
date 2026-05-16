@@ -216,17 +216,6 @@ class CachingHttpClientTest {
     }
 
     @Test
-    void shouldThrowRetryableExceptionOn429WithRetryAfter(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlPathEqualTo(PATH))
-                .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "30")));
-
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
-        assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null))
-                .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(30));
-    }
-
-    @Test
     void shouldThrowRetryableExceptionOn503(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlPathEqualTo(PATH))
                 .willReturn(aResponse().withStatus(503)));
@@ -684,6 +673,10 @@ class CachingHttpClientTest {
         // First stale call falls back to cached body. fresh_until must remain in the past.
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
+        // Advance past the rate-limit gate that the 503 just engaged (default 30s backoff),
+        // so the next call is not short-circuited.
+        clock.advance(Duration.ofSeconds(31));
+
         // Second call must still revalidate via If-None-Match, thus proving
         // the entry's freshness deadline was not refreshed by the prior stale fallback.
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -1009,6 +1002,110 @@ class CachingHttpClientTest {
 
         assertThat(body).isEqualTo("fresh".getBytes(StandardCharsets.UTF_8));
         verify(1, getRequestedFor(urlPathEqualTo(PATH)));
+    }
+
+    @Test
+    void shouldGateHostAfter429AndServeStale(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo(PATH))
+                .inScenario("backoff")
+                .whenScenarioStateIs("Started")
+                .willReturn(aResponse().withStatus(200)
+                        .withHeader("ETag", "\"v1\"")
+                        .withBody("hello"))
+                .willSetStateTo("limited"));
+        stubFor(get(urlPathEqualTo(PATH))
+                .inScenario("backoff")
+                .whenScenarioStateIs("limited")
+                .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "60")));
+
+        final var clock = new MutableClock();
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
+        clock.advance(Duration.ofMinutes(2));
+
+        final byte[] firstStale = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
+        assertThat(firstStale).isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
+        verify(2, getRequestedFor(urlPathEqualTo(PATH)));
+
+        final byte[] gatedStale = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
+        assertThat(gatedStale).isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
+        verify(2, getRequestedFor(urlPathEqualTo(PATH)));
+    }
+
+    @Test
+    void shouldGateHostAfter429AndThrowWhenNoStale(WireMockRuntimeInfo wmRuntimeInfo) {
+        stubFor(get(urlPathEqualTo(PATH))
+                .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "60")));
+
+        final var clock = new MutableClock();
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES, clock);
+        assertThatExceptionOfType(RetryableResolutionException.class)
+                .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null));
+
+        assertThatExceptionOfType(RetryableResolutionException.class)
+                .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null))
+                .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(60));
+        verify(1, getRequestedFor(urlPathEqualTo(PATH)));
+    }
+
+    @Test
+    void shouldReleaseHostGateAfterBackoffWindow(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo(PATH))
+                .inScenario("backoff-release")
+                .whenScenarioStateIs("Started")
+                .willReturn(aResponse().withStatus(200)
+                        .withHeader("ETag", "\"v1\"")
+                        .withBody("hello"))
+                .willSetStateTo("limited"));
+        stubFor(get(urlPathEqualTo(PATH))
+                .inScenario("backoff-release")
+                .whenScenarioStateIs("limited")
+                .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "30"))
+                .willSetStateTo("recovered"));
+        stubFor(get(urlPathEqualTo(PATH))
+                .inScenario("backoff-release")
+                .whenScenarioStateIs("recovered")
+                .willReturn(aResponse().withStatus(304)));
+
+        final var clock = new MutableClock();
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
+        clock.advance(Duration.ofMinutes(2));
+
+        cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
+        verify(2, getRequestedFor(urlPathEqualTo(PATH)));
+
+        clock.advance(Duration.ofSeconds(60));
+        cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
+        verify(3, getRequestedFor(urlPathEqualTo(PATH)));
+    }
+
+    @Test
+    void shouldGateHostAfter503AndServeStale(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo(PATH))
+                .inScenario("backoff-5xx")
+                .whenScenarioStateIs("Started")
+                .willReturn(aResponse().withStatus(200)
+                        .withHeader("ETag", "\"v1\"")
+                        .withBody("hello"))
+                .willSetStateTo("overloaded"));
+        stubFor(get(urlPathEqualTo(PATH))
+                .inScenario("backoff-5xx")
+                .whenScenarioStateIs("overloaded")
+                .willReturn(aResponse().withStatus(503)));
+
+        final var clock = new MutableClock();
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
+        clock.advance(Duration.ofMinutes(2));
+
+        final byte[] firstStale = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
+        assertThat(firstStale).isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
+        verify(2, getRequestedFor(urlPathEqualTo(PATH)));
+
+        final byte[] gatedStale = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
+        assertThat(gatedStale).isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
+        verify(2, getRequestedFor(urlPathEqualTo(PATH)));
     }
 
     private static byte[] gzip(byte[] input) throws Exception {

@@ -85,7 +85,7 @@ class NixpkgsPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("nixpkgs",
                 wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("8.7.1");
@@ -107,7 +107,7 @@ class NixpkgsPackageMetadataResolverTest {
 
         final var repo = new PackageRepository("nixpkgs",
                 wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
-        final PackageMetadata result = resolver.resolve(purl, repo);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNull();
     }
@@ -128,7 +128,7 @@ class NixpkgsPackageMetadataResolverTest {
         final var repo = new PackageRepository("nixpkgs",
                 wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
 
-        resolver.resolve(purl, repo);
+        resolver.resolve(purl, repo, null);
 
         final var purl2 = PackageURLBuilder.aPackageURL()
                 .withType("nixpkgs")
@@ -136,7 +136,7 @@ class NixpkgsPackageMetadataResolverTest {
                 .withVersion("2.40.0")
                 .build();
 
-        final PackageMetadata result = resolver.resolve(purl2, repo);
+        final PackageMetadata result = resolver.resolve(purl2, repo, null);
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.44.0");
 
@@ -152,7 +152,7 @@ class NixpkgsPackageMetadataResolverTest {
                 .build();
 
         assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null));
+                .isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -169,7 +169,7 @@ class NixpkgsPackageMetadataResolverTest {
         final var repo = new PackageRepository("nixpkgs",
                 wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo))
+                .isThrownBy(() -> resolver.resolve(purl, repo, null))
                 .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(30));
     }
 
@@ -195,11 +195,11 @@ class NixpkgsPackageMetadataResolverTest {
         final var repoB = new PackageRepository("nixpkgs",
                 wmRuntimeInfo.getHttpBaseUrl() + "/channel-b/packages.json.br", null, null);
 
-        final PackageMetadata resultA = resolver.resolve(purl, repoA);
+        final PackageMetadata resultA = resolver.resolve(purl, repoA, null);
         assertThat(resultA).isNotNull();
         assertThat(resultA.latestVersion()).isEqualTo("8.7.1");
 
-        final PackageMetadata resultB = resolver.resolve(purl, repoB);
+        final PackageMetadata resultB = resolver.resolve(purl, repoB, null);
         assertThat(resultB).isNotNull();
         assertThat(resultB.latestVersion()).isEqualTo("8.7.1");
 
@@ -221,7 +221,7 @@ class NixpkgsPackageMetadataResolverTest {
         final var repo = new PackageRepository("nixpkgs",
                 wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo));
+                .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
 
 }

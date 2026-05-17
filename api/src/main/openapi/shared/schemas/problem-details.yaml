@@ -21,7 +21,7 @@ externalDocs:
 properties:
   type:
     type: string
-    format: uri
+    format: uri-reference
     default: about:blank
     description: A URI reference that identifies the problem type
   status:
@@ -41,7 +41,7 @@ properties:
     maxLength: 1024
   instance:
     type: string
-    format: uri
+    format: uri-reference
     description: Reference URI that identifies the specific occurrence of the problem
 required:
 - title

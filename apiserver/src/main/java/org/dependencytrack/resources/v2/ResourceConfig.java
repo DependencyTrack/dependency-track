@@ -34,6 +34,7 @@ import org.dependencytrack.filters.DeprecationResponseFilter;
 import org.dependencytrack.filters.JerseyMetricsApplicationEventListener;
 import org.dependencytrack.plugin.PluginManagerBinder;
 import org.dependencytrack.secret.SecretManagerBinder;
+import org.dependencytrack.vulndatasource.VulnDataSourceMirrorServiceBinder;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -79,6 +80,7 @@ public final class ResourceConfig extends org.glassfish.jersey.server.ResourceCo
         register(FileStorageBinder.class);
         register(PluginManagerBinder.class);
         register(SecretManagerBinder.class);
+        register(VulnDataSourceMirrorServiceBinder.class);
     }
 
 }

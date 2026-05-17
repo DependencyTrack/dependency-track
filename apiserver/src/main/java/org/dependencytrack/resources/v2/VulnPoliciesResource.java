@@ -35,7 +35,6 @@ import org.dependencytrack.api.v2.model.ListVulnPoliciesResponse;
 import org.dependencytrack.api.v2.model.ListVulnPoliciesResponseItem;
 import org.dependencytrack.api.v2.model.ListVulnPolicyBundlesResponse;
 import org.dependencytrack.api.v2.model.ListVulnPolicyBundlesResponseItem;
-import org.dependencytrack.api.v2.model.ProblemDetails;
 import org.dependencytrack.api.v2.model.TotalCount;
 import org.dependencytrack.api.v2.model.TotalCountType;
 import org.dependencytrack.api.v2.model.UpdateVulnPolicyRequest;
@@ -71,6 +70,7 @@ import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyRating;
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v2.exception.ProblemDetailsException;
+import org.dependencytrack.resources.v2.exception.ProblemType;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -386,12 +386,9 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
                                         .setBundleUuid(uuid.toString())
                                         .build()));
         if (runId == null) {
-            throw new ProblemDetailsException(
-                    ProblemDetails.builder()
-                            .status(Response.Status.CONFLICT.getStatusCode())
-                            .title("Conflict")
-                            .detail("Bundle synchronization is already in progress")
-                            .build());
+            throw ProblemDetailsException.of(
+                    ProblemType.VULN_POLICY_BUNDLE_SYNC_ALREADY_RUNNING,
+                    "Bundle synchronization is already in progress");
         }
 
         LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Triggered vulnerability policy bundle sync");

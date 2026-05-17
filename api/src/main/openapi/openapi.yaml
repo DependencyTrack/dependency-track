@@ -183,6 +183,8 @@ tags:
   description: Endpoints related to secrets
 - name: Task Queues
   description: Endpoints related to task queue management
+- name: Vuln Data Sources
+  description: Endpoints related to vulnerability data sources
 - name: Vuln Policies
   description: Endpoints related to vulnerability policies
 - name: Workflows
@@ -219,6 +221,10 @@ paths:
     $ref: "./resources/vuln-policies/vuln-policy-bundle.yaml"
   /vuln-policy-bundles/{uuid}/sync:
     $ref: "./resources/vuln-policies/vuln-policy-bundle-sync.yaml"
+  /vuln-data-sources/{name}/mirror-runs:
+    $ref: "./resources/vuln-data-sources/vuln-data-source-mirror-runs.yaml"
+  /vuln-data-sources/{name}/mirror-runs/latest:
+    $ref: "./resources/vuln-data-sources/vuln-data-source-mirror-run-latest.yaml"
   /internal/task-queues/{type}:
     $ref: "./resources/internal/task-queues/task-queues.yaml"
   /internal/task-queues/{type}/{name}:

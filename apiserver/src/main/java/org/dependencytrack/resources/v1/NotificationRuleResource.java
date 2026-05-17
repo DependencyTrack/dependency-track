@@ -74,7 +74,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * JAX-RS resources for processing notification rules.
@@ -125,7 +128,33 @@ public class NotificationRuleResource extends AbstractApiResource {
             @QueryParam("triggerType") final NotificationTriggerType triggerTypeFilter) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getNotificationRules(triggerTypeFilter);
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            final List<NotificationRule> rules = result.getList(NotificationRule.class);
+
+            qm.makeTransientAll(rules);
+
+            final Set<UUID> accessibleProjectUuids =
+                    filterAccessibleProjects(
+                            rules.stream()
+                                    .map(NotificationRule::getProjects)
+                                    .filter(Objects::nonNull)
+                                    .flatMap(List::stream)
+                                    .toList())
+                            .stream()
+                            .map(Project::getUuid)
+                            .collect(Collectors.toSet());
+            for (final NotificationRule rule : rules) {
+                final List<Project> projects = rule.getProjects();
+                if (projects == null) {
+                    rule.setProjects(List.of());
+                    continue;
+                }
+
+                rule.setProjects(projects.stream()
+                        .filter(project -> accessibleProjectUuids.contains(project.getUuid()))
+                        .toList());
+            }
+
+            return Response.ok(rules).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
         }
     }
 
@@ -290,7 +319,7 @@ public class NotificationRuleResource extends AbstractApiResource {
 
         final NotificationRule updatedRule;
         try (final var qm = new QueryManager(getAlpineRequest())) {
-            updatedRule = qm.callInTransaction(() -> {
+            final NotificationRule persisted = qm.callInTransaction(() -> {
                 var rule = qm.getObjectByUuid(NotificationRule.class, request.uuid());
                 if (rule == null) {
                     throw new ClientErrorException(Response
@@ -360,6 +389,10 @@ public class NotificationRuleResource extends AbstractApiResource {
                             .build());
                 }
             });
+
+            qm.makeTransient(persisted);
+            persisted.setProjects(filterAccessibleProjects(persisted.getProjects()));
+            updatedRule = persisted;
         }
 
         LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Updated notification rule '{}'", updatedRule.getName());
@@ -427,27 +460,42 @@ public class NotificationRuleResource extends AbstractApiResource {
             @Parameter(description = "The UUID of the project to add to the rule", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("projectUuid") @ValidUuid String projectUuid) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
+            final NotificationRule updatedRule = qm.callInTransaction(() -> {
                 final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
                 if (rule == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
+                    throw new ClientErrorException(Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The notification rule could not be found.")
+                            .build());
                 }
                 if (rule.getScope() != NotificationScope.PORTFOLIO) {
-                    return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Project limitations are only possible on notification rules with PORTFOLIO scope.").build();
+                    throw new ClientErrorException(Response
+                            .status(Response.Status.NOT_ACCEPTABLE)
+                            .entity("Project limitations are only possible on notification rules with PORTFOLIO scope.")
+                            .build());
                 }
                 final Project project = qm.getObjectByUuid(Project.class, projectUuid);
                 if (project == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+                    throw new ClientErrorException(Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The project could not be found.")
+                            .build());
                 }
                 requireAccess(qm, project);
                 final List<Project> projects = rule.getProjects();
-                if (projects != null && !projects.contains(project)) {
-                    rule.getProjects().add(project);
-                    qm.persist(rule);
-                    return Response.ok(rule).build();
+                if (projects == null || projects.contains(project)) {
+                    return null;
                 }
-                return Response.status(Response.Status.NOT_MODIFIED).build();
+                rule.getProjects().add(project);
+                return rule;
             });
+            if (updatedRule == null) {
+                return Response.status(Response.Status.NOT_MODIFIED).build();
+            }
+
+            qm.makeTransient(updatedRule);
+            updatedRule.setProjects(filterAccessibleProjects(updatedRule.getProjects()));
+            return Response.ok(updatedRule).build();
         }
     }
 
@@ -479,27 +527,42 @@ public class NotificationRuleResource extends AbstractApiResource {
             @Parameter(description = "The UUID of the project to remove from the rule", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("projectUuid") @ValidUuid String projectUuid) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
+            final NotificationRule updatedRule = qm.callInTransaction(() -> {
                 final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
                 if (rule == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
+                    throw new ClientErrorException(Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The notification rule could not be found.")
+                            .build());
                 }
                 if (rule.getScope() != NotificationScope.PORTFOLIO) {
-                    return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Project limitations are only possible on notification rules with PORTFOLIO scope.").build();
+                    throw new ClientErrorException(Response
+                            .status(Response.Status.NOT_ACCEPTABLE)
+                            .entity("Project limitations are only possible on notification rules with PORTFOLIO scope.")
+                            .build());
                 }
                 final Project project = qm.getObjectByUuid(Project.class, projectUuid);
                 if (project == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+                    throw new ClientErrorException(Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The project could not be found.")
+                            .build());
                 }
                 requireAccess(qm, project);
                 final List<Project> projects = rule.getProjects();
-                if (projects != null && projects.contains(project)) {
-                    rule.getProjects().remove(project);
-                    qm.persist(rule);
-                    return Response.ok(rule).build();
+                if (projects == null || !projects.contains(project)) {
+                    return null;
                 }
-                return Response.status(Response.Status.NOT_MODIFIED).build();
+                rule.getProjects().remove(project);
+                return rule;
             });
+            if (updatedRule == null) {
+                return Response.status(Response.Status.NOT_MODIFIED).build();
+            }
+
+            qm.makeTransient(updatedRule);
+            updatedRule.setProjects(filterAccessibleProjects(updatedRule.getProjects()));
+            return Response.ok(updatedRule).build();
         }
     }
 
@@ -527,23 +590,35 @@ public class NotificationRuleResource extends AbstractApiResource {
             @Parameter(description = "The UUID of the team to add to the rule", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("teamUuid") @ValidUuid String teamUuid) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
+            final NotificationRule updatedRule = qm.callInTransaction(() -> {
                 final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
                 if (rule == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
+                    throw new ClientErrorException(Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The notification rule could not be found.")
+                            .build());
                 }
                 final Team team = qm.getObjectByUuid(Team.class, teamUuid);
                 if (team == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
+                    throw new ClientErrorException(Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The team could not be found.")
+                            .build());
                 }
                 final Set<Team> teams = rule.getTeams();
-                if (teams != null && !teams.contains(team)) {
-                    rule.getTeams().add(team);
-                    qm.persist(rule);
-                    return Response.ok(rule).build();
+                if (teams == null || teams.contains(team)) {
+                    return null;
                 }
-                return Response.status(Response.Status.NOT_MODIFIED).build();
+                rule.getTeams().add(team);
+                return rule;
             });
+            if (updatedRule == null) {
+                return Response.status(Response.Status.NOT_MODIFIED).build();
+            }
+
+            qm.makeTransient(updatedRule);
+            updatedRule.setProjects(filterAccessibleProjects(updatedRule.getProjects()));
+            return Response.ok(updatedRule).build();
         }
     }
 
@@ -571,23 +646,35 @@ public class NotificationRuleResource extends AbstractApiResource {
             @Parameter(description = "The UUID of the project to remove from the rule", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("teamUuid") @ValidUuid String teamUuid) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
+            final NotificationRule updatedRule = qm.callInTransaction(() -> {
                 final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
                 if (rule == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The notification rule could not be found.").build();
+                    throw new ClientErrorException(Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The notification rule could not be found.")
+                            .build());
                 }
                 final Team team = qm.getObjectByUuid(Team.class, teamUuid);
                 if (team == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The team could not be found.").build();
+                    throw new ClientErrorException(Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The team could not be found.")
+                            .build());
                 }
                 final Set<Team> teams = rule.getTeams();
-                if (teams != null && teams.contains(team)) {
-                    rule.getTeams().remove(team);
-                    qm.persist(rule);
-                    return Response.ok(rule).build();
+                if (teams == null || !teams.contains(team)) {
+                    return null;
                 }
-                return Response.status(Response.Status.NOT_MODIFIED).build();
+                rule.getTeams().remove(team);
+                return rule;
             });
+            if (updatedRule == null) {
+                return Response.status(Response.Status.NOT_MODIFIED).build();
+            }
+
+            qm.makeTransient(updatedRule);
+            updatedRule.setProjects(filterAccessibleProjects(updatedRule.getProjects()));
+            return Response.ok(updatedRule).build();
         }
     }
 

@@ -387,4 +387,246 @@ public class PolicyResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
     }
 
+    @Test
+    public void shouldNotLeakInaccessibleProjectsViaGetPolicyWhenAclEnabled() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_READ);
+        enablePortfolioAccessControl();
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final var policy = new Policy();
+        policy.setName("policy");
+        policy.setOperator(Policy.Operator.ANY);
+        policy.setViolationState(Policy.ViolationState.INFO);
+        policy.setProjects(List.of(accessibleProject, inaccessibleProject));
+        qm.persist(policy);
+
+        final Response response = jersey.target(V1_POLICY + "/" + policy.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.projects[*].uuid")
+                .isArray()
+                .containsExactly(accessibleProject.getUuid().toString());
+    }
+
+    @Test
+    public void shouldNotLeakInaccessibleProjectsViaGetPoliciesWhenAclEnabled() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_READ);
+        enablePortfolioAccessControl();
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final var policy = new Policy();
+        policy.setName("policy");
+        policy.setOperator(Policy.Operator.ANY);
+        policy.setViolationState(Policy.ViolationState.INFO);
+        policy.setProjects(List.of(accessibleProject, inaccessibleProject));
+        qm.persist(policy);
+
+        final Response response = jersey.target(V1_POLICY)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[0].projects[*].uuid")
+                .isArray()
+                .containsExactly(accessibleProject.getUuid().toString());
+    }
+
+    @Test
+    public void shouldNotLeakInaccessibleProjectsInAddProjectToPolicyResponseWhenAclEnabled() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_UPDATE);
+        enablePortfolioAccessControl();
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final var policy = new Policy();
+        policy.setName("policy");
+        policy.setOperator(Policy.Operator.ANY);
+        policy.setViolationState(Policy.ViolationState.INFO);
+        policy.setProjects(List.of(inaccessibleProject));
+        qm.persist(policy);
+
+        final Response response = jersey
+                .target(V1_POLICY + "/" + policy.getUuid() + "/project/" + accessibleProject.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(null);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.projects[*].uuid")
+                .isArray()
+                .containsExactly(accessibleProject.getUuid().toString());
+    }
+
+    @Test
+    public void shouldPreserveInaccessibleProjectsInDatabaseWhenScrubbingPolicyResponse() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_READ);
+        enablePortfolioAccessControl();
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final var policy = new Policy();
+        policy.setName("policy");
+        policy.setOperator(Policy.Operator.ANY);
+        policy.setViolationState(Policy.ViolationState.INFO);
+        policy.setProjects(List.of(accessibleProject, inaccessibleProject));
+        qm.persist(policy);
+
+        final Response response = jersey.target(V1_POLICY + "/" + policy.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        qm.getPersistenceManager().refresh(policy);
+        assertThat(policy.getProjects())
+                .extracting(Project::getUuid)
+                .containsExactlyInAnyOrder(accessibleProject.getUuid(), inaccessibleProject.getUuid());
+    }
+
+    @Test
+    public void shouldReturnAllProjectsViaGetPolicyWhenCallerBypassesAcl() {
+        initializeWithPermissions(
+                Permissions.POLICY_MANAGEMENT_READ,
+                Permissions.PORTFOLIO_ACCESS_CONTROL_BYPASS);
+        enablePortfolioAccessControl();
+
+        final var projectA = new Project();
+        projectA.setName("a");
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("b");
+        qm.persist(projectB);
+
+        final var policy = new Policy();
+        policy.setName("policy");
+        policy.setOperator(Policy.Operator.ANY);
+        policy.setViolationState(Policy.ViolationState.INFO);
+        policy.setProjects(List.of(projectA, projectB));
+        qm.persist(policy);
+
+        final Response response = jersey.target(V1_POLICY + "/" + policy.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.projects[*].uuid")
+                .isArray()
+                .containsExactlyInAnyOrder(
+                        projectA.getUuid().toString(),
+                        projectB.getUuid().toString());
+    }
+
+    @Test
+    public void shouldNotLeakInaccessibleProjectsInUpdatePolicyResponseWhenAclEnabled() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_UPDATE);
+        enablePortfolioAccessControl();
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final var policy = new Policy();
+        policy.setName("policy");
+        policy.setOperator(Policy.Operator.ANY);
+        policy.setViolationState(Policy.ViolationState.INFO);
+        policy.setProjects(List.of(accessibleProject, inaccessibleProject));
+        qm.persist(policy);
+
+        final Response response = jersey.target(V1_POLICY).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "renamed",
+                          "operator": "ANY",
+                          "violationState": "INFO"
+                        }
+                        """.formatted(policy.getUuid())));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.projects[*].uuid")
+                .isArray()
+                .containsExactly(accessibleProject.getUuid().toString());
+    }
+
+    @Test
+    public void shouldNotLeakInaccessibleProjectsInRemoveProjectFromPolicyResponseWhenAclEnabled() {
+        initializeWithPermissions(Permissions.POLICY_MANAGEMENT_DELETE);
+        enablePortfolioAccessControl();
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final var policy = new Policy();
+        policy.setName("policy");
+        policy.setOperator(Policy.Operator.ANY);
+        policy.setViolationState(Policy.ViolationState.INFO);
+        policy.setProjects(List.of(inaccessibleProject, accessibleProject));
+        qm.persist(policy);
+
+        final Response response = jersey
+                .target(V1_POLICY + "/" + policy.getUuid() + "/project/" + accessibleProject.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.projects")
+                .isArray()
+                .isEmpty();
+    }
+
 }

@@ -4583,4 +4583,96 @@ class ProjectResourceTest extends ResourceTest {
         assertThat(clonedProject.getCollectionTag()).isNotNull();
         assertThat(clonedProject.getCollectionTag().getName()).isEqualTo("prod");
     }
+
+    @Test
+    void shouldNotLeakInaccessibleParentViaGetProjectByUuidWhenAclEnabled() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        enablePortfolioAccessControl();
+
+        final var parent = qm.createProject("secret-parent", null, "1.0", null, null, null, null, false);
+        final var child = qm.createProject("acme-child", null, "1.0", null, parent, null, null, false);
+        child.addAccessTeam(super.team);
+
+        final Response response = jersey.target(V1_PROJECT + "/" + child.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.parent")
+                .isAbsent();
+    }
+
+    @Test
+    void shouldNotLeakInaccessibleParentViaProjectLookupWhenAclEnabled() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        enablePortfolioAccessControl();
+
+        final var parent = qm.createProject("secret-parent", null, "1.0", null, null, null, null, false);
+        final var child = qm.createProject("acme-child", null, "1.0", null, parent, null, null, false);
+        child.addAccessTeam(super.team);
+
+        final Response response = jersey.target(V1_PROJECT + "/lookup")
+                .queryParam("name", "acme-child")
+                .queryParam("version", "1.0")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.parent")
+                .isAbsent();
+    }
+
+    @Test
+    void shouldNotLeakInaccessibleParentViaUpdateProjectWhenAclEnabled() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+        enablePortfolioAccessControl();
+
+        final var parent = qm.createProject("secret-parent", null, "1.0", null, null, null, null, false);
+        final var child = qm.createProject("acme-child", null, "1.0", null, parent, null, null, false);
+        child.addAccessTeam(super.team);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "acme-child",
+                          "version": "1.0",
+                          "description": "renamed"
+                        }
+                        """.formatted(child.getUuid())));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.parent")
+                .isAbsent();
+    }
+
+    @Test
+    void shouldNotLeakInaccessibleVersionsViaGetProjectByUuidWhenAclEnabled() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        enablePortfolioAccessControl();
+
+        final var accessibleVersion = qm.createProject("shared-name", null, "1.0", null, null, null, null, false);
+        accessibleVersion.addAccessTeam(super.team);
+        qm.persist(accessibleVersion);
+        final var inaccessibleVersion = qm.createProject("shared-name", null, "2.0", null, null, null, null, false);
+
+        final Response response = jersey.target(V1_PROJECT + "/" + accessibleVersion.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.versions[*].uuid")
+                .isArray()
+                .containsExactly(accessibleVersion.getUuid().toString());
+    }
+
 }

@@ -291,14 +291,23 @@ public class ProjectResource extends AbstractApiResource {
     public Response getProject(
             @Parameter(description = "The UUID of the project to retrieve", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getProject(uuid);
-            if (project != null) {
-                requireAccess(qm, project);
-                return Response.ok(project).build();
-            } else {
+            if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
+            requireAccess(qm, project);
+
+            final boolean isParentAccessible =
+                    project.getParent() != null
+                            && qm.hasAccess(getPrincipal(), project.getParent());
+
+            qm.makeTransient(project);
+            if (!isParentAccessible) {
+                project.setParent(null);
+            }
+
+            return Response.ok(project).build();
         }
     }
 

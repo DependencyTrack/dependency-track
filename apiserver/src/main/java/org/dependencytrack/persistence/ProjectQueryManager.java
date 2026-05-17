@@ -45,6 +45,7 @@ import javax.jdo.metadata.TypeMetadata;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -829,11 +830,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
     private List<ProjectVersion> getProjectVersions(Project project) {
         final Query<Project> query = pm.newQuery(Project.class);
-        query.setFilter("name == :name");
-        query.setParameters(project.getName());
         query.setResult("uuid, version, inactiveSince");
         query.setOrdering("id asc"); // Ensure consistent ordering
-        return query.executeResultList(ProjectVersion.class);
+        final var params = new HashMap<String, Object>();
+        params.put("name", project.getName());
+        preprocessACLs(query, "name == :name", params);
+        query.setNamedParameters(params);
+        return executeAndCloseResultList(query, ProjectVersion.class);
     }
 
     private void populateMetrics(final Collection<Project> projects) {

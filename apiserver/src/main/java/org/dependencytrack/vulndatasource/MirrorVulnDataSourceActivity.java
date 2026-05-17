@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jdo.Query;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -53,6 +54,7 @@ import java.util.Set;
 
 import static org.datanucleus.PropertyNames.PROPERTY_MANAGE_RELATIONSHIPS;
 import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
+import static org.dependencytrack.common.MdcKeys.MDC_VULN_DATA_SOURCE_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_ID;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_SOURCE;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
@@ -64,6 +66,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransactio
 public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDataSourceArg, Void> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MirrorVulnDataSourceActivity.class);
+    private static final Duration HEARTBEAT_LOG_INTERVAL = Duration.ofSeconds(30);
 
     private final PluginManager pluginManager;
 
@@ -102,34 +105,55 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
 
         final var updatePolicy = new VulnerabilityUpdatePolicy(pluginManager);
 
-        try (final VulnDataSource dataSource = dataSourceFactory.create()) {
-            final var bovBatch = new ArrayList<Bom>(25);
-            while (dataSource.hasNext()) {
-                if (Thread.interrupted()) {
-                    throw new InterruptedException("Interrupted before all BOVs could be consumed");
-                }
-                ctx.maybeHeartbeat();
+        try (var ignoredMdc = new MdcScope(Map.of(MDC_VULN_DATA_SOURCE_NAME, arg.getDataSourceName()))) {
+            LOGGER.info("Starting mirror");
+            final long startTimeNs = System.nanoTime();
+            long lastHeartbeatNs = startTimeNs;
+            int vulnsProcessed = 0;
+            int vulnsSkipped = 0;
 
-                final Bom bov = dataSource.next();
-                if (!bov.getVulnerabilities(0).hasRejected()) {
-                    bovBatch.add(bov);
-                    if (bovBatch.size() == 25) {
-                        processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
-                        bovBatch.clear();
+            try (final VulnDataSource dataSource = dataSourceFactory.create()) {
+                final var bovBatch = new ArrayList<Bom>(25);
+                while (dataSource.hasNext()) {
+                    if (Thread.interrupted()) {
+                        throw new InterruptedException("Interrupted before all vulnerabilities could be consumed");
                     }
-                } else {
-                    LOGGER.warn(
-                            "Skipping vulnerability {} rejected at {}",
-                            bov.getVulnerabilities(0).getId(),
-                            Timestamps.toString(bov.getVulnerabilities(0).getRejected()));
+                    ctx.maybeHeartbeat();
+
+                    final Bom bov = dataSource.next();
+                    if (!bov.getVulnerabilities(0).hasRejected()) {
+                        bovBatch.add(bov);
+                        if (bovBatch.size() == 25) {
+                            processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
+                            vulnsProcessed += bovBatch.size();
+                            bovBatch.clear();
+                            if (System.nanoTime() - lastHeartbeatNs >= HEARTBEAT_LOG_INTERVAL.toNanos()) {
+                                LOGGER.info("Processed {} vulnerabilities so far", vulnsProcessed);
+                                lastHeartbeatNs = System.nanoTime();
+                            }
+                        }
+                    } else {
+                        vulnsSkipped++;
+                        LOGGER.warn(
+                                "Skipping vulnerability {} rejected at {}",
+                                bov.getVulnerabilities(0).getId(),
+                                Timestamps.toString(bov.getVulnerabilities(0).getRejected()));
+                    }
+                }
+
+                if (!bovBatch.isEmpty()) {
+                    ctx.maybeHeartbeat();
+                    processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
+                    vulnsProcessed += bovBatch.size();
+                    bovBatch.clear();
                 }
             }
 
-            if (!bovBatch.isEmpty()) {
-                ctx.maybeHeartbeat();
-                processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
-                bovBatch.clear();
-            }
+            LOGGER.info(
+                    "Completed mirror; processed {} vulnerabilities ({} skipped) in {}",
+                    vulnsProcessed,
+                    vulnsSkipped,
+                    Duration.ofNanos(System.nanoTime() - startTimeNs));
         }
 
         return null;
@@ -141,7 +165,7 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             Vulnerability.Source source,
             String dataSourceName,
             VulnerabilityUpdatePolicy updatePolicy) {
-        LOGGER.debug("Processing batch of {} BOVs", bovs.size());
+        LOGGER.debug("Processing batch of {} vulnerabilities", bovs.size());
 
         final var vulns = new ArrayList<Vulnerability>(bovs.size());
         final var vsListByVulnId = new HashMap<String, List<VulnerableSoftware>>(bovs.size());
@@ -149,12 +173,12 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
 
         for (final Bom bov : bovs) {
             if (bov.getVulnerabilitiesCount() == 0) {
-                LOGGER.warn("BOV contains no vulnerabilities; Skipping");
+                LOGGER.warn("Encountered record with no vulnerabilities; Skipping");
                 continue;
             }
 
             if (bov.getVulnerabilitiesCount() > 1) {
-                LOGGER.warn("BOV contains more than one vulnerability; Skipping");
+                LOGGER.warn("Encountered record with more than one vulnerability; Skipping");
                 continue;
             }
 

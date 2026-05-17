@@ -47,6 +47,9 @@ final class GitHubVulnDataSource implements VulnDataSource {
     private final boolean isAliasSyncEnabled;
     private final Queue<SecurityAdvisory> advisoryQueue;
     private boolean hasNextCalled = false;
+    private boolean startLogged = false;
+    private int pagesFetched = 0;
+    private int advisoriesFetched = 0;
 
     GitHubVulnDataSource(
             final WatermarkManager watermarkManager,
@@ -69,12 +72,20 @@ final class GitHubVulnDataSource implements VulnDataSource {
         if (!advisoryQueue.isEmpty()) {
             return true;
         }
+        if (!startLogged) {
+            LOGGER.info(
+                    "Downloading and processing GitHub advisories updated since {} (interleaved by page)",
+                    watermarkManager.getWatermark());
+            startLogged = true;
+        }
         if (!client.hasNext()) {
             return false;
         }
 
         final Collection<SecurityAdvisory> advisories = client.next();
-        LOGGER.debug("Fetched {} advisories", advisories.size());
+        pagesFetched++;
+        advisoriesFetched += advisories.size();
+        LOGGER.debug("Fetched page {} ({} advisories)", pagesFetched, advisories.size());
 
         advisoryQueue.addAll(advisories);
         return !advisoryQueue.isEmpty();
@@ -119,6 +130,8 @@ final class GitHubVulnDataSource implements VulnDataSource {
     @Override
     public void close() {
         watermarkManager.maybeCommit(/* ignoreMinCommitInterval */ true);
+
+        LOGGER.info("Fetched {} advisories across {} page(s)", advisoriesFetched, pagesFetched);
 
         try {
             client.close();

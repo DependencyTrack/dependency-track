@@ -63,6 +63,8 @@ final class NvdVulnDataSource implements VulnDataSource {
     private NvdDataFeed currentFeed;
     private @Nullable String currentFeedSha256;
     private int currentFeedIndex = 0;
+    private int currentFeedCvesProcessed = 0;
+    private int currentFeedCvesSkipped = 0;
     private InputStream currentFileInputStream;
     private JsonParser currentJsonParser;
     private boolean hasNextCalled = false;
@@ -98,6 +100,7 @@ final class NvdVulnDataSource implements VulnDataSource {
             }
 
             recordCurrentFeedDigest();
+            logCurrentFeedSummary();
             closeCurrentFeed();
             currentFeedIndex++;
         }
@@ -111,6 +114,7 @@ final class NvdVulnDataSource implements VulnDataSource {
                     return true;
                 }
                 recordCurrentFeedDigest();
+                logCurrentFeedSummary();
                 closeCurrentFeed();
             }
             currentFeedIndex++;
@@ -173,7 +177,8 @@ final class NvdVulnDataSource implements VulnDataSource {
         }
 
         currentFeed = feeds.get(currentFeedIndex);
-        LOGGER.info("Opening {}", currentFeed);
+        currentFeedCvesProcessed = 0;
+        currentFeedCvesSkipped = 0;
 
         final NvdDataFeedMetadata feedMetadata = retrieveFeedMetadata(currentFeed);
 
@@ -214,6 +219,7 @@ final class NvdVulnDataSource implements VulnDataSource {
 
                 if ("vulnerabilities".equals(fieldName)) {
                     if (currentToken == JsonToken.START_ARRAY) {
+                        LOGGER.info("Processing feed {}", currentFeed);
                         return true;
                     } else {
                         currentJsonParser.skipChildren();
@@ -250,6 +256,7 @@ final class NvdVulnDataSource implements VulnDataSource {
 
                 if (watermark != null && !watermark.isBefore(cveLastModified)) {
                     LOGGER.debug("Skipping CVE {}: Below watermark", defCveItem.getCve().getId());
+                    currentFeedCvesSkipped++;
                     defCveItem = null;
                 }
             } catch (IOException e) {
@@ -257,7 +264,18 @@ final class NvdVulnDataSource implements VulnDataSource {
             }
         }
 
+        currentFeedCvesProcessed++;
         return ModelConverter.convert(defCveItem);
+    }
+
+    private void logCurrentFeedSummary() {
+        if (currentFeed == null) {
+            return;
+        }
+
+        LOGGER.info(
+                "Finished {}: processed {} CVE(s), skipped {} below watermark",
+                currentFeed, currentFeedCvesProcessed, currentFeedCvesSkipped);
     }
 
     private void recordCurrentFeedDigest() {
@@ -330,7 +348,8 @@ final class NvdVulnDataSource implements VulnDataSource {
             throw new IllegalStateException("Failed to create temp file", e);
         }
 
-        LOGGER.info("Downloading {} to {}", feedFileUri, tempFile);
+        LOGGER.info("Downloading feed {} from {}", feed, feedFileUri);
+        LOGGER.debug("Download destination: {}", tempFile);
         final HttpResponse<Path> response;
         try {
             response = httpClient.send(

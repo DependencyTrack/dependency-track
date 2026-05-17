@@ -73,6 +73,7 @@ final class OsvVulnDataSource implements VulnDataSource {
     private final ModelConverter modelConverter;
     private String currentEcosystem;
     private int currentEcosystemIndex;
+    private int currentEcosystemAdvisoriesProcessed;
     private Path currentEcosystemDirPath;
     private Stream<Path> currentEcosystemFileStream;
     private Iterator<Path> currentEcosystemFileIterator;
@@ -116,6 +117,7 @@ final class OsvVulnDataSource implements VulnDataSource {
             if (watermarkManager != null) {
                 watermarkManager.maybeCommit(List.of(currentEcosystem));
             }
+            logCurrentEcosystemSummary();
             closeCurrentEcosystem();
             currentEcosystemIndex++;
         }
@@ -132,6 +134,7 @@ final class OsvVulnDataSource implements VulnDataSource {
                 if (watermarkManager != null) {
                     watermarkManager.maybeCommit(List.of(currentEcosystem));
                 }
+                logCurrentEcosystemSummary();
                 closeCurrentEcosystem();
             }
             currentEcosystemIndex++;
@@ -197,16 +200,27 @@ final class OsvVulnDataSource implements VulnDataSource {
         }
 
         final Path filePath = currentEcosystemFileIterator.next();
-        LOGGER.debug("Reading advisory {}", filePath);
 
         final Osv osv;
         try {
             osv = objectMapper.readValue(filePath.toFile(), Osv.class);
         } catch (IOException e) {
-            throw new UncheckedIOException("Failed to read OSV advisory", e);
+            throw new UncheckedIOException("Failed to read OSV advisory " + filePath.getFileName(), e);
         }
 
+        currentEcosystemAdvisoriesProcessed++;
         return modelConverter.convert(osv, isAliasSyncEnabled, currentEcosystem);
+    }
+
+    private void logCurrentEcosystemSummary() {
+        if (currentEcosystem == null) {
+            return;
+        }
+
+        LOGGER.info(
+                "Finished ecosystem {}: processed {} advisories",
+                currentEcosystem,
+                currentEcosystemAdvisoriesProcessed);
     }
 
     private boolean openNextEcosystem() {
@@ -215,7 +229,7 @@ final class OsvVulnDataSource implements VulnDataSource {
         }
 
         currentEcosystem = ecosystems.get(currentEcosystemIndex);
-        LOGGER.info("Opening ecosystem {}", currentEcosystem);
+        currentEcosystemAdvisoriesProcessed = 0;
 
         currentEcosystemDirPath = downloadEcosystemFiles(currentEcosystem);
         try {
@@ -228,6 +242,7 @@ final class OsvVulnDataSource implements VulnDataSource {
             throw new UncheckedIOException("Failed to walk " + currentEcosystemDirPath, e);
         }
 
+        LOGGER.info("Processing ecosystem {}", currentEcosystem);
         return true;
     }
 
@@ -257,7 +272,7 @@ final class OsvVulnDataSource implements VulnDataSource {
     }
 
     private void downloadEcosystemFilesAll(final String ecosystem, final Path destDirPath) {
-        LOGGER.info("Downloading all advisories for ecosystem {}", ecosystem);
+        LOGGER.info("Downloading all advisories for ecosystem {} from upstream", ecosystem);
         final var request = HttpRequest.newBuilder()
                 .uri(URI.create("%s/%s/all.zip".formatted(dataUrl, ecosystem)))
                 .build();
@@ -272,7 +287,8 @@ final class OsvVulnDataSource implements VulnDataSource {
             throw new IllegalStateException("Interrupted while downloading advisory archive", e);
         }
 
-        LOGGER.info("Extracting advisories for ecosystem {} to {}", ecosystem, destDirPath);
+        LOGGER.info("Extracting advisories for ecosystem {}", ecosystem);
+        LOGGER.debug("Extraction destination: {}", destDirPath);
         try (final InputStream responseBodyInputStream = response.body();
              final var zipInputStream = new ZipInputStream(responseBodyInputStream)) {
             ZipEntry zipEntry;
@@ -307,7 +323,7 @@ final class OsvVulnDataSource implements VulnDataSource {
         }
 
         // TODO: Use structured concurrency after Java 25 upgrade (https://openjdk.org/jeps/505).
-        LOGGER.info("Downloading {} new or updated advisories", modifiedIds.size());
+        LOGGER.info("Downloading {} new or updated advisories for ecosystem {}", modifiedIds.size(), ecosystem);
         for (final String modifiedId : modifiedIds) {
             LOGGER.debug("Downloading advisory {}", modifiedId);
             downloadAdvisoryFile(ecosystem, modifiedId, destDirPath);
@@ -335,8 +351,6 @@ final class OsvVulnDataSource implements VulnDataSource {
     }
 
     private void closeCurrentEcosystem() {
-        LOGGER.info("Closing ecosystem {}", currentEcosystem);
-
         if (currentEcosystemFileStream != null) {
             currentEcosystemFileStream.close();
             currentEcosystemFileIterator = null;

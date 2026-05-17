@@ -40,6 +40,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
@@ -54,7 +55,8 @@ import static org.dependencytrack.util.TaskUtil.getLockConfigForTask;
 public class EpssMirrorTask implements Subscriber {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EpssMirrorTask.class);
-    private static final int BATCH_SIZE = 100;
+    private static final int BATCH_SIZE = 1000;
+    private static final Duration HEARTBEAT_LOG_INTERVAL = Duration.ofSeconds(30);
 
     private final HttpClient httpClient;
 
@@ -79,14 +81,24 @@ public class EpssMirrorTask implements Subscriber {
     private void informLocked() throws IOException {
         final Config config = loadConfig();
         if (!config.isEnabled()) {
+            LOGGER.info("EPSS data source is disabled; Skipping mirror");
             return;
         }
 
-        LOGGER.info("Downloading feed file from {}", config.feedsBaseUrl());
-        final Path feedFilePath = downloadFeedFile(config.feedsBaseUrl());
+        LOGGER.info("Starting EPSS mirror");
+        final long startTimeNs = System.nanoTime();
 
-        LOGGER.info("Processing feed file {}", feedFilePath);
-        processFeedFile(feedFilePath);
+        LOGGER.info("Downloading EPSS feed from {}", config.feedsBaseUrl());
+        final Path feedFilePath = downloadFeedFile(config.feedsBaseUrl());
+        LOGGER.debug("Download destination: {}", feedFilePath);
+
+        LOGGER.info("Processing EPSS feed");
+        final int recordsModified = processFeedFile(feedFilePath);
+
+        LOGGER.info(
+                "Completed EPSS mirror; modified {} record(s) in {}",
+                recordsModified,
+                Duration.ofNanos(System.nanoTime() - startTimeNs));
     }
 
     private Path downloadFeedFile(final String baseUrl) throws IOException {
@@ -110,7 +122,11 @@ public class EpssMirrorTask implements Subscriber {
         return tempFile;
     }
 
-    private void processFeedFile(final Path feedFilePath) throws IOException {
+    private int processFeedFile(final Path feedFilePath) throws IOException {
+        int recordsRead = 0;
+        int recordsModified = 0;
+        long lastHeartbeatNs = System.nanoTime();
+
         try (final var fileInputStream = Files.newInputStream(feedFilePath, StandardOpenOption.DELETE_ON_CLOSE);
              final var bufferedInputStream = new BufferedInputStream(fileInputStream);
              final var gzipInputStream = new GZIPInputStream(bufferedInputStream);
@@ -135,24 +151,32 @@ public class EpssMirrorTask implements Subscriber {
                 recordBatch.add(record);
 
                 if (recordBatch.size() == BATCH_SIZE) {
-                    processBatch(recordBatch);
+                    recordsModified += processBatch(recordBatch);
+                    recordsRead += recordBatch.size();
                     recordBatch.clear();
+                    if (System.nanoTime() - lastHeartbeatNs >= HEARTBEAT_LOG_INTERVAL.toNanos()) {
+                        LOGGER.info(
+                                "Read {} records so far ({} modified)",
+                                recordsRead, recordsModified);
+                        lastHeartbeatNs = System.nanoTime();
+                    }
                 }
             }
 
             if (!recordBatch.isEmpty()) {
-                processBatch(recordBatch);
+                recordsModified += processBatch(recordBatch);
                 recordBatch.clear();
             }
         }
+
+        return recordsModified;
     }
 
-    private void processBatch(final List<Epss> records) {
+    private int processBatch(final List<Epss> records) {
         LOGGER.debug("Processing batch of {} records", records.size());
 
-        final int recordsModified = inJdbiTransaction(
+        return inJdbiTransaction(
                 handle -> handle.attach(EpssDao.class).createOrUpdateAll(records));
-        LOGGER.debug("Created or updated {} records", recordsModified);
     }
 
     private static Epss parseEpssRecord(final String csvLine) {

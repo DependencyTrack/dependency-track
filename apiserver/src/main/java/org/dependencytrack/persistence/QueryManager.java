@@ -730,6 +730,10 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().hasAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
+    public boolean hasVulnerabilities(final Project project) {
+        return getVulnerabilityQueryManager().hasVulnerabilities(project);
+    }
+
     public boolean contains(Vulnerability vulnerability, Component component) {
         return getVulnerabilityQueryManager().contains(vulnerability, component);
     }
@@ -832,8 +836,8 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilities(component, includeSuppressed);
     }
 
-    public List<Component> getAllVulnerableComponents(Project project, Vulnerability vulnerability, boolean includeSuppressed) {
-        return getVulnerabilityQueryManager().getAllVulnerableComponents(project, vulnerability, includeSuppressed);
+    public List<Component> getAllVulnerableComponents(Project project, Vulnerability vulnerability) {
+        return getVulnerabilityQueryManager().getAllVulnerableComponents(project, vulnerability);
     }
 
     public List<Vulnerability> getAllVulnerabilities(Component component, boolean includeSuppressed) {

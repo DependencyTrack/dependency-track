@@ -116,7 +116,7 @@ public final class ImportVexActivity implements Activity<ImportVexArg, Void> {
             vex.setSerialNumber(bom.getSerialNumber());
 
             final CycloneDXVexImporter vexImporter = new CycloneDXVexImporter();
-            vexImporter.applyVex(qm, bom, project);
+            qm.runInTransaction(() -> vexImporter.applyVex(qm, bom, project));
             LOGGER.info("Completed processing of CycloneDX VEX");
 
             final var notificationEmitter = new JdoNotificationEmitter(qm);

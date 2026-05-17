@@ -65,7 +65,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 class NotificationRuleResourceTest extends ResourceTest {
@@ -492,6 +492,213 @@ class NotificationRuleResourceTest extends ResourceTest {
 
         response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void shouldNotLeakInaccessibleProjectsViaGetAllNotificationRulesWhenAclEnabled() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
+        enablePortfolioAccessControl();
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final NotificationRule rule = qm.createNotificationRule(
+                "Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setProjects(List.of(accessibleProject, inaccessibleProject));
+        qm.persist(rule);
+
+        final Response response = jersey.target(V1_NOTIFICATION_RULE).request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[0].projects[*].uuid")
+                .isArray()
+                .containsExactly(accessibleProject.getUuid().toString());
+    }
+
+    @Test
+    void shouldNotLeakInaccessibleProjectsInAddProjectToRuleResponseWhenAclEnabled() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
+        enablePortfolioAccessControl();
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final NotificationRule rule = qm.createNotificationRule(
+                "Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setProjects(List.of(inaccessibleProject));
+        qm.persist(rule);
+
+        final Response response = jersey
+                .target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + accessibleProject.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(""));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.projects[*].uuid")
+                .isArray()
+                .containsExactly(accessibleProject.getUuid().toString());
+    }
+
+    @Test
+    void shouldNotLeakInaccessibleProjectsInUpdateNotificationRuleResponseWhenAclEnabled() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
+        enablePortfolioAccessControl();
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final NotificationRule rule = qm.createNotificationRule(
+                "Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setProjects(List.of(accessibleProject, inaccessibleProject));
+        rule.setPublisherConfig("{\"destinationUrl\":\"https://slack.example.com\"}");
+        qm.persist(rule);
+
+        final Response response = jersey.target(V1_NOTIFICATION_RULE).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "renamed",
+                          "scope": "PORTFOLIO",
+                          "level": "INFORMATIONAL",
+                          "enabled": true,
+                          "notifyChildren": true,
+                          "logSuccessfulPublish": false,
+                          "notifyOn": [],
+                          "tags": [],
+                          "publisherConfig": "{\\"destinationUrl\\":\\"https://slack.example.com\\"}"
+                        }
+                        """.formatted(rule.getUuid())));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.projects[*].uuid")
+                .isArray()
+                .containsExactly(accessibleProject.getUuid().toString());
+    }
+
+    @Test
+    void shouldNotLeakInaccessibleProjectsInAddTeamToRuleResponseWhenAclEnabled() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
+        enablePortfolioAccessControl();
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final NotificationRule rule = qm.createNotificationRule(
+                "Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setProjects(List.of(accessibleProject, inaccessibleProject));
+        qm.persist(rule);
+
+        final Team newTeam = qm.createTeam("notify-team");
+
+        final Response response = jersey
+                .target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + newTeam.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(""));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.projects[*].uuid")
+                .isArray()
+                .containsExactly(accessibleProject.getUuid().toString());
+    }
+
+    @Test
+    void shouldNotLeakInaccessibleProjectsInRemoveTeamFromRuleResponseWhenAclEnabled() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
+        enablePortfolioAccessControl();
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final Team existingTeam = qm.createTeam("notify-team");
+
+        final NotificationRule rule = qm.createNotificationRule(
+                "Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setProjects(List.of(accessibleProject, inaccessibleProject));
+        rule.setTeams(Set.of(existingTeam));
+        qm.persist(rule);
+
+        final Response response = jersey
+                .target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/team/" + existingTeam.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.projects[*].uuid")
+                .isArray()
+                .containsExactly(accessibleProject.getUuid().toString());
+    }
+
+    @Test
+    void shouldNotLeakInaccessibleProjectsInRemoveProjectFromRuleResponseWhenAclEnabled() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_DELETE);
+        enablePortfolioAccessControl();
+
+        final var inaccessibleProject = new Project();
+        inaccessibleProject.setName("inaccessible");
+        qm.persist(inaccessibleProject);
+
+        final var accessibleProject = new Project();
+        accessibleProject.setName("accessible");
+        qm.persist(accessibleProject);
+        accessibleProject.addAccessTeam(super.team);
+
+        final NotificationRule rule = qm.createNotificationRule(
+                "Rule", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setProjects(List.of(inaccessibleProject, accessibleProject));
+        qm.persist(rule);
+
+        final Response response = jersey
+                .target(V1_NOTIFICATION_RULE + "/" + rule.getUuid() + "/project/" + accessibleProject.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.projects")
+                .isArray()
+                .isEmpty();
     }
 
     @Test

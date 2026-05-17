@@ -629,6 +629,15 @@ public interface ProjectDao extends SqlObject {
             """)
     Boolean isAccessible(@Bind UUID projectUuid);
 
+    @SqlQuery(/* language=InjectedFreeMarker */ """
+            <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
+            SELECT "UUID"
+              FROM "PROJECT"
+             WHERE "UUID" = ANY(:projectUuids)
+               AND ${apiProjectAclCondition}
+            """)
+    Set<UUID> getAccessibleProjectUuids(@Bind Collection<UUID> projectUuids);
+
     /**
      * @param command The clone command.
      * @return The {@link UUID} of the cloned project.

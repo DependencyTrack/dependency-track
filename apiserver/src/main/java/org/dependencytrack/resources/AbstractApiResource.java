@@ -24,6 +24,7 @@ import org.dependencytrack.api.v2.model.TotalCountType;
 import org.dependencytrack.common.MdcScope;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.exception.ProjectAccessDeniedException;
+import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
@@ -34,15 +35,21 @@ import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.Principal;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.dependencytrack.common.MdcKeys.MDC_COMPONENT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 /**
  * @since 5.0.0
@@ -59,12 +66,12 @@ public abstract class AbstractApiResource extends AlpineResource {
     }
 
     /**
-     * Asserts that the authenticated {@link java.security.Principal} has access to a given {@link Project}.
+     * Asserts that the authenticated {@link Principal} has access to a given {@link Project}.
      *
      * @param qm      The {@link QueryManager} to use.
      * @param project The {@link Project} to verify access permission for.
      * @param message The message to use if a {@link ProjectAccessDeniedException} is thrown.
-     * @throws ProjectAccessDeniedException When the authenticated {@link java.security.Principal}
+     * @throws ProjectAccessDeniedException When the authenticated {@link Principal}
      *                                      does not have access to the given {@link Project}.
      */
     protected void requireAccess(final QueryManager qm, final Project project, final String message) {
@@ -87,12 +94,12 @@ public abstract class AbstractApiResource extends AlpineResource {
     }
 
     /**
-     * Asserts that the authenticated {@link java.security.Principal} has access to the component with a given {@link UUID}.
+     * Asserts that the authenticated {@link Principal} has access to the component with a given {@link UUID}.
      *
      * @param jdbiHandle    The {@link Handle} to use.
      * @param componentUuid {@link UUID} of the component to verify access permission for.
      * @throws NoSuchElementException       When no component with the given {@link UUID} exists.
-     * @throws ProjectAccessDeniedException When the authenticated {@link java.security.Principal}
+     * @throws ProjectAccessDeniedException When the authenticated {@link Principal}
      *                                      does not have access to the given {@link Project}.
      */
     protected void requireComponentAccess(final Handle jdbiHandle, final UUID componentUuid) {
@@ -111,12 +118,12 @@ public abstract class AbstractApiResource extends AlpineResource {
     }
 
     /**
-     * Asserts that the authenticated {@link java.security.Principal} has access to the project with a given {@link UUID}.
+     * Asserts that the authenticated {@link Principal} has access to the project with a given {@link UUID}.
      *
      * @param jdbiHandle  The {@link Handle} to use.
      * @param projectUuid {@link UUID} of the project to verify access permission for.
      * @throws NoSuchElementException       When no project with the given {@link UUID} exists.
-     * @throws ProjectAccessDeniedException When the authenticated {@link java.security.Principal}
+     * @throws ProjectAccessDeniedException When the authenticated {@link Principal}
      *                                      does not have access to the given {@link Project}.
      */
     protected void requireProjectAccess(final Handle jdbiHandle, final UUID projectUuid) {
@@ -130,6 +137,39 @@ public abstract class AbstractApiResource extends AlpineResource {
             }
             throw new ProjectAccessDeniedException("Access to the requested project is forbidden");
         }
+    }
+
+    /**
+     * Returns the subset of {@code projects} that the authenticated {@link Principal}
+     * has access to. The order of the input is preserved.
+     * <p>
+     * The intended use is to filter {@link Project} collections embedded in a response payload
+     * (e.g. {@link Policy#projects}) prior to serialization, where the persistence layer does
+     * not natively apply ACL to the loaded child collection.
+     * <p>
+     * <strong>This is a stopgap</strong>! The proper remediation is paginated sub-resources,
+     * where the listing itself enforces ACL. <strong>Only use this method for legacy endpoints</strong>,
+     * do not design new endpoints around this logic!
+     *
+     * @return Subset of {@code projects} that the authenticated {@link Principal} has access to.
+     */
+    protected List<Project> filterAccessibleProjects(@Nullable Collection<Project> projects) {
+        if (projects == null || projects.isEmpty()) {
+            return List.of();
+        }
+
+        final Set<UUID> accessibleUuids = withJdbiHandle(
+                super.getAlpineRequest(),
+                handle -> handle
+                        .attach(ProjectDao.class)
+                        .getAccessibleProjectUuids(
+                                projects.stream()
+                                        .map(Project::getUuid)
+                                        .collect(Collectors.toSet())));
+
+        return projects.stream()
+                .filter(project -> accessibleUuids.contains(project.getUuid()))
+                .toList();
     }
 
     protected @Nullable TotalCount convertTotalCount(Page.@Nullable TotalCount totalCount) {

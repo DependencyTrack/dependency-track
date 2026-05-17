@@ -25,6 +25,7 @@ import org.datanucleus.store.rdbms.sql.expression.BooleanExpression;
 import org.datanucleus.store.rdbms.sql.expression.IntegerLiteral;
 import org.datanucleus.store.rdbms.sql.expression.ObjectExpression;
 import org.datanucleus.store.rdbms.sql.expression.SQLExpression;
+import org.datanucleus.store.rdbms.sql.expression.SQLLiteral;
 import org.datanucleus.store.rdbms.sql.method.SQLMethod;
 
 import java.util.List;
@@ -39,9 +40,9 @@ public class ProjectIsAccessibleByMethod implements SQLMethod {
 
     @Override
     public SQLExpression getExpression(
-            final SQLStatement stmt,
-            final SQLExpression expr,
-            final List<SQLExpression> args) {
+            SQLStatement stmt,
+            SQLExpression expr,
+            List<SQLExpression> args) {
         if (!(expr instanceof final ObjectExpression objectExpr))
             // DataNucleus should prevent this from ever happening since
             // the method is explicitly registered for java.lang.Object.
@@ -63,27 +64,27 @@ public class ProjectIsAccessibleByMethod implements SQLMethod {
         // TODO: When a list, set, etc. is passed as argument, it will be of type CollectionLiteral.
         //  Array literals are easier to verify the type of, hence we're focusing on that for now.
 
-        switch (args.getFirst()) {
-            case IntegerLiteral userIdArg -> {
-                return getUserExpression(stmt, objectExpr, userIdArg);
-            }
-            case ArrayLiteral arrayLiteralArg -> {
-                return getApiKeyExpression(stmt, objectExpr, arrayLiteralArg);
-            }
-            default -> {
-                throw new IllegalArgumentException("Expected argument to be of type %s or %s, but got %s"
-                        .formatted(ArrayLiteral.class.getName(),
-                                IntegerLiteral.class.getName(),
-                                args.getFirst().getClass().getName()));
-            }
-        }
+        return switch (args.getFirst()) {
+            case IntegerLiteral userIdArg -> getUserExpression(stmt, objectExpr, userIdArg);
+            case ArrayLiteral arrayLiteralArg -> getApiKeyExpression(stmt, objectExpr, arrayLiteralArg);
+            default -> throw new IllegalArgumentException(
+                    "Expected argument to be of type %s or %s, but got %s".formatted(
+                            ArrayLiteral.class.getName(),
+                            IntegerLiteral.class.getName(),
+                            args.getFirst().getClass().getName()));
+        };
     }
 
-    private SQLExpression getApiKeyExpression(final SQLStatement stmt, final ObjectExpression objectExpr, final ArrayLiteral arrayLiteralArg) {
-        if (!(arrayLiteralArg.getValue() instanceof final Long[] teamIds))
+    private SQLExpression getApiKeyExpression(
+            SQLStatement stmt,
+            ObjectExpression objectExpr,
+            ArrayLiteral arrayLiteralArg) {
+        if (!(arrayLiteralArg.getValue() instanceof final Long[] teamIds)) {
             throw new IllegalArgumentException(
                     "Expected array argument to be of type %s, but got %s".formatted(
-                            Long[].class.getName(), arrayLiteralArg.getValue().getClass().getName()));
+                            Long[].class.getName(),
+                            arrayLiteralArg.getValue().getClass().getName()));
+        }
 
         final JavaTypeMapping booleanTypeMapping = stmt.getSQLExpressionFactory().getMappingForType(Boolean.class);
 
@@ -105,14 +106,27 @@ public class ProjectIsAccessibleByMethod implements SQLMethod {
                 AND ph."CHILD_PROJECT_ID" = %s\
                 )""".formatted(teamIdsLiteralSql, objectExpr.toSQLText().toSQL());
 
+        // Let DN know when we interpreted parameters as literal.
+        if (objectExpr.isParameter() && objectExpr instanceof final SQLLiteral sqlLiteral) {
+            stmt.getQueryGenerator().useParameterExpressionAsLiteral(sqlLiteral);
+        }
+        if (arrayLiteralArg.isParameter()) {
+            stmt.getQueryGenerator().useParameterExpressionAsLiteral(arrayLiteralArg);
+        }
+
         return new BooleanExpression(stmt, booleanTypeMapping, sql);
     }
 
-    private SQLExpression getUserExpression(final SQLStatement stmt, final ObjectExpression objectExpr, final IntegerLiteral userIdArg) {
-        if (!(userIdArg.getValue() instanceof final Long userId))
+    private SQLExpression getUserExpression(
+            SQLStatement stmt,
+            ObjectExpression objectExpr,
+            IntegerLiteral userIdArg) {
+        if (!(userIdArg.getValue() instanceof final Long userId)) {
             throw new IllegalArgumentException(
                     "Expected user ID argument to be of type %s, but got %s".formatted(
-                            Long.class.getName(), userIdArg.getValue().getClass().getName()));
+                            Long.class.getName(),
+                            userIdArg.getValue().getClass().getName()));
+        }
 
         final JavaTypeMapping booleanTypeMapping = stmt.getSQLExpressionFactory().getMappingForType(Boolean.class);
 
@@ -125,6 +139,14 @@ public class ProjectIsAccessibleByMethod implements SQLMethod {
                 WHERE ph."CHILD_PROJECT_ID" = %s \
                 AND pau."USER_ID" = %d\
                 )""".formatted(objectExpr.toSQLText().toSQL(), userId);
+
+        // Let DN know when we interpreted parameters as literal.
+        if (objectExpr.isParameter() && objectExpr instanceof final SQLLiteral sqlLiteral) {
+            stmt.getQueryGenerator().useParameterExpressionAsLiteral(sqlLiteral);
+        }
+        if (userIdArg.isParameter()) {
+            stmt.getQueryGenerator().useParameterExpressionAsLiteral(userIdArg);
+        }
 
         return new BooleanExpression(stmt, booleanTypeMapping, sql);
     }

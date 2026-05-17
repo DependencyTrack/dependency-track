@@ -42,6 +42,7 @@ import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.util.DateUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.AfterEach;
@@ -149,7 +150,7 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                         .withComment("someComment"));
 
         // Create metrics for project and component.
-        useJdbiHandle(handle ->  {
+        useJdbiHandle(handle -> {
             var dao = handle.attach(MetricsTestDao.class);
             dao.createMetricsPartitionsForDate("PROJECTMETRICS", LocalDate.of(2025, 1, 1));
             dao.createMetricsPartitionsForDate("DEPENDENCYMETRICS", LocalDate.of(2025, 1, 1));
@@ -234,6 +235,162 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         MetricsDao dao = jdbiHandle.attach(MetricsDao.class);
         assertThat(dao.getProjectMetricsSince(project.getId(), DateUtil.parseShortDate("20250101").toInstant())).isEmpty();
         assertThat(dao.getDependencyMetricsSince(component.getId(), DateUtil.parseShortDate("20250101").toInstant())).isEmpty();
+    }
+
+    @Test
+    public void shouldExcludeInactiveFindingsWhenCloningProject() {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("2.0.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-123");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, component, "internal");
+
+        qm.makeAnalysis(
+                new MakeAnalysisCommand(component, vuln)
+                        .withState(AnalysisState.NOT_AFFECTED)
+                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE)
+                        .withResponse(AnalysisResponse.WORKAROUND_AVAILABLE)
+                        .withDetails("analysisDetails")
+                        .withCommenter("someCommenter")
+                        .withComment("someComment"));
+
+        jdbiHandle.createUpdate(/* language=SQL */ """
+                        UPDATE "FINDINGATTRIBUTION"
+                           SET "DELETED_AT" = NOW()
+                         WHERE "COMPONENT_ID" = :componentId
+                           AND "VULNERABILITY_ID" = :vulnerabilityId
+                        """)
+                .bind("componentId", component.getId())
+                .bind("vulnerabilityId", vuln.getId())
+                .execute();
+
+        final UUID clonedUuid = projectDao.cloneProject(new CloneProjectCommand(
+                project.getUuid(),
+                "1.1.0",
+                /* targetProjectVersionIsLatest */ false,
+                /* includeAcl */ false,
+                /* includeComponents */ true,
+                /* includeFindings */ true,
+                /* includeFindingsAuditHistory */ true,
+                /* includePolicyViolations */ false,
+                /* includePolicyViolationsAuditHistory */ false,
+                /* includeProperties */ false,
+                /* includeServices */ false,
+                /* includeTags */ false));
+
+        final Long clonedComponentId = jdbiHandle.createQuery(/* language=SQL */ """
+                        SELECT c."ID"
+                          FROM "COMPONENT" AS c
+                         INNER JOIN "PROJECT" AS p
+                            ON p."ID" = c."PROJECT_ID"
+                         WHERE p."UUID" = :projectUuid
+                        """)
+                .bind("projectUuid", clonedUuid)
+                .mapTo(Long.class)
+                .one();
+
+        final long clonedCvCount = jdbiHandle.createQuery(/* language=SQL */ """
+                        SELECT COUNT(*)
+                          FROM "COMPONENTS_VULNERABILITIES"
+                         WHERE "COMPONENT_ID" = :componentId
+                        """)
+                .bind("componentId", clonedComponentId)
+                .mapTo(Long.class)
+                .one();
+        assertThat(clonedCvCount).isZero();
+
+        final long clonedAttributionCount = jdbiHandle.createQuery(/* language=SQL */ """
+                        SELECT COUNT(*)
+                          FROM "FINDINGATTRIBUTION"
+                         WHERE "COMPONENT_ID" = :componentId
+                        """)
+                .bind("componentId", clonedComponentId)
+                .mapTo(Long.class)
+                .one();
+        assertThat(clonedAttributionCount).isZero();
+
+        final long clonedAnalysisCount = jdbiHandle.createQuery(/* language=SQL */ """
+                        SELECT COUNT(*)
+                          FROM "ANALYSIS"
+                         WHERE "COMPONENT_ID" = :componentId
+                        """)
+                .bind("componentId", clonedComponentId)
+                .mapTo(Long.class)
+                .one();
+        assertThat(clonedAnalysisCount).isZero();
+
+        final long clonedCommentCount = jdbiHandle.createQuery(/* language=SQL */ """
+                        SELECT COUNT(*)
+                          FROM "ANALYSISCOMMENT" AS ac
+                         INNER JOIN "ANALYSIS" AS a
+                            ON a."ID" = ac."ANALYSIS_ID"
+                         WHERE a."COMPONENT_ID" = :componentId
+                        """)
+                .bind("componentId", clonedComponentId)
+                .mapTo(Long.class)
+                .one();
+        assertThat(clonedCommentCount).isZero();
+    }
+
+    @Test
+    public void shouldCloneActiveFindingsWhenCloningProject() {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("2.0.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-123");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, component, "internal");
+
+        final UUID clonedUuid = projectDao.cloneProject(new CloneProjectCommand(
+                project.getUuid(),
+                "1.1.0",
+                /* targetProjectVersionIsLatest */ false,
+                /* includeAcl */ false,
+                /* includeComponents */ true,
+                /* includeFindings */ true,
+                /* includeFindingsAuditHistory */ true,
+                /* includePolicyViolations */ false,
+                /* includePolicyViolationsAuditHistory */ false,
+                /* includeProperties */ false,
+                /* includeServices */ false,
+                /* includeTags */ false));
+
+        final long clonedCvCount = jdbiHandle.createQuery(/* language=SQL */ """
+                        SELECT COUNT(*)
+                          FROM "COMPONENTS_VULNERABILITIES" cv
+                         INNER JOIN "COMPONENT" c
+                            ON c."ID" = cv."COMPONENT_ID"
+                         INNER JOIN "PROJECT" p
+                            ON p."ID" = c."PROJECT_ID"
+                         WHERE p."UUID" = :projectUuid
+                        """)
+                .bind("projectUuid", clonedUuid)
+                .mapTo(Long.class)
+                .one();
+        assertThat(clonedCvCount).isOne();
     }
 
     @Test

@@ -34,6 +34,7 @@ import org.dependencytrack.persistence.jdbi.FindingDao;
 import javax.jdo.FetchGroup;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -85,8 +86,11 @@ public class CycloneDXExporter {
 
     private Bom create(List<Component>components, final List<ServiceComponent> services, final List<Finding> findings, final Project project) {
         if (Variant.VDR == variant) {
+            final Set<UUID> vulnerableComponentUuids = findings.stream()
+                    .map(finding -> (UUID) finding.getComponent().get("uuid"))
+                    .collect(Collectors.toSet());
             components = components.stream()
-                    .filter(component -> !component.getVulnerabilities().isEmpty())
+                    .filter(component -> vulnerableComponentUuids.contains(component.getUuid()))
                     .toList();
         }
         final List<org.cyclonedx.model.Component> cycloneComponents = (Variant.VEX != variant && components != null) ? components.stream().map(component -> ModelConverter.convert(component)).collect(Collectors.toList()) : null;

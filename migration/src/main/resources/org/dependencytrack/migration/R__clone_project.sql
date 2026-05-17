@@ -318,11 +318,19 @@ BEGIN
     IF include_findings THEN
       INSERT INTO "COMPONENTS_VULNERABILITIES" ("COMPONENT_ID", "VULNERABILITY_ID")
       SELECT tmp_component_mapping.target_id
-           , "VULNERABILITY_ID"
-        FROM "COMPONENTS_VULNERABILITIES"
+           , cv."VULNERABILITY_ID"
+        FROM "COMPONENTS_VULNERABILITIES" AS cv
        INNER JOIN tmp_component_mapping
-          ON tmp_component_mapping.source_id = "COMPONENT_ID"
-       ORDER BY "VULNERABILITY_ID"
+          ON tmp_component_mapping.source_id = cv."COMPONENT_ID"
+       WHERE EXISTS (
+         SELECT 1
+           FROM "FINDINGATTRIBUTION" AS fa
+          WHERE fa."COMPONENT_ID" = cv."COMPONENT_ID"
+            AND fa."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
+            AND fa."PROJECT_ID" = source_project.id
+            AND fa."DELETED_AT" IS NULL
+       )
+       ORDER BY cv."VULNERABILITY_ID"
               , tmp_component_mapping.target_id;
 
       INSERT INTO "FINDINGATTRIBUTION" (
@@ -354,8 +362,16 @@ BEGIN
         source_analysis AS (
           SELECT *
                , ROW_NUMBER() OVER(ORDER BY "ID") AS rn
-            FROM "ANALYSIS"
-           WHERE "PROJECT_ID" = source_project.id
+            FROM "ANALYSIS" AS a
+           WHERE a."PROJECT_ID" = source_project.id
+             AND EXISTS (
+               SELECT 1
+                 FROM "FINDINGATTRIBUTION" AS fa
+                WHERE fa."COMPONENT_ID" = a."COMPONENT_ID"
+                  AND fa."VULNERABILITY_ID" = a."VULNERABILITY_ID"
+                  AND fa."PROJECT_ID" = source_project.id
+                  AND fa."DELETED_AT" IS NULL
+             )
         ),
         target_analysis AS (
           INSERT INTO "ANALYSIS" (

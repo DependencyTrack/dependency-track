@@ -113,6 +113,7 @@ import static org.dependencytrack.notification.NotificationTestUtil.createCatchA
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_VALIDATION_FAILED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -1003,6 +1004,62 @@ class BomResourceTest extends ResourceTest {
         assertThat(componentWithoutVuln.getDirectDependencies()).isNotNull();
         assertThat(componentWithVuln.getDirectDependencies()).isNotNull();
         assertThat(componentWithVulnAndAnalysis.getDirectDependencies()).isNotNull();
+    }
+
+    @Test
+    void shouldExcludeComponentsWithOnlyInactiveFindingsFromVdr() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO, Permissions.VIEW_VULNERABILITY);
+
+        var vulnerability = new Vulnerability();
+        vulnerability.setVulnId("INT-001");
+        vulnerability.setSource(Vulnerability.Source.INTERNAL);
+        vulnerability.setSeverity(Severity.HIGH);
+        vulnerability = qm.createVulnerability(vulnerability);
+
+        var project = new Project();
+        project.setName("acme-app");
+        project.setClassifier(Classifier.APPLICATION);
+        qm.createProject(project, null, false);
+
+        var componentWithActiveFinding = new Component();
+        componentWithActiveFinding.setProject(project);
+        componentWithActiveFinding.setName("acme-lib-active");
+        componentWithActiveFinding.setVersion("1.0.0");
+        componentWithActiveFinding.setDirectDependencies("[]");
+        qm.createComponent(componentWithActiveFinding, false);
+        qm.addVulnerability(vulnerability, componentWithActiveFinding, "internal");
+
+        var componentWithInactiveFinding = new Component();
+        componentWithInactiveFinding.setProject(project);
+        componentWithInactiveFinding.setName("acme-lib-inactive");
+        componentWithInactiveFinding.setVersion("1.0.0");
+        componentWithInactiveFinding.setDirectDependencies("[]");
+        qm.createComponent(componentWithInactiveFinding, false);
+        qm.addVulnerability(vulnerability, componentWithInactiveFinding, "internal");
+
+        final long inactiveComponentId = componentWithInactiveFinding.getId();
+        final long inactiveVulnerabilityId = vulnerability.getId();
+        useJdbiHandle(handle -> handle.createUpdate(/* language=SQL */ """
+                        UPDATE "FINDINGATTRIBUTION"
+                           SET "DELETED_AT" = NOW()
+                         WHERE "COMPONENT_ID" = :componentId
+                           AND "VULNERABILITY_ID" = :vulnerabilityId
+                        """)
+                .bind("componentId", inactiveComponentId)
+                .bind("vulnerabilityId", inactiveVulnerabilityId)
+                .execute());
+
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .queryParam("variant", "vdr")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.components[*].name")
+                .isArray()
+                .containsExactly("acme-lib-active");
     }
 
     @Test

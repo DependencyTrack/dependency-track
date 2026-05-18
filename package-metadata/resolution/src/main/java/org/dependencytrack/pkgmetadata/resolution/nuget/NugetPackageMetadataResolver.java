@@ -422,13 +422,13 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
 
         try {
             return OffsetDateTime.parse(published).toInstant();
-        } catch (DateTimeParseException ignored) {
+        } catch (DateTimeParseException _) {
             // try next format
         }
 
         try {
             return LocalDateTime.parse(published).toInstant(ZoneOffset.UTC);
-        } catch (DateTimeParseException ignored) {
+        } catch (DateTimeParseException _) {
             return null;
         }
     }

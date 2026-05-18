@@ -135,7 +135,7 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         feeds.add(new NvdDataFeed.ModifiedDataFeed());
 
         final List<String> feedNames = feeds.stream().map(NvdDataFeed::name).toList();
-        final var watermarkManager = WatermarkManager.create(kvStore, feedNames);
+        final var watermarkManager = new WatermarkManager(kvStore, feedNames);
 
         return new NvdVulnDataSource(watermarkManager, objectMapper, httpClient, config.getCveFeedsUrl().toString(), feeds);
     }
@@ -201,7 +201,7 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         testResult.pass("connection");
 
         try {
-            final var ignored = NvdDataFeedMetadata.of(response.body());
+            var _ = NvdDataFeedMetadata.of(response.body());
             testResult.pass("feed_format");
         } catch (RuntimeException e) {
             LOGGER.warn("Failed to parse feed metadata from {}", metadataUri, e);

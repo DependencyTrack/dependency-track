@@ -72,7 +72,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
         relay = new NotificationOutboxRelay(
                 dexEngineMock,
                 fileStorage,
-                ignored -> routerMock,
+                _ -> routerMock,
                 new SimpleMeterRegistry(),
                 /* pollIntervalMillis */ 10,
                 /* batchSize */ 10,
@@ -238,7 +238,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
                     .isThrownBy(() -> new NotificationOutboxRelay(
                             null,
                             fileStorage,
-                            ignored -> routerMock,
+                            _ -> routerMock,
                             new SimpleMeterRegistry(),
                             /* pollIntervalMillis */ 100,
                             /* batchSize */ 10,
@@ -251,7 +251,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
                     .isThrownBy(() -> new NotificationOutboxRelay(
                             dexEngineMock,
                             null,
-                            ignored -> routerMock,
+                            _ -> routerMock,
                             new SimpleMeterRegistry(),
                             /* pollIntervalMillis */ 100,
                             /* batchSize */ 10,
@@ -277,7 +277,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
                     .isThrownBy(() -> new NotificationOutboxRelay(
                             dexEngineMock,
                             fileStorage,
-                            ignored -> routerMock,
+                            _ -> routerMock,
                             null,
                             /* pollIntervalMillis */ 100,
                             /* batchSize */ 10,
@@ -290,7 +290,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
                     .isThrownBy(() -> new NotificationOutboxRelay(
                             dexEngineMock,
                             fileStorage,
-                            ignored -> routerMock,
+                            _ -> routerMock,
                             new SimpleMeterRegistry(),
                             /* pollIntervalMillis */ 0,
                             /* batchSize */ 10,
@@ -303,7 +303,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
                     .isThrownBy(() -> new NotificationOutboxRelay(
                             dexEngineMock,
                             fileStorage,
-                            ignored -> routerMock,
+                            _ -> routerMock,
                             new SimpleMeterRegistry(),
                             /* pollIntervalMillis */ 100,
                             /* batchSize */ 0,

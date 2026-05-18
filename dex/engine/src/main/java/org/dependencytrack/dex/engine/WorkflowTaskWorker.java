@@ -71,9 +71,9 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
     void process(final WorkflowTask task) {
-        try (var ignoredMdcWorkflowName = MDC.putCloseable("workflowName", task.workflowName());
-             var ignoredMdcWorkflowInstanceId = MDC.putCloseable("workflowInstanceId", task.workflowInstanceId());
-             var ignoredMdcWorkflowRunId = MDC.putCloseable("workflowRunId", task.workflowRunId().toString())) {
+        try (var _ = MDC.putCloseable("workflowName", task.workflowName());
+             var _ = MDC.putCloseable("workflowInstanceId", task.workflowInstanceId());
+             var _ = MDC.putCloseable("workflowRunId", task.workflowRunId().toString())) {
             final WorkflowMetadata workflowMetadata;
             try {
                 workflowMetadata = metadataRegistry.getWorkflowMetadata(task.workflowName());

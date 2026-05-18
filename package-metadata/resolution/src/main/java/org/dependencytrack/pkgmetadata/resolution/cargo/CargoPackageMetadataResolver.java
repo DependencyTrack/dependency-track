@@ -93,7 +93,7 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
                     if (crateVersion.createdAt() != null) {
                         try {
                             latestVersionPublishedAt = Instant.parse(crateVersion.createdAt());
-                        } catch (DateTimeParseException ignored) {
+                        } catch (DateTimeParseException _) {
                         }
                     }
                 }
@@ -120,7 +120,7 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
         if (crateVersion.createdAt() != null) {
             try {
                 publishedAt = Instant.parse(crateVersion.createdAt());
-            } catch (DateTimeParseException ignored) {
+            } catch (DateTimeParseException _) {
             }
         }
 

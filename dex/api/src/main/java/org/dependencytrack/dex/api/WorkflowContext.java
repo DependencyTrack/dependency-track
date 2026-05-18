@@ -132,11 +132,11 @@ public interface WorkflowContext<A extends @Nullable Object> {
             String name,
             PayloadConverter<SR> resultConverter,
             Supplier<SR> supplier) {
-        return executeSideEffect(name, null, resultConverter, ignored -> supplier.get());
+        return executeSideEffect(name, null, resultConverter, _ -> supplier.get());
     }
 
     default Awaitable<Void> executeSideEffect(String name, Runnable runnable) {
-        return executeSideEffect(name, null, voidConverter(), ignored -> {
+        return executeSideEffect(name, null, voidConverter(), _ -> {
             runnable.run();
             return null;
         });

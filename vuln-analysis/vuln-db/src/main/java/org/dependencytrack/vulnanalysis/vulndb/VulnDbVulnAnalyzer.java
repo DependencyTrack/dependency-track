@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +42,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Gatherers;
 
 /**
  * @since 5.0.0
@@ -81,7 +81,9 @@ final class VulnDbVulnAnalyzer implements VulnAnalyzer {
         final var vulnsByCpe = new HashMap<String, List<VulnDbApiResponse.Vulnerability>>(bomRefsByCpe.size());
         final var cpesToAnalyze = new LinkedHashSet<>(bomRefsByCpe.keySet());
 
-        for (final var cpeBatch : partition(List.copyOf(bomRefsByCpe.keySet()), CACHE_BATCH_SIZE)) {
+        for (final var cpeBatch : (Iterable<List<String>>) () -> bomRefsByCpe.keySet().stream()
+                .gather(Gatherers.windowFixed(CACHE_BATCH_SIZE))
+                .iterator()) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before all cache lookups could complete");
             }
@@ -196,7 +198,7 @@ final class VulnDbVulnAnalyzer implements VulnAnalyzer {
                 final Vulnerability.Builder vulnBuilder =
                         vulnBuilderByVulnId.computeIfAbsent(
                                 vulnId,
-                                ignored -> VulnDbModelConverter.convert(vulnDbVuln, aliasSyncEnabled));
+                                _ -> VulnDbModelConverter.convert(vulnDbVuln, aliasSyncEnabled));
 
                 for (final String bomRef : bomRefs) {
                     vulnBuilder.addAffects(
@@ -213,14 +215,6 @@ final class VulnDbVulnAnalyzer implements VulnAnalyzer {
                                 .map(Vulnerability.Builder::build)
                                 .toList())
                 .build();
-    }
-
-    private static <T> List<List<T>> partition(List<T> list, int batchSize) {
-        final var partitions = new ArrayList<List<T>>();
-        for (int i = 0; i < list.size(); i += batchSize) {
-            partitions.add(list.subList(i, Math.min(i + batchSize, list.size())));
-        }
-        return partitions;
     }
 
 }

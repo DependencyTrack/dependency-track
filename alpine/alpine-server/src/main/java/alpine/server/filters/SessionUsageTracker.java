@@ -111,7 +111,7 @@ public class SessionUsageTracker implements ApplicationEventListener {
             final var lastUsedByHash = new HashMap<String, Long>();
             while (EVENT_QUEUE.peek() != null) {
                 final SessionUsedEvent event = EVENT_QUEUE.poll();
-                lastUsedByHash.compute(event.tokenHash(), (ignored, prev) -> {
+                lastUsedByHash.compute(event.tokenHash(), (_, prev) -> {
                     if (prev == null) {
                         return event.timestamp();
                     }

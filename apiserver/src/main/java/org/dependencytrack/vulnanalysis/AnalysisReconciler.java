@@ -99,7 +99,7 @@ final class AnalysisReconciler {
     @Nullable Result reconcile(VulnerabilityPolicy policy) {
         requireNonNull(policy, "policy must not be null");
 
-        try (var ignoredMdcPolicyName = MDC.putCloseable(MDC_VULN_POLICY_NAME, policy.getName())) {
+        try (var _ = MDC.putCloseable(MDC_VULN_POLICY_NAME, policy.getName())) {
             final VulnerabilityPolicyAnalysis policyAnalysis = policy.getAnalysis();
             if (policyAnalysis == null) {
                 LOGGER.warn("Vulnerability policy does not define an analysis");

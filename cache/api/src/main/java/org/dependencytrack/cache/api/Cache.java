@@ -33,7 +33,7 @@ public interface Cache {
 
     default byte @Nullable [] get(String key) {
         try {
-            return get(key, ignored -> {
+            return get(key, _ -> {
                 throw CacheMissException.INSTANCE;
             });
         } catch (CacheMissException e) {

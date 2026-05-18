@@ -46,7 +46,7 @@ public class VulnerableSoftwareRowMapper implements RowMapper<VulnerableSoftware
     public VulnerableSoftware map(final ResultSet rs, final StatementContext ctx) throws SQLException {
         final VulnerableSoftware vs = vulnerableSoftwareMapper.map(rs, ctx);
         maybeSet(rs, "attributionsJson",
-                (ignored, columnName) -> deserializeJson(rs, columnName, ATTRIBUTIONS_TYPE_REF),
+                (_, columnName) -> deserializeJson(rs, columnName, ATTRIBUTIONS_TYPE_REF),
                 vs::setAffectedVersionAttributions);
         return vs;
     }

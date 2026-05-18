@@ -361,7 +361,7 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
      */
     @Override
     public void truncateNotificationOutbox() {
-        try (var ignored = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
+        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
             final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
                 TRUNCATE TABLE "NOTIFICATION_OUTBOX"
                 """);

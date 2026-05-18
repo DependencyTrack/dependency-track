@@ -71,7 +71,7 @@ public final class VulnAnalysisWorkflow implements Workflow<VulnAnalysisWorkflow
             throw new TerminalApplicationFailureException("No argument provided");
         }
 
-        try (var ignored = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid())) {
+        try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid())) {
             ctx.logger().info("Starting vulnerability analysis");
 
             final PrepareVulnAnalysisRes preparationResult = prepare(ctx, arg.getProjectUuid());
@@ -138,7 +138,7 @@ public final class VulnAnalysisWorkflow implements Workflow<VulnAnalysisWorkflow
         final var awaitableByAnalyzerName = new LinkedHashMap<String, Awaitable<InvokeVulnAnalyzerRes>>();
 
         for (final String analyzerName : analyzerNames) {
-            try (var ignored = MDC.putCloseable(MDC_VULN_ANALYZER_NAME, analyzerName)) {
+            try (var _ = MDC.putCloseable(MDC_VULN_ANALYZER_NAME, analyzerName)) {
                 ctx.logger().debug("Invoking analyzer");
                 final Awaitable<InvokeVulnAnalyzerRes> awaitable =
                         invokeAnalyzer(ctx, projectUuid, analyzerName, bomFileMetadata);
@@ -176,7 +176,7 @@ public final class VulnAnalysisWorkflow implements Workflow<VulnAnalysisWorkflow
             final String analyzerName = entry.getKey();
             final Awaitable<InvokeVulnAnalyzerRes> awaitable = entry.getValue();
 
-            try (var ignored = MDC.putCloseable(MDC_VULN_ANALYZER_NAME, analyzerName)) {
+            try (var _ = MDC.putCloseable(MDC_VULN_ANALYZER_NAME, analyzerName)) {
                 ctx.logger().debug("Waiting for analyzer to complete");
 
                 final var result = awaitable.await();

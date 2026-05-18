@@ -114,7 +114,7 @@ final class CpanPackageMetadataResolver implements PackageMetadataResolver {
             try {
                 // CPAN dates are in ISO local date-time format without timezone (UTC implied).
                 publishedAt = LocalDateTime.parse(date).toInstant(ZoneOffset.UTC);
-            } catch (DateTimeParseException ignored) {
+            } catch (DateTimeParseException _) {
             }
         }
         return publishedAt;

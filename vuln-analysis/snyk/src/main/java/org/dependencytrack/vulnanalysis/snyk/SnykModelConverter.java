@@ -259,10 +259,10 @@ final class SnykModelConverter {
             return SCORE_METHOD_OTHER;
         }
         return switch (cvss) {
-            case Cvss4P0 ignored -> SCORE_METHOD_CVSSV4;
-            case Cvss3P1 ignored -> SCORE_METHOD_CVSSV31;
-            case Cvss3P0 ignored -> SCORE_METHOD_CVSSV3;
-            case Cvss2 ignored -> SCORE_METHOD_CVSSV2;
+            case Cvss4P0 _ -> SCORE_METHOD_CVSSV4;
+            case Cvss3P1 _ -> SCORE_METHOD_CVSSV31;
+            case Cvss3P0 _ -> SCORE_METHOD_CVSSV3;
+            case Cvss2 _ -> SCORE_METHOD_CVSSV2;
             default -> SCORE_METHOD_OTHER;
         };
     }

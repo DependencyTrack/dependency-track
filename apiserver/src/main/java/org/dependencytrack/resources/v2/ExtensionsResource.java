@@ -280,7 +280,7 @@ public class ExtensionsResource extends AbstractApiResource implements Extension
         final ExtensionFactory<?> extensionFactory =
                 getExtensionFactory(extensionPointClass, extensionName);
 
-        try (var ignoredMdcScope = new MdcScope(Map.ofEntries(
+        try (var _ = new MdcScope(Map.ofEntries(
                 Map.entry(MDC_EXTENSION_POINT_NAME, extensionPointName),
                 Map.entry(MDC_EXTENSION_NAME, extensionName)))) {
             LOGGER.info(

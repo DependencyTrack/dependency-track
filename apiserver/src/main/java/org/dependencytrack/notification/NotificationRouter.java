@@ -122,7 +122,7 @@ final class NotificationRouter {
             final Notification notification = entry.getKey();
             final List<RuleQueryResult> rules = entry.getValue();
 
-            try (var ignoredMdcScope = new MdcScope(Map.ofEntries(
+            try (var _ = new MdcScope(Map.ofEntries(
                     Map.entry(MDC_NOTIFICATION_ID, notification.getId()),
                     Map.entry(MDC_NOTIFICATION_SCOPE, convert(notification.getScope()).name()),
                     Map.entry(MDC_NOTIFICATION_GROUP, convert(notification.getGroup()).name()),
@@ -251,7 +251,7 @@ final class NotificationRouter {
 
         final var applicableRules = new ArrayList<RuleQueryResult>(ruleCandidates.size());
         for (final RuleQueryResult rule : ruleCandidates) {
-            try (var ignoredMdcRuleName = MDC.putCloseable("notificationRuleName", rule.name())) {
+            try (var _ = MDC.putCloseable("notificationRuleName", rule.name())) {
                 if (isApplicable(rule, notification, projectSubject, unpackedSubject)) {
                     LOGGER.debug("Rule is applicable");
                     applicableRules.add(rule);

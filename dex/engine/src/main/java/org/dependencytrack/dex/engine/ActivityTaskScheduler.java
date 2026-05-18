@@ -204,7 +204,7 @@ final class ActivityTaskScheduler implements Closeable {
         boolean didScheduleTasks = false;
         for (final Queue queue : queues) {
             final Timer.Sample latencySample = Timer.start();
-            try (var ignored = MDC.putCloseable("queueName", queue.name())) {
+            try (var _ = MDC.putCloseable("queueName", queue.name())) {
                 didScheduleTasks |= jdbi.inTransaction(handle -> processQueue(handle, queue));
             } finally {
                 latencySample.stop(

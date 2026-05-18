@@ -107,7 +107,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
             return null;
         }
 
-        try (var ignoredMdcResolver = MDC.putCloseable(MDC_PKG_METADATA_RESOLVER_NAME, resolverName)) {
+        try (var _ = MDC.putCloseable(MDC_PKG_METADATA_RESOLVER_NAME, resolverName)) {
             final PackageMetadataResolverFactory resolverFactory = getResolverFactory(resolverName);
 
             // Surface previously-resolved artifact metadata as an opt-in hint to resolvers.
@@ -251,13 +251,13 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
                     continue;
                 }
 
-                try (var ignoredMdcRepo = MDC.putCloseable(MDC_PKG_REPOSITORY_IDENTIFIER, repo.getIdentifier())) {
+                try (var _ = MDC.putCloseable(MDC_PKG_REPOSITORY_IDENTIFIER, repo.getIdentifier())) {
                     String password = null;
                     if (repo.isAuthenticationRequired() && repo.getPassword() != null) {
                         password = passwordByRepoTypeAndName
                                 .computeIfAbsent(
                                         "%s:%s".formatted(repo.getType(), repo.getIdentifier()),
-                                        ignored -> {
+                                        _ -> {
                                             final String secret = secretManager.getSecretValue(repo.getPassword());
                                             if (secret == null) {
                                                 LOGGER.warn("""

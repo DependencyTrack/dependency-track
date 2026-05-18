@@ -339,7 +339,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
             return awaitable;
         }
 
-        pendingAwaitablesByExternalEventId.compute(externalEventId, (ignored, awaitables) -> {
+        pendingAwaitablesByExternalEventId.compute(externalEventId, (_, awaitables) -> {
             if (awaitables == null) {
                 return new LinkedList<>(List.of(awaitable));
             }
@@ -348,10 +348,10 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
             return awaitables;
         });
 
-        createTimerInternal("External event %s wait timeout".formatted(externalEventId), timeout).onComplete(ignored -> {
+        createTimerInternal("External event %s wait timeout".formatted(externalEventId), timeout).onComplete(_ -> {
             awaitable.cancel("Timed out while waiting for external event");
 
-            pendingAwaitablesByExternalEventId.computeIfPresent(externalEventId, (ignoredKey, awaitables) -> {
+            pendingAwaitablesByExternalEventId.computeIfPresent(externalEventId, (_, awaitables) -> {
                 awaitables.remove(awaitable);
                 if (awaitables.isEmpty()) {
                     return null;
@@ -824,7 +824,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
             return;
         }
 
-        bufferedExternalEvents.compute(externalEventId, (ignored, awaitables) -> {
+        bufferedExternalEvents.compute(externalEventId, (_, awaitables) -> {
             if (awaitables == null) {
                 return new LinkedList<>(List.of(event));
             }

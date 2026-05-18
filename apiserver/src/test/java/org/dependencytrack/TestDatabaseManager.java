@@ -74,7 +74,7 @@ public final class TestDatabaseManager {
                     System.getProperty("java.io.tmpdir"),
                     "hyades-apiserver-postgres-testcontainer.lock");
             try (final var channel = FileChannel.open(lockFile, CREATE, WRITE);
-                 final var ignored = channel.lock()) {
+                 var _ = channel.lock()) {
                 container.start();
                 dropStaleDatabases(container, pid);
             } catch (IOException e) {
@@ -128,7 +128,7 @@ public final class TestDatabaseManager {
                         if (ProcessHandle.of(existingPid).isEmpty() || existingPid == pid) {
                             staleDatabases.add(existingDb);
                         }
-                    } catch (NumberFormatException ignored) {
+                    } catch (NumberFormatException _) {
                     }
                 }
             }

@@ -58,7 +58,7 @@ public class ScopedCustomizationTest {
         pm.getFetchPlan().setDetachmentOptions(DETACH_LOAD_FIELDS);
         assertThat(pm.getFetchPlan().getDetachmentOptions()).isEqualTo(DETACH_LOAD_FIELDS);
 
-        try (var ignored = new ScopedCustomization(pm).withDetachmentOptions(DETACH_UNLOAD_FIELDS)) {
+        try (var _ = new ScopedCustomization(pm).withDetachmentOptions(DETACH_UNLOAD_FIELDS)) {
             assertThat(pm.getFetchPlan().getDetachmentOptions()).isEqualTo(DETACH_UNLOAD_FIELDS);
         }
 
@@ -71,7 +71,7 @@ public class ScopedCustomizationTest {
         pm.getFetchPlan().setGroups("foo");
         assertThat(pm.getFetchPlan().getGroups()).containsOnly("foo");
 
-        try (var ignored = new ScopedCustomization(pm).withFetchGroup("bar")) {
+        try (var _ = new ScopedCustomization(pm).withFetchGroup("bar")) {
             assertThat(pm.getFetchPlan().getGroups()).containsOnly("bar");
         }
 
@@ -83,7 +83,7 @@ public class ScopedCustomizationTest {
         pm.setProperty(PROPERTY_DETACH_ALL_ON_COMMIT, "true");
         assertThat(pm.getExecutionContext().getProperty(PROPERTY_DETACH_ALL_ON_COMMIT)).isEqualTo("true");
 
-        try (var ignored = new ScopedCustomization(pm).withProperty(PROPERTY_DETACH_ALL_ON_COMMIT, "false")) {
+        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_DETACH_ALL_ON_COMMIT, "false")) {
             assertThat(pm.getExecutionContext().getProperty(PROPERTY_DETACH_ALL_ON_COMMIT)).isEqualTo("false");
         }
 

@@ -92,7 +92,7 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
             throw new TerminalApplicationFailureException("No argument provided");
         }
 
-        try (var ignored = new MdcScope(Map.ofEntries(
+        try (var _ = new MdcScope(Map.ofEntries(
                 Map.entry(MDC_NOTIFICATION_ID, argument.getNotificationId()),
                 Map.entry(MDC_NOTIFICATION_RULE_NAME, argument.getNotificationRuleName())))) {
             final RuleMetadata ruleMetadata = getRuleMetadata(argument.getNotificationRuleName());

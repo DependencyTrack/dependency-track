@@ -611,9 +611,9 @@ public class ProjectResource extends AbstractApiResource {
                 return project;
             });
 
-            try (var ignoredMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, createdProject.getUuid().toString());
-                 var ignoredMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, createdProject.getName());
-                 var ignoredMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, createdProject.getVersion())) {
+            try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, createdProject.getUuid().toString());
+                 var _ = MDC.putCloseable(MDC_PROJECT_NAME, createdProject.getName());
+                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, createdProject.getVersion())) {
 
                 LOGGER.info("Project {} created by {}", createdProject, super.getPrincipal().getName());
             }
@@ -724,9 +724,9 @@ public class ProjectResource extends AbstractApiResource {
                 }
             });
 
-            try (var ignoredMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, updatedProject.getUuid().toString());
-                 var ignoredMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, updatedProject.getName());
-                 var ignoredMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())){
+            try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, updatedProject.getUuid().toString());
+                 var _ = MDC.putCloseable(MDC_PROJECT_NAME, updatedProject.getName());
+                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())){
 
                 LOGGER.info("Project {} updated by {}", updatedProject, super.getPrincipal().getName());
             }
@@ -889,9 +889,9 @@ public class ProjectResource extends AbstractApiResource {
                 return Response.notModified().build();
             }
 
-            try (var ignoredMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, updatedProject.getUuid().toString());
-                 var ignoredMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, updatedProject.getName());
-                 var ignoredMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())){
+            try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, updatedProject.getUuid().toString());
+                 var _ = MDC.putCloseable(MDC_PROJECT_NAME, updatedProject.getName());
+                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())){
 
                 LOGGER.info("Project {} updated by {}", updatedProject, super.getPrincipal().getName());
             }
@@ -964,9 +964,9 @@ public class ProjectResource extends AbstractApiResource {
                 }
                 requireAccess(qm, project);
 
-                try (var ignoredMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());
-                     var ignoredMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
-                     var ignoredMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
+                try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());
+                     var _ = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
+                     var _ = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
 
                     LOGGER.info("Project {} deletion request by {}", project, super.getPrincipal().getName());
                 }
@@ -1065,9 +1065,9 @@ public class ProjectResource extends AbstractApiResource {
                     }
                 }
 
-                try (var ignoredMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, sourceProject.getUuid().toString());
-                     var ignoredMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, sourceProject.getName());
-                     var ignoredMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, sourceProject.getVersion())){
+                try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, sourceProject.getUuid().toString());
+                     var _ = MDC.putCloseable(MDC_PROJECT_NAME, sourceProject.getName());
+                     var _ = MDC.putCloseable(MDC_PROJECT_VERSION, sourceProject.getVersion())){
 
                     LOGGER.info("Project {} is being cloned by {}", sourceProject, super.getPrincipal().getName());
                 }

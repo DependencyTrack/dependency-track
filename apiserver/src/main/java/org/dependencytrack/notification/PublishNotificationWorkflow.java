@@ -56,7 +56,7 @@ public final class PublishNotificationWorkflow implements Workflow<PublishNotifi
                     "Neither notification nor notification file metadata provided");
         }
 
-        try (var ignoredMdcNotificationId = MDC.putCloseable(MDC_NOTIFICATION_ID, arg.getNotificationId())) {
+        try (var _ = MDC.putCloseable(MDC_NOTIFICATION_ID, arg.getNotificationId())) {
             final var awaitableByRuleName =
                     new LinkedHashMap<String, Awaitable<?>>(arg.getNotificationRuleNamesCount());
 

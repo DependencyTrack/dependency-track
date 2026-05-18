@@ -65,7 +65,7 @@ public class CycloneDXExporter {
     public Bom create(final Project project) {
         final List<Component> components;
         final List<ServiceComponent> services;
-        try (final var ignored = new ScopedCustomization(qm.getPersistenceManager())
+        try (var _ = new ScopedCustomization(qm.getPersistenceManager())
                 .withFetchGroup(FetchGroup.ALL)) {
             components = qm.getAllComponents(project);
             services = qm.getAllServiceComponents(project);

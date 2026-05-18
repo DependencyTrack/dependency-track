@@ -321,12 +321,12 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
         if (requestedVersion != null) {
             try {
                 requested = VersionFactory.forScheme(SCHEME_COMPOSER, requestedVersion);
-            } catch (InvalidVersionException ignored) {}
+            } catch (InvalidVersionException _) {}
         }
         if (latestVersion != null) {
             try {
                 requestedLatest = VersionFactory.forScheme(SCHEME_COMPOSER, latestVersion);
-            } catch (InvalidVersionException ignored) {}
+            } catch (InvalidVersionException _) {}
         }
 
         Instant latestVersionPublishedAt = null;
@@ -342,7 +342,7 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
                 if (requestedLatest != null && requestedLatest.equals(VersionFactory.forScheme(SCHEME_COMPOSER, entryVersion))) {
                     latestVersionPublishedAt = extractPublishedAt(entry);
                 }
-            } catch (InvalidVersionException ignored) {
+            } catch (InvalidVersionException _) {
             }
 
             try {
@@ -352,7 +352,7 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
                         break;
                     }
                 }
-            } catch (InvalidVersionException ignored) {
+            } catch (InvalidVersionException _) {
             }
         }
 

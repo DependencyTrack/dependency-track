@@ -82,7 +82,7 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
             throw new TerminalApplicationFailureException("No argument provided");
         }
 
-        try (var ignored = MDC.putCloseable(MDC_PROJECT_UUID, argument.getProjectUuid())) {
+        try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, argument.getProjectUuid())) {
             LOGGER.debug("Determining applicable analyzers");
             final Map<String, Set<VulnAnalyzerRequirement>> requirementsByAnalyzer = getApplicableAnalyzers();
             if (requirementsByAnalyzer.isEmpty()) {
@@ -119,7 +119,7 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
             final var vulnAnalyzerFactory = (VulnAnalyzerFactory) factory;
             final var analyzerName = vulnAnalyzerFactory.extensionName();
 
-            try (var ignored = MDC.putCloseable(MDC_VULN_ANALYZER_NAME, analyzerName)) {
+            try (var _ = MDC.putCloseable(MDC_VULN_ANALYZER_NAME, analyzerName)) {
                 if (vulnAnalyzerFactory.isEnabled()) {
                     LOGGER.debug("Analyzer is enabled");
                     requirementsByAnalyzer

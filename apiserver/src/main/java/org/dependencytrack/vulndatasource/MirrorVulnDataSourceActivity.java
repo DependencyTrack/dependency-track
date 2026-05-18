@@ -105,7 +105,7 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
 
         final var updatePolicy = new VulnerabilityUpdatePolicy(pluginManager);
 
-        try (var ignoredMdc = new MdcScope(Map.of(MDC_VULN_DATA_SOURCE_NAME, arg.getDataSourceName()))) {
+        try (var _ = new MdcScope(Map.of(MDC_VULN_DATA_SOURCE_NAME, arg.getDataSourceName()))) {
             LOGGER.info("Starting mirror");
             final long startTimeNs = System.nanoTime();
             long lastHeartbeatNs = startTimeNs;
@@ -184,7 +184,7 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
 
             final Vulnerability vuln;
             final List<VulnerableSoftware> vsList;
-            try (var ignored = new MdcScope(Map.ofEntries(
+            try (var _ = new MdcScope(Map.ofEntries(
                     Map.entry(MDC_VULN_ID, bov.getVulnerabilities(0).getId()),
                     Map.entry(MDC_VULN_SOURCE, bov.getVulnerabilities(0).getSource().getName())))) {
                 vuln = BovModelConverter.convert(bov, bov.getVulnerabilities(0), true);

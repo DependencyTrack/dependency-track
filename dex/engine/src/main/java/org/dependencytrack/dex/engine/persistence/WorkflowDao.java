@@ -641,22 +641,22 @@ public final class WorkflowDao extends AbstractDao {
             switch (polledEvent.eventType()) {
                 case HISTORY -> {
                     final List<WorkflowEvent> history = historyByRunId.computeIfAbsent(
-                            polledEvent.workflowRunId(), ignored -> new ArrayList<>());
+                            polledEvent.workflowRunId(), _ -> new ArrayList<>());
                     history.add(polledEvent.event());
 
                     maxHistorySequenceNumberByRunId.compute(
                             polledEvent.workflowRunId(),
-                            (ignored, previousMax) -> (previousMax == null || previousMax < polledEvent.historySequenceNumber())
+                            (_, previousMax) -> (previousMax == null || previousMax < polledEvent.historySequenceNumber())
                                     ? polledEvent.historySequenceNumber()
                                     : previousMax);
                 }
                 case INBOX -> {
                     final List<WorkflowEvent> inbox = inboxByRunId.computeIfAbsent(
-                            polledEvent.workflowRunId(), ignored -> new ArrayList<>());
+                            polledEvent.workflowRunId(), _ -> new ArrayList<>());
                     inbox.add(polledEvent.event());
 
                     final List<Long> messageIds = inboxMessageIdsByRunId.computeIfAbsent(
-                            polledEvent.workflowRunId(), ignored -> new ArrayList<>());
+                            polledEvent.workflowRunId(), _ -> new ArrayList<>());
                     messageIds.add(polledEvent.inboxMessageId());
                 }
             }

@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 
@@ -58,7 +57,7 @@ public final class DataSourceHealthCheck implements HealthCheck {
             final DataSource dataSource = entry.getValue();
 
             LOGGER.debug("Checking health of data source {}", name);
-            try (final Connection ignored = dataSource.getConnection()) {
+            try (var _ = dataSource.getConnection()) {
                 responseBuilder.withData(name, HealthCheckResponse.Status.UP.name());
             } catch (SQLException | RuntimeException e) {
                 responseBuilder.withData(name, HealthCheckResponse.Status.DOWN.name());

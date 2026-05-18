@@ -98,7 +98,7 @@ public class CycloneDXVexImporter {
                         updateAnalysis(qm, component, dtVuln, vexVuln);
                     }
                 } else if (target != null) {
-                    final List<Component> components = componentsByBomRef.computeIfAbsent(affectedBomRef, ignored -> {
+                    final List<Component> components = componentsByBomRef.computeIfAbsent(affectedBomRef, _ -> {
                         final var cid = new ComponentIdentity(target.component());
                         return qm.matchIdentity(project, cid);
                     });

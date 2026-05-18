@@ -70,7 +70,7 @@ public final class InvokeVulnAnalyzerActivity implements Activity<InvokeVulnAnal
             throw new TerminalApplicationFailureException("No argument provided");
         }
 
-        try (var ignored = new MdcScope(Map.ofEntries(
+        try (var _ = new MdcScope(Map.ofEntries(
                 Map.entry(MDC_PROJECT_UUID, arg.getProjectUuid()),
                 Map.entry(MDC_VULN_ANALYZER_NAME, arg.getAnalyzerName())))) {
             LOGGER.debug("Retrieving BOM from {}", arg.getBomFileMetadata().getLocation());

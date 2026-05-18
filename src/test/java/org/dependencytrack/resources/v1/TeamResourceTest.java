@@ -150,7 +150,7 @@ class TeamResourceTest extends ResourceTest {
         Response response = jersey.target(V1_TEAM).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(team, MediaType.APPLICATION_JSON));
-        Assertions.assertEquals(201, response.getStatus(), 0);
+        Assertions.assertEquals(201, response.getStatus());
         JsonObject json = parseJsonObject(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals("My Team", json.getString("name"));
@@ -159,16 +159,115 @@ class TeamResourceTest extends ResourceTest {
     }
 
     @Test
+    public void createTeamWithPermissionsTest() {
+        setUpUser(true);
+        Team team = new Team();
+        team.setName("My Team");
+        team.setPermissions(List.of(qm.getPermission(Permissions.Constants.BOM_UPLOAD)));
+        Response response = jersey.target(V1_TEAM).request()
+                .header("Authorization", "Bearer " + jwt)
+                .put(Entity.entity(team, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(201, response.getStatus());
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("My Team", json.getString("name"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        Assertions.assertTrue(json.getJsonArray("apiKeys").isEmpty());
+
+        final var dbTeam = qm.getTeam(team.getName());
+        Assertions.assertNotNull(dbTeam);
+
+        final var permissions = dbTeam.getPermissions();
+        Assertions.assertNotNull(permissions);
+        Assertions.assertEquals(1, permissions.size());
+        Assertions.assertEquals(Permissions.Constants.BOM_UPLOAD, permissions.get(0).getName());
+    }
+
+    @Test
     void updateTeamTest() {
+        setUpUser(true);
         Team team = qm.createTeam("My Team");
         team.setName("My New Teams Name");
+        team.setPermissions(List.of(qm.getPermission(Permissions.Constants.BOM_UPLOAD)));
         Response response = jersey.target(V1_TEAM).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(team, MediaType.APPLICATION_JSON));
-        Assertions.assertEquals(200, response.getStatus(), 0);
+        Assertions.assertEquals(200, response.getStatus());
         JsonObject json = parseJsonObject(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals("My New Teams Name", json.getString("name"));
+
+        final var dbTeam = qm.getTeam(team.getName());
+        Assertions.assertNotNull(dbTeam);
+
+        final var permissions = dbTeam.getPermissions();
+        Assertions.assertNotNull(permissions);
+        Assertions.assertEquals(1, permissions.size());
+        Assertions.assertEquals(Permissions.Constants.BOM_UPLOAD, permissions.get(0).getName());
+    }
+
+    @Test
+    public void updateTeamWithPermissionsTest() {
+        setUpUser(true);
+        Team team = qm.createTeam("My Team");
+        team.setName("My New Teams Name");
+        team.setPermissions(List.of(qm.getPermission(Permissions.Constants.BOM_UPLOAD)));
+        Response response = jersey.target(V1_TEAM).request()
+                .header("Authorization", "Bearer " + jwt)
+                .post(Entity.entity(team, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(200, response.getStatus());
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("My New Teams Name", json.getString("name"));
+
+        final var dbTeam = qm.getTeam(team.getName());
+        Assertions.assertNotNull(dbTeam);
+
+        final var permissions = dbTeam.getPermissions();
+        Assertions.assertEquals(1, permissions.size());
+        Assertions.assertEquals(Permissions.Constants.BOM_UPLOAD, permissions.get(0).getName());
+    }
+
+    @Test
+    public void createTeamWithMultiplePermissionsTest() {
+        setUpUser(true);
+        Team team = new Team();
+        team.setName("Team With Multiple Permissions");
+        team.setPermissions(List.of(
+            qm.getPermission(Permissions.Constants.BOM_UPLOAD),
+            qm.getPermission(Permissions.Constants.VIEW_PORTFOLIO)
+        ));
+        Response response = jersey.target(V1_TEAM).request()
+                .header("Authorization", "Bearer " + jwt)
+                .put(Entity.entity(team, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(201, response.getStatus());
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertEquals("Team With Multiple Permissions", json.getString("name"));
+        Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        Assertions.assertTrue(json.getJsonArray("apiKeys").isEmpty());
+
+        final var dbTeam = qm.getTeam(team.getName());
+        Assertions.assertNotNull(dbTeam);
+
+        final var permissions = dbTeam.getPermissions();
+        Assertions.assertNotNull(permissions);
+        Assertions.assertEquals(2, permissions.size());
+
+        // Check that both permissions are present
+        boolean hasBomUpload = false;
+        boolean hasViewPortfolio = false;
+
+        for (Permission permission : permissions) {
+            if (Permissions.Constants.BOM_UPLOAD.equals(permission.getName())) {
+                hasBomUpload = true;
+            } else if (Permissions.Constants.VIEW_PORTFOLIO.equals(permission.getName())) {
+                hasViewPortfolio = true;
+            }
+        }
+
+        Assertions.assertTrue(hasBomUpload, "BOM_UPLOAD permission is missing");
+        Assertions.assertTrue(hasViewPortfolio, "VIEW_PORTFOLIO permission is missing");
     }
 
     @Test

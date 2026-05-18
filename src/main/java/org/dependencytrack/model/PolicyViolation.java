@@ -75,6 +75,11 @@ public class PolicyViolation implements Serializable {
     private Component component;
 
     @Persistent(defaultFetchGroup = "true")
+    @Column(name = "VULNERABILITY_ID", allowsNull = "true")
+    @Index(name = "POLICYVIOLATION_VULNERABILITY_IDX")
+    private Vulnerability vulnerability;
+
+    @Persistent(defaultFetchGroup = "true")
     @Column(name = "POLICYCONDITION_ID", allowsNull = "false")
     private PolicyCondition policyCondition;
 
@@ -125,6 +130,15 @@ public class PolicyViolation implements Serializable {
         this.component = component;
         this.project = component.getProject();
     }
+
+    public Vulnerability getVulnerability() {
+        return vulnerability;
+    }
+
+    public void setVulnerability(Vulnerability vulnerability) {
+        this.vulnerability = vulnerability;
+    }
+
 
     public Project getProject() {
         return project;

@@ -307,6 +307,34 @@ public class FindingResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldFilterFindingsByProjectByEpssScore() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final Component cLow = createComponent(project, "Component Low", "1.0");
+        final Component cHigh = createComponent(project, "Component High", "1.0");
+        final Component cNoEpss = createComponent(project, "Component NoEpss", "1.0");
+
+        qm.addVulnerability(createVulnerabilityWithEpss("Vuln-Low", Severity.LOW, new BigDecimal("0.10")), cLow, "none");
+        qm.addVulnerability(createVulnerabilityWithEpss("Vuln-High", Severity.CRITICAL, new BigDecimal("0.85")), cHigh, "none");
+        qm.addVulnerability(createVulnerability("Vuln-NoEpss", Severity.MEDIUM), cNoEpss, "none");
+
+        final Response response = jersey
+                .target(V1_FINDING + "/project/" + project.getUuid())
+                .queryParam("epssFrom", "0.05")
+                .queryParam("epssTo", "0.5")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].vulnerability.vulnId")
+                .isArray()
+                .containsExactly("Vuln-Low");
+    }
+
+    @Test
     public void exportFindingsByProjectTest() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 

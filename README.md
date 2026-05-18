@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **v5 is coming.** Whether you operate or contribute to Dependency-Track, read [V5_MIGRATION.md](./V5_MIGRATION.md).
+
 # Hyades API Server
 
 API server module of Hyades, the next major version of [OWASP Dependency-Track](https://github.com/DependencyTrack/dependency-track).

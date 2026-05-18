@@ -110,8 +110,11 @@ public interface FindingDao {
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="apiOrderByClause" type="String" -->
             <#-- @ftlvariable name="apiOffsetLimitClause" type="String" -->
+            <#-- @ftlvariable name="epssFrom" type="boolean" -->
+            <#-- @ftlvariable name="epssTo" type="boolean" -->
             <#-- @ftlvariable name="includeInactive" type="boolean" -->
             <#-- @ftlvariable name="includeSuppressed" type="boolean" -->
+            <#-- @ftlvariable name="source" type="boolean" -->
             SELECT p."UUID" AS "projectUuid"
                  , p."NAME" AS "projectName"
                  , p."VERSION" AS "projectVersion"
@@ -257,6 +260,12 @@ public interface FindingDao {
                AND a."SUPPRESSED" IS DISTINCT FROM TRUE
             </#if>
                AND (:hasAnalysis IS NULL OR (a."ID" IS NOT NULL) = :hasAnalysis)
+            <#if epssFrom>
+               AND e."SCORE" >= :epssFrom
+            </#if>
+            <#if epssTo>
+               AND e."SCORE" <= :epssTo
+            </#if>
             <#if apiOrderByClause??>
               ${apiOrderByClause}
             <#else>
@@ -267,6 +276,11 @@ public interface FindingDao {
     @AllowApiOrdering(alwaysBy = "attribution.id", by = {
             @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
             @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
+            @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
+            @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
+            @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
+            @AllowApiOrdering.Column(name = "vulnerability.epssScore", queryName = "\"epssScore\""),
+            @AllowApiOrdering.Column(name = "vulnerability.epssPercentile", queryName = "\"epssPercentile\""),
             @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
             @AllowApiOrdering.Column(name = "component.group", queryName = "c.\"GROUP\""),
             @AllowApiOrdering.Column(name = "component.name", queryName = "c.\"NAME\""),
@@ -283,10 +297,19 @@ public interface FindingDao {
             @Define boolean includeInactive,
             @Define boolean includeSuppressed,
             @Bind Boolean hasAnalysis,
-            @Bind String source);
+            @Bind String source,
+            @Bind BigDecimal epssFrom,
+            @Bind BigDecimal epssTo);
 
     default List<Finding> getFindings(final long projectId, final boolean includeSuppressed) {
-        List<FindingRow> findingRows = getFindingsByProject(projectId, /* includeInactive */ false, includeSuppressed, null, null);
+        List<FindingRow> findingRows = getFindingsByProject(
+                projectId,
+                /* includeInactive */ false,
+                includeSuppressed,
+                /* hasAnalysis */ null,
+                /* source */ null,
+                /* epssFrom */ null,
+                /* epssTo */ null);
         List<Finding> findings = findingRows.stream().map(Finding::new).toList();
         return mapComponentLatestVersion(findings);
     }

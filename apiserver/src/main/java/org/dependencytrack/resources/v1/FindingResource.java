@@ -72,6 +72,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -143,14 +144,24 @@ public class FindingResource extends AbstractApiResource {
                                          @QueryParam("source") Vulnerability.Source source,
                                          @HeaderParam("accept") String acceptHeader,
                                          @Parameter(description = "Whether to include only projects with existing analysis.")
-                                         @QueryParam("hasAnalysis") final Boolean hasAnalysis) {
+                                         @QueryParam("hasAnalysis") final Boolean hasAnalysis,
+                                         @Parameter(description = "Filter EPSS score from this value (inclusive)")
+                                         @QueryParam("epssFrom") final BigDecimal epssFrom,
+                                         @Parameter(description = "Filter EPSS score to this value (inclusive)")
+                                         @QueryParam("epssTo") final BigDecimal epssTo) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 requireAccess(qm, project);
                 List<FindingDao.FindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle ->
                         handle.attach(FindingDao.class).getFindingsByProject(
-                                project.getId(), false, suppressed, hasAnalysis, source != null ? source.name() : null));
+                                project.getId(),
+                                /* includeInactive */ false,
+                                suppressed,
+                                hasAnalysis,
+                                source != null ? source.name() : null,
+                                epssFrom,
+                                epssTo));
                 final long totalCount = findingRows.isEmpty() ? 0 : findingRows.getFirst().totalCount();
                 List<Finding> findings = findingRows.stream().map(Finding::new).toList();
                 findings = mapComponentLatestVersion(findings);

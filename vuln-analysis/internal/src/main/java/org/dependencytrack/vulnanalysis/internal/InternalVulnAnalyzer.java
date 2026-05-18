@@ -54,6 +54,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherers;
 
 import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_GENERIC;
 import static java.util.Objects.requireNonNull;
@@ -66,6 +67,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalVulnAnalyzer.class);
     private static final Pattern EPOCH_PREFIX_PATTERN = Pattern.compile("^\\d+:");
     private static final String INTERNAL_VULN_ID_PROPERTY = "dependencytrack:internal:vulnerability-id";
+    private static final int QUERY_BATCH_SIZE = 25;
 
     private final Jdbi jdbi;
 
@@ -102,7 +104,9 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         final var findingsByVuln = new HashMap<Long, Set<Long>>();
         final var vulnMetadata = new HashMap<Long, VulnMetadata>();
 
-        for (final List<CpeCoordinate> batch : partition(cpeCoordinates)) {
+        for (final var batch : (Iterable<List<CpeCoordinate>>) () -> cpeCoordinates.stream()
+                .gather(Gatherers.windowFixed(QUERY_BATCH_SIZE))
+                .iterator()) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before all components could be analyzed");
             }
@@ -115,7 +119,9 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
                     vulnMetadata);
         }
 
-        for (final List<PurlCoordinate> batch : partition(purlCoordinates)) {
+        for (final var batch : (Iterable<List<PurlCoordinate>>) () -> purlCoordinates.stream()
+                .gather(Gatherers.windowFixed(QUERY_BATCH_SIZE))
+                .iterator()) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before all components could be analyzed");
             }
@@ -294,8 +300,8 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
                     }
 
                     final boolean affected = switch (coordinate) {
-                        case CpeCoordinate ignored -> isAffectedByCpe(candidate, criteria);
-                        case PurlCoordinate ignored -> isAffectedByPurl(candidate, criteria);
+                        case CpeCoordinate _ -> isAffectedByCpe(candidate, criteria);
+                        case PurlCoordinate _ -> isAffectedByPurl(candidate, criteria);
                     };
                     if (affected) {
                         findingsByVuln
@@ -614,15 +620,6 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
     }
 
     private record VulnMetadata(String vulnId, String source) {
-    }
-
-    private static <T> List<List<T>> partition(List<T> list) {
-        final var partitions = new ArrayList<List<T>>();
-        for (int i = 0; i < list.size(); i += 25) {
-            partitions.add(list.subList(i, Math.min(i + 25, list.size())));
-        }
-
-        return partitions;
     }
 
 }

@@ -65,7 +65,7 @@ class BufferTest {
 
     @Test
     void addShouldThrowWhenNotRunning() {
-        final Consumer<List<String>> batchConsumer = ignored -> {
+        final Consumer<List<String>> batchConsumer = _ -> {
         };
 
         final var buffer = new Buffer<>(

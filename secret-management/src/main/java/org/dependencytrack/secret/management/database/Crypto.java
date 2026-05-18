@@ -318,7 +318,7 @@ final class Crypto {
             } finally {
                 try {
                     connection.setAutoCommit(originalAutoCommit);
-                } catch (SQLException ignored) {
+                } catch (SQLException _) {
                 }
             }
         } catch (SQLException e) {

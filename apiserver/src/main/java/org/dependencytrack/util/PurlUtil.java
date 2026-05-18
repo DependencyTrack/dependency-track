@@ -108,7 +108,7 @@ public class PurlUtil {
 
         try {
             return new PackageURL(purl);
-        } catch (MalformedPackageURLException ignored) {
+        } catch (MalformedPackageURLException _) {
             return null;
         }
     }

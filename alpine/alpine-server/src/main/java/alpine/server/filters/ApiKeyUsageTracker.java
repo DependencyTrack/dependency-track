@@ -116,7 +116,7 @@ public class ApiKeyUsageTracker implements ApplicationEventListener {
             final var lastUsedByKeyId = new HashMap<Long, Long>();
             while (EVENT_QUEUE.peek() != null) {
                 final ApiKeyUsedEvent event = EVENT_QUEUE.poll();
-                lastUsedByKeyId.compute(event.keyId(), (ignored, prev) -> {
+                lastUsedByKeyId.compute(event.keyId(), (_, prev) -> {
                     if (prev == null) {
                         return event.timestamp();
                     }

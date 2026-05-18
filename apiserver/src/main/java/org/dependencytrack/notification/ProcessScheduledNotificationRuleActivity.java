@@ -113,7 +113,7 @@ public final class ProcessScheduledNotificationRuleActivity
                     "Rule with name %s not found".formatted(arg.getRuleName()));
         }
 
-        try (var ignored = MDC.putCloseable(MDC_NOTIFICATION_RULE_NAME, rule.getName())) {
+        try (var _ = MDC.putCloseable(MDC_NOTIFICATION_RULE_NAME, rule.getName())) {
             processRule(rule);
         }
 
@@ -530,7 +530,7 @@ public final class ProcessScheduledNotificationRuleActivity
                 .setNotificationId(notification.getId())
                 .addNotificationRuleNames(ruleName);
 
-        try (var ignored = MDC.putCloseable(MDC_NOTIFICATION_ID, notification.getId())) {
+        try (var _ = MDC.putCloseable(MDC_NOTIFICATION_ID, notification.getId())) {
             if (notification.getSerializedSize() > largeNotificationThresholdBytes) {
                 LOGGER.warn(
                         "Notification size {}b exceeds threshold of {}b; offloading to file storage",

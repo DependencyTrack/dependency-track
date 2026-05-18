@@ -197,7 +197,7 @@ public final class Buffer<T> implements Closeable {
                     LOGGER.warn("{}: Flush thread did not stop in time; Interrupting it", name);
                     flushThread.interrupt();
                 }
-            } catch (InterruptedException ignored) {
+            } catch (InterruptedException _) {
                 LOGGER.warn("{}: Interrupted while waiting for flush thread to stop", name);
                 Thread.currentThread().interrupt();
                 flushThread.interrupt();
@@ -234,7 +234,7 @@ public final class Buffer<T> implements Closeable {
             // Request a flush to be performed, but don't block
             // if the queue already has a pending request.
             LOGGER.debug("{}: Requesting another flush because {} items are still queued", name, itemsQueue.size());
-            boolean ignored = flushRequestQueue.offer(true);
+            boolean _ = flushRequestQueue.offer(true);
         }
 
         return future;
@@ -356,7 +356,7 @@ public final class Buffer<T> implements Closeable {
             if (itemsQueue.size() >= maxBatchSize) {
                 // Request another flush if there's still at least
                 // a full batch worth of items queued.
-                boolean ignored = flushRequestQueue.offer(true);
+                boolean _ = flushRequestQueue.offer(true);
             }
         } finally {
             flushLock.unlock();

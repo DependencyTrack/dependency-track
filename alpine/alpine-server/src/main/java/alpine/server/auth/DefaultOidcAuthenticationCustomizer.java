@@ -66,7 +66,7 @@ public class DefaultOidcAuthenticationCustomizer implements OidcAuthenticationCu
                     .map(String::trim)
                     .filter(not(String::isEmpty))
                     .toList();
-            case Collection<?> ignored -> claimsSet.getStringListClaim(teamsClaimName);
+            case Collection<?> _ -> claimsSet.getStringListClaim(teamsClaimName);
             case null, default -> Collections.emptyList();
         });
         profile.setEmail(claimsSet.getStringClaim(UserInfo.EMAIL_CLAIM_NAME));

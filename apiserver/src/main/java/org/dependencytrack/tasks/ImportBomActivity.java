@@ -161,10 +161,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         project.setVersion(arg.getProjectVersion().isEmpty() ? null : arg.getProjectVersion());
 
         final var processCtx = new ProcessingContext(token, project);
-        try (var ignoredMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid());
-             var ignoredMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, arg.getProjectName());
-             var ignoredMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, arg.getProjectVersion());
-             var ignoredMdcBomUploadToken = MDC.putCloseable(MDC_BOM_UPLOAD_TOKEN, arg.getBomUploadToken())) {
+        try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid());
+             var _ = MDC.putCloseable(MDC_PROJECT_NAME, arg.getProjectName());
+             var _ = MDC.putCloseable(MDC_PROJECT_VERSION, arg.getProjectVersion());
+             var _ = MDC.putCloseable(MDC_BOM_UPLOAD_TOKEN, arg.getBomUploadToken())) {
             final byte[] cdxBomBytes;
             try (final InputStream cdxBomStream = fileStorage.get(arg.getBomFileMetadata())) {
                 cdxBomBytes = cdxBomStream.readAllBytes();
@@ -203,10 +203,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         dispatchBomConsumedNotification(ctx);
 
         final ProcessedBom processedBom;
-        try (var ignoredMdcBomFormat = MDC.putCloseable(MDC_BOM_FORMAT, ctx.bomFormat.getFormatShortName());
-             var ignoredMdcBomSpecVersion = MDC.putCloseable(MDC_BOM_SPEC_VERSION, ctx.bomSpecVersion);
-             var ignoredMdcBomSerialNumber = MDC.putCloseable(MDC_BOM_SERIAL_NUMBER, ctx.bomSerialNumber);
-             var ignoredMdcBomVersion = MDC.putCloseable(MDC_BOM_VERSION, String.valueOf(ctx.bomVersion))) {
+        try (var _ = MDC.putCloseable(MDC_BOM_FORMAT, ctx.bomFormat.getFormatShortName());
+             var _ = MDC.putCloseable(MDC_BOM_SPEC_VERSION, ctx.bomSpecVersion);
+             var _ = MDC.putCloseable(MDC_BOM_SERIAL_NUMBER, ctx.bomSerialNumber);
+             var _ = MDC.putCloseable(MDC_BOM_VERSION, String.valueOf(ctx.bomVersion))) {
             try {
                 processedBom = processBom(ctx, consumedBom);
             } catch (Throwable e) {

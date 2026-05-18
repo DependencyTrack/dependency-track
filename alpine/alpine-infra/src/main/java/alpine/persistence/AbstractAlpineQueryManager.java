@@ -343,13 +343,13 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
      * @since 1.3.0
      */
     public <T> T detach(Class<T> clazz, Object id) {
-        try (var ignored = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
+        try (var _ = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
             return pm.detachCopy(pm.getObjectById(clazz, id));
         }
     }
 
     public <T> T detach(final T object) {
-        try (var ignored = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
+        try (var _ = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
             return pm.detachCopy(object);
         }
     }
@@ -362,7 +362,7 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
      * @since 1.3.0
      */
     public <T> List<T> detach(List<T> pcs) {
-        try (var ignored = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
+        try (var _ = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
             return new ArrayList<>(pm.detachCopyAll(pcs));
         }
     }
@@ -375,7 +375,7 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
      * @since 1.3.0
      */
     public <T> Set<T> detach(Set<T> pcs) {
-        try (var ignored = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
+        try (var _ = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
             return new LinkedHashSet<>(pm.detachCopyAll(pcs));
         }
     }

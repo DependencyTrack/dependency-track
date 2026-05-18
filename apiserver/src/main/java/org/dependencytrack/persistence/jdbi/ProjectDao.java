@@ -706,9 +706,9 @@ public interface ProjectDao extends SqlObject {
         public ProjectListRow map(final ResultSet rs, final StatementContext ctx) throws SQLException {
             final Project project = projectMapper.map(rs, ctx);
             maybeSet(rs, "projectPurl", ResultSet::getString, project::setPurl);
-            maybeSet(rs, "teamsJson", (ignored, columnName) ->
+            maybeSet(rs, "teamsJson", (_, columnName) ->
                     deserializeJson(rs, columnName, TEAMS_TYPE_REF), project::setAccessTeams);
-            maybeSet(rs, "tagsJson", (ignored, columnName) ->
+            maybeSet(rs, "tagsJson", (_, columnName) ->
                     deserializeJson(rs, columnName, TAGS_TYPE_REF), project::setTags);
             final ProjectListRow projectListRow = new ProjectListRow(project, rs.getInt("totalCount"));
             return projectListRow;

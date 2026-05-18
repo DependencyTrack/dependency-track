@@ -70,6 +70,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
@@ -93,6 +94,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
     private static final String INTERNAL_VULN_ID_PROPERTY = "dependencytrack:internal:vulnerability-id";
     private static final String REFERENCE_URL_PROPERTY = "dependency-track:vuln:reference-url";
+    private static final int SYNC_BATCH_SIZE = 100;
 
     private final FileStorage fileStorage;
     private final PluginManager pluginManager;
@@ -117,7 +119,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
         final var projectUuid = UUID.fromString(arg.getProjectUuid());
 
-        try (var ignored = MDC.putCloseable(MDC_PROJECT_UUID, projectUuid.toString())) {
+        try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, projectUuid.toString())) {
             LOGGER.debug(
                     "Reconciling results from {} vulnerability analyzers",
                     arg.getAnalyzerResultsCount());
@@ -139,7 +141,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                 }
 
                 final String analyzerName = result.getAnalyzerName();
-                try (var ignoredMdcAnalyzerName = MDC.putCloseable(MDC_VULN_ANALYZER_NAME, analyzerName)) {
+                try (var _ = MDC.putCloseable(MDC_VULN_ANALYZER_NAME, analyzerName)) {
                     LOGGER.debug("Processing analyzer results");
 
                     if (!result.getSuccessful()) {
@@ -343,25 +345,15 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
     private Map<VulnerabilityKey, Long> syncVulns(
             List<Vulnerability> vulns,
             Predicate<String> canUpdatePredicate) throws InterruptedException {
-        if (vulns.size() <= 100) {
-            return syncVulnsBatch(vulns, canUpdatePredicate);
-        }
-
         final var syncedVulns = new HashMap<VulnerabilityKey, Long>(vulns.size());
 
-        final var batch = new ArrayList<Vulnerability>(100);
-        for (final Vulnerability vuln : vulns) {
+        for (final var batch : (Iterable<List<Vulnerability>>) () -> vulns.stream()
+                .gather(Gatherers.windowFixed(SYNC_BATCH_SIZE))
+                .iterator()) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before synchronizing vulnerability batch");
             }
 
-            batch.add(vuln);
-            if (batch.size() >= 100) {
-                syncedVulns.putAll(syncVulnsBatch(batch, canUpdatePredicate));
-                batch.clear();
-            }
-        }
-        if (!batch.isEmpty()) {
             syncedVulns.putAll(syncVulnsBatch(batch, canUpdatePredicate));
         }
 

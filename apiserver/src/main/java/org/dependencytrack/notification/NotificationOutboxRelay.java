@@ -276,7 +276,7 @@ final class NotificationOutboxRelay implements Closeable {
         for (final var routerResult : routerResults) {
             final Notification notification = routerResult.notification();
 
-            try (var ignored = MDC.putCloseable(MDC_NOTIFICATION_ID, notification.getId())) {
+            try (var _ = MDC.putCloseable(MDC_NOTIFICATION_ID, notification.getId())) {
                 final var workflowArgBuilder =
                         PublishNotificationWorkflowArg.newBuilder()
                                 .setNotificationId(notification.getId())

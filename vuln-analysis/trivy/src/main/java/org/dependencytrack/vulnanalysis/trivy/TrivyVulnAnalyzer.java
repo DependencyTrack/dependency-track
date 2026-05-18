@@ -182,7 +182,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
         }
 
         bomRefsByPurl
-                .computeIfAbsent(purl.toString(), ignored -> new HashSet<>())
+                .computeIfAbsent(purl.toString(), _ -> new HashSet<>())
                 .add(component.getBomRef());
 
         if (!PurlType.APP_TYPE_PACKAGES.equals(appType)) {
@@ -250,7 +250,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
             }
         }
 
-        final PackageInfo.Builder pkg = pkgs.computeIfAbsent(pkgType, ignored -> PackageInfo.newBuilder());
+        final PackageInfo.Builder pkg = pkgs.computeIfAbsent(pkgType, _ -> PackageInfo.newBuilder());
 
         final trivy.proto.common.Package.Builder packageBuilder = trivy.proto.common.Package.newBuilder()
                 .setName(purl.getName())
@@ -379,7 +379,7 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
                 final Vulnerability.Builder vulnBuilder =
                         vulnBuilderByVulnId.computeIfAbsent(
                                 trivyVuln.getVulnerabilityId(),
-                                ignored -> TrivyModelConverter.convert(trivyVuln));
+                                _ -> TrivyModelConverter.convert(trivyVuln));
 
                 for (final String bomRef : bomRefs) {
                     vulnBuilder.addAffects(

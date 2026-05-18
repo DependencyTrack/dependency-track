@@ -102,7 +102,7 @@ public final class MockKeyValueStore implements KeyValueStore {
         // the entry having been modified.
         final var versionMatched = new AtomicBoolean(false);
 
-        final Entry entry = kvMap.computeIfPresent(key, (ignored, existingEntry) -> {
+        final Entry entry = kvMap.computeIfPresent(key, (_, existingEntry) -> {
             if (existingEntry.version() != expectedVersion) {
                 return existingEntry;
             }
@@ -133,7 +133,7 @@ public final class MockKeyValueStore implements KeyValueStore {
         // In both scenarios computeIfPresent returns null.
         final var versionMatched = new AtomicBoolean(false);
 
-        kvMap.computeIfPresent(key, (ignored, entry) -> {
+        kvMap.computeIfPresent(key, (_, entry) -> {
             if (entry.version() == expectedVersion) {
                 versionMatched.set(true);
                 return null;

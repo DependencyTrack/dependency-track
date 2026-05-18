@@ -37,23 +37,16 @@ final class WatermarkManager {
     private final Map<String, WatermarkRecord> pendingRecordByEcosystem;
     private final Map<String, WatermarkRecord> committedRecordByEcosystem;
 
-    private WatermarkManager(
-            final WatermarkStore store,
-            final Map<String, WatermarkRecord> committedRecordByEcosystem) {
-        this.store = store;
-        this.pendingRecordByEcosystem = new HashMap<>(committedRecordByEcosystem);
-        this.committedRecordByEcosystem = new HashMap<>(committedRecordByEcosystem);
-    }
-
-    // TODO: Just use constructor after upgrading to Java 25 (https://openjdk.org/jeps/513)
-    static WatermarkManager create(
+    WatermarkManager(
             final Collection<String> ecosystems,
             final KeyValueStore kvStore) {
         final var watermarkStore = new WatermarkStore(kvStore);
         final Map<String, WatermarkRecord> recordByEcosystem =
                 watermarkStore.getForEcosystems(ecosystems);
 
-        return new WatermarkManager(watermarkStore, recordByEcosystem);
+        this.store = watermarkStore;
+        this.pendingRecordByEcosystem = new HashMap<>(recordByEcosystem);
+        this.committedRecordByEcosystem = new HashMap<>(recordByEcosystem);
     }
 
     Instant getWatermark(final String ecosystem) {
@@ -62,7 +55,7 @@ final class WatermarkManager {
     }
 
     void maybeAdvance(final String ecosystem, final Instant watermark) {
-        pendingRecordByEcosystem.compute(ecosystem, (ignored, existingRecord) -> {
+        pendingRecordByEcosystem.compute(ecosystem, (_, existingRecord) -> {
             if (existingRecord == null) {
                 return new WatermarkRecord(ecosystem, watermark);
             } else if (existingRecord.value().isAfter(watermark)) {

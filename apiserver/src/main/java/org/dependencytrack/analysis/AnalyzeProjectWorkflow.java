@@ -49,7 +49,7 @@ public final class AnalyzeProjectWorkflow implements Workflow<AnalyzeProjectWork
             throw new TerminalApplicationFailureException("No argument provided");
         }
 
-        try (var ignored = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid())) {
+        try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid())) {
             ctx.logger().info("Starting project analysis");
 
             final var vulnAnalysisArgBuilder = VulnAnalysisWorkflowArg.newBuilder()

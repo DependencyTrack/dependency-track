@@ -103,7 +103,7 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         }
 
         final @Nullable WatermarkManager watermarkManager = config.isIncrementalMirroringEnabled()
-                ? WatermarkManager.create(config.getEcosystems(), kvStore)
+                ? new WatermarkManager(config.getEcosystems(), kvStore)
                 : null;
 
         return new OsvVulnDataSource(

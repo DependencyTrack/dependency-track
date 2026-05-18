@@ -88,7 +88,7 @@ record CacheControl(boolean noStore, boolean noCache, @Nullable Long maxAgeSecon
         try {
             final long parsed = Long.parseLong(unquoted);
             return parsed >= 0 ? parsed : null;
-        } catch (NumberFormatException ignored) {
+        } catch (NumberFormatException _) {
             // Treat as absent as per RFC 9111.
             return null;
         }

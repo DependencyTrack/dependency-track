@@ -51,6 +51,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Gatherers;
 
 /**
  * @since 5.0.0
@@ -103,7 +104,9 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         final var issuesByPurl = new HashMap<String, List<SnykIssue>>(bomRefsByPurl.size());
         final var purlsToAnalyze = new LinkedHashSet<>(bomRefsByPurl.keySet());
 
-        for (final var purlBatch : partition(List.copyOf(bomRefsByPurl.keySet()), CACHE_BATCH_SIZE)) {
+        for (final var purlBatch : (Iterable<List<String>>) () -> bomRefsByPurl.keySet().stream()
+                .gather(Gatherers.windowFixed(CACHE_BATCH_SIZE))
+                .iterator()) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before all cache lookups could complete");
             }
@@ -178,7 +181,9 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
         final var issuesByPurl = new HashMap<String, List<SnykIssue>>(purls.size());
 
-        for (final var purlBatch : partition(List.copyOf(purls), REQUEST_BATCH_SIZE)) {
+        for (final var purlBatch : (Iterable<List<String>>) () -> purls.stream()
+                .gather(Gatherers.windowFixed(REQUEST_BATCH_SIZE))
+                .iterator()) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before all components could be analyzed");
             }
@@ -295,7 +300,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                 final Vulnerability.Builder vulnBuilder =
                         vulnBuilderByVulnId.computeIfAbsent(
                                 issue.id(),
-                                ignored -> SnykModelConverter.convert(issue, aliasSyncEnabled));
+                                _ -> SnykModelConverter.convert(issue, aliasSyncEnabled));
 
                 for (final String bomRef : bomRefs) {
                     vulnBuilder.addAffects(
@@ -312,14 +317,6 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                                 .map(Vulnerability.Builder::build)
                                 .toList())
                 .build();
-    }
-
-    private static <T> List<List<T>> partition(List<T> list, int batchSize) {
-        final var partitions = new ArrayList<List<T>>();
-        for (int i = 0; i < list.size(); i += batchSize) {
-            partitions.add(list.subList(i, Math.min(i + batchSize, list.size())));
-        }
-        return partitions;
     }
 
 }

@@ -94,7 +94,7 @@ public class RetryableResolutionException extends RuntimeException {
         try {
             final long seconds = Long.parseLong(trimmed);
             return seconds > 0 ? Duration.ofSeconds(seconds) : null;
-        } catch (NumberFormatException ignored) {
+        } catch (NumberFormatException _) {
             // Fallthrough to date parsing.
         }
 
@@ -104,7 +104,7 @@ public class RetryableResolutionException extends RuntimeException {
                     .toInstant();
             final Duration delta = Duration.between(clock.instant(), deadline);
             return (delta.isZero() || delta.isNegative()) ? null : delta;
-        } catch (DateTimeParseException ignored) {
+        } catch (DateTimeParseException _) {
             return null;
         }
     }

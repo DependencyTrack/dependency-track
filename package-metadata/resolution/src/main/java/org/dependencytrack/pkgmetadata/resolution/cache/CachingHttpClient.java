@@ -114,7 +114,7 @@ public final class CachingHttpClient {
         return sendWithStaleFallback(uri, entry, this::staleBody, () -> {
             final HttpResponse<byte[]> response = httpClient.send(
                     requestBuilderCopy.build(),
-                    ignored -> new LimitedBodySubscriber(maxBytes));
+                    _ -> new LimitedBodySubscriber(maxBytes));
             return handleGetResponse(response, entry, cacheKey);
         });
     }

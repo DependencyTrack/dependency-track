@@ -85,7 +85,7 @@ public final class VulnDataSourcesResource extends AbstractApiResource implement
         final TriggerResult result = mirrorService.trigger(name, getPrincipal().getName());
 
         return switch (result) {
-            case TriggerResult.Triggered ignored -> {
+            case TriggerResult.Triggered _ -> {
                 LOGGER.info(
                         SecurityMarkers.SECURITY_AUDIT,
                         "Triggered vulnerability data source mirror for {}",
@@ -99,13 +99,13 @@ public final class VulnDataSourcesResource extends AbstractApiResource implement
                                 .build())
                         .build();
             }
-            case TriggerResult.AlreadyRunning ignored -> throw ProblemDetailsException.of(
+            case TriggerResult.AlreadyRunning _ -> throw ProblemDetailsException.of(
                     ProblemType.VULN_DATA_SOURCE_MIRROR_ALREADY_RUNNING,
                     "A mirror run for this data source is already in progress");
-            case TriggerResult.NotEnabled ignored -> throw ProblemDetailsException.of(
+            case TriggerResult.NotEnabled _ -> throw ProblemDetailsException.of(
                     ProblemType.VULN_DATA_SOURCE_NOT_ENABLED,
                     "The vulnerability data source is not enabled");
-            case TriggerResult.NotFound ignored -> throw new NotFoundException();
+            case TriggerResult.NotFound _ -> throw new NotFoundException();
         };
     }
 

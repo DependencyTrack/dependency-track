@@ -105,7 +105,7 @@ final class HexPackageMetadataResolver implements PackageMetadataResolver {
         if (insertedAt != null) {
             try {
                 return Instant.parse(insertedAt);
-            } catch (DateTimeParseException ignored) {}
+            } catch (DateTimeParseException _) {}
         }
         return null;
     }

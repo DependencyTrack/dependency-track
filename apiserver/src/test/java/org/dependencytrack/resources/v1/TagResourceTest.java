@@ -987,7 +987,7 @@ class TagResourceTest extends ResourceTest {
         qm.createTag("foo");
 
         final List<String> projectUuids = IntStream.range(0, 101)
-                .mapToObj(ignored -> UUID.randomUUID())
+                .mapToObj(_ -> UUID.randomUUID())
                 .map(UUID::toString)
                 .toList();
 
@@ -1470,7 +1470,7 @@ class TagResourceTest extends ResourceTest {
         qm.createTag("foo");
 
         final List<String> policyUuids = IntStream.range(0, 101)
-                .mapToObj(ignored -> UUID.randomUUID())
+                .mapToObj(_ -> UUID.randomUUID())
                 .map(UUID::toString)
                 .toList();
 
@@ -1967,7 +1967,7 @@ class TagResourceTest extends ResourceTest {
         qm.createTag("foo");
 
         final List<String> policyUuids = IntStream.range(0, 101)
-                .mapToObj(ignored -> UUID.randomUUID())
+                .mapToObj(_ -> UUID.randomUUID())
                 .map(UUID::toString)
                 .toList();
 
@@ -2236,7 +2236,7 @@ class TagResourceTest extends ResourceTest {
         qm.createTag("foo");
 
         final List<String> vulnUuids = IntStream.range(0, 101)
-                .mapToObj(ignored -> UUID.randomUUID())
+                .mapToObj(_ -> UUID.randomUUID())
                 .map(UUID::toString)
                 .toList();
 

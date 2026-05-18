@@ -100,7 +100,7 @@ final class PypiPackageMetadataResolver implements PackageMetadataResolver {
                             if (mostRecentUploadTime == null || instant.isAfter(mostRecentUploadTime)) {
                                 mostRecentUploadTime = instant;
                             }
-                        } catch (DateTimeParseException ignored) {}
+                        } catch (DateTimeParseException _) {}
                     }
                 }
                 latestVersionPublishedAt = mostRecentUploadTime;

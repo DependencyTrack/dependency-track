@@ -234,10 +234,10 @@ final class ModelConverter {
                 ? "(" + cvss + ")"
                 : cvss.toString();
         return switch (cvss) {
-            case Cvss4P0 ignored -> new DerivedCvss(SCORE_METHOD_CVSSV4, score, scoreToSeverityCvssV4(score), stored);
-            case Cvss3P1 ignored -> new DerivedCvss(SCORE_METHOD_CVSSV31, score, scoreToSeverityCvssV3(score), stored);
-            case Cvss3P0 ignored -> new DerivedCvss(SCORE_METHOD_CVSSV3, score, scoreToSeverityCvssV3(score), stored);
-            case Cvss2 ignored -> new DerivedCvss(SCORE_METHOD_CVSSV2, score, scoreToSeverityCvssV2(score), stored);
+            case Cvss4P0 _ -> new DerivedCvss(SCORE_METHOD_CVSSV4, score, scoreToSeverityCvssV4(score), stored);
+            case Cvss3P1 _ -> new DerivedCvss(SCORE_METHOD_CVSSV31, score, scoreToSeverityCvssV3(score), stored);
+            case Cvss3P0 _ -> new DerivedCvss(SCORE_METHOD_CVSSV3, score, scoreToSeverityCvssV3(score), stored);
+            case Cvss2 _ -> new DerivedCvss(SCORE_METHOD_CVSSV2, score, scoreToSeverityCvssV2(score), stored);
             default -> null;
         };
     }

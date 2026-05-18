@@ -90,7 +90,7 @@ final class AwaitableImpl<T> implements Awaitable<T> {
             case State.Completed<T> it -> it.result();
             case State.Failed<T> it -> throw it.exception();
             case State.Canceled<T> it -> throw new CancellationFailureException(it.reason());
-            case State.Pending<T> ignored -> throw new AssertionError("unreachable");
+            case State.Pending<T> _ -> throw new AssertionError("unreachable");
         };
     }
 

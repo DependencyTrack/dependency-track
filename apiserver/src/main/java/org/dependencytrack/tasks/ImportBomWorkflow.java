@@ -52,10 +52,10 @@ public final class ImportBomWorkflow implements Workflow<ImportBomArg, Void> {
             throw new TerminalApplicationFailureException("No argument provided");
         }
 
-        try (var ignoredMdcProjectUuid = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid());
-             var ignoredMdcProjectName = MDC.putCloseable(MDC_PROJECT_NAME, arg.getProjectName());
-             var ignoredMdcProjectVersion = MDC.putCloseable(MDC_PROJECT_VERSION, arg.getProjectVersion());
-             var ignoredMdcBomUploadToken = MDC.putCloseable(MDC_BOM_UPLOAD_TOKEN, arg.getBomUploadToken())) {
+        try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid());
+             var _ = MDC.putCloseable(MDC_PROJECT_NAME, arg.getProjectName());
+             var _ = MDC.putCloseable(MDC_PROJECT_VERSION, arg.getProjectVersion());
+             var _ = MDC.putCloseable(MDC_BOM_UPLOAD_TOKEN, arg.getBomUploadToken())) {
             ctx.logger().info("Starting BOM import");
 
             try {

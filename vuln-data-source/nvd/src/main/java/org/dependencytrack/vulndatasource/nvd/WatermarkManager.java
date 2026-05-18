@@ -46,22 +46,7 @@ final class WatermarkManager {
     private final Map<String, Long> committedFeedDigestVersions;
     private final Map<String, String> pendingFeedDigests;
 
-    private WatermarkManager(
-            final KeyValueStore kvStore,
-            final Instant committedWatermark,
-            final Long committedWatermarkVersion,
-            final Map<String, String> committedFeedDigests,
-            final Map<String, Long> committedFeedDigestVersions) {
-        this.kvStore = kvStore;
-        this.committedWatermark = committedWatermark;
-        this.committedWatermarkVersion = committedWatermarkVersion;
-        this.committedFeedDigests = committedFeedDigests;
-        this.committedFeedDigestVersions = committedFeedDigestVersions;
-        this.pendingFeedDigests = new HashMap<>();
-    }
-
-    // TODO: Just use constructor after upgrading to Java 25: https://openjdk.org/jeps/513
-    static WatermarkManager create(final KeyValueStore kvStore, final Collection<String> feedNames) {
+    WatermarkManager(final KeyValueStore kvStore, final Collection<String> feedNames) {
         Instant committedWatermark = null;
         Long committedWatermarkVersion = null;
 
@@ -93,9 +78,12 @@ final class WatermarkManager {
             }
         }
 
-        return new WatermarkManager(
-                kvStore, committedWatermark, committedWatermarkVersion,
-                committedFeedDigests, committedFeedDigestVersions);
+        this.kvStore = kvStore;
+        this.committedWatermark = committedWatermark;
+        this.committedWatermarkVersion = committedWatermarkVersion;
+        this.committedFeedDigests = committedFeedDigests;
+        this.committedFeedDigestVersions = committedFeedDigestVersions;
+        this.pendingFeedDigests = new HashMap<>();
     }
 
     Instant getWatermark() {

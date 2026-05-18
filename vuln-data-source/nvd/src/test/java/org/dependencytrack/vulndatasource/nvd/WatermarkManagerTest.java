@@ -33,7 +33,7 @@ class WatermarkManagerTest {
         final var kvStore = new MockKeyValueStore();
         kvStore.put("watermark", "1700000000000");
 
-        final var manager = WatermarkManager.create(kvStore, List.of());
+        final var manager = new WatermarkManager(kvStore, List.of());
 
         assertThat(manager.getWatermark()).isEqualTo(Instant.ofEpochMilli(1700000000000L));
     }
@@ -42,7 +42,7 @@ class WatermarkManagerTest {
     void shouldReturnNullWatermarkWhenNoneExists() {
         final var kvStore = new MockKeyValueStore();
 
-        final var manager = WatermarkManager.create(kvStore, List.of());
+        final var manager = new WatermarkManager(kvStore, List.of());
 
         assertThat(manager.getWatermark()).isNull();
     }
@@ -50,7 +50,7 @@ class WatermarkManagerTest {
     @Test
     void shouldAdvanceAndCommitWatermark() {
         final var kvStore = new MockKeyValueStore();
-        final var manager = WatermarkManager.create(kvStore, List.of());
+        final var manager = new WatermarkManager(kvStore, List.of());
 
         final var watermark = Instant.ofEpochMilli(1700000000000L);
         manager.maybeAdvance(watermark);
@@ -63,7 +63,7 @@ class WatermarkManagerTest {
     @Test
     void shouldNotAdvanceToEarlierWatermark() {
         final var kvStore = new MockKeyValueStore();
-        final var manager = WatermarkManager.create(kvStore, List.of());
+        final var manager = new WatermarkManager(kvStore, List.of());
 
         final var later = Instant.ofEpochMilli(1700000000000L);
         final var earlier = Instant.ofEpochMilli(1600000000000L);
@@ -80,7 +80,7 @@ class WatermarkManagerTest {
         kvStore.put("feed-digest:2024", "abc123");
         kvStore.put("feed-digest:modified", "def456");
 
-        final var manager = WatermarkManager.create(kvStore, List.of("2024", "2023", "modified"));
+        final var manager = new WatermarkManager(kvStore, List.of("2024", "2023", "modified"));
 
         assertThat(manager.getFeedDigest("2024")).isEqualTo("abc123");
         assertThat(manager.getFeedDigest("modified")).isEqualTo("def456");
@@ -90,7 +90,7 @@ class WatermarkManagerTest {
     @Test
     void shouldReturnNullForUnknownFeedDigest() {
         final var kvStore = new MockKeyValueStore();
-        final var manager = WatermarkManager.create(kvStore, List.of("2024"));
+        final var manager = new WatermarkManager(kvStore, List.of("2024"));
 
         assertThat(manager.getFeedDigest("1999")).isNull();
     }
@@ -98,7 +98,7 @@ class WatermarkManagerTest {
     @Test
     void shouldCommitPendingFeedDigests() {
         final var kvStore = new MockKeyValueStore();
-        final var manager = WatermarkManager.create(kvStore, List.of("2024", "2023"));
+        final var manager = new WatermarkManager(kvStore, List.of("2024", "2023"));
 
         manager.recordFeedDigest("2024", "abc123");
         manager.recordFeedDigest("2023", "def456");
@@ -116,7 +116,7 @@ class WatermarkManagerTest {
         final var kvStore = new MockKeyValueStore();
         kvStore.put("feed-digest:2024", "abc123");
 
-        final var manager = WatermarkManager.create(kvStore, List.of("2024"));
+        final var manager = new WatermarkManager(kvStore, List.of("2024"));
 
         manager.recordFeedDigest("2024", "abc123");
         manager.commitFeedDigests();
@@ -129,7 +129,7 @@ class WatermarkManagerTest {
         final var kvStore = new MockKeyValueStore();
         kvStore.put("feed-digest:2024", "old_digest");
 
-        final var manager = WatermarkManager.create(kvStore, List.of("2024"));
+        final var manager = new WatermarkManager(kvStore, List.of("2024"));
 
         manager.recordFeedDigest("2024", "new_digest");
         manager.commitFeedDigests();
@@ -141,7 +141,7 @@ class WatermarkManagerTest {
     @Test
     void shouldHandleEmptyFeedNameList() {
         final var kvStore = new MockKeyValueStore();
-        final var manager = WatermarkManager.create(kvStore, List.of());
+        final var manager = new WatermarkManager(kvStore, List.of());
 
         assertThat(manager.getFeedDigest("2024")).isNull();
     }
@@ -149,7 +149,7 @@ class WatermarkManagerTest {
     @Test
     void shouldCommitFeedDigestsIndependentlyOfWatermark() {
         final var kvStore = new MockKeyValueStore();
-        final var manager = WatermarkManager.create(kvStore, List.of("2024"));
+        final var manager = new WatermarkManager(kvStore, List.of("2024"));
 
         manager.maybeAdvance(Instant.ofEpochMilli(1700000000000L));
         manager.recordFeedDigest("2024", "abc123");

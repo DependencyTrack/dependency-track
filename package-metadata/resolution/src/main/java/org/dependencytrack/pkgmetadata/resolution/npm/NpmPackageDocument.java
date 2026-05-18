@@ -123,7 +123,7 @@ record NpmPackageDocument(
             if (version != null && version.contains(".")) {
                 try {
                     timestamps.put(version, Instant.parse(parser.getText()));
-                } catch (DateTimeParseException ignored) {
+                } catch (DateTimeParseException _) {
                 }
             }
         }

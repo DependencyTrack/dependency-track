@@ -81,7 +81,7 @@ public abstract class AbstractApiResource extends AlpineResource {
         //  requests, that would already help under high traffic conditions.
 
         if (!qm.hasAccess(super.getPrincipal(), project)) {
-            try (var ignored = new MdcScope(Map.ofEntries(
+            try (var _ = new MdcScope(Map.ofEntries(
                     Map.entry(MDC_PROJECT_UUID, project.getUuid().toString()),
                     Map.entry(MDC_PROJECT_NAME, project.getName()),
                     Map.entry(MDC_PROJECT_VERSION, String.valueOf(project.getVersion()))))) {
@@ -109,7 +109,7 @@ public abstract class AbstractApiResource extends AlpineResource {
         if (isAccessible == null) {
             throw new NoSuchElementException("Component could not be found");
         } else if (!isAccessible) {
-            try (var ignored = new MdcScope(Map.of(MDC_COMPONENT_UUID, componentUuid.toString()))) {
+            try (var _ = new MdcScope(Map.of(MDC_COMPONENT_UUID, componentUuid.toString()))) {
                 logSecurityEvent(logger, SecurityMarkers.SECURITY_FAILURE, "Unauthorized project access attempt");
             }
 
@@ -132,7 +132,7 @@ public abstract class AbstractApiResource extends AlpineResource {
         if (isAccessible == null) {
             throw new NoSuchElementException("Project could not be found");
         } else if (!isAccessible) {
-            try (var ignored = new MdcScope(Map.of(MDC_PROJECT_UUID, projectUuid.toString()))) {
+            try (var _ = new MdcScope(Map.of(MDC_PROJECT_UUID, projectUuid.toString()))) {
                 logSecurityEvent(logger, SecurityMarkers.SECURITY_FAILURE, "Unauthorized project access attempt");
             }
             throw new ProjectAccessDeniedException("Access to the requested project is forbidden");

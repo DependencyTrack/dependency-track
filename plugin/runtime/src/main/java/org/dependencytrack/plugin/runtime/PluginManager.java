@@ -286,7 +286,7 @@ public class PluginManager implements Closeable {
 
         LOGGER.debug("Loading plugins");
         for (final Plugin plugin : plugins) {
-            try (var ignoredMdcPlugin = MDC.putCloseable(MDC_PLUGIN, plugin.getClass().getName())) {
+            try (var _ = MDC.putCloseable(MDC_PLUGIN, plugin.getClass().getName())) {
                 LOGGER.debug("Loading plugin");
                 loadExtensionsForPlugin(plugin);
 
@@ -338,10 +338,10 @@ public class PluginManager implements Closeable {
             final ExtensionPointMetadata extensionPointMetadata =
                     requireImplementsExtensionPoint(extensionFactory.extensionClass());
 
-            try (var ignoredMdcExtensionPointName = MDC.putCloseable(MDC_EXTENSION_POINT_NAME, extensionPointMetadata.name());
-                 var ignoredMdcExtensionPoint = MDC.putCloseable(MDC_EXTENSION_POINT, extensionPointMetadata.clazz().getName());
-                 var ignoredMdcExtensionName = MDC.putCloseable(MDC_EXTENSION_NAME, extensionFactory.extensionName());
-                 var ignoredMdcExtension = MDC.putCloseable(MDC_EXTENSION, extensionFactory.extensionClass().getName())) {
+            try (var _ = MDC.putCloseable(MDC_EXTENSION_POINT_NAME, extensionPointMetadata.name());
+                 var _ = MDC.putCloseable(MDC_EXTENSION_POINT, extensionPointMetadata.clazz().getName());
+                 var _ = MDC.putCloseable(MDC_EXTENSION_NAME, extensionFactory.extensionName());
+                 var _ = MDC.putCloseable(MDC_EXTENSION, extensionFactory.extensionClass().getName())) {
                 loadExtension(plugin, extensionFactory, extensionPointMetadata);
             }
         }
@@ -437,11 +437,11 @@ public class PluginManager implements Closeable {
         }
 
         factoriesByPlugin.computeIfAbsent(
-                        plugin, ignored -> new ArrayList<>())
+                        plugin, _ -> new ArrayList<>())
                 .add(extensionFactory);
         extensionNamesByExtensionPointClass.computeIfAbsent(
                         extensionIdentity.extensionPointClass(),
-                        ignored -> new HashSet<>())
+                        _ -> new HashSet<>())
                 .add(extensionFactory.extensionName());
         factoryByExtensionIdentity.put(extensionIdentity, extensionFactory);
         pluginByExtensionIdentity.put(extensionIdentity, plugin);
@@ -457,8 +457,8 @@ public class PluginManager implements Closeable {
                         """.formatted(extensionPointClass.getName()));
             }
 
-            try (var ignoredMdcExtensionPoint = MDC.putCloseable(MDC_EXTENSION_POINT, extensionPointClass.getName());
-                 var ignoredMdcExtensionPointName = MDC.putCloseable(MDC_EXTENSION_POINT_NAME, extensionPointMetadata.name())) {
+            try (var _ = MDC.putCloseable(MDC_EXTENSION_POINT, extensionPointClass.getName());
+                 var _ = MDC.putCloseable(MDC_EXTENSION_POINT_NAME, extensionPointMetadata.name())) {
                 LOGGER.debug("Determining default extension");
 
                 final SequencedCollection<? extends ExtensionFactory<?>> factories = getFactories(extensionPointClass);
@@ -561,7 +561,7 @@ public class PluginManager implements Closeable {
 
         // Unload plugins in reverse order in which they were loaded.
         for (final Plugin plugin : loadedPluginByClass.sequencedValues().reversed()) {
-            try (var ignoredMdcPlugin = MDC.putCloseable(MDC_PLUGIN, plugin.getClass().getName())) {
+            try (var _ = MDC.putCloseable(MDC_PLUGIN, plugin.getClass().getName())) {
                 LOGGER.debug("Unloading plugin");
                 unloadPlugin(plugin);
 
@@ -584,8 +584,8 @@ public class PluginManager implements Closeable {
             final String extensionPointClassName = extensionPointMetadata.clazz().getName();
             final String extensionClassName = extensionFactory.extensionClass().getName();
 
-            try (var ignoredMdcExtensionPoint = MDC.putCloseable(MDC_EXTENSION_POINT, extensionPointClassName);
-                 var ignoredMdcExtension = MDC.putCloseable(MDC_EXTENSION, extensionClassName)) {
+            try (var _ = MDC.putCloseable(MDC_EXTENSION_POINT, extensionPointClassName);
+                 var _ = MDC.putCloseable(MDC_EXTENSION, extensionClassName)) {
                 LOGGER.debug("Closing extension");
                 extensionFactory.close();
 

@@ -32,45 +32,18 @@ When someone authenticates using OIDC, the claims provided in the ID token or `/
 
 ## Dependency-Track Permission Roles
 
-When mapping OIDC groups to Dependency-Track teams, it is important to understand what permissions each role grants. The following table describes 
-all available permissions in Dependency-Track and their purpose:
+When mapping OIDC groups to Dependency-Track teams, it is important to understand what permissions each role grants. For a full list of available permissions and their descriptions, refer to the [Users and Permissions](../administration/users-and-permissions.md) documentation.
 
-| Permission | Description |
-|---|---|
-| ACCESS_MANAGEMENT | Allows management of users, teams, and permissions |
-| BOM_UPLOAD | Allows uploading of Bill of Materials (BOM) files |
-| POLICY_MANAGEMENT | Allows creation and management of security policies |
-| POLICY_VIOLATION_ANALYSIS | Allows analysis and auditing of policy violations |
-| PORTFOLIO_MANAGEMENT | Allows management of projects and portfolio structure |
-| PROJECT_CREATION_UPLOAD | Allows creation of new projects and upload of BOMs |
-| SYSTEM_CONFIGURATION | Allows modification of system-wide configuration settings |
-| TAG_MANAGEMENT | Allows creation and management of tags |
-| VIEW_BADGES | Allows viewing of project badges |
-| VIEW_POLICY_VIOLATION | Allows viewing of policy violations without auditing them |
-| VULNERABILITY_ANALYSIS | Allows analysis and auditing of vulnerabilities |
-| VULNERABILITY_MANAGEMENT | Allows management of vulnerabilities and findings |
+### Example Enterprise Role Structure
 
-### Recommended Enterprise Role Structure
-
-For enterprise deployments, consider mapping OIDC groups to the following team structure:
+The following is an example role structure for enterprise deployments. Organizations should adapt this to their own needs, as roles may not map cleanly to every environment:
 
 | Team | Recommended Permissions |
 |---|---|
-| Security Administrators | ACCESS_MANAGEMENT, SYSTEM_CONFIGURATION, POLICY_MANAGEMENT, PORTFOLIO_MANAGEMENT |
-| Security Analysts | VULNERABILITY_ANALYSIS, POLICY_VIOLATION_ANALYSIS, VIEW_POLICY_VIOLATION |
-| Developers | BOM_UPLOAD, PROJECT_CREATION_UPLOAD, VIEW_BADGES, VIEW_POLICY_VIOLATION |
-| Read Only | VIEW_BADGES, VIEW_POLICY_VIOLATION |
-
-### Mapping Roles in Common Identity Providers
-
-#### Microsoft Entra ID
-
-In Entra ID, create security groups matching your team names (e.g. `DT-Security-Admins`, `DT-Developers`) and assign users to them. 
-In Dependency-Track, navigate to _Administration_ -> _Access Management_ -> _OpenID Connect Groups_ and map each Entra group name to the corresponding Dependency-Track team. Note that Entra ID returns group UUIDs by default — ensure you configure group claims to return group names or use the UUID as the group name in Dependency-Track.
-
-#### Keycloak
-
-In Keycloak, create groups matching your desired team names and assign users accordingly. Use the protocol mapper configuration described in the Keycloak example below to include group memberships in the `groups` claim. Map these group names in Dependency-Track under _Administration_ -> _Access Management_ -> _OpenID Connect Groups_.
+| Security Administrators | VIEW_PORTFOLIO, ACCESS_MANAGEMENT, SYSTEM_CONFIGURATION, POLICY_MANAGEMENT, PORTFOLIO_MANAGEMENT |
+| Security Analysts |  VIEW_PORTFOLIO, VULNERABILITY_ANALYSIS, POLICY_VIOLATION_ANALYSIS, VIEW_POLICY_VIOLATION |
+| Developers | VIEW_PORTFOLIO, BOM_UPLOAD, PROJECT_CREATION_UPLOAD, VIEW_BADGES, VIEW_POLICY_VIOLATION |
+| Read Only | VIEW_PORTFOLIO, VIEW_BADGES, VIEW_POLICY_VIOLATION |
 
 #### Okta
 
@@ -374,8 +347,7 @@ The following steps demonstrate how to setup OpenID Connect with Microsoft Entra
    - OpenId permissions -> profile
    - GroupMember -> GroupMember.Read.All
   
-5. Note that Entra will return the group UUID in the claims (not the group name). 
-
+5. Note that Entra ID returns group UUIDs in the claims (not the group name). To use group names instead, configure optional claims in your app registration to return `groups` as names. Alternatively, use the group UUID as the group name in Dependency-Track's _Administration_ -> _Access Management_ -> _OpenID Connect Groups_ configuration. 
 
 ### Example setup with AWS Cognito
 

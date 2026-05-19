@@ -19,7 +19,7 @@
       },
       "group": "gov.nist.nvd",
       "name": "National Vulnerability Database (NVD)",
-      "description": "The NVD is the U.S. government repository of standards based vulnerability management data represented using the Security Content Automation Protocol (SCAP). This data enables automation of vulnerability management, security measurement, and compliance. The NVD includes databases of security checklist references, security-related software flaws, misconfigurations, product names, and impact metrics.",
+      "description": "Used as a vulnerability data source. CVE feeds are mirrored to Dependency-Track.",
       "endpoints": [
         "https://nvd.nist.gov/feeds"
       ],
@@ -55,7 +55,7 @@
       },
       "group": "org.sonatype.ossindex",
       "name": "OSS Index",
-      "description": "The NVD is the U.S. government repository of standards based vulnerability management data represented using the Security Content Automation Protocol (SCAP). This data enables automation of vulnerability management, security measurement, and compliance. The NVD includes databases of security checklist references, security-related software flaws, misconfigurations, product names, and impact metrics.",
+      "description": "Optional vulnerability analyzer. Queried by component package URL to retrieve known vulnerabilities.",
       "endpoints": [
         "https://ossindex.sonatype.org/api/v3/component-report",
         "https://ossindex.sonatype.org/api/v3/version"
@@ -88,7 +88,7 @@
       },
       "group": "com.cyberriskanalytics.vulndb",
       "name": "VulnDB",
-      "description": "VulnDB is the most comprehensive and timely vulnerability intelligence available and provides actionable information about the latest in security vulnerabilities via an easy-to-use SaaS Portal, or a RESTful API that allows easy integration into GRC tools and ticketing systems. VulnDB allows organizations to search and be alerted on the latest vulnerabilities, both in end-user software and the 3rd Party Libraries or dependencies. A subscription to VulnDB provides organizations with simple to understand ratings and metrics on their vendors and products, and how each contributes to the organization’s risk-profile and cost of ownership.",
+      "description": "Optional commercial vulnerability analyzer. Queried for component vulnerabilities. Requires a paid subscription.",
       "endpoints": [
         "https://vulndb.cyberriskanalytics.com/api/v1/account_status",
         "https://vulndb.cyberriskanalytics.com/api/v1/vendors/",
@@ -116,9 +116,10 @@
       },
       "group": "com.github.api",
       "name": "GitHub Advisories",
-      "description": "Security vulnerability database inclusive of CVEs and GitHub originated security advisories from the world of open source software.",
+      "description": "Used as a vulnerability data source. GitHub Security Advisories are mirrored to Dependency-Track via GraphQL. Also queried for repository metadata of packages hosted on GitHub.",
       "endpoints": [
-        "https://api.github.com/graphql"
+        "https://api.github.com/graphql",
+        "https://api.github.com/repos/"
       ],
       "authenticated": true,
       "x-trust-boundary": true,
@@ -139,7 +140,7 @@
       },
       "group": "io.crates",
       "name": "Crates.io",
-      "description": "The Rust community’s crate registry",
+      "description": "Queried for package metadata and latest version information of Rust crates.",
       "endpoints": [
         "https://crates.io/api/v1/crates"
       ],
@@ -161,8 +162,8 @@
         ]
       },
       "group": "org.packagist.repo",
-      "name": "Crates.io",
-      "description": "The PHP Package Repository",
+      "name": "Packagist",
+      "description": "Queried for latest version information of PHP Composer packages.",
       "endpoints": [
         "https://repo.packagist.org/p/"
       ],
@@ -185,7 +186,7 @@
       },
       "group": "org.rubygems",
       "name": "RubyGems",
-      "description": "RubyGems.org is the Ruby community’s gem hosting service.",
+      "description": "Queried for package metadata and latest version information of Ruby gems.",
       "endpoints": [
         "https://rubygems.org/api/v1/versions"
       ],
@@ -208,7 +209,7 @@
       },
       "group": "org.golang.proxy",
       "name": "Go Module Mirror, Index, and Checksum Database",
-      "description": "The Go team is providing the following services run by Google: a module mirror for accelerating Go module downloads, an index for discovering new modules, and a global go.sum database for authenticating module content.",
+      "description": "Queried for package metadata and latest version information of Go modules.",
       "endpoints": [
         "https://proxy.golang.org/"
       ],
@@ -237,7 +238,7 @@
       },
       "group": "pm.hex",
       "name": "hex",
-      "description": "The package manager for the Erlang ecosystem.",
+      "description": "Queried for package metadata and latest version information of Erlang and Elixir packages.",
       "endpoints": [
         "https://hex.pm/api/packages"
       ],
@@ -260,7 +261,7 @@
       },
       "group": "org.maven.repo1",
       "name": "Maven Central",
-      "description": "Package repository for the Java ecosystem.",
+      "description": "Queried for package metadata and latest version information of Java artifacts.",
       "endpoints": [
         "https://repo1.maven.org/maven2"
       ],
@@ -283,7 +284,7 @@
       },
       "group": "com.atlassian.maven",
       "name": "Atlassian Public",
-      "description": "Package repository for the Java ecosystem.",
+      "description": "Queried for latest version information of Atlassian-published Maven artifacts.",
       "endpoints": [
         "https://packages.atlassian.com/content/repositories/atlassian-public/"
       ],
@@ -306,7 +307,7 @@
       },
       "group": "org.jboss.repository",
       "name": "JBoss Releases",
-      "description": "Package repository for the Java ecosystem.",
+      "description": "Queried for latest version information of JBoss-published Maven artifacts.",
       "endpoints": [
         "https://repository.jboss.org/nexus/content/repositories/releases/"
       ],
@@ -329,7 +330,7 @@
       },
       "group": "org.clojars.repo",
       "name": "Clojars",
-      "description": "Clojars is an easy to use community repository for open source Clojure libraries",
+      "description": "Queried for latest version information of Clojure libraries.",
       "endpoints": [
         "https://repo.clojars.org/"
       ],
@@ -352,6 +353,7 @@
       },
       "group": "com.google.maven",
       "name": "Google's Maven Repository",
+      "description": "Queried for latest version information of Google and Android Maven artifacts.",
       "endpoints": [
         "https://maven.google.com/"
       ],
@@ -374,7 +376,7 @@
       },
       "group": "org.npmjs.registry",
       "name": "NPM Registry",
-      "description": "Package repository for the Node.js and JavaScript ecosystems.",
+      "description": "Queried for package metadata and latest version information of npm packages.",
       "endpoints": [
         "https://registry.npmjs.org/-/package/"
       ],
@@ -402,7 +404,7 @@
       },
       "group": "org.nuget.api",
       "name": "NuGet Registry",
-      "description": "Package repository for the .NET ecosystem.",
+      "description": "Queried for package metadata and latest version information of NuGet packages.",
       "endpoints": [
         "https://api.nuget.org/v3-flatcontainer/",
         "https://api.nuget.org/v3/registration3/"
@@ -426,7 +428,7 @@
       },
       "group": "dev.osv",
       "name": "OSV",
-      "description": "OSV is a distributed vulnerability database for Open Source",
+      "description": "Used as a vulnerability data source. Per-ecosystem OSV feeds are mirrored to Dependency-Track.",
       "endpoints": [
         "https://osv-vulnerabilities.storage.googleapis.com"
       ],
@@ -454,7 +456,7 @@
       },
       "group": "org.pypi",
       "name": "PyPI",
-      "description": "The Python Package Index (PyPI) is a repository of software for the Python programming language.",
+      "description": "Queried for package metadata and latest version information of Python packages.",
       "endpoints": [
         "https://pypi.org/pypi/"
       ],
@@ -477,7 +479,7 @@
       },
       "group": "org.dependencytrack.metrics",
       "name": "Dependency-Track Telemetry",
-      "description": "Dependency-Track telemetry service for collecting anonymous usage data.",
+      "description": "Receives anonymous usage telemetry submitted by this Dependency-Track instance. Optional.",
       "endpoints": [
         "https://metrics.dependencytrack.org"
       ],
@@ -500,11 +502,103 @@
       },
       "group": "io.snyk",
       "name": "Snyk",
-      "description": "Snyk is a developer security platform. Integrating directly into development tools, workflows, and automation pipelines, Snyk makes it easy for teams to find, prioritize, and fix security vulnerabilities in code, dependencies, containers, and infrastructure as code. Supported by industry-leading application and security intelligence, Snyk puts security expertise in any developer's toolkit.",
+      "description": "Optional commercial vulnerability analyzer. Queried for component vulnerabilities. Requires a paid subscription.",
       "endpoints": [
         "https://api.snyk.io"
       ],
       "authenticated": true,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.empiricalsecurity.epss",
+      "provider": {
+        "name": "Empirical Security",
+        "url": [
+          "https://www.first.org/epss/"
+        ]
+      },
+      "group": "com.empiricalsecurity.epss",
+      "name": "EPSS",
+      "description": "Used as a source of EPSS exploit prediction scores for CVEs. Feeds are mirrored to Dependency-Track.",
+      "endpoints": [
+        "https://epss.empiricalsecurity.com/epss_scores-current.csv.gz"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.metacpan",
+      "provider": {
+        "name": "The Perl Foundation",
+        "url": [
+          "https://metacpan.org"
+        ]
+      },
+      "group": "org.metacpan",
+      "name": "MetaCPAN",
+      "description": "Queried for latest version information of Perl modules on CPAN.",
+      "endpoints": [
+        "https://fastapi.metacpan.org/v1/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.haskell.hackage",
+      "provider": {
+        "name": "Haskell.org",
+        "url": [
+          "https://www.haskell.org"
+        ]
+      },
+      "group": "org.haskell.hackage",
+      "name": "Hackage",
+      "description": "Queried for latest version information of Haskell packages.",
+      "endpoints": [
+        "https://hackage.haskell.org/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.nixos.channels",
+      "provider": {
+        "name": "NixOS Foundation",
+        "url": [
+          "https://nixos.org"
+        ]
+      },
+      "group": "org.nixos.channels",
+      "name": "Nixpkgs",
+      "description": "Queried for latest version information of Nixpkgs packages.",
+      "endpoints": [
+        "https://channels.nixos.org/nixpkgs-unstable/packages.json.br"
+      ],
+      "authenticated": false,
       "x-trust-boundary": true,
       "data": [
         {

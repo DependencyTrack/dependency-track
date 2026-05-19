@@ -142,7 +142,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldRunWorkflowWithArgumentAndResult() {
-        registerWorkflow("test", stringConverter(), stringConverter(), (ctx, arg) -> {
+        registerWorkflow("test", stringConverter(), stringConverter(), (ctx, _) -> {
             ctx.setStatus("someCustomStatus");
             return "someResult";
         });
@@ -218,7 +218,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldFailWorkflowRunWhenRunnerThrows() {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (_, _) -> {
             throw new IllegalStateException("Ouch!");
         });
         registerWorkflowWorker("workflow-worker", 1);
@@ -259,7 +259,7 @@ class DexEngineImplTest {
     void shouldFailWorkflowRunOnNonDeterministicExecution() {
         final var executionCounter = new AtomicInteger(0);
 
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             if (executionCounter.incrementAndGet() == 1) {
                 ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
             } else {
@@ -267,8 +267,8 @@ class DexEngineImplTest {
             }
             return null;
         });
-        registerActivity("abc", (ctx, arg) -> null);
-        registerActivity("def", (ctx, arg) -> null);
+        registerActivity("abc", (_, _) -> null);
+        registerActivity("def", (_, _) -> null);
         registerWorkflowWorker("workflow-worker", 1);
         registerTaskWorker("activity-worker", 1);
 
@@ -302,7 +302,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldFailWorkflowRunWhenCancelled() {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             // Sleep for a moment so we get an opportunity to cancel the run.
             ctx.createTimer("sleep", Duration.ofSeconds(5)).await();
             return null;
@@ -351,7 +351,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldWaitForTimerToElapse() {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             ctx.createTimer("Sleep", Duration.ofMillis(5)).await();
             return null;
         });
@@ -384,7 +384,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldWaitForMultipleTimersToElapse() {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             final var timers = new ArrayList<Awaitable<Void>>(3);
             for (int i = 0; i < 3; i++) {
                 timers.add(ctx.createTimer("sleep" + i, Duration.ofMillis(5)));
@@ -426,13 +426,13 @@ class DexEngineImplTest {
 
     @Test
     void shouldWaitForChildRun() {
-        registerWorkflow("foo", (ctx, arg) -> {
+        registerWorkflow("foo", (ctx, _) -> {
             final String childWorkflowResult =
                     ctx.callChildWorkflow("bar", 1, null, WORKFLOW_TASK_QUEUE, null, "inputValue", stringConverter(), stringConverter()).await();
             assertThat(childWorkflowResult).contains("inputValue-outputValue");
             return null;
         });
-        registerWorkflow("bar", stringConverter(), stringConverter(), (ctx, arg) -> arg + "-outputValue");
+        registerWorkflow("bar", stringConverter(), stringConverter(), (_, arg) -> arg + "-outputValue");
         registerWorkflowWorker("workflow-worker", 2);
         engine.start();
 
@@ -459,11 +459,11 @@ class DexEngineImplTest {
 
     @Test
     void shouldFailWhenChildRunFails() {
-        registerWorkflow("foo", (ctx, arg) -> {
+        registerWorkflow("foo", (ctx, _) -> {
             ctx.callChildWorkflow("bar", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
             return null;
         });
-        registerWorkflow("bar", (ctx, arg) -> {
+        registerWorkflow("bar", (_, _) -> {
             throw new IllegalStateException("Oh no!");
         });
         registerWorkflowWorker("workflow-worker", 2);
@@ -503,16 +503,16 @@ class DexEngineImplTest {
         final var childRunIdReference = new AtomicReference<UUID>();
         final var grandChildRunIdReference = new AtomicReference<UUID>();
 
-        registerWorkflow("parent", (ctx, arg) -> {
+        registerWorkflow("parent", (ctx, _) -> {
             ctx.callChildWorkflow("child", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
             return null;
         });
-        registerWorkflow("child", (ctx, arg) -> {
+        registerWorkflow("child", (ctx, _) -> {
             childRunIdReference.set(ctx.runId());
             ctx.callChildWorkflow("grand-child", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
             return null;
         });
-        registerWorkflow("grand-child", (ctx, arg) -> {
+        registerWorkflow("grand-child", (ctx, _) -> {
             grandChildRunIdReference.set(ctx.runId());
             ctx.createTimer("sleep", Duration.ofSeconds(3)).await();
             return null;
@@ -535,7 +535,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldThrowWhenCancellingRunInTerminalState() {
-        registerWorkflow("test", (ctx, arg) -> null);
+        registerWorkflow("test", (_, _) -> null);
         registerWorkflowWorker("workflow-worker", 1);
         engine.start();
 
@@ -550,7 +550,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldSuspendAndResumeRunWhenRequested() {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             // Block for a moment so we get an opportunity to suspend the run.
             ctx.waitForExternalEvent("foo", voidConverter(), Duration.ofSeconds(3)).await();
             return null;
@@ -572,7 +572,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldCancelSuspendedRunWhenRequested() {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             // Sleep for a moment so we get an opportunity to suspend the run.
             ctx.createTimer("sleep", Duration.ofSeconds(3)).await();
             return null;
@@ -593,7 +593,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldThrowWhenSuspendingRunInTerminalState() {
-        registerWorkflow("test", (ctx, arg) -> null);
+        registerWorkflow("test", (_, _) -> null);
         registerWorkflowWorker("workflow-worker", 1);
         engine.start();
 
@@ -608,7 +608,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldThrowWhenSuspendingRunInSuspendedState() {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             // Sleep for a moment so we get an opportunity to suspend the run.
             ctx.createTimer("sleep", Duration.ofSeconds(3)).await();
             return null;
@@ -629,7 +629,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldThrowWhenResumingRunInNonSuspendedState() {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             // Sleep for a moment so we get an opportunity to act on the running run.
             ctx.createTimer("sleep", Duration.ofSeconds(3)).await();
             return null;
@@ -648,7 +648,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldThrowWhenResumingRunInTerminalState() {
-        registerWorkflow("test", (ctx, arg) -> null);
+        registerWorkflow("test", (_, _) -> null);
         registerWorkflowWorker("workflow-worker", 1);
         engine.start();
 
@@ -666,7 +666,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldNotCreateRunWhenAnotherRunWithSameInstanceIdIsInProgress() {
-            registerWorkflow("test", stringConverter(), voidConverter(), (ctx, arg) -> null);
+            registerWorkflow("test", stringConverter(), voidConverter(), (_, _) -> null);
 
             UUID runId = engine.createRun(
                     new CreateWorkflowRunRequest<>("test", 1)
@@ -681,11 +681,11 @@ class DexEngineImplTest {
 
         @Test
         void shouldFailChildWorkflowWhenRunSameInstanceIdIsInProgress() {
-            registerWorkflow("parent", (ctx, arg) -> {
+            registerWorkflow("parent", (ctx, _) -> {
                 ctx.callChildWorkflow("child", 1, "instanceId", WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
                 return null;
             });
-            registerWorkflow("child", (ctx, arg) -> {
+            registerWorkflow("child", (ctx, _) -> {
                 ctx.createTimer("sleep", Duration.ofSeconds(3)).await();
                 return null;
             });
@@ -732,7 +732,7 @@ class DexEngineImplTest {
         void shouldExecuteRunsWithSameConcurrencyKeyInPriorityOrder() {
             final var executionQueue = new ArrayBlockingQueue<String>(5);
 
-            registerWorkflow("test", stringConverter(), voidConverter(), (ctx, arg) -> {
+            registerWorkflow("test", stringConverter(), voidConverter(), (_, arg) -> {
                 executionQueue.add(arg);
                 return null;
             });
@@ -761,7 +761,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldWaitForExternalEvent() throws Exception {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             ctx.waitForExternalEvent("foo-123", voidConverter(), Duration.ofSeconds(30)).await();
             return null;
         });
@@ -800,7 +800,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldFailWhenWaitingForExternalEventTimesOut() {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             ctx.waitForExternalEvent("foo-123", voidConverter(), Duration.ofMillis(5)).await();
             return null;
         });
@@ -839,7 +839,7 @@ class DexEngineImplTest {
         void shouldRecordSideEffectResult() {
             final var sideEffectInvocationCounter = new AtomicInteger();
 
-            registerWorkflow("test", (ctx, arg) -> {
+            registerWorkflow("test", (ctx, _) -> {
                 ctx.executeSideEffect("sideEffect", sideEffectInvocationCounter::incrementAndGet).await();
 
                 ctx.createTimer("sleep", Duration.ofMillis(10)).await();
@@ -877,7 +877,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldNotAllowNestedSideEffects() {
-            registerWorkflow("test", (ctx, arg) -> {
+            registerWorkflow("test", (ctx, _) -> {
                 ctx.executeSideEffect("outerSideEffect", () -> ctx.executeSideEffect("nestedSideEffect", () -> {
                 }).await()).await();
                 return null;
@@ -912,11 +912,11 @@ class DexEngineImplTest {
 
     @Test
     void shouldCallActivity() {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
             return null;
         });
-        registerActivity("abc", voidConverter(), stringConverter(), (ctx, arg) -> "123");
+        registerActivity("abc", voidConverter(), stringConverter(), (_, _) -> "123");
         registerWorkflowWorker("workflow-worker", 1);
         registerTaskWorker("activity-worker", 1);
         engine.start();
@@ -944,7 +944,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldCreateMultipleActivitiesConcurrently() {
-        registerWorkflow("test", voidConverter(), stringConverter(), (ctx, arg) -> {
+        registerWorkflow("test", voidConverter(), stringConverter(), (ctx, _) -> {
             final List<Awaitable<String>> awaitables = List.of(
                     ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, "first", stringConverter(), stringConverter(), RetryPolicy.ofDefault()),
                     ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, "second", stringConverter(), stringConverter(), RetryPolicy.ofDefault()));
@@ -953,7 +953,7 @@ class DexEngineImplTest {
                     .map(Awaitable::await)
                     .collect(Collectors.joining(", "));
         });
-        registerActivity("abc", stringConverter(), stringConverter(), (ctx, arg) -> arg);
+        registerActivity("abc", stringConverter(), stringConverter(), (_, arg) -> arg);
         registerWorkflowWorker("workflow-worker", 1);
         registerTaskWorker("activity-worker", 2);
         engine.start();
@@ -995,7 +995,7 @@ class DexEngineImplTest {
             ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), retryPolicy).await();
             return null;
         });
-        registerActivity("abc", voidConverter(), stringConverter(), (ctx, arg) -> {
+        registerActivity("abc", voidConverter(), stringConverter(), (_, _) -> {
             throw new IllegalStateException();
         });
         registerWorkflowWorker("workflow-worker", 1);
@@ -1028,11 +1028,11 @@ class DexEngineImplTest {
 
     @Test
     void shouldNotRetryActivityFailingWithTerminalException() {
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
             return null;
         });
-        registerActivity("abc", voidConverter(), stringConverter(), (ctx, arg) -> {
+        registerActivity("abc", voidConverter(), stringConverter(), (_, _) -> {
             throw new TerminalApplicationFailureException("Ouch!", null);
         });
         registerWorkflowWorker("workflow-worker", 1);
@@ -1081,11 +1081,11 @@ class DexEngineImplTest {
 
         final var activityInvocations = new AtomicInteger(0);
 
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, "input", stringConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
             return null;
         });
-        registerActivity("abc", throwingArgumentConverter, stringConverter(), (ctx, arg) -> {
+        registerActivity("abc", throwingArgumentConverter, stringConverter(), (_, arg) -> {
             activityInvocations.incrementAndGet();
             return arg;
         });
@@ -1137,11 +1137,11 @@ class DexEngineImplTest {
             }
         };
 
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
             return null;
         });
-        registerActivity("abc", voidConverter(), throwingResultConverter, (ctx, arg) -> "result");
+        registerActivity("abc", voidConverter(), throwingResultConverter, (_, _) -> "result");
         registerWorkflowWorker("workflow-worker", 1);
         registerTaskWorker("activity-worker", 1);
         engine.start();
@@ -1178,11 +1178,11 @@ class DexEngineImplTest {
     void shouldHeartbeatActivity() {
         final var heartbeatsPerformed = new ArrayBlockingQueue<Boolean>(3);
 
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
             return null;
         });
-        registerActivity("test", (ctx, arg) -> {
+        registerActivity("test", (ctx, _) -> {
             heartbeatsPerformed.add(ctx.maybeHeartbeat());
             Thread.sleep(3_500);
             heartbeatsPerformed.add(ctx.maybeHeartbeat());
@@ -1204,11 +1204,11 @@ class DexEngineImplTest {
         final var activityStarted = new AtomicBoolean(false);
         final var activityInterrupted = new AtomicBoolean(false);
 
-        registerWorkflow("test", (ctx, arg) -> {
+        registerWorkflow("test", (ctx, _) -> {
             ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
             return null;
         });
-        registerActivity("test", (ctx, arg) -> {
+        registerActivity("test", (_, _) -> {
             activityStarted.set(true);
             try {
                 Thread.sleep(Duration.ofMinutes(1));
@@ -1237,7 +1237,7 @@ class DexEngineImplTest {
     void shouldPropagateExceptions() {
         final AtomicReference<FailureException> exceptionReference = new AtomicReference<>();
 
-        registerWorkflow("foo", (ctx, arg) -> {
+        registerWorkflow("foo", (ctx, _) -> {
             try {
                 ctx.callChildWorkflow("bar", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
             } catch (FailureException e) {
@@ -1247,15 +1247,15 @@ class DexEngineImplTest {
 
             return null;
         });
-        registerWorkflow("bar", (ctx, arg) -> {
+        registerWorkflow("bar", (ctx, _) -> {
             ctx.callChildWorkflow("baz", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
             return null;
         });
-        registerWorkflow("baz", (ctx, arg) -> {
+        registerWorkflow("baz", (ctx, _) -> {
             ctx.callActivity("qux", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
             return null;
         });
-        registerActivity("qux", (ctx, arg) -> {
+        registerActivity("qux", (_, _) -> {
             throw new TerminalApplicationFailureException("Ouch!", null);
         });
         registerWorkflowWorker("workflow-worker", 3);
@@ -1319,12 +1319,12 @@ class DexEngineImplTest {
 
     @Test
     void shouldPropagateLabels() {
-        registerWorkflow("foo", (ctx, arg) -> {
+        registerWorkflow("foo", (ctx, _) -> {
             assertThat(ctx.labels()).containsOnlyKeys("oof", "rab");
             ctx.callChildWorkflow("bar", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
             return null;
         });
-        registerWorkflow("bar", (ctx, arg) -> {
+        registerWorkflow("bar", (ctx, _) -> {
             assertThat(ctx.labels()).containsOnlyKeys("oof", "rab");
             return null;
         });
@@ -1360,50 +1360,256 @@ class DexEngineImplTest {
                 entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
-    @Test
-    void shouldContinueAsNew() {
-        registerWorkflow("foo", stringConverter(), stringConverter(), (ctx, arg) -> {
-            final int iteration = Integer.parseInt(arg);
-            ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
-            if (iteration < 3) {
-                ctx.continueAsNew(
-                        new ContinueAsNewOptions<String>()
-                                .withArgument(String.valueOf(iteration + 1)));
-            }
-            return String.valueOf(iteration);
-        });
-        registerActivity("abc", (ctx, arg) -> null);
-        registerWorkflowWorker("workflow-worker", 1);
-        registerTaskWorker("activity-worker", 1);
-        engine.start();
+    @Nested
+    class ContinueAsNewTest {
 
-        final UUID runId = engine.createRun(
-                new CreateWorkflowRunRequest<>("foo", 1)
-                        .withArgument("0"));
+        @Test
+        void shouldContinueAsNew() {
+            registerWorkflow("foo", stringConverter(), stringConverter(), (ctx, arg) -> {
+                final int iteration = Integer.parseInt(arg);
+                ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
+                if (iteration < 3) {
+                    ctx.continueAsNew(
+                            new ContinueAsNewOptions<String>()
+                                    .withArgument(String.valueOf(iteration + 1)));
+                }
+                return String.valueOf(iteration);
+            });
+            registerActivity("abc", (_, _) -> null);
+            registerWorkflowWorker("workflow-worker", 1);
+            registerTaskWorker("activity-worker", 1);
+            engine.start();
 
-        awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+            final UUID runId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("foo", 1)
+                            .withArgument("0"));
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED);
-                    assertThat(stringConverter().convertFromPayload(entry.getRunCreated().getArgument())).isEqualTo("3");
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                    assertThat(stringConverter().convertFromPayload(entry.getRunCompleted().getResult())).isEqualTo("3");
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+            awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+            final Stream<WorkflowEvent> historyEvents = engine
+                    .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
+                    .items()
+                    .stream()
+                    .map(WorkflowRunHistoryEntry::event);
+            assertThat(historyEvents).satisfiesExactly(
+                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                    entry -> {
+                        assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED);
+                        assertThat(stringConverter().convertFromPayload(entry.getRunCreated().getArgument())).isEqualTo("3");
+                    },
+                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
+                    entry -> {
+                        assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                        assertThat(stringConverter().convertFromPayload(entry.getRunCompleted().getResult())).isEqualTo("3");
+                    },
+                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        }
+
+        @Test
+        void shouldFailContinueAsNewWhenActivityTaskPending() {
+            registerWorkflow("foo", stringConverter(), stringConverter(), (ctx, _) -> {
+                ctx.callActivity("blocked", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault());
+                ctx.waitForExternalEvent("go", voidConverter(), Duration.ofMinutes(5)).await();
+                ctx.continueAsNew(new ContinueAsNewOptions<String>().withArgument("next"));
+                return null;
+            });
+            registerActivity("blocked", (_, _) -> null);
+            registerWorkflowWorker("workflow-worker", 1);
+            // No activity worker registered, so the activity task remains persisted but unprocessed.
+            engine.start();
+
+            final UUID runId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("foo", 1).withArgument("0"));
+
+            await("Activity task to be created")
+                    .atMost(Duration.ofSeconds(30))
+                    .untilAsserted(() -> {
+                        final Stream<WorkflowEvent> events = engine
+                                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
+                                .items()
+                                .stream()
+                                .map(WorkflowRunHistoryEntry::event);
+                        assertThat(events).anyMatch(
+                                event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED);
+                    });
+
+            engine.sendExternalEvent(new ExternalEvent(runId, "go", null)).join();
+
+            awaitRunStatus(runId, WorkflowRunStatus.FAILED);
+
+            final Stream<WorkflowEvent> historyEvents = engine
+                    .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
+                    .items()
+                    .stream()
+                    .map(WorkflowRunHistoryEntry::event);
+            assertThat(historyEvents)
+                    .filteredOn(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.RUN_COMPLETED)
+                    .singleElement()
+                    .satisfies(event -> {
+                        assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                        assertThat(event.getRunCompleted().getFailure().getMessage())
+                                .contains("continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
+                    });
+        }
+
+        @Test
+        void shouldFailContinueAsNewWhenChildRunPending() {
+            final var childRunIdRef = new AtomicReference<UUID>();
+            registerWorkflow("parent", stringConverter(), stringConverter(), (ctx, _) -> {
+                final Awaitable<Void> childAwaitable = ctx.callChildWorkflow(
+                        "child", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter());
+                ctx.waitForExternalEvent("go", voidConverter(), Duration.ofMinutes(5)).await();
+                ctx.continueAsNew(new ContinueAsNewOptions<String>().withArgument("next"));
+                childAwaitable.await();
+                return null;
+            });
+            registerWorkflow("child", (ctx, _) -> {
+                childRunIdRef.compareAndSet(null, ctx.runId());
+                ctx.waitForExternalEvent("never", voidConverter(), Duration.ofMinutes(5)).await();
+                return null;
+            });
+            registerWorkflowWorker("workflow-worker", 2);
+            engine.start();
+
+            final UUID parentRunId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("parent", 1).withArgument("0"));
+
+            await("Child run to be created")
+                    .atMost(Duration.ofSeconds(30))
+                    .untilAsserted(() -> {
+                        final Stream<WorkflowEvent> events = engine
+                                .listRunHistory(new ListWorkflowRunHistoryRequest(parentRunId))
+                                .items()
+                                .stream()
+                                .map(WorkflowRunHistoryEntry::event);
+                        assertThat(events).anyMatch(
+                                event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.CHILD_RUN_CREATED);
+                    });
+            await("Child run to start")
+                    .atMost(Duration.ofSeconds(30))
+                    .until(() -> childRunIdRef.get() != null);
+
+            engine.sendExternalEvent(new ExternalEvent(parentRunId, "go", null)).join();
+
+            awaitRunStatus(parentRunId, WorkflowRunStatus.FAILED);
+
+            final Stream<WorkflowEvent> historyEvents = engine
+                    .listRunHistory(new ListWorkflowRunHistoryRequest(parentRunId))
+                    .items()
+                    .stream()
+                    .map(WorkflowRunHistoryEntry::event);
+            assertThat(historyEvents)
+                    .filteredOn(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.RUN_COMPLETED)
+                    .singleElement()
+                    .satisfies(event -> {
+                        assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                        assertThat(event.getRunCompleted().getFailure().getMessage())
+                                .contains("continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
+                    });
+
+            // Parent terminal-cleanup must propagate cancellation to the child.
+            awaitRunStatus(childRunIdRef.get(), WorkflowRunStatus.CANCELLED);
+        }
+
+        @Test
+        void shouldFailContinueAsNewWhenActivityTaskScheduledWithoutAwait() {
+            registerWorkflow("foo", stringConverter(), stringConverter(), (ctx, _) -> {
+                ctx.callActivity("blocked", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault());
+                ctx.continueAsNew(new ContinueAsNewOptions<String>().withArgument("next"));
+                return null;
+            });
+            registerActivity("blocked", (_, _) -> null);
+            registerWorkflowWorker("workflow-worker", 1);
+            engine.start();
+
+            final UUID runId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("foo", 1).withArgument("0"));
+
+            awaitRunStatus(runId, WorkflowRunStatus.FAILED);
+
+            final Stream<WorkflowEvent> historyEvents = engine
+                    .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
+                    .items()
+                    .stream()
+                    .map(WorkflowRunHistoryEntry::event);
+            assertThat(historyEvents)
+                    .filteredOn(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.RUN_COMPLETED)
+                    .singleElement()
+                    .satisfies(event -> {
+                        assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                        assertThat(event.getRunCompleted().getFailure().getMessage())
+                                .contains("continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
+                    });
+        }
+
+        @Test
+        void shouldFailContinueAsNewWhenTimerScheduledWithoutAwait() {
+            registerWorkflow("foo", stringConverter(), stringConverter(), (ctx, _) -> {
+                ctx.createTimer("long", Duration.ofMinutes(5));
+                ctx.continueAsNew(new ContinueAsNewOptions<String>().withArgument("next"));
+                return null;
+            });
+            registerWorkflowWorker("workflow-worker", 1);
+            engine.start();
+
+            final UUID runId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("foo", 1).withArgument("0"));
+
+            awaitRunStatus(runId, WorkflowRunStatus.FAILED);
+
+            final Stream<WorkflowEvent> historyEvents = engine
+                    .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
+                    .items()
+                    .stream()
+                    .map(WorkflowRunHistoryEntry::event);
+            assertThat(historyEvents)
+                    .filteredOn(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.RUN_COMPLETED)
+                    .singleElement()
+                    .satisfies(event -> {
+                        assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                        assertThat(event.getRunCompleted().getFailure().getMessage())
+                                .contains("continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
+                    });
+        }
+
+        @Test
+        void shouldFailContinueAsNewWhenChildRunScheduledWithoutAwait() {
+            registerWorkflow("parent", stringConverter(), stringConverter(), (ctx, _) -> {
+                ctx.callChildWorkflow("child", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter());
+                ctx.continueAsNew(new ContinueAsNewOptions<String>().withArgument("next"));
+                return null;
+            });
+            registerWorkflow("child", (ctx, _) -> {
+                ctx.waitForExternalEvent("never", voidConverter(), Duration.ofMinutes(5)).await();
+                return null;
+            });
+            registerWorkflowWorker("workflow-worker", 2);
+            engine.start();
+
+            final UUID parentRunId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("parent", 1).withArgument("0"));
+
+            awaitRunStatus(parentRunId, WorkflowRunStatus.FAILED);
+
+            final Stream<WorkflowEvent> historyEvents = engine
+                    .listRunHistory(new ListWorkflowRunHistoryRequest(parentRunId))
+                    .items()
+                    .stream()
+                    .map(WorkflowRunHistoryEntry::event);
+            assertThat(historyEvents)
+                    .filteredOn(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.RUN_COMPLETED)
+                    .singleElement()
+                    .satisfies(event -> {
+                        assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                        assertThat(event.getRunCompleted().getFailure().getMessage())
+                                .contains("continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
+                    });
+        }
+
     }
 
     @Test
@@ -1413,7 +1619,7 @@ class DexEngineImplTest {
             completedRuns.addAll(event.completedRuns());
         });
 
-        registerWorkflow("foo", stringConverter(), stringConverter(), (ctx, arg) -> {
+        registerWorkflow("foo", stringConverter(), stringConverter(), (_, arg) -> {
             final boolean shouldFail = Boolean.parseBoolean(arg);
             if (shouldFail) {
                 throw new IllegalStateException();
@@ -1452,7 +1658,7 @@ class DexEngineImplTest {
 
     @Test
     void shouldListRuns() {
-        registerWorkflow("test", (ctx, arg) -> null);
+        registerWorkflow("test", (_, _) -> null);
 
         for (int i = 0; i < 10; i++) {
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
@@ -1477,7 +1683,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldReturnTrueWhenRunExistsWithMatchingStatus() {
-            registerWorkflow("test", (ctx, arg) -> null);
+            registerWorkflow("test", (_, _) -> null);
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
             assertThat(engine.existsRun(new ExistsWorkflowRunRequest(
@@ -1486,7 +1692,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldReturnFalseWhenNoRunExistsWithMatchingStatus() {
-            registerWorkflow("test", (ctx, arg) -> null);
+            registerWorkflow("test", (_, _) -> null);
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
             assertThat(engine.existsRun(new ExistsWorkflowRunRequest(
@@ -1495,7 +1701,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldReturnTrueWhenRunExistsWithMatchingLabels() {
-            registerWorkflow("test", (ctx, arg) -> null);
+            registerWorkflow("test", (_, _) -> null);
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
                     .withLabels(Map.of("foo", "bar")));
 
@@ -1505,7 +1711,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldReturnFalseWhenNoRunExistsWithMatchingLabels() {
-            registerWorkflow("test", (ctx, arg) -> null);
+            registerWorkflow("test", (_, _) -> null);
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
                     .withLabels(Map.of("foo", "bar")));
 
@@ -1515,7 +1721,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldReturnTrueWhenRunExistsWithMatchingStatusAndLabels() {
-            registerWorkflow("test", (ctx, arg) -> null);
+            registerWorkflow("test", (_, _) -> null);
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
                     .withLabels(Map.of("foo", "bar")));
 
@@ -1525,7 +1731,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldReturnFalseWhenRunExistsWithMatchingStatusButNotLabels() {
-            registerWorkflow("test", (ctx, arg) -> null);
+            registerWorkflow("test", (_, _) -> null);
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
                     .withLabels(Map.of("foo", "bar")));
 
@@ -1540,7 +1746,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldListRunHistory() {
-            registerWorkflow("foo", (ctx, arg) -> {
+            registerWorkflow("foo", (ctx, _) -> {
                 ctx.executeSideEffect("a", () -> {
                 }).await();
                 ctx.executeSideEffect("b", () -> {
@@ -1575,7 +1781,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldListRunHistoryInDescOrder() {
-            registerWorkflow("foo", (ctx, arg) -> {
+            registerWorkflow("foo", (ctx, _) -> {
                 ctx.executeSideEffect("a", () -> {
                 }).await();
                 ctx.executeSideEffect("b", () -> {
@@ -1620,7 +1826,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldListRunHistoryFromSequenceNumber() {
-            registerWorkflow("foo", (ctx, arg) -> {
+            registerWorkflow("foo", (ctx, _) -> {
                 ctx.executeSideEffect("a", () -> {
                 }).await();
                 ctx.executeSideEffect("b", () -> {
@@ -1656,7 +1862,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldListRunHistoryFromSequenceNumberInDescOrder() {
-            registerWorkflow("foo", (ctx, arg) -> {
+            registerWorkflow("foo", (ctx, _) -> {
                 ctx.executeSideEffect("a", () -> {
                 }).await();
                 ctx.executeSideEffect("b", () -> {
@@ -1702,7 +1908,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldReturnMetadataWhenRunExistsWithNonTerminalState() {
-            registerWorkflow("foo", (ctx, arg) -> null);
+            registerWorkflow("foo", (_, _) -> null);
 
             final UUID runId = engine.createRun(
                     new CreateWorkflowRunRequest<>("foo", 1)
@@ -1724,7 +1930,7 @@ class DexEngineImplTest {
 
         @Test
         void shouldReturnNullWhenRunExistsWithTerminalState() {
-            registerWorkflow("foo", (ctx, arg) -> null);
+            registerWorkflow("foo", (_, _) -> null);
             registerWorkflowWorker("workflow-worker", 1);
             engine.start();
 

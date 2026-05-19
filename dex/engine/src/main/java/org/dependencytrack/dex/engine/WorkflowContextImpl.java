@@ -71,6 +71,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
@@ -94,6 +95,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
     private final PayloadConverter<R> resultConverter;
     private final List<WorkflowEvent> eventHistory;
     private final List<WorkflowEvent> newEvents;
+    private final BooleanSupplier hasPendingWorkSupplier;
     private final List<WorkflowEvent> suspendedEvents;
     private final Map<Integer, WorkflowEvent> eventById;
     private final Map<Integer, WorkflowCommand> pendingCommandByEventId;
@@ -122,7 +124,8 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
             final PayloadConverter<A> argumentConverter,
             final PayloadConverter<R> resultConverter,
             final List<WorkflowEvent> eventHistory,
-            final List<WorkflowEvent> newEvents) {
+            final List<WorkflowEvent> newEvents,
+            final BooleanSupplier hasPendingWorkSupplier) {
         this.runId = runId;
         this.workflowName = workflowName;
         this.workflowVersion = workflowVersion;
@@ -134,6 +137,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
         this.resultConverter = resultConverter;
         this.eventHistory = eventHistory;
         this.newEvents = newEvents;
+        this.hasPendingWorkSupplier = hasPendingWorkSupplier;
         this.suspendedEvents = new ArrayList<>();
         this.eventById = new HashMap<>();
         this.pendingCommandByEventId = new HashMap<>();
@@ -368,6 +372,16 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
     public void continueAsNew(final ContinueAsNewOptions<A> options) {
         requireNotInSideEffect("continueAsNew is not allowed from within a side effect");
         requireNonNull(options, "options must not be null");
+        final boolean hasUnemittedCreateCommand =
+                pendingCommandByEventId.values().stream()
+                        .anyMatch(cmd -> cmd instanceof CreateActivityTaskCommand
+                                || cmd instanceof CreateChildRunCommand
+                                || cmd instanceof CreateTimerCommand);
+        if (hasPendingWorkSupplier.getAsBoolean() || hasUnemittedCreateCommand) {
+            throw new IllegalStateException("""
+                    continueAsNew is not allowed while activity tasks, child runs, or timers \
+                    are still pending; await or cancel them first""");
+        }
         throw new WorkflowRunContinuedAsNewError(
                 argumentConverter.convertToPayload(options.argument()));
     }

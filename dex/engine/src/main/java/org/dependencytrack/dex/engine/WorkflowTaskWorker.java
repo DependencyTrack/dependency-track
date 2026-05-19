@@ -142,7 +142,10 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
                     workflowMetadata.argumentConverter(),
                     workflowMetadata.resultConverter(),
                     workflowRunState.eventHistory(),
-                    workflowRunState.newEvents());
+                    workflowRunState.newEvents(),
+                    () -> !workflowRunState.pendingChildRunIds().isEmpty()
+                            || !workflowRunState.pendingActivityTaskIds().isEmpty()
+                            || !workflowRunState.pendingTimerCreatedEventIds().isEmpty());
             final WorkflowRunExecutionResult executionResult = ctx.execute();
 
             workflowRunState.setCustomStatus(executionResult.customStatus());

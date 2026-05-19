@@ -320,14 +320,24 @@ public final class Application {
 
     private static final Set<String> HISTOGRAM_METER_NAMES = Set.of(
             "alpine_event_processing",
-            "dt.notification.router.rule.query.latency",
+            "dt.dex.engine.activity.task.scheduling.latency",
+            "dt.dex.engine.buffer.flush.batch.size",
+            "dt.dex.engine.buffer.flush.latency",
+            "dt.dex.engine.buffer.item.wait.latency",
+            "dt.dex.engine.task.worker.poll.latency",
+            "dt.dex.engine.task.worker.process.latency",
+            "dt.dex.engine.task.worker.tasks.polled",
+            "dt.dex.engine.workflow.task.scheduling.latency",
             "dt.notification.router.rule.filter.latency",
+            "dt.notification.router.rule.query.latency",
             "dt.notifications.emit.latency",
             "dt.outbox.relay.cycle.latency",
             "dt.outbox.relay.poll.latency",
             "dt.outbox.relay.send.latency",
-            "pc.user.function.processing.time",
-            "http.server.requests");
+            "http.client.requests",
+            "http.server.requests",
+            "jdbi.query.latency",
+            "vuln_policy_evaluation");
 
     private static void configureMeterRegistry(Config config, MeterRegistry meterRegistry) {
         final boolean metricsEnabled = config

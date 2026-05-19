@@ -38,7 +38,7 @@ When mapping OIDC groups to Dependency-Track teams, it is important to understan
 
 The following is an example role structure for enterprise deployments. Organizations should adapt this to their own needs, as roles may not map cleanly to every environment:
 
-| Team | Recommended Permissions |
+| Team | Example Permissions |
 |---|---|
 | Security Administrators | VIEW_PORTFOLIO, ACCESS_MANAGEMENT, SYSTEM_CONFIGURATION, POLICY_MANAGEMENT, PORTFOLIO_MANAGEMENT |
 | Security Analysts |  VIEW_PORTFOLIO, VULNERABILITY_ANALYSIS, POLICY_VIOLATION_ANALYSIS, VIEW_POLICY_VIOLATION |

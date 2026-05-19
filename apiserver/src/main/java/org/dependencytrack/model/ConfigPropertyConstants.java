@@ -43,7 +43,7 @@ public enum ConfigPropertyConstants {
     MAINTENANCE_VULNERABILITY_SCAN_RETENTION_HOURS("maintenance", "vuln.scan.retention.hours", "24", PropertyType.INTEGER, "Number of hours to retain vulnerability scan records for", ConfigPropertyAccessMode.READ_WRITE),
     VULNERABILITY_POLICY_FILE_LAST_MODIFIED_HASH("vulnerability-policy", "vulnerability.policy.file.last.modified.hash", null, PropertyType.STRING, "Hash value or etag of the last fetched bundle if any", ConfigPropertyAccessMode.READ_ONLY),
     VULNERABILITY_SOURCE_EPSS_ENABLED("vuln-source", "epss.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable Exploit Prediction Scoring System", ConfigPropertyAccessMode.READ_WRITE),
-    VULNERABILITY_SOURCE_EPSS_FEEDS_URL("vuln-source", "epss.feeds.url", "https://epss.cyentia.com", PropertyType.URL, "A base URL pointing to the hostname and path of the EPSS feeds", ConfigPropertyAccessMode.READ_WRITE),
+    VULNERABILITY_SOURCE_EPSS_FEEDS_URL("vuln-source", "epss.feeds.url", "https://epss.empiricalsecurity.com", PropertyType.URL, "A base URL pointing to the hostname and path of the EPSS feeds", ConfigPropertyAccessMode.READ_WRITE),
     ACCEPT_ARTIFACT_CYCLONEDX("artifact", "cyclonedx.enabled", "true", PropertyType.BOOLEAN, "Flag to enable/disable the systems ability to accept CycloneDX uploads", ConfigPropertyAccessMode.READ_WRITE),
     BOM_VALIDATION_MODE("artifact", "bom.validation.mode", BomValidationMode.ENABLED.name(), PropertyType.STRING, "Flag to control the BOM validation mode", ConfigPropertyAccessMode.READ_WRITE),
     BOM_VALIDATION_TAGS_INCLUSIVE("artifact", "bom.validation.tags.inclusive", "[]", PropertyType.STRING, "JSON array of tags for which BOM validation shall be performed", ConfigPropertyAccessMode.READ_WRITE),

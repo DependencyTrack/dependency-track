@@ -46,9 +46,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.SequencedCollection;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.fasterxml.uuid.Generators.timeBasedEpochRandomGenerator;
@@ -78,6 +80,7 @@ final class WorkflowRunState {
     private final List<WorkflowMessage> pendingMessages;
     private final Map<Integer, UUID> pendingChildRunIdByEventId;
     private final Map<Integer, ActivityTaskId> pendingActivityTaskIdByEventId;
+    private final Set<Integer> pendingTimerCreatedEventIds;
     private @Nullable WorkflowEvent createdEvent;
     private @Nullable WorkflowEvent startedEvent;
     private @Nullable WorkflowEvent completedEvent;
@@ -104,6 +107,7 @@ final class WorkflowRunState {
         this.pendingMessages = new ArrayList<>();
         this.pendingChildRunIdByEventId = new HashMap<>();
         this.pendingActivityTaskIdByEventId = new HashMap<>();
+        this.pendingTimerCreatedEventIds = new HashSet<>();
 
         for (final WorkflowEvent event : eventHistory) {
             applyEvent(event, /* isNew */ false);
@@ -169,6 +173,14 @@ final class WorkflowRunState {
      */
     Collection<ActivityTaskId> pendingActivityTaskIds() {
         return pendingActivityTaskIdByEventId.values();
+    }
+
+    /**
+     * @return IDs of {@code TimerCreated} events for which no corresponding
+     * {@code TimerElapsed} event has been recorded yet.
+     */
+    Set<Integer> pendingTimerCreatedEventIds() {
+        return pendingTimerCreatedEventIds;
     }
 
     @Nullable
@@ -333,6 +345,11 @@ final class WorkflowRunState {
             case CHILD_RUN_FAILED -> {
                 final int createdEventId = event.getChildRunFailed().getChildRunCreatedEventId();
                 pendingChildRunIdByEventId.remove(createdEventId);
+            }
+            case TIMER_CREATED -> pendingTimerCreatedEventIds.add(event.getId());
+            case TIMER_ELAPSED -> {
+                final int createdEventId = event.getTimerElapsed().getTimerCreatedEventId();
+                pendingTimerCreatedEventIds.remove(createdEventId);
             }
         }
 

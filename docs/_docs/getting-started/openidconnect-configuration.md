@@ -30,6 +30,25 @@ When someone authenticates using OIDC, the claims provided in the ID token or `/
 2. Create a group with the name used in the OIDC team claim configured below. The value _must_ match exactly, including case.
 3. If the team you want members of the OIDC group to join already exists, use the _Mapped Teams_ menu to select it. If the team does not exist, open _Administration_ -> _Access Management_ -> _Teams_ to create it and, after having done so, add the OIDC group to the _Mapped OpenID Connect Groups_ list.
 
+## Dependency-Track Permission Roles
+
+When mapping OIDC groups to Dependency-Track teams, it is important to understand what permissions each role grants. For a full list of available permissions and their descriptions, refer to the [Users and Permissions](../administration/users-and-permissions.md) documentation.
+
+### Example Enterprise Role Structure
+
+The following is an example role structure for enterprise deployments. Organizations should adapt this to their own needs, as roles may not map cleanly to every environment:
+
+| Team | Example Permissions |
+|---|---|
+| Security Administrators | VIEW_PORTFOLIO, ACCESS_MANAGEMENT, SYSTEM_CONFIGURATION, POLICY_MANAGEMENT, PORTFOLIO_MANAGEMENT |
+| Security Analysts |  VIEW_PORTFOLIO, VULNERABILITY_ANALYSIS, POLICY_VIOLATION_ANALYSIS, VIEW_POLICY_VIOLATION |
+| Developers | VIEW_PORTFOLIO, BOM_UPLOAD, PROJECT_CREATION_UPLOAD, VIEW_BADGES, VIEW_POLICY_VIOLATION |
+| Read Only | VIEW_PORTFOLIO, VIEW_BADGES, VIEW_POLICY_VIOLATION |
+
+#### Okta
+
+In Okta, create groups and assign users. Configure the groups claim in your Okta application to include group memberships. Map the Okta group names to Dependency-Track teams under _Administration_ -> _Access Management_ -> _OpenID Connect Groups_.
+
 ### Example Configurations
 
 Generally, Dependency-Track can be used with any identity provider that implements the [OpenID Connect](https://openid.net/connect/) standard.
@@ -328,8 +347,7 @@ The following steps demonstrate how to setup OpenID Connect with Microsoft Entra
    - OpenId permissions -> profile
    - GroupMember -> GroupMember.Read.All
   
-5. Note that Entra will return the group UUID in the claims (not the group name). 
-
+5. Note that Entra ID returns group UUIDs in the claims (not the group name). To use group names instead, configure optional claims in your app registration to return `groups` as names. Alternatively, use the group UUID as the group name in Dependency-Track's _Administration_ -> _Access Management_ -> _OpenID Connect Groups_ configuration. 
 
 ### Example setup with AWS Cognito
 

@@ -38,6 +38,10 @@ import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABL
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_API_KEY;
 import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_REIMPORT_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_ENABLED;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_ENGAGEMENT_NAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_PRODUCT_TYPE_NAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT;
 
 public class DefectDojoUploader extends AbstractIntegrationPoint implements ProjectFindingUploader {
 
@@ -47,6 +51,10 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     private static final String DO_NOT_REACTIVATE_PROPERTY = "defectdojo.doNotReactivate";
     private static final String VERIFIED_PROPERTY = "defectdojo.verified";
     private static final String TEST_TITLE_PROPERTY = "defectdojo.testTitle";
+    private static final String AUTOCREATE_PRODUCT_NAME_PROPERTY = "defectdojo.autocreate.productName";
+    private static final String AUTOCREATE_ENGAGEMENT_NAME_PROPERTY = "defectdojo.autocreate.engagementName";
+    private static final String AUTOCREATE_PRODUCT_TYPE_NAME_PROPERTY = "defectdojo.autocreate.productTypeName";
+    private static final String AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT_PROPERTY = "defectdojo.autocreate.deduplicationOnEngagement";
 
     public boolean isReimportConfigured(final Project project) {
         final ProjectProperty reimport = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), REIMPORT_PROPERTY);
@@ -84,6 +92,55 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         return null;
     }
 
+    public boolean isAutoCreateEnabled() {
+        final ConfigProperty autoCreateEnabled = qm.getConfigProperty(DEFECTDOJO_AUTOCREATE_ENABLED.getGroupName(), DEFECTDOJO_AUTOCREATE_ENABLED.getPropertyName());
+        return autoCreateEnabled != null && Boolean.parseBoolean(autoCreateEnabled.getPropertyValue());
+    }
+
+    public String getProductName(final Project project) {
+        final ProjectProperty productName = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), AUTOCREATE_PRODUCT_NAME_PROPERTY);
+        if (productName != null && productName.getPropertyValue() != null) {
+            return productName.getPropertyValue();
+        }
+        return project.getName();
+    }
+
+    public String getEngagementName(final Project project) {
+        final ProjectProperty engagementName = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), AUTOCREATE_ENGAGEMENT_NAME_PROPERTY);
+        if (engagementName != null && engagementName.getPropertyValue() != null) {
+            return engagementName.getPropertyValue();
+        }
+        final ConfigProperty globalEngagementName = qm.getConfigProperty(DEFECTDOJO_AUTOCREATE_ENGAGEMENT_NAME.getGroupName(), DEFECTDOJO_AUTOCREATE_ENGAGEMENT_NAME.getPropertyName());
+        if (globalEngagementName != null && globalEngagementName.getPropertyValue() != null) {
+            return globalEngagementName.getPropertyValue();
+        }
+        return "dependencytrack";
+    }
+
+    public String getProductTypeName(final Project project) {
+        final ProjectProperty productTypeName = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), AUTOCREATE_PRODUCT_TYPE_NAME_PROPERTY);
+        if (productTypeName != null && productTypeName.getPropertyValue() != null) {
+            return productTypeName.getPropertyValue();
+        }
+        final ConfigProperty globalProductTypeName = qm.getConfigProperty(DEFECTDOJO_AUTOCREATE_PRODUCT_TYPE_NAME.getGroupName(), DEFECTDOJO_AUTOCREATE_PRODUCT_TYPE_NAME.getPropertyName());
+        if (globalProductTypeName != null && globalProductTypeName.getPropertyValue() != null) {
+            return globalProductTypeName.getPropertyValue();
+        }
+        return "Dependency Track";
+    }
+
+    public boolean isDeduplicationOnEngagementEnabled(final Project project) {
+        final ProjectProperty deduplicationOnEngagement = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT_PROPERTY);
+        if (deduplicationOnEngagement != null) {
+            return Boolean.parseBoolean(deduplicationOnEngagement.getPropertyValue());
+        }
+        final ConfigProperty globalDeduplicationOnEngagement = qm.getConfigProperty(DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT.getGroupName(), DEFECTDOJO_AUTOCREATE_DEDUPLICATION_ON_ENGAGEMENT.getPropertyName());
+        if (globalDeduplicationOnEngagement != null) {
+            return Boolean.parseBoolean(globalDeduplicationOnEngagement.getPropertyValue());
+        }
+        return false;
+    }
+
     @Override
     public String name() {
         return "DefectDojo";
@@ -103,7 +160,11 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     @Override
     public boolean isProjectConfigured(final Project project) {
         final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
-        return engagementId != null && engagementId.getPropertyValue() != null;
+        if (engagementId != null && engagementId.getPropertyValue() != null) {
+            return true;
+        }
+        // If auto-create is enabled, project is considered configured
+        return isAutoCreateEnabled();
     }
 
     @Override
@@ -119,19 +180,73 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         final boolean globalReimportEnabled = qm.isEnabled(DEFECTDOJO_REIMPORT_ENABLED);
         final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
         final boolean verifyFindings = isVerifiedConfigured(project);
+
         try {
             final DefectDojoClient client = new DefectDojoClient(this, URI.create(defectDojoUrl.getPropertyValue()).toURL());
-            if (isReimportConfigured(project) || globalReimportEnabled) {
-                final ArrayList<String> testsIds = client.getDojoTestIds(apiKey.getPropertyValue(), engagementId.getPropertyValue());
-                final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds, getTestTitle(project));
-                LOGGER.debug("Found existing test Id: " + testId);
-                if (testId.equals("")) {
-                    client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, verifyFindings, getTestTitle(project));
+
+            // Check if manual engagement ID is configured (takes precedence)
+            if (engagementId != null && engagementId.getPropertyValue() != null) {
+                // Traditional flow with engagement ID
+                if (isReimportConfigured(project) || globalReimportEnabled) {
+                    final ArrayList<String> testsIds = client.getDojoTestIds(apiKey.getPropertyValue(), engagementId.getPropertyValue());
+                    final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds, getTestTitle(project));
+                    LOGGER.debug("Found existing test Id: " + testId);
+                    if (testId.equals("")) {
+                        client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, verifyFindings, getTestTitle(project));
+                    } else {
+                        client.reimportDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, testId, isDoNotReactivateConfigured(project), verifyFindings, getTestTitle(project));
+                    }
                 } else {
-                    client.reimportDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, testId, isDoNotReactivateConfigured(project), verifyFindings, getTestTitle(project));
+                    client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, verifyFindings, getTestTitle(project));
+                }
+            } else if (isAutoCreateEnabled()) {
+                // Auto-create context flow
+                LOGGER.info("Using DefectDojo auto-create context for project: " + project.getName());
+                final String productTypeName = getProductTypeName(project);
+                final String productName = getProductName(project);
+                final String engagementName = getEngagementName(project);
+                final boolean deduplicationOnEngagement = isDeduplicationOnEngagementEnabled(project);
+
+                try {
+                    if (isReimportConfigured(project) || globalReimportEnabled) {
+                        // Use reimport-scan which automatically finds/creates/updates tests
+                        LOGGER.debug("Reimport is enabled, using reimport-scan with auto-create context");
+                        client.reimportDependencyTrackFindings(
+                            apiKey.getPropertyValue(),
+                            null, // No engagement ID when using auto-create
+                            payload,
+                            null, // No test ID when using auto-create
+                            isDoNotReactivateConfigured(project),
+                            verifyFindings,
+                            getTestTitle(project),
+                            productTypeName,
+                            productName,
+                            engagementName,
+                            true, // Enable auto-create context
+                            deduplicationOnEngagement
+                        );
+                    } else {
+                        // Use import-scan for first-time creation
+                        LOGGER.debug("Reimport is disabled, using import-scan with auto-create context");
+                        client.uploadDependencyTrackFindings(
+                            apiKey.getPropertyValue(),
+                            null, // No engagement ID when using auto-create
+                            payload,
+                            verifyFindings,
+                            getTestTitle(project),
+                            productTypeName,
+                            productName,
+                            engagementName,
+                            true, // Enable auto-create context
+                            deduplicationOnEngagement
+                        );
+                    }
+                    LOGGER.info("Successfully uploaded findings to DefectDojo with auto-created context");
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to upload findings to DefectDojo with auto-create context", e);
                 }
             } else {
-                client.uploadDependencyTrackFindings(apiKey.getPropertyValue(), engagementId.getPropertyValue(), payload, verifyFindings, getTestTitle(project));
+                LOGGER.warn("Project " + project.getName() + " has no engagement ID configured and auto-create is not enabled");
             }
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to DefectDojo", e);

@@ -129,11 +129,11 @@ final class DexEngineImpl implements DexEngine {
 
     enum Status {
 
-        CREATED(1, 3), // 0
-        STARTING(2),   // 1
-        RUNNING(3),    // 2
-        STOPPING(4),   // 3
-        STOPPED(1);    // 4
+        CREATED(1, 3),  // 0
+        STARTING(2, 3), // 1
+        RUNNING(3),     // 2
+        STOPPING(4),    // 3
+        STOPPED(1);     // 4
 
         private final Set<Integer> allowedTransitions;
 
@@ -1598,16 +1598,13 @@ final class DexEngineImpl implements DexEngine {
             throw e;
         }
 
-        final Map<ActivityTaskId, CompletableFuture<TaskLock>> futureByTaskId = heartbeats.stream()
-                .collect(Collectors.toMap(
-                        ActivityTaskHeartbeat::taskId,
-                        ActivityTaskHeartbeat::future));
+        for (final ActivityTaskHeartbeat heartbeat : heartbeats) {
+            final CompletableFuture<TaskLock> future = heartbeat.future();
+            if (future.isDone()) {
+                continue;
+            }
 
-        for (final var entry : futureByTaskId.entrySet()) {
-            final ActivityTaskId taskId = entry.getKey();
-            final CompletableFuture<TaskLock> future = entry.getValue();
-
-            final TaskLock lock = lockByTaskId.get(taskId);
+            final TaskLock lock = lockByTaskId.get(heartbeat.taskId());
             if (lock != null) {
                 future.complete(lock);
             } else {

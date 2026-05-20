@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>dependency-track-parent</artifactId>
-        <version>5.7.0-alpha.8-SNAPSHOT</version>
+        <version>5.7.0-alpha.8</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -148,7 +148,7 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>org.dependencytrack.v4migrator.V4Migrator</mainClass>
                                 </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                             </transformers>
                         </configuration>
                     </execution>
@@ -165,7 +165,7 @@
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <excludes combine.self="override"/>
+                            <excludes combine.self="override" />
                             <includes>
                                 <include>**/*Test.java</include>
                                 <include>**/*IT.java</include>

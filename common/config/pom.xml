@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>common-parent</artifactId>
-        <version>5.7.0-alpha.8-SNAPSHOT</version>
+        <version>5.7.0-alpha.8</version>
     </parent>
 
     <artifactId>common-config</artifactId>

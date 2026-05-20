@@ -61,6 +61,8 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -127,6 +129,7 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
             @Nullable Integer workflowVersion,
             @Nullable String workflowInstanceId,
             @Nullable WorkflowRunStatus status,
+            @Nullable List<String> label,
             @Nullable Long createdAtFrom,
             @Nullable Long createdAtTo,
             @Nullable Long completedAtFrom,
@@ -141,6 +144,7 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
                         .withWorkflowVersion(workflowVersion)
                         .withWorkflowInstanceId(workflowInstanceId)
                         .withStatuses(status != null ? Set.of(convert(status)) : null)
+                        .withLabels(convertLabelFilters(label))
                         .withCreatedAtFrom(createdAtFrom != null
                                 ? Instant.ofEpochMilli(createdAtFrom)
                                 : null)
@@ -241,6 +245,22 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
         };
     }
 
+    private static @Nullable Map<String, String> convertLabelFilters(@Nullable List<String> labelFilters) {
+        if (labelFilters == null || labelFilters.isEmpty()) {
+            return null;
+        }
+
+        final var labels = new HashMap<String, String>(labelFilters.size());
+        for (final String entry : labelFilters) {
+            // NB: format is already validated via @Pattern annotation in
+            // the WorkflowsApi interface.
+            final int eq = entry.indexOf('=');
+            labels.put(entry.substring(0, eq), entry.substring(eq + 1));
+        }
+
+        return labels;
+    }
+
     private static org.dependencytrack.api.v2.model.WorkflowRunMetadata convert(WorkflowRunMetadata runMetadata) {
         return org.dependencytrack.api.v2.model.WorkflowRunMetadata.builder()
                 .id(runMetadata.id())
@@ -283,4 +303,5 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
                 .event(eventJsonMap)
                 .build();
     }
+    
 }

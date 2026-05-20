@@ -1678,6 +1678,34 @@ class DexEngineImplTest {
         assertThat(runsPage.nextPageToken()).isNull();
     }
 
+    @Test
+    void shouldListRunsFilteredByLabels() {
+        registerWorkflow("test", (_, _) -> null);
+
+        engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
+                .withLabels(Map.of("env", "prod", "team", "api")));
+        engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
+                .withLabels(Map.of("env", "prod", "team", "web")));
+        engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
+                .withLabels(Map.of("env", "dev", "team", "api")));
+        engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+
+        assertThat(engine.listRuns(
+                new ListWorkflowRunsRequest()
+                        .withLabels(Map.of("env", "prod"))).items())
+                .hasSize(2);
+
+        assertThat(engine.listRuns(
+                new ListWorkflowRunsRequest()
+                        .withLabels(Map.of("env", "prod", "team", "api"))).items())
+                .hasSize(1);
+
+        assertThat(engine.listRuns(
+                new ListWorkflowRunsRequest()
+                        .withLabels(Map.of("env", "staging"))).items())
+                .isEmpty();
+    }
+
     @Nested
     class ExistsRunTest {
 

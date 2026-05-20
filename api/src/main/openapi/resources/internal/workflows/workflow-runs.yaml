@@ -55,6 +55,19 @@ get:
       in: query
       schema:
         $ref: "./schemas/workflow-run-status.yaml"
+    - name: label
+      description: |-
+        Filter by label in `key=value` form. Repeat to require multiple labels.
+        A run matches only if it carries every supplied label.
+        On duplicate keys the last occurrence wins.
+      in: query
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+          pattern: "^[^=]+=.*$"
     - name: created_at_from
       description: Filter runs created on or after this timestamp.
       in: query

@@ -181,6 +181,8 @@ tags:
   description: Endpoints related to projects
 - name: Secrets
   description: Endpoints related to secrets
+- name: System Capabilities
+  description: Endpoints exposing the capabilities of the running server
 - name: Task Queues
   description: Endpoints related to task queue management
 - name: Vuln Data Sources
@@ -225,6 +227,8 @@ paths:
     $ref: "./resources/vuln-data-sources/vuln-data-source-mirror-runs.yaml"
   /vuln-data-sources/{name}/mirror-runs/latest:
     $ref: "./resources/vuln-data-sources/vuln-data-source-mirror-run-latest.yaml"
+  /internal/system-capabilities:
+    $ref: "./resources/internal/system-capabilities/system-capabilities.yaml"
   /internal/task-queues/{type}:
     $ref: "./resources/internal/task-queues/task-queues.yaml"
   /internal/task-queues/{type}/{name}:

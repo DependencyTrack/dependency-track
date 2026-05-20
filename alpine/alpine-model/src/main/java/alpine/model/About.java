@@ -18,17 +18,10 @@
  */
 package alpine.model;
 
-import alpine.common.AboutProvider;
 import alpine.config.AlpineConfigKeys;
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ServiceLoader;
 
 /**
  * A value object describing the name of the application, version, and the timestamp when it was built.
@@ -91,29 +84,6 @@ public class About implements Serializable {
         public String getUuid() {
             return FRAMEWORK_UUID;
         }
-    }
-
-    /**
-     * @return Additional information provided by {@link AboutProvider}s
-     * @since 3.0.0
-     */
-    @JsonAnyGetter
-    @JsonInclude(Include.NON_EMPTY)
-    @SuppressWarnings("unused") // Called by JSON serializer.
-    public Map<String, Object> getProviderData() {
-        final ServiceLoader<AboutProvider> providers = ServiceLoader.load(AboutProvider.class);
-
-        final var data = new HashMap<String, Object>();
-        for (final AboutProvider provider : providers) {
-            final String providerName = provider.name();
-            final Map<String, Object> providerData = provider.collect();
-
-            if (providerData != null && !providerData.isEmpty()) {
-                data.put(providerName, providerData);
-            }
-        }
-
-        return data;
     }
 
 }

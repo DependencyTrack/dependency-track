@@ -16,28 +16,22 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.persistence.jdbi.query;
+package org.dependencytrack.capabilities;
 
-import org.jspecify.annotations.Nullable;
+import org.glassfish.hk2.api.ServiceLocator;
+
+import java.util.Map;
 
 /**
  * @since 5.0.0
  */
-public record ListAdvisoriesForProjectQuery(
-        long projectId,
-        @Nullable String pageToken,
-        int limit) {
+public interface CapabilityProvider {
 
-    public ListAdvisoriesForProjectQuery(long projectId) {
-        this(projectId, null, 100);
-    }
+    String namespace();
 
-    public ListAdvisoriesForProjectQuery withPageToken(@Nullable String pageToken) {
-        return new ListAdvisoriesForProjectQuery(this.projectId, pageToken, this.limit);
-    }
+    Map<String, Object> capabilities();
 
-    public ListAdvisoriesForProjectQuery withLimit(int limit) {
-        return new ListAdvisoriesForProjectQuery(this.projectId, this.pageToken, limit);
+    default void init(ServiceLocator serviceLocator) {
     }
 
 }

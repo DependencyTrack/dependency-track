@@ -18,46 +18,47 @@
  */
 package org.dependencytrack.secret;
 
-import alpine.common.AboutProvider;
+import org.dependencytrack.capabilities.CapabilityProvider;
 import org.dependencytrack.secret.management.SecretManager;
+import org.glassfish.hk2.api.ServiceLocator;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 5.0.0
  */
-public final class SecretManagerAboutProvider implements AboutProvider {
+public final class SecretManagementCapabilityProvider implements CapabilityProvider {
 
-    private final Supplier<SecretManager> instanceSupplier;
+    private @Nullable Supplier<SecretManager> secretManagerSupplier;
 
-    SecretManagerAboutProvider(final Supplier<@Nullable SecretManager> instanceSupplier) {
-        this.instanceSupplier = instanceSupplier;
-    }
-
-    @SuppressWarnings("unused")
-    public SecretManagerAboutProvider() {
-        // TODO: Find a way to get rid of this, we shouldn't rely on singletons.
-        this(() -> SecretManagerInitializer.secretManager);
+    @SuppressWarnings("unused") // Used by ServiceLoader.
+    public SecretManagementCapabilityProvider() {
     }
 
     @Override
-    public String name() {
-        return "secretManager";
+    public String namespace() {
+        return "secret_management";
     }
 
     @Override
-    public Map<String, Object> collect() {
-        SecretManager secretManager = instanceSupplier.get();
-        if (secretManager == null) {
-            return Collections.emptyMap();
+    public void init(ServiceLocator serviceLocator) {
+        this.secretManagerSupplier = () -> serviceLocator.getService(SecretManager.class);
+    }
+
+    @Override
+    public Map<String, Object> capabilities() {
+        if (secretManagerSupplier == null) {
+            return Map.of();
         }
 
-        return Map.ofEntries(
-                Map.entry("provider", secretManager.name()),
-                Map.entry("readOnly", secretManager.isReadOnly()));
+        final SecretManager secretManager = requireNonNull(
+                secretManagerSupplier.get(),
+                "secretManager must not be null");
+        return Map.of("read_only", secretManager.isReadOnly());
     }
 
 }

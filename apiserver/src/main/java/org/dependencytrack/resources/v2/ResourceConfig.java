@@ -27,6 +27,7 @@ import alpine.server.filters.RequestMdcEnrichmentFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.ext.ContextResolver;
 import org.dependencytrack.cache.CacheManagerBinder;
+import org.dependencytrack.capabilities.SystemCapabilitiesBinder;
 import org.dependencytrack.common.Mappers;
 import org.dependencytrack.dex.DexEngineBinder;
 import org.dependencytrack.filestorage.FileStorageBinder;
@@ -80,6 +81,7 @@ public final class ResourceConfig extends org.glassfish.jersey.server.ResourceCo
         register(FileStorageBinder.class);
         register(PluginManagerBinder.class);
         register(SecretManagerBinder.class);
+        register(SystemCapabilitiesBinder.class);
         register(VulnDataSourceMirrorServiceBinder.class);
     }
 

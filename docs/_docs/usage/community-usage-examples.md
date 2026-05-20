@@ -151,6 +151,19 @@ catch
 }
 ```
 
-[GitHub Advisories]: {{ site.baseurl }}{% link _docs/datasources/github-advisories.md %}
-[OSV]: {{ site.baseurl }}{% link _docs/datasources/osv.md %}
-[Snyk]: {{ site.baseurl }}{% link _docs/datasources/snyk.md %}
+### Importing Vulnerability Analysis Data from Excel to DT.
+
+> Contributed by [JoergBruenner](https://github.com/JoergBruenner)
+
+Not every software supplier supports VEX statements compliant to CycloneDX. They continue providing vulnerability analysis data by E-Mail. 
+You'd have to import that stuff manually to DT. That's no fun, even in a smaller environment. Here is the way to automate the import by the help of Excel.
+
+The Excel document [Audit.xlsx]({{ site.baseurl }}{% link files/Audit.xlsx %}) contains the vulnerability analysis information from your software supplier.
+It consists of three worksheets. The first worksheet, "Metadata", describes the project. The worksheet "Vulnerabilities" lists the
+affected components, their vulnerabilities and analysis state. The third worksheet contains data for the drop down lists. Don't edit there. The Excel 
+document will be red by a python script [ExcelToAudit.py]({{ site.baseurl }}{% link files/ExcelToAudit.py %}). It reads the data in the document and 
+sends them to DT by API call. The script expects configuration data in [excel.ini]({{ site.baseurl }}{% link files/excel.ini %}).
+
+Your vulnerability management works better if you merge the KEV and the EPSS scripts. Export the vulnerabilities to Excel. Ask your supplier to complete 
+the audit data and import them back to Dependency-Track. The import script will be simpler if you include the UUIDs of the project, components and vulnerabilities 
+into the Excel document.

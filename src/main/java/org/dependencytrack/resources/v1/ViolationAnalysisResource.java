@@ -35,6 +35,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Validator;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
@@ -46,15 +55,7 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest;
 import org.dependencytrack.util.NotificationUtil;
 
-import jakarta.validation.Validator;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import java.util.Objects;
 
 /**
  * JAX-RS resources for processing violation analysis decisions.
@@ -167,6 +168,10 @@ public class ViolationAnalysisResource extends AlpineResource {
                 analysisStateChange = true; // this is a new analysis - so set to true because it was previously null
                 if (ViolationAnalysisState.NOT_SET != request.getAnalysisState()) {
                     qm.makeViolationAnalysisComment(analysis, String.format("%s → %s", ViolationAnalysisState.NOT_SET, request.getAnalysisState()), commenter);
+                }
+                if (Objects.equals(request.isSuppressed(), true)) {
+                    suppressionChange = true;
+                    qm.makeViolationAnalysisComment(analysis, "Suppressed", commenter);
                 }
             }
 

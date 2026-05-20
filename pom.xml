@@ -155,7 +155,7 @@
         <lib.s3mock.version>5.0.0</lib.s3mock.version>
         <lib.slf4j.version>2.0.17</lib.slf4j.version>
         <lib.smallrye-config.version>3.17.2</lib.smallrye-config.version>
-        <lib.swagger.version>2.2.49</lib.swagger.version>
+        <lib.swagger.version>2.2.50</lib.swagger.version>
         <lib.system-stubs.version>2.1.8</lib.system-stubs.version>
         <lib.testcontainers.version>2.0.5</lib.testcontainers.version>
         <lib.tink.version>1.21.0</lib.tink.version>

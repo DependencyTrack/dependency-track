@@ -18,12 +18,9 @@
  */
 package alpine.model;
 
-import alpine.common.AboutProvider;
 import alpine.common.util.UuidUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.util.Map;
 
 public class AboutTest {
 
@@ -39,26 +36,6 @@ public class AboutTest {
         //Assertions.assertTrue(about.getFramework().getVersion().startsWith("3."));
         Assertions.assertTrue(about.getFramework().getTimestamp().startsWith("20"));
         Assertions.assertTrue(UuidUtil.isValidUUID(about.getFramework().getUuid()));
-
-        final Map<String, Object> providerData = about.getProviderData();
-        Assertions.assertEquals(1, providerData.size());
-        Assertions.assertNotNull(providerData.get("test"));
-        Assertions.assertTrue(providerData.get("test") instanceof Map);
-        Assertions.assertEquals("bar", ((Map<String, Object>) providerData.get("test")).get("foo"));
-    }
-
-    public static class TestProvider implements AboutProvider {
-
-        @Override
-        public String name() {
-            return "test";
-        }
-
-        @Override
-        public Map<String, Object> collect() {
-            return Map.of("foo", "bar");
-        }
-
     }
 
 }

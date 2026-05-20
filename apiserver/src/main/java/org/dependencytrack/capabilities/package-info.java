@@ -1,5 +1,5 @@
 /*
- * This file is part of Alpine.
+ * This file is part of Dependency-Track.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,9 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package alpine.common;
+@NullMarked
+package org.dependencytrack.capabilities;
 
-import java.util.Map;
-
-/**
- * @since 3.0.0
- */
-public interface AboutProvider {
-
-    /**
-     * @return The name of the component this provider collects "about" information for
-     */
-    String name();
-
-    /**
-     * @return Information about the described component
-     */
-    Map<String, Object> collect();
-
-}
+import org.jspecify.annotations.NullMarked;

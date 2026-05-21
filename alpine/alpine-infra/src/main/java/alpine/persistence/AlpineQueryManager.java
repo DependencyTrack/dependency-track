@@ -18,8 +18,6 @@
  */
 package alpine.persistence;
 
-import alpine.event.LdapSyncEvent;
-import alpine.event.framework.EventService;
 import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
 import alpine.model.LdapUser;
@@ -363,14 +361,12 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
      * @since 1.0.0
      */
     public LdapUser createLdapUser(final String username) {
-        final LdapUser createdUser = callInTransaction(() -> {
+        return callInTransaction(() -> {
             final var user = new LdapUser();
             user.setUsername(username);
-            user.setDN("Syncing...");
+            // DN and email are populated on first successful login.
             return pm.makePersistent(user);
         });
-        EventService.getInstance().publish(new LdapSyncEvent(createdUser.getUsername()));
-        return createdUser;
     }
 
     /**
@@ -383,6 +379,7 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
         return callInTransaction(() -> {
             final LdapUser user = getObjectById(LdapUser.class, transientUser.getId());
             user.setDN(transientUser.getDN());
+            user.setEmail(transientUser.getEmail());
             return user;
         });
     }

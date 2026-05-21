@@ -21,7 +21,6 @@ package alpine.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import javax.jdo.annotations.Column;
@@ -47,8 +46,7 @@ public class LdapUser extends User {
     private static final long serialVersionUID = 261924579887470488L;
 
     @Persistent
-    @Column(name = "DN", allowsNull = "false")
-    @NotBlank
+    @Column(name = "DN")
     @Size(min = 1, max = 255)
     @Pattern(regexp = "[\\P{Cc}]+", message = "The distinguished name must not contain control characters")
     private String dn;

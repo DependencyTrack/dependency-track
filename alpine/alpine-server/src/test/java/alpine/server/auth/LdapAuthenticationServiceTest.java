@@ -88,6 +88,33 @@ class LdapAuthenticationServiceTest {
     }
 
     @Test
+    void shouldRefreshDnAndEmailWhenExistingUserLogsIn() throws Exception {
+        // Pre-seed a user with a missing DN and a stale email.
+        // Login must populate the DN from LDAP and overwrite the email with whatever
+        // the directory reports, i.e. null for the lldap admin,
+        // which has no mail attribute set out of the box.
+        try (final var qm = new AlpineQueryManager()) {
+            final var existing = new LdapUser();
+            existing.setUsername(ADMIN_USERNAME);
+            existing.setEmail("stale@example.com");
+            qm.persist(existing);
+        }
+
+        final var authService = new LdapAuthenticationService(defaultConfig(), ADMIN_USERNAME, ADMIN_PASSWORD);
+
+        final var principal = (LdapUser) authService.authenticate();
+        assertThat(principal).isNotNull();
+        assertThat(principal.getDN()).isEqualToIgnoringCase(ADMIN_DN);
+        assertThat(principal.getEmail()).isNull();
+
+        try (final var qm = new AlpineQueryManager()) {
+            final LdapUser persisted = qm.getLdapUser(ADMIN_USERNAME);
+            assertThat(persisted.getDN()).isEqualToIgnoringCase(ADMIN_DN);
+            assertThat(persisted.getEmail()).isNull();
+        }
+    }
+
+    @Test
     void shouldThrowInvalidCredentialsWhenPasswordIsWrong() {
         final var authService = new LdapAuthenticationService(defaultConfig(), ADMIN_USERNAME, "wrong-password");
 
@@ -127,7 +154,40 @@ class LdapAuthenticationServiceTest {
         assertThat(principal.getTeams()).extracting(Team::getName).containsExactly("admins");
     }
 
-@Test
+    @Test
+    void shouldRefreshTeamMembershipWhenExistingUserLogsInWithTeamSyncEnabled() throws Exception {
+        final String adminGroupDn = "cn=lldap_admin,ou=groups,dc=example,dc=com";
+        final String absentGroupDn = "cn=other-group,ou=groups,dc=example,dc=com";
+
+        try (final var qm = new AlpineQueryManager()) {
+            // staleTeam is mapped to a group the admin user is NOT in.
+            // synchronizeTeamMembership should remove the admin from it.
+            var staleTeam = new Team();
+            staleTeam.setName("stale-team");
+            staleTeam = qm.persist(staleTeam);
+            qm.createMappedLdapGroup(staleTeam, absentGroupDn);
+
+            var adminTeam = new Team();
+            adminTeam.setName("admins");
+            adminTeam = qm.persist(adminTeam);
+            qm.createMappedLdapGroup(adminTeam, adminGroupDn);
+
+            final var existing = new LdapUser();
+            existing.setUsername(ADMIN_USERNAME);
+            existing.setDN(ADMIN_DN);
+            qm.persist(existing);
+            qm.addUserToTeam(existing, staleTeam);
+        }
+
+        final Config config = configWith(Map.of(AlpineConfigKeys.LDAP_TEAM_SYNCHRONIZATION, "true"));
+        final var authService = new LdapAuthenticationService(config, ADMIN_USERNAME, ADMIN_PASSWORD);
+
+        final var principal = (LdapUser) authService.authenticate();
+
+        assertThat(principal.getTeams()).extracting(Team::getName).containsExactly("admins");
+    }
+
+    @Test
     void shouldThrowUnmappedAccountWhenProvisioningIsDisabled() {
         final Config config = configWith(Map.of(AlpineConfigKeys.LDAP_USER_PROVISIONING, "false"));
 

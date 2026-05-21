@@ -53,7 +53,7 @@ jobs:
       with:
         persist-credentials: false
     - name: Detect Breaking Changes
-      uses: oasdiff/oasdiff-action/breaking@26ccb332c67a45ca649de9faf60552ef1b8260d9 # tag=v0.0.46
+      uses: oasdiff/oasdiff-action/breaking@6147a58e5d1249a12f42fc864ab791d571a30015 # tag=v0.0.47
       with:
         base: https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/api/src/main/openapi/openapi.yaml
         revision: api/src/main/openapi/openapi.yaml

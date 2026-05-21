@@ -18,10 +18,8 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.event.LdapSyncEvent;
 import alpine.event.framework.Event;
 import alpine.server.auth.SessionTokenService;
-import alpine.server.tasks.LdapSyncTask;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import org.dependencytrack.common.ConfigKeys;
@@ -159,11 +157,6 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                                 }
                             }
                         })
-                .schedule(
-                        "LDAP Sync",
-                        getCronScheduleForTask(LdapSyncTask.class),
-                        () -> Event.dispatch(new LdapSyncEvent()),
-                        /* triggerOnFirstRun */ true)
                 .schedule(
                         "Metrics Maintenance",
                         getCronScheduleForTask(MetricsMaintenanceTask.class),

@@ -92,8 +92,7 @@ public class LdapAuthenticationService implements AuthenticationService {
             try (AlpineQueryManager qm = new AlpineQueryManager()) {
                 final LdapUser user = qm.getLdapUser(username);
                 if (user != null) {
-                    LOGGER.debug("Attempting to authenticate user: {}", username);
-                    return user;
+                    return refreshFromLdap(ldap, qm, user);
                 } else if (ldap.isUserProvisioningEnabled()) {
                     LOGGER.debug("The user ({}) authenticated successfully but the account has not been provisioned", username);
                     return autoProvision(ldap, qm);
@@ -146,6 +145,55 @@ public class LdapAuthenticationService implements AuthenticationService {
             ldap.closeQuietly(dirContext);
         }
         return user;
+    }
+
+    private static LdapUser refreshFromLdap(
+            LdapConnectionWrapper ldap,
+            AlpineQueryManager qm,
+            LdapUser user) {
+        final String dn;
+        final String email;
+        final List<String> groupDNs;
+        DirContext ctx = null;
+        try {
+            ctx = ldap.createDirContext();
+
+            final SearchResult result = ldap.searchForSingleUsername(ctx, user.getUsername());
+            if (result == null) {
+                return user;
+            }
+
+            dn = result.getNameInNamespace();
+            email = ldap.getAttribute(result, ldap.getAttributeMail());
+
+            if (ldap.isTeamSynchronizationEnabled()) {
+                final var probe = new LdapUser();
+                probe.setUsername(user.getUsername());
+                probe.setDN(dn);
+                groupDNs = ldap.getGroups(ctx, probe);
+            } else {
+                groupDNs = null;
+            }
+        } catch (NamingException e) {
+            LOGGER.warn(
+                    "Failed to refresh LDAP attributes for {}; using cached values",
+                    user.getUsername(), e);
+            return user;
+        } finally {
+            ldap.closeQuietly(ctx);
+        }
+
+        return qm.callInTransaction(() -> {
+            user.setDN(dn);
+            user.setEmail(email);
+
+            final LdapUser updated = qm.updateLdapUser(user);
+            if (groupDNs != null) {
+                return qm.synchronizeTeamMembership(updated, groupDNs);
+            }
+
+            return updated;
+        });
     }
 
     /**

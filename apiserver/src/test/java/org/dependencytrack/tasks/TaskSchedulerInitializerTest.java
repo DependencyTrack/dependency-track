@@ -61,7 +61,6 @@ class TaskSchedulerInitializerTest extends PersistenceCapableTest {
                 "GitHub Advisories Mirror",
                 "Internal Component Identification",
                 "Kenna Security Upload",
-                "LDAP Sync",
                 "Metrics Maintenance",
                 "NVD Mirror",
                 "OSV Mirror",

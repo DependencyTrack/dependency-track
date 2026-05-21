@@ -30,6 +30,7 @@ import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.OrganizationalContact;
 import org.dependencytrack.model.PackageArtifactMetadata;
@@ -39,6 +40,7 @@ import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.util.PurlUtil;
+import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -52,15 +54,24 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.mock;
 
 public class ComponentResourcePostgresTest extends ResourceTest {
+
+    private static final DexEngine DEX_ENGINE_MOCK = mock(DexEngine.class);
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(ComponentResource.class)
                     .register(ApiFilter.class)
                     .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class));
+                    .register(AuthorizationFeature.class)
+                    .register(new AbstractBinder() {
+                        @Override
+                        protected void configure() {
+                            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
+                        }
+                    }));
 
     @Test
     public void getAllComponentsTest() throws Exception {

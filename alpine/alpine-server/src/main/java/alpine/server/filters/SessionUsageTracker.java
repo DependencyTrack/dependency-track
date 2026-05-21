@@ -18,7 +18,6 @@
  */
 package alpine.server.filters;
 
-import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.persistence.AlpineQueryManager;
 import jakarta.ws.rs.ext.Provider;
 import org.glassfish.jersey.server.monitoring.ApplicationEvent;
@@ -61,7 +60,8 @@ public class SessionUsageTracker implements ApplicationEventListener {
         this.flushExecutor = Executors.newSingleThreadScheduledExecutor(
                 Thread.ofPlatform()
                         .name("Alpine-SessionUsageTracker")
-                        .uncaughtExceptionHandler(new LoggableUncaughtExceptionHandler())
+                        .uncaughtExceptionHandler((thread, throwable) ->
+                                LOGGER.error("Uncaught exception in thread {}", thread.getName(), throwable))
                         .factory());
         this.flushLock = new ReentrantLock();
     }

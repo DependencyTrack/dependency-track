@@ -20,7 +20,6 @@ package org.dependencytrack.tasks.maintenance;
 
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.maintenance.PackageMetadataMaintenanceEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.PackageArtifactMetadata;
 import org.dependencytrack.model.PackageMetadata;
@@ -90,7 +89,7 @@ class PackageMetadataMaintenanceTaskTest extends PersistenceCapableTest {
         });
 
         final var task = new PackageMetadataMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.inform(new PackageMetadataMaintenanceEvent()));
+        assertThatNoException().isThrownBy(() -> task.run());
 
         final long acmeLibArtifactCount = withJdbiHandle(handle -> handle
                 .createQuery("SELECT COUNT(*) FROM \"PACKAGE_ARTIFACT_METADATA\" WHERE \"PURL\" = :purl")

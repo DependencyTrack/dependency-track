@@ -1164,7 +1164,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
-      "description": "Internal Alpine event bus publish rate by event type.",
+      "description": "Scheduled task completion rate grouped by outcome.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1245,13 +1245,13 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum by (event) (rate(alpine_events_published_total{instance=~\"$instance\"}[1m]))",
-          "legendFormat": "{{event}}",
+          "expr": "sum by (result) (rate(dbscheduler_task_completions_total{instance=~\"$instance\"}[1m]))",
+          "legendFormat": "{{result}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Alpine Event Publish Rate",
+      "title": "Scheduled Task Completion Rate",
       "type": "timeseries"
     },
     {
@@ -1259,7 +1259,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
-      "description": "Internal Alpine event processing latency.",
+      "description": "Scheduled task failure rate by task.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1308,7 +1308,7 @@
               }
             ]
           },
-          "unit": "s"
+          "unit": "ops"
         },
         "overrides": []
       },
@@ -1340,35 +1340,13 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(alpine_event_processing_seconds_bucket{instance=~\"$instance\"}[1m])))",
-          "legendFormat": "p50",
+          "expr": "sum by (task) (rate(dbscheduler_task_completions_total{instance=~\"$instance\",result=\"failed\"}[1m]))",
+          "legendFormat": "{{task}}",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(alpine_event_processing_seconds_bucket{instance=~\"$instance\"}[1m])))",
-          "legendFormat": "p95",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(alpine_event_processing_seconds_bucket{instance=~\"$instance\"}[1m])))",
-          "legendFormat": "p99",
-          "range": true,
-          "refId": "C"
         }
       ],
-      "title": "Alpine Event Processing Latency",
+      "title": "Scheduled Task Failure Rate",
       "type": "timeseries"
     },
     {

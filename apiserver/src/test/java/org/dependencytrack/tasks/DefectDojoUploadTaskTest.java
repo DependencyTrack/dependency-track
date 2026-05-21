@@ -24,7 +24,6 @@ import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import jakarta.ws.rs.core.MediaType;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.DefectDojoUploadEventAbstract;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
@@ -116,7 +115,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         new DefectDojoUploadTask(
                 HttpClient.newHttpClient(),
                 new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
-                .inform(new DefectDojoUploadEventAbstract());
+                .run();
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/import-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
@@ -251,7 +250,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         new DefectDojoUploadTask(
                 HttpClient.newHttpClient(),
                 new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
-                .inform(new DefectDojoUploadEventAbstract());
+                .run();
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/import-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
@@ -504,7 +503,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         new DefectDojoUploadTask(
                 HttpClient.newHttpClient(),
                 new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
-                .inform(new DefectDojoUploadEventAbstract());
+                .run();
 
         verify(2, getRequestedFor(urlPathEqualTo("/api/v2/tests/")));
 
@@ -681,7 +680,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         new DefectDojoUploadTask(
                 HttpClient.newHttpClient(),
                 new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
-                .inform(new DefectDojoUploadEventAbstract());
+                .run();
 
         verify(1, getRequestedFor(urlPathEqualTo("/api/v2/tests/")));
 
@@ -808,7 +807,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         new DefectDojoUploadTask(
                 HttpClient.newHttpClient(),
                 new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
-                .inform(new DefectDojoUploadEventAbstract());
+                .run();
 
         verify(1, getRequestedFor(urlPathEqualTo("/api/v2/tests/")));
 
@@ -906,7 +905,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         new DefectDojoUploadTask(
                 HttpClient.newHttpClient(),
                 new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
-                .inform(new DefectDojoUploadEventAbstract());
+                .run();
 
         verify(1, getRequestedFor(urlPathEqualTo("/api/v2/tests/")));
 
@@ -996,7 +995,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         new DefectDojoUploadTask(
                 HttpClient.newHttpClient(),
                 new TestSecretManager(Map.of("wmRuntimeInfo", apiKey)))
-                .inform(new DefectDojoUploadEventAbstract());
+                .run();
     }
 
 }

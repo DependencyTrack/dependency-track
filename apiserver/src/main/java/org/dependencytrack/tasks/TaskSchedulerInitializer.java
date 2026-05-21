@@ -18,30 +18,29 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.event.framework.Event;
 import alpine.server.auth.SessionTokenService;
+import com.github.kagkarlsson.scheduler.CurrentlyExecuting;
+import com.github.kagkarlsson.scheduler.Scheduler;
+import com.github.kagkarlsson.scheduler.event.AbstractSchedulerListener;
+import com.github.kagkarlsson.scheduler.stats.MicrometerStatsRegistry;
+import com.github.kagkarlsson.scheduler.stats.StatsRegistryAdapter;
+import com.github.kagkarlsson.scheduler.task.ExecutionComplete;
+import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
+import com.github.kagkarlsson.scheduler.task.helper.Tasks;
+import com.github.kagkarlsson.scheduler.task.schedule.Schedule;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.HttpClient;
+import org.dependencytrack.common.datasource.DataSourceRegistry;
+import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
-import org.dependencytrack.event.DefectDojoUploadEventAbstract;
-import org.dependencytrack.event.EpssMirrorEvent;
-import org.dependencytrack.event.FortifySscUploadEventAbstract;
-import org.dependencytrack.event.InternalComponentIdentificationEvent;
-import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
-import org.dependencytrack.event.PortfolioVulnerabilityAnalysisEvent;
-import org.dependencytrack.event.VulnerabilityMetricsUpdateEvent;
-import org.dependencytrack.event.maintenance.MetricsMaintenanceEvent;
-import org.dependencytrack.event.maintenance.PackageMetadataMaintenanceEvent;
-import org.dependencytrack.event.maintenance.ProjectMaintenanceEvent;
-import org.dependencytrack.event.maintenance.TagMaintenanceEvent;
-import org.dependencytrack.event.maintenance.VulnerabilityDatabaseMaintenanceEvent;
 import org.dependencytrack.metrics.UpdatePortfolioMetricsWorkflow;
 import org.dependencytrack.metrics.VulnerabilityMetricsUpdateTask;
 import org.dependencytrack.notification.ProcessScheduledNotificationsWorkflow;
-import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ScheduledNotificationDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
@@ -49,6 +48,7 @@ import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.policy.vulnerability.SyncVulnPolicyBundleWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.ProcessScheduledNotificationsWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
+import org.dependencytrack.secret.management.SecretManager;
 import org.dependencytrack.tasks.maintenance.MetricsMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.PackageMetadataMaintenanceTask;
 import org.dependencytrack.tasks.maintenance.ProjectMaintenanceTask;
@@ -57,15 +57,18 @@ import org.dependencytrack.tasks.maintenance.VulnerabilityDatabaseMaintenanceTas
 import org.dependencytrack.vulndatasource.VulnDataSourceMirrorService;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static java.util.Objects.requireNonNull;
-import static org.dependencytrack.model.ConfigPropertyConstants.DEFECTDOJO_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.FORTIFY_SSC_ENABLED;
-import static org.dependencytrack.model.ConfigPropertyConstants.KENNA_ENABLED;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.TaskUtil.getCronScheduleForTask;
 import static org.dependencytrack.util.TaskUtil.getCronScheduleFromConfig;
@@ -78,16 +81,25 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskSchedulerInitializer.class);
 
     private final Config config;
-    private final TaskScheduler scheduler;
+    private final DataSource dataSource;
+    private final MeterRegistry meterRegistry;
+    private final HealthCheckRegistry healthCheckRegistry;
+    private @Nullable Scheduler scheduler;
 
-    TaskSchedulerInitializer(Config config, TaskScheduler scheduler) {
-        this.config = config;
-        this.scheduler = scheduler;
+    public TaskSchedulerInitializer(HealthCheckRegistry healthCheckRegistry) {
+        this(ConfigProvider.getConfig(), DataSourceRegistry.getInstance().getDefault(),
+                Metrics.globalRegistry, healthCheckRegistry);
     }
 
-    @SuppressWarnings("unused")
-    public TaskSchedulerInitializer() {
-        this(ConfigProvider.getConfig(), new TaskScheduler());
+    TaskSchedulerInitializer(
+            Config config,
+            DataSource dataSource,
+            MeterRegistry meterRegistry,
+            HealthCheckRegistry healthCheckRegistry) {
+        this.config = config;
+        this.dataSource = dataSource;
+        this.meterRegistry = meterRegistry;
+        this.healthCheckRegistry = healthCheckRegistry;
     }
 
     @Override
@@ -97,117 +109,145 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
             return;
         }
 
-        LOGGER.info("Starting task scheduler");
-        scheduler.start();
-
         final var dexEngine = (DexEngine) event.getServletContext().getAttribute(DexEngine.class.getName());
         requireNonNull(dexEngine, "dexEngine has not been initialized");
 
         final var pluginManager = (PluginManager) event.getServletContext().getAttribute(PluginManager.class.getName());
         requireNonNull(pluginManager, "pluginManager has not been initialized");
 
+        final var secretManager = (SecretManager) event.getServletContext().getAttribute(SecretManager.class.getName());
+        requireNonNull(secretManager, "secretManager has not been initialized");
+
+        final List<RecurringTask<Void>> tasks = recurringTasks(config, dexEngine, pluginManager, secretManager);
+
+        LOGGER.info("Starting task scheduler");
+        final int threads = config.getValue(ConfigKeys.TASK_SCHEDULER_THREADS, int.class);
+        final var pollInterval = Duration.ofMillis(
+                config.getValue(ConfigKeys.TASK_SCHEDULER_POLL_INTERVAL_MS, long.class));
+        final var shutdownMaxWait = Duration.ofMillis(
+                config.getValue(ConfigKeys.TASK_SCHEDULER_SHUTDOWN_MAX_WAIT_MS, long.class));
+        scheduler = Scheduler
+                .create(dataSource)
+                .startTasks(tasks)
+                .threads(threads)
+                .pollingInterval(pollInterval)
+                .pollUsingLockAndFetch(0.5, 1.0)
+                .shutdownMaxWait(shutdownMaxWait)
+                .addSchedulerListener(new StatsRegistryAdapter(new MicrometerStatsRegistry(meterRegistry, tasks)))
+                .addSchedulerListener(new AbstractSchedulerListener() {
+
+                    @Override
+                    public void onExecutionStart(CurrentlyExecuting event) {
+                        LOGGER.debug("Executing task '{}'", event.getExecution().getTaskName());
+                    }
+
+                    @Override
+                    public void onExecutionComplete(ExecutionComplete event) {
+                        switch (event.getResult()) {
+                            case OK -> LOGGER.debug(
+                                    "Task '{}' completed successfully in {}",
+                                    event.getExecution().getTaskName(),
+                                    event.getDuration());
+                            case FAILED -> LOGGER.warn(
+                                    "Task '{}' failed in {}",
+                                    event.getExecution().getTaskName(),
+                                    event.getDuration(),
+                                    event.getCause().orElse(null));
+                        }
+                    }
+
+                })
+                .build();
+        scheduler.start();
+
+        healthCheckRegistry.addCheck(new TaskSchedulerHealthCheck(scheduler));
+    }
+
+    @Override
+    public void contextDestroyed(ServletContextEvent event) {
+        if (scheduler != null) {
+            LOGGER.info("Stopping task scheduler");
+            scheduler.stop();
+        }
+    }
+
+    static List<RecurringTask<Void>> recurringTasks(
+            Config config,
+            DexEngine dexEngine,
+            PluginManager pluginManager,
+            SecretManager secretManager) {
         final var vulnDataSourceMirrorService = new VulnDataSourceMirrorService(pluginManager, dexEngine);
 
-        scheduler
-                .schedule(
+        return List.of(
+                recurringTask(
                         "Package Metadata Maintenance",
                         getCronScheduleForTask(PackageMetadataMaintenanceTask.class),
-                        () -> Event.dispatch(new PackageMetadataMaintenanceEvent()))
-                .schedule(
+                        new PackageMetadataMaintenanceTask()),
+                recurringTask(
                         "Defect Dojo Upload",
                         getCronScheduleForTask(DefectDojoUploadTask.class),
-                        () -> {
-                            try (final var qm = new QueryManager()) {
-                                if (qm.isEnabled(DEFECTDOJO_ENABLED)) {
-                                    Event.dispatch(new DefectDojoUploadEventAbstract());
-                                }
-                            }
-                        })
-                .schedule(
+                        new DefectDojoUploadTask(HttpClient.INSTANCE, secretManager)),
+                recurringTaskTriggeredOnFirstRun(
                         "EPSS Mirror",
                         getCronScheduleForTask(EpssMirrorTask.class),
-                        () -> Event.dispatch(new EpssMirrorEvent()),
-                        /* triggerOnFirstRun */ true)
-                .schedule(
+                        new EpssMirrorTask(HttpClient.INSTANCE)),
+                recurringTask(
                         "Fortify SSC Upload",
                         getCronScheduleForTask(FortifySscUploadTask.class),
-                        () -> {
-                            try (final var qm = new QueryManager()) {
-                                if (qm.isEnabled(FORTIFY_SSC_ENABLED)) {
-                                    Event.dispatch(new FortifySscUploadEventAbstract());
-                                }
-                            }
-                        })
-                .schedule(
+                        new FortifySscUploadTask(HttpClient.INSTANCE, secretManager)),
+                recurringTaskTriggeredOnFirstRun(
                         "GitHub Advisories Mirror",
                         getCronScheduleFromConfig(config, "dt.task.git.hub.advisory.mirror.cron"),
-                        () -> vulnDataSourceMirrorService.trigger("github", null),
-                        /* triggerOnFirstRun */ true)
-                .schedule(
-                        "Internal Component Identification",
-                        getCronScheduleForTask(InternalComponentIdentificationTask.class),
-                        () -> Event.dispatch(new InternalComponentIdentificationEvent()))
-                .schedule(
+                        () -> vulnDataSourceMirrorService.trigger("github", null)),
+                recurringTask(
                         "Kenna Security Upload",
                         getCronScheduleForTask(KennaSecurityUploadTask.class),
-                        () -> {
-                            try (final var qm = new QueryManager()) {
-                                if (qm.isEnabled(KENNA_ENABLED)) {
-                                    Event.dispatch(new KennaSecurityUploadEventAbstract());
-                                }
-                            }
-                        })
-                .schedule(
+                        new KennaSecurityUploadTask(HttpClient.INSTANCE, secretManager)),
+                recurringTask(
                         "Metrics Maintenance",
                         getCronScheduleForTask(MetricsMaintenanceTask.class),
-                        () -> Event.dispatch(new MetricsMaintenanceEvent()))
-                .schedule(
+                        new MetricsMaintenanceTask()),
+                recurringTaskTriggeredOnFirstRun(
                         "NVD Mirror",
                         getCronScheduleFromConfig(config, "dt.task.nist.mirror.cron"),
-                        () -> vulnDataSourceMirrorService.trigger("nvd", null),
-                        /* triggerOnFirstRun */ true)
-                .schedule(
+                        () -> vulnDataSourceMirrorService.trigger("nvd", null)),
+                recurringTaskTriggeredOnFirstRun(
                         "OSV Mirror",
                         getCronScheduleFromConfig(config, "dt.task.osv.mirror.cron"),
-                        () -> vulnDataSourceMirrorService.trigger("osv", null),
-                        /* triggerOnFirstRun */ true)
-                .schedule(
+                        () -> vulnDataSourceMirrorService.trigger("osv", null)),
+                recurringTask(
                         "Package Metadata Resolution",
                         getCronScheduleFromConfig(config, "dt.task.package-metadata-resolution.cron"),
-                        () -> {
-                            dexEngine.createRun(
-                                    new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class)
-                                            .withWorkflowInstanceId(ResolvePackageMetadataWorkflow.INSTANCE_ID));
-                        })
-                .schedule(
+                        () -> dexEngine.createRun(
+                                new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class)
+                                        .withWorkflowInstanceId(ResolvePackageMetadataWorkflow.INSTANCE_ID))),
+                recurringTask(
                         "Portfolio Metrics Update",
                         getCronScheduleFromConfig(config, "dt.task.portfolio-metrics-update.cron"),
-                        () -> {
-                            dexEngine.createRun(
-                                    new CreateWorkflowRunRequest<>(UpdatePortfolioMetricsWorkflow.class)
-                                            .withWorkflowInstanceId(UpdatePortfolioMetricsWorkflow.INSTANCE_ID));
-                        })
-                .schedule(
+                        () -> dexEngine.createRun(
+                                new CreateWorkflowRunRequest<>(UpdatePortfolioMetricsWorkflow.class)
+                                        .withWorkflowInstanceId(UpdatePortfolioMetricsWorkflow.INSTANCE_ID))),
+                recurringTask(
                         "Portfolio Vulnerability Analysis",
                         getCronScheduleForTask(VulnerabilityAnalysisTask.class),
-                        () -> Event.dispatch(new PortfolioVulnerabilityAnalysisEvent()))
-                .schedule(
+                        new VulnerabilityAnalysisTask(dexEngine)),
+                recurringTask(
                         "Project Maintenance",
                         getCronScheduleForTask(ProjectMaintenanceTask.class),
-                        () -> Event.dispatch(new ProjectMaintenanceEvent()))
-                .schedule(
+                        new ProjectMaintenanceTask()),
+                recurringTask(
                         "Tag Maintenance",
                         getCronScheduleForTask(TagMaintenanceTask.class),
-                        () -> Event.dispatch(new TagMaintenanceEvent()))
-                .schedule(
+                        new TagMaintenanceTask()),
+                recurringTask(
                         "Vulnerability Database Maintenance",
                         getCronScheduleForTask(VulnerabilityDatabaseMaintenanceTask.class),
-                        () -> Event.dispatch(new VulnerabilityDatabaseMaintenanceEvent()))
-                .schedule(
+                        new VulnerabilityDatabaseMaintenanceTask()),
+                recurringTask(
                         "Vulnerability Metrics Update",
                         getCronScheduleForTask(VulnerabilityMetricsUpdateTask.class),
-                        () -> Event.dispatch(new VulnerabilityMetricsUpdateEvent()))
-                .schedule(
+                        new VulnerabilityMetricsUpdateTask()),
+                recurringTaskTriggeredOnFirstRun(
                         "Vulnerability Policy Bundle Sync",
                         getCronScheduleFromConfig(config, "dt.task.vulnerability-policy-bundle-sync.cron"),
                         () -> {
@@ -221,13 +261,12 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                                             .withArgument(SyncVulnPolicyBundleArg.newBuilder()
                                                     .setBundleUuid(VulnerabilityPolicyDao.DEFAULT_BUNDLE_UUID.toString())
                                                     .build()));
-                        },
-                        /* triggerOnFirstRun */ true)
-                .schedule(
+                        }),
+                recurringTask(
                         "Expired Session Cleanup",
                         getCronScheduleFromConfig(config, "dt.task.expired-session-cleanup.cron"),
-                        () -> new SessionTokenService().deleteExpiredSessions())
-                .schedule(
+                        () -> new SessionTokenService().deleteExpiredSessions()),
+                recurringTask(
                         "Scheduled Notification Dispatch",
                         getCronScheduleFromConfig(config, "dt.task.scheduled-notification-dispatch.cron"),
                         () -> {
@@ -244,18 +283,51 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                                             .withArgument(ProcessScheduledNotificationsWorkflowArg.newBuilder()
                                                     .addAllRuleNames(ruleNames)
                                                     .build()));
-                        })
-                .schedule(
+                        }),
+                recurringTaskTriggeredOnFirstRun(
                         "Telemetry Submission",
                         getCronScheduleFromConfig(config, "dt.task.telemetry-submission.cron"),
-                        new TelemetrySubmissionTask(HttpClient.INSTANCE, config),
-                        /* triggerOnFirstRun */ true);
+                        new TelemetrySubmissionTask(HttpClient.INSTANCE, config)));
     }
 
-    @Override
-    public void contextDestroyed(ServletContextEvent sce) {
-        LOGGER.info("Stopping task scheduler");
-        scheduler.close();
+    private static RecurringTask<Void> recurringTask(String name, Schedule schedule, Runnable runnable) {
+        return Tasks.recurring(name, schedule).execute((_, _) -> runnable.run());
+    }
+
+    private static RecurringTask<Void> recurringTaskTriggeredOnFirstRun(String name, Schedule schedule, Runnable runnable) {
+        return recurringTask(name, new TriggerOnFirstRunSchedule(schedule), runnable);
+    }
+
+    record TriggerOnFirstRunSchedule(Schedule delegate) implements Schedule {
+
+        private static final Duration MAX_STARTUP_DELAY = Duration.ofMinutes(1);
+
+        @Override
+        public Instant getNextExecutionTime(ExecutionComplete executionComplete) {
+            return delegate.getNextExecutionTime(executionComplete);
+        }
+
+        @Override
+        public Instant getInitialExecutionTime(Instant now) {
+            final long delayMillis = ThreadLocalRandom.current().nextLong(MAX_STARTUP_DELAY.toMillis());
+            return now.plusMillis(delayMillis);
+        }
+
+        @Override
+        public boolean isDeterministic() {
+            return false;
+        }
+
+        @Override
+        public boolean isDisabled() {
+            return delegate.isDisabled();
+        }
+
+    }
+
+    @Nullable
+    Scheduler scheduler() {
+        return scheduler;
     }
 
 }

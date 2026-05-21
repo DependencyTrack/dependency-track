@@ -18,82 +18,30 @@
  */
 package org.dependencytrack.tasks.maintenance;
 
-import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
-import org.dependencytrack.persistence.jdbi.AdvisoryLocks;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.ToIntFunction;
 
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 
-abstract class AbstractBatchingMaintenanceTask<E extends Event> implements Subscriber {
+abstract class AbstractBatchingMaintenanceTask implements Runnable {
 
-    private final Class<E> eventType;
-    private final String taskName;
-    private final long advisoryLockId;
     private final int maxIterations;
     private final Logger logger;
 
-    AbstractBatchingMaintenanceTask(
-            Class<E> eventType,
-            String taskName,
-            long advisoryLockId,
-            int maxIterations) {
-        this.eventType = eventType;
-        this.taskName = taskName;
-        this.advisoryLockId = advisoryLockId;
+    AbstractBatchingMaintenanceTask(int maxIterations) {
         this.maxIterations = maxIterations;
         this.logger = LoggerFactory.getLogger(getClass());
     }
-
-    @Override
-    public final void inform(Event event) {
-        if (!eventType.isInstance(event)) {
-            return;
-        }
-
-        final long startTimeNanos = System.nanoTime();
-        try {
-            logger.info("Starting {}", taskName);
-            final String summary = doRun();
-
-            logger.info(
-                    "Completed {} in {}ms: {}",
-                    taskName,
-                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNanos),
-                    summary);
-        } catch (RuntimeException e) {
-            logger.error(
-                    "Failed to complete {} after {}ms",
-                    taskName,
-                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNanos),
-                    e);
-        }
-    }
-
-    abstract String doRun();
 
     final int runBatched(int batchSize, ToIntFunction<Handle> batchFn) {
         int totalProcessed = 0;
         int iteration = 0;
 
         while (iteration < maxIterations) {
-            final int processed = inJdbiTransaction(handle -> {
-                if (!AdvisoryLocks.tryAcquire(handle, advisoryLockId)) {
-                    return -1;
-                }
-
-                return batchFn.applyAsInt(handle);
-            });
-
-            if (processed < 0) {
-                logger.debug("Advisory lock held by another instance; Skipping remaining batches");
-                break;
-            }
+            final int processed = inJdbiTransaction(batchFn::applyAsInt);
 
             iteration++;
             totalProcessed += processed;

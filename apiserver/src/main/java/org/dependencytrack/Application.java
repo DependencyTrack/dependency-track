@@ -49,7 +49,6 @@ import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dev.DevServices;
 import org.dependencytrack.dex.DexEngineBinder;
 import org.dependencytrack.dex.DexEngineInitializer;
-import org.dependencytrack.event.EventSubsystemInitializer;
 import org.dependencytrack.filestorage.FileStorageBinder;
 import org.dependencytrack.filestorage.FileStorageInitializer;
 import org.dependencytrack.init.InitTaskExecutor;
@@ -221,8 +220,7 @@ public final class Application {
                         dataSourceRegistry,
                         Metrics.globalRegistry,
                         healthCheckRegistry));
-        context.addEventListener(new EventSubsystemInitializer());
-        context.addEventListener(new TaskSchedulerInitializer());
+        context.addEventListener(new TaskSchedulerInitializer(healthCheckRegistry));
         context.addEventListener(new NotificationSubsystemInitializer());
 
         final var whitelistFilter = new FilterHolder(WhitelistUrlFilter.class);
@@ -319,7 +317,7 @@ public final class Application {
     }
 
     private static final Set<String> HISTOGRAM_METER_NAMES = Set.of(
-            "alpine_event_processing",
+            "dbscheduler_task_duration",
             "dt.dex.engine.activity.task.scheduling.latency",
             "dt.dex.engine.buffer.flush.batch.size",
             "dt.dex.engine.buffer.flush.latency",

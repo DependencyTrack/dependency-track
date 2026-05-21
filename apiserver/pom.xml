@@ -27,7 +27,6 @@
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
         <lib.woodstox.version>7.1.1</lib.woodstox.version>
         <lib.httpclient.version>4.5.14</lib.httpclient.version>
-        <lib.net.javacrumbs.shedlock.version>7.7.0</lib.net.javacrumbs.shedlock.version>
         <lib.javacron.version>1.4.0</lib.javacron.version>
 
         <!-- CycloneDX CLI -->
@@ -267,6 +266,10 @@
             <artifactId>ae-security</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.github.kagkarlsson</groupId>
+            <artifactId>db-scheduler</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.dependencytrack</groupId>
             <artifactId>jdbi-support</artifactId>
             <version>${project.version}</version>
@@ -363,17 +366,6 @@
             <artifactId>packageurl-java</artifactId>
         </dependency>
 
-        <!-- shedlock dependencies -->
-        <dependency>
-            <groupId>net.javacrumbs.shedlock</groupId>
-            <artifactId>shedlock-provider-jdbc</artifactId>
-            <version>${lib.net.javacrumbs.shedlock.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>net.javacrumbs.shedlock</groupId>
-            <artifactId>shedlock-provider-jdbc-internal</artifactId>
-            <version>${lib.net.javacrumbs.shedlock.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.asahaf.javacron</groupId>
             <artifactId>javacron</artifactId>

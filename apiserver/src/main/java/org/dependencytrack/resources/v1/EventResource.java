@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.event.framework.Event;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -100,9 +99,7 @@ public class EventResource extends AbstractApiResource {
         final UUID token = UUID.fromString(uuid);
 
         final boolean isProcessing;
-        if (Event.isEventBeingProcessed(token)) {
-            isProcessing = true;
-        } else if (hasNonTerminalDexRun(token)) {
+        if (hasNonTerminalDexRun(token)) {
             isProcessing = true;
         } else {
             isProcessing = false;

@@ -22,7 +22,6 @@ import alpine.model.IConfigProperty;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
@@ -111,7 +110,7 @@ class KennaSecurityUploadTaskTest extends PersistenceCapableTest {
         final var task = new KennaSecurityUploadTask(
                 HttpClient.newHttpClient(),
                 new TestSecretManager(Map.of("kennaTokenSecretName", "token")));
-        task.inform(new KennaSecurityUploadEventAbstract());
+        task.run();
 
         verify(postRequestedFor(urlPathEqualTo("/connectors/foo/data_file"))
                 .withHeader("X-Risk-Token", equalTo("token"))

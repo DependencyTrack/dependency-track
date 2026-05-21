@@ -16,17 +16,25 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.event;
+package org.dependencytrack.tasks;
 
-import java.util.UUID;
+import org.dependencytrack.dex.api.Workflow;
+import org.dependencytrack.dex.api.WorkflowContext;
+import org.dependencytrack.dex.api.WorkflowSpec;
+import org.jspecify.annotations.Nullable;
 
-public class FortifySscUploadEventAbstract extends AbstractVulnerabilityManagementUploadEvent {
+/**
+ * @since 5.0.0
+ */
+@WorkflowSpec(name = "identify-internal-components")
+public final class IdentifyInternalComponentsWorkflow implements Workflow<Void, Void> {
 
-    public FortifySscUploadEventAbstract() {
-        super();
+    public static final String INSTANCE_ID = "identify-internal-components";
+
+    @Override
+    public @Nullable Void execute(WorkflowContext<Void> ctx, @Nullable Void arg) throws Exception {
+        ctx.activity(IdentifyInternalComponentsActivity.class).call().await();
+        return null;
     }
 
-    public FortifySscUploadEventAbstract(final UUID projectUuid) {
-        super(projectUuid);
-    }
 }

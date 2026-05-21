@@ -18,7 +18,6 @@
  */
 package alpine.server.filters;
 
-import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import alpine.model.ApiKey;
 import alpine.persistence.AlpineQueryManager;
 import jakarta.ws.rs.ext.Provider;
@@ -62,7 +61,8 @@ public class ApiKeyUsageTracker implements ApplicationEventListener {
     public ApiKeyUsageTracker() {
         this.flushExecutor = Executors.newSingleThreadScheduledExecutor(
                 Thread.ofPlatform()
-                        .uncaughtExceptionHandler(new LoggableUncaughtExceptionHandler())
+                        .uncaughtExceptionHandler((thread, throwable) ->
+                                LOGGER.error("Uncaught exception in thread {}", thread.getName(), throwable))
                         .name("Alpine-ApiKeyUsageTracker")
                         .factory());
         this.flushLock = new ReentrantLock();

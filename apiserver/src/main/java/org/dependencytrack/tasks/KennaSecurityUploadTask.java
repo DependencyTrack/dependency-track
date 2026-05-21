@@ -18,18 +18,12 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.event.framework.Event;
-import org.dependencytrack.event.KennaSecurityUploadEventAbstract;
 import org.dependencytrack.integrations.kenna.KennaSecurityUploader;
 import org.dependencytrack.secret.management.SecretManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.http.HttpClient;
 
-public class KennaSecurityUploadTask extends VulnerabilityManagementUploadTask {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(KennaSecurityUploadTask.class);
+public final class KennaSecurityUploadTask extends VulnerabilityManagementUploadTask {
 
     private final HttpClient httpClient;
     private final SecretManager secretManager;
@@ -39,15 +33,9 @@ public class KennaSecurityUploadTask extends VulnerabilityManagementUploadTask {
         this.secretManager = secretManager;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void inform(final Event e) {
-        if (e instanceof KennaSecurityUploadEventAbstract) {
-            final KennaSecurityUploadEventAbstract event = (KennaSecurityUploadEventAbstract) e;
-            LOGGER.debug("Starting Kenna Security upload task");
-            super.inform(event, new KennaSecurityUploader(httpClient, secretManager));
-            LOGGER.debug("Kenna Security upload complete");
-        }
+    @Override
+    public void run() {
+        runUpload(new KennaSecurityUploader(httpClient, secretManager));
     }
+
 }

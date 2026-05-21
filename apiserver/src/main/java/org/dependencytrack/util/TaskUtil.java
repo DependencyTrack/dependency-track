@@ -18,16 +18,14 @@
  */
 package org.dependencytrack.util;
 
-import alpine.event.framework.Subscriber;
-import com.asahaf.javacron.InvalidExpressionException;
-import com.asahaf.javacron.Schedule;
+import com.github.kagkarlsson.scheduler.task.schedule.CronSchedule;
+import com.github.kagkarlsson.scheduler.task.schedule.CronStyle;
+import com.github.kagkarlsson.scheduler.task.schedule.Schedule;
 import com.google.common.base.CaseFormat;
-import net.javacrumbs.shedlock.core.LockConfiguration;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
-import java.time.Duration;
-import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.NoSuchElementException;
 
 import static java.util.Objects.requireNonNull;
@@ -38,54 +36,33 @@ import static java.util.Objects.requireNonNull;
 public final class TaskUtil {
 
     private static final String PROPERTY_CRON = "cron";
-    private static final String PROPERTY_LOCK_MAX_DURATION = "lock.max.duration";
-    private static final String PROPERTY_LOCK_MIN_DURATION = "lock.min.duration";
 
     private TaskUtil() {
     }
 
-    public static LockConfiguration getLockConfigForTask(final Class<? extends Subscriber> taskClass) {
-        final String taskName = getTaskConfigName(taskClass);
-        final Config config = ConfigProvider.getConfig();
-
-        final String maxLockDurationString = config
-                .getOptionalValue(taskPropertyName(taskName, PROPERTY_LOCK_MAX_DURATION), String.class)
-                .orElseThrow(() -> new NoSuchElementException("No max lock duration configured for task %s".formatted(taskName)));
-
-        final String minLockDurationString = config
-                .getOptionalValue(taskPropertyName(taskName, PROPERTY_LOCK_MIN_DURATION), String.class)
-                .orElseThrow(() -> new NoSuchElementException("No min lock duration configured for task %s".formatted(taskName)));
-
-        return new LockConfiguration(
-                Instant.now(),
-                taskName,
-                Duration.parse(maxLockDurationString),
-                Duration.parse(minLockDurationString));
-    }
-
-    public static Schedule getCronScheduleForTask(final Class<? extends Subscriber> taskClass) {
+    public static Schedule getCronScheduleForTask(final Class<?> taskClass) {
         final String taskName = getTaskConfigName(taskClass);
 
         final String cronExpression = ConfigProvider.getConfig()
                 .getOptionalValue(taskPropertyName(taskName, PROPERTY_CRON), String.class)
                 .orElseThrow(() -> new NoSuchElementException("No cron expression configured for task %s".formatted(taskName)));
 
-        try {
-            return Schedule.create(cronExpression);
-        } catch (InvalidExpressionException e) {
-            throw new IllegalStateException("Failed to create schedule for task %s from cron expression %s".formatted(taskName, cronExpression), e);
-        }
+        return cronSchedule(cronExpression);
     }
 
     public static Schedule getCronScheduleFromConfig(final Config config, final String configName) {
+        return cronSchedule(config.getValue(configName, String.class));
+    }
+
+    private static Schedule cronSchedule(final String cronExpression) {
         try {
-            return Schedule.create(config.getValue(configName, String.class));
-        } catch (InvalidExpressionException e) {
-            throw new IllegalStateException("Cron expression of config '%s' is invalid".formatted(configName), e);
+            return new CronSchedule(cronExpression, ZoneOffset.UTC, CronStyle.UNIX);
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("Invalid cron expression: %s".formatted(cronExpression), e);
         }
     }
 
-    private static String getTaskConfigName(final Class<? extends Subscriber> taskClass) {
+    private static String getTaskConfigName(final Class<?> taskClass) {
         requireNonNull(taskClass);
 
         return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, taskClass.getSimpleName())

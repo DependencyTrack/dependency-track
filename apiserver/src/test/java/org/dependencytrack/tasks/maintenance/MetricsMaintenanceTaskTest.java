@@ -19,7 +19,6 @@
 package org.dependencytrack.tasks.maintenance;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.maintenance.MetricsMaintenanceEvent;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.Project;
@@ -124,7 +123,7 @@ public class MetricsMaintenanceTaskTest extends PersistenceCapableTest {
         createProjectMetricsForLastOccurrence.accept(now.minus(89, ChronoUnit.DAYS), 89);
 
         final var task = new MetricsMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.inform(new MetricsMaintenanceEvent()));
+        assertThatNoException().isThrownBy(() -> task.run());
 
         assertThat(metricsDao.getDependencyMetricsSince(component.getId(), now.minus(91, ChronoUnit.DAYS))).satisfiesExactly(
                 metrics -> assertThat(metrics.getVulnerabilities()).isEqualTo(89));
@@ -142,7 +141,7 @@ public class MetricsMaintenanceTaskTest extends PersistenceCapableTest {
                 MAINTENANCE_METRICS_RETENTION_DAYS.getPropertyType(),
                 MAINTENANCE_METRICS_RETENTION_DAYS.getDescription());
 
-        new MetricsMaintenanceTask().inform(new MetricsMaintenanceEvent());
+        new MetricsMaintenanceTask().run();
         var today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
         var tomorrow = LocalDate.now().plusDays(1).format(DateTimeFormatter.BASIC_ISO_DATE);
 

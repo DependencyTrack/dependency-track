@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.event.framework.Event;
 import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import com.github.packageurl.MalformedPackageURLException;
@@ -34,6 +33,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.inject.Inject;
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -48,7 +48,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.event.InternalComponentIdentificationEvent;
+import org.dependencytrack.dex.engine.api.DexEngine;
+import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ComponentOccurrence;
@@ -65,6 +66,7 @@ import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
+import org.dependencytrack.tasks.IdentifyInternalComponentsWorkflow;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.dependencytrack.util.PurlUtil;
 import org.jdbi.v3.core.Handle;
@@ -74,6 +76,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_TRIGGERED_BY;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
@@ -90,6 +93,13 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
         @SecurityRequirement(name = "BearerAuth")
 })
 public class ComponentResource extends AbstractApiResource {
+
+    private final DexEngine dexEngine;
+
+    @Inject
+    ComponentResource(DexEngine dexEngine) {
+        this.dexEngine = dexEngine;
+    }
 
     @GET
     @Path("/project/{uuid}")
@@ -578,7 +588,10 @@ public class ComponentResource extends AbstractApiResource {
     })
     @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response identifyInternalComponents() {
-        Event.dispatch(new InternalComponentIdentificationEvent());
+        dexEngine.createRun(
+                new CreateWorkflowRunRequest<>(IdentifyInternalComponentsWorkflow.class)
+                        .withWorkflowInstanceId(IdentifyInternalComponentsWorkflow.INSTANCE_ID)
+                        .withLabels(Map.of(WF_LABEL_TRIGGERED_BY, getPrincipal().getName())));
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 

@@ -282,6 +282,14 @@ public class Project implements Serializable {
     private Set<Tag> tags;
 
     /**
+     * Date when the project was created.
+     */
+    @Persistent
+    @Column(name = "CREATED", allowsNull = "true") // New column, must allow nulls on existing databases
+    @Schema(type = "integer", format = "int64", requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "UNIX epoch timestamp in milliseconds")
+    private Date created;
+
+    /**
      * Convenience field which will contain the date of the last entry in the {@link Bom} table
      */
     @Persistent
@@ -545,6 +553,14 @@ public class Project implements Serializable {
 
     public void setTags(Set<Tag> tags) {
         this.tags = tags;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
     }
 
     public Date getLastBomImport() {

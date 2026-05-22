@@ -1608,7 +1608,7 @@ final class DexEngineImpl implements DexEngine {
             if (lock != null) {
                 future.complete(lock);
             } else {
-                future.completeExceptionally(new IllegalStateException());
+                future.completeExceptionally(new TaskLockLostException());
             }
         }
     }

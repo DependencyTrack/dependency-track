@@ -24,12 +24,14 @@ import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Property;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
+import org.dependencytrack.vulndatasource.osv.OsvAdvisorySource.IncrementalOsvAdvisorySource;
+import org.dependencytrack.vulndatasource.osv.OsvAdvisorySource.ZipOsvAdvisorySource;
 import org.dependencytrack.vulndatasource.osv.schema.Osv;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -43,18 +45,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.function.Predicate.not;
 import static org.dependencytrack.vulndatasource.osv.CycloneDxPropertyNames.OSV_ECOSYSTEM;
 
 /**
@@ -63,7 +59,7 @@ import static org.dependencytrack.vulndatasource.osv.CycloneDxPropertyNames.OSV_
 final class OsvVulnDataSource implements VulnDataSource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OsvVulnDataSource.class);
-    private static final int MAX_INCREMENTAL_ADVISORY_DOWNLOADS = 50;
+    private static final int MAX_INCREMENTAL_ADVISORY_DOWNLOADS = 250;
 
     private final WatermarkManager watermarkManager;
     private final ObjectMapper objectMapper;
@@ -75,9 +71,7 @@ final class OsvVulnDataSource implements VulnDataSource {
     private String currentEcosystem;
     private int currentEcosystemIndex;
     private int currentEcosystemAdvisoriesProcessed;
-    private Path currentEcosystemDirPath;
-    private Stream<Path> currentEcosystemFileStream;
-    private Iterator<Path> currentEcosystemFileIterator;
+    private @Nullable OsvAdvisorySource currentAdvisorySource;
     private boolean hasNextCalled;
     private Bom nextItem;
     private final boolean isAliasSyncEnabled;
@@ -107,7 +101,7 @@ final class OsvVulnDataSource implements VulnDataSource {
 
         hasNextCalled = true;
 
-        if (currentEcosystemFileIterator != null) {
+        if (currentEcosystem != null) {
             final Bom item = readNextItem();
             if (item != null) {
                 nextItem = item;
@@ -158,7 +152,7 @@ final class OsvVulnDataSource implements VulnDataSource {
     }
 
     @Override
-    public void markProcessed(final Bom bov) {
+    public void markProcessed(Bom bov) {
         requireNonNull(bov, "bov must not be null");
 
         if (bov.getVulnerabilitiesCount() != 1) {
@@ -196,19 +190,11 @@ final class OsvVulnDataSource implements VulnDataSource {
     }
 
     private Bom readNextItem() {
-        if (currentEcosystemFileIterator == null || !currentEcosystemFileIterator.hasNext()) {
+        if (currentAdvisorySource == null || !currentAdvisorySource.hasNext()) {
             return null;
         }
 
-        final Path filePath = currentEcosystemFileIterator.next();
-
-        final Osv osv;
-        try {
-            osv = objectMapper.readValue(filePath.toFile(), Osv.class);
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to read OSV advisory " + filePath.getFileName(), e);
-        }
-
+        final Osv osv = currentAdvisorySource.next();
         currentEcosystemAdvisoriesProcessed++;
         return modelConverter.convert(osv, isAliasSyncEnabled, currentEcosystem);
     }
@@ -231,154 +217,102 @@ final class OsvVulnDataSource implements VulnDataSource {
 
         currentEcosystem = ecosystems.get(currentEcosystemIndex);
         currentEcosystemAdvisoriesProcessed = 0;
-
-        currentEcosystemDirPath = downloadEcosystemFiles(currentEcosystem);
-        try {
-            currentEcosystemFileStream = Files.walk(currentEcosystemDirPath)
-                    .filter(not(Files::isDirectory))
-                    .filter(file -> file.getFileName().toString().endsWith(".json"));
-            currentEcosystemFileIterator = currentEcosystemFileStream.iterator();
-        } catch (IOException e) {
-            closeCurrentEcosystem();
-            throw new UncheckedIOException("Failed to walk " + currentEcosystemDirPath, e);
-        }
+        currentAdvisorySource = openAdvisorySource(currentEcosystem);
 
         LOGGER.info("Processing ecosystem {}", currentEcosystem);
         return true;
     }
 
-    private Path downloadEcosystemFiles(final String ecosystem) {
-        final Path tempDirPath;
-        try {
-            tempDirPath = Files.createTempDirectory(null);
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to create temp directory", e);
-        }
-
+    private @Nullable OsvAdvisorySource openAdvisorySource(String ecosystem) {
         if (watermarkManager == null) {
-            LOGGER.debug("Incremental mirroring disabled; Downloading all advisories");
-            downloadEcosystemFilesAll(ecosystem, tempDirPath);
-        } else {
-            final Instant watermark = watermarkManager.getWatermark(ecosystem);
-            if (watermark == null) {
-                LOGGER.debug("No watermark found; Downloading all advisories");
-                downloadEcosystemFilesAll(ecosystem, tempDirPath);
-            } else {
-                LOGGER.debug("Downloading advisories changed since {}", watermark);
-                downloadEcosystemFilesIncremental(ecosystem, watermark, tempDirPath);
-            }
+            LOGGER.debug("Incremental mirroring disabled; downloading all advisories");
+            return downloadFullArchive(ecosystem);
         }
 
-        return tempDirPath;
-    }
-
-    private void downloadEcosystemFilesAll(final String ecosystem, final Path destDirPath) {
-        LOGGER.info("Downloading all advisories for ecosystem {} from upstream", ecosystem);
-        final var request = HttpRequest.newBuilder()
-                .uri(URI.create("%s/%s/all.zip".formatted(dataUrl, ecosystem)))
-                .build();
-
-        final HttpResponse<InputStream> response;
-        try {
-            response = httpClient.send(request, BodyHandlers.buffering(BodyHandlers.ofInputStream(), 1024));
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to download advisory archive", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while downloading advisory archive", e);
+        final Instant watermark = watermarkManager.getWatermark(ecosystem);
+        if (watermark == null) {
+            LOGGER.debug("No watermark found; Downloading all advisories");
+            return downloadFullArchive(ecosystem);
         }
 
-        LOGGER.info("Extracting advisories for ecosystem {}", ecosystem);
-        LOGGER.debug("Extraction destination: {}", destDirPath);
-        try (final InputStream responseBodyInputStream = response.body();
-             final var zipInputStream = new ZipInputStream(responseBodyInputStream)) {
-            ZipEntry zipEntry;
-            while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-                if (zipEntry.isDirectory()) {
-                    LOGGER.debug("Skipping directory {}", zipEntry.getName());
-                    continue;
-                }
-
-                final Path filePath = destDirPath.resolve(zipEntry.getName());
-                if (!filePath.normalize().startsWith(destDirPath.normalize())) {
-                    LOGGER.warn("Entry path {} resolves to a location outside of the destination directory; Skipping", filePath);
-                    continue;
-                }
-
-                LOGGER.debug("Extracting {} to {}", zipEntry.getName(), filePath);
-                Files.copy(zipInputStream, filePath);
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to read advisory archive", e);
-        }
-    }
-
-    private void downloadEcosystemFilesIncremental(
-            final String ecosystem,
-            final Instant watermark,
-            final Path destDirPath) {
+        LOGGER.debug("Downloading advisories changed since {}", watermark);
         final Set<String> modifiedIds = getModifiedIds(ecosystem, watermark);
         if (modifiedIds.isEmpty()) {
             LOGGER.info("No new or updated advisories since {}", watermark);
-            return;
+            return null;
         }
 
         if (modifiedIds.size() > MAX_INCREMENTAL_ADVISORY_DOWNLOADS) {
             LOGGER.info("""
-                            {} new or updated advisories for ecosystem {} exceeds the incremental \
+                            Number of new or updated advisories for ecosystem {} exceeds the incremental \
                             download threshold of {}; downloading the full advisory archive instead""",
-                    modifiedIds.size(), ecosystem, MAX_INCREMENTAL_ADVISORY_DOWNLOADS);
-            downloadEcosystemFilesAll(ecosystem, destDirPath);
-            return;
+                    ecosystem, MAX_INCREMENTAL_ADVISORY_DOWNLOADS);
+            return downloadFullArchive(ecosystem);
         }
 
-        // TODO: Use structured concurrency after Java 25 upgrade (https://openjdk.org/jeps/505).
-        LOGGER.info("Downloading {} new or updated advisories for ecosystem {}", modifiedIds.size(), ecosystem);
-        for (final String modifiedId : modifiedIds) {
-            LOGGER.debug("Downloading advisory {}", modifiedId);
-            downloadAdvisoryFile(ecosystem, modifiedId, destDirPath);
-        }
+        LOGGER.info("Incrementally mirroring {} new or updated advisories for ecosystem {}",
+                modifiedIds.size(), ecosystem);
+        return new IncrementalOsvAdvisorySource(httpClient, objectMapper, dataUrl, ecosystem, modifiedIds);
     }
 
-    private void downloadAdvisoryFile(final String ecosystem, final String advisoryId, final Path destDirPath) {
+    private ZipOsvAdvisorySource downloadFullArchive(String ecosystem) {
+        LOGGER.info("Downloading all advisories for ecosystem {} from upstream", ecosystem);
+
+        final Path tempZipPath;
+        try {
+            tempZipPath = Files.createTempFile(null, ".zip");
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to create temp file", e);
+        }
+
         final var request = HttpRequest.newBuilder()
-                .uri(URI.create("%s/%s/%s.json".formatted(dataUrl, ecosystem, advisoryId)))
+                .uri(URI.create("%s/%s/all.zip".formatted(dataUrl, ecosystem)))
                 .GET()
                 .build();
 
-        final HttpResponse<?> response;
         try {
-            response = httpClient.send(request, BodyHandlers.ofFile(destDirPath.resolve("%s.json".formatted(advisoryId))));
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to download advisory", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while downloading advisory", e);
-        }
-        if (response.statusCode() != 200) {
-            throw new IllegalStateException("Unexpected response code: " + response.statusCode());
+            final HttpResponse<Path> response;
+            try {
+                response = httpClient.send(request, BodyHandlers.ofFile(tempZipPath));
+            } catch (IOException e) {
+                throw new UncheckedIOException("Failed to download advisory archive", e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while downloading advisory archive", e);
+            }
+            if (response.statusCode() != 200) {
+                throw new IllegalStateException("Unexpected response code: " + response.statusCode());
+            }
+
+            try {
+                return new ZipOsvAdvisorySource(tempZipPath, objectMapper);
+            } catch (IOException e) {
+                throw new UncheckedIOException("Failed to open advisory archive " + tempZipPath, e);
+            }
+        } catch (RuntimeException e) {
+            try {
+                Files.deleteIfExists(tempZipPath);
+            } catch (IOException suppressed) {
+                e.addSuppressed(suppressed);
+            }
+            throw e;
         }
     }
 
     private void closeCurrentEcosystem() {
-        if (currentEcosystemFileStream != null) {
-            currentEcosystemFileStream.close();
-            currentEcosystemFileIterator = null;
-        }
-
-        if (currentEcosystemDirPath != null) {
+        if (currentAdvisorySource != null) {
             try {
-                deleteRecursively(currentEcosystemDirPath);
+                currentAdvisorySource.close();
             } catch (IOException e) {
-                LOGGER.warn("Failed to delete directory {}", currentEcosystemDirPath, e);
+                LOGGER.warn("Failed to close advisory source for ecosystem {}", currentEcosystem, e);
             }
-            currentEcosystemDirPath = null;
+            currentAdvisorySource = null;
         }
 
         currentEcosystem = null;
     }
 
-    private Set<String> getModifiedIds(final String ecosystem, final Instant watermark) {
+    private Set<String> getModifiedIds(String ecosystem, Instant watermark) {
         final var request = HttpRequest.newBuilder()
                 .uri(URI.create("%s/%s/modified_id.csv".formatted(dataUrl, ecosystem)))
                 .GET()
@@ -428,7 +362,7 @@ final class OsvVulnDataSource implements VulnDataSource {
         return modifiedIds;
     }
 
-    private static String extractEcosystem(final Vulnerability vuln) {
+    private static String extractEcosystem(Vulnerability vuln) {
         for (final Property property : vuln.getPropertiesList()) {
             if (OSV_ECOSYSTEM.equals(property.getName())) {
                 return property.getValue();
@@ -436,15 +370,6 @@ final class OsvVulnDataSource implements VulnDataSource {
         }
 
         return null;
-    }
-
-    private static void deleteRecursively(final Path path) throws IOException {
-        try (final Stream<Path> filePaths = Files.walk(path)) {
-            filePaths
-                    .sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
-        }
     }
 
     WatermarkManager getWatermarkManager() {

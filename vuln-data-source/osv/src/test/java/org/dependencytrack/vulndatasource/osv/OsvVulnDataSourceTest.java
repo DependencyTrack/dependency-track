@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.net.http.HttpClient;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -155,7 +156,7 @@ class OsvVulnDataSourceTest {
     }
 
     @Test
-    void testDownloadAndExtractEcosystemFiles(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldIterateAdvisoriesFromFullArchive(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         final String ecosystem = "maven";
 
         // Create in-memory ZIP with one advisory JSON
@@ -228,6 +229,48 @@ class OsvVulnDataSourceTest {
 
         dataSource.close();
         verify(watermarkManagerMock).maybeCommit(any());
+    }
+
+    @Test
+    void shouldSkipDirectoryAndNonJsonEntriesInFullArchive(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        ByteArrayOutputStream zipBytes = new ByteArrayOutputStream();
+        try (ZipOutputStream zos = new ZipOutputStream(zipBytes)) {
+            zos.putNextEntry(new ZipEntry("nested/"));
+            zos.closeEntry();
+            zos.putNextEntry(new ZipEntry("README.txt"));
+            zos.write("not an advisory".getBytes());
+            zos.closeEntry();
+            zos.putNextEntry(new ZipEntry("nested/OSV-1.json"));
+            zos.write(/* language=JSON */ """
+                    {"id":"OSV-1","summary":"first","affected":[],"modified":"2024-01-01T00:00:00Z"}
+                    """.getBytes());
+            zos.closeEntry();
+            zos.putNextEntry(new ZipEntry("OSV-2.json"));
+            zos.write(/* language=JSON */ """
+                    {"id":"OSV-2","summary":"second","affected":[],"modified":"2024-01-02T00:00:00Z"}
+                    """.getBytes());
+            zos.closeEntry();
+        }
+        stubFor(get(urlEqualTo("/maven/all.zip"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/zip")
+                        .withBody(zipBytes.toByteArray())));
+
+        final var ids = new ArrayList<String>();
+        try (var dataSource = new OsvVulnDataSource(
+                null,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("maven"),
+                HttpClient.newHttpClient(),
+                false)) {
+            while (dataSource.hasNext()) {
+                ids.add(dataSource.next().getVulnerabilitiesList().getFirst().getId());
+            }
+        }
+
+        assertThat(ids).containsExactlyInAnyOrder("OSV-1", "OSV-2");
     }
 
     @Test
@@ -357,11 +400,54 @@ class OsvVulnDataSourceTest {
     }
 
     @Test
+    void shouldDownloadIncrementalAdvisoriesLazily(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        when(watermarkManagerMock.getWatermark("maven")).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
+        String csvBody = """
+                2025-01-02T00:00:00Z,OSV-2
+                2025-01-01T00:00:00Z,OSV-1
+                """;
+        stubFor(get(urlEqualTo("/maven/modified_id.csv"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "text/csv")
+                        .withBody(csvBody)));
+        for (final String id : List.of("OSV-1", "OSV-2")) {
+            stubFor(get(urlEqualTo("/maven/" + id + ".json"))
+                    .willReturn(aResponse()
+                            .withStatus(200)
+                            .withHeader("Content-Type", "application/json")
+                            .withBody(/* language=JSON */ """
+                                    {"id":"%s","summary":"s","affected":[],"modified":"2025-01-01T00:00:00Z"}
+                                    """.formatted(id))));
+        }
+
+        try (var dataSource = new OsvVulnDataSource(
+                watermarkManagerMock,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("maven"),
+                HttpClient.newHttpClient(),
+                false)) {
+            assertThat(dataSource.hasNext()).isTrue();
+            WireMock.verify(1, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
+
+            dataSource.next();
+            WireMock.verify(1, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
+
+            assertThat(dataSource.hasNext()).isTrue();
+            WireMock.verify(2, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
+
+            dataSource.next();
+            assertThat(dataSource.hasNext()).isFalse();
+        }
+    }
+
+    @Test
     void shouldFallBackToFullDownloadWhenIncrementalThresholdExceeded(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         when(watermarkManagerMock.getWatermark("maven")).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
 
         final var csvBody = new StringBuilder();
-        for (int i = 0; i < 51; i++) {
+        for (int i = 0; i < 251; i++) {
             csvBody.append("2025-01-01T00:00:00Z,OSV-%d\n".formatted(i));
         }
         stubFor(get(urlEqualTo("/maven/modified_id.csv"))

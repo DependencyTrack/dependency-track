@@ -23,6 +23,8 @@ import org.dependencytrack.dex.api.ActivityContext;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 final class ActivityContextImpl implements ActivityContext {
 
@@ -55,7 +57,24 @@ final class ActivityContextImpl implements ActivityContext {
             return false;
         }
 
-        task.setLock(engine.heartbeatActivityTask(task.id(), task.lock(), lockTimeout).join());
+        final CompletableFuture<TaskLock> newLockFuture =
+                engine.heartbeatActivityTask(task.id(), task.lock(), lockTimeout);
+
+        final TaskLock newLock;
+        try {
+            newLock = newLockFuture.join();
+        } catch (CompletionException e) {
+            // The completion exception has no meaning to callers of this method.
+            // Unwrap its cause if possible.
+            switch (e.getCause()) {
+                case RuntimeException re -> throw re;
+                case Error err -> throw err;
+                case null -> throw e;
+                default -> throw new IllegalStateException(e.getCause());
+            }
+        }
+
+        task.setLock(newLock);
         return true;
     }
 

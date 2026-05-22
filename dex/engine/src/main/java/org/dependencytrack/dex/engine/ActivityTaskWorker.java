@@ -141,6 +141,11 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
                 if (cause instanceof InterruptedException) {
                     logger.debug("Activity was interrupted; Abandoning task");
                     abandon(task);
+                } else if (cause instanceof TaskLockLostException) {
+                    logger.warn("""
+                            Activity task lock was lost, likely because execution took longer than \
+                            the lock timeout without a heartbeat; discarding this execution as \
+                            another worker has taken over the task""");
                 } else {
                     final Instant retryAt = computeRetryAt(task, cause);
                     if (retryAt == null) {

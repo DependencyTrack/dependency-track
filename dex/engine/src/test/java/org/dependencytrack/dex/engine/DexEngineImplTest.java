@@ -74,6 +74,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1197,6 +1198,48 @@ class DexEngineImplTest {
         awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
         assertThat(heartbeatsPerformed).containsExactly(false, true, false);
+    }
+
+    @Test
+    void shouldDiscardActivityExecutionWhenLockIsLost() {
+        final var invocations = new AtomicInteger();
+        final var lockLostObserved = new AtomicBoolean();
+        final var successorStarted = new CountDownLatch(1);
+
+        registerWorkflow("test", (ctx, _) -> {
+            ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
+            return null;
+        });
+
+        engine.registerActivityInternal(
+                "test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(1),
+                (ctx, _) -> {
+                    if (invocations.incrementAndGet() > 1) {
+                        successorStarted.countDown();
+                        return null;
+                    }
+
+                    assertThat(successorStarted.await(30, TimeUnit.SECONDS)).isTrue();
+
+                    try {
+                        ctx.maybeHeartbeat();
+                    } catch (TaskLockLostException e) {
+                        lockLostObserved.set(true);
+                        throw e;
+                    }
+
+                    return null;
+                });
+        registerWorkflowWorker("workflow-worker", 1);
+        registerTaskWorker("activity-worker", 2);
+        engine.start();
+
+        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+        awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        await("Displaced execution to observe the lost lock")
+                .untilAsserted(() -> assertThat(lockLostObserved).isTrue());
+        assertThat(invocations.get()).isGreaterThanOrEqualTo(2);
     }
 
     @Test

@@ -120,6 +120,9 @@ public final class BovModelConverter {
         if (cdxVuln.hasCreated()) {
             vuln.setCreated(new Date(Timestamps.toMillis(cdxVuln.getCreated())));
         }
+        if (cdxVuln.hasRejected()) {
+            vuln.setRejected(new Date(Timestamps.toMillis(cdxVuln.getRejected())));
+        }
         if (cdxVuln.hasCredits()) {
             vuln.setCredits(String.join(", ", cdxVuln.getCredits().toString()));
         }

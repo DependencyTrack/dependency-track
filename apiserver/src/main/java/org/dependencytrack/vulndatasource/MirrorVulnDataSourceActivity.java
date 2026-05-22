@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.vulndatasource;
 
-import com.google.protobuf.util.Timestamps;
 import org.cyclonedx.proto.v1_7.Bom;
 import org.dependencytrack.common.MdcScope;
 import org.dependencytrack.dex.api.Activity;
@@ -111,7 +110,6 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             final long startTimeNs = System.nanoTime();
             long lastHeartbeatNs = startTimeNs;
             int vulnsProcessed = 0;
-            int vulnsSkipped = 0;
 
             final VulnDataSource dataSource = dataSourceFactory.create();
 
@@ -127,23 +125,15 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
                     ctx.maybeHeartbeat();
 
                     final Bom bov = dataSource.next();
-                    if (!bov.getVulnerabilities(0).hasRejected()) {
-                        bovBatch.add(bov);
-                        if (bovBatch.size() == 25) {
-                            processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
-                            vulnsProcessed += bovBatch.size();
-                            bovBatch.clear();
-                            if (System.nanoTime() - lastHeartbeatNs >= HEARTBEAT_LOG_INTERVAL.toNanos()) {
-                                LOGGER.info("Processed {} vulnerabilities so far", vulnsProcessed);
-                                lastHeartbeatNs = System.nanoTime();
-                            }
+                    bovBatch.add(bov);
+                    if (bovBatch.size() == 25) {
+                        processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
+                        vulnsProcessed += bovBatch.size();
+                        bovBatch.clear();
+                        if (System.nanoTime() - lastHeartbeatNs >= HEARTBEAT_LOG_INTERVAL.toNanos()) {
+                            LOGGER.info("Processed {} vulnerabilities so far", vulnsProcessed);
+                            lastHeartbeatNs = System.nanoTime();
                         }
-                    } else {
-                        vulnsSkipped++;
-                        LOGGER.warn(
-                                "Skipping vulnerability {} rejected at {}",
-                                bov.getVulnerabilities(0).getId(),
-                                Timestamps.toString(bov.getVulnerabilities(0).getRejected()));
                     }
                 }
 
@@ -156,9 +146,8 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             }
 
             LOGGER.info(
-                    "Completed mirror; processed {} vulnerabilities ({} skipped) in {}",
+                    "Completed mirror; processed {} vulnerabilities in {}",
                     vulnsProcessed,
-                    vulnsSkipped,
                     Duration.ofNanos(System.nanoTime() - startTimeNs));
         }
 

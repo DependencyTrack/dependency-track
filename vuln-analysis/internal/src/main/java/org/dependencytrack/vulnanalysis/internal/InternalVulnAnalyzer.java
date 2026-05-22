@@ -225,6 +225,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
                             ON vsv."VULNERABLESOFTWARE_ID" = vs."ID"
                          INNER JOIN "VULNERABILITY" AS v
                             ON v."ID" = vsv."VULNERABILITY_ID"
+                           AND v."REJECTED" IS NULL
                         """)
                 .bind("parts", parts)
                 .bind("vendors", vendors)
@@ -266,6 +267,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
                             ON vsv."VULNERABLESOFTWARE_ID" = vs."ID"
                          INNER JOIN "VULNERABILITY" AS v
                             ON v."ID" = vsv."VULNERABILITY_ID"
+                           AND v."REJECTED" IS NULL
                         """)
                 .bind("types", types)
                 .bind("namespaces", namespaces)

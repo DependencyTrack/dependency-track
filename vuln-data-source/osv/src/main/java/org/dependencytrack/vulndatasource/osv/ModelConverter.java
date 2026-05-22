@@ -159,6 +159,10 @@ final class ModelConverter {
         if (modified != null) {
             vuln.setUpdated(modified);
         }
+        final Timestamp withdrawn = toTimestamp(osv.getWithdrawn(), id, "withdrawn");
+        if (withdrawn != null) {
+            vuln.setRejected(withdrawn);
+        }
 
         // CWEs and a fallback severity from OSV's top-level database_specific.
         Severity dbSeverity = SEVERITY_UNKNOWN;

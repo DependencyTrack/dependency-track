@@ -138,8 +138,8 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
                 engine.onTaskEvent(new ActivityTaskCompletedEvent(task, result));
             } catch (ExecutionException e) {
                 final Throwable cause = e.getCause();
-                if (cause instanceof InterruptedException) {
-                    logger.debug("Activity was interrupted; Abandoning task");
+                if (cause instanceof InterruptedException || executionExecutor.isShutdown()) {
+                    logger.debug("Activity was interrupted or worker is shutting down; abandoning task");
                     abandon(task);
                 } else if (cause instanceof TaskLockLostException) {
                     logger.warn("""

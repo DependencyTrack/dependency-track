@@ -56,6 +56,7 @@ import org.dependencytrack.dex.engine.api.response.CreateWorkflowRunResponse;
 import org.dependencytrack.dex.proto.event.v1.WorkflowEvent;
 import org.dependencytrack.dex.proto.payload.v1.Payload;
 import org.eclipse.microprofile.health.HealthCheckResponse;
+import org.jdbi.v3.core.Jdbi;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -1274,6 +1275,44 @@ class DexEngineImplTest {
         engine.close();
 
         assertThat(activityInterrupted).isTrue();
+    }
+
+    @Test
+    void shouldAbandonActivityInterruptedDuringShutdownInsteadOfFailingIt() throws Exception {
+        final var activityStarted = new AtomicBoolean(false);
+        final var activityBlockedLatch = new CountDownLatch(1);
+
+        registerWorkflow("test", (ctx, _) -> {
+            ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
+            return null;
+        });
+        registerActivity("test", (_, _) -> {
+            activityStarted.set(true);
+            try {
+                activityBlockedLatch.await(1, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                throw new IllegalStateException("Interrupted", e);
+            }
+            return null;
+        });
+        registerWorkflowWorker("workflow-worker", 1);
+        registerTaskWorker("activity-worker", 1);
+        engine.start();
+
+        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+
+        await("Activity start")
+                .atMost(Duration.ofSeconds(3))
+                .until(activityStarted::get);
+
+        engine.close();
+        
+        final Integer attempt = Jdbi.create(dataSource).withHandle(handle -> handle
+                .createQuery("SELECT attempt FROM dex_activity_task WHERE workflow_run_id = :runId")
+                .bind("runId", runId)
+                .mapTo(Integer.class)
+                .one());
+        assertThat(attempt).isEqualTo(1);
     }
 
     @Test

@@ -18,9 +18,6 @@
  */
 package org.dependencytrack.tasks.maintenance;
 
-import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
-import org.dependencytrack.event.maintenance.MetricsMaintenanceEvent;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.jdbi.v3.core.Handle;
@@ -29,53 +26,22 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
-import static net.javacrumbs.shedlock.core.LockAssert.assertLocked;
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_METRICS_RETENTION_DAYS;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
-import static org.dependencytrack.util.LockProvider.executeWithLock;
-import static org.dependencytrack.util.TaskUtil.getLockConfigForTask;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 /**
  * @since 5.0.0
  */
-public class MetricsMaintenanceTask implements Subscriber {
+public final class MetricsMaintenanceTask implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsMaintenanceTask.class);
 
     @Override
-    public void inform(final Event event) {
-        if (!(event instanceof MetricsMaintenanceEvent)) {
-            return;
-        }
-
-        final long startTimeNs = System.nanoTime();
-        try (final Handle jdbiHandle = openJdbiHandle()) {
-            LOGGER.info("Starting metrics maintenance");
-            final Statistics statistics = executeWithLock(
-                    getLockConfigForTask(MetricsMaintenanceTask.class),
-                    () -> informLocked(jdbiHandle));
-            if (statistics == null) {
-                LOGGER.info("Task is locked by another instance; Skipping");
-                return;
-            }
-
-            final var taskDuration = Duration.ofNanos(System.nanoTime() - startTimeNs);
-            LOGGER.info("Completed in %s: %s".formatted(taskDuration, statistics));
-        } catch (Throwable e) {
-            final var taskDuration = Duration.ofNanos(System.nanoTime() - startTimeNs);
-            LOGGER.error("Failed to complete after %s".formatted(taskDuration), e);
-        }
+    public void run() {
+        useJdbiHandle(this::runMaintenance);
     }
 
-    private record Statistics(
-            Duration retentionDuration,
-            int deletedComponentMetrics,
-            int deletedProjectMetrics) {
-    }
-
-    private Statistics informLocked(final Handle jdbiHandle) {
-        assertLocked();
-
+    private void runMaintenance(final Handle jdbiHandle) {
         final var configPropertyDao = jdbiHandle.attach(ConfigPropertyDao.class);
         final var metricsDao = jdbiHandle.attach(MetricsDao.class);
 
@@ -83,10 +49,17 @@ public class MetricsMaintenanceTask implements Subscriber {
 
         final Integer retentionDays = configPropertyDao.getValue(MAINTENANCE_METRICS_RETENTION_DAYS, Integer.class);
         final Duration retentionDuration = Duration.ofDays(retentionDays);
+        LOGGER.debug("Configured retention duration: {}", retentionDuration);
 
         final int numDeletedComponent = metricsDao.deleteComponentMetricsForRetentionDuration(retentionDuration);
-        final int numDeletedProject = metricsDao.deleteProjectMetricsForRetentionDuration(retentionDuration);
+        if (numDeletedComponent > 0) {
+            LOGGER.info("Dropped {} component metrics partition(s)", numDeletedComponent);
+        }
 
-        return new Statistics(retentionDuration, numDeletedComponent, numDeletedProject);
+        final int numDeletedProject = metricsDao.deleteProjectMetricsForRetentionDuration(retentionDuration);
+        if (numDeletedProject > 0) {
+            LOGGER.info("Dropped {} project metrics partition(s)", numDeletedProject);
+        }
     }
+
 }

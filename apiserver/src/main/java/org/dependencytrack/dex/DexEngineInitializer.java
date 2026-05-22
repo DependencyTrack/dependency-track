@@ -80,6 +80,8 @@ import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowArg;
 import org.dependencytrack.secret.management.SecretManager;
+import org.dependencytrack.tasks.IdentifyInternalComponentsActivity;
+import org.dependencytrack.tasks.IdentifyInternalComponentsWorkflow;
 import org.dependencytrack.tasks.ImportBomActivity;
 import org.dependencytrack.tasks.ImportBomWorkflow;
 import org.dependencytrack.tasks.ImportVexActivity;
@@ -167,6 +169,11 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter(),
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
+                new IdentifyInternalComponentsWorkflow(),
+                voidConverter(),
+                voidConverter(),
+                Duration.ofMinutes(1));
+        engine.registerWorkflow(
                 new ImportBomWorkflow(),
                 protoConverter(ImportBomArg.class),
                 voidConverter(),
@@ -212,6 +219,11 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter(),
                 Duration.ofMinutes(1));
 
+        engine.registerActivity(
+                new IdentifyInternalComponentsActivity(),
+                voidConverter(),
+                voidConverter(),
+                Duration.ofMinutes(30));
         engine.registerActivity(
                 new ImportBomActivity(
                         fileStorage,

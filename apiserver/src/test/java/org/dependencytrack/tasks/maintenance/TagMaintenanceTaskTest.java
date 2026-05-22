@@ -19,7 +19,6 @@
 package org.dependencytrack.tasks.maintenance;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.maintenance.TagMaintenanceEvent;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Vulnerability;
@@ -63,7 +62,7 @@ class TagMaintenanceTaskTest extends PersistenceCapableTest {
         qm.createTag("tag-orphaned");
 
         final var task = new TagMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.inform(new TagMaintenanceEvent()));
+        assertThatNoException().isThrownBy(() -> task.run());
 
         assertThat(qm.getTags()).satisfiesExactlyInAnyOrder(
                 tag -> assertThat(tag.name()).isEqualTo("tag-project"),
@@ -84,7 +83,7 @@ class TagMaintenanceTaskTest extends PersistenceCapableTest {
         qm.createTag("tag-orphaned");
 
         final var task = new TagMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.inform(new TagMaintenanceEvent()));
+        assertThatNoException().isThrownBy(() -> task.run());
 
         assertThat(qm.getTags()).satisfiesExactly(
                 tag -> assertThat(tag.name()).isEqualTo("tag-orphaned")

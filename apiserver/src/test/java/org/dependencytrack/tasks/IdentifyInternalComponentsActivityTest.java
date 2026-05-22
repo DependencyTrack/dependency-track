@@ -20,7 +20,7 @@ package org.dependencytrack.tasks;
 
 import alpine.model.IConfigProperty.PropertyType;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.InternalComponentIdentificationEvent;
+import org.dependencytrack.dex.api.ActivityContext;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
@@ -31,8 +31,9 @@ import javax.jdo.Query;
 import javax.jdo.Transaction;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
-public class InternalComponentIdentificationTaskTest extends PersistenceCapableTest {
+class IdentifyInternalComponentsActivityTest extends PersistenceCapableTest {
 
     @BeforeEach
     public void before() throws Exception {
@@ -63,8 +64,8 @@ public class InternalComponentIdentificationTaskTest extends PersistenceCapableT
     }
 
     @Test
-    public void test() throws Exception {
-        new InternalComponentIdentificationTask().inform(new InternalComponentIdentificationEvent());
+    void shouldFlagComponentsMatchingGroupAndName() throws Exception {
+        new IdentifyInternalComponentsActivity().execute(mock(ActivityContext.class), null);
         assertThat(getInternalComponentCount()).isEqualTo(3);
     }
 

@@ -41,13 +41,14 @@ public final class ConfigKeys {
     public static final String METRICS_AUTH_PASSWORD = "dt.metrics.auth.password";
 
     public static final String TASK_SCHEDULER_ENABLED = "dt.task-scheduler.enabled";
+    public static final String TASK_SCHEDULER_THREADS = "dt.task-scheduler.threads";
+    public static final String TASK_SCHEDULER_POLL_INTERVAL_MS = "dt.task-scheduler.poll-interval-ms";
+    public static final String TASK_SCHEDULER_SHUTDOWN_MAX_WAIT_MS = "dt.task-scheduler.shutdown-max-wait-ms";
 
     public static final String VULNERABILITY_POLICY_BUNDLE_URL = "dt.vulnerability.policy.bundle.url";
     public static final String VULNERABILITY_POLICY_BUNDLE_AUTH_USERNAME = "dt.vulnerability.policy.bundle.auth.username";
     public static final String VULNERABILITY_POLICY_BUNDLE_AUTH_PASSWORD = "dt.vulnerability.policy.bundle.auth.password";
     public static final String VULNERABILITY_POLICY_BUNDLE_AUTH_BEARER_TOKEN = "dt.vulnerability.policy.bundle.auth.bearer.token";
-
-    public static final String WORKER_POOL_DRAIN_TIMEOUT_DURATION = "dt.worker.pool.drain.timeout.duration";
 
     public static final String CACHE_PROVIDER = "dt.cache.provider";
     public static final String FILE_STORAGE_PROVIDER = "dt.file-storage.provider";

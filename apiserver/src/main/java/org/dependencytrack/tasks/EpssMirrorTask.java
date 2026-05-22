@@ -18,10 +18,6 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
-import net.javacrumbs.shedlock.core.LockingTaskExecutor;
-import org.dependencytrack.event.EpssMirrorEvent;
 import org.dependencytrack.model.Epss;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.EpssDao;
@@ -32,6 +28,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -49,10 +46,8 @@ import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SO
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_EPSS_FEEDS_URL;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
-import static org.dependencytrack.util.LockProvider.executeWithLock;
-import static org.dependencytrack.util.TaskUtil.getLockConfigForTask;
 
-public class EpssMirrorTask implements Subscriber {
+public final class EpssMirrorTask implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EpssMirrorTask.class);
     private static final int BATCH_SIZE = 1000;
@@ -64,41 +59,25 @@ public class EpssMirrorTask implements Subscriber {
         this.httpClient = httpClient;
     }
 
-    public void inform(final Event e) {
-        if (!(e instanceof EpssMirrorEvent)) {
+    @Override
+    public void run() {
+        final Config config = loadConfig();
+        if (!config.isEnabled()) {
+            LOGGER.debug("EPSS data source is disabled; nothing to do");
             return;
         }
 
         try {
-            executeWithLock(
-                    getLockConfigForTask(getClass()),
-                    (LockingTaskExecutor.Task) this::informLocked);
-        } catch (Throwable ex) {
-            LOGGER.error("Failed to acquire lock or execute task", ex);
+            LOGGER.info("Downloading EPSS feed from {}", config.feedsBaseUrl());
+            final Path feedFilePath = downloadFeedFile(config.feedsBaseUrl());
+            LOGGER.debug("Download destination: {}", feedFilePath);
+
+            LOGGER.info("Processing EPSS feed");
+            final int recordsModified = processFeedFile(feedFilePath);
+            LOGGER.info("Modified {} record(s)", recordsModified);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-    }
-
-    private void informLocked() throws IOException {
-        final Config config = loadConfig();
-        if (!config.isEnabled()) {
-            LOGGER.info("EPSS data source is disabled; Skipping mirror");
-            return;
-        }
-
-        LOGGER.info("Starting EPSS mirror");
-        final long startTimeNs = System.nanoTime();
-
-        LOGGER.info("Downloading EPSS feed from {}", config.feedsBaseUrl());
-        final Path feedFilePath = downloadFeedFile(config.feedsBaseUrl());
-        LOGGER.debug("Download destination: {}", feedFilePath);
-
-        LOGGER.info("Processing EPSS feed");
-        final int recordsModified = processFeedFile(feedFilePath);
-
-        LOGGER.info(
-                "Completed EPSS mirror; modified {} record(s) in {}",
-                recordsModified,
-                Duration.ofNanos(System.nanoTime() - startTimeNs));
     }
 
     private Path downloadFeedFile(final String baseUrl) throws IOException {

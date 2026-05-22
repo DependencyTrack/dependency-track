@@ -18,18 +18,12 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.event.framework.Event;
-import org.dependencytrack.event.DefectDojoUploadEventAbstract;
 import org.dependencytrack.integrations.defectdojo.DefectDojoUploader;
 import org.dependencytrack.secret.management.SecretManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.http.HttpClient;
 
-public class DefectDojoUploadTask extends VulnerabilityManagementUploadTask {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefectDojoUploadTask.class);
+public final class DefectDojoUploadTask extends VulnerabilityManagementUploadTask {
 
     private final HttpClient httpClient;
     private final SecretManager secretManager;
@@ -39,15 +33,9 @@ public class DefectDojoUploadTask extends VulnerabilityManagementUploadTask {
         this.secretManager = secretManager;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void inform(final Event e) {
-        if (e instanceof DefectDojoUploadEventAbstract) {
-            final DefectDojoUploadEventAbstract event = (DefectDojoUploadEventAbstract) e;
-            LOGGER.debug("Starting DefectDojo upload task");
-            super.inform(event, new DefectDojoUploader(httpClient, secretManager));
-            LOGGER.debug("DefectDojo upload complete");
-        }
+    @Override
+    public void run() {
+        runUpload(new DefectDojoUploader(httpClient, secretManager));
     }
+
 }

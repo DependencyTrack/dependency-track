@@ -20,7 +20,6 @@ package org.dependencytrack.tasks;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.EpssMirrorEvent;
 import org.dependencytrack.model.Epss;
 import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.jdbi.v3.core.mapper.reflect.BeanMapper;
@@ -40,6 +39,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_EPSS_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.VULNERABILITY_SOURCE_EPSS_FEEDS_URL;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
@@ -103,7 +103,7 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
         useJdbiHandle(handle -> handle.attach(EpssDao.class)
                 .createOrUpdateAll(List.of(new Epss("CVE-1999-0001", BigDecimal.ONE, BigDecimal.ZERO))));
 
-        new EpssMirrorTask(httpClient).inform(new EpssMirrorEvent());
+        new EpssMirrorTask(httpClient).run();
 
         final List<Epss> epssRecords = findAllEpss();
 
@@ -154,7 +154,8 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
                         .withStatus(200)
                         .withBody(compressedFeedOutputStream.toByteArray())));
 
-        new EpssMirrorTask(httpClient).inform(new EpssMirrorEvent());
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(new EpssMirrorTask(httpClient)::run);
 
         assertThat(findAllEpss()).isEmpty();
     }
@@ -174,7 +175,7 @@ class EpssMirrorTaskTest extends PersistenceCapableTest {
                 VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getPropertyType(),
                 VULNERABILITY_SOURCE_EPSS_FEEDS_URL.getDescription());
 
-        new EpssMirrorTask(httpClient).inform(new EpssMirrorEvent());
+        new EpssMirrorTask(httpClient).run();
 
         assertThat(findAllEpss()).isEmpty();
     }

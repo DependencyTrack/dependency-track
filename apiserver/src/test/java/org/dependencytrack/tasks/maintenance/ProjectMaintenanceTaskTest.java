@@ -20,7 +20,6 @@ package org.dependencytrack.tasks.maintenance;
 
 import alpine.persistence.PaginatedResult;
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.event.maintenance.ProjectMaintenanceEvent;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.util.DateUtil;
@@ -66,7 +65,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         // Delete projects older than default 30 days
         final var task = new ProjectMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.inform(new ProjectMaintenanceEvent()));
+        assertThatNoException().isThrownBy(() -> task.run());
 
         final PaginatedResult projects = withJdbiHandle(handle ->
                 handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, false, false, false));
@@ -123,7 +122,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         // Retain all active and last 2 inactive versions of a project and delete rest
         final var task = new ProjectMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.inform(new ProjectMaintenanceEvent()));
+        assertThatNoException().isThrownBy(() -> task.run());
         final PaginatedResult projects = withJdbiHandle(handle ->
                 handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, false, false, false));
         assertThat(projects.getList(Project.class)).satisfiesExactly(
@@ -180,7 +179,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         // Retain all active and last 2 inactive versions of all projects and delete rest
         final var task = new ProjectMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.inform(new ProjectMaintenanceEvent()));
+        assertThatNoException().isThrownBy(() -> task.run());
         final PaginatedResult projects = withJdbiHandle(handle ->
                 handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, false, false, false));
         assertThat(projects.getList(Project.class)).satisfiesExactlyInAnyOrder(
@@ -215,7 +214,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         qm.persist(project);
 
         final var task = new ProjectMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.inform(new ProjectMaintenanceEvent()));
+        assertThatNoException().isThrownBy(() -> task.run());
         final PaginatedResult projects = withJdbiHandle(handle ->
                 handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, false, false, false));
         assertThat(projects).isNotNull();
@@ -237,7 +236,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         qm.persist(project);
 
         final var task = new ProjectMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.inform(new ProjectMaintenanceEvent()));
+        assertThatNoException().isThrownBy(() -> task.run());
         final PaginatedResult projects = withJdbiHandle(handle ->
                 handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, false, false, false));
         assertThat(projects).isNotNull();

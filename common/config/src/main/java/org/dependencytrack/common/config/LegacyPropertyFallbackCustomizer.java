@@ -98,7 +98,6 @@ public final class LegacyPropertyFallbackCustomizer implements SmallRyeConfigBui
             "oidc.teams.default",
             "oidc.user.provisioning",
             "oidc.username.claim",
-            "worker.pool.drain.timeout.duration",
             "worker.thread.multiplier",
             "worker.threads"
     );

@@ -18,48 +18,47 @@
  */
 package org.dependencytrack.tasks;
 
+import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
+import com.github.kagkarlsson.scheduler.task.schedule.Schedule;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
-import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.plugin.runtime.PluginManager;
-import org.eclipse.microprofile.config.Config;
+import org.dependencytrack.secret.management.SecretManager;
+import org.dependencytrack.tasks.TaskSchedulerInitializer.TriggerOnFirstRunSchedule;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import javax.sql.DataSource;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-class TaskSchedulerInitializerTest extends PersistenceCapableTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+
+class TaskSchedulerInitializerTest {
 
     @Test
-    void shouldScheduleTasks() {
-        final Config config = ConfigProvider.getConfig();
-        final var scheduler = new TaskScheduler();
-        final var dexEngineMock = mock(DexEngine.class);
-        final var pluginManagerMock = mock(PluginManager.class);
+    void shouldRegisterAllRecurringTasks() {
+        final List<RecurringTask<Void>> tasks =
+                TaskSchedulerInitializer.recurringTasks(
+                        ConfigProvider.getConfig(),
+                        mock(DexEngine.class),
+                        mock(PluginManager.class),
+                        mock(SecretManager.class));
 
-        final var servletContextMock = mock(ServletContext.class);
-        doReturn(dexEngineMock)
-                .when(servletContextMock).getAttribute(eq(DexEngine.class.getName()));
-        doReturn(pluginManagerMock)
-                .when(servletContextMock).getAttribute(eq(PluginManager.class.getName()));
-
-        final var initializer = new TaskSchedulerInitializer(config, scheduler);
-        initializer.contextInitialized(new ServletContextEvent(servletContextMock));
-
-        assertThat(scheduler.scheduledTaskIds()).containsExactlyInAnyOrder(
+        assertThat(tasks).extracting(RecurringTask::getName).containsExactlyInAnyOrder(
                 "Defect Dojo Upload",
                 "EPSS Mirror",
                 "Expired Session Cleanup",
                 "Fortify SSC Upload",
                 "GitHub Advisories Mirror",
-                "Internal Component Identification",
                 "Kenna Security Upload",
                 "Metrics Maintenance",
                 "NVD Mirror",
@@ -75,12 +74,6 @@ class TaskSchedulerInitializerTest extends PersistenceCapableTest {
                 "Vulnerability Database Maintenance",
                 "Vulnerability Metrics Update",
                 "Vulnerability Policy Bundle Sync");
-
-        assertThat(scheduler.isRunning()).isTrue();
-
-        initializer.contextDestroyed(null);
-
-        assertThat(scheduler.isRunning()).isFalse();
     }
 
     @Test
@@ -88,20 +81,30 @@ class TaskSchedulerInitializerTest extends PersistenceCapableTest {
         final var config = new SmallRyeConfigBuilder()
                 .withDefaultValue("dt.task-scheduler.enabled", "false")
                 .build();
-        final var schedulerMock = mock(TaskScheduler.class);
-        final var dexEngineMock = mock(DexEngine.class);
-        final var pluginManagerMock = mock(PluginManager.class);
+        final var initializer = new TaskSchedulerInitializer(
+                config, mock(DataSource.class), new SimpleMeterRegistry(), new HealthCheckRegistry());
 
-        final var servletContextMock = mock(ServletContext.class);
-        doReturn(dexEngineMock)
-                .when(servletContextMock).getAttribute(eq(DexEngine.class.getName()));
-        doReturn(pluginManagerMock)
-                .when(servletContextMock).getAttribute(eq(PluginManager.class.getName()));
+        initializer.contextInitialized(new ServletContextEvent(mock(ServletContext.class)));
 
-        final var initializer = new TaskSchedulerInitializer(config, schedulerMock);
-        initializer.contextInitialized(new ServletContextEvent(servletContextMock));
+        assertThat(initializer.scheduler()).isNull();
+    }
 
-        verify(schedulerMock, never()).start();
+    @Test
+    void shouldJitterInitialExecutionOfTriggerOnFirstRunSchedule() {
+        final var schedule = new TriggerOnFirstRunSchedule(mock(Schedule.class));
+
+        final Instant now = Instant.now();
+        final Set<Instant> initialExecutionTimes = new HashSet<>();
+
+        for (int i = 0; i < 100; i++) {
+            final Instant initialExecutionTime = schedule.getInitialExecutionTime(now);
+            assertThat(initialExecutionTime)
+                    .isAfterOrEqualTo(now)
+                    .isBefore(now.plus(Duration.ofMinutes(1)));
+            initialExecutionTimes.add(initialExecutionTime);
+        }
+
+        assertThat(initialExecutionTimes).hasSizeGreaterThan(1);
     }
 
 }

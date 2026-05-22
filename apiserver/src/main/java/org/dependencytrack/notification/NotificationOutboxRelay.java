@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.notification;
 
-import alpine.event.framework.LoggableUncaughtExceptionHandler;
 import io.github.resilience4j.core.IntervalFunction;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
@@ -132,7 +131,8 @@ final class NotificationOutboxRelay implements Closeable {
 
         executorService = Executors.newSingleThreadScheduledExecutor(
                 BasicThreadFactory.builder()
-                        .uncaughtExceptionHandler(new LoggableUncaughtExceptionHandler())
+                        .uncaughtExceptionHandler((thread, throwable) ->
+                                LOGGER.error("Uncaught exception in thread {}", thread.getName(), throwable))
                         .namingPattern(EXECUTOR_NAME + "-%d")
                         .build());
         new ExecutorServiceMetrics(executorService, EXECUTOR_NAME, null)

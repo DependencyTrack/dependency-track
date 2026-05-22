@@ -23,8 +23,6 @@ package alpine.config;
  */
 public final class AlpineConfigKeys {
 
-    public static final String WORKER_THREADS = "dt.worker.threads";
-    public static final String WORKER_THREAD_MULTIPLIER = "dt.worker.thread.multiplier";
     public static final String BCRYPT_ROUNDS = "dt.bcrypt.rounds";
     public static final String LDAP_ENABLED = "dt.ldap.enabled";
     public static final String LDAP_SERVER_URL = "dt.ldap.server.url";

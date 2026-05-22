@@ -18,35 +18,36 @@
  */
 package org.dependencytrack.tasks.maintenance;
 
-import org.dependencytrack.event.maintenance.PackageMetadataMaintenanceEvent;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @since 5.0.0
  */
-public final class PackageMetadataMaintenanceTask
-        extends AbstractBatchingMaintenanceTask<PackageMetadataMaintenanceEvent> {
+public final class PackageMetadataMaintenanceTask extends AbstractBatchingMaintenanceTask {
 
-    private static final long ADVISORY_LOCK_ID = 3179468540126812349L;
+    private static final Logger LOGGER = LoggerFactory.getLogger(PackageMetadataMaintenanceTask.class);
     private static final int BATCH_SIZE = 1000;
     private static final int MAX_ITERATIONS = 1000;
 
     public PackageMetadataMaintenanceTask() {
-        super(
-                PackageMetadataMaintenanceEvent.class,
-                "package metadata maintenance",
-                ADVISORY_LOCK_ID,
-                MAX_ITERATIONS);
+        super(MAX_ITERATIONS);
     }
 
     @Override
-    protected String doRun() {
+    public void run() {
         final int deletedArtifactMetadata = runBatched(
                 BATCH_SIZE, PackageMetadataMaintenanceTask::deleteOrphanedArtifactMetadata);
+        if (deletedArtifactMetadata > 0) {
+            LOGGER.info("Deleted {} orphan PACKAGE_ARTIFACT_METADATA rows", deletedArtifactMetadata);
+        }
+
         final int deletedPackageMetadata = runBatched(
                 BATCH_SIZE, PackageMetadataMaintenanceTask::deleteOrphanedPackageMetadata);
-        return "deleted %d orphan PACKAGE_ARTIFACT_METADATA rows, %d orphan PACKAGE_METADATA rows"
-                .formatted(deletedArtifactMetadata, deletedPackageMetadata);
+        if (deletedPackageMetadata > 0) {
+            LOGGER.info("Deleted {} orphan PACKAGE_METADATA rows", deletedPackageMetadata);
+        }
     }
 
     private static int deleteOrphanedArtifactMetadata(Handle handle) {

@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.tasks.maintenance;
 
-import org.dependencytrack.event.maintenance.ProjectMaintenanceEvent;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.slf4j.Logger;
@@ -34,30 +33,26 @@ import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJ
 import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_VERSIONS;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
-public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTask<ProjectMaintenanceEvent> {
+public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTask {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectMaintenanceTask.class);
-    private static final long ADVISORY_LOCK_ID = 7102463598274163180L;
     private static final int BATCH_SIZE = 25;
     private static final int MAX_ITERATIONS = 1000;
 
     public ProjectMaintenanceTask() {
-        super(
-                ProjectMaintenanceEvent.class,
-                "project maintenance",
-                ADVISORY_LOCK_ID,
-                MAX_ITERATIONS);
+        super(MAX_ITERATIONS);
     }
 
     @Override
-    String doRun() {
+    public void run() {
         final Optional<String> retentionType = withJdbiHandle(
                 handle -> handle
                         .attach(ConfigPropertyDao.class)
                         .getOptionalValue(MAINTENANCE_PROJECTS_RETENTION_TYPE, String.class));
 
         if (retentionType.isEmpty() || retentionType.get().isEmpty()) {
-            return "inactive project deletion is disabled";
+            LOGGER.debug("Inactive project deletion is disabled; nothing to do");
+            return;
         }
 
         if ("AGE".equals(retentionType.get())) {
@@ -74,7 +69,11 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
                 return deletedProjects.size();
             });
 
-            return "deleted %d inactive projects by age".formatted(deleted);
+            if (deleted > 0) {
+                LOGGER.info("Deleted {} inactive project(s) by age", deleted);
+            }
+
+            return;
         }
 
         final int versionCountThreshold = withJdbiHandle(
@@ -90,7 +89,9 @@ public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTas
             return deletedProjects.size();
         });
 
-        return "deleted %d excess project versions".formatted(deleted);
+        if (deleted > 0) {
+            LOGGER.info("Deleted {} excess project version(s)", deleted);
+        }
     }
 
     private static void logDeletedProjects(List<ProjectDao.DeletedProject> deletedProjects) {

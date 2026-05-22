@@ -18,18 +18,16 @@
  */
 package org.dependencytrack.tasks;
 
-import alpine.event.framework.Event;
-import alpine.event.framework.Subscriber;
-import net.javacrumbs.shedlock.core.LockConfiguration;
-import net.javacrumbs.shedlock.core.LockExtender;
-import net.javacrumbs.shedlock.core.LockingTaskExecutor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
-import org.dependencytrack.event.InternalComponentIdentificationEvent;
+import org.dependencytrack.dex.api.Activity;
+import org.dependencytrack.dex.api.ActivityContext;
+import org.dependencytrack.dex.api.ActivitySpec;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.jdbi.v3.core.statement.PreparedBatch;
 import org.jdbi.v3.core.statement.SqlStatements;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,58 +40,37 @@ import java.util.Map;
 import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_QUERY_NAME;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
-import static org.dependencytrack.util.LockProvider.executeWithLock;
-import static org.dependencytrack.util.LockProvider.isTaskLockToBeExtended;
-import static org.dependencytrack.util.TaskUtil.getLockConfigForTask;
 
 /**
- * Subscriber task that identifies internal components throughout the entire portfolio.
+ * Identifies internal components throughout the entire portfolio.
  *
- * @author nscuro
- * @since 3.7.0
+ * @since 5.0.0
  */
-public class InternalComponentIdentificationTask implements Subscriber {
+@ActivitySpec(name = "identify-internal-components")
+public final class IdentifyInternalComponentsActivity implements Activity<Void, Void> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(InternalComponentIdentificationTask.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IdentifyInternalComponentsActivity.class);
 
     @Override
-    public void inform(final Event e) {
-        if (e instanceof InternalComponentIdentificationEvent) {
-            try {
-                executeWithLock(
-                        getLockConfigForTask(InternalComponentIdentificationTask.class),
-                        (LockingTaskExecutor.Task) this::analyze);
-            } catch (Throwable ex) {
-                LOGGER.error("Error in acquiring lock and executing internal component identification task", ex);
-            }
-        }
-    }
-
-    private void analyze() {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable Void argument) throws InterruptedException {
         final Instant startTime = Instant.now();
         LOGGER.info("Starting internal component identification");
-        LockConfiguration lockConfiguration = getLockConfigForTask(InternalComponentIdentificationTask.class);
         final var internalComponentIdentifier = new InternalComponentIdentifier();
 
         if (!internalComponentIdentifier.hasPatterns() && !internalComponentsExist()) {
-            LOGGER.debug("""
+            LOGGER.info("""
                     No internal patterns configured, and no components currently
                     marked as internal exist; Nothing to do""");
-            return;
+            return null;
         }
 
         final var changedInternalStatusByComponentId = new HashMap<Long, Boolean>(250);
         List<Component> components = fetchNextComponentsPage(null);
         while (!components.isEmpty()) {
-            //Extend the lock by 5 min everytime we have a page.
-            //We will get max 1000 components in a page
-            //Reason of not extending at the end of loop is if it does not have to do much,
-            //It might finish execution before lock could be extended resulting in error
-            LOGGER.debug("extending lock of internal component identification by 5 min");
-            long cumulativeProcessingDuration = System.currentTimeMillis() - startTime.toEpochMilli();
-            if (isTaskLockToBeExtended(cumulativeProcessingDuration, InternalComponentIdentificationTask.class)) {
-                LockExtender.extendActiveLock(Duration.ofMinutes(5).plus(lockConfiguration.getLockAtLeastFor()), lockConfiguration.getLockAtLeastFor());
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Interrupted before all components could be processed");
             }
+            ctx.maybeHeartbeat();
 
             for (final Component component : components) {
                 String coordinates = component.getName();
@@ -125,6 +102,7 @@ public class InternalComponentIdentificationTask implements Subscriber {
         }
 
         LOGGER.info("Internal component identification completed in {}", DateFormatUtils.format(Duration.between(startTime, Instant.now()).toMillis(), "mm:ss:SS"));
+        return null;
     }
 
     private boolean internalComponentsExist() {
@@ -151,7 +129,6 @@ public class InternalComponentIdentificationTask implements Subscriber {
                          ORDER BY "ID" DESC
                          FETCH NEXT 1000 ROWS ONLY
                         """)
-                // lastId parameter is not bound for first iteration.
                 .configure(SqlStatements.class, cfg -> cfg.setUnusedBindingAllowed(true))
                 .define(ATTRIBUTE_QUERY_NAME, "%s#fetchNextComponentsPage".formatted(getClass().getSimpleName()))
                 .bind("lastId", lastId)

@@ -21,7 +21,7 @@ package org.dependencytrack.notification.publishing.kafka;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.record.CompressionType;
+import org.apache.kafka.common.record.internal.CompressionType;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;

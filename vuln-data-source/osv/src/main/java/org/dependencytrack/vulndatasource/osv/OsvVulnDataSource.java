@@ -63,6 +63,7 @@ import static org.dependencytrack.vulndatasource.osv.CycloneDxPropertyNames.OSV_
 final class OsvVulnDataSource implements VulnDataSource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OsvVulnDataSource.class);
+    private static final int MAX_INCREMENTAL_ADVISORY_DOWNLOADS = 50;
 
     private final WatermarkManager watermarkManager;
     private final ObjectMapper objectMapper;
@@ -322,6 +323,15 @@ final class OsvVulnDataSource implements VulnDataSource {
             return;
         }
 
+        if (modifiedIds.size() > MAX_INCREMENTAL_ADVISORY_DOWNLOADS) {
+            LOGGER.info("""
+                            {} new or updated advisories for ecosystem {} exceeds the incremental \
+                            download threshold of {}; downloading the full advisory archive instead""",
+                    modifiedIds.size(), ecosystem, MAX_INCREMENTAL_ADVISORY_DOWNLOADS);
+            downloadEcosystemFilesAll(ecosystem, destDirPath);
+            return;
+        }
+
         // TODO: Use structured concurrency after Java 25 upgrade (https://openjdk.org/jeps/505).
         LOGGER.info("Downloading {} new or updated advisories for ecosystem {}", modifiedIds.size(), ecosystem);
         for (final String modifiedId : modifiedIds) {
@@ -402,6 +412,11 @@ final class OsvVulnDataSource implements VulnDataSource {
                 final Instant timestamp = Instant.parse(parts[0]);
                 if (timestamp.isAfter(watermark)) {
                     modifiedIds.add(parts[1]);
+                    if (modifiedIds.size() > MAX_INCREMENTAL_ADVISORY_DOWNLOADS) {
+                        // NB: We already know there are too many modified IDs,
+                        // no point in scanning further.
+                        break;
+                    }
                 } else {
                     break;
                 }

@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jdo.Query;
+import java.io.Closeable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -112,7 +113,12 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             int vulnsProcessed = 0;
             int vulnsSkipped = 0;
 
-            try (final VulnDataSource dataSource = dataSourceFactory.create()) {
+            final VulnDataSource dataSource = dataSourceFactory.create();
+
+            // NB: Give the data source the chance to persist its pending state
+            // when the activity got interrupted. That requires temporarily popping
+            // the interrupt flag from the thread before invoking close() on it.
+            try (var _ = (Closeable) () -> closeUninterruptibly(dataSource)) {
                 final var bovBatch = new ArrayList<Bom>(25);
                 while (dataSource.hasNext()) {
                     if (Thread.interrupted()) {
@@ -256,6 +262,17 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             return query.executeUnique();
         } finally {
             query.closeAll();
+        }
+    }
+
+    private static void closeUninterruptibly(VulnDataSource dataSource) {
+        final boolean interrupted = Thread.interrupted();
+        try {
+            dataSource.close();
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

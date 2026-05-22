@@ -385,6 +385,36 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
     }
 
     @Test
+    void shouldProcessRejectedVuln() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2022-40489",
+                      "source": { "name": "NVD" },
+                      "rejected": "2022-12-05T10:15:00Z"
+                    }
+                  ]
+                }
+                """;
+
+        final Bom bov = generateBomFromJson(bovJson);
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false).when(dataSourceMock).hasNext();
+        doReturn(bov).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder()
+                .setDataSourceName("nvd").setSourceName("NVD").build());
+
+        verify(dataSourceMock).markProcessed(eq(bov));
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2022-40489");
+        assertThat(vuln).isNotNull();
+        assertThat(vuln.getRejected()).isEqualTo("2022-12-05T10:15:00Z");
+    }
+
+    @Test
     void shouldProcessGitHubVuln() throws Exception {
         final var bovJson = """
                 {

@@ -63,6 +63,8 @@ class BovModelConverterTest {
                                 .setSeconds(1639098000)) // 2021-12-10
                         .setUpdated(Timestamp.newBuilder()
                                 .setSeconds(1675645200)) // 2023-02-06
+                        .setRejected(Timestamp.newBuilder()
+                                .setSeconds(1675645200)) // 2023-02-06
                         .addAllCwes(List.of(20, 400, 502, 917, 9999999)) // 9999999 is invalid
                         .addAdvisories(Advisory.newBuilder().setUrl("https://logging.apache.org/log4j/2.x/security.html").build())
                         .addAdvisories(Advisory.newBuilder().setUrl("https://support.apple.com/kb/HT213189").build())
@@ -102,6 +104,7 @@ class BovModelConverterTest {
         assertThat(vuln.getCreated()).isInSameDayAs("2021-12-10");
         assertThat(vuln.getPublished()).isInSameDayAs("2021-12-10");
         assertThat(vuln.getUpdated()).isInSameDayAs("2023-02-06");
+        assertThat(vuln.getRejected()).isInSameDayAs("2023-02-06");
         assertThat(vuln.getReferences()).isEqualToIgnoringWhitespace("""
                 * [https://logging.apache.org/log4j/2.x/security.html](https://logging.apache.org/log4j/2.x/security.html)\s
                 * [https://support.apple.com/kb/HT213189](https://support.apple.com/kb/HT213189)

@@ -821,6 +821,38 @@ class InternalVulnAnalyzerTest {
         assertThat(vdr.getVulnerabilitiesList()).isEmpty();
     }
 
+    @Test
+    void shouldNotMatchRejectedVulnerability() throws Exception {
+        jdbi.useTransaction(handle -> {
+            final long vulnDbId = createVulnerability(handle, "CVE-2023-00006", "NVD");
+            createPurlVulnerableSoftware(
+                    handle,
+                    "pkg:maven/com.example/lib",
+                    Range.withRange().havingEndExcluding("2.0.0"),
+                    vulnDbId);
+            handle.createUpdate("""
+                            UPDATE "VULNERABILITY"
+                               SET "REJECTED" = NOW()
+                             WHERE "ID" = :id
+                            """)
+                    .bind("id", vulnDbId)
+                    .execute();
+        });
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("lib")
+                        .setVersion("1.0.0")
+                        .setPurl("pkg:maven/com.example/lib@1.0.0")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+
+        assertThat(vdr.getVulnerabilitiesList()).isEmpty();
+    }
+
     public record Range(String startIncluding, String startExcluding, String endIncluding, String endExcluding) {
 
         public static Range withRange() {

@@ -67,3 +67,10 @@ properties:
     $ref: "./component-project.yaml"
   metrics:
     $ref: "./dependency-metrics.yaml"
+  package_metadata:
+    $ref: "./package-metadata.yaml"
+  package_artifact_metadata:
+    $ref: "./package-artifact-metadata.yaml"
+required:
+  - uuid
+  - name

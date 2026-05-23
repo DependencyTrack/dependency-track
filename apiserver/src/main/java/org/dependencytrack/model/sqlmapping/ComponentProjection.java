@@ -21,8 +21,6 @@ package org.dependencytrack.model.sqlmapping;
 import org.apache.commons.lang3.SerializationUtils;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
-import org.dependencytrack.model.ComponentMetaInformation;
-import org.dependencytrack.model.IntegrityMatchStatus;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Scope;
@@ -106,14 +104,6 @@ public class ComponentProjection {
     public String componentLicenseName;
 
     public String licenseExpression;
-
-    public Date publishedAt;
-
-    public Date lastFetch;
-
-    public String integrityCheckStatus;
-
-    public String integrityRepoUrl;
 
     public Long projectId;
 
@@ -264,17 +254,6 @@ public class ComponentProjection {
                 license.setOsiApproved(result.isOsiApproved);
             }
             componentPersistent.setResolvedLicense(license);
-        }
-
-        if (result.publishedAt != null
-            || result.integrityCheckStatus != null
-            || result.lastFetch != null
-            || result.integrityRepoUrl != null) {
-            componentPersistent.setComponentMetaInformation(new ComponentMetaInformation(
-                    result.publishedAt,
-                    result.integrityCheckStatus != null ? IntegrityMatchStatus.valueOf(result.integrityCheckStatus) : null,
-                    result.lastFetch,
-                    result.integrityRepoUrl));
         }
 
         return componentPersistent;

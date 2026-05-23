@@ -38,11 +38,9 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.OrganizationalContact;
-import org.dependencytrack.model.PackageArtifactMetadata;
 import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
-import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -59,7 +57,6 @@ import java.util.function.Supplier;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.dependencytrack.model.IntegrityMatchStatus.HASH_MATCH_PASSED;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.mock;
@@ -185,60 +182,6 @@ public class ComponentResourceTest extends ResourceTest {
         Assertions.assertEquals("abc", json.getJsonObject("repositoryMeta").getString("name"));
         Assertions.assertEquals("2.0.0", json.getJsonObject("repositoryMeta").getString("latestVersion"));
         Assertions.assertEquals(resolvedAt.getTime(), json.getJsonObject("repositoryMeta").getJsonNumber("lastCheck").longValue());
-    }
-
-    @Test
-    public void getComponentByUuidWithPublishedMetaDataTest() throws Exception {
-        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
-        Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
-        Component component = new Component();
-        component.setProject(project);
-        component.setName("ABC");
-        component.setPurl("pkg:maven/org.acme/abc");
-        component.setSha256("abc123def456");
-        final var published = new Date();
-        final var resolvedAt = new Date();
-        useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
-                            new PackageURL("pkg:maven/org.acme/abc"),
-                            "2.0.0",
-                            null,
-                            resolvedAt.toInstant(),
-                            null,
-                            null)));
-
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
-                            new PackageURL("pkg:maven/org.acme/abc"),
-                            new PackageURL("pkg:maven/org.acme/abc"),
-                            null,
-                            null,
-                            "abc123def456",
-                            null,
-                            published.toInstant(),
-                            null,
-                            null,
-                            published.toInstant())));
-        });
-        component = qm.createComponent(component, false);
-        Response response = jersey.target(V1_COMPONENT + "/" + component.getUuid())
-                .queryParam("includeRepositoryMetaData", true)
-                .queryParam("includeIntegrityMetaData", true)
-                .request().header(X_API_KEY, apiKey).get(Response.class);
-        Assertions.assertEquals(200, response.getStatus(), 0);
-        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonObject json = parseJsonObject(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals("ABC", json.getString("name"));
-        Assertions.assertEquals("MAVEN", json.getJsonObject("repositoryMeta").getString("repositoryType"));
-        Assertions.assertEquals("org.acme", json.getJsonObject("repositoryMeta").getString("namespace"));
-        Assertions.assertEquals("abc", json.getJsonObject("repositoryMeta").getString("name"));
-        Assertions.assertEquals("2.0.0", json.getJsonObject("repositoryMeta").getString("latestVersion"));
-        Assertions.assertEquals(resolvedAt.getTime(), json.getJsonObject("repositoryMeta").getJsonNumber("lastCheck").longValue());
-        Assertions.assertEquals(published.toString(), Date.from(Instant.ofEpochSecond(json.getJsonObject("componentMetaInformation").getJsonNumber("publishedDate").longValue() / 1000)).toString());
-        Assertions.assertEquals(HASH_MATCH_PASSED.toString(), json.getJsonObject("componentMetaInformation").getString("integrityMatchStatus"));
-        Assertions.assertEquals(published.toString(), Date.from(Instant.ofEpochSecond(json.getJsonObject("componentMetaInformation").getJsonNumber("lastFetched").longValue() / 1000)).toString());
     }
 
     @Test

@@ -116,9 +116,6 @@ public class ComponentResourcePostgresTest extends ResourceTest {
                             "latestVersion": "0.0",
                             "lastCheck": "${json-unit.any-number}"
                           },
-                          "componentMetaInformation": {
-                            "integrityMatchStatus": "COMPONENT_MISSING_HASH"
-                          },
                           "expandDependencyGraph": false,
                           "isInternal": false,
                           "occurrenceCount": 0

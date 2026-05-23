@@ -20,14 +20,14 @@ package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.Page.TotalCount;
-import org.dependencytrack.common.pagination.PageToken;
 import org.dependencytrack.common.pagination.PageTokenEncoder;
 import org.dependencytrack.common.pagination.SortDirection;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
-import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
+import org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.mapper.reflect.BeanMapper;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -43,13 +43,13 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.hasColumn;
 import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
@@ -100,214 +100,303 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             """)
     Long getComponentId(@Bind UUID componentUuid);
 
-    default Page<Component> listProjectComponents(
-            final long projectId,
-            final Boolean onlyOutdated,
-            final Boolean onlyDirect,
-            final int limit,
-            final String pageToken) {
+    default Page<Component> listProjectComponents(ListProjectComponentsQuery query) {
         final PageTokenEncoder pageTokenEncoder =
                 getHandle().getConfig(PaginationConfig.class).getPageTokenEncoder();
-        final var decodedPageToken = pageTokenEncoder.decode(pageToken, ListComponentPageToken.class);
+        final var decodedPageToken = pageTokenEncoder.decode(
+                query.pageToken(), ListProjectComponentsQuery.PageToken.class);
 
-        final TotalCount totalCount;
-        if (decodedPageToken != null) {
-            totalCount = decodedPageToken.totalCount();
-        } else {
-            final var countWhere = new StringBuilder("\"C\".\"PROJECT_ID\" = :projectId");
-            final var countParams = new HashMap<String, Object>();
-            countParams.put("projectId", projectId);
-            if (Boolean.TRUE.equals(onlyOutdated)) {
-                countWhere.append("""
-                        AND EXISTS (
-                         SELECT 1
-                           FROM "PACKAGE_ARTIFACT_METADATA" "PAM"
-                           JOIN "PACKAGE_METADATA" "PM" ON "PM"."PURL" = "PAM"."PACKAGE_PURL"
-                          WHERE "PAM"."PURL" = "C"."PURL"
-                            AND "PM"."LATEST_VERSION" != "C"."VERSION"
-                        )""");
-            }
-            if (Boolean.TRUE.equals(onlyDirect)) {
-                countWhere.append("""
-                        AND EXISTS (
-                         SELECT 1
-                           FROM "PROJECT"
-                          WHERE "PROJECT"."ID" = "C"."PROJECT_ID"
-                            AND "PROJECT"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', "C"."UUID"))
-                        )""");
-            }
-            totalCount = getBoundedTotalCountWithProjectAcl(
-                    "FROM \"COMPONENT\" \"C\" WHERE " + countWhere,
-                    countParams,
-                    10000,
-                    "\"C\".\"PROJECT_ID\"");
+        final var whereConditions = new ArrayList<>(List.of("\"C\".\"PROJECT_ID\" = :projectId"));
+        final var queryParams = new HashMap<String, Object>(Map.of("projectId", query.projectId()));
+
+        if (Boolean.TRUE.equals(query.onlyOutdated())) {
+            whereConditions.add(/* language=SQL */ """
+                    EXISTS (
+                     SELECT 1
+                       FROM "PACKAGE_ARTIFACT_METADATA" "PAM"
+                       JOIN "PACKAGE_METADATA" "PM" ON "PM"."PURL" = "PAM"."PACKAGE_PURL"
+                      WHERE "PAM"."PURL" = "C"."PURL"
+                        AND "PM"."LATEST_VERSION" != "C"."VERSION"
+                    )""");
+        }
+        if (Boolean.TRUE.equals(query.onlyDirect())) {
+            whereConditions.add(/* language=SQL */ """
+                    EXISTS (
+                     SELECT 1
+                       FROM "PROJECT"
+                      WHERE "PROJECT"."ID" = "C"."PROJECT_ID"
+                        AND "PROJECT"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', "C"."UUID"))
+                    )""");
+        }
+        if (query.searchText() != null && !query.searchText().isBlank()) {
+            whereConditions.add(/* language=SQL */ """
+                    (LOWER("C"."NAME") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!' \
+                    OR LOWER("C"."GROUP") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!')""");
+            queryParams.put("searchText", escapeLikePattern(query.searchText()));
         }
 
-        final List<Component> rows = listProjectComponents(projectId, limit + 1, onlyOutdated, onlyDirect,
-                decodedPageToken != null ? decodedPageToken.lastName() : null,
-                decodedPageToken != null ? decodedPageToken.lastVersion() : null,
-                decodedPageToken != null ? decodedPageToken.lastId() : null);
+        final TotalCount totalCount;
+        final ListProjectComponentsQuery.SortBy effectiveSortBy;
+        final SortDirection effectiveSortDirection;
 
-        final List<Component> resultRows = rows.size() > 1
-                ? rows.subList(0, Math.min(rows.size(), limit))
+        if (decodedPageToken != null) {
+            totalCount = decodedPageToken.totalCount();
+            effectiveSortBy = decodedPageToken.sortBy() != null
+                    ? decodedPageToken.sortBy()
+                    : ListProjectComponentsQuery.SortBy.NAME;
+            effectiveSortDirection = decodedPageToken.sortDirection();
+            queryParams.put("lastSortValue", switch (effectiveSortBy) {
+                case NAME -> decodedPageToken.lastName();
+                case GROUP -> decodedPageToken.lastGroup();
+                case LAST_RISKSCORE -> decodedPageToken.lastRiskScore();
+                case PUBLISHED_AT -> decodedPageToken.lastPublishedAtMicros() != null
+                        ? Instant.EPOCH.plus(decodedPageToken.lastPublishedAtMicros(), ChronoUnit.MICROS)
+                        : null;
+            });
+        } else {
+            totalCount = getBoundedTotalCountWithProjectAcl(
+                    "FROM \"COMPONENT\" \"C\" WHERE " + String.join(" AND ", whereConditions),
+                    queryParams,
+                    null,
+                    "\"C\".\"PROJECT_ID\"");
+            effectiveSortBy = query.sortBy() != null
+                    ? query.sortBy()
+                    : ListProjectComponentsQuery.SortBy.NAME;
+            effectiveSortDirection = query.sortDirection() != null
+                    ? query.sortDirection()
+                    : SortDirection.ASC;
+        }
+
+        final List<ListedComponent> rows = listProjectComponents(
+                whereConditions,
+                queryParams,
+                query.limit() + 1,
+                query.includeOccurrenceCount(),
+                decodedPageToken != null
+                        ? decodedPageToken.lastId()
+                        : null,
+                effectiveSortBy,
+                effectiveSortDirection,
+                decodedPageToken != null);
+
+        final List<ListedComponent> resultRows = rows.size() > 1
+                ? rows.subList(0, Math.min(rows.size(), query.limit()))
                 : rows;
 
-        final ListComponentPageToken nextPageToken = rows.size() > limit
-                ? new ListComponentPageToken(resultRows.getLast().getName(), resultRows.getLast().getVersion(), resultRows.getLast().getId(), totalCount)
-                : null;
+        final ListProjectComponentsQuery.PageToken nextPageToken;
+        if (rows.size() > query.limit()) {
+            final ListedComponent lastRow = resultRows.getLast();
+            final Component lastComponent = lastRow.component();
 
-        return new Page<>(resultRows, pageTokenEncoder.encode(nextPageToken), totalCount);
-    }
+            nextPageToken = new ListProjectComponentsQuery.PageToken(
+                    lastComponent.getId(),
+                    effectiveSortBy == ListProjectComponentsQuery.SortBy.NAME
+                            ? lastComponent.getName()
+                            : null,
+                    effectiveSortBy == ListProjectComponentsQuery.SortBy.GROUP
+                            ? lastComponent.getGroup()
+                            : null,
+                    effectiveSortBy == ListProjectComponentsQuery.SortBy.LAST_RISKSCORE
+                            ? lastComponent.getLastInheritedRiskScore()
+                            : null,
+                    effectiveSortBy == ListProjectComponentsQuery.SortBy.PUBLISHED_AT
+                            ? lastRow.publishedAtMicros()
+                            : null,
+                    effectiveSortBy,
+                    effectiveSortDirection,
+                    totalCount);
+        } else {
+            nextPageToken = null;
+        }
 
-    record ListComponentPageToken(
-            String lastName,
-            String lastVersion,
-            Long lastId,
-            TotalCount totalCount) implements PageToken {
+        final List<Component> components = resultRows.stream()
+                .map(ListedComponent::component)
+                .toList();
+        return new Page<>(components, pageTokenEncoder.encode(nextPageToken), totalCount);
     }
 
     @SqlQuery(/* language=InjectedFreeMarker */ """
-            <#-- @ftlvariable name="onlyOutdated" type="Boolean" -->
-            <#-- @ftlvariable name="onlyDirect" type="Boolean" -->
+            <#-- @ftlvariable name="includeOccurrenceCount" type="boolean" -->
             <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
-            SELECT "C"."ID",
-                        "C"."NAME",
-                        "C"."BLAKE2B_256",
-                        "C"."BLAKE2B_384",
-                        "C"."BLAKE2B_512",
-                        "C"."BLAKE3",
-                        "C"."CLASSIFIER",
-                        "C"."COPYRIGHT",
-                        "C"."CPE",
-                        "C"."PURL",
-                        "C"."GROUP",
-                        "C"."INTERNAL",
-                        "C"."LAST_RISKSCORE",
-                        "C"."LICENSE" AS "componentLicenseName",
-                        "C"."LICENSE_EXPRESSION" AS "licenseExpression",
-                        "C"."LICENSE_URL" AS "licenseUrl",
-                        "C"."TEXT",
-                        "C"."SCOPE",
-                        "C"."MD5",
-                        "C"."SHA1",
-                        "C"."SHA_256" AS "sha256",
-                        "C"."SHA_384" AS "sha384",
-                        "C"."SHA_512" AS "sha512",
-                        "C"."SHA3_256",
-                        "C"."SHA3_384",
-                        "C"."SHA3_512",
-                        "C"."SWIDTAGID",
-                        "C"."UUID",
-                        "C"."VERSION",
-                        "L"."ISCUSTOMLICENSE",
-                        "L"."FSFLIBRE" AS "isFsfLibre",
-                        "L"."LICENSEID",
-                        "L"."ISOSIAPPROVED",
-                        "L"."UUID" AS "licenseUuid",
-                        "L"."NAME" AS "licenseName",
-                        (SELECT COUNT(*) FROM "COMPONENT_OCCURRENCE" WHERE "COMPONENT_ID" = "C"."ID") AS "occurrenceCount"
-                FROM "COMPONENT" "C"
-                INNER JOIN "PROJECT" ON "C"."PROJECT_ID" = "PROJECT"."ID"
-                LEFT OUTER JOIN "LICENSE" "L" ON "C"."LICENSE_ID" = "L"."ID"
-                WHERE ${apiProjectAclCondition}
-                AND "C"."PROJECT_ID" = :projectId
-                <#if lastName && lastVersion && lastId>
-                    AND ("C"."NAME" > :lastName
-                            OR ("C"."NAME" = :lastName AND "C"."VERSION" < :lastVersion)
-                            OR ("C"."NAME" = :lastName AND "C"."VERSION" = :lastVersion AND "C"."ID" > :lastId))
+            <#-- @ftlvariable name="sortByColumn" type="org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery.SortBy" -->
+            <#-- @ftlvariable name="sortDirection" type="String" -->
+            <#-- @ftlvariable name="hasCursor" type="boolean" -->
+            <#-- @ftlvariable name="whereConditions" type="java.util.Collection<String>" -->
+            SELECT "C"."ID"
+                 , "C"."NAME"
+                 , "C"."BLAKE2B_256"
+                 , "C"."BLAKE2B_384"
+                 , "C"."BLAKE2B_512"
+                 , "C"."BLAKE3"
+                 , "C"."CLASSIFIER"
+                 , "C"."COPYRIGHT"
+                 , "C"."CPE"
+                 , "C"."PURL"
+                 , "C"."GROUP"
+                 , "C"."INTERNAL"
+                 , "C"."LAST_RISKSCORE"
+                 , "C"."LICENSE" AS "componentLicenseName"
+                 , "C"."LICENSE_EXPRESSION" AS "licenseExpression"
+                 , "C"."LICENSE_URL" AS "licenseUrl"
+                 , "C"."TEXT"
+                 , "C"."SCOPE"
+                 , "C"."MD5"
+                 , "C"."SHA1"
+                 , "C"."SHA_256" AS "sha256"
+                 , "C"."SHA_384" AS "sha384"
+                 , "C"."SHA_512" AS "sha512"
+                 , "C"."SHA3_256"
+                 , "C"."SHA3_384"
+                 , "C"."SHA3_512"
+                 , "C"."SWIDTAGID"
+                 , "C"."UUID"
+                 , "C"."VERSION"
+                 , "L"."ISCUSTOMLICENSE"
+                 , "L"."FSFLIBRE" AS "isFsfLibre"
+                 , "L"."LICENSEID"
+                 , "L"."ISOSIAPPROVED"
+                 , "L"."UUID" AS "licenseUuid"
+                 , "L"."NAME" AS "licenseName"
+            <#if includeOccurrenceCount>
+                 , (SELECT COUNT(*) FROM "COMPONENT_OCCURRENCE" WHERE "COMPONENT_ID" = "C"."ID") AS "occurrenceCount"
+            </#if>
+            <#if sortByColumn?has_content && sortByColumn == "PUBLISHED_AT">
+                 , (EXTRACT(EPOCH FROM "PAM"."PUBLISHED_AT") * 1000000)::bigint AS "artifactPublishedAtMicros"
+            </#if>
+              FROM "COMPONENT" "C"
+              LEFT JOIN "LICENSE" "L"
+                ON "C"."LICENSE_ID" = "L"."ID"
+            <#if sortByColumn?has_content && sortByColumn == "PUBLISHED_AT">
+              LEFT JOIN "PACKAGE_ARTIFACT_METADATA" "PAM"
+                ON "PAM"."PURL" = "C"."PURL"
+            </#if>
+             WHERE ${apiProjectAclCondition}
+               AND ${whereConditions?join(" AND ")}
+            <#assign castedLastSortValue>
+                <#-- Ensure Postgres can determine the type of lastSortValue even when it's null. -->
+                <#if sortByColumn?has_content && sortByColumn == "PUBLISHED_AT">CAST(:lastSortValue AS TIMESTAMPTZ)
+                <#elseif sortByColumn?has_content && sortByColumn == "LAST_RISKSCORE">CAST(:lastSortValue AS DOUBLE PRECISION)
+                <#else>CAST(:lastSortValue AS TEXT)
                 </#if>
-                <#if onlyOutdated && onlyOutdated == true>
-                    AND EXISTS (
-                        SELECT 1
-                          FROM "PACKAGE_ARTIFACT_METADATA" "PAM"
-                          JOIN "PACKAGE_METADATA" "PM" ON "PM"."PURL" = "PAM"."PACKAGE_PURL"
-                         WHERE "PAM"."PURL" = "C"."PURL"
-                           AND "PM"."LATEST_VERSION" <> "C"."VERSION")
-                </#if>
-                <#if onlyDirect && onlyDirect == true>
-                    AND "PROJECT"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', "C"."UUID"))
-                </#if>
-                ORDER BY "NAME" ASC, "VERSION" DESC, "ID" ASC
-                LIMIT :limit
+            </#assign>
+            <#if hasCursor && sortByColumn?has_content && sortByColumn == "PUBLISHED_AT">
+               <#-- NB: Handle sort with NULLS LAST in *both* directions. -->
+               <#if sortDirection == "DESC">
+                   AND ((${castedLastSortValue} IS NULL AND "PAM"."PUBLISHED_AT" IS NULL AND "C"."ID" > :lastId)
+                        OR (${castedLastSortValue} IS NOT NULL AND "PAM"."PUBLISHED_AT" IS NOT NULL
+                            AND ("PAM"."PUBLISHED_AT" < ${castedLastSortValue}
+                                 OR ("PAM"."PUBLISHED_AT" = ${castedLastSortValue} AND "C"."ID" > :lastId)))
+                        OR (${castedLastSortValue} IS NOT NULL AND "PAM"."PUBLISHED_AT" IS NULL))
+               <#else>
+                   AND ((${castedLastSortValue} IS NULL AND "PAM"."PUBLISHED_AT" IS NULL AND "C"."ID" > :lastId)
+                        OR (${castedLastSortValue} IS NOT NULL AND "PAM"."PUBLISHED_AT" IS NOT NULL
+                            AND ("PAM"."PUBLISHED_AT" > ${castedLastSortValue}
+                                 OR ("PAM"."PUBLISHED_AT" = ${castedLastSortValue} AND "C"."ID" > :lastId)))
+                        OR (${castedLastSortValue} IS NOT NULL AND "PAM"."PUBLISHED_AT" IS NULL))
+               </#if>
+            <#elseif hasCursor && sortByColumn?has_content>
+               <#if sortDirection == "DESC">
+                   AND ((${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NULL AND "C"."ID" > :lastId)
+                        OR (${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NOT NULL)
+                        OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NOT NULL
+                            AND ("C"."${sortByColumn}" < ${castedLastSortValue}
+                                 OR ("C"."${sortByColumn}" = ${castedLastSortValue} AND "C"."ID" > :lastId))))
+               <#else>
+                   AND ((${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NULL AND "C"."ID" > :lastId)
+                        OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NOT NULL
+                            AND ("C"."${sortByColumn}" > ${castedLastSortValue}
+                                 OR ("C"."${sortByColumn}" = ${castedLastSortValue} AND "C"."ID" > :lastId)))
+                        OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NULL))
+               </#if>
+            <#elseif hasCursor>
+               AND "C"."ID" > :lastId
+            </#if>
+            <#if sortByColumn?has_content && sortByColumn == "PUBLISHED_AT">
+             ORDER BY "PAM"."PUBLISHED_AT" ${sortDirection} NULLS LAST, "C"."ID" ASC
+            <#elseif sortByColumn?has_content>
+             ORDER BY "C"."${sortByColumn}" ${sortDirection}, "C"."ID" ASC
+            <#else>
+             ORDER BY "C"."ID" ASC
+            </#if>
+             LIMIT :limit
             """)
     @DefineNamedBindings
     @DefineApiProjectAclCondition(projectIdColumn = "\"PROJECT_ID\"")
     @RegisterRowMapper(ComponentListRowMapper.class)
-    List<Component> listProjectComponents(
-            @Bind long projectId,
+    List<ListedComponent> listProjectComponents(
+            @Define ArrayList<String> whereConditions,
+            @BindMap Map<String, Object> queryParams,
             @Bind int limit,
-            @Bind Boolean onlyOutdated,
-            @Bind Boolean onlyDirect,
-            @Bind String lastName,
-            @Bind String lastVersion,
-            @Bind Long lastId
-    );
+            @Define boolean includeOccurrenceCount,
+            @Bind Long lastId,
+            @Define ListProjectComponentsQuery.SortBy sortByColumn,
+            @Define SortDirection sortDirection,
+            @Define boolean hasCursor);
 
-    default Page<Component> listComponents(
-            final Long projectId,
-            final Boolean includeMetrics,
-            final String componentPurl,
-            final String componentCpe,
-            final String componentSwidTagId,
-            final String componentGroup,
-            final String componentName,
-            final String componentVersion,
-            final HashType componentHashType,
-            final String componentHash,
-            final Boolean projectActive,
-            final Boolean projectIsLatest,
-            final int limit,
-            final String pageToken,
-            final String sortBy,
-            final SortDirection sortDirection) {
+    default Page<Component> listComponents(ListComponentsQuery query) {
         final PageTokenEncoder pageTokenEncoder =
                 getHandle().getConfig(PaginationConfig.class).getPageTokenEncoder();
-        final var decodedPageToken = pageTokenEncoder.decode(pageToken, ListComponentPageToken.class);
+        final var decodedPageToken = pageTokenEncoder.decode(
+                query.pageToken(), ListComponentsQuery.PageToken.class);
 
-        TotalCount totalCount;
         final var whereConditions = new ArrayList<String>();
         final var queryParams = new HashMap<String, Object>();
         whereConditions.add("TRUE");
-        if (projectId != null) {
+        if (query.projectId() != null) {
             whereConditions.add("\"C\".\"PROJECT_ID\" = :projectId");
-            queryParams.put("projectId", projectId);
+            queryParams.put("projectId", query.projectId());
         }
-        if (componentGroup != null) {
-            whereConditions.add("LOWER(\"C\".\"GROUP\") LIKE ('%' || LOWER(:componentGroup) || '%')");
-            queryParams.put("componentGroup", componentGroup);
+        if (query.groupContains() != null) {
+            whereConditions.add("LOWER(\"C\".\"GROUP\") LIKE ('%' || LOWER(:componentGroup) || '%') ESCAPE '!'");
+            queryParams.put("componentGroup", escapeLikePattern(query.groupContains()));
         }
-        if (componentName != null) {
-            whereConditions.add("LOWER(\"C\".\"NAME\") LIKE ('%' || LOWER(:componentName) || '%')");
-            queryParams.put("componentName", componentName);
+        if (query.nameContains() != null) {
+            whereConditions.add("LOWER(\"C\".\"NAME\") LIKE ('%' || LOWER(:componentName) || '%') ESCAPE '!'");
+            queryParams.put("componentName", escapeLikePattern(query.nameContains()));
         }
-        if (componentVersion != null) {
-            whereConditions.add("LOWER(\"C\".\"VERSION\") LIKE ('%' || LOWER(:componentVersion) || '%')");
-            queryParams.put("componentVersion", componentVersion);
+        if (query.versionContains() != null) {
+            whereConditions.add("LOWER(\"C\".\"VERSION\") LIKE ('%' || LOWER(:componentVersion) || '%') ESCAPE '!'");
+            queryParams.put("componentVersion", escapeLikePattern(query.versionContains()));
         }
-        if (componentPurl != null) {
-            whereConditions.add("LOWER(\"C\".\"PURL\") LIKE LOWER(:componentPurl) || '%'");
-            queryParams.put("componentPurl", componentPurl);
+        if (query.purlStartsWith() != null) {
+            whereConditions.add("LOWER(\"C\".\"PURL\") LIKE LOWER(:componentPurl) || '%' ESCAPE '!'");
+            queryParams.put("componentPurl", escapeLikePattern(query.purlStartsWith()));
         }
-        if (componentCpe != null) {
+        if (query.cpe() != null) {
             whereConditions.add("LOWER(\"C\".\"CPE\") = LOWER(:componentCpe)");
-            queryParams.put("componentCpe", componentCpe);
+            queryParams.put("componentCpe", query.cpe());
         }
-        if (componentSwidTagId != null) {
-            whereConditions.add("LOWER(\"C\".\"SWIDTAGID\") LIKE ('%' || LOWER(:componentSwidTagId) || '%')");
-            queryParams.put("componentSwidTagId", componentSwidTagId);
+        if (query.swidTagIdContains() != null) {
+            whereConditions.add("LOWER(\"C\".\"SWIDTAGID\") LIKE ('%' || LOWER(:componentSwidTagId) || '%') ESCAPE '!'");
+            queryParams.put("componentSwidTagId", escapeLikePattern(query.swidTagIdContains()));
         }
-        if (projectActive != null) {
-            whereConditions.add(projectActive
+        if (query.packageArtifactPublishedSince() != null || query.packageArtifactPublishedBefore() != null) {
+            final var pamConditions = new ArrayList<String>(3);
+            pamConditions.add("pam.\"PURL\" = \"C\".\"PURL\"");
+            if (query.packageArtifactPublishedSince() != null) {
+                pamConditions.add("pam.\"PUBLISHED_AT\" >= :packageArtifactPublishedSince");
+                queryParams.put("packageArtifactPublishedSince", query.packageArtifactPublishedSince());
+            }
+            if (query.packageArtifactPublishedBefore() != null) {
+                pamConditions.add("pam.\"PUBLISHED_AT\" < :packageArtifactPublishedBefore");
+                queryParams.put("packageArtifactPublishedBefore", query.packageArtifactPublishedBefore());
+            }
+            whereConditions.add(
+                    "EXISTS (SELECT 1 FROM \"PACKAGE_ARTIFACT_METADATA\" AS pam WHERE %s)".formatted(
+                            String.join(" AND ", pamConditions)));
+        }
+        if (query.projectActive() != null) {
+            whereConditions.add(query.projectActive()
                     ? "\"PROJECT\".\"INACTIVE_SINCE\" IS NULL"
                     : "\"PROJECT\".\"INACTIVE_SINCE\" IS NOT NULL");
         }
-        if (projectIsLatest != null) {
-            whereConditions.add(projectIsLatest
+        if (query.projectIsLatest() != null) {
+            whereConditions.add(query.projectIsLatest()
                     ? "\"PROJECT\".\"IS_LATEST\""
                     : "NOT \"PROJECT\".\"IS_LATEST\"");
         }
-        if (componentHashType != null && componentHash != null) {
-            final String hashColumn = switch (componentHashType) {
+        if (query.hashType() != null && query.hashValue() != null) {
+            final String hashColumn = switch (query.hashType()) {
                 case MD5 -> "\"C\".\"MD5\"";
                 case SHA1 -> "\"C\".\"SHA1\"";
                 case SHA_256 -> "\"C\".\"SHA_256\"";
@@ -322,13 +411,26 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 case BLAKE3 -> "\"C\".\"BLAKE3\"";
             };
             whereConditions.add("%s = :componentHash".formatted(hashColumn));
-            queryParams.put("componentHash", componentHash);
+            queryParams.put("componentHash", query.hashValue());
         }
+
+        final TotalCount totalCount;
+        final ListComponentsQuery.SortBy effectiveSortBy;
+        final SortDirection effectiveSortDirection;
 
         if (decodedPageToken != null) {
             totalCount = decodedPageToken.totalCount();
+            effectiveSortBy = decodedPageToken.sortBy() != null
+                    ? decodedPageToken.sortBy()
+                    : ListComponentsQuery.SortBy.NAME;
+            effectiveSortDirection = decodedPageToken.sortDirection();
+            queryParams.put("lastSortValue", switch (effectiveSortBy) {
+                case NAME -> decodedPageToken.lastName();
+                case GROUP -> decodedPageToken.lastGroup();
+                case LAST_RISKSCORE -> decodedPageToken.lastRiskScore();
+            });
         } else {
-            final String projectJoin = (projectActive != null || projectIsLatest != null)
+            final String projectJoin = (query.projectActive() != null || query.projectIsLatest() != null)
                     ? "INNER JOIN \"PROJECT\" ON \"C\".\"PROJECT_ID\" = \"PROJECT\".\"ID\""
                     : "";
             totalCount = getBoundedTotalCountWithProjectAcl("""
@@ -339,73 +441,63 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                     queryParams,
                     10000,
                     "\"C\".\"PROJECT_ID\"");
+            effectiveSortBy = query.sortBy() != null
+                    ? query.sortBy()
+                    : ListComponentsQuery.SortBy.NAME;
+            effectiveSortDirection = query.sortDirection() != null
+                    ? query.sortDirection()
+                    : SortDirection.ASC;
         }
 
-        final String cursorPrimary = decodedPageToken != null ? decodedPageToken.lastName() : null;
-        final Long cursorId = decodedPageToken != null ? decodedPageToken.lastId() : null;
-        final boolean hasCursor = decodedPageToken != null;
-        final String sortDirectionSql = sortDirection != null ? sortDirection.name() : "ASC";
+        final List<ListedComponent> rows = listComponents(
+                whereConditions,
+                queryParams,
+                query.limit() + 1,
+                decodedPageToken != null
+                        ? decodedPageToken.lastId()
+                        : null,
+                effectiveSortBy,
+                effectiveSortDirection,
+                decodedPageToken != null);
 
-        var sortByColumn = switch (sortBy) {
-            case "name" -> SortBy.NAME;
-            case "version" -> SortBy.VERSION;
-            case "group" -> SortBy.GROUP;
-            case "purl" -> SortBy.PURL;
-            case "cpe" -> SortBy.CPE;
-            case "last_inherited_risk_score" -> SortBy.LAST_RISKSCORE;
-            case null, default -> null;
-        };
-
-        final List<Component> rows = listComponents(whereConditions, queryParams, limit + 1,
-                cursorPrimary,
-                cursorId,
-                sortByColumn, sortDirectionSql, hasCursor);
-
-        final List<Component> resultRows = rows.size() > 1
-                ? rows.subList(0, Math.min(rows.size(), limit))
+        final List<ListedComponent> resultRows = rows.size() > 1
+                ? rows.subList(0, Math.min(rows.size(), query.limit()))
                 : rows;
 
-        final ListComponentPageToken nextPageToken;
-        if (rows.size() > limit) {
-            final Component lastRow = resultRows.getLast();
-            final Object lastPrimary = switch (sortByColumn) {
-                case SortBy.NAME -> lastRow.getName();
-                case SortBy.VERSION -> lastRow.getVersion();
-                case SortBy.GROUP -> lastRow.getGroup();
-                case SortBy.PURL -> lastRow.getPurl();
-                case SortBy.CPE -> lastRow.getCpe();
-                case SortBy.LAST_RISKSCORE -> lastRow.getLastInheritedRiskScore();
-                case null -> lastRow.getName();
-            };
-            final String lastSecondary = sortByColumn == null ? lastRow.getVersion() : null;
-            nextPageToken = new ListComponentPageToken(
-                    lastPrimary != null ? lastPrimary.toString() : null,
-                    lastSecondary,
-                    lastRow.getId(),
+        final ListComponentsQuery.PageToken nextPageToken;
+        if (rows.size() > query.limit()) {
+            final ListedComponent lastRow = resultRows.getLast();
+            final Component lastComponent = lastRow.component();
+
+            nextPageToken = new ListComponentsQuery.PageToken(
+                    lastComponent.getId(),
+                    effectiveSortBy == ListComponentsQuery.SortBy.NAME
+                            ? lastComponent.getName()
+                            : null,
+                    effectiveSortBy == ListComponentsQuery.SortBy.GROUP
+                            ? lastComponent.getGroup()
+                            : null,
+                    effectiveSortBy == ListComponentsQuery.SortBy.LAST_RISKSCORE
+                            ? lastComponent.getLastInheritedRiskScore()
+                            : null,
+                    effectiveSortBy,
+                    effectiveSortDirection,
                     totalCount);
         } else {
             nextPageToken = null;
         }
 
-        if (includeMetrics) {
-            final Map<Long, Component> componentById = resultRows.stream()
-                    .collect(Collectors.toMap(Component::getId, Function.identity()));
-            final List<DependencyMetrics> metricsList = getHandle().attach(MetricsDao.class)
-                    .getMostRecentDependencyMetrics(componentById.keySet());
-            for (final DependencyMetrics metrics : metricsList) {
-                final var component = componentById.get(metrics.getComponentId());
-                if (component != null) {
-                    component.setMetrics(metrics);
-                }
-            }
-        }
-
-        return new Page<>(resultRows, pageTokenEncoder.encode(nextPageToken), totalCount);
+        final List<Component> components = resultRows.stream()
+                .map(ListedComponent::component)
+                .toList();
+        return new Page<>(components, pageTokenEncoder.encode(nextPageToken), totalCount);
     }
 
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
-            <#-- @ftlvariable name="sortBy" type="org.dependencytrack.persistence.jdbi.SortBy" -->
+            <#-- @ftlvariable name="sortByColumn" type="org.dependencytrack.persistence.jdbi.query.ListComponentsQuery.SortBy" -->
+            <#-- @ftlvariable name="sortDirection" type="org.dependencytrack.common.pagination.SortDirection" -->
+            <#-- @ftlvariable name="hasCursor" type="boolean" -->
             <#-- @ftlvariable name="whereConditions" type="java.util.Collection<String>" -->
             SELECT "C"."ID",
                         "C"."NAME",
@@ -447,86 +539,60 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 LEFT OUTER JOIN "LICENSE" "L" ON "C"."LICENSE_ID" = "L"."ID"
                 WHERE ${apiProjectAclCondition}
                 AND ${whereConditions?join(" AND ")}
+                <#assign castedLastSortValue>
+                    <#-- Ensure Postgres can determine the type of lastSortValue even when it's null. -->
+                    <#if sortByColumn?has_content && sortByColumn == "LAST_RISKSCORE">CAST(:lastSortValue AS DOUBLE PRECISION)
+                    <#else>CAST(:lastSortValue AS TEXT)
+                    </#if>
+                </#assign>
                 <#if hasCursor && sortByColumn?has_content>
-                    AND (
-                        <#if sortDirection == "DESC">
-                            ("C"."${sortByColumn}" <
-                                <#if sortByColumn == "LAST_RISKSCORE" > CAST(:lastPrimaryValue AS DOUBLE PRECISION)
-                                <#else> :lastPrimaryValue
-                                </#if>
-                             OR ("C"."${sortByColumn}" =
-                                <#if sortByColumn == "LAST_RISKSCORE" > CAST(:lastPrimaryValue AS DOUBLE PRECISION)
-                                <#else> :lastPrimaryValue
-                                </#if>
-                             AND "C"."ID" > :lastId))
-                        <#else>
-                            ("C"."${sortByColumn}" >
-                                <#if sortByColumn == "LAST_RISKSCORE" > CAST(:lastPrimaryValue AS DOUBLE PRECISION)
-                                <#else> :lastPrimaryValue
-                                </#if>
-                             OR ("C"."${sortByColumn}" =
-                                <#if sortByColumn == "LAST_RISKSCORE" > CAST(:lastPrimaryValue AS DOUBLE PRECISION)
-                                <#else>:lastPrimaryValue
-                                </#if>
-                             AND "C"."ID" > :lastId))
-                        </#if>
-                    )
-                <#elseif hasCursor && lastPrimaryValue?has_content && lastId?has_content>
-                    AND ("C"."NAME" > :lastPrimaryValue
-                            OR ("C"."NAME" = :lastPrimaryValue AND "C"."ID" > :lastId))
+                    <#if sortDirection == "DESC">
+                        AND ((${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NULL AND "C"."ID" > :lastId)
+                             OR (${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NOT NULL)
+                             OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NOT NULL
+                                 AND ("C"."${sortByColumn}" < ${castedLastSortValue}
+                                      OR ("C"."${sortByColumn}" = ${castedLastSortValue} AND "C"."ID" > :lastId))))
+                    <#else>
+                        AND ((${castedLastSortValue} IS NULL AND "C"."${sortByColumn}" IS NULL AND "C"."ID" > :lastId)
+                             OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NOT NULL
+                                 AND ("C"."${sortByColumn}" > ${castedLastSortValue}
+                                      OR ("C"."${sortByColumn}" = ${castedLastSortValue} AND "C"."ID" > :lastId)))
+                             OR (${castedLastSortValue} IS NOT NULL AND "C"."${sortByColumn}" IS NULL))
+                    </#if>
+                <#elseif hasCursor>
+                    AND ("C"."NAME" > ${castedLastSortValue}
+                            OR ("C"."NAME" = ${castedLastSortValue} AND "C"."ID" > :lastId))
                 </#if>
                 <#if sortByColumn?has_content>
-                    ORDER BY "${sortByColumn}" ${sortDirection!"ASC"}, "ID" ASC
+                    ORDER BY "C"."${sortByColumn}" ${sortDirection!"ASC"}, "C"."ID" ASC
                 <#else>
                     <#-- Default sorting to ensure consistent pagination -->
-                    ORDER BY "NAME" ASC, "ID" ASC
+                    ORDER BY "C"."NAME" ASC, "C"."ID" ASC
                 </#if>
                 LIMIT :limit
             """)
     @DefineNamedBindings
     @RegisterRowMapper(ComponentListRowMapper.class)
     @DefineApiProjectAclCondition(projectIdColumn = "\"C\".\"PROJECT_ID\"")
-    List<Component> listComponents(
+    List<ListedComponent> listComponents(
             @Define ArrayList<String> whereConditions,
             @BindMap Map<String, Object> queryParams,
             @Bind int limit,
-            @Bind String lastPrimaryValue,
             @Bind Long lastId,
-            @Define SortBy sortByColumn,
-            @Define String sortDirection,
+            @Define ListComponentsQuery.SortBy sortByColumn,
+            @Define SortDirection sortDirection,
             @Define boolean hasCursor
     );
 
-    enum SortBy {
-        NAME,
-        VERSION,
-        GROUP,
-        PURL,
-        CPE,
-        LAST_RISKSCORE
+    record ListedComponent(Component component, Long publishedAtMicros) {
     }
 
-    enum HashType {
-        MD5,
-        SHA1,
-        SHA_256,
-        SHA_384,
-        SHA_512,
-        SHA3_256,
-        SHA3_384,
-        SHA3_512,
-        BLAKE2B_256,
-        BLAKE2B_384,
-        BLAKE2B_512,
-        BLAKE3
-    }
-
-    class ComponentListRowMapper implements RowMapper<Component> {
+    class ComponentListRowMapper implements RowMapper<ListedComponent> {
 
         private final RowMapper<Component> componentRowMapper = BeanMapper.of(Component.class);
 
         @Override
-        public Component map(final ResultSet rs, final StatementContext ctx) throws SQLException {
+        public ListedComponent map(final ResultSet rs, final StatementContext ctx) throws SQLException {
             final Component component = componentRowMapper.map(rs, ctx);
             if (hasColumn(rs, "projectUuid") && rs.getString("projectUuid") != null) {
                 final var project = new Project();
@@ -552,7 +618,22 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             if (hasColumn(rs, "occurrenceCount")) {
                 maybeSet(rs, "occurrenceCount", ResultSet::getLong, component::setOccurrenceCount);
             }
-            return component;
+            Long publishedAtMicros = null;
+            if (hasColumn(rs, "artifactPublishedAtMicros")) {
+                final long value = rs.getLong("artifactPublishedAtMicros");
+                if (!rs.wasNull()) {
+                    publishedAtMicros = value;
+                }
+            }
+            return new ListedComponent(component, publishedAtMicros);
         }
     }
+
+    private static String escapeLikePattern(String input) {
+        return input
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
+    }
+
 }

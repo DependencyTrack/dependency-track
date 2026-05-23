@@ -67,3 +67,12 @@ properties:
   uuid:
     type: string
     format: uuid
+  metrics:
+    $ref: "../../components/schemas/dependency-metrics.yaml"
+  package_metadata:
+    $ref: "../../components/schemas/package-metadata.yaml"
+  package_artifact_metadata:
+    $ref: "../../components/schemas/package-artifact-metadata.yaml"
+required:
+  - uuid
+  - name

@@ -1,8 +1,6 @@
 org.dependencytrack.persistence.jdbi.ComponentDao.getOccurrences(java.util.UUID) returns model class org.dependencytrack.model.ComponentOccurrence
-org.dependencytrack.persistence.jdbi.ComponentDao.listComponents(java.lang.Long, java.lang.Boolean, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, org.dependencytrack.persistence.jdbi.ComponentDao$HashType, java.lang.String, java.lang.Boolean, java.lang.Boolean, int, java.lang.String, java.lang.String, org.dependencytrack.common.pagination.SortDirection) returns model class org.dependencytrack.model.Component
-org.dependencytrack.persistence.jdbi.ComponentDao.listComponents(java.util.ArrayList, java.util.Map, int, java.lang.String, java.lang.Long, org.dependencytrack.persistence.jdbi.ComponentDao$SortBy, java.lang.String, boolean) returns model class org.dependencytrack.model.Component
-org.dependencytrack.persistence.jdbi.ComponentDao.listProjectComponents(long, int, java.lang.Boolean, java.lang.Boolean, java.lang.String, java.lang.String, java.lang.Long) returns model class org.dependencytrack.model.Component
-org.dependencytrack.persistence.jdbi.ComponentDao.listProjectComponents(long, java.lang.Boolean, java.lang.Boolean, int, java.lang.String) returns model class org.dependencytrack.model.Component
+org.dependencytrack.persistence.jdbi.ComponentDao.listComponents(org.dependencytrack.persistence.jdbi.query.ListComponentsQuery) returns model class org.dependencytrack.model.Component
+org.dependencytrack.persistence.jdbi.ComponentDao.listProjectComponents(org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery) returns model class org.dependencytrack.model.Component
 org.dependencytrack.persistence.jdbi.ConfigPropertyDao.getOptional(java.lang.String, java.lang.String) returns model class alpine.model.ConfigProperty
 org.dependencytrack.persistence.jdbi.FindingDao.getFindings(long, boolean) returns model class org.dependencytrack.model.Finding
 org.dependencytrack.persistence.jdbi.MetricsDao.getCollectionProjectMetricsSince(long, java.time.Instant) returns model class org.dependencytrack.model.ProjectMetrics

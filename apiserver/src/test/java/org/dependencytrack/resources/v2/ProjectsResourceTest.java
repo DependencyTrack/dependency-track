@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v2;
 
+import com.github.packageurl.PackageURL;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
@@ -25,22 +26,29 @@ import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.License;
+import org.dependencytrack.model.PackageArtifactMetadata;
+import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Scope;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
+import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
+import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class ProjectsResourceTest extends ResourceTest {
@@ -65,11 +73,13 @@ public class ProjectsResourceTest extends ResourceTest {
                 {
                   "items" : [ {
                         "name" : "component-name",
-                        "version" : "3.0",
+                        "version" : "1.0",
                         "group" : "component-group",
-                        "purl" : "pkg:maven/foo/bar@3.0",
+                        "purl" : "pkg:maven/foo/bar@1.0",
                         "internal" : false,
-                        "occurrence_count" : 0,
+                        "hashes": {
+                              "md5": "hash-md5"
+                        },
                         "uuid" : "${json-unit.any-string}"
                       }, {
                         "name" : "component-name",
@@ -86,7 +96,6 @@ public class ProjectsResourceTest extends ResourceTest {
                               "fsf_libre" : false,
                               "custom_license" : false
                         },
-                        "occurrence_count" : 0,
                         "uuid" : "${json-unit.any-string}"
                       }
                   ],
@@ -111,14 +120,10 @@ public class ProjectsResourceTest extends ResourceTest {
                 {
                   "items" : [ {
                        "name" : "component-name",
-                       "version" : "1.0",
+                       "version" : "3.0",
                        "group" : "component-group",
-                       "purl" : "pkg:maven/foo/bar@1.0",
+                       "purl" : "pkg:maven/foo/bar@3.0",
                        "internal" : false,
-                       "occurrence_count" : 0,
-                       "hashes": {
-                            "md5": "hash-md5"
-                       },
                        "uuid" : "${json-unit.any-string}"
                       }
                   ],
@@ -128,6 +133,308 @@ public class ProjectsResourceTest extends ResourceTest {
                   }
                 }
                 """);
+    }
+
+    @Test
+    public void shouldFilterProjectComponentsBySearchText() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, null, null, null, null, null, false);
+
+        final var libA = new Component();
+        libA.setProject(project);
+        libA.setGroup("org.acme");
+        libA.setName("widget-core");
+        qm.persist(libA);
+
+        final var libB = new Component();
+        libB.setProject(project);
+        libB.setGroup("com.example");
+        libB.setName("gadget");
+        qm.persist(libB);
+
+        final var libC = new Component();
+        libC.setProject(project);
+        libC.setGroup("com.example");
+        libC.setName("WIDGET-ui");
+        qm.persist(libC);
+
+        final Response nameMatch = jersey.target("/projects/" + project.getUuid() + "/components")
+                .queryParam("q", "widget")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(nameMatch.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(nameMatch)).inPath("$.items[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("widget-core", "WIDGET-ui");
+
+        final Response groupMatch = jersey.target("/projects/" + project.getUuid() + "/components")
+                .queryParam("q", "ACME")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(groupMatch.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(groupMatch)).inPath("$.items[*].name")
+                .isArray()
+                .containsExactly("widget-core");
+    }
+
+    @Test
+    public void listProjectComponentsShouldNotMatchUnderscoreAsWildcard() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, null, null, null, null, null, false);
+
+        final var literal = new Component();
+        literal.setProject(project);
+        literal.setName("lib_foo");
+        qm.persist(literal);
+
+        final var wildcardMatch = new Component();
+        wildcardMatch.setProject(project);
+        wildcardMatch.setName("libxfoo");
+        qm.persist(wildcardMatch);
+
+        final Response response = jersey.target("/projects/" + project.getUuid() + "/components")
+                .queryParam("q", "lib_foo")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+                .isArray()
+                .containsExactly("lib_foo");
+    }
+
+    @Test
+    public void listProjectComponentsShouldNotMatchPercentAsWildcard() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, null, null, null, null, null, false);
+
+        final var literal = new Component();
+        literal.setProject(project);
+        literal.setName("lib%foo");
+        qm.persist(literal);
+
+        final var other = new Component();
+        other.setProject(project);
+        other.setName("libbarfoo");
+        qm.persist(other);
+
+        final Response response = jersey.target("/projects/" + project.getUuid() + "/components")
+                .queryParam("q", "lib%foo")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+                .isArray()
+                .containsExactly("lib%foo");
+    }
+
+    @Test
+    public void listProjectComponentsShouldNotDropRowsWhenPagingOverNullSortValues() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, null, null, null, null, null, false);
+
+        // Create 6 components, the first 3 with non-null group, the last 3 with null group.
+        final var expectedNames = new java.util.ArrayList<String>();
+        for (int i = 0; i < 3; i++) {
+            final var c = new Component();
+            c.setProject(project);
+            c.setName("c-with-group-" + i);
+            c.setGroup("group-" + i);
+            qm.persist(c);
+            expectedNames.add(c.getName());
+        }
+        for (int i = 0; i < 3; i++) {
+            final var c = new Component();
+            c.setProject(project);
+            c.setName("c-without-group-" + i);
+            qm.persist(c);
+            expectedNames.add(c.getName());
+        }
+
+        final java.util.List<String> collected = new java.util.ArrayList<>();
+        String pageToken = null;
+        do {
+            var target = jersey.target("/projects/" + project.getUuid() + "/components")
+                    .queryParam("sort_by", "group")
+                    .queryParam("sort_direction", "ASC")
+                    .queryParam("limit", 2);
+            if (pageToken != null) {
+                target = target.queryParam("page_token", pageToken);
+            }
+            final Response response = target.request().header(X_API_KEY, apiKey).get();
+            assertThat(response.getStatus()).isEqualTo(200);
+            final JsonObject body = parseJsonObject(response);
+            body.getJsonArray("items").forEach(v ->
+                    collected.add(v.asJsonObject().getString("name")));
+            pageToken = body.containsKey("next_page_token") ? body.getString("next_page_token") : null;
+        } while (pageToken != null);
+
+        assertThat(collected).containsExactlyInAnyOrderElementsOf(expectedNames);
+    }
+
+    @Test
+    public void listProjectComponentsDescByLastInheritedRiskScoreShouldIncludeNullScores() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, null, null, null, null, null, false);
+
+        // 4 components with null risk score, 2 with non-null scores.
+        final var expectedNames = new java.util.ArrayList<String>();
+        for (int i = 0; i < 4; i++) {
+            final var c = new Component();
+            c.setProject(project);
+            c.setName("null-score-" + i);
+            qm.persist(c);
+            expectedNames.add(c.getName());
+        }
+        for (int i = 0; i < 2; i++) {
+            final var c = new Component();
+            c.setProject(project);
+            c.setName("score-" + i);
+            c.setLastInheritedRiskScore((double) (i + 1));
+            qm.persist(c);
+            expectedNames.add(c.getName());
+        }
+
+        final java.util.List<String> collected = new java.util.ArrayList<>();
+        String pageToken = null;
+        do {
+            var target = jersey.target("/projects/" + project.getUuid() + "/components")
+                    .queryParam("sort_by", "last_inherited_risk_score")
+                    .queryParam("sort_direction", "DESC")
+                    .queryParam("limit", 2);
+            if (pageToken != null) {
+                target = target.queryParam("page_token", pageToken);
+            }
+            final Response response = target.request().header(X_API_KEY, apiKey).get();
+            assertThat(response.getStatus()).isEqualTo(200);
+            final JsonObject body = parseJsonObject(response);
+            body.getJsonArray("items").forEach(v ->
+                    collected.add(v.asJsonObject().getString("name")));
+            pageToken = body.containsKey("next_page_token") ? body.getString("next_page_token") : null;
+        } while (pageToken != null);
+
+        assertThat(collected).containsExactlyInAnyOrderElementsOf(expectedNames);
+        // DESC NULLS FIRST: all null-score components appear before any scored components.
+        final int lastNullIdx = collected.lastIndexOf("null-score-3");
+        final int firstScoredIdx = Math.min(collected.indexOf("score-0"), collected.indexOf("score-1"));
+        assertThat(firstScoredIdx).isGreaterThan(lastNullIdx);
+    }
+
+    @Test
+    public void listProjectComponentsSortByPublishedAtAscTest() throws Exception {
+        final Project project = preparePublishedAtFixture();
+        final Response response = jersey.target("/projects/" + project.getUuid() + "/components")
+                .queryParam("limit", 10)
+                .queryParam("sort_by", "package_artifact_metadata.published_at")
+                .queryParam("sort_direction", "ASC")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+                .isEqualTo(/* language=JSON */ "[\"old\", \"new\", \"unresolved\"]");
+    }
+
+    @Test
+    public void listProjectComponentsSortByPublishedAtDescTest() throws Exception {
+        final Project project = preparePublishedAtFixture();
+        final Response response = jersey.target("/projects/" + project.getUuid() + "/components")
+                .queryParam("limit", 10)
+                .queryParam("sort_by", "package_artifact_metadata.published_at")
+                .queryParam("sort_direction", "DESC")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].name")
+                .isEqualTo(/* language=JSON */ "[\"new\", \"old\", \"unresolved\"]");
+    }
+
+    private Project preparePublishedAtFixture() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("p", null, "1.0", null, null, null, null, false);
+
+        final var compOld = new Component();
+        compOld.setProject(project);
+        compOld.setName("old");
+        compOld.setPurl(new PackageURL("maven", "test", "old", "1.0", null, null));
+        qm.createComponent(compOld, false);
+
+        final var compNew = new Component();
+        compNew.setProject(project);
+        compNew.setName("new");
+        compNew.setPurl(new PackageURL("maven", "test", "new", "1.0", null, null));
+        qm.createComponent(compNew, false);
+
+        final var compUnresolved = new Component();
+        compUnresolved.setProject(project);
+        compUnresolved.setName("unresolved");
+        compUnresolved.setPurl(new PackageURL("maven", "test", "unresolved", "1.0", null, null));
+        qm.createComponent(compUnresolved, false);
+
+        final Instant resolvedAt = Instant.ofEpochMilli(1_700_000_000_000L);
+        final var oldPackagePurl = new PackageURL("maven", "test", "old", null, null, null);
+        final var newPackagePurl = new PackageURL("maven", "test", "new", null, null, null);
+        useJdbiHandle(handle ->
+                new PackageMetadataDao(handle).upsertAll(java.util.List.of(
+                        new PackageMetadata(oldPackagePurl, null, null, resolvedAt, null, null),
+                        new PackageMetadata(newPackagePurl, null, null, resolvedAt, null, null))));
+        useJdbiHandle(handle ->
+                new PackageArtifactMetadataDao(handle).upsertAll(java.util.List.of(
+                        new PackageArtifactMetadata(
+                                new PackageURL("maven", "test", "old", "1.0", null, null),
+                                oldPackagePurl,
+                                null, null, null, null,
+                                Instant.ofEpochMilli(1_500_000_000_000L),
+                                null, "central", resolvedAt),
+                        new PackageArtifactMetadata(
+                                new PackageURL("maven", "test", "new", "1.0", null, null),
+                                newPackagePurl,
+                                null, null, null, null,
+                                Instant.ofEpochMilli(1_700_000_000_000L),
+                                null, "central", resolvedAt))));
+        return project;
+    }
+
+    @Test
+    public void listProjectComponentsShouldExpandOccurrenceCountTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("acme-app", null, null, null, null, null, null, false);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        final var occurrenceA = new ComponentOccurrence();
+        occurrenceA.setComponent(component);
+        occurrenceA.setLocation("/foo/bar/baz");
+        qm.persist(occurrenceA);
+
+        final var occurrenceB = new ComponentOccurrence();
+        occurrenceB.setComponent(component);
+        occurrenceB.setLocation("/foo/qux");
+        qm.persist(occurrenceB);
+
+        final Response response = jersey.target("/projects/" + project.getUuid() + "/components")
+                .queryParam("expand", "occurrence_count")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).inPath("$.items[*].occurrence_count")
+                .isArray()
+                .containsExactly(2);
     }
 
     @Test

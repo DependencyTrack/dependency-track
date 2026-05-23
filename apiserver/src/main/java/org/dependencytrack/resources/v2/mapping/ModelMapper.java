@@ -23,6 +23,8 @@ import org.dependencytrack.api.v2.model.DependencyMetrics;
 import org.dependencytrack.api.v2.model.Hashes;
 import org.dependencytrack.api.v2.model.License;
 import org.dependencytrack.api.v2.model.OrganizationalContact;
+import org.dependencytrack.api.v2.model.PackageArtifactMetadata;
+import org.dependencytrack.api.v2.model.PackageMetadata;
 import org.dependencytrack.api.v2.model.Scope;
 import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.model.Component;
@@ -155,4 +157,52 @@ public class ModelMapper {
             case null -> null;
         };
     }
+
+    public static PackageMetadata map(org.dependencytrack.model.@Nullable PackageMetadata pm) {
+        if (pm == null) {
+            return null;
+        }
+
+        return PackageMetadata.builder()
+                .latestVersion(pm.latestVersion())
+                .latestVersionPublishedAt(pm.latestVersionPublishedAt() != null
+                        ? pm.latestVersionPublishedAt().toEpochMilli()
+                        : null)
+                .resolvedAt(pm.resolvedAt().toEpochMilli())
+                .build();
+    }
+
+    public static PackageArtifactMetadata map(org.dependencytrack.model.@Nullable PackageArtifactMetadata pam) {
+        if (pam == null) {
+            return null;
+        }
+
+        return PackageArtifactMetadata.builder()
+                .hashes(mapHashes(pam))
+                .publishedAt(pam.publishedAt() != null
+                        ? pam.publishedAt().toEpochMilli()
+                        : null)
+                .resolvedFrom(pam.resolvedFrom())
+                .resolvedAt(pam.resolvedAt() != null
+                        ? pam.resolvedAt().toEpochMilli()
+                        : null)
+                .build();
+    }
+
+    private static Hashes mapHashes(org.dependencytrack.model.PackageArtifactMetadata pam) {
+        if (pam.md5() == null
+                && pam.sha1() == null
+                && pam.sha256() == null
+                && pam.sha512() == null) {
+            return null;
+        }
+
+        return Hashes.builder()
+                .md5(pam.md5())
+                .sha1(pam.sha1())
+                .sha256(pam.sha256())
+                .sha512(pam.sha512())
+                .build();
+    }
+
 }

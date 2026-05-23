@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v2;
 
+import com.github.packageurl.PackageURL;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
@@ -27,13 +28,21 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.PackageArtifactMetadata;
+import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Scope;
+import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
+import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import java.time.Instant;
+import java.util.List;
+
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class ComponentsResourceTest extends ResourceTest {
 
@@ -234,7 +243,7 @@ public class ComponentsResourceTest extends ResourceTest {
         prepareComponents();
         final Response response = jersey.target("/components")
                 .queryParam("limit", 3)
-                .queryParam("sort_by", "purl")
+                .queryParam("sort_by", "name")
                 .queryParam("sort_direction", "DESC")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -650,6 +659,173 @@ public class ComponentsResourceTest extends ResourceTest {
                 .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("activeLatest", "activeNotLatest", "inactiveLatest", "inactiveNotLatest");
+    }
+
+    @Test
+    public void listComponentsWithPackageMetadataTest() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("test", null, "1.0", null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("comp");
+        component.setPurl(new PackageURL("maven", "test", "comp", "1.0", null, null));
+        qm.createComponent(component, false);
+
+        final Instant resolvedAt = Instant.ofEpochMilli(1_700_000_000_000L);
+        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
+                new PackageMetadata(
+                        new PackageURL("maven", "test", "comp", null, null, null),
+                        "2.0",
+                        null,
+                        resolvedAt,
+                        null,
+                        null))));
+
+        final Response response = jersey.target("/components")
+                .queryParam("expand", "package_metadata")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[0].package_metadata")
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "latest_version": "2.0",
+                          "resolved_at": 1700000000000
+                        }
+                        """);
+    }
+
+    @Test
+    public void listComponentsWithArtifactMetadataTest() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("test", null, "1.0", null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("comp");
+        component.setPurl(new PackageURL("maven", "test", "comp", "1.0", null, null));
+        qm.createComponent(component, false);
+
+        final Instant resolvedAt = Instant.ofEpochMilli(1_700_000_000_000L);
+        final Instant publishedAt = Instant.ofEpochMilli(1_600_000_000_000L);
+        final var packagePurl = new PackageURL("maven", "test", "comp", null, null, null);
+        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
+                new PackageMetadata(packagePurl, null, null, resolvedAt, null, null))));
+        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle).upsertAll(List.of(
+                new PackageArtifactMetadata(
+                        new PackageURL("maven", "test", "comp", "1.0", null, null),
+                        packagePurl,
+                        null,
+                        "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+                        "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+                        null,
+                        publishedAt,
+                        null,
+                        "central",
+                        resolvedAt))));
+
+        final Response response = jersey
+                .target("/components")
+                .queryParam("expand", "package_artifact_metadata")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[0].package_artifact_metadata")
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "hashes": {
+                            "sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+                            "sha256": "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+                          },
+                          "published_at": 1600000000000,
+                          "resolved_from": "central",
+                          "resolved_at": 1700000000000
+                        }
+                        """);
+    }
+
+    @Test
+    public void listComponentsFilterByPackageArtifactPublishedAtTest() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("test", null, "1.0", null, null, null, null, false);
+        final long t0 = 1_500_000_000_000L;
+        final long t1 = 1_600_000_000_000L;
+        final long t2 = 1_700_000_000_000L;
+
+        final var c0 = createComponentWithPublishedAt(project, "c0", Instant.ofEpochMilli(t0));
+        final var c1 = createComponentWithPublishedAt(project, "c1", Instant.ofEpochMilli(t1));
+        final var c2 = createComponentWithPublishedAt(project, "c2", Instant.ofEpochMilli(t2));
+        assertThat(c0).isNotNull();
+        assertThat(c1).isNotNull();
+        assertThat(c2).isNotNull();
+
+        final Response from = jersey
+                .target("/components")
+                .queryParam("package_artifact_published_since", t1)
+                .queryParam("limit", 10)
+                .request().header(X_API_KEY, apiKey).get();
+        assertThat(from.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(from))
+                .inPath("$.items[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("c1", "c2");
+
+        final Response to = jersey
+                .target("/components")
+                .queryParam("package_artifact_published_before", t2)
+                .queryParam("limit", 10)
+                .request().header(X_API_KEY, apiKey).get();
+        assertThat(to.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(to))
+                .inPath("$.items[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("c0", "c1");
+
+        final Response range = jersey
+                .target("/components")
+                .queryParam("package_artifact_published_since", t1)
+                .queryParam("package_artifact_published_before", t2)
+                .queryParam("limit", 10)
+                .request().header(X_API_KEY, apiKey).get();
+        assertThat(range.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(range))
+                .inPath("$.items[*].name")
+                .isArray()
+                .containsExactly("c1");
+    }
+
+    private Component createComponentWithPublishedAt(final Project project, final String name, final Instant publishedAt) throws Exception {
+        final var component = new Component();
+        component.setProject(project);
+        component.setName(name);
+        component.setPurl(new PackageURL("maven", "test", name, "1.0", null, null));
+        qm.createComponent(component, false);
+
+        final var packagePurl = new PackageURL("maven", "test", name, null, null, null);
+        final Instant resolvedAt = Instant.ofEpochMilli(1_700_000_000_000L);
+        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
+                new PackageMetadata(packagePurl, null, null, resolvedAt, null, null))));
+        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle).upsertAll(List.of(
+                new PackageArtifactMetadata(
+                        new PackageURL("maven", "test", name, "1.0", null, null),
+                        packagePurl,
+                        null,
+                        null,
+                        null,
+                        null,
+                        publishedAt,
+                        null,
+                        "central",
+                        resolvedAt))));
+        return component;
     }
 
     private void prepareComponents() {

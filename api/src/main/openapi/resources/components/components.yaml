@@ -65,11 +65,16 @@ get:
     Sorting is supported for the following fields:
 
     * `name`
-    * `version`
     * `group`
-    * `purl`
-    * `cpe`
     * `last_inherited_risk_score`
+
+    ### Expandable fields
+
+    The following fields can be included via `expand`:
+
+    * `metrics`
+    * `package_metadata`
+    * `package_artifact_metadata`
 
     Requires permission `VIEW_PORTFOLIO`
   tags:
@@ -137,6 +142,22 @@ get:
         Requires `hash_type` to be set.
       schema:
         type: string
+    - name: package_artifact_published_since
+      in: query
+      description: |-
+        Filter by package artifact publish date (inclusive lower bound).
+
+        Note that components without resolved package artifact metadata,
+        or whose upstream repository did not report a publication date,
+        are excluded whenever `package_artifact_published_since` or
+        `package_artifact_published_before` is set.
+      schema:
+        $ref: "../../shared/schemas/timestamp.yaml"
+    - name: package_artifact_published_before
+      in: query
+      description: Filter by package artifact publish date (exclusive upper bound).
+      schema:
+        $ref: "../../shared/schemas/timestamp.yaml"
     - name: project_state
       in: query
       description: |-
@@ -155,6 +176,15 @@ get:
         Omit to include components regardless of the flag.
       schema:
         type: boolean
+    - name: expand
+      in: query
+      description: Optional fields to include in each component response item. Unknown values are silently ignored.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
     - $ref: "../../shared/parameters/pagination-limit.yaml"
     - $ref: "../../shared/parameters/page-token.yaml"
     - $ref: "../../shared/parameters/sort-direction.yaml"

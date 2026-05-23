@@ -17,7 +17,30 @@
 get:
   operationId: listProjectComponents
   summary: Retrieves a list of all components for a given project.
-  description: Requires permission `VIEW_PORTFOLIO`
+  description: |-
+    Requires permission `VIEW_PORTFOLIO`
+
+    ### Sortable fields
+
+    Sorting is supported for the following fields:
+
+    * `name`
+    * `group`
+    * `last_inherited_risk_score`
+    * `package_artifact_metadata.published_at`
+
+    Components without resolved artifact metadata, or whose upstream registry did not
+    report a publication date, are placed at the end of the result for both sort
+    directions when sorting by `package_artifact_metadata.published_at`.
+
+    ### Expandable fields
+
+    The following fields can be included via `expand`:
+
+    * `metrics`
+    * `package_metadata`
+    * `package_artifact_metadata`
+    * `occurrence_count`
   tags:
     - Projects
   parameters:
@@ -38,8 +61,26 @@ get:
       description: Optionally exclude transitive dependencies so only direct dependencies are returned
       schema:
         type: boolean
+    - name: q
+      in: query
+      description: >-
+        Optional free-text search term.
+        Matches components whose `group` or `name` contains the given value (case-insensitive).
+      schema:
+        type: string
+    - name: expand
+      in: query
+      description: Optional fields to include in each component response item. Unknown values are silently ignored.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
     - $ref: "../../shared/parameters/pagination-limit.yaml"
     - $ref: "../../shared/parameters/page-token.yaml"
+    - $ref: "../../shared/parameters/sort-direction.yaml"
+    - $ref: "../../shared/parameters/sort-by.yaml"
   responses:
     "200":
       description: A list of all components for a given project

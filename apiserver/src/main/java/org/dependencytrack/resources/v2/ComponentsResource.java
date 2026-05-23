@@ -41,11 +41,20 @@ import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.exception.ProjectAccessDeniedException;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.License;
+import org.dependencytrack.model.PackageArtifactMetadata;
+import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
+import org.dependencytrack.persistence.jdbi.MetricsDao;
+import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
+import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
 import org.dependencytrack.resources.AbstractApiResource;
+import org.dependencytrack.resources.v2.exception.ProblemDetailsException;
+import org.dependencytrack.resources.v2.exception.ProblemType;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.dependencytrack.util.PurlUtil;
 import org.owasp.security.logging.SecurityMarkers;
@@ -54,9 +63,17 @@ import org.slf4j.LoggerFactory;
 import us.springett.parsers.cpe.CpeParser;
 import us.springett.parsers.cpe.exceptions.CpeParsingException;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
+import static org.dependencytrack.resources.v2.mapping.ModelMapper.map;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapDependencyMetrics;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapHashes;
 import static org.dependencytrack.resources.v2.mapping.ModelMapper.mapLicense;
@@ -75,8 +92,10 @@ public class ComponentsResource extends AbstractApiResource implements Component
     private UriInfo uriInfo;
 
     @Override
-    @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT,
-            Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE})
+    @PermissionRequired({
+            Permissions.Constants.PORTFOLIO_MANAGEMENT,
+            Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE
+    })
     public Response createComponent(final CreateComponentRequest request) {
         final UUID projectUuid = request.getProjectUuid();
         try (QueryManager qm = new QueryManager()) {
@@ -110,10 +129,30 @@ public class ComponentsResource extends AbstractApiResource implements Component
 
     @Override
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
-    public Response listComponents(String groupContains, String nameContains, String versionContains, String purlPrefix, String cpe,
-                                   String swidTagIdContains, String hashType, String hash, ProjectState projectState, Boolean projectLatestVersion,
-                                   Integer limit, String pageToken, SortDirection sortDirection, String sortBy) {
-        return inJdbiTransaction(getAlpineRequest(), handle -> {
+    public Response listComponents(
+            String groupContains,
+            String nameContains,
+            String versionContains,
+            String purlPrefix,
+            String cpe,
+            String swidTagIdContains,
+            String hashType,
+            String hash,
+            Long packageArtifactPublishedSince,
+            Long packageArtifactPublishedBefore,
+            ProjectState projectState,
+            Boolean projectLatestVersion,
+            List<String> expand,
+            Integer limit,
+            String pageToken,
+            SortDirection sortDirection,
+            String sortBy) {
+        final boolean hasExpand = expand != null && !expand.isEmpty();
+        final boolean expandMetrics = hasExpand && expand.contains("metrics");
+        final boolean expandPkgMeta = hasExpand && expand.contains("package_metadata");
+        final boolean expandPkgArtifactMeta = hasExpand && expand.contains("package_artifact_metadata");
+
+        return withJdbiHandle(getAlpineRequest(), handle -> {
             PackageURL packageURL = null;
             if (purlPrefix != null) {
                 try {
@@ -129,20 +168,29 @@ public class ComponentsResource extends AbstractApiResource implements Component
                     throw new BadRequestException("Invalid CPE: %s".formatted(cpe));
                 }
             }
-            ComponentDao.HashType hashTypeEnum = null;
+            ListComponentsQuery.HashType hashTypeEnum = null;
             if (hashType != null) {
                 try {
-                    hashTypeEnum = ComponentDao.HashType.valueOf(StringUtils.trimToNull(hashType).toUpperCase());
+                    hashTypeEnum = ListComponentsQuery.HashType.valueOf(StringUtils.trimToNull(hashType).toUpperCase());
                 } catch (IllegalArgumentException e) {
                     throw new BadRequestException("Invalid Hash type: %s".formatted(hashType));
                 }
             }
 
+            final ListComponentsQuery.SortBy sortByEnum = switch (sortBy) {
+                case null -> null;
+                case "name" -> ListComponentsQuery.SortBy.NAME;
+                case "group" -> ListComponentsQuery.SortBy.GROUP;
+                case "last_inherited_risk_score" -> ListComponentsQuery.SortBy.LAST_RISKSCORE;
+                default -> throw ProblemDetailsException.of(ProblemType.INVALID_SORT_BY, "Invalid sort_by: " + sortBy);
+            };
+
             final Page<Component> componentsPage = handle.attach(ComponentDao.class)
-                    .listComponents(
+                    .listComponents(new ListComponentsQuery(
                             /* projectId */ null,
-                            /* includeMetrics */ true,
-                            packageURL != null ? packageURL.canonicalize().toLowerCase() : null,
+                            packageURL != null
+                                    ? packageURL.canonicalize().toLowerCase()
+                                    : null,
                             StringUtils.trimToNull(cpe),
                             StringUtils.trimToNull(swidTagIdContains),
                             StringUtils.trimToNull(groupContains),
@@ -150,6 +198,12 @@ public class ComponentsResource extends AbstractApiResource implements Component
                             StringUtils.trimToNull(versionContains),
                             hashTypeEnum,
                             StringUtils.trimToNull(hash),
+                            packageArtifactPublishedSince != null
+                                    ? Instant.ofEpochMilli(packageArtifactPublishedSince)
+                                    : null,
+                            packageArtifactPublishedBefore != null
+                                    ? Instant.ofEpochMilli(packageArtifactPublishedBefore)
+                                    : null,
                             switch (projectState) {
                                 case ACTIVE -> Boolean.TRUE;
                                 case INACTIVE -> Boolean.FALSE;
@@ -158,34 +212,96 @@ public class ComponentsResource extends AbstractApiResource implements Component
                             projectLatestVersion,
                             limit,
                             pageToken,
-                            sortBy,
-                            mapSortDirection(sortDirection));
+                            sortByEnum,
+                            mapSortDirection(sortDirection)));
+
+            var metricsByComponentId = Map.<Long, DependencyMetrics>of();
+            var pkgMetaByPackagePurl = Map.<String, PackageMetadata>of();
+            var pkgArtifactMetaByPurl = Map.<String, PackageArtifactMetadata>of();
+            if (!componentsPage.items().isEmpty()) {
+                if (expandMetrics) {
+                    final Set<Long> componentIds =
+                            componentsPage.items().stream()
+                                    .map(Component::getId)
+                                    .collect(Collectors.toSet());
+                    metricsByComponentId = handle.attach(MetricsDao.class)
+                            .getMostRecentDependencyMetrics(componentIds)
+                            .stream()
+                            .collect(Collectors.toMap(
+                                    DependencyMetrics::getComponentId,
+                                    Function.identity()));
+                }
+                if (expandPkgMeta) {
+                    final Set<String> packagePurls = componentsPage.items().stream()
+                            .filter(component -> component.getPurl() != null)
+                            .map(component -> PurlUtil.purlPackageOnly(component.getPurl()))
+                            .collect(Collectors.toSet());
+                    pkgMetaByPackagePurl =
+                            new PackageMetadataDao(handle).getAll(packagePurls).stream()
+                                    .collect(Collectors.toMap(
+                                            pm -> pm.purl().canonicalize(),
+                                            Function.identity()));
+                }
+                if (expandPkgArtifactMeta) {
+                    final Set<String> versionedPurls = componentsPage.items().stream()
+                            .filter(component -> component.getPurl() != null)
+                            .map(component -> component.getPurl().canonicalize())
+                            .collect(Collectors.toSet());
+                    pkgArtifactMetaByPurl =
+                            new PackageArtifactMetadataDao(handle).getAll(versionedPurls).stream()
+                                    .collect(Collectors.toMap(pam -> pam.purl().canonicalize(), Function.identity()));
+                }
+            }
+
+            final var responseItems = new ArrayList<ListComponentsResponseItem>(componentsPage.items().size());
+            for (final Component componentRow : componentsPage.items()) {
+                final String purlStr = componentRow.getPurl() != null
+                        ? componentRow.getPurl().canonicalize()
+                        : null;
+                final String packagePurlStr = componentRow.getPurl() != null
+                        ? PurlUtil.purlPackageOnly(componentRow.getPurl())
+                        : null;
+                final PackageArtifactMetadata pkgArtifactMeta = purlStr != null
+                        ? pkgArtifactMetaByPurl.get(purlStr)
+                        : null;
+                final var item = ListComponentsResponseItem.builder()
+                        .name(componentRow.getName())
+                        .hashes(mapHashes(componentRow))
+                        .classifier(componentRow.getClassifier() != null
+                                ? componentRow.getClassifier().name()
+                                : null)
+                        .scope(mapScope(componentRow.getScope()))
+                        .copyright(componentRow.getCopyright())
+                        .cpe(componentRow.getCpe())
+                        .group(componentRow.getGroup())
+                        .internal(componentRow.isInternal())
+                        .lastInheritedRiskScore(componentRow.getLastInheritedRiskScore())
+                        .license(componentRow.getLicense())
+                        .licenseExpression(componentRow.getLicenseExpression())
+                        .licenseUrl(componentRow.getLicenseUrl())
+                        .resolvedLicense(mapLicense(componentRow.getResolvedLicense()))
+                        .purl(purlStr)
+                        .swidTagId(componentRow.getSwidTagId())
+                        .uuid(componentRow.getUuid())
+                        .version(componentRow.getVersion())
+                        .project(mapProject(componentRow.getProject()))
+                        .metrics(expandMetrics
+                                ? mapDependencyMetrics(metricsByComponentId.get(componentRow.getId()))
+                                : null)
+                        .packageMetadata(
+                                expandPkgMeta && packagePurlStr != null
+                                        ? map(pkgMetaByPackagePurl.get(packagePurlStr))
+                                        : null)
+                        .packageArtifactMetadata(
+                                expandPkgArtifactMeta
+                                        ? map(pkgArtifactMeta)
+                                        : null)
+                        .build();
+                responseItems.add(item);
+            }
 
             final var response = ListComponentsResponse.builder()
-                    .items(componentsPage.items().stream()
-                            .<ListComponentsResponseItem>map(
-                                    componentRow -> ListComponentsResponseItem.builder()
-                                            .name(componentRow.getName())
-                                            .hashes(mapHashes(componentRow))
-                                            .classifier(componentRow.getClassifier() != null ? componentRow.getClassifier().name() : null)
-                                            .scope(mapScope(componentRow.getScope()))
-                                            .copyright(componentRow.getCopyright())
-                                            .cpe(componentRow.getCpe())
-                                            .group(componentRow.getGroup())
-                                            .internal(componentRow.isInternal())
-                                            .lastInheritedRiskScore(componentRow.getLastInheritedRiskScore())
-                                            .license(componentRow.getLicense())
-                                            .licenseExpression(componentRow.getLicenseExpression())
-                                            .licenseUrl(componentRow.getLicenseUrl())
-                                            .resolvedLicense(mapLicense(componentRow.getResolvedLicense()))
-                                            .purl(componentRow.getPurl() != null ? componentRow.getPurl().toString() : null)
-                                            .swidTagId(componentRow.getSwidTagId())
-                                            .uuid(componentRow.getUuid())
-                                            .version(componentRow.getVersion())
-                                            .project(mapProject(componentRow.getProject()))
-                                            .metrics(mapDependencyMetrics(componentRow.getMetrics()))
-                                            .build())
-                            .toList())
+                    .items(responseItems)
                     .nextPageToken(componentsPage.nextPageToken())
                     .total(convertTotalCount(componentsPage.totalCount()))
                     .build();

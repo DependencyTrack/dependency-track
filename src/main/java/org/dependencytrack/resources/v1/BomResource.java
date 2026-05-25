@@ -20,7 +20,10 @@ package org.dependencytrack.resources.v1;
 
 import alpine.common.logging.Logger;
 import alpine.event.framework.Event;
+import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
+import alpine.model.Team;
+import alpine.model.UserPrincipal;
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
 import alpine.server.auth.PermissionRequired;
@@ -60,6 +63,8 @@ import org.dependencytrack.parser.cyclonedx.InvalidBomException;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.problems.InvalidBomProblemDetails;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 import org.dependencytrack.resources.v1.vo.IsTokenBeingProcessedResponse;
@@ -92,13 +97,17 @@ import java.security.Principal;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import jakarta.ws.rs.ClientErrorException;
+import static java.util.Objects.requireNonNullElseGet;
 import static java.util.function.Predicate.not;
+import static org.dependencytrack.util.PersistenceUtil.isPersistent;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
@@ -382,6 +391,7 @@ public class BomResource extends AlpineResource {
                                 StringUtils.trimToNull(request.getProjectVersion()), request.getProjectTags(), parent,
                                 null, true, request.isLatest(), true);
                         Principal principal = getPrincipal();
+                        applyAccessTeamsToProject(qm, project, requireNonNullElseGet(request.getAccessTeams(), Collections::emptyList), principal);
                         qm.updateNewProjectACL(project, principal);
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
@@ -444,6 +454,7 @@ public class BomResource extends AlpineResource {
             @FormDataParam("projectName") String projectName,
             @FormDataParam("projectVersion") String projectVersion,
             @FormDataParam("projectTags") String projectTags,
+            @FormDataParam("accessTeams") String accessTeamsJson,
             @FormDataParam("parentName") String parentName,
             @FormDataParam("parentVersion") String parentVersion,
             @FormDataParam("parentUUID") String parentUUID,
@@ -453,6 +464,7 @@ public class BomResource extends AlpineResource {
         final List<org.dependencytrack.model.Tag> requestTags = (projectTags != null && !projectTags.isBlank())
                 ? Arrays.stream(projectTags.split(",")).map(String::trim).filter(not(String::isEmpty)).map(Tag::new).toList()
                 : null;
+        final List<Team> accessTeams = parseAccessTeams(accessTeamsJson);
 
         if (projectUuid != null) { // behavior in v3.0.0
             try (QueryManager qm = new QueryManager()) {
@@ -494,6 +506,7 @@ public class BomResource extends AlpineResource {
                         }
                         project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, requestTags, parent, null, true, isLatest, true);
                         Principal principal = getPrincipal();
+                        applyAccessTeamsToProject(qm, project, accessTeams, principal);
                         qm.updateNewProjectACL(project, principal);
                     } else {
                         return Response.status(Response.Status.UNAUTHORIZED).entity("The principal does not have permission to create project.").build();
@@ -692,6 +705,69 @@ public class BomResource extends AlpineResource {
             return (validationMode == BomValidationMode.ENABLED_FOR_TAGS && doTagsMatch)
                     || (validationMode == BomValidationMode.DISABLED_FOR_TAGS && !doTagsMatch);
         }
+    }
+
+    private static List<Team> parseAccessTeams(final String accessTeamsJson) {
+        if (accessTeamsJson == null || accessTeamsJson.isBlank()) {
+            return Collections.emptyList();
+        }
+        try {
+            return new ObjectMapper().readValue(accessTeamsJson, new TypeReference<>() {});
+        } catch (Exception e) {
+            throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                    .entity("accessTeams must be a valid JSON array of team objects with uuid or name")
+                    .build());
+        }
+    }
+
+    private void applyAccessTeamsToProject(final QueryManager qm, final Project project,
+            final List<Team> chosenTeams, final Principal principal) {
+        if (chosenTeams.isEmpty()) {
+            return;
+        }
+        for (final Team chosenTeam : chosenTeams) {
+            if (chosenTeam.getUuid() == null && chosenTeam.getName() == null) {
+                throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                        .entity("""
+                                accessTeams must either specify a UUID or a name,\
+                                but the team at index %d has neither.""".formatted(chosenTeams.indexOf(chosenTeam)))
+                        .build());
+            }
+        }
+        final List<Team> userTeams;
+        if (principal instanceof final UserPrincipal userPrincipal) {
+            userTeams = userPrincipal.getTeams();
+        } else if (principal instanceof final ApiKey apiKey) {
+            userTeams = apiKey.getTeams();
+        } else {
+            userTeams = Collections.emptyList();
+        }
+        final boolean isAdmin = qm.hasAccessManagementPermission(principal);
+        final List<Team> visibleTeams = isAdmin ? qm.getTeams() : userTeams;
+        final var visibleTeamByUuid = new HashMap<UUID, Team>(visibleTeams.size());
+        final var visibleTeamByName = new HashMap<String, Team>(visibleTeams.size());
+        for (final Team visibleTeam : visibleTeams) {
+            visibleTeamByUuid.put(visibleTeam.getUuid(), visibleTeam);
+            visibleTeamByName.put(visibleTeam.getName(), visibleTeam);
+        }
+        for (final Team chosenTeam : chosenTeams) {
+            Team visibleTeam = visibleTeamByUuid.getOrDefault(
+                    chosenTeam.getUuid(),
+                    visibleTeamByName.get(chosenTeam.getName()));
+            if (visibleTeam == null) {
+                throw new ClientErrorException(Response.status(Response.Status.BAD_REQUEST)
+                        .entity("""
+                                The team with %s can not be assigned because it does not exist, \
+                                or is not accessible to the authenticated principal.""".formatted(
+                                chosenTeam.getUuid() != null ? "UUID " + chosenTeam.getUuid() : "name " + chosenTeam.getName()))
+                        .build());
+            }
+            if (!isPersistent(visibleTeam)) {
+                visibleTeam = qm.getObjectById(Team.class, visibleTeam.getId());
+            }
+            project.addAccessTeam(visibleTeam);
+        }
+        qm.persist(project);
     }
 
     private void maybeBindTags(final QueryManager qm, final Project project, final List<Tag> tags) {

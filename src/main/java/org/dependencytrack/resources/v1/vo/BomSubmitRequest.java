@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+import alpine.model.Team;
 import org.dependencytrack.model.Tag;
 
 import jakarta.validation.constraints.NotBlank;
@@ -75,6 +76,8 @@ public final class BomSubmitRequest {
 
     private final boolean isLatest;
 
+    private final List<Team> accessTeams;
+
     public BomSubmitRequest(String project,
                             String projectName,
                             String projectVersion,
@@ -82,7 +85,7 @@ public final class BomSubmitRequest {
                             boolean autoCreate,
                             boolean isLatest,
                             String bom) {
-        this(project, projectName, projectVersion, projectTags, autoCreate, null, null, null, isLatest, bom);
+        this(project, projectName, projectVersion, projectTags, autoCreate, null, null, null, isLatest, null, bom);
     }
 
     @JsonCreator
@@ -96,6 +99,7 @@ public final class BomSubmitRequest {
             @JsonProperty(value = "parentName") String parentName,
             @JsonProperty(value = "parentVersion") String parentVersion,
             @JsonProperty(value = "isLatest", defaultValue = "false") @JsonAlias("isLatestProjectVersion") boolean isLatest,
+            @JsonProperty(value = "accessTeams") List<Team> accessTeams,
             @JsonProperty(value = "bom", required = true) String bom) {
         this.project = project;
         this.projectName = projectName;
@@ -106,6 +110,7 @@ public final class BomSubmitRequest {
         this.parentName = parentName;
         this.parentVersion = parentVersion;
         this.isLatest = isLatest;
+        this.accessTeams = accessTeams;
         this.bom = bom;
     }
 
@@ -152,6 +157,14 @@ public final class BomSubmitRequest {
 
     @JsonProperty("isLatest")
     public boolean isLatest() { return isLatest; }
+
+    @Schema(description = """
+            Teams to grant access to when auto-creating a project. Either uuid or name of a team must be specified. \
+            Only teams which the authenticated principal is a member of can be assigned. \
+            Principals with ACCESS_MANAGEMENT permission can assign any team.""")
+    public List<Team> getAccessTeams() {
+        return accessTeams;
+    }
 
     @Schema(
             description = "Base64 encoded BOM",

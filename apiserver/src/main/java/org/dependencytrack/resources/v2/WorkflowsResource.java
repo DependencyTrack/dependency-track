@@ -130,10 +130,10 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
             @Nullable String workflowInstanceId,
             @Nullable WorkflowRunStatus status,
             @Nullable List<String> label,
-            @Nullable Long createdAtFrom,
-            @Nullable Long createdAtTo,
-            @Nullable Long completedAtFrom,
-            @Nullable Long completedAtTo,
+            @Nullable Long createdSince,
+            @Nullable Long createdBefore,
+            @Nullable Long completedSince,
+            @Nullable Long completedBefore,
             Integer limit,
             @Nullable String pageToken,
             @Nullable SortDirection sortDirection,
@@ -145,17 +145,17 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
                         .withWorkflowInstanceId(workflowInstanceId)
                         .withStatuses(status != null ? Set.of(convert(status)) : null)
                         .withLabels(convertLabelFilters(label))
-                        .withCreatedAtFrom(createdAtFrom != null
-                                ? Instant.ofEpochMilli(createdAtFrom)
+                        .withCreatedSince(createdSince != null
+                                ? Instant.ofEpochMilli(createdSince)
                                 : null)
-                        .withCreatedAtTo(createdAtTo != null
-                                ? Instant.ofEpochMilli(createdAtTo)
+                        .withCreatedBefore(createdBefore != null
+                                ? Instant.ofEpochMilli(createdBefore)
                                 : null)
-                        .withCompletedAtFrom(completedAtFrom != null
-                                ? Instant.ofEpochMilli(completedAtFrom)
+                        .withCompletedSince(completedSince != null
+                                ? Instant.ofEpochMilli(completedSince)
                                 : null)
-                        .withCompletedAtTo(completedAtTo != null
-                                ? Instant.ofEpochMilli(completedAtTo)
+                        .withCompletedBefore(completedBefore != null
+                                ? Instant.ofEpochMilli(completedBefore)
                                 : null)
                         .withSortBy(switch (sortBy) {
                             case "id" -> ListWorkflowRunsRequest.SortBy.ID;
@@ -303,5 +303,5 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
                 .event(eventJsonMap)
                 .build();
     }
-    
+
 }

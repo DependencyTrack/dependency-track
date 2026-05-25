@@ -68,22 +68,22 @@ get:
         items:
           type: string
           pattern: "^[^=]+=.*$"
-    - name: created_at_from
+    - name: created_since
       description: Filter runs created on or after this timestamp.
       in: query
       schema:
         $ref: "../../../shared/schemas/timestamp.yaml"
-    - name: created_at_to
+    - name: created_before
       description: Filter runs created before this timestamp.
       in: query
       schema:
         $ref: "../../../shared/schemas/timestamp.yaml"
-    - name: completed_at_from
+    - name: completed_since
       description: Filter runs completed on or after this timestamp.
       in: query
       schema:
         $ref: "../../../shared/schemas/timestamp.yaml"
-    - name: completed_at_to
+    - name: completed_before
       description: Filter runs completed before this timestamp.
       in: query
       schema:

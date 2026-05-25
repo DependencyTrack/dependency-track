@@ -294,10 +294,10 @@ class WorkflowsResourceTest extends ResourceTest {
                 .queryParam("workflow_instance_id", "instance-123")
                 .queryParam("status", "CANCELLED")
                 .queryParam("label", "env=prod", "team=api")
-                .queryParam("created_at_from", 1000000)
-                .queryParam("created_at_to", 2000000)
-                .queryParam("completed_at_from", 3000000)
-                .queryParam("completed_at_to", 4000000)
+                .queryParam("created_since", 1000000)
+                .queryParam("created_before", 2000000)
+                .queryParam("completed_since", 3000000)
+                .queryParam("completed_before", 4000000)
                 .queryParam("limit", 50)
                 .queryParam("page_token", "nextPageToken")
                 .queryParam("sort_direction", "DESC")
@@ -316,10 +316,10 @@ class WorkflowsResourceTest extends ResourceTest {
         assertThat(capturedRequest.workflowInstanceId()).isEqualTo("instance-123");
         assertThat(capturedRequest.statuses()).containsOnly(WorkflowRunStatus.CANCELLED);
         assertThat(capturedRequest.labels()).containsExactlyInAnyOrderEntriesOf(Map.of("env", "prod", "team", "api"));
-        assertThat(capturedRequest.createdAtFrom()).isEqualTo(Instant.ofEpochMilli(1000000));
-        assertThat(capturedRequest.createdAtTo()).isEqualTo(Instant.ofEpochMilli(2000000));
-        assertThat(capturedRequest.completedAtFrom()).isEqualTo(Instant.ofEpochMilli(3000000));
-        assertThat(capturedRequest.completedAtTo()).isEqualTo(Instant.ofEpochMilli(4000000));
+        assertThat(capturedRequest.createdSince()).isEqualTo(Instant.ofEpochMilli(1000000));
+        assertThat(capturedRequest.createdBefore()).isEqualTo(Instant.ofEpochMilli(2000000));
+        assertThat(capturedRequest.completedSince()).isEqualTo(Instant.ofEpochMilli(3000000));
+        assertThat(capturedRequest.completedBefore()).isEqualTo(Instant.ofEpochMilli(4000000));
         assertThat(capturedRequest.limit()).isEqualTo(50);
         assertThat(capturedRequest.pageToken()).isEqualTo("nextPageToken");
         assertThat(capturedRequest.sortDirection()).isEqualTo(SortDirection.DESC);

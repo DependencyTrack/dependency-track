@@ -139,21 +139,21 @@ public final class WorkflowRunDao extends AbstractDao {
             whereConditions.add("labels @> cast(:labels as jsonb)");
             queryParams.put("labels", labelsJson);
         }
-        if (request.createdAtFrom() != null) {
-            whereConditions.add("created_at >= :createdAtFrom");
-            queryParams.put("createdAtFrom", request.createdAtFrom());
+        if (request.createdSince() != null) {
+            whereConditions.add("created_at >= :createdSince");
+            queryParams.put("createdSince", request.createdSince());
         }
-        if (request.createdAtTo() != null) {
-            whereConditions.add("created_at < :createdAtTo");
-            queryParams.put("createdAtTo", request.createdAtTo());
+        if (request.createdBefore() != null) {
+            whereConditions.add("created_at < :createdBefore");
+            queryParams.put("createdBefore", request.createdBefore());
         }
-        if (request.completedAtFrom() != null) {
-            whereConditions.add("completed_at >= :completedAtFrom");
-            queryParams.put("completedAtFrom", request.completedAtFrom());
+        if (request.completedSince() != null) {
+            whereConditions.add("completed_at >= :completedSince");
+            queryParams.put("completedSince", request.completedSince());
         }
-        if (request.completedAtTo() != null) {
-            whereConditions.add("completed_at < :completedAtTo");
-            queryParams.put("completedAtTo", request.completedAtTo());
+        if (request.completedBefore() != null) {
+            whereConditions.add("completed_at < :completedBefore");
+            queryParams.put("completedBefore", request.completedBefore());
         }
 
         final var decodedPageToken = decodePageToken(request.pageToken(), ListRunsPageToken.class);

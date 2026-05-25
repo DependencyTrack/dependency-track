@@ -36,10 +36,10 @@ class ListWorkflowRunsRequestTest {
                 .withWorkflowVersion(123)
                 .withStatuses(Set.of(WorkflowRunStatus.RUNNING, WorkflowRunStatus.CREATED))
                 .withLabels(Map.of("foo", "bar"))
-                .withCreatedAtFrom(Instant.ofEpochSecond(111))
-                .withCreatedAtTo(Instant.ofEpochSecond(222))
-                .withCompletedAtFrom(Instant.ofEpochSecond(333))
-                .withCompletedAtTo(Instant.ofEpochSecond(444))
+                .withCreatedSince(Instant.ofEpochSecond(111))
+                .withCreatedBefore(Instant.ofEpochSecond(222))
+                .withCompletedSince(Instant.ofEpochSecond(333))
+                .withCompletedBefore(Instant.ofEpochSecond(444))
                 .withPageToken("pageToken")
                 .withLimit(666);
 
@@ -47,10 +47,10 @@ class ListWorkflowRunsRequestTest {
         assertThat(request.workflowVersion()).isEqualTo(123);
         assertThat(request.statuses()).containsExactlyInAnyOrder(WorkflowRunStatus.RUNNING, WorkflowRunStatus.CREATED);
         assertThat(request.labels()).containsEntry("foo", "bar");
-        assertThat(request.createdAtFrom()).isEqualTo(Instant.ofEpochSecond(111));
-        assertThat(request.createdAtTo()).isEqualTo(Instant.ofEpochSecond(222));
-        assertThat(request.completedAtFrom()).isEqualTo(Instant.ofEpochSecond(333));
-        assertThat(request.completedAtTo()).isEqualTo(Instant.ofEpochSecond(444));
+        assertThat(request.createdSince()).isEqualTo(Instant.ofEpochSecond(111));
+        assertThat(request.createdBefore()).isEqualTo(Instant.ofEpochSecond(222));
+        assertThat(request.completedSince()).isEqualTo(Instant.ofEpochSecond(333));
+        assertThat(request.completedBefore()).isEqualTo(Instant.ofEpochSecond(444));
         assertThat(request.pageToken()).isEqualTo("pageToken");
         assertThat(request.limit()).isEqualTo(666);
     }

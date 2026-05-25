@@ -1032,13 +1032,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "DEPENDENCYMETRICS" WHERE "PROJECT_ID" = ANY(?);
                     """.replaceAll(Pattern.quote("= ANY(?)"), inExpression)
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "FINDINGATTRIBUTION" WHERE "PROJECT_ID" = ANY(?);
                     """.replaceAll(Pattern.quote("= ANY(?)"), inExpression)
                 );
@@ -1060,13 +1060,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "ANALYSIS" WHERE "PROJECT_ID" = ANY(?);
                     """.replace("= ANY(?)", inExpression)
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "COMPONENT_PROPERTY" WHERE "COMPONENT_ID" IN (
                         SELECT "ID" FROM "COMPONENT" WHERE "PROJECT_ID" = ANY(?)
                     );
@@ -1119,7 +1119,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     executeAndCloseWithArray(sqlQuery, queryParameter);
                 }
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "COMPONENT" WHERE "PROJECT_ID" = ANY(?);
                     """.replace("= ANY(?)", inExpression)
                 );
@@ -1318,7 +1318,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     executeAndCloseWithArray(sqlQuery, queryParameter);
                 }
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "PROJECT" WHERE "ID" = ANY(?);
                     """.replace("= ANY(?)", inExpression)
                 );
@@ -1564,7 +1564,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
     /**
      * Updates a Project ACL to add the principals Team to the AccessTeams
-     * This only happens if Portfolio Access Control is enabled and the @param principal is an ApyKey
+     * This only happens if @param principal is an ApyKey
      * For a UserPrincipal we don't know which Team(s) to add to the ACL,
      * See https://github.com/DependencyTrack/dependency-track/issues/1435
      * @param project
@@ -1573,7 +1573,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
      */
     @Override
     public boolean updateNewProjectACL(Project project, Principal principal) {
-        if (isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && principal instanceof ApiKey apiKey) {
+        if (principal instanceof ApiKey apiKey) {
             final var apiTeam = apiKey.getTeams().stream().findFirst();
             if (apiTeam.isPresent()) {
                 LOGGER.debug("adding Team to ACL of newly created project");

@@ -30,5 +30,6 @@ public enum AnalysisState {
     FALSE_POSITIVE,
     NOT_AFFECTED,
     RESOLVED,
-    NOT_SET
+    RESOLVED_WITH_PEDIGREE,
+    NOT_SET,
 }

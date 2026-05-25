@@ -152,7 +152,7 @@ public class CycloneDXVexImporter {
         }
         if (cdxVuln.getAnalysis().getState() != null) {
             analysisState = ModelConverter.convertCdxVulnAnalysisStateToDtAnalysisState(cdxVuln.getAnalysis().getState());
-            suppress = (AnalysisState.FALSE_POSITIVE == analysisState || AnalysisState.NOT_AFFECTED == analysisState || AnalysisState.RESOLVED == analysisState);
+            suppress = (AnalysisState.FALSE_POSITIVE == analysisState || AnalysisState.NOT_AFFECTED == analysisState || AnalysisState.RESOLVED == analysisState || AnalysisState.RESOLVED_WITH_PEDIGREE == analysisState);
             AnalysisCommentUtil.makeStateComment(qm, analysis, analysisState, COMMENTER);
         }
         if (cdxVuln.getAnalysis().getJustification() != null) {

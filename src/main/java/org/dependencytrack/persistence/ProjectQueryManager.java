@@ -157,6 +157,11 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 project.setMetrics(getMostRecentProjectMetrics(project));
             }
         }
+        if (!onlyRoot) {
+            // When not showing only root projects (e.g., during search), populate the ancestor path
+            // to provide hierarchy context in the flat list view.
+            populateAncestorPaths(result.getList(Project.class));
+        }
         return result;
     }
 
@@ -223,6 +228,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setMetrics(getMostRecentProjectMetrics(project));
             // set ProjectVersions to minimize the number of round trips a client needs to make
             project.setVersions(getProjectVersions(project));
+            populateAncestorPaths(List.of(project));
         }
         return project;
     }
@@ -254,6 +260,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setMetrics(getMostRecentProjectMetrics(project));
             // set ProjectVersions to prevent extra round trip
             project.setVersions(getProjectVersions(project));
+            populateAncestorPaths(List.of(project));
         }
         return project;
     }
@@ -286,6 +293,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
             project.setMetrics(getMostRecentProjectMetrics(project));
             // set ProjectVersions to prevent extra round trip
             project.setVersions(getProjectVersions(project));
+            populateAncestorPaths(List.of(project));
         }
         return project;
     }
@@ -1032,13 +1040,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "DEPENDENCYMETRICS" WHERE "PROJECT_ID" = ANY(?);
                     """.replaceAll(Pattern.quote("= ANY(?)"), inExpression)
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "FINDINGATTRIBUTION" WHERE "PROJECT_ID" = ANY(?);
                     """.replaceAll(Pattern.quote("= ANY(?)"), inExpression)
                 );
@@ -1060,13 +1068,13 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "ANALYSIS" WHERE "PROJECT_ID" = ANY(?);
                     """.replace("= ANY(?)", inExpression)
                 );
                 executeAndCloseWithArray(sqlQuery, queryParameter);
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "COMPONENT_PROPERTY" WHERE "COMPONENT_ID" IN (
                         SELECT "ID" FROM "COMPONENT" WHERE "PROJECT_ID" = ANY(?)
                     );
@@ -1119,7 +1127,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     executeAndCloseWithArray(sqlQuery, queryParameter);
                 }
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "COMPONENT" WHERE "PROJECT_ID" = ANY(?);
                     """.replace("= ANY(?)", inExpression)
                 );
@@ -1318,7 +1326,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
                     executeAndCloseWithArray(sqlQuery, queryParameter);
                 }
 
-                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """                        
+                sqlQuery = pm.newQuery(JDOQuery.SQL_QUERY_LANGUAGE, """
                     DELETE FROM "PROJECT" WHERE "ID" = ANY(?);
                     """.replace("= ANY(?)", inExpression)
                 );
@@ -1634,6 +1642,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         preprocessACLs(query, queryFilter, params, false);
         query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         result = execute(query, params);
+        populateAncestorPaths(result.getList(Project.class));
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
@@ -1663,6 +1672,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         preprocessACLs(query, queryFilter, params, false);
         query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         result = execute(query, params);
+        populateAncestorPaths(result.getList(Project.class));
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
@@ -1695,7 +1705,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         final Map<String, Object> params = filterBuilder.getParams();
 
         preprocessACLs(query, queryFilter, params, false);
+        query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
         result = execute(query, params);
+        populateAncestorPaths(result.getList(Project.class));
         if (includeMetrics) {
             // Populate each Project object in the paginated result with transitive related
             // data to minimize the number of round trips a client needs to make, process, and render.
@@ -1806,6 +1818,24 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         query.setRange(0, 1);
         query.setResult("id");
         return !executeAndCloseResultList(query, Long.class).isEmpty();
+    }
+
+    /**
+     * Fetches projects by their UUIDs and populates their ancestor paths.
+     * Returns a map of project UUID to project for efficient lookup.
+     *
+     * @param uuids project UUIDs to fetch
+     * @return map of project UUID to project with ancestor chains wired
+     */
+    public Map<UUID, Project> getProjectsWithAncestorPaths(Collection<UUID> uuids) {
+        if (uuids == null || uuids.isEmpty()) {
+            return Map.of();
+        }
+        final List<Project> projects = fetchProjectsByUuids(Set.copyOf(uuids));
+        populateAncestorPaths(projects);
+        return projects.stream()
+                .filter(p -> p.getUuid() != null)
+                .collect(Collectors.toMap(Project::getUuid, p -> p, (a, b) -> a));
     }
 
     private static boolean isChildOf(Project project, UUID uuid) {

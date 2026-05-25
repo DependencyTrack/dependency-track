@@ -208,6 +208,12 @@ public class PolicyViolationResource extends AlpineResource {
      * <p>
      * This ensures that responses include not only the violations themselves, but also the associated
      * {@link org.dependencytrack.model.Policy}, which is required to tell the policy name and violation state.
+     * <p>
+     * <b>Parent path limitation:</b> Only the direct parent (one level) is included in the project. A full
+     * ancestor chain is difficult to support here because: (1) Higher JDO fetch depth triggers cycles
+     * (Project↔children, Component↔project) and causes "Input is too deeply nested" serialization errors;
+     * (2) This API returns raw JDO entities—a proper full chain would require a response VO with
+     * {@link org.dependencytrack.resources.v1.vo.ProjectParentInfo} (like {@code AffectedProject}), i.e. an API contract change.
      *
      * @param qm         The {@link QueryManager} to use
      * @param violations The {@link PolicyViolation}s to detach
@@ -216,7 +222,7 @@ public class PolicyViolationResource extends AlpineResource {
      */
     private Collection<PolicyViolation> detachViolations(final QueryManager qm, final Collection<PolicyViolation> violations) {
         final PersistenceManager pm = qm.getPersistenceManager();
-        pm.getFetchPlan().setMaxFetchDepth(2); // Ensure policy is included
+        pm.getFetchPlan().setMaxFetchDepth(2); // Policy + project + direct parent only; higher depth triggers cycles
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         return qm.getPersistenceManager().detachCopyAll(violations);
     }

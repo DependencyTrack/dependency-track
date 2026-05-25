@@ -227,6 +227,39 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void getProjectLookupReturnsNestedParentChainTest() {
+        final var parentProject = new Project();
+        parentProject.setName("acme-parent");
+        parentProject.setVersion("2.0");
+        qm.persist(parentProject);
+
+        final var project = new Project();
+        project.setName("acme-lookup-child");
+        project.setVersion("1.0");
+        project.setParent(parentProject);
+        qm.persist(project);
+
+        Response response = jersey.target(V1_PROJECT + "/lookup")
+                .queryParam("name", "acme-lookup-child")
+                .queryParam("version", "1.0")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json).isNotNull();
+        assertThat(json.getString("name")).isEqualTo("acme-lookup-child");
+        assertThat(json.getString("version")).isEqualTo("1.0");
+
+        JsonObject parent = json.getJsonObject("parent");
+        assertThat(parent).isNotNull();
+        assertThat(parent.getString("name")).isEqualTo("acme-parent");
+        assertThat(parent.getString("version")).isEqualTo("2.0");
+        assertThat(parent.getString("uuid")).isEqualTo(parentProject.getUuid().toString());
+        assertThat(parent.containsKey("parent")).isFalse(); // root, no further parent
+    }
+
+    @Test
     void getProjectLookupNotFoundTest() {
         final var project = new Project();
         project.setName("acme-app");
@@ -381,6 +414,107 @@ class ProjectResourceTest extends ResourceTest {
                           ]
                         }
                         """);
+    }
+
+    @Test
+    void getProjectByUuidWithNestedParentChainTest() {
+        final var grandparentProject = new Project();
+        grandparentProject.setName("acme-org");
+        grandparentProject.setVersion("1.0");
+        qm.persist(grandparentProject);
+
+        final var parentProject = new Project();
+        parentProject.setName("acme-app-parent");
+        parentProject.setVersion("1.0.0");
+        parentProject.setParent(grandparentProject);
+        qm.persist(parentProject);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setParent(parentProject);
+        qm.persist(project);
+
+        Response response = jersey.target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json).isNotNull();
+
+        // Assert nested parent chain: project -> parent -> grandparent -> null
+        JsonObject parent = json.getJsonObject("parent");
+        assertThat(parent).isNotNull();
+        assertThat(parent.getString("name")).isEqualTo("acme-app-parent");
+        assertThat(parent.getString("version")).isEqualTo("1.0.0");
+        assertThat(parent.getString("uuid")).isEqualTo(parentProject.getUuid().toString());
+
+        JsonObject grandparent = parent.getJsonObject("parent");
+        assertThat(grandparent).isNotNull();
+        assertThat(grandparent.getString("name")).isEqualTo("acme-org");
+        assertThat(grandparent.getString("version")).isEqualTo("1.0");
+        assertThat(grandparent.getString("uuid")).isEqualTo(grandparentProject.getUuid().toString());
+
+        // Root has no parent (key omitted with NON_NULL or null)
+        assertThat(grandparent.containsKey("parent")).isFalse();
+    }
+
+    @Test
+    void getProjectByUuidWithDeepParentChainTest() {
+        // 4 levels: root -> org -> product -> app
+        final var root = new Project();
+        root.setName("acme-root");
+        root.setVersion("1.0");
+        qm.persist(root);
+
+        final var org = new Project();
+        org.setName("acme-org");
+        org.setVersion("2.0");
+        org.setParent(root);
+        qm.persist(org);
+
+        final var product = new Project();
+        product.setName("acme-product");
+        product.setVersion("3.0");
+        product.setParent(org);
+        qm.persist(product);
+
+        final var app = new Project();
+        app.setName("acme-app");
+        app.setVersion("4.0");
+        app.setParent(product);
+        qm.persist(app);
+
+        Response response = jersey.target(V1_PROJECT + "/" + app.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json).isNotNull();
+        assertThat(json.getString("name")).isEqualTo("acme-app");
+
+        // Assert full parent chain with all fields populated (no empty objects)
+        JsonObject parent1 = json.getJsonObject("parent");
+        assertThat(parent1).isNotNull();
+        assertThat(parent1.getString("name")).isEqualTo("acme-product");
+        assertThat(parent1.getString("version")).isEqualTo("3.0");
+        assertThat(parent1.getString("uuid")).isEqualTo(product.getUuid().toString());
+
+        JsonObject parent2 = parent1.getJsonObject("parent");
+        assertThat(parent2).isNotNull();
+        assertThat(parent2.getString("name")).isEqualTo("acme-org");
+        assertThat(parent2.getString("version")).isEqualTo("2.0");
+        assertThat(parent2.getString("uuid")).isEqualTo(org.getUuid().toString());
+
+        JsonObject parent3 = parent2.getJsonObject("parent");
+        assertThat(parent3).isNotNull();
+        assertThat(parent3.getString("name")).isEqualTo("acme-root");
+        assertThat(parent3.getString("version")).isEqualTo("1.0");
+        assertThat(parent3.getString("uuid")).isEqualTo(root.getUuid().toString());
+
+        assertThat(parent3.containsKey("parent")).isFalse();
     }
 
     @Test
@@ -1858,6 +1992,39 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void getChildrenProjectsWithDeepParentChainTest() {
+        // root -> parent -> child; fetch children of parent (returns child with 2-level parent chain)
+        final var root = qm.createProject("root", null, "1.0", null, null, null, true, false);
+        final var parent = qm.createProject("parent", null, "2.0", null, root, null, true, false);
+        final var child = qm.createProject("child", null, "3.0", null, parent, null, true, false);
+
+        Response response = jersey.target(V1_PROJECT + "/" + parent.getUuid() + "/children")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonArray json = parseJsonArray(response);
+        assertThat(json.size()).isEqualTo(1);
+        JsonObject childJson = json.getJsonObject(0);
+        assertThat(childJson.getString("name")).isEqualTo("child");
+        assertThat(childJson.getString("uuid")).isEqualTo(child.getUuid().toString());
+
+        // Parent chain must be fully populated (no empty {} at root)
+        JsonObject childParent = childJson.getJsonObject("parent");
+        assertThat(childParent).isNotNull();
+        assertThat(childParent.getString("name")).isEqualTo("parent");
+        assertThat(childParent.getString("version")).isEqualTo("2.0");
+        assertThat(childParent.getString("uuid")).isEqualTo(parent.getUuid().toString());
+
+        JsonObject grandparent = childParent.getJsonObject("parent");
+        assertThat(grandparent).isNotNull();
+        assertThat(grandparent.getString("name")).isEqualTo("root");
+        assertThat(grandparent.getString("version")).isEqualTo("1.0");
+        assertThat(grandparent.getString("uuid")).isEqualTo(root.getUuid().toString());
+        assertThat(grandparent.containsKey("parent")).isFalse();
+    }
+
+    @Test
     void updateChildAsParentOfChild() {
         Project parent = qm.createProject("ABC",null, "1.0", null, null, null, true, false);
         Project child = qm.createProject("DEF", null, "1.0", null, parent, null, true, false);
@@ -2449,6 +2616,38 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals("Acme Example", json.getString("name"));
         Assertions.assertEquals("1.0.2", json.getString("version"));
+    }
+
+    @Test
+    void getLatestProjectReturnsNestedParentChainTest() {
+        final var parentProject = new Project();
+        parentProject.setName("acme-latest-parent");
+        parentProject.setVersion("1.0");
+        qm.persist(parentProject);
+
+        qm.createProject("Acme Latest", null, "1.0.0", null, null, null, true, false);
+        final var latestProject = new Project();
+        latestProject.setName("Acme Latest");
+        latestProject.setVersion("1.0.2");
+        latestProject.setParent(parentProject);
+        latestProject.setIsLatest(true);
+        qm.persist(latestProject);
+
+        Response response = jersey.target(V1_PROJECT_LATEST + "Acme Latest")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        JsonObject json = parseJsonObject(response);
+        assertThat(json).isNotNull();
+        assertThat(json.getString("name")).isEqualTo("Acme Latest");
+        assertThat(json.getString("version")).isEqualTo("1.0.2");
+
+        JsonObject parent = json.getJsonObject("parent");
+        assertThat(parent).isNotNull();
+        assertThat(parent.getString("name")).isEqualTo("acme-latest-parent");
+        assertThat(parent.getString("version")).isEqualTo("1.0");
+        assertThat(parent.getString("uuid")).isEqualTo(parentProject.getUuid().toString());
     }
 
     @Test

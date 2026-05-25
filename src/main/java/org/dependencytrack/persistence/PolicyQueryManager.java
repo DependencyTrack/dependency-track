@@ -419,6 +419,11 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
             violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
             violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
         }
+        populateAncestorPaths(result.getList(PolicyViolation.class).stream()
+                .map(PolicyViolation::getProject)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList());
         return result;
     }
 
@@ -444,6 +449,11 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
             violation.getComponent().getResolvedLicense(); // force resolved license to ne included since its not the default
             violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
         }
+        populateAncestorPaths(result.getList(PolicyViolation.class).stream()
+                .map(PolicyViolation::getProject)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList());
         return result;
     }
 
@@ -475,6 +485,11 @@ final class PolicyQueryManager extends QueryManager implements IQueryManager {
             violation.getComponent().getResolvedLicense(); // force resolved license to be included since it's not the default
             violation.setAnalysis(getViolationAnalysis(violation.getComponent(), violation)); // Include the violation analysis by default
         }
+        populateAncestorPaths(result.getList(PolicyViolation.class).stream()
+                .map(PolicyViolation::getProject)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList());
         return result;
     }
 

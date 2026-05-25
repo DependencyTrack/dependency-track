@@ -31,15 +31,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
-import org.apache.commons.lang3.StringUtils;
-import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.Policy;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Tag;
-import org.dependencytrack.model.validation.ValidUuid;
-import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.resources.v1.openapi.PaginatedApi;
-
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -51,6 +42,15 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.model.Policy;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.validation.ValidUuid;
+import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.resources.v1.openapi.PaginatedApi;
+
 import java.util.List;
 import java.util.Set;
 
@@ -142,7 +142,8 @@ public class PolicyResource extends AlpineResource {
     public Response createPolicy(Policy jsonPolicy) {
         final Validator validator = super.getValidator();
         failOnValidationError(
-                validator.validateProperty(jsonPolicy, "name")
+                validator.validateProperty(jsonPolicy, "name"),
+                validator.validateProperty(jsonPolicy, "policyConditions")
         );
 
         try (QueryManager qm = new QueryManager()) {
@@ -159,6 +160,19 @@ public class PolicyResource extends AlpineResource {
                 policy = qm.createPolicy(
                         StringUtils.trimToNull(jsonPolicy.getName()),
                         operator, violationState, jsonPolicy.isOnlyLatestProjectVersion());
+
+                if (jsonPolicy.getPolicyConditions() != null) {
+                    for (final var condition : jsonPolicy.getPolicyConditions()) {
+                        qm.createPolicyCondition(policy, condition.getSubject(), condition.getOperator(), condition.getValue());
+                    }
+
+                    // ensure conditions are returned and that no recursive references are returned
+                    policy = qm.detach(policy);
+                    for (final var condition : policy.getPolicyConditions()) {
+                        condition.setPolicy(null);
+                    }
+                }
+
                 return Response.status(Response.Status.CREATED).entity(policy).build();
             } else {
                 return Response.status(Response.Status.CONFLICT).entity("A policy with the specified name already exists.").build();

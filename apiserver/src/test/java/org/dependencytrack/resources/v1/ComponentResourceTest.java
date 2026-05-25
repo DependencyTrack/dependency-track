@@ -38,10 +38,14 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ExternalReference;
 import org.dependencytrack.model.OrganizationalContact;
+import org.dependencytrack.model.PackageArtifactMetadata;
 import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
+import org.dependencytrack.model.RepositoryType;
+import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.util.PurlUtil;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Assertions;
@@ -1294,6 +1298,250 @@ public class ComponentResourceTest extends ResourceTest {
                         """));
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(getPlainTextBody(response)).isEqualTo("A collection project cannot contain components.");
+    }
+
+    @Test
+    public void getAllComponentsTest() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = prepareProject();
+
+        final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("pageNumber", "1")
+                .queryParam("pageSize", "5")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("20");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(5);
+        assertThatJson(json.getFirst().toString())
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .isEqualTo("""
+                        {
+                          "authors": [
+                            {
+                              "name": "author-0"
+                            }
+                          ],
+                          "group": "component-group",
+                          "name": "component-name-0",
+                          "version": "0.0",
+                          "purl": "pkg:maven/component-group/component-name-0@0.0",
+                          "project": {
+                            "name": "Acme Application",
+                            "directDependencies": "${json-unit.any-string}",
+                            "uuid": "${json-unit.matches:projectUuid}",
+                            "isLatest": false,
+                            "active": true
+                          },
+                          "uuid": "${json-unit.any-string}",
+                          "repositoryMeta": {
+                            "repositoryType": "MAVEN",
+                            "namespace": "component-group",
+                            "name": "component-name-0",
+                            "latestVersion": "0.0",
+                            "lastCheck": "${json-unit.any-number}"
+                          },
+                          "expandDependencyGraph": false,
+                          "isInternal": false,
+                          "occurrenceCount": 0
+                        }
+                        """);
+    }
+
+    @Test
+    public void getOutdatedComponentsTest() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = prepareProject();
+
+        final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("onlyOutdated", true)
+                .queryParam("onlyDirect", false)
+                .queryParam("pageNumber", "1")
+                .queryParam("pageSize", "5")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("10"); // 5 direct + 5 transitive outdated
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(5);
+    }
+
+    @Test
+    public void getOutdatedDirectComponentsTest() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = prepareProject();
+
+        final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("onlyOutdated", true)
+                .queryParam("onlyDirect", true)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5"); // 5 outdated direct dependencies
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(5);
+    }
+
+    @Test
+    public void getAllDirectComponentsTest() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = prepareProject();
+
+        final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("onlyDirect", true)
+                .queryParam("pageNumber", "1")
+                .queryParam("pageSize", "5")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("10"); // 10 direct dependencies
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(5);
+    }
+
+    @Test
+    public void getAllComponentsFilterTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("Acme-Lib-A");
+        qm.persist(componentA);
+
+        final var componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("aCme-lIb-b");
+        qm.persist(componentB);
+
+        final var componentC = new Component();
+        componentC.setProject(project);
+        componentC.setName("somethingCompletelyDifferent");
+        qm.persist(componentC);
+
+        final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("searchText", "ACME")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("2");
+        assertThat(parseJsonArray(response)).satisfiesExactly(
+                component -> assertThat(component.asJsonObject().getString("name")).isEqualTo("Acme-Lib-A"),
+                component -> assertThat(component.asJsonObject().getString("name")).isEqualTo("aCme-lIb-b")
+        );
+    }
+
+    @Test
+    public void getComponentsByNameTest() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = prepareProject();
+
+        final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("searchText", "name-1")
+                .queryParam("pageNumber", "1")
+                .queryParam("pageSize", "5")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        // name-1, name-10..19
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("11");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(5);
+    }
+
+    @Test
+    public void getComponentsByGroupTest() throws Exception {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = prepareProject();
+
+        final Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid())
+                .queryParam("searchText", "group")
+                .queryParam("pageNumber", "1")
+                .queryParam("pageSize", "5")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("20");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(5);
+    }
+
+    private Project prepareProject() throws Exception {
+        final Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+        final List<String> directDependencies = new ArrayList<>();
+        final List<PackageMetadata> packageMetadataList = new ArrayList<>();
+        final List<PackageArtifactMetadata> artifactMetadataList = new ArrayList<>();
+        // Generate 20 dependencies: 10 direct + 10 transitive.
+        // Of those, 10 are outdated (5 direct, 5 transitive), 3 are recent,
+        // and the remaining 2 (transitive) have no metadata.
+        for (int i = 0; i < 20; i++) {
+            final var author = new OrganizationalContact();
+            author.setName("author-" + i);
+
+            Component component = new Component();
+            component.setProject(project);
+            component.setAuthors(List.of(author));
+            component.setGroup("component-group");
+            component.setName("component-name-" + i);
+            component.setVersion(i + ".0");
+            component.setPurl(new PackageURL(RepositoryType.MAVEN.toString(), "component-group", "component-name-" + i, i + ".0", null, null));
+            component = qm.createComponent(component, false);
+            if (i < 10) {
+                directDependencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
+            }
+            if ((i >= 5) && (i < 15)) {
+                packageMetadataList.add(new PackageMetadata(
+                        PurlUtil.silentPurlPackageOnly(component.getPurl()),
+                        (i + 1) + ".0",
+                        null,
+                        Instant.now(),
+                        null,
+                        null));
+                artifactMetadataList.add(new PackageArtifactMetadata(
+                        component.getPurl(),
+                        PurlUtil.silentPurlPackageOnly(component.getPurl()),
+                        null, null, null, null, null, null, null, null));
+            } else if (i < 18) {
+                packageMetadataList.add(new PackageMetadata(
+                        PurlUtil.silentPurlPackageOnly(component.getPurl()),
+                        i + ".0",
+                        null,
+                        Instant.now(),
+                        null,
+                        null));
+                artifactMetadataList.add(new PackageArtifactMetadata(
+                        component.getPurl(),
+                        PurlUtil.silentPurlPackageOnly(component.getPurl()),
+                        null, null, null, null, null, null, null, null));
+            }
+        }
+        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(packageMetadataList));
+        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle).upsertAll(artifactMetadataList));
+        project.setDirectDependencies("[" + String.join(",", directDependencies) + "]");
+        return project;
     }
 
 }

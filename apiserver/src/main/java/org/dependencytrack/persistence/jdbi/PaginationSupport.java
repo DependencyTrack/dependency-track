@@ -34,64 +34,53 @@ import static java.util.Objects.requireNonNull;
 @NullMarked
 public interface PaginationSupport extends SqlObject {
 
-    /**
-     * Calculates the bounded total count of rows that match a given {@code FROM ... WHERE} clause.
-     * <p>
-     * Should be used for queries that may match a large number of rows,
-     * to the point where Postgres struggles to count them.
-     * <p>
-     * For queries that
-     * <ul>
-     *     <li>are expected to match only a small number of rows, or</li>
-     *     <li>are expected to be executed very rarely, or</li>
-     *     <li>or are expected to be executed very rarely</li>
-     * </ul>
-     * consider simply adding a {@code COUNT(*) OVER() AS total_count}
-     * window function to your {@code SELECT} statement.
-     * <p>
-     * For queries that use keyset pagination, note that the pagination
-     * condition (e.g., {@code "NAME" > :lastName}) <strong>must not</strong>
-     * be included in {@code fromWhereClause}, as it reduces the result set
-     * and thus would cause counts to fluctuate (i.e., reduce) across pages.
-     *
-     * @param fromWhereClause The {@code FROM ... WHERE ...} clause to use.
-     *                        May contain parameter placeholders such as {@code :foo}.
-     * @param whereParams     Parameter values to apply to the {@code WHERE} clause.
-     * @param threshold       The threshold up to which rows will be counted. If the total count
-     *                        is equal to or lower than this value, the returned count will be
-     *                        of type {@link TotalCount.Type#EXACT}, otherwise it will be
-     *                        {@link TotalCount.Type#AT_LEAST}.
-     * @return The total count of rows.
-     * @see <a href="https://wiki.postgresql.org/wiki/Slow_Counting">Postgres slow counting</a>
-     */
-    default TotalCount getBoundedTotalCount(
-            String fromWhereClause,
-            @Nullable Map<String, Object> whereParams,
-            int threshold) {
-        return getBoundedTotalCount(fromWhereClause, whereParams, threshold, null);
-    }
-
-    /**
-     * Calculates a bounded total count while applying the API project ACL condition using the provided project ID column.
-     * The {@code fromWhereClause} must already contain a {@code WHERE} clause; this method simply appends
-     * {@code AND ${apiProjectAclCondition}} to it.
-     */
+    /// @see [#getBoundedTotalCount(String, Map, Integer, String)]
     default TotalCount getBoundedTotalCountWithProjectAcl(
             String fromWhereClause,
             @Nullable Map<String, Object> whereParams,
-            int threshold,
+            @Nullable Integer threshold,
             String projectIdColumn) {
         requireNonNull(projectIdColumn, "projectIdColumn must not be null");
         return getBoundedTotalCount(fromWhereClause, whereParams, threshold, projectIdColumn);
     }
 
-    private TotalCount getBoundedTotalCount(
+    /// Calculates the total count of rows that match a given `FROM ... WHERE` clause.
+    ///
+    /// For queries that may match a large number of rows, to the point where Postgres struggles
+    /// to count them, pass a non-`null` `threshold` to cap the count.
+    /// If the total is equal to or lower than `threshold`, the returned count will be of type
+    /// [TotalCount.Type#EXACT], otherwise [TotalCount.Type#AT_LEAST].
+    ///
+    /// For queries that are naturally bounded (e.g. scoped to a single project),
+    /// pass `null` as `threshold` to perform an unbounded exact count.
+    ///
+    /// For queries that
+    ///
+    ///   - are expected to match only a small number of rows, or
+    ///   - are expected to be executed very rarely
+    ///
+    /// consider simply adding a `COUNT(*) OVER() AS total_count`
+    /// window function to your `SELECT` statement.
+    ///
+    /// For queries that use keyset pagination, note that the pagination
+    /// condition (e.g. `"NAME" > :lastName`) **must not** be included in
+    /// `fromWhereClause`, as it reduces the result set and thus would cause
+    /// counts to fluctuate (i.e. reduce) across pages.
+    ///
+    /// @param fromWhereClause The `FROM ... WHERE ...` clause to use.
+    ///                        May contain parameter placeholders such as `:foo`.
+    /// @param whereParams     Parameter values to apply to the `WHERE` clause.
+    /// @param threshold       The threshold up to which rows will be counted, or `null`
+    ///                        for an unbounded exact count.
+    /// @return The total count of rows.
+    /// @see [Postgres slow counting](https://wiki.postgresql.org/wiki/Slow_Counting)
+    default TotalCount getBoundedTotalCount(
             String fromWhereClause,
             @Nullable Map<String, Object> whereParams,
-            int threshold,
+            @Nullable Integer threshold,
             @Nullable String projectIdColumn) {
         requireNonNull(fromWhereClause, "fromWhereClause must not be null");
-        if (threshold < 1) {
+        if (threshold != null && threshold < 1) {
             throw new IllegalArgumentException("threshold must not be less than 1");
         }
         if (projectIdColumn != null && projectIdColumn.isEmpty()) {
@@ -104,9 +93,11 @@ public interface PaginationSupport extends SqlObject {
         // SELECT COUNT(*) ... LIMIT X is *not* sufficient:
         // https://pganalyze.com/blog/5mins-postgres-limited-count
         final Query query = getHandle().createQuery(/* language=InjectedFreeMarker */ """
+                <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
                 <#-- @ftlvariable name="fromWhereClause" type="String" -->
-                <#-- @ftlvariable name="threshold" type="boolean" -->
                 <#-- @ftlvariable name="includeAcl" type="boolean" -->
+                <#-- @ftlvariable name="threshold" type="boolean" -->
+                <#if threshold>
                 SELECT COUNT(*)
                   FROM (
                     SELECT 1
@@ -116,6 +107,13 @@ public interface PaginationSupport extends SqlObject {
                 </#if>
                      LIMIT (:threshold + 1)
                   ) AS t
+                <#else>
+                SELECT COUNT(*)
+                  ${fromWhereClause}
+                <#if includeAcl>
+                   AND ${apiProjectAclCondition}
+                </#if>
+                </#if>
                 """);
 
         if (includeAcl) {
@@ -132,6 +130,10 @@ public interface PaginationSupport extends SqlObject {
                 .defineNamedBindings()
                 .mapTo(long.class)
                 .one();
+
+        if (threshold == null) {
+            return new TotalCount(count, TotalCount.Type.EXACT);
+        }
 
         return new TotalCount(
                 Math.min(count, threshold),

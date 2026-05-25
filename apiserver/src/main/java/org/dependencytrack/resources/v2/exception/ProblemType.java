@@ -28,6 +28,7 @@ import org.jspecify.annotations.Nullable;
 @NullMarked
 public enum ProblemType {
 
+    INVALID_SORT_BY("invalid-sort-by", 400),
     VULN_DATA_SOURCE_MIRROR_ALREADY_RUNNING("vuln-data-source-mirror-already-running", 409),
     VULN_DATA_SOURCE_NOT_ENABLED("vuln-data-source-not-enabled", 400),
     VULN_POLICY_BUNDLE_SYNC_ALREADY_RUNNING("vuln-policy-bundle-sync-already-running", 409);

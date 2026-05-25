@@ -30,7 +30,6 @@ import jakarta.json.JsonValue;
 import org.apache.commons.lang3.tuple.Pair;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
-import org.dependencytrack.model.ComponentMetaInformation;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ComponentProperty;
 import org.dependencytrack.model.DependencyMetrics;
@@ -39,7 +38,6 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.sqlmapping.ComponentProjection;
-import org.dependencytrack.persistence.jdbi.ComponentMetaDao;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
@@ -180,44 +178,10 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                         "D0"."ISOSIAPPROVED" AS "isOsiApproved",
                         "D0"."UUID" AS "licenseUuid",
                         "D0"."NAME" AS "licenseName",
-                        "I0"."RESOLVED_AT" AS "lastFetch",
-                        "I0"."PUBLISHED_AT" AS "publishedAt",
-                        CASE
-                          WHEN "I0"."PURL" IS NULL
-                          THEN NULL
-                          WHEN "A0"."SHA_256" IS NOT NULL AND "I0"."HASH_SHA256" IS NOT NULL
-                          THEN CASE
-                                 WHEN LOWER("A0"."SHA_256") = LOWER("I0"."HASH_SHA256")
-                                 THEN 'HASH_MATCH_PASSED'
-                                 ELSE 'HASH_MATCH_FAILED'
-                               END
-                          WHEN "A0"."SHA_512" IS NOT NULL AND "I0"."HASH_SHA512" IS NOT NULL
-                          THEN CASE
-                                 WHEN LOWER("A0"."SHA_512") = LOWER("I0"."HASH_SHA512")
-                                 THEN 'HASH_MATCH_PASSED'
-                                 ELSE 'HASH_MATCH_FAILED'
-                               END
-                          WHEN "A0"."SHA1" IS NOT NULL AND "I0"."HASH_SHA1" IS NOT NULL
-                          THEN CASE
-                                 WHEN LOWER("A0"."SHA1") = LOWER("I0"."HASH_SHA1")
-                                 THEN 'HASH_MATCH_PASSED'
-                                 ELSE 'HASH_MATCH_FAILED'
-                               END
-                          WHEN "A0"."MD5" IS NOT NULL AND "I0"."HASH_MD5" IS NOT NULL
-                          THEN CASE
-                                 WHEN LOWER("A0"."MD5") = LOWER("I0"."HASH_MD5")
-                                 THEN 'HASH_MATCH_PASSED'
-                                 ELSE 'HASH_MATCH_FAILED'
-                               END
-                          WHEN "A0"."SHA_256" IS NULL AND "A0"."SHA_512" IS NULL AND "A0"."SHA1" IS NULL AND "A0"."MD5" IS NULL
-                          THEN 'COMPONENT_MISSING_HASH'
-                          ELSE 'HASH_MATCH_UNKNOWN'
-                        END AS "integrityCheckStatus",
                         (SELECT COUNT(*) FROM "COMPONENT_OCCURRENCE" WHERE "COMPONENT_ID" = "A0"."ID") AS "occurrenceCount",
                         COUNT(*) OVER() AS "totalCount"
                 FROM "COMPONENT" "A0"
                 INNER JOIN "PROJECT" "B0" ON "A0"."PROJECT_ID" = "B0"."ID"
-                LEFT JOIN "PACKAGE_ARTIFACT_METADATA" "I0" ON "A0"."PURL" = "I0"."PURL"
                 LEFT OUTER JOIN "LICENSE" "D0" ON "A0"."LICENSE_ID" = "D0"."ID"
                 WHERE "A0"."PROJECT_ID" = :projectId
                 """;
@@ -257,12 +221,6 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                         "version" DESC
                     """;
         } else {
-            if (orderBy.equalsIgnoreCase("componentMetaInformation.publishedDate")) {
-                queryString +=
-                        """
-                            ORDER BY "publishedAt"
-                        """;
-            }
             if (orderBy.equalsIgnoreCase("version")) {
                 queryString +=
                         """
@@ -285,12 +243,6 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                 queryString +=
                         """
                             ORDER BY "lastInheritedRiskScore"
-                        """;
-            }
-            if (orderBy.equalsIgnoreCase("componentMetaInformation.integrityMatchStatus")) {
-                queryString +=
-                        """
-                            ORDER BY "integrityCheckStatus"
                         """;
             }
             if (orderBy.equalsIgnoreCase("occurrenceCount")) {
@@ -437,7 +389,6 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
 
         if (!result.getObjects().isEmpty() && includeMetrics) {
             final List<Component> components = result.getList(Component.class);
-            populateComponentMetadata(components);
             populateRepositoryMetadata(components);
             populateMetrics(components);
         }
@@ -924,20 +875,6 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
             final var component = componentById.get(metrics.getComponentId());
             if (component != null) {
                 component.setMetrics(metrics);
-            }
-        }
-    }
-
-    private void populateComponentMetadata(final Collection<Component> components) {
-        final Map<UUID, Component> componentByUuid = components.stream()
-                .filter(component -> component.getPurl() != null)
-                .collect(Collectors.toMap(Component::getUuid, Function.identity()));
-        final Map<UUID, ComponentMetaInformation> metadataByUuid = withJdbiHandle(
-                handle -> handle.attach(ComponentMetaDao.class).getComponentMetaInfo(componentByUuid.keySet()));
-        for (final Map.Entry<UUID, ComponentMetaInformation> entry : metadataByUuid.entrySet()) {
-            final var component = componentByUuid.get(entry.getKey());
-            if (component != null) {
-                component.setComponentMetaInformation(entry.getValue());
             }
         }
     }

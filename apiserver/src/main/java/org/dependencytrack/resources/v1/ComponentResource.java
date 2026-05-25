@@ -57,11 +57,9 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.RepositoryMetaComponent;
-import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
-import org.dependencytrack.persistence.jdbi.ComponentMetaDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
@@ -168,27 +166,17 @@ public class ComponentResource extends AbstractApiResource {
             @Parameter(description = "The UUID of the component to retrieve", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
             @Parameter(description = "Optionally includes third-party metadata about the component from external repositories")
-            @QueryParam("includeRepositoryMetaData") boolean includeRepositoryMetaData,
-            @QueryParam("includeIntegrityMetaData") boolean includeIntegrityMetaData) {
+            @QueryParam("includeRepositoryMetaData") boolean includeRepositoryMetaData) {
         try (QueryManager qm = new QueryManager()) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
                 requireAccess(qm, component.getProject());
                 final Component detachedComponent = qm.detach(Component.class, component.getId()); // TODO: Force project to be loaded. It should be anyway, but JDO seems to be having issues here.
-                if ((includeRepositoryMetaData || includeIntegrityMetaData) && detachedComponent.getPurl() != null) {
-                    final RepositoryType type = RepositoryType.resolve(detachedComponent.getPurl());
-                    if (RepositoryType.UNSUPPORTED != type) {
-                        if (includeRepositoryMetaData) {
-                            final PackageMetadata packageMetadata = withJdbiHandle(
-                                    handle -> new PackageMetadataDao(handle).get(detachedComponent.getPurl()));
-                            if (packageMetadata != null) {
-                                detachedComponent.setRepositoryMeta(RepositoryMetaComponent.of(packageMetadata));
-                            }
-                        }
-                        if (includeIntegrityMetaData) {
-                            detachedComponent.setComponentMetaInformation(withJdbiHandle(
-                                    handle -> handle.attach(ComponentMetaDao.class).getComponentMetaInfo(component.getUuid())));
-                        }
+                if (includeRepositoryMetaData && detachedComponent.getPurl() != null) {
+                    final PackageMetadata packageMetadata = withJdbiHandle(
+                            handle -> new PackageMetadataDao(handle).get(detachedComponent.getPurl()));
+                    if (packageMetadata != null) {
+                        detachedComponent.setRepositoryMeta(RepositoryMetaComponent.of(packageMetadata));
                     }
                 }
                 return Response.ok(detachedComponent).build();
@@ -262,7 +250,7 @@ public class ComponentResource extends AbstractApiResource {
                     StringUtils.trimToNull(swidTagId), StringUtils.trimToNull(group), StringUtils.trimToNull(name),
                     StringUtils.trimToNull(version));
             if (identity.getGroup() == null && identity.getName() == null && identity.getVersion() == null
-                && identity.getPurl() == null && identity.getCpe() == null && identity.getSwidTagId() == null) {
+                    && identity.getPurl() == null && identity.getCpe() == null && identity.getSwidTagId() == null) {
                 return Response.ok().header(TOTAL_COUNT_HEADER, 0).build();
             } else {
                 final PaginatedResult result = qm.getComponents(

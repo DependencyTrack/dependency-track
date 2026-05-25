@@ -51,6 +51,7 @@ import org.dependencytrack.notification.NotificationConstants;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.resources.v1.vo.AnalysisRequest;
+import org.dependencytrack.util.DateUtil;
 import org.dependencytrack.util.NotificationUtil;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.AfterAll;
@@ -60,6 +61,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.time.Duration;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -121,9 +123,10 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
-
+        long currentTime = System.currentTimeMillis();
+        long twoDaysInMillis = 2 * 24 * 60 * 60 * 1000L;
         final Analysis analysis = qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED,
-                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true);
+                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true, currentTime + twoDaysInMillis);
         qm.makeAnalysisComment(analysis, "Analysis comment here", "Jane Doe");
 
         final Response response = jersey.target(V1_ANALYSIS)
@@ -147,6 +150,7 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Jane Doe"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
+        assertThat(responseJson.getJsonNumber("suppressionExpiration").longValue()).isEqualTo(currentTime + twoDaysInMillis);
     }
 
     @Test
@@ -333,9 +337,12 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
 
+        long currentTime = System.currentTimeMillis();
+        long twoDaysInMillis = 2 * 24 * 60 * 60 * 1000L;
+
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true, currentTime + twoDaysInMillis);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -351,7 +358,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
         final var comments = responseJson.getJsonArray("analysisComments");
-        assertThat(comments).hasSize(6);
+        assertThat(comments).hasSize(7);
         assertThat(comments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis: NOT_SET → NOT_AFFECTED"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
@@ -368,9 +375,13 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppressed"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(comments.getJsonObject(5))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppression Expiration: NOT_SET → " + DateUtil.toISO8601(new Date(currentTime + twoDaysInMillis), true)))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(comments.getJsonObject(6))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
+        assertThat(responseJson.getJsonNumber("suppressionExpiration").longValue()).isEqualTo(currentTime + twoDaysInMillis);
 
         assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));
         final Notification projectNotification = NOTIFICATIONS.poll();
@@ -406,9 +417,12 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
 
+        long currentTime = System.currentTimeMillis();
+        long twoDaysInMillis = 2 * 24 * 60 * 60 * 1000L;
+
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true, currentTime + twoDaysInMillis);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -424,7 +438,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisResponse")).isEqualTo(AnalysisResponse.WILL_NOT_FIX.name());
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
         final var comments = responseJson.getJsonArray("analysisComments");
-        assertThat(comments).hasSize(6);
+        assertThat(comments).hasSize(7);
         assertThat(comments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis: NOT_SET → NOT_AFFECTED"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
@@ -441,9 +455,13 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppressed"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
         assertThat(comments.getJsonObject(5))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppression Expiration: NOT_SET → " + DateUtil.toISO8601(new Date(currentTime + twoDaysInMillis), true)))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
+        assertThat(comments.getJsonObject(6))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
+        assertThat(responseJson.getJsonNumber("suppressionExpiration").longValue()).isEqualTo(currentTime + twoDaysInMillis);
 
         assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));
         final Notification projectNotification = NOTIFICATIONS.poll();
@@ -477,7 +495,7 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability = qm.createVulnerability(vulnerability, false);
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), null, null, null, null, null, null);
+                vulnerability.getUuid().toString(), null, null, null, null, null, null, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -494,6 +512,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getJsonString("analysisDetails")).isNull();
         assertThat(responseJson.getJsonArray("analysisComments")).isEmpty();
         assertThat(responseJson.getBoolean("isSuppressed")).isFalse();
+        assertThat(responseJson.getJsonNumber("suppressionExpiration")).isNull();
 
         assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 1, Duration.ofSeconds(5));
         final Notification projectNotification = NOTIFICATIONS.poll();
@@ -523,14 +542,16 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
+        long currentTime = System.currentTimeMillis();
+        long twoDaysInMillis = 2 * 24 * 60 * 60 * 1000L;
 
         final Analysis analysis = qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED,
-                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true);
+                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true, currentTime + twoDaysInMillis);
         qm.makeAnalysisComment(analysis, "Analysis comment here", "Jane Doe");
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.EXPLOITABLE, AnalysisJustification.NOT_SET,
-                AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false);
+                AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false, currentTime + twoDaysInMillis);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -547,7 +568,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("New analysis details here");
 
         final JsonArray analysisComments = responseJson.getJsonArray("analysisComments");
-        assertThat(analysisComments).hasSize(7);
+        assertThat(analysisComments).hasSize(8);
         assertThat(analysisComments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Jane Doe"));
@@ -567,9 +588,13 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Unsuppressed"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(analysisComments.getJsonObject(6))
+                .hasFieldOrPropertyWithValue("comment", Json.createValue("Suppression Expiration: " + DateUtil.toISO8601(new Date(currentTime + twoDaysInMillis), true) + " → NOT_SET"))
+                .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
+        assertThat(analysisComments.getJsonObject(7))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("New analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(responseJson.getBoolean("isSuppressed")).isFalse();
+        assertThat(responseJson.getJsonNumber("suppressionExpiration")).isNull();
 
         assertConditionWithTimeout(() -> NOTIFICATIONS.size() == 2, Duration.ofSeconds(5));
         final Notification projectNotification = NOTIFICATIONS.poll();
@@ -602,13 +627,16 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
 
+        long currentTime = System.currentTimeMillis();
+        long twoDaysInMillis = 2 * 24 * 60 * 60 * 1000L;
+
         final Analysis analysis = qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED,
-                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.CAN_NOT_FIX, "Analysis details here", true);
+                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.CAN_NOT_FIX, "Analysis details here", true, currentTime + twoDaysInMillis);
         qm.makeAnalysisComment(analysis, "Analysis comment here", "Jane Doe");
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", null, true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", null, true, currentTime + twoDaysInMillis);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -654,13 +682,15 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
+        long currentTime = System.currentTimeMillis();
+        long twoDaysInMillis = 2 * 24 * 60 * 60 * 1000L;
 
         final Analysis analysis = qm.makeAnalysis(component, vulnerability, AnalysisState.NOT_AFFECTED,
-                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true);
+                AnalysisJustification.CODE_NOT_REACHABLE, AnalysisResponse.WILL_NOT_FIX, "Analysis details here", true, currentTime + twoDaysInMillis);
         qm.makeAnalysisComment(analysis, "Analysis comment here", "Jane Doe");
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
-                vulnerability.getUuid().toString(), null, null, null, null, null, null);
+                vulnerability.getUuid().toString(), null, null, null, null, null, null, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -677,7 +707,7 @@ class AnalysisResourceTest extends ResourceTest {
         assertThat(responseJson.getString("analysisDetails")).isEqualTo("Analysis details here");
 
         final JsonArray analysisComments = responseJson.getJsonArray("analysisComments");
-        assertThat(analysisComments).hasSize(4);
+        assertThat(analysisComments).hasSize(5);
         assertThat(analysisComments.getJsonObject(0))
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Analysis comment here"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Jane Doe"));
@@ -721,10 +751,12 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
+        long currentTime = System.currentTimeMillis();
+        long twoDaysInMillis = 2 * 24 * 60 * 60 * 1000L;
 
         final var analysisRequest = new AnalysisRequest(UUID.randomUUID().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true, currentTime + twoDaysInMillis);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -753,10 +785,12 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
+        long currentTime = System.currentTimeMillis();
+        long twoDaysInMillis = 2 * 24 * 60 * 60 * 1000L;
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), UUID.randomUUID().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true, currentTime + twoDaysInMillis);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -785,10 +819,12 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setSeverity(Severity.HIGH);
         vulnerability.setComponents(List.of(component));
         qm.createVulnerability(vulnerability, false);
+        long currentTime = System.currentTimeMillis();
+        long twoDaysInMillis = 2 * 24 * 60 * 60 * 1000L;
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 UUID.randomUUID().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.CODE_NOT_REACHABLE,
-                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true);
+                AnalysisResponse.WILL_NOT_FIX, "Analysis details here", "Analysis comment here", true, currentTime + twoDaysInMillis);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -822,11 +858,11 @@ class AnalysisResourceTest extends ResourceTest {
         vulnerability.setComponents(List.of(component));
         vulnerability = qm.createVulnerability(vulnerability, false);
 
-        qm.makeAnalysis(component, vulnerability, AnalysisState.IN_TRIAGE, null, null, null, false);
+        qm.makeAnalysis(component, vulnerability, AnalysisState.IN_TRIAGE, null, null, null, false, null);
 
         final var analysisRequest = new AnalysisRequest(project.getUuid().toString(), component.getUuid().toString(),
                 vulnerability.getUuid().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL,
-                AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false);
+                AnalysisResponse.UPDATE, "New analysis details here", "New analysis comment here", false, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()
@@ -877,7 +913,7 @@ class AnalysisResourceTest extends ResourceTest {
     void updateAnalysisUnauthorizedTest() {
         final var analysisRequest = new AnalysisRequest(UUID.randomUUID().toString(), UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(), AnalysisState.NOT_AFFECTED, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL,
-                AnalysisResponse.UPDATE, "Analysis details here", "Analysis comment here", false);
+                AnalysisResponse.UPDATE, "Analysis details here", "Analysis comment here", false, null);
 
         final Response response = jersey.target(V1_ANALYSIS)
                 .request()

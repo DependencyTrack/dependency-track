@@ -34,6 +34,7 @@ import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationGroup;
@@ -604,6 +605,196 @@ class ScheduledNotificationDispatchTaskTest extends PersistenceCapableTest {
         assertThat(NOTIFICATIONS).satisfiesExactlyInAnyOrder(
                 notification -> assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITIES_SUMMARY.name()),
                 notification -> assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_POLICY_VIOLATIONS_SUMMARY.name()));
+    }
+
+    @Test
+    void shouldDispatchNotificationWhenLimitedToTagsOnly() {
+        final Instant ruleLastFiredAt = Instant.now().minus(10, ChronoUnit.MINUTES);
+        final Instant afterRuleLastFiredAt = ruleLastFiredAt.plus(5, ChronoUnit.MINUTES);
+
+        final var vulnA = new Vulnerability();
+        vulnA.setVulnId("INT-001");
+        vulnA.setSource(Vulnerability.Source.INTERNAL);
+        vulnA.setSeverity(Severity.HIGH);
+        qm.persist(vulnA);
+
+        // Create a tag
+        final var tag = new Tag("production");
+        qm.persist(tag);
+
+        // Create project with the tag
+        final var taggedProject = new Project();
+        taggedProject.setName("acme-app-tagged");
+        qm.persist(taggedProject);
+        qm.bind(taggedProject, Set.of(tag));
+
+        final var taggedProjectComponent = new Component();
+        taggedProjectComponent.setProject(taggedProject);
+        taggedProjectComponent.setName("acme-lib-tagged");
+        qm.persist(taggedProjectComponent);
+        qm.addVulnerability(
+                vulnA,
+                taggedProjectComponent,
+                AnalyzerIdentity.INTERNAL_ANALYZER,
+                null,
+                null,
+                Date.from(afterRuleLastFiredAt));
+
+        // Create project without the tag (should not be included)
+        final var untaggedProject = new Project();
+        untaggedProject.setName("acme-app-untagged");
+        qm.persist(untaggedProject);
+        final var untaggedProjectComponent = new Component();
+        untaggedProjectComponent.setProject(untaggedProject);
+        untaggedProjectComponent.setName("acme-lib-untagged");
+        qm.persist(untaggedProjectComponent);
+        qm.addVulnerability(
+                vulnA,
+                untaggedProjectComponent,
+                AnalyzerIdentity.INTERNAL_ANALYZER,
+                null,
+                null,
+                Date.from(afterRuleLastFiredAt));
+
+        final var publisher = qm.createNotificationPublisher(
+                "foo", null, WebhookPublisher.class, "template", "templateMimeType", false);
+        final var rule = qm.createScheduledNotificationRule(
+                "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY));
+        rule.setTags(Set.of(tag)); // Only tags, no projects
+        rule.setNotifyChildren(true);
+        rule.setScheduleCron("* * * * *");
+        rule.setScheduleLastTriggeredAt(Date.from(ruleLastFiredAt));
+        rule.updateScheduleNextTriggerAt();
+        rule.setScheduleSkipUnchanged(true);
+        rule.setEnabled(true);
+
+        new ScheduledNotificationDispatchTask().inform(new ScheduledNotificationDispatchEvent());
+
+        final Notification notification = await("Notification Dispatch")
+                .atMost(3, TimeUnit.SECONDS)
+                .until(NOTIFICATIONS::poll, Objects::nonNull);
+        assertThat(notification).isNotNull();
+
+        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITIES_SUMMARY.name());
+        assertThat(notification.getSubject()).isInstanceOf(NewVulnerabilitiesSummary.class);
+
+        // Verify only the tagged project is included
+        assertThatJson(notification.getSubject())
+                .withMatcher("ruleId", equalTo(BigDecimal.valueOf(rule.getId())))
+                .withOptions(Option.IGNORING_EXTRA_FIELDS)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "overview": {
+                            "affectedProjectsCount": 1,
+                            "affectedComponentsCount": 1,
+                            "newVulnerabilitiesCount": 1
+                          }
+                        }
+                        """);
+    }
+
+    @Test
+    void shouldDispatchNotificationWhenLimitedToProjectsAndTagsIntersection() {
+        final Instant ruleLastFiredAt = Instant.now().minus(10, ChronoUnit.MINUTES);
+        final Instant afterRuleLastFiredAt = ruleLastFiredAt.plus(5, ChronoUnit.MINUTES);
+
+        final var vulnA = new Vulnerability();
+        vulnA.setVulnId("INT-001");
+        vulnA.setSource(Vulnerability.Source.INTERNAL);
+        vulnA.setSeverity(Severity.HIGH);
+        qm.persist(vulnA);
+
+        // Create a tag
+        final var tag = new Tag("production");
+        qm.persist(tag);
+
+        // Create project with the tag AND in the projects list (should be included - intersection)
+        final var taggedAndListedProject = new Project();
+        taggedAndListedProject.setName("acme-app-tagged-listed");
+        qm.persist(taggedAndListedProject);
+        qm.bind(taggedAndListedProject, Set.of(tag));
+        final var taggedAndListedComponent = new Component();
+        taggedAndListedComponent.setProject(taggedAndListedProject);
+        taggedAndListedComponent.setName("acme-lib-tagged-listed");
+        qm.persist(taggedAndListedComponent);
+        qm.addVulnerability(
+                vulnA,
+                taggedAndListedComponent,
+                AnalyzerIdentity.INTERNAL_ANALYZER,
+                null,
+                null,
+                Date.from(afterRuleLastFiredAt));
+
+        // Create project with the tag but NOT in the projects list (should NOT be included - no intersection)
+        final var taggedOnlyProject = new Project();
+        taggedOnlyProject.setName("acme-app-tagged-only");
+        qm.persist(taggedOnlyProject);
+        qm.bind(taggedOnlyProject, Set.of(tag));
+        final var taggedOnlyComponent = new Component();
+        taggedOnlyComponent.setProject(taggedOnlyProject);
+        taggedOnlyComponent.setName("acme-lib-tagged-only");
+        qm.persist(taggedOnlyComponent);
+        qm.addVulnerability(
+                vulnA,
+                taggedOnlyComponent,
+                AnalyzerIdentity.INTERNAL_ANALYZER,
+                null,
+                null,
+                Date.from(afterRuleLastFiredAt));
+
+        // Create project in the projects list but WITHOUT the tag (should NOT be included - no intersection)
+        final var listedOnlyProject = new Project();
+        listedOnlyProject.setName("acme-app-listed-only");
+        qm.persist(listedOnlyProject);
+        final var listedOnlyComponent = new Component();
+        listedOnlyComponent.setProject(listedOnlyProject);
+        listedOnlyComponent.setName("acme-lib-listed-only");
+        qm.persist(listedOnlyComponent);
+        qm.addVulnerability(
+                vulnA,
+                listedOnlyComponent,
+                AnalyzerIdentity.INTERNAL_ANALYZER,
+                null,
+                null,
+                Date.from(afterRuleLastFiredAt));
+
+        final var publisher = qm.createNotificationPublisher(
+                "foo", null, WebhookPublisher.class, "template", "templateMimeType", false);
+        final var rule = qm.createScheduledNotificationRule(
+                "foo", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITIES_SUMMARY));
+        rule.setProjects(List.of(taggedAndListedProject, listedOnlyProject)); // Two projects
+        rule.setTags(Set.of(tag)); // One tag
+        rule.setNotifyChildren(true);
+        rule.setScheduleCron("* * * * *");
+        rule.setScheduleLastTriggeredAt(Date.from(ruleLastFiredAt));
+        rule.updateScheduleNextTriggerAt();
+        rule.setScheduleSkipUnchanged(true);
+        rule.setEnabled(true);
+
+        new ScheduledNotificationDispatchTask().inform(new ScheduledNotificationDispatchEvent());
+
+        final Notification notification = await("Notification Dispatch")
+                .atMost(3, TimeUnit.SECONDS)
+                .until(NOTIFICATIONS::poll, Objects::nonNull);
+        assertThat(notification).isNotNull();
+
+        assertThat(notification.getGroup()).isEqualTo(NotificationGroup.NEW_VULNERABILITIES_SUMMARY.name());
+
+        // Verify only the project that has BOTH the tag AND is in the projects list is included
+        assertThatJson(notification.getSubject())
+                .withMatcher("ruleId", equalTo(BigDecimal.valueOf(rule.getId())))
+                .withOptions(Option.IGNORING_EXTRA_FIELDS)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "overview": {
+                            "affectedProjectsCount": 1,
+                            "affectedComponentsCount": 1,
+                            "newVulnerabilitiesCount": 1
+                          }
+                        }
+                        """);
     }
 
 }

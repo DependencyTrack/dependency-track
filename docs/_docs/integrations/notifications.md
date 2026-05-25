@@ -62,7 +62,7 @@ multiple levels, while others can only ever have a single level.
 | SYSTEM    | USER_CREATED                  | Event    | INFORMATIONAL | Notifications generated as a result of a user creation                                                                            |
 | SYSTEM    | USER_DELETED                  | Event    | INFORMATIONAL | Notifications generated as a result of a user deletion                                                                            |
 | PORTFOLIO | NEW_VULNERABILITY             | Event    | INFORMATIONAL | Notifications generated whenever a new vulnerability is identified                                                                |
-| PORTFOLIO | NEW_VULNERABILITIES_SUMMARY   | Schedule | INFORMATIONAL | Summaries of new vulnerabilities identified in a set of projects                                                                  |
+| PORTFOLIO | NEW_VULNERABILITIES_SUMMARY   | Schedule | INFORMATIONAL | Summaries of new vulnerabilities identified in a set of projects and/or tags                                                      |
 | PORTFOLIO | NEW_VULNERABLE_DEPENDENCY     | Event    | INFORMATIONAL | Notifications generated as a result of a vulnerable component becoming a dependency of a project                                  |
 | PORTFOLIO | GLOBAL_AUDIT_CHANGE           | Event    | INFORMATIONAL | Notifications generated whenever an analysis or suppression state has changed on a finding from a component (global)              |
 | PORTFOLIO | PROJECT_AUDIT_CHANGE          | Event    | INFORMATIONAL | Notifications generated whenever an analysis or suppression state has changed on a finding from a project                         |
@@ -71,7 +71,7 @@ multiple levels, while others can only ever have a single level.
 | PORTFOLIO | BOM_PROCESSING_FAILED         | Event    | ERROR         | Notifications generated whenever a BOM upload process fails                                                                       |
 | PORTFOLIO | BOM_VALIDATION_FAILED         | Event    | ERROR         | Notifications generated whenever an invalid BOM is uploaded                                                                       |
 | PORTFOLIO | POLICY_VIOLATION              | Event    | INFORMATIONAL | Notifications generated whenever a policy violation is identified                                                                 |
-| PORTFOLIO | NEW_POLICY_VIOLATIONS_SUMMARY | Schedule | INFORMATIONAL | Summary of new policy violations identified in a set of projects                                                                  |
+| PORTFOLIO | NEW_POLICY_VIOLATIONS_SUMMARY | Schedule | INFORMATIONAL | Summary of new policy violations identified in a set of projects and/or tags                                                      |
 
 ## Configuring Publishers
 
@@ -179,13 +179,13 @@ This type of notification will always contain:
 
 #### NEW_VULNERABILITIES_SUMMARY
 
-A summary of new vulnerabilities identified in a set of projects. "New" in this context refers to vulnerabilities
-identified *since the notification was last triggered*. For example, if the notification is scheduled to trigger
-every day at 8AM (cron expression: `0 8 * * *`) it will always contain newly identified vulnerabilities since
+A summary of new vulnerabilities identified in a set of projects and/or tags. "New" in this context refers to
+vulnerabilities identified *since the notification was last triggered*. For example, if the notification is scheduled to
+trigger every day at 8AM (cron expression: `0 8 * * *`) it will always contain newly identified vulnerabilities since
 the last day at 8AM.
 
 Note that this notification can not be configured to cover the entire portfolio, but only a limited set of
-projects. This limitation exists to prevent payloads from growing too large.
+projects and/or tags. This limitation exists to prevent payloads from growing too large.
 
 ```json
 {
@@ -506,13 +506,13 @@ This type of notification will always contain:
 
 #### NEW_POLICY_VIOLATIONS_SUMMARY
 
-A summary of new policy violations identified in a set of projects. "New" in this context refers to violations
-identified *since the notification was last triggered*. For example, if the notification is scheduled to trigger
-every day at 8AM (cron expression: `0 8 * * *`) it will always contain newly identified violations since
+A summary of new policy violations identified in a set of projects and/or tags. "New" in this context refers to
+violations  identified *since the notification was last triggered*. For example, if the notification is scheduled to
+trigger every day at 8AM (cron expression: `0 8 * * *`) it will always contain newly identified violations since
 the last day at 8AM.
 
 Note that this notification can not be configured to cover the entire portfolio, but only a limited set of
-projects. This limitation exists to prevent payloads from growing too large.
+projects and/or tags. This limitation exists to prevent payloads from growing too large.
 
 ```json
 {
@@ -761,7 +761,7 @@ Both the last successful, and the next planned trigger timestamp can be viewed i
 To further reduce the noise produced by the system, users can opt into skipping the publishing of a notification,  
 if no new data has been identified since the last time it triggered.
 
-Certain notification groups may require the alert to be limited to specific projects.  
+Certain notification groups may require the alert to be limited to specific projects and/or tags.  
 This is to protect the system from generating payloads that are too resource intensive to compute,  
 or too large for receiving systems to accept.
 

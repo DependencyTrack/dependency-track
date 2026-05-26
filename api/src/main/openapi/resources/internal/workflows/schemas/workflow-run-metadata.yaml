@@ -19,6 +19,9 @@ properties:
   id:
     type: string
     format: uuid
+  parent_id:
+    type: string
+    format: uuid
   workflow_name:
     type: string
   workflow_version:

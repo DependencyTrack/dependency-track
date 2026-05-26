@@ -58,6 +58,7 @@ final class WorkflowRunMetadataRowMapper implements RowMapper<WorkflowRunMetadat
 
         return new WorkflowRunMetadata(
                 rs.getObject("id", UUID.class),
+                rs.getObject("parent_id", UUID.class),
                 rs.getString("workflow_name"),
                 rs.getInt("workflow_version"),
                 rs.getString("workflow_instance_id"),

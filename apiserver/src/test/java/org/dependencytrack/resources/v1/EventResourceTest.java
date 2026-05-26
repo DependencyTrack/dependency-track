@@ -72,6 +72,7 @@ class EventResourceTest extends ResourceTest {
         final var runId = UUID.fromString("6214c0c2-660c-4615-8b3a-174a64e4abe4");
         final var runMetadata = new WorkflowRunMetadata(
                 runId,
+                null,
                 "analyze-project",
                 1,
                 null,

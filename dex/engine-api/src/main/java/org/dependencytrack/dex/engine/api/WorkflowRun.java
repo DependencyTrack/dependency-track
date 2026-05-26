@@ -30,6 +30,7 @@ import java.util.UUID;
 
 public record WorkflowRun(
         UUID id,
+        @Nullable UUID parentId,
         String workflowName,
         int workflowVersion,
         String workflowInstanceId,

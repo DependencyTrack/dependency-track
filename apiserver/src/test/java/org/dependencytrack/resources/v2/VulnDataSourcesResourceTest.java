@@ -236,7 +236,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
 
         when(DEX_ENGINE_MOCK.listRuns(any(ListWorkflowRunsRequest.class)))
                 .thenReturn(new Page<>(List.of(new WorkflowRunMetadata(
-                        runId, "MirrorVulnDataSourceWorkflow", 1,
+                        runId, null, "MirrorVulnDataSourceWorkflow", 1,
                         "mirror-vuln-data-source:osv",
                         "default", WorkflowRunStatus.RUNNING, null, 0, null, null,
                         startedAt, startedAt, startedAt, null)), null, null));
@@ -266,7 +266,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         final var completedAt = Instant.parse("2026-04-15T10:01:00Z");
 
         final var runMetadata = new WorkflowRunMetadata(
-                runId, "MirrorVulnDataSourceWorkflow", 1,
+                runId, null, "MirrorVulnDataSourceWorkflow", 1,
                 "mirror-vuln-data-source:osv",
                 "default", WorkflowRunStatus.FAILED, null, 0, null, null,
                 startedAt, completedAt, startedAt, completedAt);
@@ -282,7 +282,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
                 .build();
 
         final var run = new WorkflowRun(
-                runId, "MirrorVulnDataSourceWorkflow", 1,
+                runId, null, "MirrorVulnDataSourceWorkflow", 1,
                 "mirror-vuln-data-source:osv",
                 WorkflowRunStatus.FAILED, null, 0, null, null,
                 startedAt, completedAt, startedAt, completedAt,
@@ -319,7 +319,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         final var completedAt = Instant.parse("2026-04-15T10:01:00Z");
 
         final var runMetadata = new WorkflowRunMetadata(
-                runId, "MirrorVulnDataSourceWorkflow", 1,
+                runId, null, "MirrorVulnDataSourceWorkflow", 1,
                 "mirror-vuln-data-source:osv",
                 "default", WorkflowRunStatus.FAILED, null, 0, null, null,
                 startedAt, completedAt, startedAt, completedAt);
@@ -332,7 +332,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
                 .build();
 
         final var run = new WorkflowRun(
-                runId, "MirrorVulnDataSourceWorkflow", 1,
+                runId, null, "MirrorVulnDataSourceWorkflow", 1,
                 "mirror-vuln-data-source:osv",
                 WorkflowRunStatus.FAILED, null, 0, null, null,
                 startedAt, completedAt, startedAt, completedAt,

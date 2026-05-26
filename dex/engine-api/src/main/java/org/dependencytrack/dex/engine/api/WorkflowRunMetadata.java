@@ -26,6 +26,7 @@ import java.util.UUID;
 
 public record WorkflowRunMetadata(
         UUID id,
+        @Nullable UUID parentId,
         String workflowName,
         int workflowVersion,
         @Nullable String workflowInstanceId,

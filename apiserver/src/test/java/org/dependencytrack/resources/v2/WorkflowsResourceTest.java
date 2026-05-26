@@ -81,6 +81,7 @@ class WorkflowsResourceTest extends ResourceTest {
 
         final var workflowRunMetadata = new WorkflowRunMetadata(
                 UUID.fromString("724c0700-4eeb-45f0-8ff4-8bba369c0174"),
+                null,
                 "workflowName",
                 66,
                 "workflowInstanceId",
@@ -154,6 +155,7 @@ class WorkflowsResourceTest extends ResourceTest {
         final var runId = UUID.fromString("724c0700-4eeb-45f0-8ff4-8bba369c0174");
         final var workflowRunMetadata = new WorkflowRunMetadata(
                 runId,
+                null,
                 "workflowName",
                 66,
                 "workflowInstanceId",
@@ -228,6 +230,7 @@ class WorkflowsResourceTest extends ResourceTest {
 
         final var workflowRunMetadata = new WorkflowRunMetadata(
                 UUID.fromString("724c0700-4eeb-45f0-8ff4-8bba369c0174"),
+                null,
                 "workflowName",
                 66,
                 "workflowInstanceId",

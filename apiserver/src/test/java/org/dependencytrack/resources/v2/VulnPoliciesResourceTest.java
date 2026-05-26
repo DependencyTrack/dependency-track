@@ -629,7 +629,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
         final var completedAt = Instant.parse("2026-04-15T10:01:00Z");
 
         final var runMetadata = new WorkflowRunMetadata(
-                runId, "SyncVulnPolicyBundleWorkflow", 1,
+                runId, null, "SyncVulnPolicyBundleWorkflow", 1,
                 "sync-vuln-policy-bundle:bc106cf4-3993-4e38-952d-d2f5f11412ed",
                 "default", WorkflowRunStatus.FAILED, null, 0, null, null,
                 startedAt, completedAt, startedAt, completedAt);
@@ -648,7 +648,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
                 .build();
 
         final var run = new WorkflowRun(
-                runId, "SyncVulnPolicyBundleWorkflow", 1,
+                runId, null, "SyncVulnPolicyBundleWorkflow", 1,
                 "sync-vuln-policy-bundle:bc106cf4-3993-4e38-952d-d2f5f11412ed",
                 WorkflowRunStatus.FAILED, null, 0, null, null,
                 startedAt, completedAt, startedAt, completedAt,

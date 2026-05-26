@@ -2259,7 +2259,7 @@ class BomResourceTest extends ResourceTest {
 
         final var runId = UUID.fromString("6214c0c2-660c-4615-8b3a-174a64e4abe4");
         final var runMetadata = new WorkflowRunMetadata(
-                runId, "import-bom", 1, null, "default",
+                runId, null, "import-bom", 1, null, "default",
                 WorkflowRunStatus.RUNNING, null, 0, null, null,
                 java.time.Instant.now(), java.time.Instant.now(), null, null);
         doReturn(false).when(DEX_ENGINE_MOCK).existsRun(any(ExistsWorkflowRunRequest.class));

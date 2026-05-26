@@ -605,18 +605,16 @@ public interface MetricsDao extends SqlObject {
         int deletedCount = 0;
         for (final String partition : partitions) {
             requireValidTableIdentifier(partition);
-            getHandle().execute("SET lock_timeout = '5s'");
-            try {
-                if (isPartitionDetachPending(parentTable, partition)) {
-                    getHandle().execute("ALTER TABLE %s DETACH PARTITION %s FINALIZE".formatted(parentTable, partition));
-                } else {
-                    getHandle().execute("ALTER TABLE %s DETACH PARTITION %s CONCURRENTLY".formatted(parentTable, partition));
-                }
-                getHandle().execute("DROP TABLE IF EXISTS %s CASCADE".formatted(partition));
-                deletedCount++;
-            } finally {
-                getHandle().execute("SET lock_timeout = '0'");
+            if (isPartitionDetachPending(parentTable, partition)) {
+                getHandle().useTransaction(trx -> {
+                    trx.execute("SET LOCAL lock_timeout = '5s'");
+                    trx.execute("ALTER TABLE %s DETACH PARTITION %s FINALIZE".formatted(parentTable, partition));
+                });
+            } else {
+                getHandle().execute("ALTER TABLE %s DETACH PARTITION %s CONCURRENTLY".formatted(parentTable, partition));
             }
+            getHandle().execute("DROP TABLE IF EXISTS %s CASCADE".formatted(partition));
+            deletedCount++;
         }
         return deletedCount;
     }

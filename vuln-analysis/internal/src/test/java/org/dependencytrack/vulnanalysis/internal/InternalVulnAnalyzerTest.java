@@ -129,7 +129,7 @@ class InternalVulnAnalyzerTest {
                     // | 1   | ANY        | ANY        | EQUAL    |
                     Arguments.of("cpe:2.3:*:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
-                    Arguments.of("cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
+                    Arguments.of("cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other"),
@@ -143,7 +143,7 @@ class InternalVulnAnalyzerTest {
                     // | 2   | ANY        | NA         | SUPERSET |
                     Arguments.of("cpe:2.3:*:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:-:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
-                    Arguments.of("cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
+                    Arguments.of("cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other"),
@@ -186,7 +186,7 @@ class InternalVulnAnalyzerTest {
                     // | 5   | NA         | ANY        | SUBSET   |
                     Arguments.of("cpe:2.3:-:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
-                    Arguments.of("cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
+                    Arguments.of("cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other"),
@@ -200,7 +200,7 @@ class InternalVulnAnalyzerTest {
                     // | 6   | NA         | NA         | EQUAL    |
                     Arguments.of("cpe:2.3:-:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:-:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:-:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
-                    Arguments.of("cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
+                    Arguments.of("cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:-:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:-:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:-:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:-:lang:swEdition:targetSw:targetHw:other"),
@@ -290,7 +290,7 @@ class InternalVulnAnalyzerTest {
                     // | 13  | i              | ANY        | SUPERSET |
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
-                    Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
+                    Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other"),
@@ -322,7 +322,7 @@ class InternalVulnAnalyzerTest {
                     // {"cpe:2.3:?:vendor:product:1.0.0:*:*:*:*:*:*:*", DOES_NOT_MATCH, "cpe:2.3:*:vendor:product:1.0.0:*:*:*:*:*:*:*"),
                     //   cpe-parser library does not allow wildcards for the part attribute.
                     Arguments.of("cpe:2.3:a:ven*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:*:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
-                    Arguments.of("cpe:2.3:a:vendor:pro*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
+                    Arguments.of("cpe:2.3:a:vendor:pro*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:a:vendor:*:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.*:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:*:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:upd*:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:*:edition:lang:swEdition:targetSw:targetHw:other"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:edi*:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:*:lang:swEdition:targetSw:targetHw:other"),
@@ -388,13 +388,15 @@ class InternalVulnAnalyzerTest {
                     // Required CPE name comparison relations (as per table 6-4 in the spec)
                     // ---
                     // Scenario:  All attributes are EQUAL
-                    Arguments.of("cpe:2.3:*:*:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:*:*:*:*:*:*:*:*:*:*"),
-                    Arguments.of("cpe:2.3:-:-:-:-:-:-:-:-:-:-:-", WITHOUT_RANGE, MATCHES, "cpe:2.3:-:-:-:-:-:-:-:-:-:-:-"),
+                    // Note:      Target products of ANY or NA are not matched to avoid matching the entire database.
+                    Arguments.of("cpe:2.3:*:*:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:*:*:*:*:*:*:*:*:*:*:*"),
+                    Arguments.of("cpe:2.3:-:-:-:-:-:-:-:-:-:-:-", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:-:-:-:-:-:-:-:-:-:-:-"),
                     Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     // Scenario:  All attributes of source are SUPERSET of target
                     Arguments.of("cpe:2.3:*:*:*:*:*:*:*:*:*:*:*", WITHOUT_RANGE, MATCHES, "cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other"),
                     // Scenario:  All attributes of source are SUBSET of target
-                    Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, MATCHES, "cpe:2.3:*:*:*:*:*:*:*:*:*:*:*"),
+                    // Note:      Target products of ANY or NA are not matched to avoid matching the entire database.
+                    Arguments.of("cpe:2.3:a:vendor:product:1.0.0:update:edition:lang:swEdition:targetSw:targetHw:other", WITHOUT_RANGE, DOES_NOT_MATCH, "cpe:2.3:*:*:*:*:*:*:*:*:*:*:*"),
                     // ---
                     // Regression tests
                     // ---

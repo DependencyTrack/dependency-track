@@ -38,7 +38,7 @@ import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 public final class PypiPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
     private static final Duration FRESH_FOR = Duration.ofHours(12);
-    private static final long MAX_BYTES = 4L * 1024 * 1024;
+    private static final long MAX_BYTES = 8L * 1024 * 1024;
 
     private @Nullable ObjectMapper objectMapper;
     private @Nullable CachingHttpClient cachingHttpClient;

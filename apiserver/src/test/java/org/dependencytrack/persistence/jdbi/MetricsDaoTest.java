@@ -33,8 +33,12 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
@@ -161,5 +165,45 @@ public class MetricsDaoTest extends PersistenceCapableTest {
         metricsDao.createMetricsPartitions();
         assertThat(Collections.frequency(metricsDao.getProjectMetricsPartitions(), "\"PROJECTMETRICS_%s\"".formatted(today))).isEqualTo(1);
         assertThat(Collections.frequency(metricsDao.getDependencyMetricsPartitions(), "\"DEPENDENCYMETRICS_%s\"".formatted(today))).isEqualTo(1);
+    }
+
+    @Test
+    public void testDropPartitionsWithPendingDetach() throws Exception {
+        metricsTestDao.createPartitionForDaysAgo("PROJECTMETRICS", 91);
+        final String partitionSuffix = LocalDate.now().minusDays(91).format(DateTimeFormatter.BASIC_ISO_DATE);
+        final String partitionName = "\"PROJECTMETRICS_%s\"".formatted(partitionSuffix);
+
+        // Simulate the partition into 'pending_detach' state
+        // by holding lock to block phase 2 of DETACH PARTITION CONCURRENTLY
+        try (final Handle lockHandle = openJdbiHandle()) {
+            lockHandle.begin();
+            try {
+                lockHandle.execute("LOCK TABLE %s IN ACCESS SHARE MODE".formatted(partitionName));
+
+                final CompletableFuture<Integer> detachBackendPid = new CompletableFuture<>();
+                final var future = CompletableFuture.runAsync(() -> {
+                    try (final Handle handle = openJdbiHandle()) {
+                        detachBackendPid.complete(handle.createQuery("SELECT pg_backend_pid()")
+                                .mapTo(Integer.class)
+                                .one());
+                        handle.execute("ALTER TABLE %s DETACH PARTITION %s CONCURRENTLY".formatted("\"PROJECTMETRICS\"", partitionName));
+                    }
+                });
+
+                await("partition pending detach")
+                        .atMost(5, TimeUnit.SECONDS)
+                        .until(() -> metricsDao.isPartitionDetachPending("\"PROJECTMETRICS\"", partitionName));
+
+                assertThat(jdbiHandle.createQuery("SELECT pg_cancel_backend(:pid)")
+                        .bind("pid", detachBackendPid.get(5, TimeUnit.SECONDS))
+                        .mapTo(Boolean.class)
+                        .one())
+                        .isTrue();
+                assertThat(metricsDao.isPartitionDetachPending("\"PROJECTMETRICS\"", partitionName)).isTrue();
+            } finally {
+                lockHandle.rollback();
+            }
+        }
+        assertThat(metricsDao.dropPartitions("\"PROJECTMETRICS\"", List.of(partitionName))).isEqualTo(1);
     }
 }

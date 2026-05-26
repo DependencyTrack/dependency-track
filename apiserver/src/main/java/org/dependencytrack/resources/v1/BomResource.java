@@ -86,8 +86,10 @@ import org.dependencytrack.tasks.ImportBomWorkflow;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -105,6 +107,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
+import static org.dependencytrack.common.MdcKeys.MDC_BOM_UPLOAD_TOKEN;
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
+import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_BOM_UPLOAD_TOKEN;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_PROJECT_UUID;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
@@ -691,11 +697,18 @@ public class BomResource extends AbstractApiResource {
                                     .setBomUploadToken(bomUploadToken.toString())
                                     .setBomFileMetadata(bomFileMetadata)
                                     .build()));
+
+            try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.uuid().toString());
+                 var _ = MDC.putCloseable(MDC_PROJECT_NAME, project.name());
+                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, project.version());
+                 var _ = MDC.putCloseable(MDC_BOM_UPLOAD_TOKEN, bomUploadToken.toString())) {
+                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "BOM upload accepted");
+            }
         } catch (RuntimeException e) {
             try {
                 fileStorage.delete(bomFileMetadata);
             } catch (IOException ex) {
-                LOGGER.warn("Failed to cleanup BOM file %s".formatted(bomFileMetadata.getLocation()), ex);
+                LOGGER.warn("Failed to cleanup BOM file {}", bomFileMetadata.getLocation(), ex);
                 e.addSuppressed(ex);
             }
             throw e;

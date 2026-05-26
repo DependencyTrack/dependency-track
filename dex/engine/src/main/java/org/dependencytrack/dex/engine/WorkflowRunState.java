@@ -69,6 +69,7 @@ import static org.dependencytrack.dex.engine.support.ProtobufUtil.toProtoTimesta
 final class WorkflowRunState {
 
     private final UUID id;
+    private @Nullable UUID parentId;
     private @Nullable String workflowName;
     private @Nullable Integer workflowVersion;
     private @Nullable String workflowInstanceId;
@@ -116,6 +117,11 @@ final class WorkflowRunState {
 
     UUID id() {
         return id;
+    }
+
+    @Nullable
+    UUID parentId() {
+        return parentId;
     }
 
     @Nullable
@@ -261,6 +267,9 @@ final class WorkflowRunState {
                             "%s/%s: Duplicate RunCreated event; Previous event is: %s; New event is: %s".formatted(
                                     this.workflowName, this.id, previousEventStr, nextEventStr));
                 }
+                parentId = event.getRunCreated().hasParentRun()
+                        ? UUID.fromString(event.getRunCreated().getParentRun().getId())
+                        : null;
                 workflowName = event.getRunCreated().getWorkflowName();
                 workflowVersion = event.getRunCreated().getWorkflowVersion();
                 workflowInstanceId = event.getRunCreated().hasWorkflowInstanceId()

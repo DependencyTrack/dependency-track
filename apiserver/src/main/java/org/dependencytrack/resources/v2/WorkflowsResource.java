@@ -264,6 +264,7 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
     private static org.dependencytrack.api.v2.model.WorkflowRunMetadata convert(WorkflowRunMetadata runMetadata) {
         return org.dependencytrack.api.v2.model.WorkflowRunMetadata.builder()
                 .id(runMetadata.id())
+                .parentId(runMetadata.parentId())
                 .workflowName(runMetadata.workflowName())
                 .workflowVersion(runMetadata.workflowVersion())
                 .workflowInstanceId(runMetadata.workflowInstanceId())

@@ -222,6 +222,7 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
             Map<String, String> labels) {
         return new WorkflowRunMetadata(
                 UUID.randomUUID(),
+                null,
                 workflowName,
                 1,
                 null,

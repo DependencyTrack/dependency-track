@@ -171,4 +171,11 @@ public final class PersistenceUtil {
                 || objectState == HOLLOW_PERSISTENT_NONTRANSACTIONAL;
     }
 
+    public static String escapeLikePattern(String input) {
+        return input
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
+    }
+
 }

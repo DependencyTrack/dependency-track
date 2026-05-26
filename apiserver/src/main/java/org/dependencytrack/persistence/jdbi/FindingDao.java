@@ -31,6 +31,7 @@ import org.jdbi.v3.sqlobject.customizer.BindMap;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.customizer.DefineNamedBindings;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -115,6 +116,7 @@ public interface FindingDao {
             <#-- @ftlvariable name="includeInactive" type="boolean" -->
             <#-- @ftlvariable name="includeSuppressed" type="boolean" -->
             <#-- @ftlvariable name="source" type="boolean" -->
+            <#-- @ftlvariable name="searchText" type="boolean" -->
             SELECT p."UUID" AS "projectUuid"
                  , p."NAME" AS "projectName"
                  , p."VERSION" AS "projectVersion"
@@ -266,6 +268,13 @@ public interface FindingDao {
             <#if epssTo>
                AND e."SCORE" <= :epssTo
             </#if>
+            <#if searchText>
+               AND (
+                 LOWER(c."NAME") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!'
+                 OR LOWER(c."GROUP") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!'
+                 OR LOWER(v."VULNID") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!'
+               )
+            </#if>
             <#if apiOrderByClause??>
               ${apiOrderByClause}
             <#else>
@@ -296,6 +305,7 @@ public interface FindingDao {
             @Bind long projectId,
             @Define boolean includeInactive,
             @Define boolean includeSuppressed,
+            @Nullable @Bind String searchText,
             @Bind Boolean hasAnalysis,
             @Bind String source,
             @Bind BigDecimal epssFrom,
@@ -306,6 +316,7 @@ public interface FindingDao {
                 projectId,
                 /* includeInactive */ false,
                 includeSuppressed,
+                /* searchText */ null,
                 /* hasAnalysis */ null,
                 /* source */ null,
                 /* epssFrom */ null,

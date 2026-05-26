@@ -25,6 +25,7 @@ import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -65,6 +66,7 @@ import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
+import org.dependencytrack.util.PersistenceUtil;
 import org.dependencytrack.util.PurlUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,6 +137,13 @@ public class FindingResource extends AbstractApiResource {
             @ApiResponse(responseCode = "404", description = "The project could not be found")
     })
     @PaginatedApi
+    @Parameter(
+            name = "searchText",
+            in = ParameterIn.QUERY,
+            description = """
+                    Case-insensitive substring filter matched against component name, \
+                    component group, and vulnerability ID."""
+    )
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
     public Response getFindingsByProject(@Parameter(description = "The UUID of the project", schema = @Schema(type = "string", format = "uuid"), required = true)
                                          @PathParam("uuid") @ValidUuid String uuid,
@@ -153,11 +162,17 @@ public class FindingResource extends AbstractApiResource {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
                 requireAccess(qm, project);
+                final String rawFilter = getAlpineRequest().getFilter();
+                final String searchText =
+                        (rawFilter != null && !rawFilter.isBlank())
+                                ? PersistenceUtil.escapeLikePattern(rawFilter)
+                                : null;
                 List<FindingDao.FindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle ->
                         handle.attach(FindingDao.class).getFindingsByProject(
                                 project.getId(),
                                 /* includeInactive */ false,
                                 suppressed,
+                                searchText,
                                 hasAnalysis,
                                 source != null ? source.name() : null,
                                 epssFrom,

@@ -53,6 +53,7 @@ import java.util.UUID;
 
 import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.hasColumn;
 import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
+import static org.dependencytrack.util.PersistenceUtil.escapeLikePattern;
 
 public interface ComponentDao extends SqlObject, PaginationSupport {
 
@@ -627,13 +628,6 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             }
             return new ListedComponent(component, publishedAtMicros);
         }
-    }
-
-    private static String escapeLikePattern(String input) {
-        return input
-                .replace("!", "!!")
-                .replace("%", "!%")
-                .replace("_", "!_");
     }
 
 }

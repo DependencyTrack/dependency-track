@@ -231,8 +231,10 @@ paths:
     $ref: "./resources/vuln-policies/vuln-policy-bundles.yaml"
   /vuln-policy-bundles/{uuid}:
     $ref: "./resources/vuln-policies/vuln-policy-bundle.yaml"
-  /vuln-policy-bundles/{uuid}/sync:
-    $ref: "./resources/vuln-policies/vuln-policy-bundle-sync.yaml"
+  /vuln-policy-bundles/{uuid}/sync-runs:
+    $ref: "./resources/vuln-policies/vuln-policy-bundle-sync-runs.yaml"
+  /vuln-policy-bundles/{uuid}/sync-runs/latest:
+    $ref: "./resources/vuln-policies/vuln-policy-bundle-sync-run-latest.yaml"
   /vuln-data-sources/{name}/mirror-runs:
     $ref: "./resources/vuln-data-sources/vuln-data-source-mirror-runs.yaml"
   /vuln-data-sources/{name}/mirror-runs/latest:

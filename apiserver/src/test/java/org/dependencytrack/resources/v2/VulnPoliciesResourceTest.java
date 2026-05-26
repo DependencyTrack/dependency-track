@@ -497,7 +497,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
                 .thenReturn(runId);
 
         Response response = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync")
+                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -505,14 +505,14 @@ class VulnPoliciesResourceTest extends ResourceTest {
         assertThat(getPlainTextBody(response)).isEmpty();
 
         response = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync")
+                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
         assertThat(response.getStatus()).isEqualTo(409);
 
         response = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync")
+                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -528,14 +528,14 @@ class VulnPoliciesResourceTest extends ResourceTest {
                 .thenReturn(null);
 
         final Response firstResponse = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync")
+                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
         assertThat(firstResponse.getStatus()).isEqualTo(202);
 
         final Response secondResponse = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync")
+                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -657,7 +657,7 @@ class VulnPoliciesResourceTest extends ResourceTest {
         when(DEX_ENGINE_MOCK.getRunById(runId)).thenReturn(run);
 
         final Response response = jersey
-                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync")
+                .target("/vuln-policy-bundles/bc106cf4-3993-4e38-952d-d2f5f11412ed/sync-runs/latest")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();

@@ -305,7 +305,7 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
             Permissions.Constants.POLICY_MANAGEMENT,
             Permissions.Constants.POLICY_MANAGEMENT_READ
     })
-    public Response getVulnPolicyBundleSyncStatus(UUID uuid) {
+    public Response getLatestVulnPolicyBundleSyncRun(UUID uuid) {
         if (!VulnerabilityPolicyDao.DEFAULT_BUNDLE_UUID.equals(uuid)) {
             final VulnPolicyBundleRow bundle = withJdbiHandle(
                     handle -> handle.attach(VulnerabilityPolicyDao.class).getBundleByUuid(uuid));
@@ -368,7 +368,7 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
             Permissions.Constants.POLICY_MANAGEMENT,
             Permissions.Constants.POLICY_MANAGEMENT_UPDATE
     })
-    public Response triggerVulnPolicyBundleSync(UUID uuid) {
+    public Response triggerVulnPolicyBundleSyncRun(UUID uuid) {
         if (!VulnerabilityPolicyDao.DEFAULT_BUNDLE_UUID.equals(uuid)) {
             final VulnPolicyBundleRow bundle = withJdbiHandle(
                     handle -> handle.attach(VulnerabilityPolicyDao.class).getBundleByUuid(uuid));
@@ -396,7 +396,7 @@ public final class VulnPoliciesResource extends AbstractApiResource implements V
                 .accepted()
                 .header("Location", getUriInfo()
                         .getBaseUriBuilder()
-                        .path("/vuln-policy-bundles/{uuid}/sync")
+                        .path("/vuln-policy-bundles/{uuid}/sync-runs/latest")
                         .resolveTemplate("uuid", uuid)
                         .build())
                 .build();

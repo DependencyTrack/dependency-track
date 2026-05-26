@@ -14,47 +14,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) OWASP Foundation. All Rights Reserved.
-get:
-  operationId: getVulnPolicyBundleSyncStatus
-  summary: Get bundle synchronization status
-  description: |-
-    Returns the status of the most recent synchronization for a given
-    vulnerability policy bundle.
-
-    Returns 404 if no synchronization has been triggered yet.
-
-    Requires permission `POLICY_MANAGEMENT` or `POLICY_MANAGEMENT_READ`.
-  tags:
-    - Vuln Policies
-  parameters:
-    - name: uuid
-      in: path
-      description: UUID of the vulnerability policy bundle
-      required: true
-      schema:
-        type: string
-        format: uuid
-  responses:
-    "200":
-      description: Synchronization status
-      content:
-        application/json:
-          schema:
-            $ref: "./schemas/vuln-policy-bundle-sync-status.yaml"
-    "401":
-      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
-    "403":
-      $ref: "../../shared/responses/generic-forbidden-error.yaml"
-    "404":
-      $ref: "../../shared/responses/generic-not-found-error.yaml"
-    default:
-      $ref: "../../shared/responses/generic-error.yaml"
-
 post:
-  operationId: triggerVulnPolicyBundleSync
-  summary: Trigger bundle synchronization
+  operationId: triggerVulnPolicyBundleSyncRun
+  summary: Trigger a vulnerability policy bundle sync run
   description: |-
-    Triggers synchronization of the vulnerability policy bundle.
+    Triggers a synchronization run for the given vulnerability policy bundle.
 
     Requires permission `POLICY_MANAGEMENT` or `POLICY_MANAGEMENT_UPDATE`.
   tags:
@@ -69,15 +33,15 @@ post:
         format: uuid
   responses:
     "202":
-      description: Synchronization triggered
+      description: Sync run triggered
       headers:
         Location:
-          description: URL of the synchronization status endpoint
+          description: URL of the latest sync run resource.
           schema:
             type: string
             format: uri
     "400":
-      description: Bad Request
+      description: Sync run cannot be started
       content:
         application/problem+json:
           schema:
@@ -89,7 +53,7 @@ post:
     "404":
       $ref: "../../shared/responses/generic-not-found-error.yaml"
     "409":
-      description: Synchronization already in progress
+      description: A sync run is already in progress
       content:
         application/problem+json:
           schema:

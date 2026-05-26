@@ -1,0 +1,53 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+get:
+  operationId: getLatestVulnPolicyBundleSyncRun
+  summary: Get the latest vulnerability policy bundle sync run
+  description: |-
+    Returns the status of the most recent synchronization run for a given
+    vulnerability policy bundle.
+
+    Returns 404 if no sync run is available
+    (e.g. none has been triggered yet, or the most recent run
+    is no longer retained), or if the bundle is unknown.
+
+    Requires permission `POLICY_MANAGEMENT` or `POLICY_MANAGEMENT_READ`.
+  tags:
+    - Vuln Policies
+  parameters:
+    - name: uuid
+      in: path
+      description: UUID of the vulnerability policy bundle
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    "200":
+      description: Sync run status
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/vuln-policy-bundle-sync-status.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    "404":
+      $ref: "../../shared/responses/generic-not-found-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"

@@ -517,12 +517,26 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
             return null;
         }
 
+        final Cpe parsed;
         try {
-            return CpeParser.parse(component.getCpe());
+            parsed = CpeParser.parse(component.getCpe());
         } catch (CpeParsingException e) {
             LOGGER.warn("Failed to parse CPE '{}'", component.getCpe(), e);
             return null;
         }
+
+        // Skip overly generic component CPEs to matching excessive quantities of vulns.
+        // A non-concrete product (* / -) would expand to "every product from $vendor"
+        // or "ALL products". Wildcard vendor with a concrete product is allowed,
+        // since NVD vendor strings are inconsistent, and users may legitimately
+        // use components like "cpe:2.3:a:*:openssl:..."
+        final String product = parsed.getProduct();
+        if ("*".equals(product) || "-".equals(product)) {
+            LOGGER.debug("Ignoring CPE '{}': product is not concrete", component.getCpe());
+            return null;
+        }
+
+        return parsed;
     }
 
     private static @Nullable PackageURL tryParsePurl(@Nullable String purl) {

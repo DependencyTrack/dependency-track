@@ -28,9 +28,11 @@ import alpine.server.filters.AuthenticationFeature;
 import alpine.server.filters.AuthorizationFeature;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import org.apache.commons.lang3.function.TriFunction;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -69,9 +71,11 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNullElse;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
@@ -173,6 +177,54 @@ public class FindingResourceTest extends ResourceTest {
                     assertEquals(p1.getUuid().toString() + ":" + c2.getUuid().toString() + ":" + v3.getUuid().toString(), finding.getString("matrix"));
                 }
         );
+    }
+
+    @Test
+    public void getFindingsByProjectWithSearchTextTest() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project project = qm.createProject("acme-app", null, "1.0", null, null, null, null, false);
+
+        final TriFunction<String, String, String, Component> createComponent = (name, group, version) -> {
+            final Component component = new Component();
+            component.setProject(project);
+            component.setName(name);
+            component.setGroup(group);
+            component.setVersion(version);
+            return qm.createComponent(component, false);
+        };
+        final Component componentAlpha = createComponent.apply("alpha", "com.acme", "1.0");
+        final Component componentBeta = createComponent.apply("beta", "io.example", "2.0");
+        final Component componentLiteral = createComponent.apply("with%char_x", "edge", "1.0");
+
+        final Vulnerability vulnFoo = createVulnerability("FOO-100", Severity.HIGH);
+        final Vulnerability vulnBar = createVulnerability("BAR-200", Severity.MEDIUM);
+        qm.addVulnerability(vulnFoo, componentAlpha, "none");
+        qm.addVulnerability(vulnBar, componentBeta, "none");
+        qm.addVulnerability(vulnFoo, componentLiteral, "none");
+
+        final Function<String, List<String>> searchFindings = searchText -> {
+            final Response response = jersey
+                    .target(V1_FINDING + "/project/" + project.getUuid())
+                    .queryParam("searchText", requireNonNullElse(searchText, ""))
+                    .request()
+                    .header(X_API_KEY, apiKey)
+                    .get();
+            assertThat(response.getStatus()).isEqualTo(200);
+            return parseJsonArray(response).stream()
+                    .map(JsonValue::asJsonObject)
+                    .map(finding -> finding.getJsonObject("vulnerability"))
+                    .map(vuln -> vuln.getString("vulnId"))
+                    .toList();
+        };
+
+        assertThat(searchFindings.apply(null)).containsExactlyInAnyOrder("FOO-100", "BAR-200", "FOO-100");
+        assertThat(searchFindings.apply("ALPH")).containsExactly("FOO-100");
+        assertThat(searchFindings.apply("example")).containsExactly("BAR-200");
+        assertThat(searchFindings.apply("bar-2")).containsExactly("BAR-200");
+        assertThat(searchFindings.apply("%char")).containsExactly("FOO-100");
+        assertThat(searchFindings.apply("char_x")).containsExactly("FOO-100");
+        assertThat(searchFindings.apply("alph_")).isEmpty();
     }
 
     @Test

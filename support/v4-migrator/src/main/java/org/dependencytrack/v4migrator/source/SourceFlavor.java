@@ -20,8 +20,18 @@ package org.dependencytrack.v4migrator.source;
 
 public enum SourceFlavor {
 
-    POSTGRESQL,
-    MSSQL;
+    POSTGRESQL("public"),
+    MSSQL("dbo");
+
+    private final String defaultSchema;
+
+    SourceFlavor(final String defaultSchema) {
+        this.defaultSchema = defaultSchema;
+    }
+
+    public String defaultSchema() {
+        return defaultSchema;
+    }
 
     public static SourceFlavor fromJdbcUrl(final String jdbcUrl) {
         if (jdbcUrl == null) {

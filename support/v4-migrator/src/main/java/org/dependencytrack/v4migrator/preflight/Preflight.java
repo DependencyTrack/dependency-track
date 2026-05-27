@@ -311,18 +311,20 @@ public final class Preflight {
             return;
         }
 
+        final String schema = source.sourceSchema != null ? source.sourceSchema : flavor.defaultSchema();
         try (Connection conn = Connections.openSource(source)) {
-            checkSourceSchemaMarker(conn, flavor, failures);
+            checkSourceSchemaMarker(conn, flavor, schema, failures);
         } catch (final SQLException e) {
             failures.add("Could not connect to source database: " + e.getMessage());
         }
     }
 
     private static void checkSourceSchemaMarker(final Connection conn, final SourceFlavor flavor,
-                                                final List<String> failures) {
+                                                final String schema, final List<String> failures) {
         final String sql = switch (flavor) {
-            case POSTGRESQL -> "SELECT to_regclass('public.\"PROJECT\"') IS NOT NULL";
-            case MSSQL -> "SELECT CASE WHEN OBJECT_ID('dbo.PROJECT','U') IS NOT NULL THEN 1 ELSE 0 END";
+            case POSTGRESQL -> "SELECT to_regclass('\"%s\".\"PROJECT\"') IS NOT NULL".formatted(schema);
+            case MSSQL -> "SELECT CASE WHEN OBJECT_ID('\"%s\".\"PROJECT\"','U') IS NOT NULL THEN 1 ELSE 0 END"
+                .formatted(schema);
         };
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

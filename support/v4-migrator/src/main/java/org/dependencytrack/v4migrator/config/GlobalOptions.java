@@ -21,22 +21,10 @@ package org.dependencytrack.v4migrator.config;
 import org.jspecify.annotations.Nullable;
 import picocli.CommandLine.Option;
 
-import java.util.regex.Pattern;
-
 /**
  * Options shared across CLI commands.
  */
 public final class GlobalOptions {
-
-    /**
-     * PostgreSQL unquoted-identifier syntax minus the locale-dependent letter ranges:
-     * leading letter or underscore, followed by letters, digits, underscores, or {@code $}.
-     * Max length 63 bytes ({@code NAMEDATALEN - 1}). The staging schema name is splice-formatted
-     * into SQL strings throughout the migrator, so the value must not contain anything that could
-     * close an identifier (quote, semicolon, dash, etc.) or anything the parser would treat as
-     * additional tokens.
-     */
-    private static final Pattern SCHEMA_NAME_PATTERN = Pattern.compile("^[A-Za-z_][A-Za-z0-9_$]{0,62}$");
 
     @Option(names = "--target-url",
             description = "JDBC URL of the v5 target PostgreSQL.",
@@ -56,7 +44,8 @@ public final class GlobalOptions {
 
     @Option(names = "--staging-schema",
             description = "Schema name for migrator staging. Default: ${DEFAULT-VALUE}.",
-            defaultValue = "dt_v4_migration")
+            defaultValue = "dt_v4_migration",
+            converter = SchemaNameConverter.class)
     public String stagingSchema;
 
     @Option(names = "--log-level",
@@ -68,16 +57,4 @@ public final class GlobalOptions {
             description = "Run preflight and print a plan; do not mutate any database.")
     public boolean dryRun;
 
-    /**
-     * Rejects a staging schema name that does not match the safe-identifier pattern.
-     * The name is splice-formatted into SQL throughout the migrator, so anything outside
-     * the unquoted-identifier syntax would allow injection.
-     */
-    public void validate() {
-        if (stagingSchema == null || !SCHEMA_NAME_PATTERN.matcher(stagingSchema).matches()) {
-            throw new IllegalArgumentException(
-                    "--staging-schema must match [A-Za-z_][A-Za-z0-9_$]* and be 1-63 characters; got '"
-                            + stagingSchema + "'");
-        }
-    }
 }

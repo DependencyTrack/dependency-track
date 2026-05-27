@@ -59,7 +59,7 @@ public final class TableRegistry {
              , "TEMPLATE"
              , "TEXT"
              , "UUID"
-          FROM "LICENSE"
+          FROM "%s"."LICENSE"
          ORDER BY "ID"
         """,
         List.of("ID", "COMMENT", "ISCUSTOMLICENSE", "ISDEPRECATED", "FSFLIBRE",
@@ -157,7 +157,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "ID", "NAME", "UUID"
-          FROM "TEAM"
+          FROM "%s"."TEAM"
          ORDER BY "ID"
         """,
         List.of("ID", "NAME", "UUID"),
@@ -207,7 +207,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "ID", "NAME"
-          FROM "TAG"
+          FROM "%s"."TAG"
          ORDER BY "ID"
         """,
         List.of("ID", "NAME"),
@@ -256,7 +256,7 @@ public final class TableRegistry {
              , "USERNAME"
              , "DN"
              , "EMAIL"
-          FROM "LDAPUSER"
+          FROM "%s"."LDAPUSER"
          ORDER BY "ID"
         """,
         List.of("ID", "USERNAME", "DN", "EMAIL"),
@@ -289,7 +289,7 @@ public final class TableRegistry {
              , "LAST_PASSWORD_CHANGE"
              , "NON_EXPIRY_PASSWORD"
              , "SUSPENDED"
-          FROM "MANAGEDUSER"
+          FROM "%s"."MANAGEDUSER"
          ORDER BY "ID"
         """,
         List.of("ID", "USERNAME", "PASSWORD", "FULLNAME", "EMAIL",
@@ -314,7 +314,7 @@ public final class TableRegistry {
              , "USERNAME"
              , "SUBJECT_IDENTIFIER"
              , "EMAIL"
-          FROM "OIDCUSER"
+          FROM "%s"."OIDCUSER"
          ORDER BY "ID"
         """,
         List.of("ID", "USERNAME", "SUBJECT_IDENTIFIER", "EMAIL"),
@@ -332,7 +332,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "TEAM_ID", "LDAPUSER_ID"
-          FROM "LDAPUSERS_TEAMS"
+          FROM "%s"."LDAPUSERS_TEAMS"
         """,
         List.of("TEAM_ID", "LDAPUSER_ID"),
         null,
@@ -349,7 +349,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "TEAM_ID", "MANAGEDUSER_ID"
-          FROM "MANAGEDUSERS_TEAMS"
+          FROM "%s"."MANAGEDUSERS_TEAMS"
         """,
         List.of("TEAM_ID", "MANAGEDUSER_ID"),
         null,
@@ -366,7 +366,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "TEAM_ID", "OIDCUSERS_ID"
-          FROM "OIDCUSERS_TEAMS"
+          FROM "%s"."OIDCUSERS_TEAMS"
         """,
         List.of("TEAM_ID", "OIDCUSERS_ID"),
         null,
@@ -615,7 +615,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "ID", "DESCRIPTION", "NAME"
-          FROM "PERMISSION"
+          FROM "%s"."PERMISSION"
          ORDER BY "ID"
         """,
         List.of("ID", "DESCRIPTION", "NAME"),
@@ -694,7 +694,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "LDAPUSER_ID", "PERMISSION_ID"
-          FROM "LDAPUSERS_PERMISSIONS"
+          FROM "%s"."LDAPUSERS_PERMISSIONS"
         """,
         List.of("LDAPUSER_ID", "PERMISSION_ID"),
         null,
@@ -711,7 +711,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "MANAGEDUSER_ID", "PERMISSION_ID"
-          FROM "MANAGEDUSERS_PERMISSIONS"
+          FROM "%s"."MANAGEDUSERS_PERMISSIONS"
         """,
         List.of("MANAGEDUSER_ID", "PERMISSION_ID"),
         null,
@@ -728,7 +728,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "OIDCUSER_ID", "PERMISSION_ID"
-          FROM "OIDCUSERS_PERMISSIONS"
+          FROM "%s"."OIDCUSERS_PERMISSIONS"
         """,
         List.of("OIDCUSER_ID", "PERMISSION_ID"),
         null,
@@ -811,7 +811,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "ID", "NAME", "UUID"
-          FROM "OIDCGROUP"
+          FROM "%s"."OIDCGROUP"
          ORDER BY "ID"
         """,
         List.of("ID", "NAME", "UUID"),
@@ -863,7 +863,7 @@ public final class TableRegistry {
              , "NAME"
              , "RISKWEIGHT"
              , "UUID"
-          FROM "LICENSEGROUP"
+          FROM "%s"."LICENSEGROUP"
          ORDER BY "ID"
         """,
         List.of("ID", "NAME", "RISKWEIGHT", "UUID"),
@@ -921,7 +921,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "LICENSEGROUP_ID", "LICENSE_ID"
-          FROM "LICENSEGROUP_LICENSE"
+          FROM "%s"."LICENSEGROUP_LICENSE"
         """,
         List.of("LICENSEGROUP_ID", "LICENSE_ID"),
         """
@@ -980,7 +980,7 @@ public final class TableRegistry {
              , "URL"
              , "USERNAME"
              , "UUID"
-          FROM "REPOSITORY"
+          FROM "%s"."REPOSITORY"
          ORDER BY "ID"
         """,
         List.of("ID", "AUTHENTICATIONREQUIRED", "ENABLED", "IDENTIFIER", "INTERNAL",
@@ -1128,7 +1128,7 @@ public final class TableRegistry {
              , "SWIDTAGID"
              , "UUID"
              , "VERSION"
-          FROM "PROJECT"
+          FROM "%s"."PROJECT"
          ORDER BY "ID"
         """,
         List.of("ID", "ACTIVE", "AUTHORS", "CLASSIFIER", "COLLECTION_LOGIC", "COLLECTION_TAG",
@@ -1438,7 +1438,7 @@ public final class TableRegistry {
              , "TEMPLATE"
              , "TEMPLATE_MIME_TYPE"
              , "UUID"
-          FROM "NOTIFICATIONPUBLISHER"
+          FROM "%s"."NOTIFICATIONPUBLISHER"
          ORDER BY "ID"
         """,
         List.of("ID", "DEFAULT_PUBLISHER", "DESCRIPTION", "NAME", "PUBLISHER_CLASS",
@@ -1549,7 +1549,7 @@ public final class TableRegistry {
              , "PUBLISHER_CONFIG"
              , "SCOPE"
              , "UUID"
-          FROM "NOTIFICATIONRULE"
+          FROM "%s"."NOTIFICATIONRULE"
          ORDER BY "ID"
         """,
         List.of("ID", "ENABLED", "LOG_SUCCESSFUL_PUBLISH", "MESSAGE", "NAME",
@@ -1676,7 +1676,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "NOTIFICATIONRULE_ID", "TAG_ID"
-          FROM "NOTIFICATIONRULE_TAGS"
+          FROM "%s"."NOTIFICATIONRULE_TAGS"
         """,
         List.of("NOTIFICATIONRULE_ID", "TAG_ID"),
         """
@@ -1714,7 +1714,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "NOTIFICATIONRULE_ID", "TEAM_ID"
-          FROM "NOTIFICATIONRULE_TEAMS"
+          FROM "%s"."NOTIFICATIONRULE_TEAMS"
         """,
         List.of("NOTIFICATIONRULE_ID", "TEAM_ID"),
         """
@@ -1764,7 +1764,7 @@ public final class TableRegistry {
              , "OPERATOR"
              , "UUID"
              , "VIOLATIONSTATE"
-          FROM "POLICY"
+          FROM "%s"."POLICY"
          ORDER BY "ID"
         """,
         List.of("ID", "INCLUDE_CHILDREN", "NAME", "ONLY_LATEST_PROJECT_VERSION",
@@ -1843,7 +1843,7 @@ public final class TableRegistry {
              , "SUBJECT"
              , "UUID"
              , "VALUE"
-          FROM "POLICYCONDITION"
+          FROM "%s"."POLICYCONDITION"
          ORDER BY "ID"
         """,
         List.of("ID", "OPERATOR", "POLICY_ID", "SUBJECT", "UUID", "VALUE"),
@@ -1911,7 +1911,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "POLICY_ID", "TAG_ID"
-          FROM "POLICY_TAGS"
+          FROM "%s"."POLICY_TAGS"
         """,
         List.of("POLICY_ID", "TAG_ID"),
         """
@@ -1951,7 +1951,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "POLICY_ID", "PROJECT_ID"
-          FROM "POLICY_PROJECTS"
+          FROM "%s"."POLICY_PROJECTS"
         """,
         List.of("POLICY_ID", "PROJECT_ID"),
         """
@@ -1993,7 +1993,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "NOTIFICATIONRULE_ID", "PROJECT_ID"
-          FROM "NOTIFICATIONRULE_PROJECTS"
+          FROM "%s"."NOTIFICATIONRULE_PROJECTS"
         """,
         List.of("NOTIFICATIONRULE_ID", "PROJECT_ID"),
         """
@@ -2035,7 +2035,7 @@ public final class TableRegistry {
              , "AUTHORS"
              , "PROJECT_ID"
              , "SUPPLIER"
-          FROM "PROJECT_METADATA"
+          FROM "%s"."PROJECT_METADATA"
         """,
         List.of("ID", "AUTHORS", "PROJECT_ID", "SUPPLIER"),
         """
@@ -2110,7 +2110,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "PROJECT_ID", "TEAM_ID"
-          FROM "PROJECT_ACCESS_TEAMS"
+          FROM "%s"."PROJECT_ACCESS_TEAMS"
         """,
         List.of("PROJECT_ID", "TEAM_ID"),
         """
@@ -2179,7 +2179,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "PROJECT_ID", "TAG_ID"
-          FROM "PROJECTS_TAGS"
+          FROM "%s"."PROJECTS_TAGS"
         """,
         List.of("PROJECT_ID", "TAG_ID"),
         """
@@ -2307,7 +2307,7 @@ public final class TableRegistry {
              , "SWIDTAGID"
              , "UUID"
              , "VERSION"
-          FROM "COMPONENT"
+          FROM "%s"."COMPONENT"
          ORDER BY "ID"
         """,
         List.of("ID", "AUTHORS", "BLAKE2B_256", "BLAKE2B_384", "BLAKE2B_512", "BLAKE3",
@@ -2616,7 +2616,7 @@ public final class TableRegistry {
              , "PROVIDER_ID"
              , "UUID"
              , "VERSION"
-          FROM "SERVICECOMPONENT"
+          FROM "%s"."SERVICECOMPONENT"
          ORDER BY "ID"
         """,
         List.of("ID", "AUTHENTICATED", "X_TRUST_BOUNDARY", "DATA", "DESCRIPTION",
@@ -2765,7 +2765,7 @@ public final class TableRegistry {
              , "NAMESPACE"
              , "PUBLISHED"
              , "REPOSITORY_TYPE"
-          FROM "REPOSITORY_META_COMPONENT"
+          FROM "%s"."REPOSITORY_META_COMPONENT"
          ORDER BY "ID"
         """,
         List.of("ID", "LAST_CHECK", "LATEST_VERSION", "NAME", "NAMESPACE",
@@ -2877,7 +2877,7 @@ public final class TableRegistry {
              , "LAST_USED"
              , "PUBLIC_ID"
              , "SECRET_HASH"
-          FROM "APIKEY"
+          FROM "%s"."APIKEY"
          ORDER BY "ID"
         """,
         List.of("ID", "COMMENT", "CREATED", "IS_LEGACY", "LAST_USED", "PUBLIC_ID", "SECRET_HASH"),
@@ -2947,7 +2947,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "TEAM_ID", "APIKEY_ID"
-          FROM "APIKEYS_TEAMS"
+          FROM "%s"."APIKEYS_TEAMS"
         """,
         List.of("TEAM_ID", "APIKEY_ID"),
         """
@@ -2987,7 +2987,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "TEAM_ID", "PERMISSION_ID"
-          FROM "TEAMS_PERMISSIONS"
+          FROM "%s"."TEAMS_PERMISSIONS"
         """,
         List.of("TEAM_ID", "PERMISSION_ID"),
         """
@@ -3041,7 +3041,7 @@ public final class TableRegistry {
              , "DN"
              , "TEAM_ID"
              , "UUID"
-          FROM "MAPPEDLDAPGROUP"
+          FROM "%s"."MAPPEDLDAPGROUP"
          ORDER BY "ID"
         """,
         List.of("ID", "DN", "TEAM_ID", "UUID"),
@@ -3101,7 +3101,7 @@ public final class TableRegistry {
              , "GROUP_ID"
              , "TEAM_ID"
              , "UUID"
-          FROM "MAPPEDOIDCGROUP"
+          FROM "%s"."MAPPEDOIDCGROUP"
          ORDER BY "ID"
         """,
         List.of("ID", "GROUP_ID", "TEAM_ID", "UUID"),
@@ -3230,7 +3230,7 @@ public final class TableRegistry {
              , "UUID"
              , "VULNID"
              , "VULNERABLEVERSIONS"
-          FROM "VULNERABILITY"
+          FROM "%s"."VULNERABILITY"
          ORDER BY "ID"
         """,
         List.of("ID", "CREATED", "CREDITS", "CVSSV2BASESCORE", "CVSSV2EXPLOITSCORE",
@@ -3513,7 +3513,7 @@ public final class TableRegistry {
              , "VERSIONSTARTEXCLUDING"
              , "VERSIONSTARTINCLUDING"
              , "VULNERABLE"
-          FROM "VULNERABLESOFTWARE"
+          FROM "%s"."VULNERABLESOFTWARE"
          ORDER BY "ID"
         """,
         List.of("ID", "CPE22", "CPE23", "EDITION", "LANGUAGE", "OTHER", "PART", "PRODUCT",
@@ -3718,7 +3718,7 @@ public final class TableRegistry {
              , "MEASURED_AT"
              , "MONTH"
              , "YEAR"
-          FROM "VULNERABILITYMETRICS"
+          FROM "%s"."VULNERABILITYMETRICS"
          ORDER BY "ID"
         """,
         List.of("ID", "COUNT", "MEASURED_AT", "MONTH", "YEAR"),
@@ -3793,7 +3793,7 @@ public final class TableRegistry {
              , "SONATYPE_ID"
              , "VULNDB_ID"
              , "UUID"
-          FROM "VULNERABILITYALIAS"
+          FROM "%s"."VULNERABILITYALIAS"
          ORDER BY "ID"
         """,
         List.of("ID", "CVE_ID", "GHSA_ID", "GSD_ID", "INTERNAL_ID",
@@ -4001,7 +4001,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "COMPONENT_ID", "VULNERABILITY_ID"
-          FROM "COMPONENTS_VULNERABILITIES"
+          FROM "%s"."COMPONENTS_VULNERABILITIES"
         """,
         List.of("COMPONENT_ID", "VULNERABILITY_ID"),
         """
@@ -4041,7 +4041,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "VULNERABILITY_ID", "SERVICECOMPONENT_ID"
-          FROM "SERVICECOMPONENTS_VULNERABILITIES"
+          FROM "%s"."SERVICECOMPONENTS_VULNERABILITIES"
         """,
         List.of("VULNERABILITY_ID", "SERVICECOMPONENT_ID"),
         """
@@ -4081,7 +4081,7 @@ public final class TableRegistry {
         """,
         """
         SELECT "VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"
-          FROM "VULNERABLESOFTWARE_VULNERABILITIES"
+          FROM "%s"."VULNERABLESOFTWARE_VULNERABILITIES"
         """,
         List.of("VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"),
         """
@@ -4134,7 +4134,7 @@ public final class TableRegistry {
              , "UUID"
              , "VULNERABILITY"
              , "VULNERABLE_SOFTWARE"
-          FROM "AFFECTEDVERSIONATTRIBUTION"
+          FROM "%s"."AFFECTEDVERSIONATTRIBUTION"
          ORDER BY "ID"
         """,
         List.of("ID", "FIRST_SEEN", "LAST_SEEN", "SOURCE", "UUID", "VULNERABILITY", "VULNERABLE_SOFTWARE"),
@@ -4215,7 +4215,7 @@ public final class TableRegistry {
              , "SERIAL_NUMBER"
              , "SPEC_VERSION"
              , "UUID"
-          FROM "BOM"
+          FROM "%s"."BOM"
          ORDER BY "ID"
         """,
         List.of("ID", "BOM_FORMAT", "BOM_VERSION", "IMPORTED", "PROJECT_ID",
@@ -4317,7 +4317,7 @@ public final class TableRegistry {
              , "UUID"
              , "VEX_FORMAT"
              , "VEX_VERSION"
-          FROM "VEX"
+          FROM "%s"."VEX"
          ORDER BY "ID"
         """,
         List.of("ID", "IMPORTED", "PROJECT_ID", "SERIAL_NUMBER", "SPEC_VERSION",
@@ -4420,7 +4420,7 @@ public final class TableRegistry {
              , "REFERENCE_URL"
              , "UUID"
              , "VULNERABILITY_ID"
-          FROM "FINDINGATTRIBUTION"
+          FROM "%s"."FINDINGATTRIBUTION"
          ORDER BY "ID"
         """,
         List.of("ID", "ALT_ID", "ANALYZERIDENTITY", "ATTRIBUTED_ON", "COMPONENT_ID",
@@ -4539,7 +4539,7 @@ public final class TableRegistry {
              , "TIMESTAMP"
              , "TYPE"
              , "UUID"
-          FROM "POLICYVIOLATION"
+          FROM "%s"."POLICYVIOLATION"
          ORDER BY "ID"
         """,
         List.of("ID", "COMPONENT_ID", "POLICYCONDITION_ID", "PROJECT_ID",
@@ -4655,7 +4655,7 @@ public final class TableRegistry {
              , "PROJECT_ID"
              , "SUPPRESSED"
              , "VULNERABILITY_ID"
-          FROM "ANALYSIS"
+          FROM "%s"."ANALYSIS"
          ORDER BY "ID"
         """,
         List.of("ID", "DETAILS", "JUSTIFICATION", "RESPONSE", "STATE",
@@ -4795,7 +4795,7 @@ public final class TableRegistry {
              , "COMMENT"
              , "COMMENTER"
              , "TIMESTAMP"
-          FROM "ANALYSISCOMMENT"
+          FROM "%s"."ANALYSISCOMMENT"
          ORDER BY "ID"
         """,
         List.of("ID", "ANALYSIS_ID", "COMMENT", "COMMENTER", "TIMESTAMP"),
@@ -4867,7 +4867,7 @@ public final class TableRegistry {
              , "POLICYVIOLATION_ID"
              , "PROJECT_ID"
              , "SUPPRESSED"
-          FROM "VIOLATIONANALYSIS"
+          FROM "%s"."VIOLATIONANALYSIS"
          ORDER BY "ID"
         """,
         List.of("ID", "STATE", "COMPONENT_ID", "POLICYVIOLATION_ID", "PROJECT_ID", "SUPPRESSED"),
@@ -4941,7 +4941,7 @@ public final class TableRegistry {
              , "COMMENTER"
              , "TIMESTAMP"
              , "VIOLATIONANALYSIS_ID"
-          FROM "VIOLATIONANALYSISCOMMENT"
+          FROM "%s"."VIOLATIONANALYSISCOMMENT"
          ORDER BY "ID"
         """,
         List.of("ID", "COMMENT", "COMMENTER", "TIMESTAMP", "VIOLATIONANALYSIS_ID"),
@@ -5011,7 +5011,7 @@ public final class TableRegistry {
              , "PROPERTYNAME"
              , "PROPERTYTYPE"
              , "PROPERTYVALUE"
-          FROM "CONFIGPROPERTY"
+          FROM "%s"."CONFIGPROPERTY"
          ORDER BY "ID"
         """,
         List.of("ID", "DESCRIPTION", "GROUPNAME", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE"),
@@ -5085,7 +5085,7 @@ public final class TableRegistry {
              , "PROPERTYNAME"
              , "PROPERTYTYPE"
              , "PROPERTYVALUE"
-          FROM "PROJECT_PROPERTY"
+          FROM "%s"."PROJECT_PROPERTY"
          ORDER BY "ID"
         """,
         List.of("ID", "DESCRIPTION", "GROUPNAME", "PROJECT_ID", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE"),
@@ -5167,7 +5167,7 @@ public final class TableRegistry {
              , "PROPERTYTYPE"
              , "PROPERTYVALUE"
              , "UUID"
-          FROM "COMPONENT_PROPERTY"
+          FROM "%s"."COMPONENT_PROPERTY"
          ORDER BY "ID"
         """,
         List.of("ID", "COMPONENT_ID", "DESCRIPTION", "GROUPNAME", "PROPERTYNAME",
@@ -5312,7 +5312,7 @@ public final class TableRegistry {
              , "SUPPRESSED"
              , "UNASSIGNED_SEVERITY"
              , "VULNERABILITIES"
-          FROM "DEPENDENCYMETRICS"
+          FROM "%s"."DEPENDENCYMETRICS"
          ORDER BY "ID"
         """,
         List.of("ID", "COMPONENT_ID", "CRITICAL", "FINDINGS_AUDITED", "FINDINGS_TOTAL",
@@ -5619,7 +5619,7 @@ public final class TableRegistry {
              , "UNASSIGNED_SEVERITY"
              , "VULNERABILITIES"
              , "VULNERABLECOMPONENTS"
-          FROM "PROJECTMETRICS"
+          FROM "%s"."PROJECTMETRICS"
          ORDER BY "ID"
         """,
         List.of("ID", "COLLECTION_LOGIC", "COLLECTION_LOGIC_CHANGED",

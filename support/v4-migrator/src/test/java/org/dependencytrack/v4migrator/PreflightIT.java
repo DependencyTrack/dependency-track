@@ -106,6 +106,64 @@ class PreflightIT {
     }
 
     @Test
+    void shouldFindV4MarkerInExplicitSourceSchema() {
+        // Create a PROJECT table in a non-default schema of the v5 target (used as stand-in
+        // source). With --source-schema pointing at it, the marker query must find it.
+        target.jdbi().useHandle(h -> {
+            h.execute("CREATE SCHEMA IF NOT EXISTS alt_v4");
+            h.execute("CREATE TABLE IF NOT EXISTS alt_v4.\"PROJECT\" (\"ID\" bigint)");
+        });
+        try {
+            final GlobalOptions opts = new GlobalOptions();
+            opts.targetUrl = target.jdbcUrl();
+            opts.targetUser = target.username();
+            opts.targetPass = target.password();
+            opts.stagingSchema = "dt_v4_migration_alt_schema";
+            opts.logLevel = "INFO";
+
+            final SourceOptions src = new SourceOptions();
+            src.sourceUrl = target.jdbcUrl();
+            src.sourceUser = target.username();
+            src.sourcePass = target.password();
+            src.sourceSchema = "alt_v4";
+
+            final PreflightResult result = new Preflight(target.jdbi(), src, opts).run();
+            assertThat(result.ok())
+                .as("preflight should find PROJECT under alt_v4; failures: %s", result.failures())
+                .isTrue();
+        } finally {
+            target.jdbi().useHandle(h -> h.execute("DROP SCHEMA alt_v4 CASCADE"));
+        }
+    }
+
+    @Test
+    void shouldFailMarkerWhenSourceSchemaHasNoV4Tables() {
+        // Empty schema → marker must miss → preflight fails with the expected message.
+        target.jdbi().useHandle(h -> h.execute("CREATE SCHEMA IF NOT EXISTS empty_v4"));
+        try {
+            final GlobalOptions opts = new GlobalOptions();
+            opts.targetUrl = target.jdbcUrl();
+            opts.targetUser = target.username();
+            opts.targetPass = target.password();
+            opts.stagingSchema = "dt_v4_migration_empty_schema";
+            opts.logLevel = "INFO";
+
+            final SourceOptions src = new SourceOptions();
+            src.sourceUrl = target.jdbcUrl();
+            src.sourceUser = target.username();
+            src.sourcePass = target.password();
+            src.sourceSchema = "empty_v4";
+
+            final PreflightResult result = new Preflight(target.jdbi(), src, opts).run();
+            assertThat(result.ok()).isFalse();
+            assertThat(result.failures())
+                .anyMatch(f -> f.contains("does not contain expected v4 table PROJECT"));
+        } finally {
+            target.jdbi().useHandle(h -> h.execute("DROP SCHEMA empty_v4 CASCADE"));
+        }
+    }
+
+    @Test
     void preflightRejectsPopulatedV5() {
         final GlobalOptions opts = new GlobalOptions();
         opts.targetUrl = target.jdbcUrl();

@@ -43,14 +43,9 @@ abstract class AbstractMigratorCommand implements Callable<Integer> {
     @Override
     public final Integer call() throws Exception {
         configureLogging(global.logLevel);
-        try {
-            global.validate();
-        } catch (final IllegalArgumentException e) {
-            System.err.println(e.getMessage());
-            return ExitCode.PREFLIGHT_FAILED;
-        }
+        final SourceOptions src = source();
         final Jdbi target = targetJdbi(global);
-        final PreflightResult preflight = new Preflight(target, source(), global, preflightMode()).run();
+        final PreflightResult preflight = new Preflight(target, src, global, preflightMode()).run();
         if (!preflight.ok()) {
             return preflight.exitCode();
         }

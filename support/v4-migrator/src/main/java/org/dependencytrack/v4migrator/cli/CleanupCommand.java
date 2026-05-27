@@ -41,8 +41,6 @@ public final class CleanupCommand implements Callable<Integer> {
         final LoggerContext ctx = (LoggerContext) LoggerFactory.getILoggerFactory();
         ctx.getLogger("org.dependencytrack.v4migrator").setLevel(Level.toLevel(global.logLevel, Level.INFO));
 
-        global.validate();
-
         if (global.dryRun) {
             System.out.println("Dry-run: would DROP SCHEMA IF EXISTS \"" + global.stagingSchema + "\" CASCADE");
             return ExitCode.OK;

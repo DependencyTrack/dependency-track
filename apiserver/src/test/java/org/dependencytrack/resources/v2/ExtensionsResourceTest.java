@@ -581,7 +581,7 @@ class ExtensionsResourceTest extends ResourceTest {
                 """);
     }
 
-    @ExtensionPointSpec(name = "dummy", required = false)
+    @ExtensionPointSpec(name = "dummy")
     private interface DummyExtensionPoint extends ExtensionPoint {
     }
 

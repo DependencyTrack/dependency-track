@@ -91,7 +91,6 @@ public class PluginManager implements Closeable {
     private final Map<Class<? extends ExtensionPoint>, Set<String>> extensionNamesByExtensionPointClass;
     private final Map<ExtensionIdentity, ExtensionFactory<?>> factoryByExtensionIdentity;
     private final Map<ExtensionIdentity, ConfigRegistry> configRegistryByExtensionIdentity;
-    private final Map<Class<? extends ExtensionPoint>, ExtensionFactory<?>> defaultFactoryByExtensionPointClass;
     private final Comparator<ExtensionFactory<?>> factoryComparator;
     private final AtomicBoolean closed = new AtomicBoolean();
     private final ReentrantLock lock;
@@ -116,7 +115,6 @@ public class PluginManager implements Closeable {
         this.extensionNamesByExtensionPointClass = new HashMap<>();
         this.factoryByExtensionIdentity = new HashMap<>();
         this.configRegistryByExtensionIdentity = new HashMap<>();
-        this.defaultFactoryByExtensionPointClass = new HashMap<>();
         this.factoryComparator = Comparator
                 .<ExtensionFactory<?>>comparingInt(ExtensionFactory::priority)
                 .thenComparing(ExtensionFactory::extensionName);
@@ -144,8 +142,7 @@ public class PluginManager implements Closeable {
                     extensionPointClass,
                     new ExtensionPointMetadata(
                             specAnnotation.name(),
-                            extensionPointClass,
-                            specAnnotation.required()));
+                            extensionPointClass));
         }
     }
 
@@ -155,18 +152,6 @@ public class PluginManager implements Closeable {
 
     public SequencedCollection<Plugin> getLoadedPlugins() {
         return List.copyOf(loadedPluginByClass.sequencedValues());
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T extends ExtensionPoint> T getExtension(Class<T> extensionPointClass) {
-        final ExtensionPointMetadata extensionPointMetadata = requireKnownExtensionPoint(extensionPointClass);
-
-        final ExtensionFactory<?> factory = defaultFactoryByExtensionPointClass.get(extensionPointClass);
-        if (factory == null) {
-            throw new NoSuchExtensionException(extensionPointMetadata.name());
-        }
-
-        return (T) requireNonNull(factory.create(), "extension must not be null");
     }
 
     @SuppressWarnings("unchecked")
@@ -180,18 +165,6 @@ public class PluginManager implements Closeable {
         }
 
         return (T) requireNonNull(factory.create(), "extension must not be null");
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T extends ExtensionPoint, U extends ExtensionFactory<T>> U getFactory(Class<T> extensionPointClass) {
-        final ExtensionPointMetadata extensionPointMetadata = requireKnownExtensionPoint(extensionPointClass);
-
-        final ExtensionFactory<?> factory = defaultFactoryByExtensionPointClass.get(extensionPointClass);
-        if (factory == null) {
-            throw new NoSuchExtensionException(extensionPointMetadata.name());
-        }
-
-        return (U) factory;
     }
 
     @SuppressWarnings("unchecked")
@@ -294,10 +267,6 @@ public class PluginManager implements Closeable {
                 loadedPluginByClass.put(plugin.getClass(), plugin);
             }
         }
-
-        determineDefaultExtensions();
-
-        assertRequiredExtensionPoints();
     }
 
     private void loadExtensionsForPlugin(Plugin plugin) {
@@ -447,52 +416,6 @@ public class PluginManager implements Closeable {
         pluginByExtensionIdentity.put(extensionIdentity, plugin);
     }
 
-    private void determineDefaultExtensions() {
-        for (final Class<? extends ExtensionPoint> extensionPointClass : extensionNamesByExtensionPointClass.keySet()) {
-            final ExtensionPointMetadata extensionPointMetadata = metadataByExtensionPointClass.get(extensionPointClass);
-            if (extensionPointMetadata == null) {
-                throw new IllegalStateException("""
-                        No specification exists for extension point %s; \
-                        This is likely a logic error in the plugin loading procedure\
-                        """.formatted(extensionPointClass.getName()));
-            }
-
-            try (var _ = MDC.putCloseable(MDC_EXTENSION_POINT, extensionPointClass.getName());
-                 var _ = MDC.putCloseable(MDC_EXTENSION_POINT_NAME, extensionPointMetadata.name())) {
-                LOGGER.debug("Determining default extension");
-
-                final SequencedCollection<? extends ExtensionFactory<?>> factories = getFactories(extensionPointClass);
-                if (factories == null || factories.isEmpty()) {
-                    LOGGER.warn("No extension available; Skipping");
-                    continue;
-                }
-
-                final String defaultExtensionName = config
-                        .getOptionalValue("dt.%s.default-extension".formatted(extensionPointMetadata.name()), String.class)
-                        .orElse(null);
-
-                final ExtensionFactory<?> extensionFactory;
-                if (defaultExtensionName == null) {
-                    LOGGER.debug("No default extension configured; Choosing based on priority");
-                    extensionFactory = factories.getFirst();
-                    LOGGER.debug("Chose extension %s (%s) with priority %d as default".formatted(
-                            extensionFactory.extensionName(),
-                            extensionFactory.extensionClass().getName(),
-                            extensionFactory.priority()));
-                } else {
-                    extensionFactory = factories.stream()
-                            .filter(factory -> factory.extensionName().equals(defaultExtensionName))
-                            .findFirst()
-                            .orElseThrow(() -> new NoSuchExtensionException(extensionPointMetadata.name(), defaultExtensionName));
-                    LOGGER.debug("Using extension %s (%s) as default".formatted(
-                            extensionFactory.extensionName(), extensionFactory.extensionClass().getName()));
-                }
-
-                defaultFactoryByExtensionPointClass.put(extensionPointClass, extensionFactory);
-            }
-        }
-    }
-
     private ExtensionPointMetadata requireKnownExtensionPoint(Class<? extends ExtensionPoint> extensionPointClass) {
         final ExtensionPointMetadata metadata = metadataByExtensionPointClass.get(extensionPointClass);
         if (metadata == null) {
@@ -514,22 +437,6 @@ public class PluginManager implements Closeable {
                         concreteExtensionClass.getName()));
     }
 
-    private void assertRequiredExtensionPoints() {
-        for (final ExtensionPointMetadata metadata : metadataByExtensionPointClass.values()) {
-            if (!metadata.required()) {
-                continue;
-            }
-
-            try {
-                getFactory(metadata.clazz());
-            } catch (NoSuchExtensionException e) {
-                throw new IllegalStateException(
-                        "Extension point %s (%s) is required, but no extension is enabled".formatted(
-                                metadata.name(), metadata.clazz().getName()));
-            }
-        }
-    }
-
     @Override
     public void close() {
         if (!closed.compareAndSet(false, true)) {
@@ -539,7 +446,6 @@ public class PluginManager implements Closeable {
         lock.lock();
         try {
             unloadPluginsLocked();
-            defaultFactoryByExtensionPointClass.clear();
             configRegistryByExtensionIdentity.clear();
             factoryByExtensionIdentity.clear();
             extensionNamesByExtensionPointClass.clear();

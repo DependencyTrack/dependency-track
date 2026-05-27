@@ -21,7 +21,7 @@ package org.dependencytrack.plugin.runtime;
 import org.dependencytrack.plugin.api.ExtensionPoint;
 import org.dependencytrack.plugin.api.ExtensionPointSpec;
 
-@ExtensionPointSpec(name = "test", required = false)
+@ExtensionPointSpec(name = "test")
 public interface TestExtensionPoint extends ExtensionPoint {
 
     String test();

@@ -31,7 +31,7 @@ import org.dependencytrack.plugin.api.ExtensionPointSpec;
  *
  * @since 5.0.0
  */
-@ExtensionPointSpec(name = "vuln-analyzer", required = false)
+@ExtensionPointSpec(name = "vuln-analyzer")
 public interface VulnAnalyzer extends ExtensionPoint {
 
     /**

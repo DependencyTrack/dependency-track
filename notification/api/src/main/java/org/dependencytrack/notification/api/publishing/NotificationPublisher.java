@@ -27,7 +27,7 @@ import java.io.IOException;
 /**
  * @since 5.0.0
  */
-@ExtensionPointSpec(name = "notification-publisher", required = false)
+@ExtensionPointSpec(name = "notification-publisher")
 public interface NotificationPublisher extends ExtensionPoint {
 
     /**

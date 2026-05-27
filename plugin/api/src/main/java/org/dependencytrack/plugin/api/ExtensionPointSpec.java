@@ -36,14 +36,8 @@ public @interface ExtensionPointSpec {
 
     /**
      * @return The name of the extension point.
-     * Can contain lowercase letters, numbers, and periods.
+     * Can contain lowercase letters, numbers, and hyphens.
      */
     String name();
-
-    /**
-     * @return Whether the extension point is required.
-     * Required extension points must have at least one active extension.
-     */
-    boolean required();
 
 }

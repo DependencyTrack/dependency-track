@@ -42,6 +42,7 @@ import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.util.PurlUtil;
 import org.dependencytrack.util.VulnerabilityUtil;
+import org.jspecify.annotations.Nullable;
 import org.metaeffekt.core.security.cvss.CvssVector;
 import org.metaeffekt.core.security.cvss.processor.BakedCvssVectorScores;
 import org.slf4j.Logger;
@@ -254,7 +255,9 @@ public final class BovModelConverter {
 
         if (isAliasSyncEnabled && !cdxVuln.getReferencesList().isEmpty()) {
             vuln.setAliases(cdxVuln.getReferencesList().stream()
-                    .map(alias -> convert(cdxVuln, alias)).toList());
+                    .map(alias -> convert(cdxVuln, alias))
+                    .filter(Objects::nonNull)
+                    .toList());
         }
 
         // EPSS is an additional enrichment that no scanner currently provides.
@@ -301,44 +304,62 @@ public final class BovModelConverter {
                 .toList();
     }
 
-    private static VulnerabilityAlias convert(final org.cyclonedx.proto.v1_7.Vulnerability cycloneVuln,
-                                              final VulnerabilityReference cycloneAlias) {
+    private static @Nullable VulnerabilityAlias convert(
+            org.cyclonedx.proto.v1_7.Vulnerability cycloneVuln,
+            VulnerabilityReference cycloneAlias) {
+        final var vulnSource = Vulnerability.Source.ofName(cycloneVuln.getSource().getName());
+        if (vulnSource == null || vulnSource == Vulnerability.Source.UNKNOWN) {
+            return null;
+        }
+
+        final var aliasSource = Vulnerability.Source.ofName(cycloneAlias.getSource().getName());
+        if (aliasSource == null || aliasSource == Vulnerability.Source.UNKNOWN) {
+            return null;
+        }
+
         final var alias = new VulnerabilityAlias();
-        switch (cycloneVuln.getSource().getName()) {
-            case "GITHUB" -> alias.setGhsaId(cycloneVuln.getId());
-            case "INTERNAL" -> alias.setInternalId(cycloneVuln.getId());
-            case "NVD" -> alias.setCveId(cycloneVuln.getId());
-            case "OSSINDEX" -> alias.setSonatypeId(cycloneVuln.getId());
-            case "OSV" -> alias.setOsvId(cycloneVuln.getId());
-            case "SNYK" -> alias.setSnykId(cycloneVuln.getId());
-            case "VULNDB" -> alias.setVulnDbId(cycloneVuln.getId());
+        switch (vulnSource) {
+            case GITHUB -> alias.setGhsaId(cycloneVuln.getId());
+            case INTERNAL -> alias.setInternalId(cycloneVuln.getId());
+            case NVD -> alias.setCveId(cycloneVuln.getId());
+            case OSSINDEX -> alias.setSonatypeId(cycloneVuln.getId());
+            case OSV -> alias.setOsvId(cycloneVuln.getId());
+            case SNYK -> alias.setSnykId(cycloneVuln.getId());
+            case VULNDB -> alias.setVulnDbId(cycloneVuln.getId());
             // Source of the vulnerability itself has been validated before,
             // so this scenario is highly unlikely to ever happen. Including
             // it here to make linters happy.
-            default ->
-                    throw new IllegalArgumentException("Invalid vulnerability source %s".formatted(cycloneVuln.getSource().getName()));
+            default -> throw new IllegalArgumentException(
+                    "Invalid vulnerability source %s".formatted(vulnSource));
         }
-        switch (cycloneAlias.getSource().getName()) {
-            case "GITHUB" -> alias.setGhsaId(cycloneAlias.getId());
-            case "INTERNAL" -> alias.setInternalId(cycloneAlias.getId());
-            case "NVD" -> alias.setCveId(cycloneAlias.getId());
-            case "OSSINDEX" -> alias.setSonatypeId(cycloneAlias.getId());
-            case "OSV" -> alias.setOsvId(cycloneAlias.getId());
-            case "SNYK" -> alias.setSnykId(cycloneAlias.getId());
-            case "VULNDB" -> alias.setVulnDbId(cycloneAlias.getId());
-            default -> throw new IllegalArgumentException("Invalid source %s for alias %s"
-                    .formatted(cycloneAlias.getSource().getName(), cycloneAlias.getId()));
+
+        switch (aliasSource) {
+            case GITHUB -> alias.setGhsaId(cycloneAlias.getId());
+            case INTERNAL -> alias.setInternalId(cycloneAlias.getId());
+            case NVD -> alias.setCveId(cycloneAlias.getId());
+            case OSSINDEX -> alias.setSonatypeId(cycloneAlias.getId());
+            case OSV -> alias.setOsvId(cycloneAlias.getId());
+            case SNYK -> alias.setSnykId(cycloneAlias.getId());
+            case VULNDB -> alias.setVulnDbId(cycloneAlias.getId());
+            default -> throw new IllegalArgumentException(
+                    "Invalid source %s for alias %s".formatted(aliasSource, cycloneAlias.getId()));
         }
+
         return alias;
     }
 
-    public static Vulnerability.Source extractSource(String vulnId, Source source) {
-        final String sourceId = vulnId.split("-")[0];
-        return switch (sourceId) {
-            case "GHSA" -> Vulnerability.Source.GITHUB;
-            case "CVE" -> Vulnerability.Source.NVD;
-            default -> source != null ? Vulnerability.Source.valueOf(source.getName()) : Vulnerability.Source.INTERNAL;
-        };
+    static Vulnerability.Source extractSource(String vulnId, Source source) {
+        var resolvedSource = Vulnerability.Source.ofName(source.getName());
+        if (resolvedSource != null) {
+            return resolvedSource;
+        }
+
+        resolvedSource = Vulnerability.Source.ofVulnId(vulnId);
+        if (resolvedSource != null) {
+            return resolvedSource;
+        }
+
+        return Vulnerability.Source.UNKNOWN;
     }
 
     /**

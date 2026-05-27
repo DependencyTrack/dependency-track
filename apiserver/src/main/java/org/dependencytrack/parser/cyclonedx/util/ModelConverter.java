@@ -1135,24 +1135,12 @@ public class ModelConverter {
         org.cyclonedx.model.vulnerability.Vulnerability.Source cdxSource = new org.cyclonedx.model.vulnerability.Vulnerability.Source();
         cdxSource.setName(vulnSource.name());
         switch (vulnSource) {
-            case NVD:
-                cdxSource.setUrl("https://nvd.nist.gov/");
-                break;
-            case NPM:
-                cdxSource.setUrl("https://www.npmjs.com/");
-                break;
-            case GITHUB:
-                cdxSource.setUrl("https://github.com/advisories");
-                break;
-            case VULNDB:
-                cdxSource.setUrl("https://vulndb.cyberriskanalytics.com/");
-                break;
-            case OSSINDEX:
-                cdxSource.setUrl("https://ossindex.sonatype.org/");
-                break;
-            case RETIREJS:
-                cdxSource.setUrl("https://github.com/RetireJS/retire.js");
-                break;
+            case GITHUB -> cdxSource.setUrl("https://github.com/advisories");
+            case NVD -> cdxSource.setUrl("https://nvd.nist.gov/");
+            case OSSINDEX -> cdxSource.setUrl("https://ossindex.sonatype.org/");
+            case OSV -> cdxSource.setUrl("https://osv.dev/");
+            case SNYK -> cdxSource.setUrl("https://security.snyk.io/");
+            case VULNDB -> cdxSource.setUrl("https://vulndb.cyberriskanalytics.com/");
         }
         return cdxSource;
     }

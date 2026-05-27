@@ -92,6 +92,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.protoConverter;
 import static org.dependencytrack.dex.api.payload.PayloadConverters.voidConverter;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
@@ -1265,6 +1266,61 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         assertThat(getAllAliasGroups()).isEmpty();
     }
 
+    @Test
+    void shouldHandleUnknownVulnSourceAndSkipAliasAssertions() {
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setGroup("com.fasterxml.jackson.core");
+        component.setName("jackson-databind");
+        component.setVersion("2.9.8");
+        component.setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.9.8");
+        qm.persist(component);
+
+        mockAnalyzerFunction.set(bom -> Bom.newBuilder()
+                .addVulnerabilities(
+                        org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
+                                .setId("FOO-1")
+                                .setSource(Source.newBuilder().setName("FOO"))
+                                .addAffects(VulnerabilityAffects.newBuilder().setRef(bom.getComponents(0).getBomRef()))
+                                .addReferences(VulnerabilityReference.newBuilder()
+                                        .setId("GHSA-aaaa-aaaa-aaaa")
+                                        .setSource(Source.newBuilder().setName("GITHUB"))))
+                .addVulnerabilities(
+                        org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
+                                .setId("CVE-2024-9999")
+                                .setSource(Source.newBuilder().setName("NVD"))
+                                .addAffects(VulnerabilityAffects.newBuilder().setRef(bom.getComponents(0).getBomRef()))
+                                .addReferences(VulnerabilityReference.newBuilder()
+                                        .setId("FOO-9")
+                                        .setSource(Source.newBuilder().setName("FOO")))
+                                .addReferences(VulnerabilityReference.newBuilder()
+                                        .setId("GHSA-bbbb-bbbb-bbbb")
+                                        .setSource(Source.newBuilder().setName("GITHUB"))))
+                .build());
+
+        final UUID runId = workflowTest.getEngine().createRun(
+                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+                        .withArgument(VulnAnalysisWorkflowArg.newBuilder()
+                                .setProjectUuid(project.getUuid().toString())
+                                .build()));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        assertThat(qm.getVulnerabilities(project, true))
+                .extracting(Vulnerability::getVulnId, Vulnerability::getSource)
+                .containsExactlyInAnyOrder(
+                        tuple("FOO-1", Vulnerability.Source.UNKNOWN.name()),
+                        tuple("CVE-2024-9999", Vulnerability.Source.NVD.name()));
+
+        assertThat(getAllAliasGroups()).satisfiesExactly(group ->
+                assertThat(group).containsExactlyInAnyOrder(
+                        new VulnerabilityKey("CVE-2024-9999", "NVD"),
+                        new VulnerabilityKey("GHSA-bbbb-bbbb-bbbb", "GITHUB")));
+    }
+
     private record AliasRow(UUID groupId, String source, String vulnId) {
     }
 
@@ -1276,7 +1332,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                              , "VULN_ID"
                           FROM "VULNERABILITY_ALIAS"
                         """)
-                .map((rs, ctx) -> new AliasRow(
+                .map((rs, _) -> new AliasRow(
                         rs.getObject("group_id", UUID.class),
                         rs.getString("source"),
                         rs.getString("vuln_id")))

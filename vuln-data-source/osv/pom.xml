@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>vuln-data-source-parent</artifactId>
-        <version>5.7.0-alpha.9-SNAPSHOT</version>
+        <version>5.7.0-alpha.9</version>
     </parent>
 
     <artifactId>vuln-data-source-osv</artifactId>

@@ -55,17 +55,20 @@ final class MssqlExtractor implements SourceExtractor {
     private static final Calendar UTC = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
     private final SourceOptions source;
+    private final String sourceSchema;
 
-    MssqlExtractor(final SourceOptions source) {
+    MssqlExtractor(final SourceOptions source, final String sourceSchema) {
         this.source = source;
+        this.sourceSchema = sourceSchema;
     }
 
     @Override
     public long extract(final TableMigration table, final String stagingSchema,
                         final Jdbi target, final long sampleLimit) throws Exception {
+        final String renderedSelect = table.extractSelect().formatted(sourceSchema);
         final String selectSql = sampleLimit == Long.MAX_VALUE
-            ? table.extractSelect()
-            : applyMssqlTopLimit(table.extractSelect(), sampleLimit);
+            ? renderedSelect
+            : applyMssqlTopLimit(renderedSelect, sampleLimit);
 
         try (Connection src = Connections.openSource(source)) {
             src.setAutoCommit(false);

@@ -38,9 +38,10 @@ public interface SourceExtractor {
 
     static SourceExtractor forSource(final SourceOptions source) {
         final SourceFlavor flavor = SourceFlavor.fromJdbcUrl(source.sourceUrl);
+        final String schema = source.sourceSchema != null ? source.sourceSchema : flavor.defaultSchema();
         return switch (flavor) {
-            case POSTGRESQL -> new PostgresExtractor(source);
-            case MSSQL -> new MssqlExtractor(source);
+            case POSTGRESQL -> new PostgresExtractor(source, schema);
+            case MSSQL -> new MssqlExtractor(source, schema);
         };
     }
 }

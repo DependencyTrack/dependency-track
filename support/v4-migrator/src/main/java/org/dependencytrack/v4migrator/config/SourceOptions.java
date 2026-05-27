@@ -41,4 +41,11 @@ public final class SourceOptions {
         arity = "0..1")
     @Nullable
     public String sourcePass;
+
+    @Option(names = "--source-schema",
+        description = "Schema name where v4 tables live. Defaults to the flavor's default "
+            + "(public for PostgreSQL, dbo for MSSQL).",
+        converter = SchemaNameConverter.class)
+    @Nullable
+    public String sourceSchema;
 }

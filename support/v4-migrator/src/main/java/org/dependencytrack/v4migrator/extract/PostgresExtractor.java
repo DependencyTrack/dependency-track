@@ -42,9 +42,11 @@ import java.util.concurrent.TimeUnit;
 final class PostgresExtractor implements SourceExtractor {
 
     private final SourceOptions source;
+    private final String sourceSchema;
 
-    PostgresExtractor(final SourceOptions source) {
+    PostgresExtractor(final SourceOptions source, final String sourceSchema) {
         this.source = source;
+        this.sourceSchema = sourceSchema;
     }
 
     @Override
@@ -59,9 +61,10 @@ final class PostgresExtractor implements SourceExtractor {
     private long streamCopy(final Connection src, final TableMigration table,
                             final String stagingSchema, final Jdbi target,
                             final long sampleLimit) throws Exception {
+        final String renderedSelect = table.extractSelect().formatted(sourceSchema);
         final String selectSql = sampleLimit == Long.MAX_VALUE
-            ? table.extractSelect()
-            : table.extractSelect() + " LIMIT " + sampleLimit;
+            ? renderedSelect
+            : renderedSelect + " LIMIT " + sampleLimit;
         final String srcCopySql = "COPY (" + selectSql + ") TO STDOUT WITH (FORMAT BINARY)";
         final String quotedCols = table.extractColumns().stream()
             .map(c -> "\"" + c + "\"")

@@ -86,7 +86,7 @@ import java.util.Iterator;
  * @see <a href="https://cyclonedx.org/capabilities/bov/">CycloneDX BOV</a>
  * @since 5.0.0
  */
-@ExtensionPointSpec(name = "vuln-data-source", required = false)
+@ExtensionPointSpec(name = "vuln-data-source")
 public interface VulnDataSource extends ExtensionPoint, Iterator<Bom> {
 
     /**

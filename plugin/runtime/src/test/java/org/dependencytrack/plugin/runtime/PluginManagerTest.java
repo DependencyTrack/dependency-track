@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.plugin.runtime;
 
-import io.smallrye.config.SmallRyeConfigBuilder;
 import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.plugin.api.ExtensionFactory;
 import org.dependencytrack.plugin.api.ExtensionPoint;
@@ -71,32 +70,6 @@ class PluginManagerTest extends AbstractDatabaseTest {
     }
 
     @Test
-    void testGetExtensionWithConfig() {
-        final var config = new SmallRyeConfigBuilder()
-                .withDefaultValue("dt.test.dummy.bar", "qux")
-                .build();
-
-        try (final var pluginManager = new PluginManager(
-                config, new NoopCacheManager(), secretName -> null,
-                jdbi, HttpClient.newHttpClient(),
-                List.of(TestExtensionPoint.class))) {
-            pluginManager.loadPlugins(List.of(new DummyPlugin()));
-
-            final TestExtensionPoint extension =
-                    pluginManager.getExtension(TestExtensionPoint.class);
-            assertThat(extension).isNotNull();
-            assertThat(extension.test()).isEqualTo("qux");
-        }
-    }
-
-    @Test
-    void testGetExtensionWithImplementationClass() {
-        assertThatExceptionOfType(NoSuchExtensionPointException.class)
-                .isThrownBy(() -> pluginManager.getExtension(DummyTestExtension.class))
-                .withMessage("org.dependencytrack.plugin.runtime.DummyTestExtension is not a known extension point");
-    }
-
-    @Test
     void testGetExtensionByName() {
         final TestExtensionPoint extension =
                 pluginManager.getExtension(TestExtensionPoint.class, "dummy");
@@ -108,20 +81,6 @@ class PluginManagerTest extends AbstractDatabaseTest {
         assertThatExceptionOfType(NoSuchExtensionException.class)
                 .isThrownBy(() -> pluginManager.getExtension(TestExtensionPoint.class, "doesNotExist"))
                 .withMessage("No extension named 'doesNotExist' exists for the extension point 'test'");
-    }
-
-    @Test
-    void testGetFactory() {
-        final ExtensionFactory<TestExtensionPoint> factory =
-                pluginManager.getFactory(TestExtensionPoint.class);
-        assertThat(factory).isExactlyInstanceOf(DummyTestExtensionFactory.class);
-    }
-
-    @Test
-    void testGetFactoryForUnknownExtensionPoint() {
-        assertThatExceptionOfType(NoSuchExtensionPointException.class)
-                .isThrownBy(() -> pluginManager.getFactory(UnknownExtensionPoint.class))
-                .withMessage("org.dependencytrack.plugin.runtime.PluginManagerTest$UnknownExtensionPoint is not a known extension point");
     }
 
     @Test
@@ -162,22 +121,6 @@ class PluginManagerTest extends AbstractDatabaseTest {
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> pluginManager.loadPlugins(List.of(new DummyPlugin())))
                 .withMessage("Plugins were already loaded; Unload them first");
-    }
-
-    @Test
-    void testDefaultExtensionNotLoaded() {
-        final var config = new SmallRyeConfigBuilder()
-                .withDefaultValue("dt.test.default-extension", "does.not.exist")
-                .build();
-
-        try (final var pluginManager = new PluginManager(
-                config, new NoopCacheManager(), secretName -> null,
-                jdbi, HttpClient.newHttpClient(),
-                List.of(TestExtensionPoint.class))) {
-            assertThatExceptionOfType(NoSuchExtensionException.class)
-                    .isThrownBy(() -> pluginManager.loadPlugins(List.of(new DummyPlugin())))
-                    .withMessage("No extension named 'does.not.exist' exists for the extension point 'test'");
-        }
     }
 
 }

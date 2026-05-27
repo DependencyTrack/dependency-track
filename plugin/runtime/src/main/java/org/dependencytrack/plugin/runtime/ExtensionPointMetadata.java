@@ -25,6 +25,5 @@ import org.dependencytrack.plugin.api.ExtensionPoint;
  */
 public record ExtensionPointMetadata(
         String name,
-        Class<? extends ExtensionPoint> clazz,
-        boolean required) {
+        Class<? extends ExtensionPoint> clazz) {
 }

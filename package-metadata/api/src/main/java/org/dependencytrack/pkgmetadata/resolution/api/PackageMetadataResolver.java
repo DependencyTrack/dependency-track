@@ -28,7 +28,7 @@ import org.jspecify.annotations.Nullable;
  *
  * @since 5.0.0
  */
-@ExtensionPointSpec(name = "package-metadata-resolver", required = false)
+@ExtensionPointSpec(name = "package-metadata-resolver")
 public interface PackageMetadataResolver extends ExtensionPoint {
 
     /**

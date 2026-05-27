@@ -29,7 +29,7 @@ public interface ExtensionFactory<T extends ExtensionPoint> extends Closeable {
     int PRIORITY_LOWEST = Integer.MAX_VALUE;
 
     /**
-     * @return Name of the extension. Can contain lowercase letters, numbers, and periods.
+     * @return Name of the extension. Can contain lowercase letters, numbers, and hyphens.
      */
     String extensionName();
 

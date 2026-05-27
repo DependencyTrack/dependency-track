@@ -99,7 +99,9 @@ import java.util.UUID;
                 @Persistent(name = "tags"),
                 @Persistent(name = "accessTeams"),
                 @Persistent(name = "metadata"),
-                @Persistent(name = "isLatest")
+                @Persistent(name = "isLatest"),
+                @Persistent(name = "collectionLogic"),
+                @Persistent(name = "collectionTag")
         }),
         @FetchGroup(name = "METADATA", members = {
                 @Persistent(name = "metadata")

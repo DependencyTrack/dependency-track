@@ -1861,6 +1861,50 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void getProjectByUuidWithCollectionTagTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN_WITH_TAG);
+        project.setCollectionTag(qm.createTag("foo"));
+        qm.persist(project);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "version": "1.0.0",
+                          "uuid": "${json-unit.matches:projectUuid}",
+                          "children": [],
+                          "tags": [],
+                          "isLatest": false,
+                          "active":true,
+                          "collectionLogic": "AGGREGATE_DIRECT_CHILDREN_WITH_TAG",
+                          "collectionTag": {
+                            "name": "foo"
+                          },
+                          "versions": [
+                            {
+                              "uuid": "${json-unit.matches:projectUuid}",
+                              "version": "1.0.0",
+                              "active": true
+                            }
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
     void getProjectByUuidNotPermittedTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
         enablePortfolioAccessControl();

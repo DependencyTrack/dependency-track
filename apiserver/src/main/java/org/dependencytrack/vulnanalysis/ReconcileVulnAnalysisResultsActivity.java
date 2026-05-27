@@ -73,6 +73,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNullElse;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_ANALYZER_NAME;
 import static org.dependencytrack.notification.api.NotificationFactory.createAnalyzerErrorNotification;
@@ -219,14 +220,18 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             Map<VulnerabilityKey, ReportedVulnerability> reportedVulnByVulnKey,
             Map<String, Map<VulnerabilityKey, Set<VulnerabilityKey>>> aliasAssertionsByAnalyzer) {
         for (final org.cyclonedx.proto.v1_7.Vulnerability vdrVuln : vdr.getVulnerabilitiesList()) {
-            final Vulnerability.Source source =
-                    BovModelConverter.extractSource(vdrVuln.getId(), vdrVuln.getSource());
+            var source = Vulnerability.Source.ofName(vdrVuln.getSource().getName());
+            if (source == null) {
+                source = requireNonNullElse(
+                        Vulnerability.Source.ofVulnId(vdrVuln.getId()),
+                        Vulnerability.Source.UNKNOWN);
+            }
             final var vulnKey = new VulnerabilityKey(vdrVuln.getId(), source);
 
             final Long internalVulnId = extractInternalVulnId(vdrVuln);
             final String referenceUrl = extractReferenceUrl(vdrVuln);
 
-            if (internalVulnId == null) {
+            if (internalVulnId == null && source != Vulnerability.Source.UNKNOWN) {
                 // Ensure that each vulnerability reported by an analyzer has alias assertions,
                 // even if the assertions set is empty. This is the only way we can detect whether
                 // a previously reported alias has been removed.
@@ -234,19 +239,22 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                 // Note that this does not apply to the internal analyzer, since it can't report
                 // aliases we don't already have in the database.
                 final Map<VulnerabilityKey, Set<VulnerabilityKey>> analyzerAssertions =
-                        aliasAssertionsByAnalyzer.computeIfAbsent(analyzerName, k -> new HashMap<>());
-                analyzerAssertions.computeIfAbsent(vulnKey, k -> new HashSet<>());
+                        aliasAssertionsByAnalyzer.computeIfAbsent(analyzerName, _ -> new HashMap<>());
+                analyzerAssertions.computeIfAbsent(vulnKey, _ -> new HashSet<>());
 
                 for (final VulnerabilityReference vdrVulnRef : vdrVuln.getReferencesList()) {
-                    try {
-                        final Vulnerability.Source refSource =
-                                BovModelConverter.extractSource(vdrVulnRef.getId(), vdrVulnRef.getSource());
-                        final var aliasKey = new VulnerabilityKey(vdrVulnRef.getId(), refSource);
-                        if (!aliasKey.equals(vulnKey)) {
-                            analyzerAssertions.get(vulnKey).add(aliasKey);
-                        }
-                    } catch (IllegalArgumentException e) {
+                    var refSource = Vulnerability.Source.ofName(vdrVulnRef.getSource().getName());
+                    if (refSource == null) {
+                        refSource = Vulnerability.Source.ofVulnId(vdrVulnRef.getId());
+                    }
+                    if (refSource == null || refSource == Vulnerability.Source.UNKNOWN) {
                         LOGGER.debug("Skipping alias reference with unknown source for vulnerability '{}'", vulnKey);
+                        continue;
+                    }
+
+                    final var aliasKey = new VulnerabilityKey(vdrVulnRef.getId(), refSource);
+                    if (!aliasKey.equals(vulnKey)) {
+                        analyzerAssertions.get(vulnKey).add(aliasKey);
                     }
                 }
             }
@@ -858,10 +866,14 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
     private static org.dependencytrack.notification.proto.v1.AnalysisTrigger convertAnalysisTrigger(AnalysisTrigger trigger) {
         return switch (trigger) {
-            case ANALYSIS_TRIGGER_BOM_UPLOAD -> org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD;
-            case ANALYSIS_TRIGGER_SCHEDULE -> org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_SCHEDULE;
-            case ANALYSIS_TRIGGER_MANUAL -> org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_MANUAL;
-            case ANALYSIS_TRIGGER_UNSPECIFIED -> org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_UNSPECIFIED;
+            case ANALYSIS_TRIGGER_BOM_UPLOAD ->
+                    org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD;
+            case ANALYSIS_TRIGGER_SCHEDULE ->
+                    org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_SCHEDULE;
+            case ANALYSIS_TRIGGER_MANUAL ->
+                    org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_MANUAL;
+            case ANALYSIS_TRIGGER_UNSPECIFIED ->
+                    org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_UNSPECIFIED;
             case UNRECOGNIZED -> org.dependencytrack.notification.proto.v1.AnalysisTrigger.UNRECOGNIZED;
         };
     }

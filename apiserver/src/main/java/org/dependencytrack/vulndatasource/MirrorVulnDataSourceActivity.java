@@ -82,10 +82,8 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             throw new TerminalApplicationFailureException("No argument or data source name provided");
         }
 
-        final Vulnerability.Source source;
-        try {
-            source = Vulnerability.Source.valueOf(arg.getSourceName());
-        } catch (IllegalArgumentException e) {
+        final var source = Vulnerability.Source.ofName(arg.getSourceName());
+        if (source == null) {
             throw new TerminalApplicationFailureException(
                     "Invalid source name: %s".formatted(arg.getSourceName()));
         }

@@ -30,6 +30,9 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -583,6 +586,73 @@ class BovModelConverterTest {
                     .addComponents(component)
                     .addVulnerabilities(vuln)
                     .build();
+        }
+
+    }
+
+    @Nested
+    class ExtractSourceTest {
+
+        @ParameterizedTest
+        @CsvSource({
+                "NVD,      NVD",
+                "nvd,      NVD",
+                "GITHUB,   GITHUB",
+                "OSV,      OSV",
+                "SNYK,     SNYK",
+                "OSSINDEX, OSSINDEX",
+                "VULNDB,   VULNDB",
+                "INTERNAL, INTERNAL",
+                "UNKNOWN,  UNKNOWN"
+        })
+        void shouldPreferKnownSourceNameOverVulnId(String sourceName, Vulnerability.Source expected) {
+            final var source = Source.newBuilder().setName(sourceName).build();
+            assertThat(BovModelConverter.extractSource("CVE-2024-1234", source)).isEqualTo(expected);
+        }
+
+        @ParameterizedTest
+        @CsvSource({
+                "CVE-2024-12345,   NVD",
+                "cve-2024-12345,   NVD",
+                "GHSA-xxxx-yyyy-zzzz, GITHUB",
+                "INTERNAL-foo,     INTERNAL",
+                "OSV-2024-1,       OSV",
+                "SNYK-JS-FOO-123,  SNYK"
+        })
+        void shouldInferSourceFromVulnIdWhenSourceNameIsUnrecognized(String vulnId, Vulnerability.Source expected) {
+            final var source = Source.newBuilder().setName("NOT_A_REAL_SOURCE").build();
+            assertThat(BovModelConverter.extractSource(vulnId, source)).isEqualTo(expected);
+        }
+
+        @Test
+        void shouldInferSourceFromVulnIdWhenSourceNameIsAbsent() {
+            final var source = Source.newBuilder().build();
+            assertThat(BovModelConverter.extractSource("CVE-2024-1234", source))
+                    .isEqualTo(Vulnerability.Source.NVD);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {
+                "PYSEC-2024-1",
+                "RUSTSEC-2024-0001",
+                "GO-2024-0001",
+                "MAL-2024-1",
+                "RHSA-2024:1234",
+                "no-recognizable-prefix",
+                "CVE-2024-123",
+                ""
+        })
+        void shouldFallBackToUnknownWhenNeitherSourceNameNorVulnIdMatch(String vulnId) {
+            final var source = Source.newBuilder().setName("NOT_A_REAL_SOURCE").build();
+            assertThat(BovModelConverter.extractSource(vulnId, source))
+                    .isEqualTo(Vulnerability.Source.UNKNOWN);
+        }
+
+        @Test
+        void shouldFallBackToUnknownWhenBothSourceNameAndVulnIdAreAbsent() {
+            final var source = Source.newBuilder().build();
+            assertThat(BovModelConverter.extractSource("", source))
+                    .isEqualTo(Vulnerability.Source.UNKNOWN);
         }
 
     }

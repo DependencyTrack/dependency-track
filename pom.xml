@@ -22,7 +22,7 @@
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track-parent</artifactId>
     <packaging>pom</packaging>
-    <version>5.7.0-alpha.10-SNAPSHOT</version>
+    <version>5.0.0-rc.1-SNAPSHOT</version>
 
     <modules>
         <module>common</module>
@@ -75,7 +75,17 @@
             <name>Steve Springett</name>
             <email>Steve.Springett@owasp.org</email>
             <organization>OWASP</organization>
-            <organizationUrl>http://www.owasp.org/</organizationUrl>
+            <organizationUrl>https://owasp.org/</organizationUrl>
+            <roles>
+                <role>Architect</role>
+                <role>Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Niklas Düster</name>
+            <email>niklas.duester@owasp.org</email>
+            <organization>OWASP</organization>
+            <organizationUrl>https://owasp.org/</organizationUrl>
             <roles>
                 <role>Architect</role>
                 <role>Developer</role>
@@ -92,12 +102,12 @@
 
     <issueManagement>
         <system>github</system>
-        <url>https://github.com/DependencyTrack/hyades/issues</url>
+        <url>https://github.com/DependencyTrack/dependency-track/issues</url>
     </issueManagement>
 
     <ciManagement>
         <system>github-actions</system>
-        <url>https://github.com/DependencyTrack/hyades-apiserver/actions</url>
+        <url>https://github.com/DependencyTrack/dependency-track/actions</url>
     </ciManagement>
 
     <properties>
@@ -170,9 +180,9 @@
         <unitTestLogLevel>WARN</unitTestLogLevel>
 
         <!-- Default SCM Properties -->
-        <scm.connection>scm:git:git@github.com:DependencyTrack/hyades-apiserver.git</scm.connection>
-        <scm.developer.connection>scm:git:git@github.com:DependencyTrack/hyades-apiserver.git</scm.developer.connection>
-        <scm.url>https://github.com/DependencyTrack/hyades-apiserver.git</scm.url>
+        <scm.connection>scm:git:git@github.com:DependencyTrack/dependency-track.git</scm.connection>
+        <scm.developer.connection>scm:git:git@github.com:DependencyTrack/dependency-track.git</scm.developer.connection>
+        <scm.url>https://github.com/DependencyTrack/dependency-track.git</scm.url>
     </properties>
 
     <dependencyManagement>

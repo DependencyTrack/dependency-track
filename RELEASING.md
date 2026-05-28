@@ -27,4 +27,4 @@ To release a prerelease such as `5.7.0-rc.1`:
    * **Release version**: Enter the prerelease version (e.g. `5.7.0-rc.1`).
    * **Development version**: Leave empty (in which case it will be bumped to `5.7.0-rc.2-SNAPSHOT`), or explicitly set to `5.7.0-SNAPSHOT`.
 
-[Release CI]: https://github.com/DependencyTrack/hyades-apiserver/actions/workflows/ci-release.yaml
+[Release CI]: https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-release.yaml

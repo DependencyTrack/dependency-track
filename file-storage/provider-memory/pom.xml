@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>file-storage-parent</artifactId>
-        <version>5.7.0-alpha.10-SNAPSHOT</version>
+        <version>5.0.0-rc.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>file-storage-provider-memory</artifactId>

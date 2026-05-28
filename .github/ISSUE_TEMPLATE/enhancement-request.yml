@@ -14,7 +14,7 @@ body:
       **Please do not ask questions here!**
       If you'd like to bounce ideas off or wonder whether what you want makes sense,
       you can reach out to maintainers and the broader community via various channels.
-      Refer to our [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/master/CONTRIBUTING.md#asking-questions) to find out where and how to ask questions.
+      Refer to our [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/main/CONTRIBUTING.md#asking-questions) to find out where and how to ask questions.
 - type: textarea
   id: behavior-current
   attributes:
@@ -40,7 +40,7 @@ body:
   attributes:
     label: Checklist
     options:
-    - label: I have read and understand the [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/master/CONTRIBUTING.md#filing-issues)
+    - label: I have read and understand the [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/main/CONTRIBUTING.md#filing-issues)
       required: true
     - label: I have checked the [existing issues](https://github.com/DependencyTrack/dependency-track/issues) for whether this enhancement was already requested
       required: true

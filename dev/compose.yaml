@@ -31,7 +31,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: "ghcr.io/dependencytrack/hyades-frontend:${DT_FRONTEND_VERSION:-snapshot}"
+    image: "ghcr.io/dependencytrack/frontend:${DT_FRONTEND_VERSION:-5-snapshot}"
     environment:
       API_BASE_URL: "http://localhost:8080"
     labels:

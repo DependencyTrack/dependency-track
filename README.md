@@ -1,17 +1,28 @@
-> [!IMPORTANT]
-> **v5 is coming.** Whether you operate or contribute to Dependency-Track, read [V5_MIGRATION.md](./V5_MIGRATION.md).
+# OWASP Dependency-Track
 
-# Hyades API Server
+Dependency-Track is an intelligent Component Analysis platform that allows organizations to identify and reduce risk
+in the software supply chain. Dependency-Track takes a unique and highly beneficial approach by leveraging the
+capabilities of Software Bill of Materials (SBOM).
 
-API server module of Hyades, the next major version of [OWASP Dependency-Track](https://github.com/DependencyTrack/dependency-track).
-
-[![Build Status](https://github.com/DependencyTrack/hyades-apiserver/actions/workflows/ci-build.yaml/badge.svg)](https://github.com/DependencyTrack/hyades-apiserver/actions/workflows/ci-build.yaml)
+[![Build Status](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-build.yaml/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-build.yaml)
 [![Documentation](https://img.shields.io/badge/docs-next-blue.svg)](https://dependencytrack.github.io/docs/next/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE.txt)
 
-> [!NOTE]
-> Hyades has not yet reached GA. For a production-ready release, refer to the
-> [main Dependency-Track repository](https://github.com/DependencyTrack/dependency-track).
+> [!WARNING]
+> **Dependency-Track v5 is currently in release candidate stage and not yet generally available.**
+>
+> v5 release candidates are published for testing and feedback. They are not
+> recommended for production deployments. The release candidate images are
+> tagged `5.0.0-rc.<N>` and are not pulled by `:5-snapshot`.
+>
+> For production use, stay on the latest [v4 release](https://github.com/DependencyTrack/dependency-track/releases?q=4.).
+
+> [!IMPORTANT]
+> **Looking for Dependency-Track v4?**
+> * v4 is in maintenance mode on the [`4.14.x` branch](https://github.com/DependencyTrack/dependency-track/tree/4.14.x).
+> * v4 documentation: https://docs.dependencytrack.org/.
+> * Migrating from v4 to v5? See [V5_MIGRATION.md](./V5_MIGRATION.md).
+> * v4 will reach end-of-life *~6 months* after v5 GA.
 
 ## Documentation
 
@@ -25,5 +36,5 @@ User-facing documentation is rendered at [dependencytrack.github.io/docs/next](h
 
 ## See also
 
-* [hyades-frontend](https://github.com/DependencyTrack/hyades-frontend): Frontend repository
+* [frontend](https://github.com/DependencyTrack/frontend): Frontend repository
 * [docs](https://github.com/DependencyTrack/docs): Documentation repository

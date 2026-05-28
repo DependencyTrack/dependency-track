@@ -43,6 +43,6 @@ LABEL \
     org.opencontainers.image.description="CLI tool to migrate Dependency-Track v4 data to v5" \
     org.opencontainers.image.version="${APP_VERSION}" \
     org.opencontainers.image.url="https://dependencytrack.org/" \
-    org.opencontainers.image.source="https://github.com/DependencyTrack/hyades-apiserver" \
+    org.opencontainers.image.source="https://github.com/DependencyTrack/dependency-track" \
     org.opencontainers.image.revision="${COMMIT_SHA}" \
     org.opencontainers.image.licenses="Apache-2.0"

@@ -81,7 +81,12 @@ class ModelConverterTest {
                             {
                               "affects": [
                                 {
-                                  "ref": "7876921d-3df8-3c87-bcdf-66579b0c4860"
+                                  "ref": "7876921d-3df8-3c87-bcdf-66579b0c4860",
+                                  "versions": [
+                                    {
+                                      "version": "-"
+                                    }
+                                  ]
                                 },
                                 {
                                   "ref": "e3e3aa1a-542e-3dee-a577-d4dbe0314003",

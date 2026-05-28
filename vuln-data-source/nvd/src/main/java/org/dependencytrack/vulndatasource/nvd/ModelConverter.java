@@ -242,6 +242,25 @@ final class ModelConverter {
                     component.getBomRef(),
                     bomRef -> VulnerabilityAffects.newBuilder()
                             .setRef(bomRef));
+
+            // NB: CPEs use "-" (NA) where the concept of versions does not apply
+            // (e.g. some firmware or hardware). The entire product is considered
+            // affected. vers has no representation for this, so we emit "-" as an exact
+            // version and let downstream handle it verbatim.
+            if (versForCpeMatch == null && "-".equals(cpe.getVersion())) {
+                final boolean shouldAddVersion = affectsBuilder.getVersionsList().stream()
+                        .filter(VulnerabilityAffectedVersions::hasVersion)
+                        .map(VulnerabilityAffectedVersions::getVersion)
+                        .noneMatch("-"::equals);
+                if (shouldAddVersion) {
+                    affectsBuilder.addVersions(
+                            VulnerabilityAffectedVersions.newBuilder()
+                                    .setVersion("-"));
+                }
+
+                continue;
+            }
+
             if (versForCpeMatch != null && versForCpeMatch.constraints().size() == 1
                 && versForCpeMatch.constraints().getFirst().comparator().equals(Comparator.EQUAL)) {
                 var versConstraint = versForCpeMatch.constraints().getFirst();

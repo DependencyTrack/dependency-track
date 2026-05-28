@@ -4,7 +4,7 @@ on:
       app-version:
         type: string
         required: false
-        default: "snapshot"
+        default: "4-snapshot"
         description: "the version that should be set/used as tag for the container image"
       publish-container:
         type: boolean
@@ -123,7 +123,7 @@ jobs:
           else
             TAGS="${IMAGE_NAME}:${APP_VERSION}"
             TAGS_ALPINE="${IMAGE_NAME}:${APP_VERSION}-alpine"
-            if [[ "${APP_VERSION}" != "snapshot" ]]; then
+            if [[ "${APP_VERSION}" != *-* ]]; then
               TAGS="${TAGS},${IMAGE_NAME}:latest"
               TAGS_ALPINE="${TAGS_ALPINE},${IMAGE_NAME}:latest-alpine"
             fi

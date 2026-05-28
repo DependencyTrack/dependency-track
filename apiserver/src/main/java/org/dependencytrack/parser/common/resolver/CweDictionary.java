@@ -19,11 +19,10 @@
 package org.dependencytrack.parser.common.resolver;
 
 import jakarta.annotation.Generated;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Generated(value = "From dictionary version 4.14")
+@Generated(value = "From dictionary version 4.20")
 public final class CweDictionary {
 
     public static final Map<Integer, String> DICTIONARY = new LinkedHashMap<>();
@@ -308,7 +307,7 @@ public final class CweDictionary {
         DICTIONARY.put(277, "Insecure Inherited Permissions");
         DICTIONARY.put(278, "Insecure Preserved Inherited Permissions");
         DICTIONARY.put(279, "Incorrect Execution-Assigned Permissions");
-        DICTIONARY.put(280, "Improper Handling of Insufficient Permissions or Privileges ");
+        DICTIONARY.put(280, "Improper Handling of Insufficient Permissions or Privileges");
         DICTIONARY.put(281, "Improper Preservation of Permissions");
         DICTIONARY.put(282, "Improper Ownership Management");
         DICTIONARY.put(283, "Unverified Ownership");
@@ -626,9 +625,9 @@ public final class CweDictionary {
         DICTIONARY.put(595, "Comparison of Object References Instead of Object Contents");
         DICTIONARY.put(596, "DEPRECATED: Incorrect Semantic Object Comparison");
         DICTIONARY.put(597, "Use of Wrong Operator in String Comparison");
-        DICTIONARY.put(598, "Use of GET Request Method With Sensitive Query Strings");
+        DICTIONARY.put(598, "Use of HTTP Request With Sensitive Query String");
         DICTIONARY.put(599, "Missing Validation of OpenSSL Certificate");
-        DICTIONARY.put(600, "Uncaught Exception in Servlet ");
+        DICTIONARY.put(600, "Uncaught Exception in Servlet");
         DICTIONARY.put(601, "URL Redirection to Untrusted Site ('Open Redirect')");
         DICTIONARY.put(602, "Client-Side Enforcement of Server-Side Security");
         DICTIONARY.put(603, "Use of Client-Side Authentication");
@@ -970,7 +969,7 @@ public final class CweDictionary {
         DICTIONARY.put(939, "Improper Authorization in Handler for Custom URL Scheme");
         DICTIONARY.put(940, "Improper Verification of Source of a Communication Channel");
         DICTIONARY.put(941, "Incorrectly Specified Destination in a Communication Channel");
-        DICTIONARY.put(942, "Permissive Cross-domain Policy with Untrusted Domains");
+        DICTIONARY.put(942, "Permissive Cross-domain Security Policy with Untrusted Domains");
         DICTIONARY.put(943, "Improper Neutralization of Special Elements in Data Query Logic");
         DICTIONARY.put(944, "SFP Secondary Cluster: Access Management");
         DICTIONARY.put(945, "SFP Secondary Cluster: Insecure Resource Access");
@@ -1067,7 +1066,7 @@ public final class CweDictionary {
         DICTIONARY.put(1036, "OWASP Top Ten 2017 Category A10 - Insufficient Logging \u0026 Monitoring");
         DICTIONARY.put(1037, "Processor Optimization Removal or Modification of Security-critical Code");
         DICTIONARY.put(1038, "Insecure Automated Optimizations");
-        DICTIONARY.put(1039, "Automated Recognition Mechanism with Inadequate Detection or Handling of Adversarial Input Perturbations");
+        DICTIONARY.put(1039, "Inadequate Detection or Handling of Adversarial Input Perturbations in Automated Recognition Mechanism");
         DICTIONARY.put(1040, "Quality Weaknesses with Indirect Security Impacts");
         DICTIONARY.put(1041, "Use of Redundant Code");
         DICTIONARY.put(1042, "Static Member Data Element outside of a Singleton Class Element");
@@ -1144,7 +1143,7 @@ public final class CweDictionary {
         DICTIONARY.put(1113, "Inappropriate Comment Style");
         DICTIONARY.put(1114, "Inappropriate Whitespace Style");
         DICTIONARY.put(1115, "Source Code Element without Standard Prologue");
-        DICTIONARY.put(1116, "Inaccurate Comments");
+        DICTIONARY.put(1116, "Inaccurate Source Code Comments");
         DICTIONARY.put(1117, "Callable with Insufficient Behavioral Summary");
         DICTIONARY.put(1118, "Insufficient Documentation of Error Handling Techniques");
         DICTIONARY.put(1119, "Excessive Use of Unconditional Branching");
@@ -1200,7 +1199,7 @@ public final class CweDictionary {
         DICTIONARY.put(1169, "SEI CERT C Coding Standard - Guidelines 14. Concurrency (CON)");
         DICTIONARY.put(1170, "SEI CERT C Coding Standard - Guidelines 48. Miscellaneous (MSC)");
         DICTIONARY.put(1171, "SEI CERT C Coding Standard - Guidelines 50. POSIX (POS)");
-        DICTIONARY.put(1172, "SEI CERT C Coding Standard - Guidelines 51. Microsoft Windows (WIN) ");
+        DICTIONARY.put(1172, "SEI CERT C Coding Standard - Guidelines 51. Microsoft Windows (WIN)");
         DICTIONARY.put(1173, "Improper Use of Validation Framework");
         DICTIONARY.put(1174, "ASP.NET Misconfiguration: Improper Model Validation");
         DICTIONARY.put(1175, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 18. Concurrency (CON)");
@@ -1318,7 +1317,7 @@ public final class CweDictionary {
         DICTIONARY.put(1287, "Improper Validation of Specified Type of Input");
         DICTIONARY.put(1288, "Improper Validation of Consistency within Input");
         DICTIONARY.put(1289, "Improper Validation of Unsafe Equivalence in Input");
-        DICTIONARY.put(1290, "Incorrect Decoding of Security Identifiers ");
+        DICTIONARY.put(1290, "Incorrect Decoding of Security Identifiers");
         DICTIONARY.put(1291, "Public Key Re-Use for Signing both Debug and Production Code");
         DICTIONARY.put(1292, "Incorrect Conversion of Security Identifiers");
         DICTIONARY.put(1293, "Missing Source Correlation of Multiple Independent Data");
@@ -1454,6 +1453,30 @@ public final class CweDictionary {
         DICTIONARY.put(1423, "Exposure of Sensitive Information caused by Shared Microarchitectural Predictor State that Influences Transient Execution");
         DICTIONARY.put(1424, "Weaknesses Addressed by ISA/IEC 62443 Requirements");
         DICTIONARY.put(1425, "Weaknesses in the 2023 CWE Top 25 Most Dangerous Software Weaknesses");
+        DICTIONARY.put(1426, "Improper Validation of Generative AI Output");
+        DICTIONARY.put(1427, "Improper Neutralization of Input Used for LLM Prompting");
+        DICTIONARY.put(1428, "Reliance on HTTP instead of HTTPS");
+        DICTIONARY.put(1429, "Missing Security-Relevant Feedback for Unexecuted Operations in Hardware Interface");
+        DICTIONARY.put(1430, "Weaknesses in the 2024 CWE Top 25 Most Dangerous Software Weaknesses");
+        DICTIONARY.put(1431, "Driving Intermediate Cryptographic State/Results to Hardware Module Outputs");
+        DICTIONARY.put(1432, "Weaknesses in the 2025 CWE Most Important Hardware Weaknesses List");
+        DICTIONARY.put(1433, "2025 MIHW Supplement: Expert Insights");
+        DICTIONARY.put(1434, "Insecure Setting of Generative AI/ML Model Inference Parameters");
+        DICTIONARY.put(1435, "Weaknesses in the 2025 CWE Top 25 Most Dangerous Software Weaknesses");
+        DICTIONARY.put(1436, "OWASP Top Ten 2025 Category A01:2025 - Broken Access Control");
+        DICTIONARY.put(1437, "OWASP Top Ten 2025 Category A02:2025 - Security Misconfiguration");
+        DICTIONARY.put(1438, "OWASP Top Ten 2025 Category A03:2025 - Software Supply Chain Failures");
+        DICTIONARY.put(1439, "OWASP Top Ten 2025 Category A04:2025 - Cryptographic Failures");
+        DICTIONARY.put(1440, "OWASP Top Ten 2025 Category A05:2025 - Injection");
+        DICTIONARY.put(1441, "OWASP Top Ten 2025 Category A06:2025 - Insecure Design");
+        DICTIONARY.put(1442, "OWASP Top Ten 2025 Category A07:2025 - Authentication Failures");
+        DICTIONARY.put(1443, "OWASP Top Ten 2025 Category A08:2025 - Software or Data Integrity Failures");
+        DICTIONARY.put(1444, "OWASP Top Ten 2025 Category A09:2025 - Logging \u0026 Alerting Failures");
+        DICTIONARY.put(1445, "OWASP Top Ten 2025 Category A10:2025 - Mishandling of Exceptional Conditions");
+        DICTIONARY.put(1446, "Weaknesses That are Specific to AI/ML Technology");
+        DICTIONARY.put(1447, "General Software Weaknesses that Appear in Products that Use or Support AI/ML Technology");
+        DICTIONARY.put(1448, "Weaknesses Related to AI/ML Products");
+        DICTIONARY.put(1450, "Weaknesses in OWASP Top Ten RC1 (2025)");
         DICTIONARY.put(2000, "Comprehensive CWE Dictionary");
         }
 

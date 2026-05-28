@@ -18,3 +18,32 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+- package-ecosystem: maven
+  target-branch: 4.14.x
+  directory: /
+  schedule:
+    interval: daily
+  cooldown:
+    default-days: 7
+  ignore:
+  - dependency-name: "*"
+    update-types:
+    - version-update:semver-major
+- package-ecosystem: docker
+  target-branch: 4.14.x
+  directory: /src/main/docker
+  schedule:
+    interval: daily
+  cooldown:
+    default-days: 7
+  ignore:
+  - dependency-name: "*"
+    update-types:
+    - version-update:semver-major
+- package-ecosystem: github-actions
+  target-branch: 4.14.x
+  directory: /
+  schedule:
+    interval: weekly
+  cooldown:
+    default-days: 7

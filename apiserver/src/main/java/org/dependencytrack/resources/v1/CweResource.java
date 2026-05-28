@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.persistence.PaginatedResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -59,6 +60,11 @@ public class CweResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(description = "Returns a list of all CWEs")
     @PaginatedApi
+    @Parameter(
+            name = "searchText",
+            in = ParameterIn.QUERY,
+            description = "Case-insensitive substring filter matched against CWE name and CWE-ID."
+    )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
@@ -69,7 +75,11 @@ public class CweResource extends AbstractApiResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getCwes() {
-        final PaginatedResult cwes = CweResolver.getInstance().all(getAlpineRequest().getPagination());
+        final PaginatedResult cwes = CweResolver.getInstance().all(
+                getAlpineRequest().getFilter(),
+                getAlpineRequest().getOrderBy(),
+                getAlpineRequest().getOrderDirection(),
+                getAlpineRequest().getPagination());
         return Response.ok(cwes.getObjects()).header(TOTAL_COUNT_HEADER, cwes.getTotal()).build();
     }
 

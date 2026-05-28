@@ -18,14 +18,18 @@
  */
 package org.dependencytrack.parser.common.resolver;
 
+import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.persistence.Pagination;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.Cwe;
+import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Attempts to resolve an internal CWE object from a string
@@ -49,6 +53,7 @@ public class CweResolver {
      * Lookups a CWE from the internal CWE dictionary. This method
      * does not query the database, but will return a Cwe object useful
      * for JSON serialization, but not for persistence.
+     *
      * @param cweString the string to lookup
      * @return a Cwe object
      * @since 4.5.0
@@ -61,6 +66,7 @@ public class CweResolver {
      * Lookups a CWE from the internal CWE dictionary. This method
      * does not query the database, but will return a Cwe object useful
      * for JSON serialization, but not for persistence.
+     *
      * @param cweId the cwe id to lookup
      * @return a Cwe object
      * @since 4.5.0
@@ -80,6 +86,7 @@ public class CweResolver {
 
     /**
      * Parses a CWE string returning the CWE ID, or null.
+     *
      * @param cweString the string to parse
      * @return a Cwe object
      */
@@ -120,30 +127,50 @@ public class CweResolver {
                 .toList();
     }
 
-    public PaginatedResult all(final Pagination pagination) {
+    public PaginatedResult all(
+            @Nullable String searchText,
+            @Nullable String orderBy,
+            @Nullable OrderDirection orderDirection,
+            @Nullable Pagination pagination) {
+        final String needle = (searchText != null && !searchText.isBlank())
+                ? searchText.trim().toLowerCase(Locale.ROOT)
+                : null;
+
+        Stream<Map.Entry<Integer, String>> dictEntryStream =
+                CweDictionary.DICTIONARY.entrySet().stream()
+                        .filter(entry -> needle == null
+                                || entry.getValue().toLowerCase(Locale.ROOT).contains(needle)
+                                || ("cwe-" + entry.getKey()).contains(needle));
+
+        if ("cweId".equals(orderBy)) {
+            final Comparator<Map.Entry<Integer, String>> comparator =
+                    orderDirection == OrderDirection.DESCENDING
+                            ? Map.Entry.<Integer, String>comparingByKey().reversed()
+                            : Map.Entry.comparingByKey();
+            dictEntryStream = dictEntryStream.sorted(comparator);
+        }
+
+        final List<Map.Entry<Integer, String>> dictEntries = dictEntryStream.toList();
+        final int total = dictEntries.size();
+
+        final List<Map.Entry<Integer, String>> dictEntriesPage;
         if (pagination == null || !pagination.isPaginated()) {
-            final List<Cwe> cwes = all();
-            return new PaginatedResult().objects(cwes).total(CweDictionary.DICTIONARY.size());
+            dictEntriesPage = dictEntries;
+        } else {
+            final int offset = Math.min(pagination.getOffset(), total);
+            final int end = Math.min(offset + pagination.getLimit(), total);
+            dictEntriesPage = dictEntries.subList(offset, end);
         }
 
-        int pos = 0, count = 0;
-        final var cwes = new ArrayList<Cwe>();
-        for (final Map.Entry<Integer, String> dictEntry : CweDictionary.DICTIONARY.entrySet()) {
-            if (pos >= pagination.getOffset() && count < pagination.getLimit()) {
-                final var cwe = new Cwe();
-                cwe.setCweId(dictEntry.getKey());
-                cwe.setName(dictEntry.getValue());
-                cwes.add(cwe);
-                count++;
-            }
-
-            pos++;
-            if (count >= pagination.getLimit()) {
-                break;
-            }
-        }
-
-        return new PaginatedResult().objects(cwes).total(CweDictionary.DICTIONARY.size());
+        final List<Cwe> cwes = dictEntriesPage.stream()
+                .map(entry -> {
+                    final var cwe = new Cwe();
+                    cwe.setCweId(entry.getKey());
+                    cwe.setName(entry.getValue());
+                    return cwe;
+                })
+                .toList();
+        return new PaginatedResult().objects(cwes).total(total);
     }
 
 }

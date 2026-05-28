@@ -32,8 +32,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import java.util.Comparator;
 import java.util.HashSet;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CweResourceTest extends ResourceTest {
@@ -82,6 +84,180 @@ public class CweResourceTest extends ResourceTest {
                 cwesSeen.add(cweId);
             }
         }
+    }
+
+    @Test
+    public void shouldFilterByNameSubstringCaseInsensitive() {
+        final Response response = jersey.target(V1_CWE)
+                .queryParam("searchText", "doubled character")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "cweId": 85,
+                    "name": "Doubled Character XSS Manipulations"
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    public void shouldFilterByCweIdStringRegardlessOfCase() {
+        final String upperBody = getPlainTextBody(jersey.target(V1_CWE)
+                .queryParam("searchText", "CWE-79")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get());
+        final String lowerBody = getPlainTextBody(jersey.target(V1_CWE)
+                .queryParam("searchText", "cwe-79")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get());
+
+        assertThatJson(upperBody).isEqualTo(lowerBody);
+        assertThatJson(upperBody)
+                .isArray()
+                .isNotEmpty();
+        assertThatJson(upperBody)
+                .inPath("$[?(@.cweId == 79)].name")
+                .isArray()
+                .containsExactly("Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenSearchTextHasNoMatches() {
+        final Response response = jersey.target(V1_CWE)
+                .queryParam("searchText", "no-such-cwe-xyzzy")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("0");
+        assertThatJson(getPlainTextBody(response)).isEqualTo("[]");
+    }
+
+    @Test
+    public void shouldApplyPaginationAfterFilter() {
+        final Response response = jersey.target(V1_CWE)
+                .queryParam("searchText", "injection")
+                .queryParam("pageSize", "5")
+                .queryParam("pageNumber", "1")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final int totalCount = Integer.parseInt(response.getHeaderString(TOTAL_COUNT_HEADER));
+        assertThat(totalCount).isLessThan(CweDictionary.DICTIONARY.size());
+
+        final String body = getPlainTextBody(response);
+        assertThatJson(body).isArray().hasSizeLessThanOrEqualTo(5);
+        assertThatJson(body).inPath("$[*].name")
+                .isArray()
+                .allSatisfy(name -> assertThat(((String) name).toLowerCase()).contains("injection"));
+    }
+
+    @Test
+    public void shouldSortByCweIdAscending() {
+        final Response response = jersey
+                .target(V1_CWE)
+                .queryParam("sortName", "cweId")
+                .queryParam("sortOrder", "asc")
+                .queryParam("pageSize", "3")
+                .queryParam("pageNumber", "1")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].cweId")
+                .isArray()
+                .containsExactly(1, 2, 3);
+    }
+
+    @Test
+    public void shouldSortByCweIdDescending() {
+        final Response response = jersey
+                .target(V1_CWE)
+                .queryParam("sortName", "cweId")
+                .queryParam("sortOrder", "desc")
+                .queryParam("pageSize", "3")
+                .queryParam("pageNumber", "1")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].cweId")
+                .isArray()
+                .isSortedAccordingTo(Comparator.comparingInt((Object cweId) -> ((Number) cweId).intValue()).reversed());
+    }
+
+    @Test
+    public void shouldDefaultToAscendingWhenSortOrderOmitted() {
+        final Response response = jersey
+                .target(V1_CWE)
+                .queryParam("sortName", "cweId")
+                .queryParam("pageSize", "3")
+                .queryParam("pageNumber", "1")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].cweId")
+                .isArray()
+                .containsExactly(1, 2, 3);
+    }
+
+    @Test
+    public void shouldIgnoreUnsupportedSortField() {
+        final String sortedBody = getPlainTextBody(
+                jersey.target(V1_CWE)
+                        .queryParam("sortName", "name")
+                        .queryParam("sortOrder", "asc")
+                        .queryParam("pageSize", "5")
+                        .queryParam("pageNumber", "1")
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get());
+        final String defaultBody = getPlainTextBody(
+                jersey.target(V1_CWE)
+                        .queryParam("pageSize", "5")
+                        .queryParam("pageNumber", "1")
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get());
+        assertThatJson(sortedBody).isEqualTo(defaultBody);
+    }
+
+    @Test
+    public void shouldCombineFilterSortAndPagination() {
+        final Response response = jersey
+                .target(V1_CWE)
+                .queryParam("searchText", "injection")
+                .queryParam("sortName", "cweId")
+                .queryParam("sortOrder", "asc")
+                .queryParam("pageSize", "5")
+                .queryParam("pageNumber", "1")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final int totalCount = Integer.parseInt(response.getHeaderString(TOTAL_COUNT_HEADER));
+        assertThat(totalCount).isLessThan(CweDictionary.DICTIONARY.size());
+
+        final String body = getPlainTextBody(response);
+        assertThatJson(body).isArray().hasSizeLessThanOrEqualTo(5);
+        assertThatJson(body).inPath("$[*].name")
+                .isArray()
+                .allSatisfy(name -> assertThat(((String) name).toLowerCase()).contains("injection"));
+        assertThatJson(body).inPath("$[*].cweId")
+                .isArray()
+                .isSortedAccordingTo(Comparator.comparingInt((Object cweId) -> ((Number) cweId).intValue()));
     }
 
     @Test

@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>package-metadata-parent</artifactId>
-        <version>5.0.0-rc.1-SNAPSHOT</version>
+        <version>5.0.0-rc.1</version>
     </parent>
 
     <artifactId>package-metadata-api</artifactId>

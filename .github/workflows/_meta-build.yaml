@@ -19,8 +19,7 @@ on:
     inputs:
       app-version:
         type: string
-        required: false
-        default: "snapshot"
+        required: true
         description: "the version that should be set/used as tag for the container image"
       publish-container:
         type: boolean
@@ -123,12 +122,10 @@ jobs:
       matrix:
         include:
           - name: apiserver
-            image: hyades-apiserver
             context: apiserver
             artifact: assembled-dist
             prepare-cmd: tar xzf apiserver/target/dependency-track-apiserver-dist.tar.gz -C apiserver/target
           - name: v4-migrator
-            image: v4-migrator
             context: support/v4-migrator
             artifact: v4-migrator-jar
             prepare-cmd: ":" # no-op
@@ -169,20 +166,31 @@ jobs:
         env:
           REF_NAME: ${{ inputs.ref-name }}
           APP_VERSION: ${{ inputs.app-version }}
-          IMAGE: ${{ matrix.image }}
+          IMAGE: ${{ matrix.name }}
         run: |-
+          shopt -s nocasematch
+          if [[ ! "$APP_VERSION" =~ ^([0-9]+-snapshot|[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?(\+[A-Za-z0-9.]+)?)$ ]]; then
+            echo "::error::app-version must be '<major>-snapshot' or a semver version, got: '${APP_VERSION}'"
+            exit 1
+          fi
+          if [[ ! "$REF_NAME" =~ ^[a-zA-Z0-9_][a-zA-Z0-9._/-]{0,127}$ ]]; then
+            echo "::error::ref-name is not a valid git ref: '${REF_NAME}'"
+            exit 1
+          fi
+
           IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${IMAGE}"
           TAGS=""
 
-          if [[ $REF_NAME == feature-* ]]; then
-            TAGS="${IMAGE_NAME}:${REF_NAME,,}"
+          if [[ "$REF_NAME" == feature-* ]]; then
+            # OCI tags disallow '/', but git refs allow it (e.g. feature-foo/bar).
+            # Lowercase and substitute '/' for '-' to produce a valid tag.
+            REF_TAG="${REF_NAME,,}"
+            REF_TAG="${REF_TAG//\//-}"
+            TAGS="${IMAGE_NAME}:${REF_TAG}"
           else
             TAGS="${IMAGE_NAME}:${APP_VERSION}"
-            if [[ "${APP_VERSION}" != "snapshot" && "${APP_VERSION}" != *-* ]]; then
-              TAGS="${TAGS},${IMAGE_NAME}:latest"
-            fi
           fi
-          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
 
       - name: Build multi-arch Container Image
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # tag=v7.1.0

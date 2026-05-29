@@ -40,6 +40,7 @@ permissions: { }
 
 jobs:
   build-java:
+    name: Build Java
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

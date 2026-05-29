@@ -258,6 +258,10 @@ public class AnalysisResource extends AlpineResource {
                     request.getRiskJustification(), request.getResidualRiskJustification(),
                     newRiskCalculated, newResidualRiskCalculated);
 
+            if (request.getSeverity() != null && "INTERNAL".equals(vulnerability.getSource())) {
+                vulnerability.setSeverity(request.getSeverity());
+                qm.persist(vulnerability);
+            }
             final String comment = StringUtils.trimToNull(request.getComment());
             qm.makeAnalysisComment(analysis, comment, commenter);
             analysis = qm.getAnalysis(component, vulnerability);

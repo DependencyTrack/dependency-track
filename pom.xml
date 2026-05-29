@@ -480,6 +480,18 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
+                <includes>
+                    <include>logback.xml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>logback.xml</exclude>
+                    <exclude>application.version</exclude>
+                    <exclude>openapi-configuration.yaml</exclude>
+                </excludes>
             </resource>
             <resource>
                 <directory>src/main/resources</directory>

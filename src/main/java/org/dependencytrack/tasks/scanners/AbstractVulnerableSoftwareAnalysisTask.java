@@ -33,7 +33,6 @@ import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.PurlUtil;
-import org.dependencytrack.util.VulnerableSoftwareMatchUtil;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.util.Relation;
 import java.util.List;

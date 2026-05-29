@@ -42,7 +42,7 @@ permissions: { }
 
 jobs:
   lint:
-    name: Lint
+    name: Lint Java
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

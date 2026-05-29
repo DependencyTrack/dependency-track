@@ -32,7 +32,7 @@ permissions: { }
 
 jobs:
   lint:
-    name: Lint
+    name: Lint OpenAPI
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -44,7 +44,7 @@ jobs:
       run: make lint-openapi
 
   breaking-changes:
-    name: Breaking Changes
+    name: OpenAPI Breaking Changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

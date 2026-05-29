@@ -122,12 +122,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
         }
         if (Boolean.TRUE.equals(query.onlyDirect())) {
             whereConditions.add(/* language=SQL */ """
-                    EXISTS (
-                     SELECT 1
-                       FROM "PROJECT"
-                      WHERE "PROJECT"."ID" = "C"."PROJECT_ID"
-                        AND "PROJECT"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', "C"."UUID"))
-                    )""");
+                    AND "C"."DIRECT" IS TRUE
+                    """);
         }
         if (query.searchText() != null && !query.searchText().isBlank()) {
             whereConditions.add(/* language=SQL */ """
@@ -235,6 +231,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                  , "C"."PURL"
                  , "C"."GROUP"
                  , "C"."INTERNAL"
+                 , "C"."DIRECT"
                  , "C"."LAST_RISKSCORE"
                  , "C"."LICENSE" AS "componentLicenseName"
                  , "C"."LICENSE_EXPRESSION" AS "licenseExpression"
@@ -630,4 +627,14 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
         }
     }
 
+    @SqlUpdate("""
+            UPDATE "COMPONENT"
+             SET "DIRECT" = ("UUID"::TEXT IN (
+                SELECT JSONB_ARRAY_ELEMENTS(
+                     COALESCE("DIRECT_DEPENDENCIES", '[]'::jsonb)) ->> 'uuid'
+                FROM "PROJECT" WHERE "ID" = :projectId
+             ))
+            WHERE "PROJECT_ID" = :projectId
+            """)
+    void setDirect(@Bind Long projectId);
 }

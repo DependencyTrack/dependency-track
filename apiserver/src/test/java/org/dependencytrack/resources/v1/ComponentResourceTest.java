@@ -1347,6 +1347,7 @@ public class ComponentResourceTest extends ResourceTest {
                           },
                           "expandDependencyGraph": false,
                           "isInternal": false,
+                          "isDirect": false,
                           "occurrenceCount": 0
                         }
                         """);
@@ -1510,6 +1511,7 @@ public class ComponentResourceTest extends ResourceTest {
             component.setPurl(new PackageURL(RepositoryType.MAVEN.toString(), "component-group", "component-name-" + i, i + ".0", null, null));
             component = qm.createComponent(component, false);
             if (i < 10) {
+                component.setDirect(true);
                 directDependencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
             }
             if ((i >= 5) && (i < 15)) {

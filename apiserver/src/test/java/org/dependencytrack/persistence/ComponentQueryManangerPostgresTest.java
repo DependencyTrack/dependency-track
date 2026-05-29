@@ -62,7 +62,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testGetDirectComponents() throws Exception {
+    public void testIsDirectComponents() throws Exception {
 
         final Project project = prepareProject();
         var components = qm.getComponents(project, false, false, true);
@@ -94,7 +94,6 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
 
     private Project prepareProject() throws Exception {
         final Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
-        final List<String> directDepencencies = new ArrayList<>();
         final List<PackageMetadata> metadataList = new ArrayList<>();
         final List<PackageArtifactMetadata> artifactMetadataList = new ArrayList<>();
         // Generate 1000 dependencies
@@ -114,7 +113,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
             // direct depencencies
             if (i < 100) {
                 // 100 direct depencencies, 900 transitive depencencies
-                directDepencencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
+                component.setDirect(true);
             }
             // Recent & Outdated
             if ((i >= 25) && (i < 225)) {
@@ -151,7 +150,6 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
             new PackageMetadataDao(handle).upsertAll(metadataList);
             new PackageArtifactMetadataDao(handle).upsertAll(artifactMetadataList);
         });
-        project.setDirectDependencies("[" + String.join(",", directDepencencies.toArray(new String[0])) + "]");
         return project;
     }
 
@@ -270,7 +268,6 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
      */
     private Project prepareProjectUngroupedComponents() throws Exception {
         final Project project = qm.createProject("Ungrouped Application", null, null, null, null, null, null, false);
-        final List<String> directDepencencies = new ArrayList<>();
         final List<PackageMetadata> metadataList = new ArrayList<>();
         final List<PackageArtifactMetadata> artifactMetadataList = new ArrayList<>();
         // Generate 10 dependencies
@@ -284,7 +281,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
             // direct depencencies
             if (i < 4) {
                 // 4 direct depencencies, 6 transitive depencencies
-                directDepencencies.add("{\"uuid\":\"" + component.getUuid() + "\"}");
+                component.setDirect(true);
             }
             // Recent & Outdated
             if ((i < 7)) {
@@ -313,7 +310,6 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
             new PackageMetadataDao(handle).upsertAll(metadataList);
             new PackageArtifactMetadataDao(handle).upsertAll(artifactMetadataList);
         });
-        project.setDirectDependencies("[" + String.join(",", directDepencencies.toArray(new String[0])) + "]");
         return project;
     }
 }

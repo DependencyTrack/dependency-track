@@ -361,14 +361,9 @@ public final class CelPolicyDao {
     public boolean isDirectDependency(Component component) {
         return jdbiHandle
                 .createQuery("""
-                        SELECT EXISTS (
-                          SELECT 1
-                            FROM "COMPONENT" AS c
-                           INNER JOIN "PROJECT" AS p
-                              ON p."ID" = c."PROJECT_ID"
-                             AND p."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', :uuid))
-                           WHERE c."UUID" = CAST(:uuid AS UUID)
-                        )
+                        SELECT COALESCE(c."DIRECT", FALSE)
+                        FROM "COMPONENT" c
+                        WHERE c."UUID" = CAST(:uuid AS UUID)
                         """)
                 .bind("uuid", component.getUuid())
                 .mapTo(Boolean.class)

@@ -39,6 +39,7 @@ public final class CelPolicyFieldMappingRegistry {
             new FieldMapping("purl", "c.\"PURL\""),
             new FieldMapping("swid_tag_id", "c.\"SWIDTAGID\""),
             new FieldMapping("is_internal", "c.\"INTERNAL\""),
+            new FieldMapping("is_direct", "c.\"DIRECT\""),
             new FieldMapping("md5", "c.\"MD5\""),
             new FieldMapping("sha1", "c.\"SHA1\""),
             new FieldMapping("sha256", "c.\"SHA_256\""),

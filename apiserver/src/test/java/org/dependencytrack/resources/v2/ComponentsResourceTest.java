@@ -105,7 +105,8 @@ public class ComponentsResourceTest extends ResourceTest {
                     "uuid" : "${json-unit.any-string}",
                     "expandDependencyGraph" : false,
                     "occurrenceCount" : 0,
-                    "isInternal" : false
+                    "isInternal" : false,
+                    "isDirect" : false
                   } ]
                 }
                 """);

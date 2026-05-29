@@ -500,9 +500,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("bar");
         component.setPurl("pkg:maven/foo/bar@1.0.0");
         component.setVersion("1.2.3");
+        component.setDirect(true);
         qm.persist(component);
-
-        project.setDirectDependencies("[{\"uuid\":\"" + component.getUuid() + "\"}]");
         qm.persist(project);
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
@@ -1277,11 +1276,13 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var componentA = new Component();
         componentA.setProject(project);
         componentA.setName("acme-lib-a");
+        componentA.setDirect(true);
         qm.persist(componentA);
 
         final var componentB = new Component();
         componentB.setProject(project);
         componentB.setName("acme-lib-b");
+        componentB.setDirect(true);
         qm.persist(componentB);
 
         final var componentC = new Component();
@@ -1297,10 +1298,6 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         //  /-> A -------\
         // *              > C
         //  \-> B -> D --/
-        project.setDirectDependencies("[%s, %s]".formatted(
-                new ComponentIdentity(componentA).toJSON(),
-                new ComponentIdentity(componentB).toJSON())
-        );
         componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentC).toJSON()));
         componentB.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentD).toJSON()));
         componentD.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentC).toJSON()));

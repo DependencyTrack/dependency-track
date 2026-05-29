@@ -156,9 +156,8 @@ public class VersionDistanceCelPolicyEvaluatorTest extends PersistenceCapableTes
         component.setName("bar");
         component.setPurl(componentPurl);
         component.setVersion(version);
+        component.setDirect(true);
         qm.persist(component);
-
-        project.setDirectDependencies("[{\"uuid\":\"" + component.getUuid() + "\"}]");
         qm.persist(project);
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
@@ -172,8 +171,8 @@ public class VersionDistanceCelPolicyEvaluatorTest extends PersistenceCapableTes
         }
 
         // https://github.com/DependencyTrack/dependency-track/issues/3295
-        project.setDirectDependencies(null);
-        qm.persist(project);
+        component.setDirect(false);
+        qm.persist(component);
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }

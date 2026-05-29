@@ -211,7 +211,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         if (onlyDirect) {
             queryString +=
                     """
-                       AND "B0"."DIRECT_DEPENDENCIES" @> JSONB_BUILD_ARRAY(JSONB_BUILD_OBJECT('uuid', "A0"."UUID"))
+                       AND "A0"."DIRECT" = TRUE
                     """;
         }
         if (orderBy == null) {

@@ -42,6 +42,7 @@ public final class CelPolicyComponentRowMapper implements RowMapper<Component> {
         maybeSet(rs, "purl", ResultSet::getString, builder::setPurl);
         maybeSet(rs, "swid_tag_id", ResultSet::getString, builder::setSwidTagId);
         maybeSet(rs, "is_internal", ResultSet::getBoolean, builder::setIsInternal);
+        maybeSet(rs, "is_direct", ResultSet::getBoolean, builder::setIsDirect);
         maybeSet(rs, "md5", ResultSet::getString, builder::setMd5);
         maybeSet(rs, "sha1", ResultSet::getString, builder::setSha1);
         maybeSet(rs, "sha256", ResultSet::getString, builder::setSha256);

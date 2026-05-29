@@ -188,6 +188,7 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                         .cpe(componentRow.getCpe())
                         .group(componentRow.getGroup())
                         .internal(componentRow.isInternal())
+                        .direct(componentRow.isDirect())
                         .lastInheritedRiskScore(componentRow.getLastInheritedRiskScore())
                         .license(componentRow.getLicense())
                         .licenseExpression(componentRow.getLicenseExpression())

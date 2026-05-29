@@ -235,6 +235,7 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                           "purl": "pkg:maven/componentGroup/componentName@componentVersion",
                           "swidTagId": "componentSwidTagId",
                           "isInternal": true,
+                          "isDirect": false,
                           "md5": "componentmd5",
                           "sha1": "componentsha1",
                           "sha256": "componentsha256",

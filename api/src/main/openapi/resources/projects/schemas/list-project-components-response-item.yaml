@@ -41,6 +41,8 @@ properties:
     maxLength: 255
   internal:
     type: boolean
+  direct:
+    type: boolean
   copyright:
     type: string
     maxLength: 255

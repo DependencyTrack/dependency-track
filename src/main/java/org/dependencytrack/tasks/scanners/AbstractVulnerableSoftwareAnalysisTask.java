@@ -27,12 +27,14 @@ import io.github.nscuro.versatile.spi.InvalidVersionException;
 import io.github.nscuro.versatile.version.KnownVersioningSchemes;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.OsDistribution;
+import org.dependencytrack.model.OsDistribution.RedHatDistribution;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAnalysisLevel;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.NotificationUtil;
 import org.dependencytrack.util.PurlUtil;
+import org.jspecify.annotations.Nullable;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.util.Relation;
 
@@ -178,36 +180,8 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             return false;
         }
 
-        final String componentDistroQualifier = PurlUtil.getDistroQualifier(componentPurl);
-        final String vsDistroQualifier = PurlUtil.getDistroQualifier(vs.getPurl());
-
-        // When both the component and the vulnerable software record have a distro
-        // qualifier, they must match *before* we perform the actual version comparison.
-        if (componentDistroQualifier != null && vsDistroQualifier != null) {
-            // Simplest case: the qualifiers just match without special interpretation.
-            if (!componentDistroQualifier.equals(vsDistroQualifier)) {
-                // Could still match, but depends on distro semantics.
-                // e.g. "debian-13" should match "trixie".
-                final var componentDistro = OsDistribution.of(componentPurl);
-                final var vsDistro = OsDistribution.of(PurlUtil.silentPurl(vs.getPurl()));
-
-                if (componentDistro != null && vsDistro != null) {
-                    if (!componentDistro.matches(vsDistro)) {
-                        // Actual mismatch, e.g. "debian-13" != "sid".
-                        return false;
-                    }
-                } else if (componentDistro != null || vsDistro != null) {
-                    // One side was parsed, the other wasn't. The raw qualifier
-                    // strings already differ, so this is a mismatch.
-                    return false;
-                } else {
-                    // Neither side could be parsed. The raw qualifier strings
-                    // already differ, so treat as mismatch to avoid false positives.
-                    logger.debug("Neither distro qualifier could be parsed for comparison: %s vs %s"
-                            .formatted(componentDistroQualifier, vsDistroQualifier));
-                    return false;
-                }
-            }
+        if (!matchesDistro(componentPurl, vs)) {
+            return false;
         }
 
         final String versioningScheme = KnownVersioningSchemes
@@ -215,6 +189,77 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
                 .orElse(KnownVersioningSchemes.SCHEME_GENERIC);
 
         return compareWithVers(vs, componentVersion, versioningScheme);
+    }
+
+    private boolean matchesDistro(PackageURL componentPurl, VulnerableSoftware vs) {
+        final PackageURL vsPurl = PurlUtil.silentPurl(vs.getPurl());
+        final String componentDistroQualifier = PurlUtil.getDistroQualifier(componentPurl);
+        final String vsDistroQualifier = PurlUtil.getDistroQualifier(vsPurl);
+
+        if (componentDistroQualifier != null
+                && componentDistroQualifier.equals(vsDistroQualifier)) {
+            return true;
+        }
+
+        final OsDistribution componentDistro = resolveOsDistro(componentPurl, null);
+        final OsDistribution vsDistro = resolveOsDistro(vsPurl, vs);
+
+        if (componentDistro != null && vsDistro != null) {
+            return componentDistro.matches(vsDistro);
+        }
+
+        // Both sides carry explicit qualifiers, but they're not equal and at least
+        // one couldn't be parsed. Treat as a mismatch to avoid false positives.
+        if (componentDistroQualifier != null && vsDistroQualifier != null) {
+            logger.debug("Could not reconcile distro qualifiers: %s vs. %s"
+                    .formatted(componentDistroQualifier, vsDistroQualifier));
+            return false;
+        }
+
+        // At least one side has no distro qualifier at all.
+        // Treat as match to avoid false negatives, since `distro` qualifiers
+        // are still not widely used across BOM generators and vuln DBs.
+        return true;
+    }
+
+    private static @Nullable OsDistribution resolveOsDistro(
+            @Nullable PackageURL purl,
+            @Nullable VulnerableSoftware vs) {
+        if (purl == null) {
+            return null;
+        }
+
+        final var fromPurl = OsDistribution.of(purl);
+        if (fromPurl != null) {
+            return fromPurl;
+        }
+
+        // If the producer gave an explicit qualifier we couldn't read,
+        // don't override their intent with the range heuristic below.
+        if (PurlUtil.getDistroQualifier(purl) != null) {
+            return null;
+        }
+
+        // Red Hat versions are often verbose enough to be able to infer
+        // the distro version. This captures vuln DB records that do not
+        // explicitly declare distros.
+        if (vs != null
+                && "rpm".equals(purl.getType())
+                && "redhat".equalsIgnoreCase(purl.getNamespace())) {
+            for (final String versionRangeBound : new String[]{
+                    vs.getVersionEndExcluding(),
+                    vs.getVersionEndIncluding(),
+                    vs.getVersion(),
+                    vs.getVersionStartExcluding(),
+                    vs.getVersionStartIncluding()}) {
+                final var fromVersionRangeBound = RedHatDistribution.ofRpmRelease(versionRangeBound);
+                if (fromVersionRangeBound != null) {
+                    return fromVersionRangeBound;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -20,6 +20,7 @@ package org.dependencytrack.model;
 
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.model.OsDistribution.DebianDistribution;
+import org.dependencytrack.model.OsDistribution.RedHatDistribution;
 import org.dependencytrack.model.OsDistribution.UbuntuDistribution;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -82,6 +83,28 @@ class OsDistributionTest {
         @Test
         void shouldReturnNullForNonDebianPurl() throws Exception {
             final var purl = new PackageURL("pkg:npm/lodash@4.17.21?distro=debian-11");
+            assertThat(OsDistribution.of(purl)).isNull();
+        }
+
+        @Test
+        void shouldReturnNullForRpmPurlWithUnknownNamespace() throws Exception {
+            final var purl = new PackageURL("pkg:rpm/centos/sudo@1.9.5?distro=centos-9");
+            assertThat(OsDistribution.of(purl)).isNull();
+        }
+
+        @Test
+        void shouldFallBackToRpmDisttagWhenRedhatPurlHasNoQualifier() throws Exception {
+            final var purl = new PackageURL("pkg:rpm/redhat/libsolv@0.7.24-3.el9");
+            final var distro = OsDistribution.of(purl);
+            assertThat(distro).isInstanceOf(RedHatDistribution.class);
+            assertThat(distro.purlQualifierValue()).isEqualTo("redhat-9");
+        }
+
+        @Test
+        void shouldNotFallBackToRpmDisttagWhenRedhatPurlHasUnparseableQualifier() throws Exception {
+            // Explicit (but bogus) qualifier should NOT be silently overridden by the
+            // version-based heuristic.
+            final var purl = new PackageURL("pkg:rpm/redhat/libsolv@0.7.24-3.el9?distro=garbage");
             assertThat(OsDistribution.of(purl)).isNull();
         }
     }
@@ -148,6 +171,56 @@ class OsDistributionTest {
             assertThat(distro).isNotNull();
             assertThat(distro).isInstanceOf(OsDistribution.AlpineDistribution.class);
             assertThat(distro.purlQualifierValue()).isEqualTo(expectedPurlQualifier);
+        }
+
+        @ParameterizedTest
+        @CsvSource(value = {
+                // RHEL streams:
+                "Red Hat:enterprise_linux:8::appstream, redhat-8",
+                "Red Hat:enterprise_linux:9::baseos, redhat-9",
+                "Red Hat:enterprise_linux:7::server, redhat-7",
+                "Red Hat:enterprise_linux:5::as, redhat-5",
+                "Red Hat:enterprise_linux_eus:10.0, redhat-10",
+                "Red Hat:rhel_aus:8.4::appstream, redhat-8",
+                "Red Hat:rhel_eus:9.2::baseos, redhat-9",
+                "Red Hat:rhel_e4s:8.2, redhat-8",
+                "Red Hat:rhel_tus:8.6::appstream, redhat-8",
+                "Red Hat:rhel_els:7, redhat-7",
+                "Red Hat:rhel_extras:6, redhat-6",
+                "red hat:enterprise_linux:9, redhat-9",
+                // Non-RHEL products:
+                "Red Hat:satellite:6.13::el8, redhat-8",
+                "Red Hat:openshift:4.12::el9, redhat-9",
+                "Red Hat:openshift:4.8::el10, redhat-10",
+                "Red Hat:jboss_enterprise_application_platform:7.4::el8, redhat-8",
+                "Red Hat:ceph_storage:6.1::el9, redhat-9",
+                "Red Hat:openstack:17.1::el8, redhat-8",
+                "Red Hat:red_hat_single_sign_on:7::el6, redhat-6",
+                "Red Hat:ansible_automation_platform:2.5::el9, redhat-9",
+                // rhel_* products that put their own version in the version field but
+                // expose the RHEL major version via the edition:
+                "Red Hat:rhel_software_collections:3::el7, redhat-7",
+                "Red Hat:rhel_dotnet:6.0::el7, redhat-7",
+                // Edition with trailing variant suffix:
+                "Red Hat:satellite:6.16::el8_sat, redhat-8",
+        })
+        void shouldParseRedHatEcosystemSuffix(String ecosystem, String expectedPurlQualifier) {
+            final var distro = OsDistribution.ofOsvEcosystem(ecosystem);
+            assertThat(distro).isNotNull();
+            assertThat(distro).isInstanceOf(RedHatDistribution.class);
+            assertThat(distro.purlQualifierValue()).isEqualTo(expectedPurlQualifier);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {
+                "Red Hat:",
+                "Red Hat:enterprise_linux",
+                "Red Hat:not a cpe",
+                "Red Hat:satellite:6.13",
+                "Red Hat:openshift:4.12::fastdatapath",
+        })
+        void shouldReturnNullForInvalidRedHatEcosystem(String ecosystem) {
+            assertThat(OsDistribution.ofOsvEcosystem(ecosystem)).isNull();
         }
     }
 
@@ -272,6 +345,17 @@ class OsDistributionTest {
             assertThat(debian).isNotNull();
             assertThat(alpine.matches(debian)).isFalse();
             assertThat(debian.matches(alpine)).isFalse();
+        }
+
+        @Test
+        void shouldNotMatchRedHatWithAlpine() throws Exception {
+            final var redhat = OsDistribution.of(new PackageURL("pkg:rpm/redhat/curl@8.5.0?distro=rhel-9"));
+            final var alpine = OsDistribution.of(new PackageURL("pkg:apk/alpine/curl@8.5.0?distro=3.16"));
+
+            assertThat(redhat).isNotNull();
+            assertThat(alpine).isNotNull();
+            assertThat(redhat.matches(alpine)).isFalse();
+            assertThat(alpine.matches(redhat)).isFalse();
         }
 
     }

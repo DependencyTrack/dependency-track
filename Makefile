@@ -32,11 +32,11 @@ ifdef AGENT
 endif
 
 build:
-	$(MVND) $(MVN_FLAGS) -q -Pquick package
+	$(MVND) $(MVN_FLAGS) -Pquick package
 .PHONY: build
 
 build-dist:
-	$(MVND) $(MVN_FLAGS) -q -Pdist,quick package
+	$(MVND) $(MVN_FLAGS) -Pdist,quick package
 .PHONY: build-dist
 
 build-image: build
@@ -54,15 +54,19 @@ build-v4-migrator-image: build
 .PHONY: build-v4-migrator-image
 
 datanucleus-enhance:
-	$(MVND) $(MVN_FLAGS) -q -Pquick -pl alpine/alpine-model,apiserver process-classes
+	$(MVND) $(MVN_FLAGS) \
+		-Pquick \
+		-Dresolve.skip \
+		-pl alpine/alpine-model,apiserver \
+		process-classes
 .PHONY: datanucleus-enhance
 
 install:
-	$(MVND) $(MVN_FLAGS) -q -Pquick install
+	$(MVND) $(MVN_FLAGS) -Pquick install
 .PHONY: install
 
 lint-java:
-	$(MVND) $(MVN_FLAGS) -q -Dmaven.build.cache.enabled=false validate
+	$(MVND) $(MVN_FLAGS) -Dmaven.build.cache.enabled=false validate
 .PHONY: lint-java
 
 lint-openapi:

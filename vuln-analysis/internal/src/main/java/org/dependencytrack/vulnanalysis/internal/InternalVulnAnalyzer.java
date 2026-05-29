@@ -32,6 +32,7 @@ import org.cyclonedx.proto.v1_7.Source;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.support.distrometadata.OsDistribution;
+import org.dependencytrack.support.distrometadata.RedHatDistribution;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.dependencytrack.vulnanalysis.internal.Coordinate.CpeCoordinate;
 import org.dependencytrack.vulnanalysis.internal.Coordinate.PurlCoordinate;
@@ -608,39 +609,84 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
     }
 
     private static boolean matchesDistro(PackageURL componentPurl, MatchingCriteria criteria) {
+        final PackageURL criteriaPurl = criteria.purl();
         final String componentDistroQualifier = distroQualifierOf(componentPurl);
-        final String vsDistroQualifier = distroQualifierOf(criteria.purl());
+        final String criteriaDistroQualifier = distroQualifierOf(criteriaPurl);
 
-        // When both the component and the vulnerable software record have a distro
-        // qualifier, they must match *before* we perform the actual version comparison.
-        if (componentDistroQualifier != null && vsDistroQualifier != null) {
-            // Simplest case: the qualifiers just match without special interpretation.
-            if (!componentDistroQualifier.equals(vsDistroQualifier)) {
-                // Could still match, but depends on distro semantics.
-                // e.g. "debian-13" should match "trixie".
-                final OsDistribution componentDistro = OsDistribution.of(componentPurl);
-                final OsDistribution vsDistro = OsDistribution.of(criteria.purl());
+        if (componentDistroQualifier != null
+                && componentDistroQualifier.equals(criteriaDistroQualifier)) {
+            return true;
+        }
 
-                if (componentDistro != null && vsDistro != null) {
-                    if (!componentDistro.matches(vsDistro)) {
-                        // Actual mismatch, e.g. "debian-13" != "sid".
-                        return false;
-                    }
-                } else if (componentDistro != null || vsDistro != null) {
-                    // One side was parsed, the other wasn't. The raw qualifier
-                    // strings already differ, so this is a mismatch.
-                    return false;
-                } else {
-                    // Neither side could be parsed. The raw qualifier strings
-                    // already differ, so treat as mismatch to avoid false positives.
-                    LOGGER.debug("Neither distro qualifier could be parsed for comparison: {} vs {}",
-                            componentDistroQualifier, vsDistroQualifier);
-                    return false;
+        final OsDistribution componentDistro = resolveOsDistro(componentPurl);
+        final OsDistribution criteriaDistro = resolveOsDistro(criteriaPurl, criteria);
+
+        if (componentDistro != null && criteriaDistro != null) {
+            return componentDistro.matches(criteriaDistro);
+        }
+
+        // Both sides carry explicit qualifiers, but they're not equal and at least
+        // one couldn't be parsed. Treat as a mismatch to avoid false positives.
+        if (componentDistroQualifier != null && criteriaDistroQualifier != null) {
+            LOGGER.debug(
+                    "Could not reconcile distro qualifiers: {} vs. {}",
+                    componentDistroQualifier,
+                    criteriaDistroQualifier);
+            return false;
+        }
+
+        // At least one side has no distro qualifier at all.
+        // Treat as match to avoid false negatives, since `distro` qualifiers
+        // are still not widely used across BOM generators and vuln DBs.
+        return true;
+    }
+
+    private static @Nullable OsDistribution resolveOsDistro(
+            @Nullable PackageURL purl,
+            @Nullable MatchingCriteria matchingCriteria) {
+        if (purl == null) {
+            return null;
+        }
+
+        final var fromPurl = OsDistribution.of(purl);
+        if (fromPurl != null) {
+            return fromPurl;
+        }
+
+        // If the producer gave an explicit qualifier we couldn't read,
+        // don't override their intent with the criteria range heuristic below.
+        if (distroQualifierOf(purl) != null) {
+            return null;
+        }
+
+        // Red Hat versions are often verbose enough to be able to infer
+        // the distro version. This captures vuln DB records that do not
+        // explicitly declare distros.
+        if (matchingCriteria != null
+                && "rpm".equals(purl.getType())
+                && "redhat".equalsIgnoreCase(purl.getNamespace())) {
+            for (final String versionRangeBound : new @Nullable String[]{
+                    matchingCriteria.versionEndExcluding(),
+                    matchingCriteria.versionEndIncluding(),
+                    matchingCriteria.version(),
+                    matchingCriteria.versionStartExcluding(),
+                    matchingCriteria.versionStartIncluding()}) {
+                if (versionRangeBound == null) {
+                    continue;
+                }
+
+                final var fromVersionRangeBound = RedHatDistribution.ofRpmRelease(versionRangeBound);
+                if (fromVersionRangeBound != null) {
+                    return fromVersionRangeBound;
                 }
             }
         }
 
-        return true;
+        return null;
+    }
+
+    private static @Nullable OsDistribution resolveOsDistro(@Nullable PackageURL purl) {
+        return resolveOsDistro(purl, null);
     }
 
     private static @Nullable String distroQualifierOf(@Nullable PackageURL purl) {
@@ -652,17 +698,14 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         return qualifiers != null ? qualifiers.get("distro") : null;
     }
 
-    /**
-     * Returns the PURL's version with any type-specific transformations applied to make it
-     * suitable for ecosystem-aware comparison. Returns the raw version when no transformation
-     * applies, or {@code null} if no version is set.
-     * <p>
-     * Applied transformations:
-     * <ul>
-     *   <li>{@code deb}/{@code rpm}: fold the {@code epoch} qualifier into the version as
-     *       {@code <epoch>:<version>} when not already encoded inline.</li>
-     * </ul>
-     */
+    /// Returns the PURL's version with any type-specific transformations applied to make it
+    /// suitable for ecosystem-aware comparison. Returns the raw version when no transformation
+    /// applies, or `null` if no version is set.
+    ///
+    /// Applied transformations:
+    ///
+    /// * `deb`/`rpm`: fold the `epoch` qualifier into the version as `<epoch>:<version>`
+    ///   when not already encoded inline.
     private static String effectiveVersionOf(PackageURL purl) {
         requireNonNull(purl, "purl must not be null");
         requireNonNull(purl.getVersion(), "purl version must not be null");

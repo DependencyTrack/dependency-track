@@ -53,6 +53,34 @@ class OsvEcosystemsTest {
             "Alpine:v3.22, AlpineDistribution, alpine-3.22",
             "alpine:v3.18, AlpineDistribution, alpine-3.18",
             "Alpine:3.16, AlpineDistribution, alpine-3.16",
+            // Red Hat RHEL streams:
+            "Red Hat:enterprise_linux:8::appstream, RedHatDistribution, redhat-8",
+            "Red Hat:enterprise_linux:9::baseos, RedHatDistribution, redhat-9",
+            "Red Hat:enterprise_linux:7::server, RedHatDistribution, redhat-7",
+            "Red Hat:enterprise_linux:5::as, RedHatDistribution, redhat-5",
+            "Red Hat:enterprise_linux_eus:10.0, RedHatDistribution, redhat-10",
+            "Red Hat:rhel_aus:8.4::appstream, RedHatDistribution, redhat-8",
+            "Red Hat:rhel_eus:9.2::baseos, RedHatDistribution, redhat-9",
+            "Red Hat:rhel_e4s:8.2, RedHatDistribution, redhat-8",
+            "Red Hat:rhel_tus:8.6::appstream, RedHatDistribution, redhat-8",
+            "Red Hat:rhel_els:7, RedHatDistribution, redhat-7",
+            "Red Hat:rhel_extras:6, RedHatDistribution, redhat-6",
+            "red hat:enterprise_linux:9, RedHatDistribution, redhat-9",
+            // Red Hat non-RHEL products:
+            "Red Hat:satellite:6.13::el8, RedHatDistribution, redhat-8",
+            "Red Hat:openshift:4.12::el9, RedHatDistribution, redhat-9",
+            "Red Hat:openshift:4.8::el10, RedHatDistribution, redhat-10",
+            "Red Hat:jboss_enterprise_application_platform:7.4::el8, RedHatDistribution, redhat-8",
+            "Red Hat:ceph_storage:6.1::el9, RedHatDistribution, redhat-9",
+            "Red Hat:openstack:17.1::el8, RedHatDistribution, redhat-8",
+            "Red Hat:red_hat_single_sign_on:7::el6, RedHatDistribution, redhat-6",
+            "Red Hat:ansible_automation_platform:2.5::el9, RedHatDistribution, redhat-9",
+            // Red Hat rhel_* products that put their own version in the version field but
+            // expose the RHEL major version via the edition:
+            "Red Hat:rhel_software_collections:3::el7, RedHatDistribution, redhat-7",
+            "Red Hat:rhel_dotnet:6.0::el7, RedHatDistribution, redhat-7",
+            // Red Hat Edition with trailing variant suffix:
+            "Red Hat:satellite:6.16::el8_sat, RedHatDistribution, redhat-8",
     })
     void shouldResolve(String ecosystem, String expectedType, String expectedQualifier) {
         final OsDistribution distro = OsvEcosystems.toOsDistribution(ecosystem);
@@ -71,6 +99,18 @@ class OsvEcosystemsTest {
     @Test
     void shouldReturnNullForUnknownEcosystem() {
         assertThat(OsvEcosystems.toOsDistribution("Fedora:38")).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "Red Hat:",
+            "Red Hat:enterprise_linux",
+            "Red Hat:not a cpe",
+            "Red Hat:satellite:6.13",
+            "Red Hat:openshift:4.12::fastdatapath",
+    })
+    void shouldReturnNullForInvalidRedHatEcosystem(String ecosystem) {
+        assertThat(OsvEcosystems.toOsDistribution(ecosystem)).isNull();
     }
 
     @Test

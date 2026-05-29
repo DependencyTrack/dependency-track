@@ -130,7 +130,7 @@ In dex, this can be achieved using workflow instance IDs.
 ```java
 UUID runId = dexEngine.createRun(
         new CreateWorkflowRunRequest<>(ExampleWorkflow.class)
-                .withInstanceId("only-exists-once"));
+                .withWorkflowInstanceId("only-exists-once"));
 if (runId == null) {
     // Another run with the same instance ID already exists in non-terminal state.
 } else {

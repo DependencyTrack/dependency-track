@@ -1707,20 +1707,18 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var componentA = new Component();
         componentA.setProject(project);
         componentA.setName("acme-lib-a");
+        componentA.setDirect(true);
         qm.persist(componentA);
 
         final var componentB = new Component();
         componentB.setProject(project);
         componentB.setName("acme-lib-b");
+        componentB.setDirect(true);
         qm.persist(componentB);
 
         //  /-> A -> B
         // *         ^
         //  \-------/
-        project.setDirectDependencies("[%s, %s]".formatted(
-                new ComponentIdentity(componentA).toJSON(),
-                new ComponentIdentity(componentB).toJSON()
-        ));
         componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentB).toJSON()));
         qm.persist(project);
         qm.persist(componentA);

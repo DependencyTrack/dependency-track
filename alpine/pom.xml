@@ -77,7 +77,7 @@
         <lib.commons.collections4.version>4.5.0</lib.commons.collections4.version>
         <lib.commons.io.version>2.22.0</lib.commons.io.version>
         <lib.h2.version>2.4.240</lib.h2.version>
-        <lib.logstash-logback-encoder.version>8.1</lib.logstash-logback-encoder.version>
+        <lib.logstash-logback-encoder.version>9.0</lib.logstash-logback-encoder.version>
         <lib.nimbus-oauth2-oidc-sdk.version>11.37.2</lib.nimbus-oauth2-oidc-sdk.version>
         <lib.owasp.security-logging.version>1.1.7</lib.owasp.security-logging.version>
         <lib.parsson.version>1.1.7</lib.parsson.version>

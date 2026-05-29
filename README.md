@@ -38,3 +38,5 @@ User-facing documentation is rendered at [dependencytrack.github.io/docs/next](h
 
 * [frontend](https://github.com/DependencyTrack/frontend): Frontend repository
 * [docs](https://github.com/DependencyTrack/docs): Documentation repository
+* [helm-charts](https://github.com/DependencyTrack/helm-charts): [Helm](https://helm.sh/) charts
+* [community](https://github.com/DependencyTrack/community): Community resources

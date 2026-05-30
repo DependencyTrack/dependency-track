@@ -25,7 +25,6 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
 import jakarta.ws.rs.container.ContainerResponseFilter;
 import jakarta.ws.rs.core.HttpHeaders;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
@@ -67,16 +66,16 @@ public class HeaderFilter implements ContainerResponseFilter {
         responseContext.getHeaders().add(HttpHeaders.CACHE_CONTROL, "private, max-age=0, must-revalidate, no-cache");
 
         if (CORS_ENABLED) {
-            if (StringUtils.isNotBlank(CORS_ALLOW_ORIGIN)) {
+            if (CORS_ALLOW_ORIGIN != null && !CORS_ALLOW_ORIGIN.isBlank()) {
                 responseContext.getHeaders().add("Access-Control-Allow-Origin", CORS_ALLOW_ORIGIN);
             }
-            if (StringUtils.isNotBlank(CORS_ALLOW_METHODS)) {
+            if (CORS_ALLOW_METHODS != null && !CORS_ALLOW_METHODS.isBlank()) {
                 responseContext.getHeaders().add("Access-Control-Allow-Methods", CORS_ALLOW_METHODS);
             }
-            if (StringUtils.isNotBlank(CORS_ALLOW_HEADERS)) {
+            if (CORS_ALLOW_HEADERS != null && !CORS_ALLOW_HEADERS.isBlank()) {
                 responseContext.getHeaders().add("Access-Control-Allow-Headers", CORS_ALLOW_HEADERS);
             }
-            if (StringUtils.isNotBlank(CORS_EXPOSE_HEADERS)) {
+            if (CORS_EXPOSE_HEADERS != null && !CORS_EXPOSE_HEADERS.isBlank()) {
                 responseContext.getHeaders().add("Access-Control-Expose-Headers", CORS_EXPOSE_HEADERS);
             }
             if (CORS_ALLOW_CREDENTIALS) {

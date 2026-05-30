@@ -47,7 +47,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -135,6 +137,11 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
                   "destinationUrl": "http://host.testcontainers.internal:%d/notification"
                 }
                 """.formatted(wireMock.getPort())));
+
+        // Ensure notifications will be acknowledged by WireMock.
+        wireMock.stubFor(post(urlPathEqualTo("/notification"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
 
         // Create a new internal vulnerability for jackson-databind.
         apiClient.createVulnerability(new CreateVulnerabilityRequest("INT-123", "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H", List.of(917, 502), List.of(

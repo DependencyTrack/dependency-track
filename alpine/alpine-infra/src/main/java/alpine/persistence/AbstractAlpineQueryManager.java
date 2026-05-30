@@ -20,7 +20,6 @@ package alpine.persistence;
 
 import alpine.common.validation.RegexSequence;
 import alpine.resources.AlpineRequest;
-import org.apache.commons.collections4.CollectionUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 
 import javax.jdo.FetchPlan;
@@ -491,7 +490,7 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
         }
         if (object instanceof Collection) {
             final Collection<T> result = (Collection<T>)object;
-            return CollectionUtils.isEmpty(result) ? null : result.iterator().next();
+            return result.isEmpty() ? null : result.iterator().next();
         }
         return null;
     }

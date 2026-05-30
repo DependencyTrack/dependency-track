@@ -22,7 +22,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,7 +50,8 @@ public class TrimmedStringArrayDeserializer extends JsonDeserializer<String[]> {
             final Iterator<JsonNode> elements = node.elements();
             while (elements.hasNext()) {
                 final JsonNode childNode = elements.next();
-                final String value = StringUtils.trimToNull(childNode.asText());
+                final String trimmed = childNode.asText().trim();
+                final String value = !trimmed.isEmpty() ? trimmed : null;
                 if (value != null) {
                     list.add(value);
                 }

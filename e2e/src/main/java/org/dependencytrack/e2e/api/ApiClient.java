@@ -150,11 +150,11 @@ public interface ApiClient {
     Page<VulnerabilityPolicy> getAllVulnerabilityPolicies();
 
     @POST
-    @Path("/v2/vuln-policy-bundles/{uuid}/sync")
+    @Path("/v2/vuln-policy-bundles/{uuid}/sync-runs")
     void triggerVulnPolicyBundleSync(@PathParam("uuid") UUID uuid);
 
     @GET
-    @Path("/v2/vuln-policy-bundles/{uuid}/sync")
+    @Path("/v2/vuln-policy-bundles/{uuid}/sync-runs/latest")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     VulnPolicyBundleSyncStatus getVulnPolicyBundleSyncStatus(@PathParam("uuid") UUID uuid);

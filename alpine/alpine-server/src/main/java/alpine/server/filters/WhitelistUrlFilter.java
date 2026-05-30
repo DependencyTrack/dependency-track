@@ -18,8 +18,6 @@
  */
 package alpine.server.filters;
 
-import org.apache.commons.lang3.StringUtils;
-
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -28,6 +26,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -84,17 +83,17 @@ public final class WhitelistUrlFilter implements Filter {
     public void init(final FilterConfig filterConfig) {
 
         final String allowParam = filterConfig.getInitParameter("allowUrls");
-        if (StringUtils.isNotBlank(allowParam)) {
+        if (allowParam != null && !allowParam.isBlank()) {
             this.allowUrls = allowParam.split(",");
         }
 
         final String forwardExcludesParam = filterConfig.getInitParameter("forwardExcludes");
-        if (StringUtils.isNotBlank(forwardExcludesParam)) {
+        if (forwardExcludesParam != null && !forwardExcludesParam.isBlank()) {
             this.forwardExcludes = forwardExcludesParam.split(",");
         }
 
         final String forwardToParam = filterConfig.getInitParameter("forwardTo");
-        if (StringUtils.isNotBlank(forwardToParam)) {
+        if (forwardToParam != null && !forwardToParam.isBlank()) {
             this.forwardTo = forwardToParam;
         }
 

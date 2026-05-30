@@ -254,6 +254,16 @@
                 <groupId>org.datanucleus</groupId>
                 <artifactId>javax.jdo</artifactId>
                 <version>${lib.datanucleus-javax-jdo.version}</version>
+                <exclusions>
+                    <!--
+                        Legacy baggage used for JNDI lookups of the API.
+                        We don't use that, and a 2MB JAR is too large to carry along for nothing.
+                    -->
+                    <exclusion>
+                        <groupId>org.glassfish.corba</groupId>
+                        <artifactId>glassfish-corba-omgapi</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.datanucleus</groupId>
@@ -446,6 +456,16 @@
                 <groupId>io.minio</groupId>
                 <artifactId>minio</artifactId>
                 <version>${lib.minio.version}</version>
+                <exclusions>
+                    <!--
+                        Only used by MinIO for client-side encryption.
+                        Schlepping a 9MB JAR along for features we don't use is not worth it.
+                    -->
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcprov-jdk18on</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>

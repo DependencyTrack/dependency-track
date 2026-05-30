@@ -18,9 +18,7 @@
  */
 package alpine.common.util;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.regex.Pattern;
+import java.util.UUID;
 
 /**
  * A collection of useful UUID utilities.
@@ -30,8 +28,6 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("unused")
 public final class UuidUtil {
-
-    private static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
 
     /**
      * Private constructor
@@ -45,7 +41,16 @@ public final class UuidUtil {
      * @since 1.0.0
      */
     public static boolean isValidUUID(String uuid) {
-        return !StringUtils.isEmpty(uuid) && UUID_PATTERN.matcher(uuid).matches();
+        if (uuid == null) {
+            return false;
+        }
+
+        try {
+            UUID.fromString(uuid);
+            return true;
+        } catch (IllegalArgumentException _) {
+            return false;
+        }
     }
 
 }

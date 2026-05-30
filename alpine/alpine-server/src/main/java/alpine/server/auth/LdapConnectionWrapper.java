@@ -21,7 +21,6 @@ package alpine.server.auth;
 import alpine.common.validation.LdapStringSanitizer;
 import alpine.config.AlpineConfigKeys;
 import alpine.model.LdapUser;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
@@ -87,11 +86,11 @@ public class LdapConnectionWrapper {
         this.attributeName = config.getValue(AlpineConfigKeys.LDAP_ATTRIBUTE_NAME, String.class);
         this.userProvisioning = config.getValue(AlpineConfigKeys.LDAP_USER_PROVISIONING, Boolean.class);
         this.teamSynchronization = config.getValue(AlpineConfigKeys.LDAP_TEAM_SYNCHRONIZATION, Boolean.class);
-        this.ldapSslTls = StringUtils.isNotBlank(this.ldapUrl) && this.ldapUrl.startsWith("ldaps:");
+        this.ldapSslTls = this.ldapUrl != null && !this.ldapUrl.isBlank() && this.ldapUrl.startsWith("ldaps:");
     }
 
     public boolean isLdapConfigured() {
-        return ldapEnabled && StringUtils.isNotBlank(ldapUrl);
+        return ldapEnabled && ldapUrl != null && !ldapUrl.isBlank();
     }
 
     public String getAttributeMail() {
@@ -118,11 +117,11 @@ public class LdapConnectionWrapper {
      */
     public LdapContext createLdapContext(final String userDn, final String password) throws NamingException {
         LOGGER.debug("Creating LDAP context for: {}", userDn);
-        if (StringUtils.isEmpty(userDn) || StringUtils.isEmpty(password)) {
+        if (userDn == null || userDn.isEmpty() || password == null || password.isEmpty()) {
             throw new NamingException("Username or password cannot be empty or null");
         }
         final Hashtable<String, String> env = new Hashtable<>();
-        if (StringUtils.isNotBlank(securityAuth)) {
+        if (securityAuth != null && !securityAuth.isBlank()) {
             env.put(Context.SECURITY_AUTHENTICATION, securityAuth);
         }
         env.put(Context.SECURITY_PRINCIPAL, userDn);
@@ -335,7 +334,7 @@ public class LdapConnectionWrapper {
      * @since 1.4.0
      */
     private String formatPrincipal(final String username) {
-        if (StringUtils.isNotBlank(authUsernameFmt)) {
+        if (authUsernameFmt != null && !authUsernameFmt.isBlank()) {
             return String.format(authUsernameFmt, username);
         }
         return username;

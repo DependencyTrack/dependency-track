@@ -22,15 +22,14 @@ import alpine.common.validation.RegexSequence;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.Pagination;
 import alpine.resources.AlpineRequest;
-import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.server.ContainerRequest;
-
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.Provider;
+import org.glassfish.jersey.server.ContainerRequest;
+
 import java.security.Principal;
 import java.util.Set;
 
@@ -52,7 +51,7 @@ public class ApiFilter implements ContainerRequestFilter {
             final OrderDirection orderDirection;
             String orderBy = multiParam(queryParams, "orderBy", "sortName");
 
-            if (StringUtils.isBlank(orderBy) || !RegexSequence.Pattern.STRING_IDENTIFIER.matcher(orderBy).matches()) {
+            if (orderBy == null || orderBy.isBlank() || !RegexSequence.Pattern.STRING_IDENTIFIER.matcher(orderBy).matches()) {
                 orderBy = null;
             }
 
@@ -65,9 +64,9 @@ public class ApiFilter implements ContainerRequestFilter {
             }
 
             final Pagination pagination;
-            if (StringUtils.isNotBlank(offset)) {
+            if (offset != null && !offset.isBlank()) {
                 pagination = new Pagination(Pagination.Strategy.OFFSET, offset, size);
-            } else if (StringUtils.isNotBlank(page) && StringUtils.isNotBlank(size)) {
+            } else if (page != null && !page.isBlank() && size != null && !size.isBlank()) {
                 pagination = new Pagination(Pagination.Strategy.PAGES, page, size);
             } else {
                 pagination = new Pagination(Pagination.Strategy.OFFSET, 0, 100); // Always paginate queries from resources
@@ -88,7 +87,7 @@ public class ApiFilter implements ContainerRequestFilter {
     private String multiParam(final MultivaluedMap<String, String> queryParams, final String... params) {
         for (final String param: params) {
             final String value = queryParams.getFirst(param);
-            if (StringUtils.isNotBlank(value)) {
+            if (value != null && !value.isBlank()) {
                 return value;
             }
         }

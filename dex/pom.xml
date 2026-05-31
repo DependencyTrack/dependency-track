@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>dependency-track-parent</artifactId>
-        <version>5.0.0-rc.2</version>
+        <version>5.0.0-rc.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>dex-parent</artifactId>

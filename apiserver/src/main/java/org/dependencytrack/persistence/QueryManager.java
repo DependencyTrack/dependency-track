@@ -65,7 +65,6 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
 import org.dependencytrack.model.VulnerabilityKey;
-import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
@@ -114,7 +113,6 @@ public class QueryManager extends AlpineQueryManager {
     private ComponentQueryManager componentQueryManager;
     private AnalysisQueryManager analysisQueryManager;
     private LicenseQueryManager licenseQueryManager;
-    private MetricsQueryManager metricsQueryManager;
     private NotificationQueryManager notificationQueryManager;
     private PolicyQueryManager policyQueryManager;
     private ProjectQueryManager projectQueryManager;
@@ -364,18 +362,6 @@ public class QueryManager extends AlpineQueryManager {
             analysisQueryManager = (request == null) ? new AnalysisQueryManager(getPersistenceManager()) : new AnalysisQueryManager(getPersistenceManager(), request);
         }
         return analysisQueryManager;
-    }
-
-    /**
-     * Lazy instantiation of MetricsQueryManager.
-     *
-     * @return a MetricsQueryManager object
-     */
-    private MetricsQueryManager getMetricsQueryManager() {
-        if (metricsQueryManager == null) {
-            metricsQueryManager = (request == null) ? new MetricsQueryManager(getPersistenceManager()) : new MetricsQueryManager(getPersistenceManager(), request);
-        }
-        return metricsQueryManager;
     }
 
     /**
@@ -858,14 +844,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public long makeAnalysis(final MakeAnalysisCommand command) {
         return getAnalysisQueryManager().makeAnalysis(command);
-    }
-
-    public List<VulnerabilityMetrics> getVulnerabilityMetrics() {
-        return getMetricsQueryManager().getVulnerabilityMetrics();
-    }
-
-    public void synchronizeVulnerabilityMetrics(List<VulnerabilityMetrics> metrics) {
-        getMetricsQueryManager().synchronizeVulnerabilityMetrics(metrics);
     }
 
     public PaginatedResult getRepositories() {

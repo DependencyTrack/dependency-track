@@ -58,8 +58,8 @@ class S3FileStorageTest {
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> createStorage(Map.ofEntries(
                         Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
-                        Map.entry("dt.file-storage.s3.access.key", "foo"),
-                        Map.entry("dt.file-storage.s3.secret.key", "bar"),
+                        Map.entry("dt.file-storage.s3.access-key", "foo"),
+                        Map.entry("dt.file-storage.s3.secret-key", "bar"),
                         Map.entry("dt.file-storage.s3.bucket", "does-not-exist"))))
                 .withMessage("Bucket does-not-exist does not exist");
     }
@@ -69,8 +69,8 @@ class S3FileStorageTest {
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> createStorage(Map.ofEntries(
                         Map.entry("dt.file-storage.s3.endpoint", "http://localhost:1"),
-                        Map.entry("dt.file-storage.s3.access.key", "foo"),
-                        Map.entry("dt.file-storage.s3.secret.key", "bar"),
+                        Map.entry("dt.file-storage.s3.access-key", "foo"),
+                        Map.entry("dt.file-storage.s3.secret-key", "bar"),
                         Map.entry("dt.file-storage.s3.bucket", "does-not-exist"),
                         Map.entry("dt.file-storage.s3.connect-timeout-ms", "500"))))
                 .withMessage("Failed to determine if bucket does-not-exist exists");
@@ -183,8 +183,8 @@ class S3FileStorageTest {
         private FileStorage createEphemeralStorage() {
             return createStorage(Map.ofEntries(
                     Map.entry("dt.file-storage.s3.endpoint", ephemeralContainer.getHttpEndpoint()),
-                    Map.entry("dt.file-storage.s3.access.key", "foo"),
-                    Map.entry("dt.file-storage.s3.secret.key", "bar"),
+                    Map.entry("dt.file-storage.s3.access-key", "foo"),
+                    Map.entry("dt.file-storage.s3.secret-key", "bar"),
                     Map.entry("dt.file-storage.s3.bucket", "test"),
                     Map.entry("dt.file-storage.s3.connect-timeout-ms", "5000"),
                     Map.entry("dt.file-storage.s3.read-timeout-ms", "5000"),
@@ -196,8 +196,8 @@ class S3FileStorageTest {
     private FileStorage createStorage() {
         return createStorage(Map.ofEntries(
                 Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
-                Map.entry("dt.file-storage.s3.access.key", "foo"),
-                Map.entry("dt.file-storage.s3.secret.key", "bar"),
+                Map.entry("dt.file-storage.s3.access-key", "foo"),
+                Map.entry("dt.file-storage.s3.secret-key", "bar"),
                 Map.entry("dt.file-storage.s3.bucket", "test")));
     }
 

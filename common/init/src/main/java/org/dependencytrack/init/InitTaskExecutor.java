@@ -201,7 +201,7 @@ public final class InitTaskExecutor {
 
     private Predicate<InitTask> isTaskEnabled() {
         return task -> config.getOptionalValue(
-                "dt.init.task.%s.enabled".formatted(task.name()), Boolean.class).orElse(true);
+                "dt.init-task.%s.enabled".formatted(task.name()), Boolean.class).orElse(true);
     }
 
 }

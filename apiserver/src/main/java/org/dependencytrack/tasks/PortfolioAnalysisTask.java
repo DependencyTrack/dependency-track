@@ -37,15 +37,15 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger.ANALYSIS_TRIGGER_SCHEDULE;
 
 /**
- * Submits all projects in the entire portfolio for vulnerability analysis.
+ * Submits all projects in the entire portfolio for analysis.
  */
-public final class VulnerabilityAnalysisTask implements Runnable {
+public final class PortfolioAnalysisTask implements Runnable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(VulnerabilityAnalysisTask.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PortfolioAnalysisTask.class);
 
     private final DexEngine dexEngine;
 
-    public VulnerabilityAnalysisTask(DexEngine dexEngine) {
+    public PortfolioAnalysisTask(DexEngine dexEngine) {
         this.dexEngine = dexEngine;
     }
 

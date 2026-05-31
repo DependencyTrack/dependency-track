@@ -65,7 +65,7 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
 
     @Override
     protected void customizeApiServerContainer(final GenericContainer<?> container) {
-        container.withEnv("TMP_DELAY_BOM_PROCESSED_NOTIFICATION", "true");
+        container.withEnv("DT_TMP_DELAY_BOM_PROCESSED_NOTIFICATION", "true");
     }
 
     @Test

@@ -799,7 +799,7 @@
                                             <value>dev</value>
                                         </systemProperty>
                                         <systemProperty>
-                                            <key>dev.services.enabled</key>
+                                            <key>dt.dev-services.enabled</key>
                                             <value>true</value>
                                         </systemProperty>
                                     </systemProperties>

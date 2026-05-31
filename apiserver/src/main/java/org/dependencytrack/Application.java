@@ -44,6 +44,7 @@ import jakarta.servlet.DispatcherType;
 import org.dependencytrack.cache.CacheManagerBinder;
 import org.dependencytrack.cache.CacheManagerInitializer;
 import org.dependencytrack.common.ConfigKeys;
+import org.dependencytrack.common.LegacyConfigPropertyValidator;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dev.DevServices;
@@ -88,7 +89,6 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.net.URL;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Set;
 
 import static org.glassfish.jersey.server.ServerProperties.BV_SEND_ERROR_IN_RESPONSE;
@@ -105,7 +105,7 @@ public final class Application {
         final Config config = ConfigProvider.getConfig();
         new LoggingConfiguration(config).apply((LoggerContext) LoggerFactory.getILoggerFactory());
 
-        failOnLegacyFileSecretProperties(config);
+        LegacyConfigPropertyValidator.validate(config);
 
         var contextPath = "/";
         var host = "0.0.0.0";
@@ -162,11 +162,11 @@ public final class Application {
                     initTasksHealthCheck);
             initTaskExecutor.execute();
 
-            if (config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_CLOSE_AFTER_USE, boolean.class)) {
+            if (config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_CLOSE_AFTER_COMPLETION, boolean.class)) {
                 dataSourceRegistry.close(dataSourceName);
             }
-            if (config.getValue(ConfigKeys.INIT_AND_EXIT, boolean.class)) {
-                LOGGER.info("Exiting because dt.init.and.exit is enabled");
+            if (config.getValue(ConfigKeys.INIT_TASKS_EXIT_AFTER_COMPLETION, boolean.class)) {
+                LOGGER.info("Exiting because dt.init-tasks.exit-after-completion is enabled");
                 System.exit(0);
             }
         }
@@ -289,31 +289,6 @@ public final class Application {
                 LOGGER.warn("Failed to stop dev services", e);
             }
         }
-    }
-
-    private static final Set<String> LEGACY_FILE_SECRET_PROPERTIES = Set.of(
-            "alpine.database.password.file",
-            "alpine.http.proxy.password.file",
-            "alpine.ldap.bind.password.file",
-            "dt.database.password.file",
-            "dt.http.proxy.password.file",
-            "dt.ldap.bind.password.file");
-
-    private static void failOnLegacyFileSecretProperties(Config config) {
-        final var presentPropertyNames = new HashSet<String>();
-        LEGACY_FILE_SECRET_PROPERTIES.forEach(name -> {
-            if (config.getOptionalValue(name, String.class).isPresent()) {
-                presentPropertyNames.add(name);
-            }
-        });
-        if (presentPropertyNames.isEmpty()) {
-            return;
-        }
-
-        throw new IllegalStateException("""
-                Legacy file-secret properties are no longer supported: %s; \
-                Replace each <key>.file=/path with <key>=${file::/path}\
-                """.formatted(presentPropertyNames));
     }
 
     private static final Set<String> HISTOGRAM_METER_NAMES = Set.of(

@@ -234,7 +234,7 @@ public class OidcAuthenticationService implements AuthenticationService {
                     accessToken);
         }
 
-        final List<String> defaultTeams = config.getOptionalValues(AlpineConfigKeys.OIDC_TEAMS_DEFAULT, String.class)
+        final List<String> defaultTeams = config.getOptionalValues(AlpineConfigKeys.OIDC_DEFAULT_TEAMS, String.class)
                 .orElse(List.of()).stream()
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())

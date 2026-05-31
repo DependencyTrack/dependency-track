@@ -83,7 +83,7 @@ abstract class AbstractE2ET {
                 .withEnv("DT_DATASOURCE_URL", "jdbc:postgresql://postgres:5432/dtrack")
                 .withEnv("DT_DATASOURCE_USERNAME", "dtrack")
                 .withEnv("DT_DATASOURCE_PASSWORD", "dtrack")
-                .withEnv("ALPINE_BCRYPT_ROUNDS", "4")
+                .withEnv("DT_BCRYPT_ROUNDS", "4")
                 .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("org.dependencytrack.e2e.apiserver")))
                 .waitingFor(Wait.forLogMessage(".*Dependency-Track is ready.*", 1))
                 .withNetworkAliases("apiserver")

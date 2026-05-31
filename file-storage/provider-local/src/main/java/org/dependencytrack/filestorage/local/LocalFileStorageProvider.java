@@ -63,7 +63,7 @@ public final class LocalFileStorageProvider implements FileStorageProvider {
         }
 
         final int compressionLevel = config
-                .getOptionalValue("dt.file-storage.local.compression.level", int.class)
+                .getOptionalValue("dt.file-storage.local.compression-level", int.class)
                 .orElse(5);
         if (compressionLevel < Zstd.minCompressionLevel() || compressionLevel > Zstd.maxCompressionLevel()) {
             throw new IllegalStateException(

@@ -135,7 +135,7 @@ public class LdapAuthenticationService implements AuthenticationService {
                     user = qm.synchronizeTeamMembership(user, groupDNs);
                 }
             } else {
-                LOGGER.warn("Could not find '{}' in the directory while provisioning the user. Ensure '{}' is defined correctly", username, AlpineConfigKeys.LDAP_ATTRIBUTE_NAME);
+                LOGGER.warn("Could not find '{}' in the directory while provisioning the user. Ensure '{}' is defined correctly", username, AlpineConfigKeys.LDAP_NAME_ATTRIBUTE);
                 throw new AlpineAuthenticationException(AlpineAuthenticationException.CauseType.UNMAPPED_ACCOUNT);
             }
         } catch (NamingException e) {

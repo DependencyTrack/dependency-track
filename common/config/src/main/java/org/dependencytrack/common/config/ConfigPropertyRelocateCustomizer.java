@@ -44,7 +44,7 @@ public final class ConfigPropertyRelocateCustomizer implements SmallRyeConfigBui
             @Override
             public ConfigSourceInterceptor getInterceptor(ConfigSourceInterceptorContext context) {
                 return new RelocateConfigSourceInterceptor(name -> switch (name) {
-                    case SMALLRYE_CONFIG_LOG_VALUES -> "dt.config.log.values";
+                    case SMALLRYE_CONFIG_LOG_VALUES -> "dt.config.log-values";
                     case SMALLRYE_CONFIG_PROFILE -> "dt.config.profile";
                     case SMALLRYE_CONFIG_PROFILE_PARENT -> "dt.config.profile.parent";
                     default -> name;

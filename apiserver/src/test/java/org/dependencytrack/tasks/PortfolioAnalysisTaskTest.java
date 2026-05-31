@@ -35,10 +35,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-class VulnerabilityAnalysisTaskTest extends PersistenceCapableTest {
+class PortfolioAnalysisTaskTest extends PersistenceCapableTest {
 
     private final DexEngine dexEngineMock = mock(DexEngine.class);
-    private final VulnerabilityAnalysisTask task = new VulnerabilityAnalysisTask(dexEngineMock);
+    private final PortfolioAnalysisTask task = new PortfolioAnalysisTask(dexEngineMock);
 
     @AfterEach
     void afterEach() {

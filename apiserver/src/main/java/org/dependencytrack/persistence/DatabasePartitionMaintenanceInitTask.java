@@ -35,7 +35,7 @@ public final class DatabasePartitionMaintenanceInitTask implements InitTask {
 
     @Override
     public String name() {
-        return "database.partition.maintenance";
+        return "database-partition-maintenance";
     }
 
     @Override

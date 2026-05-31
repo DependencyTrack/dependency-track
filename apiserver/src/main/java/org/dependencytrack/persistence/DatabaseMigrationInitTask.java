@@ -34,7 +34,7 @@ public final class DatabaseMigrationInitTask implements InitTask {
 
     @Override
     public String name() {
-        return "database.migration";
+        return "database-migration";
     }
 
     @Override

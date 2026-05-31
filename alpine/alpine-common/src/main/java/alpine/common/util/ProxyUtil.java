@@ -77,7 +77,7 @@ public final class ProxyUtil {
             return null;
         }
 
-        final String host = config.getOptionalValue(AlpineConfigKeys.HTTP_PROXY_ADDRESS, String.class).orElse(null);
+        final String host = config.getOptionalValue(AlpineConfigKeys.HTTP_PROXY_HOST, String.class).orElse(null);
         if (host == null) {
             return null;
         }

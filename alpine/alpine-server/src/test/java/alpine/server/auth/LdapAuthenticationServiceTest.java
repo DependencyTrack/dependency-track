@@ -206,12 +206,12 @@ class LdapAuthenticationServiceTest {
         values.put(AlpineConfigKeys.LDAP_BASEDN, LDAP.getBaseDn());
         values.put(AlpineConfigKeys.LDAP_BIND_USERNAME, LDAP.getUser());
         values.put(AlpineConfigKeys.LDAP_BIND_PASSWORD, LDAP.getPassword());
-        values.put(AlpineConfigKeys.LDAP_ATTRIBUTE_NAME, "uid");
-        values.put(AlpineConfigKeys.LDAP_ATTRIBUTE_MAIL, "mail");
+        values.put(AlpineConfigKeys.LDAP_NAME_ATTRIBUTE, "uid");
+        values.put(AlpineConfigKeys.LDAP_MAIL_ATTRIBUTE, "mail");
         values.put(AlpineConfigKeys.LDAP_USER_GROUPS_FILTER, "(member={USER_DN})");
-        values.put(AlpineConfigKeys.LDAP_GROUPS_FILTER, "(objectClass=groupOfUniqueNames)");
-        values.put(AlpineConfigKeys.LDAP_GROUPS_SEARCH_FILTER, "(&(objectClass=groupOfUniqueNames)(cn=*{SEARCH_TERM}*))");
-        values.put(AlpineConfigKeys.LDAP_USERS_SEARCH_FILTER, "(&(objectClass=inetOrgPerson)(cn=*{SEARCH_TERM}*))");
+        values.put(AlpineConfigKeys.LDAP_GROUP_FILTER, "(objectClass=groupOfUniqueNames)");
+        values.put(AlpineConfigKeys.LDAP_GROUP_SEARCH_FILTER, "(&(objectClass=groupOfUniqueNames)(cn=*{SEARCH_TERM}*))");
+        values.put(AlpineConfigKeys.LDAP_USER_SEARCH_FILTER, "(&(objectClass=inetOrgPerson)(cn=*{SEARCH_TERM}*))");
         values.put(AlpineConfigKeys.LDAP_USER_PROVISIONING, "true");
         values.put(AlpineConfigKeys.LDAP_TEAM_SYNCHRONIZATION, "false");
         values.putAll(overrides);

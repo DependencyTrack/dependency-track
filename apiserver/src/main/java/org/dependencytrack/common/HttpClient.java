@@ -86,12 +86,12 @@ public final class HttpClient extends java.net.http.HttpClient {
                         SystemUtil.getOsName(),
                         SystemUtil.getOsVersion());
 
-        final int connectTimeoutSeconds = config
-                .getOptionalValue(AlpineConfigKeys.HTTP_TIMEOUT_CONNECTION, int.class)
-                .orElse(30);
+        final long connectTimeoutMs = config
+                .getOptionalValue(AlpineConfigKeys.HTTP_CONNECT_TIMEOUT_MS, long.class)
+                .orElse(30_000L);
         final var clientBuilder = java.net.http.HttpClient.newBuilder()
                 .proxy(new ProxySelector(proxyConfig))
-                .connectTimeout(Duration.ofSeconds(connectTimeoutSeconds))
+                .connectTimeout(Duration.ofMillis(connectTimeoutMs))
                 .followRedirects(java.net.http.HttpClient.Redirect.NORMAL);
 
         if (proxyConfig != null && proxyConfig.getUsername() != null && proxyConfig.getPassword() != null) {

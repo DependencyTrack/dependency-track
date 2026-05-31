@@ -46,7 +46,6 @@ import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.VulnerabilityMetrics;
 import org.dependencytrack.model.validation.ValidUuid;
-import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
@@ -107,10 +106,9 @@ public class MetricsResource extends AbstractApiResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getVulnerabilityMetrics() {
-        try (QueryManager qm = new QueryManager()) {
-            final List<VulnerabilityMetrics> metrics = qm.getVulnerabilityMetrics();
-            return Response.ok(metrics).build();
-        }
+        final List<VulnerabilityMetrics> metrics =
+                withJdbiHandle(handle -> handle.attach(MetricsDao.class).getVulnerabilityMetrics());
+        return Response.ok(metrics).build();
     }
 
     @GET

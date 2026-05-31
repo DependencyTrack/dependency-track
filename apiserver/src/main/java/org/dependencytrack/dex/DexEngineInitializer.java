@@ -41,6 +41,7 @@ import org.dependencytrack.dex.listener.DelayedBomProcessedNotificationEmitter;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.metrics.FetchProjectMetricsUpdateCandidatesActivity;
 import org.dependencytrack.metrics.RefreshGlobalPortfolioMetricsActivity;
+import org.dependencytrack.metrics.RefreshVulnerabilityMetricsActivity;
 import org.dependencytrack.metrics.UpdatePortfolioMetricsWorkflow;
 import org.dependencytrack.metrics.UpdateProjectMetricsActivity;
 import org.dependencytrack.notification.ProcessScheduledNotificationRuleActivity;
@@ -299,6 +300,11 @@ public final class DexEngineInitializer implements ServletContextListener {
                 Duration.ofMinutes(5));
         engine.registerActivity(
                 new RefreshGlobalPortfolioMetricsActivity(),
+                voidConverter(),
+                voidConverter(),
+                Duration.ofMinutes(5));
+        engine.registerActivity(
+                new RefreshVulnerabilityMetricsActivity(),
                 voidConverter(),
                 voidConverter(),
                 Duration.ofMinutes(5));

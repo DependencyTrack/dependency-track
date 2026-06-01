@@ -91,9 +91,16 @@ public final class LoadPhase {
         // does not run the per-row ancestor walk; we load the pre-built closure directly.
         // Disable PROJECT_ACCESS_USERS write-blocking trigger so the derived backfill can
         // insert directly; v5 normally maintains this table exclusively via triggers.
+        // Disable the PROJECT_ACCESS_USERS-populating triggers on PROJECT_ACCESS_TEAMS and
+        // USERS_TEAMS so the migrator's pre-computed tgt_project_access_users remains the
+        // sole source of truth for the PROJECT_ACCESS_USERS load; otherwise those triggers
+        // fire during the parent loads and shadow the direct INSERT (which then reports 0
+        // rows due to ON CONFLICT DO NOTHING).
         target.useHandle(h -> {
             h.execute("ALTER TABLE \"PROJECT\" DISABLE TRIGGER USER");
             h.execute("ALTER TABLE \"PROJECT_ACCESS_USERS\" DISABLE TRIGGER USER");
+            h.execute("ALTER TABLE \"PROJECT_ACCESS_TEAMS\" DISABLE TRIGGER USER");
+            h.execute("ALTER TABLE \"USERS_TEAMS\" DISABLE TRIGGER USER");
         });
         prepareMetricsPartitions();
     }
@@ -102,6 +109,8 @@ public final class LoadPhase {
         target.useHandle(h -> {
             h.execute("ALTER TABLE \"PROJECT\" ENABLE TRIGGER USER");
             h.execute("ALTER TABLE \"PROJECT_ACCESS_USERS\" ENABLE TRIGGER USER");
+            h.execute("ALTER TABLE \"PROJECT_ACCESS_TEAMS\" ENABLE TRIGGER USER");
+            h.execute("ALTER TABLE \"USERS_TEAMS\" ENABLE TRIGGER USER");
         });
 
         // Restart IDENTITY sequence for each loaded table that preserved v4 IDs.

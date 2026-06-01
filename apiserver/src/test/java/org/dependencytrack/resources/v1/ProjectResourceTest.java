@@ -664,6 +664,68 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldSortProjectsByLastInheritedRiskScoreIncludingCollectionProjects() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        projectA.setLastInheritedRiskScore(10.0);
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        projectB.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(projectB, List.of(), false);
+
+        final var projectC = new Project();
+        projectC.setName("acme-app-c");
+        projectC.setParent(projectB);
+        projectC.setLastInheritedRiskScore(6.0);
+        qm.persist(projectC);
+
+        final var projectD = new Project();
+        projectD.setName("acme-app-d");
+        projectD.setLastInheritedRiskScore(5.0);
+        qm.persist(projectD);
+
+        useJdbiHandle(handle -> {
+            final var testDao = handle.attach(MetricsTestDao.class);
+            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
+            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+
+            final var childMetrics = new ProjectMetrics();
+            childMetrics.setProjectId(projectC.getId());
+            childMetrics.setInheritedRiskScore(7.0);
+            childMetrics.setFirstOccurrence(Date.from(dbNow));
+            childMetrics.setLastOccurrence(Date.from(dbNow));
+            testDao.createProjectMetrics(childMetrics);
+        });
+
+        final Response response = jersey
+                .target(V1_PROJECT)
+                .queryParam(ORDER_BY, "lastInheritedRiskScore")
+                .queryParam(SORT, SORT_DESC)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json)
+                .extracting(value -> ((JsonObject) value).getString("name"))
+                .containsExactly(
+                        "acme-app-a",
+                        "acme-app-b",
+                        "acme-app-c",
+                        "acme-app-d");
+        assertThat(json)
+                .extracting(value -> ((JsonObject) value).getJsonNumber("lastInheritedRiskScore").doubleValue())
+                .containsExactly(10.0, 7.0, 6.0, 5.0);
+    }
+
+    @Test
     void getProjectsConciseTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
         final var project = new Project();
@@ -4428,6 +4490,188 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldSortConciseListByLastRiskScoreIncludingCollectionProjects() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        projectA.setLastInheritedRiskScore(10.0);
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        projectB.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(projectB, List.of(), false);
+
+        final var projectC = new Project();
+        projectC.setName("acme-app-c");
+        projectC.setParent(projectB);
+        projectC.setLastInheritedRiskScore(6.0);
+        qm.persist(projectC);
+
+        final var projectD = new Project();
+        projectD.setName("acme-app-d");
+        projectD.setLastInheritedRiskScore(5.0);
+        qm.persist(projectD);
+
+        useJdbiHandle(handle -> {
+            final var testDao = handle.attach(MetricsTestDao.class);
+            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
+            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+
+            final var childMetrics = new ProjectMetrics();
+            childMetrics.setProjectId(projectC.getId());
+            childMetrics.setInheritedRiskScore(7.0);
+            childMetrics.setFirstOccurrence(Date.from(dbNow));
+            childMetrics.setLastOccurrence(Date.from(dbNow));
+            testDao.createProjectMetrics(childMetrics);
+        });
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/concise")
+                .queryParam("sortName", "lastRiskScore")
+                .queryParam("sortOrder", "desc")
+                .queryParam("includeMetrics", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
+
+        final JsonArray jsonArray = parseJsonArray(response);
+        assertThat(jsonArray).hasSize(4);
+        assertThat(jsonArray)
+                .extracting(value -> ((JsonObject) value).getString("name"))
+                .containsExactly(
+                        "acme-app-a",
+                        "acme-app-b",
+                        "acme-app-c",
+                        "acme-app-d");
+        assertThat(jsonArray)
+                .extracting(value -> ((JsonObject) value).getJsonNumber("lastRiskScore").doubleValue())
+                .containsExactly(10.0, 7.0, 6.0, 5.0);
+
+        final JsonObject collectionObj = jsonArray.getJsonObject(1);
+        assertThatJson(collectionObj.getJsonObject("metrics").toString())
+                .withOptions(Option.IGNORING_EXTRA_FIELDS)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "inheritedRiskScore": 7.0
+                        }
+                        """);
+    }
+
+    @Test
+    void shouldSortConciseListByLastRiskScoreWithoutMetricsExpansion() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        projectA.setLastInheritedRiskScore(3.0);
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        projectB.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(projectB, List.of(), false);
+
+        final var projectC = new Project();
+        projectC.setName("acme-app-c");
+        projectC.setParent(projectB);
+        projectC.setLastInheritedRiskScore(2.0);
+        qm.persist(projectC);
+
+        useJdbiHandle(handle -> {
+            final var testDao = handle.attach(MetricsTestDao.class);
+            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
+            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+
+            final var childMetrics = new ProjectMetrics();
+            childMetrics.setProjectId(projectC.getId());
+            childMetrics.setInheritedRiskScore(8.0);
+            childMetrics.setFirstOccurrence(Date.from(dbNow));
+            childMetrics.setLastOccurrence(Date.from(dbNow));
+            testDao.createProjectMetrics(childMetrics);
+        });
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/concise")
+                .queryParam("sortName", "lastRiskScore")
+                .queryParam("sortOrder", "desc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
+
+        final JsonArray jsonArray = parseJsonArray(response);
+        assertThat(jsonArray)
+                .extracting(value -> ((JsonObject) value).getString("name"))
+                .containsExactly("acme-app-b", "acme-app-a", "acme-app-c");
+        assertThat(jsonArray.getJsonObject(0).containsKey("metrics")).isFalse();
+    }
+
+    @Test
+    void shouldReturnCollectionProjectMetricsForChildrenConciseEndpoint() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var parent = new Project();
+        parent.setName("parent-collection");
+        parent.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(parent, List.of(), false);
+
+        final var nestedCollection = new Project();
+        nestedCollection.setName("nested-collection");
+        nestedCollection.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        nestedCollection.setParent(parent);
+        qm.createProject(nestedCollection, List.of(), false);
+
+        final var leafGrandchild = new Project();
+        leafGrandchild.setName("leaf-grandchild");
+        leafGrandchild.setParent(nestedCollection);
+        qm.persist(leafGrandchild);
+
+        useJdbiHandle(handle -> {
+            final var testDao = handle.attach(MetricsTestDao.class);
+            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
+            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+
+            final var grandchildMetrics = new ProjectMetrics();
+            grandchildMetrics.setProjectId(leafGrandchild.getId());
+            grandchildMetrics.setInheritedRiskScore(4.0);
+            grandchildMetrics.setCritical(2);
+            grandchildMetrics.setFirstOccurrence(Date.from(dbNow));
+            grandchildMetrics.setLastOccurrence(Date.from(dbNow));
+            testDao.createProjectMetrics(grandchildMetrics);
+        });
+
+        final Response response = jersey.target(V1_PROJECT + "/concise/" + parent.getUuid() + "/children")
+                .queryParam("includeMetrics", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+
+        final JsonArray jsonArray = parseJsonArray(response);
+        assertThat(jsonArray).hasSize(1);
+        final JsonObject nested = jsonArray.getJsonObject(0);
+        assertThat(nested.getString("name")).isEqualTo("nested-collection");
+        // The nested collection's metrics aggregate recursively from its leaf descendant.
+        assertThatJson(nested.getJsonObject("metrics").toString())
+                .withOptions(Option.IGNORING_EXTRA_FIELDS)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "critical": 2,
+                          "inheritedRiskScore": 4.0
+                        }
+                        """);
+    }
+
+    @Test
     void shouldCreateCollectionProjectWithoutClassifier() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
@@ -4717,6 +4961,122 @@ class ProjectResourceTest extends ResourceTest {
                 .inPath("$.versions[*].uuid")
                 .isArray()
                 .containsExactly(accessibleVersion.getUuid().toString());
+    }
+
+    @Test
+    void shouldFilterProjectsBySearchTextOnNameAndTag() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        qm.persist(projectB);
+        qm.bind(projectB, List.of(qm.createTag("tag-foo")));
+
+        final var projectC = new Project();
+        projectC.setName("acme-app-c");
+        qm.persist(projectC);
+        qm.bind(projectC, List.of(qm.createTag("tag-bar")));
+
+        Response response = jersey
+                .target(V1_PROJECT)
+                .queryParam("searchText", "acme-app-a")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-a");
+
+        response = jersey
+                .target(V1_PROJECT)
+                .queryParam("searchText", "tag-foo")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-b");
+
+        response = jersey
+                .target(V1_PROJECT)
+                .queryParam("searchText", "tag-bar")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-c");
+    }
+
+    @Test
+    void shouldFilterConciseProjectsBySearchTextOnNameAndTag() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        qm.persist(projectB);
+        qm.bind(projectB, List.of(qm.createTag("tag-foo")));
+
+        final var projectC = new Project();
+        projectC.setName("acme-app-c");
+        qm.persist(projectC);
+        qm.bind(projectC, List.of(qm.createTag("tag-bar")));
+
+        Response response = jersey
+                .target(V1_PROJECT + "/concise")
+                .queryParam("searchText", "acme-app-a")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-a");
+
+        response = jersey
+                .target(V1_PROJECT + "/concise")
+                .queryParam("searchText", "tag-foo")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-b");
+
+        response = jersey
+                .target(V1_PROJECT + "/concise")
+                .queryParam("searchText", "tag-bar")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-c");
     }
 
 }

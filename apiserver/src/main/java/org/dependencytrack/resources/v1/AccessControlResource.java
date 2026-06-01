@@ -99,8 +99,20 @@ public class AccessControlResource extends AbstractApiResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
-                final PaginatedResult projectPages = withJdbiHandle(getAlpineRequest(), handle ->
-                        handle.attach(ProjectDao.class).getProjects(null, null, null, team.getName(), null, excludeInactive, onlyRoot, false));
+                final PaginatedResult projectPages = withJdbiHandle(
+                        getAlpineRequest(),
+                        handle -> handle
+                                .attach(ProjectDao.class)
+                                .getProjects(
+                                        /* nameFilter */ null,
+                                        /* classifierFilter */ null,
+                                        /* tagFilter */ null,
+                                        team.getName(),
+                                        /* notAssignedToTeamWithUuid */ null,
+                                        getAlpineRequest().getFilter(),
+                                        excludeInactive,
+                                        onlyRoot,
+                                        /* includeMetrics */ false));
                 return Response.ok(projectPages.getObjects()).header(TOTAL_COUNT_HEADER, projectPages.getTotal()).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();

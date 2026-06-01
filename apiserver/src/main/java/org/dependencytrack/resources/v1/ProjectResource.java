@@ -51,6 +51,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
@@ -61,7 +62,6 @@ import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
-import org.dependencytrack.persistence.jdbi.ProjectDao.ConciseProjectListRow;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsConciseQuery;
 import org.dependencytrack.resources.AbstractApiResource;
@@ -150,9 +150,18 @@ public class ProjectResource extends AbstractApiResource {
                     return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
                 }
             }
-            final PaginatedResult projectPages = withJdbiHandle(getAlpineRequest(), handle ->
-                    (name != null) ? handle.attach(ProjectDao.class).getProjects(name, null, null, null, notAssignedToTeamWithUuid, excludeInactive, onlyRoot, false)
-                            : handle.attach(ProjectDao.class).getProjects(null, null, null, null, notAssignedToTeamWithUuid, excludeInactive, onlyRoot, true));
+            final PaginatedResult projectPages = withJdbiHandle(getAlpineRequest(), handle -> handle
+                    .attach(ProjectDao.class)
+                    .getProjects(
+                            name,
+                            /* classifierFilter */ null,
+                            /* tagFilter */ null,
+                            /* teamFilter */ null,
+                            notAssignedToTeamWithUuid,
+                            getAlpineRequest().getFilter(),
+                            excludeInactive,
+                            onlyRoot,
+                            /* includeMetrics */ true));
             return Response.ok(projectPages.getObjects()).header(TOTAL_COUNT_HEADER, projectPages.getTotal()).build();
         }
     }
@@ -193,7 +202,7 @@ public class ProjectResource extends AbstractApiResource {
             @Parameter(description = "Whether to include metrics in the response.")
             @QueryParam("includeMetrics") final boolean includeMetrics
     ) {
-        final List<ConciseProjectListRow> projectRows = withJdbiHandle(
+        final Page<ProjectDao.ConciseProjectListRow> page = withJdbiHandle(
                 getAlpineRequest(),
                 handle -> handle
                         .attach(ProjectDao.class)
@@ -205,11 +214,11 @@ public class ProjectResource extends AbstractApiResource {
                                 .withTeamFilter(teamFilter)
                                 .withActiveFilter(activeFilter)
                                 .withOnlyRootFilter(onlyRootFilter)
+                                .withSearchText(getAlpineRequest().getFilter())
                                 .withIncludeMetrics(includeMetrics)));
 
-        final long totalCount = projectRows.isEmpty() ? 0 : projectRows.getFirst().totalCount();
-        final List<ConciseProject> projects = projectRows.stream().map(ConciseProject::new).toList();
-        return Response.ok(projects).header(TOTAL_COUNT_HEADER, totalCount).build();
+        final List<ConciseProject> projects = page.items().stream().map(ConciseProject::new).toList();
+        return Response.ok(projects).header(TOTAL_COUNT_HEADER, page.totalCount().value()).build();
     }
 
     @GET
@@ -248,7 +257,7 @@ public class ProjectResource extends AbstractApiResource {
             @Parameter(description = "Whether to include metrics in the response.")
             @QueryParam("includeMetrics") final boolean includeMetrics
     ) {
-        final List<ConciseProjectListRow> projectRows = withJdbiHandle(
+        final Page<ProjectDao.ConciseProjectListRow> page = withJdbiHandle(
                 getAlpineRequest(),
                 handle -> handle
                         .attach(ProjectDao.class)
@@ -260,11 +269,11 @@ public class ProjectResource extends AbstractApiResource {
                                 .withTeamFilter(teamFilter)
                                 .withActiveFilter(activeFilter)
                                 .withParentUuidFilter(UUID.fromString(parentUuid))
+                                .withSearchText(getAlpineRequest().getFilter())
                                 .withIncludeMetrics(includeMetrics)));
 
-        final long totalCount = projectRows.isEmpty() ? 0 : projectRows.getFirst().totalCount();
-        final List<ConciseProject> projects = projectRows.stream().map(ConciseProject::new).toList();
-        return Response.ok(projects).header(TOTAL_COUNT_HEADER, totalCount).build();
+        final List<ConciseProject> projects = page.items().stream().map(ConciseProject::new).toList();
+        return Response.ok(projects).header(TOTAL_COUNT_HEADER, page.totalCount().value()).build();
     }
 
     @GET
@@ -410,7 +419,7 @@ public class ProjectResource extends AbstractApiResource {
             @Parameter(description = "Optionally excludes children projects from being returned")
             @QueryParam("onlyRoot") boolean onlyRoot) {
         final PaginatedResult projectPages = withJdbiHandle(getAlpineRequest(), handle -> handle.attach(ProjectDao.class)
-                .getProjects(null, null, tagString, null, null, excludeInactive, onlyRoot, true));
+                .getProjects(null, null, tagString, null, null, getAlpineRequest().getFilter(), excludeInactive, onlyRoot, true));
         return Response.ok(projectPages.getObjects()).header(TOTAL_COUNT_HEADER, projectPages.getTotal()).build();
     }
 
@@ -442,7 +451,7 @@ public class ProjectResource extends AbstractApiResource {
         try {
             final Classifier classifier = Classifier.valueOf(classifierString);
             final PaginatedResult projectPages = withJdbiHandle(getAlpineRequest(), handle -> handle.attach(ProjectDao.class)
-                    .getProjects(null, classifier.name(), null, null, null, excludeInactive, onlyRoot, true));
+                    .getProjects(null, classifier.name(), null, null, null, getAlpineRequest().getFilter(), excludeInactive, onlyRoot, true));
             return Response.ok(projectPages.getObjects()).header(TOTAL_COUNT_HEADER, projectPages.getTotal()).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity("The classifier type specified is not valid.").build();

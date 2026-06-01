@@ -20,6 +20,7 @@ package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.jdbi.v3.core.statement.Query;
+import org.jdbi.v3.core.statement.SqlStatements;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -117,10 +118,24 @@ public interface PaginationSupport extends SqlObject {
                 """);
 
         if (includeAcl) {
-            query.addCustomizer(new DefineApiProjectAclCondition.StatementCustomizer(
-                    JdbiAttributes.ATTRIBUTE_API_PROJECT_ACL_CONDITION,
-                    projectIdColumn));
+            // Only install the secondary ACL customizer when the chosen column
+            // differs from the default. Otherwise the existing condition defined
+            // by ApiRequestStatementCustomizer is already correct and no rewrite is needed.
+            final String defaultProjectIdColumn = getHandle()
+                    .getConfig(ApiRequestConfig.class)
+                    .projectAclProjectIdColumn();
+            if (!projectIdColumn.equals(defaultProjectIdColumn)) {
+                query.addCustomizer(
+                        new DefineApiProjectAclCondition.StatementCustomizer(
+                                JdbiAttributes.ATTRIBUTE_API_PROJECT_ACL_CONDITION,
+                                projectIdColumn));
+            }
         }
+
+        // NB: The count query inherits bindings from the handle's customizer chain
+        // (e.g. pagination offset / limit) and from the threshold bind even when the
+        // template doesn't reference them.
+        query.getConfig(SqlStatements.class).setUnusedBindingAllowed(true);
 
         final long count = query
                 .bindMap(whereParams)

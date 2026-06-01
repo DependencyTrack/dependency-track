@@ -68,7 +68,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         assertThatNoException().isThrownBy(() -> task.run());
 
         final PaginatedResult projects = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, false, false, false));
+                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, null, false, false, false));
 
         assertThat(projects.getList(Project.class)).satisfiesExactly(
                 retainedProject -> assertThat(retainedProject.getName()).isEqualTo("acme-app-B")
@@ -124,7 +124,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(() -> task.run());
         final PaginatedResult projects = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, false, false, false));
+                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, null, false, false, false));
         assertThat(projects.getList(Project.class)).satisfiesExactly(
                 retainedProject -> assertThat(retainedProject.getVersion()).isEqualTo("5.0.0"),
                 retainedProject -> assertThat(retainedProject.getVersion()).isEqualTo("4.0.0"),
@@ -181,7 +181,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(() -> task.run());
         final PaginatedResult projects = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, false, false, false));
+                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, null, false, false, false));
         assertThat(projects.getList(Project.class)).satisfiesExactlyInAnyOrder(
                 retainedProject -> {
                     assertThat(retainedProject.getName()).isEqualTo("acme-app-A");
@@ -216,7 +216,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(() -> task.run());
         final PaginatedResult projects = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, false, false, false));
+                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, null, false, false, false));
         assertThat(projects).isNotNull();
     }
 
@@ -238,7 +238,7 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         final var task = new ProjectMaintenanceTask();
         assertThatNoException().isThrownBy(() -> task.run());
         final PaginatedResult projects = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, false, false, false));
+                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, null, false, false, false));
         assertThat(projects).isNotNull();
     }
 }

@@ -27,8 +27,11 @@ import org.dependencytrack.v4migrator.testsupport.V5TargetContainer;
 import org.dependencytrack.v4migrator.transform.TransformPhase;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import java.util.List;
 import java.util.Map;
@@ -44,6 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * to preserve v4's implicit portfolio-access-control bypass.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UsersPermissionsIT {
 
     private V4PostgresSource source;
@@ -66,6 +70,7 @@ class UsersPermissionsIT {
     }
 
     @Test
+    @Order(1)
     void mapsPermissionsByNameAndRewritesJoins() throws Exception {
         // Seed v4: a TEAM, two permissions (one carried over to v5, one v4-only), a MANAGED
         // user "alice" with both, an LDAP user "bob" with only the v4-only one, and an OIDC
@@ -166,6 +171,57 @@ class UsersPermissionsIT {
             .containsExactlyInAnyOrder(
                 "Engineering:ACCESS_MANAGEMENT",
                 "Engineering:PORTFOLIO_ACCESS_CONTROL_BYPASS");
+    }
+
+    /**
+     * Regression for <a href="https://github.com/DependencyTrack/dependency-track/issues/6217">#6217</a>:
+     * the doc-guided recovery from a failed {@code load} drops and re-creates the v5 schema,
+     * then re-runs {@code bootstrap} and {@code load} (without {@code transform}). Bootstrap
+     * must therefore leave the v5 {@code PERMISSION} catalog populated so that the
+     * {@code USERS_PERMISSIONS_PERMISSION_FK} on the subsequent join-table load resolves.
+     */
+    @Test
+    @Order(2)
+    void shouldSucceedWhenLoadResumedAfterPermissionReset() {
+        // Simulate the operator's recovery: drop everything that hangs off PERMISSION,
+        // including PERMISSION itself, and restart the identity sequence so the re-seed
+        // produces identical IDs to the originals captured in permission_name_map.
+        target.jdbi().useHandle(h ->
+            h.execute("TRUNCATE TABLE \"PERMISSION\" RESTART IDENTITY CASCADE"));
+
+        // Re-bootstrap: only the PERMISSION seed step (Flyway is already at head).
+        PermissionCatalog.seed(target.jdbi());
+
+        // Re-run just the join-table loads. The permission_name_map and tgt_*_permissions
+        // staging tables are still in place from the first pipeline run.
+        final TableMigration teamsPerms = TableRegistry.loaded().stream()
+            .filter(t -> t.name().equals("TEAMS_PERMISSIONS"))
+            .findFirst().orElseThrow();
+        final TableMigration usersPerms = TableRegistry.loaded().stream()
+            .filter(t -> t.name().equals("USERS_PERMISSIONS"))
+            .findFirst().orElseThrow();
+
+        target.jdbi().useHandle(h -> {
+            h.execute(teamsPerms.loadSql().formatted("dt_v4_migration"));
+            h.execute(usersPerms.loadSql().formatted("dt_v4_migration"));
+        });
+
+        final List<Map<String, Object>> userPerms = target.jdbi().withHandle(h ->
+            h.createQuery("""
+                    SELECT u."USERNAME" AS username, p."NAME" AS permission_name
+                      FROM "USERS_PERMISSIONS" up
+                      JOIN "USER" u       ON u."ID" = up."USER_ID"
+                      JOIN "PERMISSION" p ON p."ID" = up."PERMISSION_ID"
+                     ORDER BY u."USERNAME", p."NAME"
+                    """)
+                .mapToMap()
+                .list());
+
+        assertThat(userPerms).extracting(m -> m.get("username") + ":" + m.get("permission_name"))
+            .containsExactlyInAnyOrder(
+                "alice:VIEW_PORTFOLIO",
+                "carol:ACCESS_MANAGEMENT",
+                "carol:PORTFOLIO_ACCESS_CONTROL_BYPASS");
     }
 
     private void runPipeline() throws Exception {

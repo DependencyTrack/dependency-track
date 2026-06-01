@@ -196,8 +196,8 @@ public final class Preflight {
 
     /**
      * Refuse to operate against a v5 cluster that already has user data.
-     * Checks a small set of high-trust tables. Flyway-installed seed data
-     * (e.g. default permissions) is permitted.
+     * Checks a small set of high-trust tables. Seed data populated by bootstrap
+     * (default permissions) is permitted.
      */
     private void checkTargetEmpty(final List<String> failures) {
         final String[] mustBeEmpty = {

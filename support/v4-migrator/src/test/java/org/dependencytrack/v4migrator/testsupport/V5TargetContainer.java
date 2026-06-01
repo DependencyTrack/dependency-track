@@ -19,6 +19,7 @@
 package org.dependencytrack.v4migrator.testsupport;
 
 import org.dependencytrack.migration.MigrationExecutor;
+import org.dependencytrack.v4migrator.PermissionCatalog;
 import org.dependencytrack.v4migrator.preflight.Preflight;
 import org.jdbi.v3.core.Jdbi;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -45,21 +46,11 @@ public final class V5TargetContainer implements AutoCloseable {
     public V5TargetContainer start() {
         container.start();
         new MigrationExecutor(dataSource(), Preflight.EXPECTED_FLYWAY_HEAD).execute();
-        seedPermissions();
+        // Mimic the bootstrap step. PermissionCatalog.seed is what the BootstrapCommand
+        // invokes immediately after applying Flyway, so downstream phases see the full
+        // v5 PERMISSION catalog.
+        PermissionCatalog.seed(jdbi());
         return this;
-    }
-
-    /**
-     * Mimic the v5 apiserver's {@code DatabaseSeedingInitTask}, which populates {@code PERMISSION}
-     * on first boot. The migrator's preflight refuses to run against an empty PERMISSION table,
-     * so tests must reproduce that initial state. A minimal seed is enough for preflight.
-     */
-    private void seedPermissions() {
-        jdbi().useHandle(h -> h.execute("""
-            INSERT INTO "PERMISSION" ("NAME", "DESCRIPTION")
-            VALUES ('VIEW_PORTFOLIO', 'View projects, components, vulnerabilities')
-            ON CONFLICT ("NAME") DO NOTHING
-            """));
     }
 
     public String jdbcUrl() {

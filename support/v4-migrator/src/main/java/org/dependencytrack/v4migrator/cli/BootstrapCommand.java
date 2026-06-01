@@ -20,6 +20,7 @@ package org.dependencytrack.v4migrator.cli;
 
 import org.dependencytrack.migration.MigrationExecutor;
 import org.dependencytrack.v4migrator.ExitCode;
+import org.dependencytrack.v4migrator.PermissionCatalog;
 import org.dependencytrack.v4migrator.config.Connections;
 import org.dependencytrack.v4migrator.preflight.Preflight;
 import org.dependencytrack.v4migrator.preflight.Preflight.Mode;
@@ -59,6 +60,13 @@ public final class BootstrapCommand extends AbstractMigratorCommand {
                 head, Preflight.EXPECTED_FLYWAY_HEAD);
             return ExitCode.SCHEMA_VERSION_MISMATCH;
         }
+
+        // Seed the v5 PERMISSION catalog now so that downstream load phases can FK-resolve
+        // into it without depending on transform having run in the same invocation. See
+        // PermissionCatalog for context.
+        LOGGER.info("Seeding v5 PERMISSION catalog");
+        PermissionCatalog.seed(target);
+
         LOGGER.info("Bootstrap complete. Flyway head = {}. Run 'extract' or 'run' next.", head);
         return ExitCode.OK;
     }
@@ -67,5 +75,6 @@ public final class BootstrapCommand extends AbstractMigratorCommand {
     protected void printPlan() {
         System.out.println("  Phase:  bootstrap");
         System.out.println("  Target Flyway head to apply: " + Preflight.EXPECTED_FLYWAY_HEAD);
+        System.out.println("  Seed v5 PERMISSION catalog: yes (idempotent)");
     }
 }

@@ -595,14 +595,14 @@ public final class TableRegistry {
     );
 
     /**
-     * Source-only mirror of v4 {@code PERMISSION}. The migrator seeds v5 {@code PERMISSION}
-     * with the full v5 catalog (ON CONFLICT DO NOTHING) and builds
-     * {@code permission_name_map} by inner-joining v4 NAME against v5 PERMISSION.
-     * v4 permission names that no longer exist in v5 (e.g. {@code VIEW_BADGES}) drop out
-     * of the map. Implication fan-out (v4 {@code ACCESS_MANAGEMENT} ->
-     * v5 {@code PORTFOLIO_ACCESS_CONTROL_BYPASS}) is applied on the join-table
-     * {@code tgt_*} tables. See {@code TEAMS_PERMISSIONS} and the consolidated
-     * {@code USERS_PERMISSIONS} transforms.
+     * Source-only mirror of v4 {@code PERMISSION}. The v5 {@code PERMISSION} catalog is
+     * seeded during {@code bootstrap} (see {@link PermissionCatalog}); transform here
+     * just builds {@code permission_name_map} by inner-joining v4 NAME against the
+     * already-seeded v5 PERMISSION table. v4 permission names that no longer exist in
+     * v5 (e.g. {@code VIEW_BADGES}) drop out of the map. Implication fan-out (v4
+     * {@code ACCESS_MANAGEMENT} -> v5 {@code PORTFOLIO_ACCESS_CONTROL_BYPASS}) is
+     * applied on the join-table {@code tgt_*} tables. See {@code TEAMS_PERMISSIONS} and
+     * the consolidated {@code USERS_PERMISSIONS} transforms.
      */
     private static final TableMigration PERMISSION = new TableMigration(
         "PERMISSION",
@@ -620,56 +620,6 @@ public final class TableRegistry {
         """,
         List.of("ID", "DESCRIPTION", "NAME"),
         """
-        -- Seed v5 PERMISSION with the full catalog from apiserver's
-        -- org.dependencytrack.auth.Permissions enum at Flyway head 202605111028.
-        -- Keep this in sync with the enum; the migrator owns v5 PERMISSION seeding so
-        -- that join-table loads further down can resolve v5-only permission IDs (e.g.
-        -- PORTFOLIO_ACCESS_CONTROL_BYPASS) before the apiserver runs its own seeding
-        -- step on first post-migration boot.
-        INSERT INTO "PERMISSION" ("NAME", "DESCRIPTION") VALUES
-            ('BOM_UPLOAD', 'Allows the ability to upload CycloneDX Software Bill of Materials (SBOM)'),
-            ('VIEW_PORTFOLIO', 'Provides the ability to view the portfolio of projects, components, and licenses'),
-            ('PORTFOLIO_ACCESS_CONTROL_BYPASS', 'Provides the ability to bypass portfolio access control, granting access to all projects'),
-            ('PORTFOLIO_MANAGEMENT', 'Allows the creation, modification, and deletion of data in the portfolio'),
-            ('PORTFOLIO_MANAGEMENT_CREATE', 'Allows the creation of data in the portfolio'),
-            ('PORTFOLIO_MANAGEMENT_READ', 'Allows the reading of data in the portfolio'),
-            ('PORTFOLIO_MANAGEMENT_UPDATE', 'Allows the updating of data in the portfolio'),
-            ('PORTFOLIO_MANAGEMENT_DELETE', 'Allows the deletion of data in the portfolio'),
-            ('VIEW_VULNERABILITY', 'Provides the ability to view the vulnerabilities projects are affected by'),
-            ('VULNERABILITY_ANALYSIS', 'Provides all abilities to make analysis decisions on vulnerabilities'),
-            ('VULNERABILITY_ANALYSIS_CREATE', 'Provides the ability to upload supported VEX documents to a project'),
-            ('VULNERABILITY_ANALYSIS_READ', 'Provides the ability read the VEX document for a project'),
-            ('VULNERABILITY_ANALYSIS_UPDATE', 'Provides the ability to make analysis decisions on vulnerabilities and upload supported VEX documents for a project'),
-            ('VIEW_POLICY_VIOLATION', 'Provides the ability to view policy violations'),
-            ('VULNERABILITY_MANAGEMENT', 'Allows all management permissions of internally-defined vulnerabilities'),
-            ('VULNERABILITY_MANAGEMENT_CREATE', 'Allows creation of internally-defined vulnerabilities'),
-            ('VULNERABILITY_MANAGEMENT_READ', 'Allows reading internally-defined vulnerabilities'),
-            ('VULNERABILITY_MANAGEMENT_UPDATE', 'Allows updating internally-defined vulnerabilities and vulnerability tags'),
-            ('VULNERABILITY_MANAGEMENT_DELETE', 'Allows management of internally-defined vulnerabilities'),
-            ('POLICY_VIOLATION_ANALYSIS', 'Provides the ability to make analysis decisions on policy violations'),
-            ('ACCESS_MANAGEMENT', 'Allows the management of users, teams, and API keys'),
-            ('ACCESS_MANAGEMENT_CREATE', 'Allows create permissions of users, teams, and API keys'),
-            ('ACCESS_MANAGEMENT_READ', 'Allows read permissions of users, teams, and API keys'),
-            ('ACCESS_MANAGEMENT_UPDATE', 'Allows update permissions of users, teams, and API keys'),
-            ('ACCESS_MANAGEMENT_DELETE', 'Allows delete permissions of users, teams, and API keys'),
-            ('SECRET_MANAGEMENT', 'Grants full secret management access'),
-            ('SECRET_MANAGEMENT_CREATE', 'Grants the ability to create secrets'),
-            ('SECRET_MANAGEMENT_UPDATE', 'Grants the ability to update secrets'),
-            ('SECRET_MANAGEMENT_DELETE', 'Grants the ability to delete secrets'),
-            ('SYSTEM_CONFIGURATION', 'Allows all access to configuration of the system including notifications, repositories, and email settings'),
-            ('SYSTEM_CONFIGURATION_CREATE', 'Allows creating configuration of the system including notifications, repositories, and email settings'),
-            ('SYSTEM_CONFIGURATION_READ', 'Allows reading the configuration of the system including notifications, repositories, and email settings'),
-            ('SYSTEM_CONFIGURATION_UPDATE', 'Allows updating the configuration of the system including notifications, repositories, and email settings'),
-            ('SYSTEM_CONFIGURATION_DELETE', 'Allows deleting the configuration of the system including notifications, repositories, and email settings'),
-            ('PROJECT_CREATION_UPLOAD', 'Provides the ability to optionally create project (if non-existent) on BOM or scan upload'),
-            ('POLICY_MANAGEMENT', 'Allows the creation, modification, and deletion of policy'),
-            ('POLICY_MANAGEMENT_CREATE', 'Allows the creation of a policy'),
-            ('POLICY_MANAGEMENT_READ', 'Allows reading of policies'),
-            ('POLICY_MANAGEMENT_UPDATE', 'Allows the modification of a policy'),
-            ('POLICY_MANAGEMENT_DELETE', 'Allows the deletion of a policy'),
-            ('TAG_MANAGEMENT', 'Allows the modification and deletion of tags'),
-            ('TAG_MANAGEMENT_DELETE', 'Allows the deletion of a tag')
-        ON CONFLICT ("NAME") DO NOTHING;
         DROP TABLE IF EXISTS "%1$s".permission_name_map;
         CREATE UNLOGGED TABLE "%1$s".permission_name_map (
             orig_id BIGINT NOT NULL PRIMARY KEY

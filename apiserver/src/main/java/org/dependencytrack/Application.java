@@ -19,7 +19,6 @@
 package org.dependencytrack;
 
 import alpine.config.AlpineConfigKeys;
-import alpine.server.AlpineServlet;
 import alpine.server.filters.WhitelistUrlFilter;
 import alpine.server.persistence.PersistenceManagerFactory;
 import ch.qos.logback.classic.LoggerContext;
@@ -104,6 +103,12 @@ public final class Application {
 
         final Config config = ConfigProvider.getConfig();
         new LoggingConfiguration(config).apply((LoggerContext) LoggerFactory.getILoggerFactory());
+
+        LOGGER.info(
+                "Starting {} {} (built {})",
+                config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_NAME, String.class),
+                config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_VERSION, String.class),
+                config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_TIMESTAMP, String.class));
 
         LegacyConfigPropertyValidator.validate(config);
 
@@ -244,7 +249,7 @@ public final class Application {
         apiV1Config.property(BV_SEND_ERROR_IN_RESPONSE, true);
         apiV1Config.property(WADL_FEATURE_DISABLE, true);
 
-        final var apiV1Servlet = new ServletHolder("DependencyTrack", new AlpineServlet(apiV1Config));
+        final var apiV1Servlet = new ServletHolder("DependencyTrack", new ServletContainer(apiV1Config));
         apiV1Servlet.setInitOrder(1);
         context.addServlet(apiV1Servlet, "/api/*");
 

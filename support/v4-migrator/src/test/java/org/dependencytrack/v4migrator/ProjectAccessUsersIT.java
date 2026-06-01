@@ -64,7 +64,7 @@ class ProjectAccessUsersIT {
     }
 
     @Test
-    void backfillsUserAccessViaTeamMembership() throws Exception {
+    void shouldBackfillUserAccessViaTeamMembership() throws Exception {
         source.jdbi().useHandle(h -> {
             h.execute("""
                 INSERT INTO "PROJECT" ("ID", "NAME", "VERSION", "UUID")
@@ -105,6 +105,14 @@ class ProjectAccessUsersIT {
 
         assertThat(rows).extracting("project_id", "username")
             .containsExactly(tuple(1L, "alice"));
+
+        final long rowsProcessed = target.jdbi().withHandle(h ->
+            h.createQuery("""
+                    SELECT rows_processed
+                      FROM "dt_v4_migration".migration_state
+                     WHERE table_name = 'PROJECT_ACCESS_USERS' AND phase = 'LOAD'
+                    """).mapTo(Long.class).one());
+        assertThat(rowsProcessed).isEqualTo(1L);
     }
 
     private void runPipeline() throws Exception {

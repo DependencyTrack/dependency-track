@@ -1530,7 +1530,10 @@ public final class TableRegistry {
           , "LOG_SUCCESSFUL_PUBLISH"      boolean
           , "MESSAGE"                     varchar(1024)
           , "NAME"                        varchar(255) NOT NULL
-          , "NOTIFICATION_LEVEL"          notification_level
+          -- Stored as text + CHECK rather than the native "notification_level" enum so a
+          -- target-side DROP SCHEMA public CASCADE does not transitively drop this column.
+          -- Keep the value list in sync with migration/.../V202605022031__init.sql.
+          , "NOTIFICATION_LEVEL"          varchar(255) CHECK ("NOTIFICATION_LEVEL" IN ('INFORMATIONAL', 'WARNING', 'ERROR'))
           , "NOTIFY_CHILDREN"             boolean
           , "NOTIFY_ON"                   text[]
           , "PUBLISHER"                   bigint
@@ -1550,7 +1553,7 @@ public final class TableRegistry {
              , r."LOG_SUCCESSFUL_PUBLISH"
              , r."MESSAGE"
              , r."NAME"
-             , CASE WHEN r."NOTIFICATION_LEVEL" IS NULL THEN NULL ELSE r."NOTIFICATION_LEVEL"::notification_level END
+             , r."NOTIFICATION_LEVEL"
              , r."NOTIFY_CHILDREN"
              , CASE WHEN r."NOTIFY_ON" IS NULL THEN NULL ELSE string_to_array(r."NOTIFY_ON", ',') END
              , m.canonical_id
@@ -1595,7 +1598,7 @@ public final class TableRegistry {
              , "LOG_SUCCESSFUL_PUBLISH"
              , "MESSAGE"
              , "NAME"
-             , "NOTIFICATION_LEVEL"
+             , CASE WHEN "NOTIFICATION_LEVEL" IS NULL THEN NULL ELSE "NOTIFICATION_LEVEL"::notification_level END
              , "NOTIFY_CHILDREN"
              , "NOTIFY_ON"
              , "PUBLISHER"
@@ -3235,7 +3238,11 @@ public final class TableRegistry {
           , "PUBLISHED"                   timestamp with time zone
           , "RECOMMENDATION"              text
           , "REFERENCES"                  text
-          , "SEVERITY"                    severity
+          -- Stored as text + CHECK rather than the native "severity" enum so a target-side
+          -- DROP SCHEMA public CASCADE (a common manual reset between load attempts) does
+          -- not transitively drop this column. Keep the value list in sync with
+          -- migration/.../V202605022031__init.sql.
+          , "SEVERITY"                    varchar(255) CHECK ("SEVERITY" IN ('UNASSIGNED', 'INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'))
           , "SOURCE"                      varchar(255) NOT NULL
           , "SUBTITLE"                    varchar(255)
           , "TITLE"                       varchar(255)
@@ -3304,7 +3311,9 @@ public final class TableRegistry {
              , "PUBLISHED"
              , "RECOMMENDATION"
              , "REFERENCES"
-             , "SEVERITY"::severity
+             -- v4 allows NULL "SEVERITY"; treat that as the canonical UNASSIGNED sentinel
+             -- so the v5 column is never NULL.
+             , COALESCE("SEVERITY", 'UNASSIGNED')
              , "SOURCE"
              , "SUBTITLE"
              , "TITLE"
@@ -3376,7 +3385,7 @@ public final class TableRegistry {
              , "PUBLISHED"
              , "RECOMMENDATION"
              , "REFERENCES"
-             , "SEVERITY"
+             , "SEVERITY"::severity
              , "SOURCE"
              , "SUBTITLE"
              , "TITLE"

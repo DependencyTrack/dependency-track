@@ -5,6 +5,8 @@ in the software supply chain. Dependency-Track takes a unique and highly benefic
 capabilities of Software Bill of Materials (SBOM).
 
 [![Build Status](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-build.yaml/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-build.yaml)
+[![Test Status](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-test.yaml/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-test.yaml)
+[![E2E Test Status](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-test-e2e.yaml/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-test-e2e.yaml)
 [![Documentation](https://img.shields.io/badge/docs-next-blue.svg)](https://dependencytrack.github.io/docs/next/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE.txt)
 

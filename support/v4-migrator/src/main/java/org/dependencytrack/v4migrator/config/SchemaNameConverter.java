@@ -25,22 +25,25 @@ import java.util.regex.Pattern;
 
 /**
  * Picocli converter for schema-name options. Schema names are splice-formatted into SQL
- * throughout the migrator, so anything outside the unquoted-identifier syntax would allow
- * injection.
+ * throughout the migrator, always inside a double-quoted identifier position ({@code "%s"}),
+ * and in a few preflight probes additionally inside a single-quoted string literal
+ * (e.g. {@code to_regclass('"%s"."PROJECT"')}). The validator therefore accepts the full
+ * quoted-identifier alphabet but rejects characters that could break out of either quoting
+ * layer: the double-quote, the single-quote / apostrophe, NUL, and other control characters.
  *
- * <p>PostgreSQL unquoted-identifier syntax minus the locale-dependent letter ranges: leading
- * letter or underscore, followed by letters, digits, underscores, or {@code $}. Max length
- * 63 bytes ({@code NAMEDATALEN - 1}).
+ * <p>Length is capped at 63 bytes ({@code NAMEDATALEN - 1} on PostgreSQL; SQL Server's 128
+ * limit is a superset).
  */
 public final class SchemaNameConverter implements ITypeConverter<String> {
 
-    private static final Pattern PATTERN = Pattern.compile("^[A-Za-z_][A-Za-z0-9_$]{0,62}$");
+    private static final Pattern PATTERN = Pattern.compile("^[^\"'\\x00-\\x1F\\x7F]{1,63}$");
 
     @Override
     public String convert(final String value) {
         if (value == null || !PATTERN.matcher(value).matches()) {
             throw new TypeConversionException(
-                "must match [A-Za-z_][A-Za-z0-9_$]* and be 1-63 characters; got '" + value + "'");
+                "must be 1-63 characters and contain no quote or control characters; got '"
+                    + value + "'");
         }
         return value;
     }

@@ -199,7 +199,6 @@ public class ModelConverter {
         component.setBomRef(useOrGenerateRandomBomRef(cdxComponent.getBomRef()));
         component.setPublisher(trimToNull(cdxComponent.getPublisher()));
         component.setSupplier(convert(cdxComponent.getSupplier()));
-        component.setBomRef(trimToNull(cdxComponent.getBomRef()));
         component.setClassifier(convertClassifier(cdxComponent.getType()).orElse(Classifier.LIBRARY));
         component.setGroup(trimToNull(cdxComponent.getGroup()));
         component.setName(requireNonNullElse(trimToNull(cdxComponent.getName()), "-"));

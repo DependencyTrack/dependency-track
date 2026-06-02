@@ -816,7 +816,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         // No incoming occurrences. Remove existing occurrences from the component if there are any.
         if (occurrences == null || occurrences.isEmpty()) {
             if (component.getOccurrences() != null && !component.getOccurrences().isEmpty()) {
-                pm.deletePersistentAll(component.getProperties());
+                pm.deletePersistentAll(component.getOccurrences());
                 component.setOccurrences(null);
             }
 

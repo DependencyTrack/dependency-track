@@ -28,6 +28,7 @@ import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
+import org.dependencytrack.pkgmetadata.resolution.cache.CachingHttpClient;
 import org.dependencytrack.plugin.api.MutableServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.Test;
 import java.io.UncheckedIOException;
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
 
@@ -831,10 +833,11 @@ class ComposerPackageMetadataResolverTest {
     void shouldRejectOversizedResponse(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         final var smallResolver = new ComposerPackageMetadataResolver(
                 new ObjectMapper(),
-                new org.dependencytrack.pkgmetadata.resolution.cache.CachingHttpClient(
+                new CachingHttpClient(
                         HttpClient.newHttpClient(),
                         cacheManager.getCache("small-test"),
-                        java.time.Duration.ofHours(1),
+                        Duration.ofHours(1),
+                        1024,
                         1024));
 
         stubJsonFile("/packages.json", "composer/packagist-v2-packages.json");

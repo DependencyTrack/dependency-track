@@ -55,35 +55,77 @@ import java.util.zip.GZIPOutputStream;
 
 import static java.util.Objects.requireNonNull;
 
-/**
- * @since 5.0.0
- */
+/// @since 5.0.0
 public final class CachingHttpClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CachingHttpClient.class);
 
+    public static final Duration DEFAULT_FRESHNESS_CAP = Duration.ofHours(12);
+    public static final long DEFAULT_MAX_COMPRESSED_BYTES = 16L * 1024 * 1024;
+    public static final long DEFAULT_MAX_DECODED_BYTES = 64L * 1024 * 1024;
+
     private final HttpClient httpClient;
     private final Cache cache;
     private final Duration freshnessCap;
-    private final long maxBytes;
+    private final long maxCompressedBytes;
+    private final long maxDecodedBytes;
     private final Clock clock;
     private final RateLimitGate rateLimitGate;
 
-    public CachingHttpClient(HttpClient httpClient, Cache cache, Duration freshnessCap, long maxBytes) {
-        this(httpClient, cache, freshnessCap, maxBytes, Clock.systemUTC());
+    public CachingHttpClient(HttpClient httpClient, Cache cache) {
+        this(httpClient, cache, DEFAULT_FRESHNESS_CAP, DEFAULT_MAX_COMPRESSED_BYTES, DEFAULT_MAX_DECODED_BYTES);
     }
 
-    CachingHttpClient(HttpClient httpClient, Cache cache, Duration freshnessCap, long maxBytes, Clock clock) {
+    public CachingHttpClient(HttpClient httpClient, Cache cache, Duration freshnessCap) {
+        this(httpClient, cache, freshnessCap, DEFAULT_MAX_COMPRESSED_BYTES, DEFAULT_MAX_DECODED_BYTES);
+    }
+
+    public CachingHttpClient(
+            HttpClient httpClient,
+            Cache cache,
+            Duration freshnessCap,
+            long maxCompressedBytes,
+            long maxDecodedBytes) {
+        this(httpClient, cache, freshnessCap, maxCompressedBytes, maxDecodedBytes, Clock.systemUTC());
+    }
+
+    CachingHttpClient(HttpClient httpClient, Cache cache, Duration freshnessCap, Clock clock) {
+        this(httpClient, cache, freshnessCap, DEFAULT_MAX_COMPRESSED_BYTES, DEFAULT_MAX_DECODED_BYTES, clock);
+    }
+
+    /// @param httpClient         The [HttpClient] to execute requests with.
+    /// @param cache              The [Cache] to store responses in.
+    /// @param freshnessCap       For how long cache entries are considered fresh.
+    /// Entries outside this freshness window will be revalidated.
+    /// @param maxCompressedBytes Maximum number of bytes that compressed repository
+    /// responses are allowed to have. Responses exceeding this limit will be dropped.
+    /// @param maxDecodedBytes    Maximum number of bytes that decoded / decompressed
+    /// responses are allowed to have. Responses exceeding this limit will be dropped.
+    /// @param clock              The [Clock] to use for rate limit gating.
+    CachingHttpClient(
+            HttpClient httpClient,
+            Cache cache,
+            Duration freshnessCap,
+            long maxCompressedBytes,
+            long maxDecodedBytes,
+            Clock clock) {
         this.httpClient = requireNonNull(httpClient, "httpClient must not be null");
         this.cache = requireNonNull(cache, "cache must not be null");
         this.freshnessCap = requireNonNull(freshnessCap, "freshnessCap must not be null");
         if (freshnessCap.isNegative() || freshnessCap.isZero()) {
             throw new IllegalArgumentException("freshnessCap must be positive: " + freshnessCap);
         }
-        if (maxBytes <= 0 || maxBytes > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("maxBytes must be in (0, %d]: %d".formatted(Integer.MAX_VALUE, maxBytes));
+        if (maxCompressedBytes <= 0 || maxCompressedBytes > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(
+                    "maxCompressedBytes must be in (0, %d]: %d".formatted(Integer.MAX_VALUE, maxCompressedBytes));
         }
-        this.maxBytes = maxBytes;
+        if (maxDecodedBytes < maxCompressedBytes || maxDecodedBytes > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(
+                    "maxDecodedBytes must be in [%d, %d]: %d".formatted(
+                            maxCompressedBytes, Integer.MAX_VALUE, maxDecodedBytes));
+        }
+        this.maxCompressedBytes = maxCompressedBytes;
+        this.maxDecodedBytes = maxDecodedBytes;
         this.clock = requireNonNull(clock, "clock must not be null");
         this.rateLimitGate = new RateLimitGate(clock);
     }
@@ -114,7 +156,7 @@ public final class CachingHttpClient {
         return sendWithStaleFallback(uri, entry, this::staleBody, () -> {
             final HttpResponse<byte[]> response = httpClient.send(
                     requestBuilderCopy.build(),
-                    _ -> new LimitedBodySubscriber(maxBytes));
+                    _ -> new LimitedBodySubscriber(maxCompressedBytes));
             return handleGetResponse(response, entry, cacheKey);
         });
     }
@@ -528,11 +570,11 @@ public final class CachingHttpClient {
     }
 
     private byte[] gunzipBounded(byte[] gzipped) {
-        final int limit = (int) Math.min(Integer.MAX_VALUE, maxBytes + 1);
+        final int limit = (int) Math.min(Integer.MAX_VALUE, maxDecodedBytes + 1);
         try (var in = new GZIPInputStream(new ByteArrayInputStream(gzipped))) {
             final byte[] decoded = in.readNBytes(limit);
-            if (decoded.length > maxBytes) {
-                throw new IOException("Decoded body exceeds %d bytes".formatted(maxBytes));
+            if (decoded.length > maxDecodedBytes) {
+                throw new IOException("Decoded body exceeds %d bytes".formatted(maxDecodedBytes));
             }
             return decoded;
         } catch (IOException e) {

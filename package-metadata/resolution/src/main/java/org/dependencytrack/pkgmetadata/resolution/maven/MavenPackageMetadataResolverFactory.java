@@ -29,13 +29,9 @@ import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.jspecify.annotations.Nullable;
 
 import java.net.http.HttpClient;
-import java.time.Duration;
 import java.util.Map;
 
 public final class MavenPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
-
-    private static final Duration FRESH_FOR = Duration.ofHours(12);
-    private static final long MAX_BYTES = 4L * 1024 * 1024;
 
     private @Nullable CachingHttpClient cachingHttpClient;
 
@@ -90,9 +86,7 @@ public final class MavenPackageMetadataResolverFactory implements PackageMetadat
     public void init(ServiceRegistry serviceRegistry) {
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
-                serviceRegistry.require(CacheManager.class).getCache("responses"),
-                FRESH_FOR,
-                MAX_BYTES);
+                serviceRegistry.require(CacheManager.class).getCache("responses"));
     }
 
     @Override

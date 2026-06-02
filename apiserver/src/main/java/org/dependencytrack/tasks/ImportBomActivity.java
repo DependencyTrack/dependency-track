@@ -755,13 +755,20 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         final var jsonDependencies = Mappers.jsonMapper().createArrayNode();
         final var directDependencyIdentitiesSeen = new HashSet<ComponentIdentity>();
 
-        for (final String sourceBomRef : sourceBomRefs) {
+        // Iterate in a stable order to ensure that the generated JSON array
+        // is identical across BOM uploads with unchanged data, and doesn't cause
+        // unnecessary DB updates.
+        final List<String> sortedSourceBomRefs = sourceBomRefs.stream().sorted().toList();
+
+        for (final String sourceBomRef : sortedSourceBomRefs) {
             final Collection<String> directDependencyBomRefs = directDependencyBomRefsProvider.apply(sourceBomRef);
             if (directDependencyBomRefs == null || directDependencyBomRefs.isEmpty()) {
                 continue;
             }
 
-            for (final String directDependencyBomRef : directDependencyBomRefs) {
+            final List<String> sortedDirectDependencyBomRefs = directDependencyBomRefs.stream().sorted().toList();
+
+            for (final String directDependencyBomRef : sortedDirectDependencyBomRefs) {
                 final ComponentIdentity directDependencyIdentity = identitiesByBomRef.get(directDependencyBomRef);
                 if (directDependencyIdentity != null) {
                     if (!directDependencyIdentitiesSeen.add(directDependencyIdentity)) {

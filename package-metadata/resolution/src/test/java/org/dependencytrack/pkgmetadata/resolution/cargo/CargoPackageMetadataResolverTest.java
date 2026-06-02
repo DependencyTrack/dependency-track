@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.pkgmetadata.resolution.cargo;
 
-import com.github.packageurl.PackageURLBuilder;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.dependencytrack.cache.api.CacheManager;
@@ -41,6 +40,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
 
+import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -78,24 +78,24 @@ class CargoPackageMetadataResolverTest {
     void shouldResolveLatestVersionWithArtifactMetadata(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/crates/serde"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
-                {
-                  "crate": { "newest_version": "1.0.200" },
-                  "versions": [
-                    {
-                      "num": "1.0.200",
-                      "created_at": "2024-01-15T10:30:00Z",
-                      "checksum": "0e0580d37234d8aeb18c8d2ce6b5e093366c3a52fb7eb5a2f7d2100635122b07"
-                    },
-                    {
-                      "num": "1.0.199",
-                      "created_at": "2023-12-01T08:00:00Z",
-                      "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                    }
-                  ]
-                }
-                """)));
+                        {
+                          "crate": { "newest_version": "1.0.200" },
+                          "versions": [
+                            {
+                              "num": "1.0.200",
+                              "created_at": "2024-01-15T10:30:00Z",
+                              "checksum": "0e0580d37234d8aeb18c8d2ce6b5e093366c3a52fb7eb5a2f7d2100635122b07"
+                            },
+                            {
+                              "num": "1.0.199",
+                              "created_at": "2023-12-01T08:00:00Z",
+                              "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                            }
+                          ]
+                        }
+                        """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo")
                 .withName("serde")
                 .withVersion("1.0.200")
@@ -120,24 +120,24 @@ class CargoPackageMetadataResolverTest {
     void shouldResolveOlderArtifactMetadata(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/crates/serde"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
-                {
-                  "crate": { "newest_version": "1.0.200" },
-                  "versions": [
-                    {
-                      "num": "1.0.200",
-                      "created_at": "2024-01-15T10:30:00Z",
-                      "checksum": "0e0580d37234d8aeb18c8d2ce6b5e093366c3a52fb7eb5a2f7d2100635122b07"
-                    },
-                    {
-                      "num": "1.0.150",
-                      "created_at": "2023-06-01T12:00:00Z",
-                      "checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-                    }
-                  ]
-                }
-                """)));
+                        {
+                          "crate": { "newest_version": "1.0.200" },
+                          "versions": [
+                            {
+                              "num": "1.0.200",
+                              "created_at": "2024-01-15T10:30:00Z",
+                              "checksum": "0e0580d37234d8aeb18c8d2ce6b5e093366c3a52fb7eb5a2f7d2100635122b07"
+                            },
+                            {
+                              "num": "1.0.150",
+                              "created_at": "2023-06-01T12:00:00Z",
+                              "checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                            }
+                          ]
+                        }
+                        """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo")
                 .withName("serde")
                 .withVersion("1.0.150")
@@ -162,15 +162,15 @@ class CargoPackageMetadataResolverTest {
     void shouldReturnNullArtifactMetadataWhenVersionNotInResponse(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/crates/serde"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
-                {
-                  "crate": { "newest_version": "1.0.200" },
-                  "versions": [
-                    { "num": "1.0.200", "created_at": "2024-01-15T10:30:00Z", "checksum": "0e0580d37234d8aeb18c8d2ce6b5e093366c3a52fb7eb5a2f7d2100635122b07" }
-                  ]
-                }
-                """)));
+                        {
+                          "crate": { "newest_version": "1.0.200" },
+                          "versions": [
+                            { "num": "1.0.200", "created_at": "2024-01-15T10:30:00Z", "checksum": "0e0580d37234d8aeb18c8d2ce6b5e093366c3a52fb7eb5a2f7d2100635122b07" }
+                          ]
+                        }
+                        """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo")
                 .withName("serde")
                 .withVersion("0.9.0")
@@ -187,11 +187,68 @@ class CargoPackageMetadataResolverTest {
     }
 
     @Test
+    void shouldPreferMaxStableVersionOverNewestVersion(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/api/v1/crates/bevy"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(/* language=JSON */ """
+                                {
+                                  "crate": {
+                                    "newest_version": "0.19.0-rc.2",
+                                    "max_stable_version": "0.18.1"
+                                  },
+                                  "versions": [
+                                    { "num": "0.18.1", "created_at": "2025-01-10T10:00:00Z" }
+                                  ]
+                                }
+                                """)));
+
+        final var purl = aPackageURL()
+                .withType("cargo")
+                .withName("bevy")
+                .withVersion("0.18.1")
+                .build();
+
+        final var repo = new PackageRepository("crates-io", wmRuntimeInfo.getHttpBaseUrl(), null, null);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
+
+        assertThat(result).isNotNull();
+        assertThat(result.latestVersion()).isEqualTo("0.18.1");
+        assertThat(result.latestVersionPublishedAt())
+                .isEqualTo(Instant.parse("2025-01-10T10:00:00Z"));
+    }
+
+    @Test
+    void shouldFallBackToNewestVersionWhenNoStableExists(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/api/v1/crates/early-bird"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(/* language=JSON */ """
+                                {
+                                  "crate": { "newest_version": "0.1.0-alpha", "max_stable_version": null },
+                                  "versions": []
+                                }
+                                """)));
+
+        final var purl = aPackageURL()
+                .withType("cargo")
+                .withName("early-bird")
+                .withVersion("0.1.0-alpha")
+                .build();
+
+        final var repo = new PackageRepository("crates-io", wmRuntimeInfo.getHttpBaseUrl(), null, null);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
+
+        assertThat(result).isNotNull();
+        assertThat(result.latestVersion()).isEqualTo("0.1.0-alpha");
+    }
+
+    @Test
     void shouldReturnNullWhenCrateNotFound(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/crates/nonexistent"))
                 .willReturn(aResponse().withStatus(404)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo")
                 .withName("nonexistent")
                 .withVersion("1.0.0")
@@ -205,7 +262,7 @@ class CargoPackageMetadataResolverTest {
 
     @Test
     void shouldThrowWhenRepositoryIsNull() throws Exception {
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo")
                 .withName("serde")
                 .withVersion("1.0.0")
@@ -219,15 +276,15 @@ class CargoPackageMetadataResolverTest {
     void shouldHandleVersionWithoutChecksum(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/crates/serde"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
-                {
-                  "crate": { "newest_version": "1.0.200" },
-                  "versions": [
-                    { "num": "1.0.200", "created_at": "2024-01-15T10:30:00Z" }
-                  ]
-                }
-                """)));
+                        {
+                          "crate": { "newest_version": "1.0.200" },
+                          "versions": [
+                            { "num": "1.0.200", "created_at": "2024-01-15T10:30:00Z" }
+                          ]
+                        }
+                        """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo")
                 .withName("serde")
                 .withVersion("1.0.200")
@@ -247,15 +304,15 @@ class CargoPackageMetadataResolverTest {
     void shouldHandleInvalidChecksum(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/crates/serde"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
-                {
-                  "crate": { "newest_version": "1.0.200" },
-                  "versions": [
-                    { "num": "1.0.200", "created_at": "2024-01-15T10:30:00Z", "checksum": "not-a-valid-hash" }
-                  ]
-                }
-                """)));
+                        {
+                          "crate": { "newest_version": "1.0.200" },
+                          "versions": [
+                            { "num": "1.0.200", "created_at": "2024-01-15T10:30:00Z", "checksum": "not-a-valid-hash" }
+                          ]
+                        }
+                        """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo")
                 .withName("serde")
                 .withVersion("1.0.200")
@@ -276,7 +333,7 @@ class CargoPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/api/v1/crates/serde"))
                 .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "30")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo")
                 .withName("serde")
                 .withVersion("1.0.0")
@@ -293,7 +350,7 @@ class CargoPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/api/v1/crates/serde"))
                 .willReturn(aResponse().withStatus(503)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo")
                 .withName("serde")
                 .withVersion("1.0.0")
@@ -308,13 +365,13 @@ class CargoPackageMetadataResolverTest {
     void shouldReturnNullNewestVersionWhenMissing(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/crates/serde"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
-                {
-                  "crate": {},
-                  "versions": []
-                }
-                """)));
+                        {
+                          "crate": {},
+                          "versions": []
+                        }
+                        """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo")
                 .withName("serde")
                 .withVersion("1.0.0")
@@ -333,7 +390,7 @@ class CargoPackageMetadataResolverTest {
                         {"crate": {"newest_version": "1.0.0"}, "versions": []}
                         """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo").withName("serde").withVersion("1.0.0").build();
 
         final var repo = new PackageRepository("crates", wmRuntimeInfo.getHttpBaseUrl(), "user", "secret");
@@ -352,7 +409,7 @@ class CargoPackageMetadataResolverTest {
                         {"crate": {"newest_version": "1.0.0"}, "versions": []}
                         """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("cargo").withName("serde").withVersion("1.0.0").build();
 
         final var repo = new PackageRepository("crates", wmRuntimeInfo.getHttpBaseUrl(), null, "token");

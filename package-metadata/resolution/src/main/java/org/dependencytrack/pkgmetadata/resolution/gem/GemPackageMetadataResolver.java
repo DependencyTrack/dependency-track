@@ -82,11 +82,28 @@ final class GemPackageMetadataResolver implements PackageMetadataResolver {
             return null;
         }
 
-        final String latestVersion = root.get(0).path("number").asText(null);
+        // rubygems.org returns versions ordered from newest to oldest,
+        // although that is not guaranteed per API contract (https://guides.rubygems.org/rubygems-org-api/).
+        // Prefer the first stable so we don't surface RC / alpha versions.
+        // Fall back to the first prerelease for packages that never published a stable version.
+        JsonNode latestEntry = null;
+        for (int i = 0; i < root.size(); i++) {
+            final JsonNode entry = root.get(i);
+            if (!entry.path("prerelease").asBoolean(false)) {
+                latestEntry = entry;
+                break;
+            }
+        }
+        if (latestEntry == null) {
+            latestEntry = root.get(0);
+        }
+
+        final String latestVersion = latestEntry.path("number").asText(null);
         if (latestVersion == null) {
             return null;
         }
-        Instant latestVersionPublishedAt = getCreatedAt(root.get(0));
+
+        Instant latestVersionPublishedAt = getCreatedAt(latestEntry);
 
         final String requestedVersion = purl.getVersion();
         JsonNode matchingEntry = null;

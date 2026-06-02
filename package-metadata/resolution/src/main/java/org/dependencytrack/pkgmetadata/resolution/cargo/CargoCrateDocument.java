@@ -27,7 +27,9 @@ record CargoCrateDocument(
         @JsonProperty("crate") Crate crate,
         List<Version> versions) {
 
-    record Crate(@JsonProperty("newest_version") @Nullable String newestVersion) {
+    record Crate(
+            @JsonProperty("newest_version") @Nullable String newestVersion,
+            @JsonProperty("max_stable_version") @Nullable String maxStableVersion) {
     }
 
     record Version(

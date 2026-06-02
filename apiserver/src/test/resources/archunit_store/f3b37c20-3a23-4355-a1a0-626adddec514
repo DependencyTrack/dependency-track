@@ -1,4 +1,5 @@
 org.dependencytrack.persistence.jdbi.mapping.AnalysisRowMapper maps to model class org.dependencytrack.model.Analysis
 org.dependencytrack.persistence.jdbi.mapping.NotificationRuleRowMapper maps to model class org.dependencytrack.model.NotificationRule
+org.dependencytrack.persistence.jdbi.ProjectDao$ProjectListRowMapper maps to model class org.dependencytrack.model.Project
 org.dependencytrack.persistence.jdbi.mapping.VulnerabilityRowMapper maps to model class org.dependencytrack.model.Vulnerability
 org.dependencytrack.persistence.jdbi.mapping.VulnerableSoftwareRowMapper maps to model class org.dependencytrack.model.VulnerableSoftware

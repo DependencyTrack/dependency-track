@@ -46,6 +46,8 @@ import static java.util.Objects.requireNonNull;
 
 public final class ActivityDao extends AbstractDao {
 
+    private static final int ACTIVITY_TASK_QUEUE_LOCK_NAMESPACE = 1616084939;
+
     public ActivityDao(Handle jdbiHandle) {
         super(jdbiHandle);
     }
@@ -53,9 +55,15 @@ public final class ActivityDao extends AbstractDao {
     public boolean createActivityTaskQueue(CreateTaskQueueRequest request) {
         return jdbiHandle
                 .createQuery("""
+                        with lock as materialized (
+                          select pg_advisory_xact_lock(:lockNamespace, :lockKey)
+                        )
                         select dex_create_activity_task_queue(:name, cast(:capacity as smallint))
+                          from lock
                         """)
                 .bindMethods(request)
+                .bind("lockNamespace", ACTIVITY_TASK_QUEUE_LOCK_NAMESPACE)
+                .bind("lockKey", request.name().hashCode())
                 .mapTo(boolean.class)
                 .one();
     }

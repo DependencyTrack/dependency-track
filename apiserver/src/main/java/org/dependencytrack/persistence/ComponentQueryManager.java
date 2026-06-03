@@ -137,6 +137,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
                         "A0"."FILENAME" AS "filename",
                         "A0"."GROUP" AS "group",
                         "A0"."INTERNAL" AS "internal",
+                        "A0"."DIRECT_DEPENDENCY" AS "directDependency",
                         "A0"."LAST_RISKSCORE" AS "lastInheritedRiskScore",
                         "A0"."LICENSE" AS "componentLicenseName",
                         "A0"."LICENSE_EXPRESSION" AS "licenseExpression",
@@ -211,7 +212,7 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         if (onlyDirect) {
             queryString +=
                     """
-                       AND "A0"."DIRECT" = TRUE
+                       AND "A0"."DIRECT_DEPENDENCY" = TRUE
                     """;
         }
         if (orderBy == null) {

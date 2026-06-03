@@ -427,9 +427,9 @@ public class Component implements Serializable {
     private UUID uuid;
 
     @Persistent
-    @Column(name = "DIRECT", allowsNull = "true")
-    @JsonProperty("isDirect")
-    private Boolean direct;
+    @Column(name = "DIRECT_DEPENDENCY", allowsNull = "true")
+    @JsonProperty("isDirectDependency")
+    private Boolean directDependency;
 
     private transient String bomRef;
     private transient List<org.cyclonedx.model.License> licenseCandidates;
@@ -960,15 +960,15 @@ public class Component implements Serializable {
         this.occurrenceCount = occurrenceCount;
     }
 
-    public boolean isDirect() {
-        if (direct == null) {
+    public boolean isDirectDependency() {
+        if (directDependency == null) {
             return false;
         }
-        return direct;
+        return directDependency;
     }
 
-    public void setDirect(boolean direct) {
-        this.direct = direct;
+    public void setDirectDependency(boolean directDependency) {
+        this.directDependency = directDependency;
     }
 
     @Override

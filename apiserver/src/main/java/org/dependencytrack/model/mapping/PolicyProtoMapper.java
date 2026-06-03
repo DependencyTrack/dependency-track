@@ -61,7 +61,7 @@ public class PolicyProtoMapper {
         maybeSet(component::getPurl, purl -> protoBuilder.setPurl(purl.canonicalize()));
         maybeSet(component::getSwidTagId, protoBuilder::setSwidTagId);
         maybeSet(component::isInternal, protoBuilder::setIsInternal);
-        maybeSet(component::isDirect, protoBuilder::setIsDirect);
+        maybeSet(component::isDirectDependency, protoBuilder::setIsDirectDependency);
         maybeSet(component::getMd5, protoBuilder::setMd5);
         maybeSet(component::getSha1, protoBuilder::setSha1);
         maybeSet(component::getSha256, protoBuilder::setSha256);

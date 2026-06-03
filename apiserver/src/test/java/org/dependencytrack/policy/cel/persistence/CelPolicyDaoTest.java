@@ -167,6 +167,7 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/componentGroup/componentName@componentVersion");
         component.setSwidTagId("componentSwidTagId");
         component.setInternal(true);
+        component.setDirectDependency(true);
         component.setMd5("componentMd5");
         component.setSha1("componentSha1");
         component.setSha256("componentSha256");
@@ -235,7 +236,7 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                           "purl": "pkg:maven/componentGroup/componentName@componentVersion",
                           "swidTagId": "componentSwidTagId",
                           "isInternal": true,
-                          "isDirect": false,
+                          "isDirectDependency": true,
                           "md5": "componentmd5",
                           "sha1": "componentsha1",
                           "sha256": "componentsha256",

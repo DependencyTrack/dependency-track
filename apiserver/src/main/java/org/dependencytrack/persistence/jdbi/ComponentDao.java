@@ -122,7 +122,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
         }
         if (Boolean.TRUE.equals(query.onlyDirect())) {
             whereConditions.add(/* language=SQL */ """
-                    AND "C"."DIRECT" IS TRUE
+                    "C"."DIRECT_DEPENDENCY" IS TRUE
                     """);
         }
         if (query.searchText() != null && !query.searchText().isBlank()) {
@@ -231,7 +231,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                  , "C"."PURL"
                  , "C"."GROUP"
                  , "C"."INTERNAL"
-                 , "C"."DIRECT"
+                 , "C"."DIRECT_DEPENDENCY"
                  , "C"."LAST_RISKSCORE"
                  , "C"."LICENSE" AS "componentLicenseName"
                  , "C"."LICENSE_EXPRESSION" AS "licenseExpression"
@@ -629,12 +629,12 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
 
     @SqlUpdate("""
             UPDATE "COMPONENT"
-             SET "DIRECT" = ("UUID"::TEXT IN (
+             SET "DIRECT_DEPENDENCY" = ("UUID"::TEXT IN (
                 SELECT JSONB_ARRAY_ELEMENTS(
                      COALESCE("DIRECT_DEPENDENCIES", '[]'::jsonb)) ->> 'uuid'
                 FROM "PROJECT" WHERE "ID" = :projectId
              ))
             WHERE "PROJECT_ID" = :projectId
             """)
-    void setDirect(@Bind Long projectId);
+    void setDirectDependency(@Bind Long projectId);
 }

@@ -703,7 +703,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         qm.getPersistenceManager().flush();
 
         try (final Handle jdbiHandle = createLocalJdbi(qm).open()) {
-            jdbiHandle.attach(ComponentDao.class).setDirect(project.getId());
+            jdbiHandle.attach(ComponentDao.class).setDirectDependency(project.getId());
         }
     }
 

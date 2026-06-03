@@ -174,7 +174,7 @@ public class ComponentDaoTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testSettingIsDirectFlag() {
+    public void testSettingIsDirectDependencyFlag() {
         final var project = qm.createProject("acme-app", "Description 1", "1.0.0", null, null, null, null, false);
         final var componentA = new Component();
         componentA.setName("acme-lib-a");
@@ -188,12 +188,12 @@ public class ComponentDaoTest extends PersistenceCapableTest {
         qm.persist(componentB);
         project.setDirectDependencies("[" + String.join(",", "{\"uuid\":\"" + componentB.getUuid() + "\"}]"));
 
-        componentDao.setDirect(project.getId());
+        componentDao.setDirectDependency(project.getId());
 
         qm.getPersistenceManager().refresh(componentA);
         qm.getPersistenceManager().refresh(componentB);
 
-        assertThat(componentA.isDirect()).isFalse();
-        assertThat(componentB.isDirect()).isTrue();
+        assertThat(componentA.isDirectDependency()).isFalse();
+        assertThat(componentB.isDirectDependency()).isTrue();
     }
 }

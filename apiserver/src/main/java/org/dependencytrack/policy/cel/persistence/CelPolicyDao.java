@@ -361,9 +361,11 @@ public final class CelPolicyDao {
     public boolean isDirectDependency(Component component) {
         return jdbiHandle
                 .createQuery("""
-                        SELECT COALESCE(c."DIRECT", FALSE)
-                        FROM "COMPONENT" c
-                        WHERE c."UUID" = CAST(:uuid AS UUID)
+                        SELECT COALESCE((
+                           SELECT c."DIRECT_DEPENDENCY"
+                           FROM "COMPONENT" c
+                           WHERE c."UUID" = CAST(:uuid AS UUID)
+                        ), FALSE)
                         """)
                 .bind("uuid", component.getUuid())
                 .mapTo(Boolean.class)

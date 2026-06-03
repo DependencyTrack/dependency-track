@@ -73,6 +73,8 @@ public class ComponentProjection {
 
     public Boolean internal;
 
+    public Boolean direct;
+
     public Double lastInheritedRiskScore;
 
     public String md5;
@@ -177,6 +179,9 @@ public class ComponentProjection {
         componentPersistent.setId(result.id);
         if (result.internal != null) {
             componentPersistent.setInternal(result.internal);
+        }
+        if (result.direct != null) {
+            componentPersistent.setDirectDependency(result.direct);
         }
         componentPersistent.setScope(result.scope != null ? Scope.valueOf(result.scope) : null);
         componentPersistent.setNotes(result.text);

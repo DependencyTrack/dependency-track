@@ -40,6 +40,7 @@ import org.dependencytrack.policy.cel.compat.ComponentHashCelPolicyScriptSourceB
 import org.dependencytrack.policy.cel.compat.CoordinatesCelPolicyScriptSourceBuilder;
 import org.dependencytrack.policy.cel.compat.CpeCelPolicyScriptSourceBuilder;
 import org.dependencytrack.policy.cel.compat.CweCelPolicyScriptSourceBuilder;
+import org.dependencytrack.policy.cel.compat.DirectDependencyCelPolicyScriptSourceBuilder;
 import org.dependencytrack.policy.cel.compat.EpssCelPolicyScriptSourceBuilder;
 import org.dependencytrack.policy.cel.compat.InternalStatusCelPolicyScriptSourceBuilder;
 import org.dependencytrack.policy.cel.compat.LicenseCelPolicyScriptSourceBuilder;
@@ -94,6 +95,7 @@ public final class CelPolicyEngine {
             Map.entry(Subject.EPSS, new EpssCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.EXPRESSION, PolicyCondition::getValue),
             Map.entry(Subject.IS_INTERNAL, new InternalStatusCelPolicyScriptSourceBuilder()),
+            Map.entry(Subject.IS_DIRECT_DEPENDENCY, new DirectDependencyCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.LICENSE, new LicenseCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.LICENSE_GROUP, new LicenseGroupCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.PACKAGE_URL, new PackageUrlCelPolicyScriptSourceBuilder()),

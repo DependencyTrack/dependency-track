@@ -113,7 +113,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
             // direct depencencies
             if (i < 100) {
                 // 100 direct depencencies, 900 transitive depencencies
-                component.setDirect(true);
+                component.setDirectDependency(true);
             }
             // Recent & Outdated
             if ((i >= 25) && (i < 225)) {
@@ -281,7 +281,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
             // direct depencencies
             if (i < 4) {
                 // 4 direct depencencies, 6 transitive depencencies
-                component.setDirect(true);
+                component.setDirectDependency(true);
             }
             // Recent & Outdated
             if ((i < 7)) {

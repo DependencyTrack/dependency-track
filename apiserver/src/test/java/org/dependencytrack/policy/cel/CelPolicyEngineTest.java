@@ -114,6 +114,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         toolComponent.setPurl("pkg:maven/toolComponentGroup/toolComponentName@toolComponentVersion"); // NB: Must be valid PURL, otherwise it's being JSON serialized as null
         toolComponent.setSwidTagId("toolComponentSwidTagId");
         toolComponent.setInternal(true); // NB: Currently ignored for tool components.
+        toolComponent.setDirectDependency(true);
         toolComponent.setMd5("toolComponentMd5");
         toolComponent.setSha1("toolComponentSha1");
         toolComponent.setSha256("toolComponentSha256");
@@ -172,6 +173,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setPurl("pkg:maven/componentGroup/componentName@componentVersion");
         component.setSwidTagId("componentSwidTagId");
         component.setInternal(true);
+        component.setDirectDependency(true);
         component.setMd5("componentMd5");
         component.setSha1("componentSha1");
         component.setSha256("componentSha256");
@@ -273,6 +275,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                   && component.purl == "pkg:maven/componentGroup/componentName@componentVersion"
                   && component.swid_tag_id == "componentSwidTagId"
                   && component.is_internal
+                  && component.is_direct_dependency
                   && component.md5 == "componentmd5"
                   && component.sha1 == "componentsha1"
                   && component.sha256 == "componentsha256"
@@ -325,6 +328,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                          && tool.purl == "pkg:maven/toolComponentGroup/toolComponentName@toolComponentVersion"
                          && tool.swid_tag_id == "toolComponentSwidTagId"
                          && !tool.is_internal
+                         && !tool.is_direct_dependency
                          && tool.md5 == "toolcomponentmd5"
                          && tool.sha1 == "toolcomponentsha1"
                          && tool.sha256 == "toolcomponentsha256"
@@ -500,7 +504,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("bar");
         component.setPurl("pkg:maven/foo/bar@1.0.0");
         component.setVersion("1.2.3");
-        component.setDirect(true);
+        component.setDirectDependency(true);
         qm.persist(component);
         qm.persist(project);
 
@@ -1276,13 +1280,13 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var componentA = new Component();
         componentA.setProject(project);
         componentA.setName("acme-lib-a");
-        componentA.setDirect(true);
+        componentA.setDirectDependency(true);
         qm.persist(componentA);
 
         final var componentB = new Component();
         componentB.setProject(project);
         componentB.setName("acme-lib-b");
-        componentB.setDirect(true);
+        componentB.setDirectDependency(true);
         qm.persist(componentB);
 
         final var componentC = new Component();
@@ -1707,13 +1711,13 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var componentA = new Component();
         componentA.setProject(project);
         componentA.setName("acme-lib-a");
-        componentA.setDirect(true);
+        componentA.setDirectDependency(true);
         qm.persist(componentA);
 
         final var componentB = new Component();
         componentB.setProject(project);
         componentB.setName("acme-lib-b");
-        componentB.setDirect(true);
+        componentB.setDirectDependency(true);
         qm.persist(componentB);
 
         //  /-> A -> B

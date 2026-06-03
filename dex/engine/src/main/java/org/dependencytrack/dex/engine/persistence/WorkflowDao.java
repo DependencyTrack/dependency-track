@@ -64,6 +64,8 @@ import static org.jdbi.v3.core.generic.GenericTypes.parameterizeClass;
 
 public final class WorkflowDao extends AbstractDao {
 
+    private static final int WORKFLOW_TASK_QUEUE_LOCK_NAMESPACE = 657204660;
+
     public WorkflowDao(Handle jdbiHandle) {
         super(jdbiHandle);
     }
@@ -71,9 +73,15 @@ public final class WorkflowDao extends AbstractDao {
     public boolean createWorkflowTaskQueue(CreateTaskQueueRequest request) {
         return jdbiHandle
                 .createQuery("""
+                        with lock as materialized (
+                          select pg_advisory_xact_lock(:lockNamespace, :lockKey)
+                        )
                         select dex_create_workflow_task_queue(:name, cast(:capacity as smallint))
+                          from lock
                         """)
                 .bindMethods(request)
+                .bind("lockNamespace", WORKFLOW_TASK_QUEUE_LOCK_NAMESPACE)
+                .bind("lockKey", request.name().hashCode())
                 .mapTo(boolean.class)
                 .one();
     }

@@ -46,7 +46,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "COMMENT"
              , "ISCUSTOMLICENSE"
              , "ISDEPRECATED"
@@ -156,7 +156,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID", "NAME", "UUID"
+        SELECT CAST("ID" AS bigint) AS "ID", "NAME", "UUID"
           FROM "%s"."TEAM"
          ORDER BY "ID"
         """,
@@ -206,7 +206,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID", "NAME"
+        SELECT CAST("ID" AS bigint) AS "ID", "NAME"
           FROM "%s"."TAG"
          ORDER BY "ID"
         """,
@@ -252,7 +252,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "USERNAME"
              , "DN"
              , "EMAIL"
@@ -280,7 +280,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "USERNAME"
              , "PASSWORD"
              , "FULLNAME"
@@ -310,7 +310,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "USERNAME"
              , "SUBJECT_IDENTIFIER"
              , "EMAIL"
@@ -331,7 +331,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "TEAM_ID", "LDAPUSER_ID"
+        SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("LDAPUSER_ID" AS bigint) AS "LDAPUSER_ID"
           FROM "%s"."LDAPUSERS_TEAMS"
         """,
         List.of("TEAM_ID", "LDAPUSER_ID"),
@@ -348,7 +348,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "TEAM_ID", "MANAGEDUSER_ID"
+        SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("MANAGEDUSER_ID" AS bigint) AS "MANAGEDUSER_ID"
           FROM "%s"."MANAGEDUSERS_TEAMS"
         """,
         List.of("TEAM_ID", "MANAGEDUSER_ID"),
@@ -365,7 +365,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "TEAM_ID", "OIDCUSERS_ID"
+        SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("OIDCUSERS_ID" AS bigint) AS "OIDCUSERS_ID"
           FROM "%s"."OIDCUSERS_TEAMS"
         """,
         List.of("TEAM_ID", "OIDCUSERS_ID"),
@@ -614,7 +614,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID", "DESCRIPTION", "NAME"
+        SELECT CAST("ID" AS bigint) AS "ID", "DESCRIPTION", "NAME"
           FROM "%s"."PERMISSION"
          ORDER BY "ID"
         """,
@@ -643,7 +643,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "LDAPUSER_ID", "PERMISSION_ID"
+        SELECT CAST("LDAPUSER_ID" AS bigint) AS "LDAPUSER_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."LDAPUSERS_PERMISSIONS"
         """,
         List.of("LDAPUSER_ID", "PERMISSION_ID"),
@@ -660,7 +660,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "MANAGEDUSER_ID", "PERMISSION_ID"
+        SELECT CAST("MANAGEDUSER_ID" AS bigint) AS "MANAGEDUSER_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."MANAGEDUSERS_PERMISSIONS"
         """,
         List.of("MANAGEDUSER_ID", "PERMISSION_ID"),
@@ -677,7 +677,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "OIDCUSER_ID", "PERMISSION_ID"
+        SELECT CAST("OIDCUSER_ID" AS bigint) AS "OIDCUSER_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."OIDCUSERS_PERMISSIONS"
         """,
         List.of("OIDCUSER_ID", "PERMISSION_ID"),
@@ -760,7 +760,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID", "NAME", "UUID"
+        SELECT CAST("ID" AS bigint) AS "ID", "NAME", "UUID"
           FROM "%s"."OIDCGROUP"
          ORDER BY "ID"
         """,
@@ -809,7 +809,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "NAME"
              , "RISKWEIGHT"
              , "UUID"
@@ -870,7 +870,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "LICENSEGROUP_ID", "LICENSE_ID"
+        SELECT CAST("LICENSEGROUP_ID" AS bigint) AS "LICENSEGROUP_ID", CAST("LICENSE_ID" AS bigint) AS "LICENSE_ID"
           FROM "%s"."LICENSEGROUP_LICENSE"
         """,
         List.of("LICENSEGROUP_ID", "LICENSE_ID"),
@@ -919,7 +919,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHENTICATIONREQUIRED"
              , "ENABLED"
              , "IDENTIFIER"
@@ -1053,12 +1053,12 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "ACTIVE"
              , "AUTHORS"
              , "CLASSIFIER"
              , "COLLECTION_LOGIC"
-             , "COLLECTION_TAG"
+             , CAST("COLLECTION_TAG" AS bigint) AS "COLLECTION_TAG"
              , "CPE"
              , "DESCRIPTION"
              , "DIRECT_DEPENDENCIES"
@@ -1071,7 +1071,7 @@ public final class TableRegistry {
              , "LAST_VULNERABILITY_ANALYSIS"
              , "MANUFACTURER"
              , "NAME"
-             , "PARENT_PROJECT_ID"
+             , CAST("PARENT_PROJECT_ID" AS bigint) AS "PARENT_PROJECT_ID"
              , "PUBLISHER"
              , "PURL"
              , "SUPPLIER"
@@ -1380,7 +1380,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "DEFAULT_PUBLISHER"
              , "DESCRIPTION"
              , "NAME"
@@ -1487,7 +1487,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "ENABLED"
              , "LOG_SUCCESSFUL_PUBLISH"
              , "MESSAGE"
@@ -1495,7 +1495,7 @@ public final class TableRegistry {
              , "NOTIFICATION_LEVEL"
              , "NOTIFY_CHILDREN"
              , "NOTIFY_ON"
-             , "PUBLISHER"
+             , CAST("PUBLISHER" AS bigint) AS "PUBLISHER"
              , "PUBLISHER_CONFIG"
              , "SCOPE"
              , "UUID"
@@ -1628,7 +1628,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "NOTIFICATIONRULE_ID", "TAG_ID"
+        SELECT CAST("NOTIFICATIONRULE_ID" AS bigint) AS "NOTIFICATIONRULE_ID", CAST("TAG_ID" AS bigint) AS "TAG_ID"
           FROM "%s"."NOTIFICATIONRULE_TAGS"
         """,
         List.of("NOTIFICATIONRULE_ID", "TAG_ID"),
@@ -1666,7 +1666,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "NOTIFICATIONRULE_ID", "TEAM_ID"
+        SELECT CAST("NOTIFICATIONRULE_ID" AS bigint) AS "NOTIFICATIONRULE_ID", CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
           FROM "%s"."NOTIFICATIONRULE_TEAMS"
         """,
         List.of("NOTIFICATIONRULE_ID", "TEAM_ID"),
@@ -1710,7 +1710,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "INCLUDE_CHILDREN"
              , "NAME"
              , "ONLY_LATEST_PROJECT_VERSION"
@@ -1790,9 +1790,9 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "OPERATOR"
-             , "POLICY_ID"
+             , CAST("POLICY_ID" AS bigint) AS "POLICY_ID"
              , "SUBJECT"
              , "UUID"
              , "VALUE"
@@ -1863,7 +1863,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "POLICY_ID", "TAG_ID"
+        SELECT CAST("POLICY_ID" AS bigint) AS "POLICY_ID", CAST("TAG_ID" AS bigint) AS "TAG_ID"
           FROM "%s"."POLICY_TAGS"
         """,
         List.of("POLICY_ID", "TAG_ID"),
@@ -1903,7 +1903,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "POLICY_ID", "PROJECT_ID"
+        SELECT CAST("POLICY_ID" AS bigint) AS "POLICY_ID", CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
           FROM "%s"."POLICY_PROJECTS"
         """,
         List.of("POLICY_ID", "PROJECT_ID"),
@@ -1945,7 +1945,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "NOTIFICATIONRULE_ID", "PROJECT_ID"
+        SELECT CAST("NOTIFICATIONRULE_ID" AS bigint) AS "NOTIFICATIONRULE_ID", CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
           FROM "%s"."NOTIFICATIONRULE_PROJECTS"
         """,
         List.of("NOTIFICATIONRULE_ID", "PROJECT_ID"),
@@ -1984,9 +1984,9 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHORS"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SUPPLIER"
           FROM "%s"."PROJECT_METADATA"
         """,
@@ -2062,7 +2062,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "PROJECT_ID", "TEAM_ID"
+        SELECT CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID", CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
           FROM "%s"."PROJECT_ACCESS_TEAMS"
         """,
         List.of("PROJECT_ID", "TEAM_ID"),
@@ -2131,7 +2131,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "PROJECT_ID", "TAG_ID"
+        SELECT CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID", CAST("TAG_ID" AS bigint) AS "TAG_ID"
           FROM "%s"."PROJECTS_TAGS"
         """,
         List.of("PROJECT_ID", "TAG_ID"),
@@ -2219,7 +2219,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHORS"
              , "BLAKE2B_256"
              , "BLAKE2B_384"
@@ -2242,12 +2242,12 @@ public final class TableRegistry {
              , "MD5"
              , "NAME"
              , "TEXT"
-             , "PARENT_COMPONENT_ID"
-             , "PROJECT_ID"
+             , CAST("PARENT_COMPONENT_ID" AS bigint) AS "PARENT_COMPONENT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "PUBLISHER"
              , "PURL"
              , "PURLCOORDINATES"
-             , "LICENSE_ID"
+             , CAST("LICENSE_ID" AS bigint) AS "LICENSE_ID"
              , "SCOPE"
              , "SHA1"
              , "SHA_256"
@@ -2553,7 +2553,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHENTICATED"
              , "X_TRUST_BOUNDARY"
              , "DATA"
@@ -2564,8 +2564,8 @@ public final class TableRegistry {
              , "LAST_RISKSCORE"
              , "NAME"
              , "TEXT"
-             , "PARENT_SERVICECOMPONENT_ID"
-             , "PROJECT_ID"
+             , CAST("PARENT_SERVICECOMPONENT_ID" AS bigint) AS "PARENT_SERVICECOMPONENT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "PROVIDER_ID"
              , "UUID"
              , "VERSION"
@@ -2711,7 +2711,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "LAST_CHECK"
              , "LATEST_VERSION"
              , "NAME"
@@ -2834,7 +2834,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "COMMENT"
              , "CREATED"
              , "IS_LEGACY"
@@ -2910,7 +2910,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "TEAM_ID", "APIKEY_ID"
+        SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("APIKEY_ID" AS bigint) AS "APIKEY_ID"
           FROM "%s"."APIKEYS_TEAMS"
         """,
         List.of("TEAM_ID", "APIKEY_ID"),
@@ -2950,7 +2950,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "TEAM_ID", "PERMISSION_ID"
+        SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."TEAMS_PERMISSIONS"
         """,
         List.of("TEAM_ID", "PERMISSION_ID"),
@@ -3001,9 +3001,9 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "DN"
-             , "TEAM_ID"
+             , CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
              , "UUID"
           FROM "%s"."MAPPEDLDAPGROUP"
          ORDER BY "ID"
@@ -3061,9 +3061,9 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
-             , "GROUP_ID"
-             , "TEAM_ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
+             , CAST("GROUP_ID" AS bigint) AS "GROUP_ID"
+             , CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
              , "UUID"
           FROM "%s"."MAPPEDOIDCGROUP"
          ORDER BY "ID"
@@ -3159,7 +3159,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "CREATED"
              , "CREDITS"
              , "CVSSV2BASESCORE"
@@ -3456,7 +3456,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "CPE22"
              , "CPE23"
              , "EDITION"
@@ -3683,7 +3683,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "COUNT"
              , "MEASURED_AT"
              , "MONTH"
@@ -3753,7 +3753,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "CVE_ID"
              , "GHSA_ID"
              , "GSD_ID"
@@ -3970,7 +3970,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "COMPONENT_ID", "VULNERABILITY_ID"
+        SELECT CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID", CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID"
           FROM "%s"."COMPONENTS_VULNERABILITIES"
         """,
         List.of("COMPONENT_ID", "VULNERABILITY_ID"),
@@ -4010,7 +4010,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "VULNERABILITY_ID", "SERVICECOMPONENT_ID"
+        SELECT CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID", CAST("SERVICECOMPONENT_ID" AS bigint) AS "SERVICECOMPONENT_ID"
           FROM "%s"."SERVICECOMPONENTS_VULNERABILITIES"
         """,
         List.of("VULNERABILITY_ID", "SERVICECOMPONENT_ID"),
@@ -4050,7 +4050,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"
+        SELECT CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID", CAST("VULNERABLESOFTWARE_ID" AS bigint) AS "VULNERABLESOFTWARE_ID"
           FROM "%s"."VULNERABLESOFTWARE_VULNERABILITIES"
         """,
         List.of("VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"),
@@ -4097,13 +4097,13 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "FIRST_SEEN"
              , "LAST_SEEN"
              , "SOURCE"
              , "UUID"
-             , "VULNERABILITY"
-             , "VULNERABLE_SOFTWARE"
+             , CAST("VULNERABILITY" AS bigint) AS "VULNERABILITY"
+             , CAST("VULNERABLE_SOFTWARE" AS bigint) AS "VULNERABLE_SOFTWARE"
           FROM "%s"."AFFECTEDVERSIONATTRIBUTION"
          ORDER BY "ID"
         """,
@@ -4177,11 +4177,11 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "BOM_FORMAT"
              , "BOM_VERSION"
              , "IMPORTED"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SERIAL_NUMBER"
              , "SPEC_VERSION"
              , "UUID"
@@ -4279,9 +4279,9 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "IMPORTED"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SERIAL_NUMBER"
              , "SPEC_VERSION"
              , "UUID"
@@ -4381,15 +4381,15 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "ALT_ID"
              , "ANALYZERIDENTITY"
              , "ATTRIBUTED_ON"
-             , "COMPONENT_ID"
-             , "PROJECT_ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "REFERENCE_URL"
              , "UUID"
-             , "VULNERABILITY_ID"
+             , CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID"
           FROM "%s"."FINDINGATTRIBUTION"
          ORDER BY "ID"
         """,
@@ -4501,10 +4501,10 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
-             , "COMPONENT_ID"
-             , "POLICYCONDITION_ID"
-             , "PROJECT_ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
+             , CAST("POLICYCONDITION_ID" AS bigint) AS "POLICYCONDITION_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "TEXT"
              , "TIMESTAMP"
              , "TYPE"
@@ -4616,15 +4616,15 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "DETAILS"
              , "JUSTIFICATION"
              , "RESPONSE"
              , "STATE"
-             , "COMPONENT_ID"
-             , "PROJECT_ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SUPPRESSED"
-             , "VULNERABILITY_ID"
+             , CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID"
           FROM "%s"."ANALYSIS"
          ORDER BY "ID"
         """,
@@ -4760,8 +4760,8 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
-             , "ANALYSIS_ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
+             , CAST("ANALYSIS_ID" AS bigint) AS "ANALYSIS_ID"
              , "COMMENT"
              , "COMMENTER"
              , "TIMESTAMP"
@@ -4831,11 +4831,11 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "STATE"
-             , "COMPONENT_ID"
-             , "POLICYVIOLATION_ID"
-             , "PROJECT_ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
+             , CAST("POLICYVIOLATION_ID" AS bigint) AS "POLICYVIOLATION_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SUPPRESSED"
           FROM "%s"."VIOLATIONANALYSIS"
          ORDER BY "ID"
@@ -4906,11 +4906,11 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "COMMENT"
              , "COMMENTER"
              , "TIMESTAMP"
-             , "VIOLATIONANALYSIS_ID"
+             , CAST("VIOLATIONANALYSIS_ID" AS bigint) AS "VIOLATIONANALYSIS_ID"
           FROM "%s"."VIOLATIONANALYSISCOMMENT"
          ORDER BY "ID"
         """,
@@ -4975,7 +4975,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "DESCRIPTION"
              , "GROUPNAME"
              , "PROPERTYNAME"
@@ -5048,10 +5048,10 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "DESCRIPTION"
              , "GROUPNAME"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "PROPERTYNAME"
              , "PROPERTYTYPE"
              , "PROPERTYVALUE"
@@ -5129,8 +5129,8 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
-             , "COMPONENT_ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
              , "DESCRIPTION"
              , "GROUPNAME"
              , "PROPERTYNAME"
@@ -5251,8 +5251,8 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
-             , "COMPONENT_ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
              , "CRITICAL"
              , "FINDINGS_AUDITED"
              , "FINDINGS_TOTAL"
@@ -5278,7 +5278,7 @@ public final class TableRegistry {
              , "POLICYVIOLATIONS_TOTAL"
              , "POLICYVIOLATIONS_UNAUDITED"
              , "POLICYVIOLATIONS_WARN"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SUPPRESSED"
              , "UNASSIGNED_SEVERITY"
              , "VULNERABILITIES"
@@ -5555,7 +5555,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "COLLECTION_LOGIC"
              , "COLLECTION_LOGIC_CHANGED"
              , "COMPONENTS"
@@ -5584,7 +5584,7 @@ public final class TableRegistry {
              , "POLICYVIOLATIONS_TOTAL"
              , "POLICYVIOLATIONS_UNAUDITED"
              , "POLICYVIOLATIONS_WARN"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SUPPRESSED"
              , "UNASSIGNED_SEVERITY"
              , "VULNERABILITIES"

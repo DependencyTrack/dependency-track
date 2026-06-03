@@ -106,7 +106,7 @@ public class ComponentsResourceTest extends ResourceTest {
                     "expandDependencyGraph" : false,
                     "occurrenceCount" : 0,
                     "isInternal" : false,
-                    "isDirect" : false
+                    "isDirectDependency" : false
                   } ]
                 }
                 """);

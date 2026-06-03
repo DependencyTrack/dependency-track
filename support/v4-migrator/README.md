@@ -24,5 +24,9 @@ User-facing documentation is maintained in the [docs](https://github.com/Depende
 ITs are excluded by default. Run them with the `e2e-tests` profile from the repository root:
 
 ```
-mvn -pl support/v4-migrator -am -Pe2e-tests verify
+mvn \
+    -am -Pe2e-tests \
+    -pl support/v4-migrator \
+    -Dmaven.build.cache.enabled=false \
+    verify
 ```

@@ -2730,14 +2730,20 @@ public final class TableRegistry {
     /**
      * Derived {@code PACKAGE_METADATA} per schema-changes §7.7 / Liquibase changeset
      * v5.7.0-52. Joins {@code REPOSITORY_META_COMPONENT} to {@code COMPONENT} on
-     * {@code (NAME, NAMESPACE/GROUP)} with symmetric NULL match and a PURL scheme match by
-     * repository type. Output {@code PURL} is the PURL coordinates with the {@code @version}
-     * suffix stripped. Rows whose resulting PURL contains any of {@code @ ? & #} are skipped
-     * to satisfy the v5 {@code PACKAGE_METADATA_PURL_CHECK} constraint. {@code DISTINCT ON
-     * (PURL)} keeps the newest {@code LAST_CHECK} per PURL. {@code RESOLVED_BY},
-     * {@code RESOLVED_FROM}, {@code LATEST_VERSION_PUBLISHED_AT} have no v4 source and are
-     * left NULL, matching the Liquibase changeset which only projects PURL, LATEST_VERSION,
-     * and RESOLVED_AT (= LAST_CHECK).
+     * {@code (NAME, NAMESPACE/GROUP, repository type)} with symmetric NULL match. Output
+     * {@code PURL} is the PURL coordinates with the {@code @version} suffix stripped. Rows
+     * whose resulting PURL contains any of {@code @ ? & #} are skipped to satisfy the v5
+     * {@code PACKAGE_METADATA_PURL_CHECK} constraint. {@code DISTINCT ON (PURL)} keeps the
+     * newest {@code LAST_CHECK} per PURL. {@code RESOLVED_BY}, {@code RESOLVED_FROM},
+     * {@code LATEST_VERSION_PUBLISHED_AT} have no v4 source and are left NULL, matching the
+     * Liquibase changeset which only projects PURL, LATEST_VERSION, and RESOLVED_AT (=
+     * LAST_CHECK).
+     *
+     * <p>{@code src_component} is pre-deduplicated to one row per
+     * {@code (NAME, GROUP, type, stripped PURL)} tuple before the join. Without this, the
+     * equality on {@code NAME} alone is non-selective in multi-project deployments where the
+     * same package appears in thousands of components, producing a multi-million-row
+     * intermediate result that {@code DISTINCT ON} then has to sort to disk.
      */
     private static final TableMigration PACKAGE_METADATA = new TableMigration(
         "PACKAGE_METADATA",
@@ -2762,28 +2768,33 @@ public final class TableRegistry {
           , "RESOLVED_FROM"
           , "RESOLVED_AT"
         )
-        SELECT DISTINCT ON (t."PURL") t."PURL"
-             , t."LATEST_VERSION"
+        WITH c_unique AS (
+            SELECT DISTINCT
+                   c."NAME"
+                 , c."GROUP"
+                 , substring(lower(c."PURL") FROM '^pkg:([^/]+)/') AS "TYPE"
+                 , split_part(c."PURLCOORDINATES", '@', 1) AS "PURL"
+              FROM "%1$s".src_component c
+             WHERE c."PURLCOORDINATES" IS NOT NULL
+               AND lower(c."PURL") LIKE 'pkg:%%'
+        )
+        SELECT DISTINCT ON (cu."PURL") cu."PURL"
+             , rmc."LATEST_VERSION"
              , NULL
              , NULL
              , NULL
-             , t."LAST_CHECK"
-          FROM (
-            SELECT split_part(c."PURLCOORDINATES", '@', 1) AS "PURL"
-                 , rmc."LATEST_VERSION"
-                 , rmc."LAST_CHECK"
-              FROM "%1$s".src_repository_meta_component rmc
-              JOIN "%1$s".src_component c
-                ON c."NAME" = rmc."NAME"
-               AND (c."GROUP" = rmc."NAMESPACE"
-                    OR (c."GROUP" IS NULL AND rmc."NAMESPACE" IS NULL))
-               AND LOWER(c."PURL") LIKE ('pkg:' || LOWER(rmc."REPOSITORY_TYPE") || '/%%')
-          ) t
-         WHERE t."PURL" NOT LIKE '%%@%%'
-           AND t."PURL" NOT LIKE '%%?%%'
-           AND t."PURL" NOT LIKE '%%&%%'
-           AND t."PURL" NOT LIKE '%%#%%'
-         ORDER BY t."PURL", t."LAST_CHECK" DESC NULLS LAST
+             , rmc."LAST_CHECK"
+          FROM c_unique cu
+          JOIN "%1$s".src_repository_meta_component rmc
+            ON cu."NAME" = rmc."NAME"
+           AND (cu."GROUP" = rmc."NAMESPACE"
+                OR (cu."GROUP" IS NULL AND rmc."NAMESPACE" IS NULL))
+           AND cu."TYPE" = lower(rmc."REPOSITORY_TYPE")
+         WHERE cu."PURL" NOT LIKE '%%@%%'
+           AND cu."PURL" NOT LIKE '%%?%%'
+           AND cu."PURL" NOT LIKE '%%&%%'
+           AND cu."PURL" NOT LIKE '%%#%%'
+         ORDER BY cu."PURL", rmc."LAST_CHECK" DESC NULLS LAST
         """,
         """
         INSERT INTO "PACKAGE_METADATA" (

@@ -50,6 +50,15 @@ public final class TransformPhase {
         target.useHandle(h -> h.execute(
             "DELETE FROM \"%s\".migration_state WHERE phase = 'LOAD'"
                 .formatted(options.stagingSchema)));
+        // src_* tables are bulk-loaded via COPY into UNLOGGED tables and autovacuum may not
+        // analyze them in time. Without stats the planner defaults to nested-loop joins for
+        // transforms like PACKAGE_METADATA, which can stall for hours on production-sized
+        // datasets.
+        target.useHandle(h -> {
+            for (final TableMigration t : TableRegistry.extracted()) {
+                h.execute("ANALYZE \"%s\".src_%s".formatted(options.stagingSchema, t.name()));
+            }
+        });
         for (final TableMigration t : TableRegistry.transformed()) {
             transformOne(t);
         }

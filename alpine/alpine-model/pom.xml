@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>alpine-parent</artifactId>
-        <version>5.0.0-rc.4</version>
+        <version>5.0.0-rc.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>alpine-model</artifactId>

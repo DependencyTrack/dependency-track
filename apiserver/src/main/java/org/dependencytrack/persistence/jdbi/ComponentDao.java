@@ -626,15 +626,4 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
             return new ListedComponent(component, publishedAtMicros);
         }
     }
-
-    @SqlUpdate("""
-            UPDATE "COMPONENT"
-             SET "DIRECT_DEPENDENCY" = ("UUID"::TEXT IN (
-                SELECT JSONB_ARRAY_ELEMENTS(
-                     COALESCE("DIRECT_DEPENDENCIES", '[]'::jsonb)) ->> 'uuid'
-                FROM "PROJECT" WHERE "ID" = :projectId
-             ))
-            WHERE "PROJECT_ID" = :projectId
-            """)
-    void setDirectDependency(@Bind Long projectId);
 }

@@ -44,13 +44,11 @@ import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowContext;
 import org.dependencytrack.util.InternalComponentIdentifier;
-import org.jdbi.v3.core.Handle;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -104,7 +102,6 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertSe
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProject;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProjectMetadata;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.createLocalJdbi;
 import static org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
@@ -667,17 +664,19 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
     ) {
         assertPersistent(project, "Project must be persistent");
 
+        Collection<String> directDependencyBomRefs = null;
         if (project.getBomRef() != null) {
-            final Collection<String> directDependencyBomRefs = dependencyGraph.get(project.getBomRef());
+            directDependencyBomRefs = dependencyGraph.get(project.getBomRef());
             if (directDependencyBomRefs == null || directDependencyBomRefs.isEmpty()) {
                 LOGGER.warn("""
                         The dependency graph has %d entries, but the project (metadata.component node of the BOM) \
                         is not one of them; Graph will be incomplete because it is not possible to determine its root\
                         """.formatted(dependencyGraph.size()));
             }
+            final Collection<String> rootDirectDependencyBomRefs = directDependencyBomRefs;
             final String directDependenciesJson = resolveDependenciesJson(
                     List.of(project.getBomRef()),
-                    sourceBomRef -> sourceBomRef.equals(project.getBomRef()) ? directDependencyBomRefs : null,
+                    sourceBomRef -> sourceBomRef.equals(project.getBomRef()) ? rootDirectDependencyBomRefs : null,
                     identitiesByBomRef);
             if (!Objects.equals(directDependenciesJson, project.getDirectDependencies())) {
                 project.setDirectDependencies(directDependenciesJson);
@@ -693,6 +692,12 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
         for (final Component component : componentsByIdentity.values()) {
             assertPersistent(component, "Component must be persistent");
+
+            // Clear old flags so repeated BOM imports don't retain components
+            // that were direct in a previous dependency graph.
+            if (component.isDirectDependency()) {
+                component.setDirectDependency(false);
+            }
             final String mergedDirectDependenciesJson = resolveMergedDirectDependenciesJson(
                     component, dependencyGraph, identitiesByBomRef, bomRefsByIdentity);
             if (!Objects.equals(mergedDirectDependenciesJson, component.getDirectDependencies())) {
@@ -700,11 +705,21 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             }
         }
 
-        qm.getPersistenceManager().flush();
+        if (directDependencyBomRefs != null) {
+            for (final String directDependencyBomRef : directDependencyBomRefs) {
+                final ComponentIdentity directDependencyIdentity = identitiesByBomRef.get(directDependencyBomRef);
+                if (directDependencyIdentity == null) {
+                    continue;
+                }
 
-        try (final Handle jdbiHandle = createLocalJdbi(qm).open()) {
-            jdbiHandle.attach(ComponentDao.class).setDirectDependency(project.getId());
+                final Component directDependencyComponent = componentsByIdentity.get(directDependencyIdentity);
+                if (directDependencyComponent != null && !directDependencyComponent.isDirectDependency()) {
+                    directDependencyComponent.setDirectDependency(true);
+                }
+            }
         }
+
+        qm.getPersistenceManager().flush();
     }
 
     private static void recordBomImport(final ProcessingContext ctx, final QueryManager qm, final Project project) {

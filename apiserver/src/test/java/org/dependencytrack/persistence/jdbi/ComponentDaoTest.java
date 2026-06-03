@@ -172,28 +172,4 @@ public class ComponentDaoTest extends PersistenceCapableTest {
         qm.persist(component);
         assertThat(componentDao.getComponentId(component.getUuid())).isEqualTo(component.getId());
     }
-
-    @Test
-    public void testSettingIsDirectDependencyFlag() {
-        final var project = qm.createProject("acme-app", "Description 1", "1.0.0", null, null, null, null, false);
-        final var componentA = new Component();
-        componentA.setName("acme-lib-a");
-        componentA.setVersion("1.0.0");
-        componentA.setProject(project);
-        qm.persist(componentA);
-        final var componentB = new Component();
-        componentB.setName("acme-lib-b");
-        componentB.setVersion("2.0.0");
-        componentB.setProject(project);
-        qm.persist(componentB);
-        project.setDirectDependencies("[" + String.join(",", "{\"uuid\":\"" + componentB.getUuid() + "\"}]"));
-
-        componentDao.setDirectDependency(project.getId());
-
-        qm.getPersistenceManager().refresh(componentA);
-        qm.getPersistenceManager().refresh(componentB);
-
-        assertThat(componentA.isDirectDependency()).isFalse();
-        assertThat(componentB.isDirectDependency()).isTrue();
-    }
 }

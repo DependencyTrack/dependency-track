@@ -60,6 +60,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -88,16 +89,16 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         project.setName("projectName");
         project.setVersion("projectVersion");
         project.setClassifier(Classifier.APPLICATION);
-        project.setInactiveSince(new java.util.Date(777));
+        project.setInactiveSince(new Date(777));
         project.setCpe("projectCpe");
         project.setPurl("projectPurl");
         project.setSwidTagId("projectSwidTagId");
-        project.setLastBomImport(new java.util.Date());
+        project.setLastBomImport(new Date());
         qm.persist(project);
 
         final var bom = new Bom();
         bom.setProject(project);
-        bom.setGenerated(new java.util.Date(999));
+        bom.setGenerated(new Date(999));
         bom.setImported(new Date());
         qm.persist(bom);
 
@@ -211,11 +212,11 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                     new PackageArtifactMetadata(
                             new PackageURL("pkg:maven/componentGroup/componentName@componentVersion"),
                             new PackageURL("pkg:maven/componentGroup/componentName"),
-                            null,
-                            null,
-                            null,
-                            null,
-                            new java.util.Date(222).toInstant(),
+                            "acbd18db4cc2f85cedef654fccc4a4d8",
+                            "0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33",
+                            "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+                            "f7fbba6e0636f890e56fbbf3283e524c6fa3204ae298382d624741d0dc6638326e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7",
+                            Instant.ofEpochMilli(222),
                             null,
                             null,
                             Instant.now())));
@@ -226,9 +227,9 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         vuln.setVulnId("CVE-001");
         vuln.setSource(Vulnerability.Source.NVD);
         vuln.setCwes(List.of(666, 777));
-        vuln.setCreated(new java.util.Date(666));
-        vuln.setPublished(new java.util.Date(777));
-        vuln.setUpdated(new java.util.Date(888));
+        vuln.setCreated(new Date(666));
+        vuln.setPublished(new Date(777));
+        vuln.setUpdated(new Date(888));
         vuln.setSeverity(Severity.INFO);
         vuln.setCvssV2BaseScore(BigDecimal.valueOf(6.0));
         vuln.setCvssV2ImpactSubScore(BigDecimal.valueOf(6.4));
@@ -299,6 +300,10 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                          && licenseGroup.name == "licenseGroupName"
                      )
                   && component.published_at == timestamp("1970-01-01T00:00:00.222Z")
+                  && component.package_artifact_md5 == "acbd18db4cc2f85cedef654fccc4a4d8"
+                  && component.package_artifact_sha1 == "0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33"
+                  && component.package_artifact_sha256 == "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
+                  && component.package_artifact_sha512 == "f7fbba6e0636f890e56fbbf3283e524c6fa3204ae298382d624741d0dc6638326e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7"
                   && component.properties.all(property,
                        property.group == "componentPropertyGroup"
                          && property.name == "componentPropertyName"
@@ -727,6 +732,100 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var policyEngine = new CelPolicyEngine();
         policyEngine.evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
+    }
+
+    private static Stream<Arguments> shouldEvaluateHasPackageArtifactHashMismatch() {
+        return Stream.of(
+                Arguments.of(
+                        "sha256 differs",
+                        (Consumer<Component>) c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                        new String[]{null, null, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", null},
+                        true),
+                Arguments.of(
+                        "sha256 matches case-insensitively",
+                        (Consumer<Component>) c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                        new String[]{null, null, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", null},
+                        false),
+                Arguments.of(
+                        "no overlapping algorithm",
+                        (Consumer<Component>) c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                        new String[]{null, "0123456789abcdef0123456789abcdef01234567", null, null},
+                        false),
+                Arguments.of(
+                        "component has no comparable hash",
+                        (Consumer<Component>) _ -> {
+                        },
+                        new String[]{null, null, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", null},
+                        false),
+                Arguments.of(
+                        "component only has non-comparable algorithm",
+                        (Consumer<Component>) c -> c.setSha3_512("c" + "0".repeat(127)),
+                        new String[]{null, null, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", null},
+                        false),
+                Arguments.of(
+                        "no package artifact metadata",
+                        (Consumer<Component>) c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                        null,
+                        false),
+                Arguments.of(
+                        "package artifact metadata exists but all hash columns null",
+                        (Consumer<Component>) c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                        new String[]{null, null, null, null},
+                        false));
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource
+    void shouldEvaluateHasPackageArtifactHashMismatch(
+            String displayName,
+            Consumer<Component> componentSetup,
+            String[] pkgArtifactHashes,
+            boolean expectViolation) throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                "component.has_package_artifact_hash_mismatch()",
+                PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setPurl(new PackageURL("pkg:maven/acme/lib@1.0"));
+        componentSetup.accept(component);
+        qm.persist(component);
+
+        if (pkgArtifactHashes != null) {
+            useJdbiHandle(handle -> {
+                try {
+                    new PackageMetadataDao(handle).upsertAll(List.of(
+                            new PackageMetadata(
+                                    new PackageURL("pkg:maven/acme/lib"),
+                                    "1.0", null, Instant.now(), null, null)));
+                    new PackageArtifactMetadataDao(handle).upsertAll(List.of(
+                            new PackageArtifactMetadata(
+                                    new PackageURL("pkg:maven/acme/lib@1.0"),
+                                    new PackageURL("pkg:maven/acme/lib"),
+                                    pkgArtifactHashes[0], pkgArtifactHashes[1], pkgArtifactHashes[2], pkgArtifactHashes[3],
+                                    null, null, "central", Instant.now())));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        if (expectViolation) {
+            assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+        } else {
+            assertThat(qm.getAllPolicyViolations(component)).isEmpty();
+        }
     }
 
     @Test

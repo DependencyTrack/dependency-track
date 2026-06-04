@@ -25,6 +25,7 @@ import java.util.Map;
 
 import static org.dependencytrack.policy.cel.CelPolicyLibrary.Function.COMPARE_AGE;
 import static org.dependencytrack.policy.cel.CelPolicyLibrary.Function.DEPENDS_ON;
+import static org.dependencytrack.policy.cel.CelPolicyLibrary.Function.HAS_PACKAGE_ARTIFACT_HASH_MISMATCH;
 import static org.dependencytrack.policy.cel.CelPolicyLibrary.Function.IS_DEPENDENCY_OF;
 import static org.dependencytrack.policy.cel.CelPolicyLibrary.Function.IS_DIRECT_DEPENDENCY_OF;
 import static org.dependencytrack.policy.cel.CelPolicyLibrary.Function.IS_EXCLUSIVE_DEPENDENCY_OF;
@@ -43,7 +44,20 @@ final class CelPolicyRequirements {
             Map.entry(IS_DIRECT_DEPENDENCY_OF.functionName(), Map.of(TYPE_COMPONENT, List.of("uuid"))),
             Map.entry(MATCHES_RANGE.functionName(), Map.of(TYPE_PROJECT, List.of("version"), TYPE_COMPONENT, List.of("version"))),
             Map.entry(VERSION_DISTANCE.functionName(), Map.of(TYPE_COMPONENT, List.of("purl", "uuid", "version", "latest_version"))),
-            Map.entry(COMPARE_AGE.functionName(), Map.of(TYPE_COMPONENT, List.of("purl", "published_at"))));
+            Map.entry(COMPARE_AGE.functionName(), Map.of(TYPE_COMPONENT, List.of("purl", "published_at"))),
+            Map.entry(
+                    HAS_PACKAGE_ARTIFACT_HASH_MISMATCH.functionName(),
+                    Map.of(
+                            TYPE_COMPONENT,
+                            List.of(
+                                    "md5",
+                                    "sha1",
+                                    "sha256",
+                                    "sha512",
+                                    "package_artifact_md5",
+                                    "package_artifact_sha1",
+                                    "package_artifact_sha256",
+                                    "package_artifact_sha512"))));
 
     static final Map<CelType, Map<String, List<String>>> FIELD_EXPANSIONS = Map.of(
             TYPE_VULNERABILITY, Map.of(

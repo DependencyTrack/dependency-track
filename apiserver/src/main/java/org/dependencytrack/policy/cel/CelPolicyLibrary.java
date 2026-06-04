@@ -133,6 +133,17 @@ final class CelPolicyLibrary implements CelCompilerLibrary, CelRuntimeLibrary {
                         "matches_version_distance_bool",
                         List.of(Component.class, String.class, VersionDistance.class),
                         args -> CelPolicyFunctions.matchesVersionDistance((Component) args[0], (String) args[1], (VersionDistance) args[2]))),
+        HAS_PACKAGE_ARTIFACT_HASH_MISMATCH(
+                CelFunctionDecl.newFunctionDeclaration(
+                        "has_package_artifact_hash_mismatch",
+                        CelOverloadDecl.newMemberOverload(
+                                "component_has_package_artifact_hash_mismatch_bool",
+                                SimpleType.BOOL,
+                                List.of(TYPE_COMPONENT))),
+                CelFunctionBinding.from(
+                        "component_has_package_artifact_hash_mismatch_bool",
+                        List.of(Component.class),
+                        args -> CelPolicyFunctions.hasPackageArtifactHashMismatch((Component) args[0]))),
         SPDX_EXPR_ALLOWS(
                 CelFunctionDecl.newFunctionDeclaration(
                         "spdx_expr_allows",

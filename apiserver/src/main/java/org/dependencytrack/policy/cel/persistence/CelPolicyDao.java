@@ -88,23 +88,28 @@ public final class CelPolicyDao {
             fetchColumns.add("c.\"LICENSE_ID\" AS resolved_license_id");
         }
 
+        final boolean shouldJoinPm = protoFieldNames.contains("latest_version");
         final boolean shouldJoinPam =
-                protoFieldNames.contains("published_at")
-                        || protoFieldNames.contains("latest_version");
+                shouldJoinPm
+                        || protoFieldNames.contains("published_at")
+                        || protoFieldNames.contains("package_artifact_md5")
+                        || protoFieldNames.contains("package_artifact_sha1")
+                        || protoFieldNames.contains("package_artifact_sha256")
+                        || protoFieldNames.contains("package_artifact_sha512");
 
         final var componentRowMapper = new CelPolicyComponentRowMapper();
         return jdbiHandle
                 .createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
                         <#-- @ftlvariable name="shouldJoinPam" type="boolean" -->
-                        <#-- @ftlvariable name="shouldJoinLatestVersion" type="boolean" -->
+                        <#-- @ftlvariable name="shouldJoinPm" type="boolean" -->
                         SELECT ${fetchColumns?join(", ")}
                           FROM "COMPONENT" AS c
                         <#if shouldJoinPam!false>
                           LEFT JOIN "PACKAGE_ARTIFACT_METADATA" AS pam
                             ON pam."PURL" = c."PURL"
                         </#if>
-                        <#if shouldJoinLatestVersion!false>
+                        <#if shouldJoinPm!false>
                           LEFT JOIN "PACKAGE_METADATA" AS pm
                             ON pm."PURL" = pam."PACKAGE_PURL"
                         </#if>
@@ -112,7 +117,7 @@ public final class CelPolicyDao {
                         """)
                 .define("fetchColumns", fetchColumns)
                 .define("shouldJoinPam", shouldJoinPam)
-                .define("shouldJoinLatestVersion", protoFieldNames.contains("latest_version"))
+                .define("shouldJoinPm", shouldJoinPm)
                 .bind("projectId", projectId)
                 .reduceResultSet(
                         new HashMap<>(),
@@ -661,33 +666,38 @@ public final class CelPolicyDao {
 
         final List<String> fetchColumns = new ArrayList<>(selectColumns(COMPONENT_FIELDS, componentRequirements));
 
-        final boolean needsLatestVersion = componentRequirements.contains("latest_version");
-        final boolean needsPublishedAt = componentRequirements.contains("published_at");
-        final boolean needsPam = needsPublishedAt || needsLatestVersion;
+        final boolean shouldJoinPm = componentRequirements.contains("latest_version");
+        final boolean shouldJoinPam =
+                shouldJoinPm
+                        || componentRequirements.contains("published_at")
+                        || componentRequirements.contains("package_artifact_md5")
+                        || componentRequirements.contains("package_artifact_sha1")
+                        || componentRequirements.contains("package_artifact_sha256")
+                        || componentRequirements.contains("package_artifact_sha512");
 
         final var componentRowMapper = new CelPolicyComponentRowMapper();
         return jdbiHandle.createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
-                        <#-- @ftlvariable name="needsPam" type="boolean" -->
-                        <#-- @ftlvariable name="needsLatestVersion" type="boolean" -->
+                        <#-- @ftlvariable name="shouldJoinPam" type="boolean" -->
+                        <#-- @ftlvariable name="shouldJoinPm" type="boolean" -->
                         SELECT c."ID" AS db_id
                         <#if fetchColumns?size gt 0>
                              , ${fetchColumns?join(", ")}
                         </#if>
                           FROM "COMPONENT" AS c
-                        <#if needsPam!false>
+                        <#if shouldJoinPam!false>
                           LEFT JOIN "PACKAGE_ARTIFACT_METADATA" AS pam
                             ON pam."PURL" = c."PURL"
                         </#if>
-                        <#if needsLatestVersion!false>
+                        <#if shouldJoinPm!false>
                           LEFT JOIN "PACKAGE_METADATA" AS pm
                             ON pm."PURL" = pam."PACKAGE_PURL"
                         </#if>
                          WHERE c."ID" = ANY(:ids)
                         """)
                 .define("fetchColumns", fetchColumns)
-                .define("needsPam", needsPam)
-                .define("needsLatestVersion", needsLatestVersion)
+                .define("shouldJoinPam", shouldJoinPam)
+                .define("shouldJoinPm", shouldJoinPm)
                 .bindArray("ids", Long.class, componentIds)
                 .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
                     final long dbId = rs.getLong("db_id");

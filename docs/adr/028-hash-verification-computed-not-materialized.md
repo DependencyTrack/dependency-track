@@ -40,3 +40,15 @@ interpretation to clients. There is no status enum or per-algorithm sub-schema t
 A future server-side consumer can compute the status when needed from the existing tables. No
 data migration is required, and the result always reflects the current state of both inputs.
 Refreshing artifact metadata never triggers updates to the `COMPONENT` table.
+
+## Follow-up (2026-06-04)
+
+We added a new CEL function `component.has_package_artifact_hash_mismatch()`. Users author the
+policy with an `EXPRESSION` condition. The filter and metrics paths are not built yet.
+
+The function returns true only when the component hash and the upstream hash are both set and not equal.
+It checks MD5, SHA-1, SHA-256, and SHA-512, ignoring upper or lower case. If there is no upstream data,
+or no shared algorithm, it returns false.
+
+It fires only on real mismatches. Matches or "unknown" states are not a useful signal.
+Many packages have no upstream data, so flagging unknowns would just add noise.

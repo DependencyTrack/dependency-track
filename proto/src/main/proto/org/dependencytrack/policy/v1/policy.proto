@@ -70,6 +70,18 @@ message Component {
   optional google.protobuf.Timestamp published_at = 53;
   optional string latest_version = 54;
 
+  // MD5 hash of the corresponding package artifact as reported by its upstream repository.
+  optional string package_artifact_md5 = 55;
+
+  // SHA-1 hash of the corresponding package artifact as reported by its upstream repository.
+  optional string package_artifact_sha1 = 56;
+
+  // SHA-256 hash of the corresponding package artifact as reported by its upstream repository.
+  optional string package_artifact_sha256 = 57;
+
+  // SHA-512 hash of the corresponding package artifact as reported by its upstream repository.
+  optional string package_artifact_sha512 = 58;
+
   message Property {
     string group = 1;
     string name = 2;

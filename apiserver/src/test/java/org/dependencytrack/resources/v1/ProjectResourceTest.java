@@ -581,6 +581,7 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertNotNull(json.getJsonArray("versions").getJsonObject(100).getString("uuid"));
         Assertions.assertNotEquals("", json.getJsonArray("versions").getJsonObject(100).getString("uuid"));
         Assertions.assertEquals("100", json.getJsonArray("versions").getJsonObject(100).getString("version"));
+        Assertions.assertFalse(json.getJsonArray("versions").getJsonObject(100).getBoolean("isLatest"));
     }
 
     @Test
@@ -1888,7 +1889,7 @@ class ProjectResourceTest extends ResourceTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .withMatcher("parentUuid", equalTo(parentProject.getUuid().toString()))
                 .withMatcher("childUuid", equalTo(childProject.getUuid().toString()))
-                .isEqualTo("""
+                .isEqualTo(/* language=JSON */ """
                         {
                           "name": "acme-app",
                           "version": "1.0.0",
@@ -1915,6 +1916,7 @@ class ProjectResourceTest extends ResourceTest {
                             {
                               "uuid": "${json-unit.matches:projectUuid}",
                               "version": "1.0.0",
+                              "isLatest": false,
                               "active": true
                             }
                           ]
@@ -1959,6 +1961,7 @@ class ProjectResourceTest extends ResourceTest {
                             {
                               "uuid": "${json-unit.matches:projectUuid}",
                               "version": "1.0.0",
+                              "isLatest": false,
                               "active": true
                             }
                           ]
@@ -3375,14 +3378,17 @@ class ProjectResourceTest extends ResourceTest {
 
         Assertions.assertNotNull(json.getJsonArray("versions").getJsonObject(0).getJsonString("uuid").getString());
         Assertions.assertEquals("1.0", json.getJsonArray("versions").getJsonObject(0).getJsonString("version").getString());
+        Assertions.assertFalse(json.getJsonArray("versions").getJsonObject(0).getBoolean("isLatest"));
         Assertions.assertTrue(json.getJsonArray("versions").getJsonObject(0).getBoolean("active"));
 
         Assertions.assertNotNull(json.getJsonArray("versions").getJsonObject(1).getJsonString("uuid").getString());
         Assertions.assertEquals("2.0", json.getJsonArray("versions").getJsonObject(1).getJsonString("version").getString());
+        Assertions.assertFalse(json.getJsonArray("versions").getJsonObject(0).getBoolean("isLatest"));
         Assertions.assertTrue(json.getJsonArray("versions").getJsonObject(0).getBoolean("active"));
 
         Assertions.assertNotNull(json.getJsonArray("versions").getJsonObject(2).getJsonString("uuid").getString());
         Assertions.assertEquals("3.0", json.getJsonArray("versions").getJsonObject(2).getJsonString("version").getString());
+        Assertions.assertFalse(json.getJsonArray("versions").getJsonObject(0).getBoolean("isLatest"));
         Assertions.assertTrue(json.getJsonArray("versions").getJsonObject(0).getBoolean("active"));
     }
 
@@ -3532,7 +3538,7 @@ class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "name": "acme-app-parent",
                   "version": "1.0.0",
@@ -3555,6 +3561,7 @@ class ProjectResourceTest extends ResourceTest {
                     {
                       "uuid": "${json-unit.any-string}",
                       "version": "1.0.0",
+                      "isLatest": false,
                       "active": true
                     }
                   ]
@@ -3566,7 +3573,7 @@ class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "name": "acme-app",
                   "version": "1.0.0",
@@ -3585,6 +3592,7 @@ class ProjectResourceTest extends ResourceTest {
                     {
                       "uuid": "${json-unit.any-string}",
                       "version": "1.0.0",
+                      "isLatest": false,
                       "active": true
                     }
                   ]

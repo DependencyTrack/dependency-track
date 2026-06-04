@@ -830,7 +830,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
     private List<ProjectVersion> getProjectVersions(Project project) {
         final Query<Project> query = pm.newQuery(Project.class);
-        query.setResult("uuid, version, inactiveSince");
+        query.setResult("uuid, version, isLatest, inactiveSince");
         query.setOrdering("id asc"); // Ensure consistent ordering
         final var params = new HashMap<String, Object>();
         params.put("name", project.getName());

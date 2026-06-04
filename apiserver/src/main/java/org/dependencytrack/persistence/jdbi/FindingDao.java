@@ -19,11 +19,14 @@
 package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.AppliedPolicyAnnotation;
 import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.persistence.jdbi.mapping.PolicyAnnotationsColumnMapper;
 import org.jdbi.v3.json.Json;
+import org.jdbi.v3.sqlobject.config.RegisterColumnMapper;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -42,6 +45,7 @@ import java.util.UUID;
 
 import static org.dependencytrack.resources.v1.FindingResource.mapComponentLatestVersion;
 
+@RegisterColumnMapper(PolicyAnnotationsColumnMapper.class)
 public interface FindingDao {
 
     record FindingRow(
@@ -86,6 +90,7 @@ public interface FindingDao {
             String reference_url,
             AnalysisState analysisState,
             boolean suppressed,
+            @Nullable List<AppliedPolicyAnnotation> policyAnnotationsJson,
             long totalCount
     ) {
     }
@@ -200,6 +205,7 @@ public interface FindingDao {
                  , fa."REFERENCE_URL"
                  , a."STATE" AS "analysisState"
                  , a."SUPPRESSED"
+                 , a."POLICY_ANNOTATIONS" AS "policyAnnotationsJson"
                  , COUNT(*) OVER() AS "totalCount"
               FROM "COMPONENT" AS c
              INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
@@ -416,6 +422,7 @@ public interface FindingDao {
                  , fa."REFERENCE_URL"
                  , a."STATE" AS "analysisState"
                  , a."SUPPRESSED"
+                 , a."POLICY_ANNOTATIONS" AS "policyAnnotationsJson"
                  , COUNT(*) OVER() AS "totalCount"
               FROM "COMPONENT" AS c
              INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv

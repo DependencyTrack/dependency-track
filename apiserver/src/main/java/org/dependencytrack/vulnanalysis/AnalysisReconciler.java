@@ -21,6 +21,7 @@ package org.dependencytrack.vulnanalysis;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.AppliedPolicyAnnotation;
 import org.dependencytrack.model.FindingKey;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.persistence.jdbi.AnalysisDao.Analysis;
@@ -44,6 +45,9 @@ import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_POLICY_NAME;
+import static org.dependencytrack.vulnanalysis.PolicyAnnotationSupport.annotationsEqual;
+import static org.dependencytrack.vulnanalysis.PolicyAnnotationSupport.desiredAnnotations;
+import static org.dependencytrack.vulnanalysis.PolicyAnnotationSupport.formatAnnotations;
 
 /**
  * @since 5.0.0
@@ -70,6 +74,7 @@ final class AnalysisReconciler {
     private final @Nullable Double cvssV4Score;
     private final @Nullable String owaspVector;
     private final @Nullable Double owaspScore;
+    private final @Nullable List<AppliedPolicyAnnotation> policyAnnotations;
 
     AnalysisReconciler(
             long projectId,
@@ -94,6 +99,7 @@ final class AnalysisReconciler {
         this.cvssV4Score = existing != null ? existing.cvssV4Score() : null;
         this.owaspVector = existing != null ? existing.owaspVector() : null;
         this.owaspScore = existing != null ? existing.owaspScore() : null;
+        this.policyAnnotations = existing != null ? existing.policyAnnotations() : null;
     }
 
     @Nullable Result reconcile(VulnerabilityPolicy policy) {
@@ -136,6 +142,7 @@ final class AnalysisReconciler {
             };
             final String desiredDetails = policyAnalysis.getDetails();
             final boolean desiredSuppressed = policyAnalysis.isSuppress();
+            final List<AppliedPolicyAnnotation> desiredPolicyAnnotations = desiredAnnotations(policy, policyAnalysis);
 
             Severity desiredSeverity = null;
             String desiredCvssV2Vector = null;
@@ -225,6 +232,7 @@ final class AnalysisReconciler {
             hasChanged |= diffField(comments, AnalysisCommentField.CVSSV4_SCORE, cvssV4Score, desiredCvssV4Score);
             hasChanged |= diffField(comments, AnalysisCommentField.OWASP_VECTOR, owaspVector, desiredOwaspVector);
             hasChanged |= diffField(comments, AnalysisCommentField.OWASP_SCORE, owaspScore, desiredOwaspScore);
+            hasChanged |= diffPolicyAnnotations(comments, policyAnnotations, desiredPolicyAnnotations);
 
             if (!hasChanged) {
                 return null;
@@ -248,7 +256,8 @@ final class AnalysisReconciler {
                     desiredCvssV4Vector,
                     desiredCvssV4Score,
                     desiredOwaspVector,
-                    desiredOwaspScore);
+                    desiredOwaspScore,
+                    desiredPolicyAnnotations.isEmpty() ? null : desiredPolicyAnnotations);
 
             if (policy.getCondition() != null && !policy.getCondition().isEmpty()) {
                 comments.addFirst("Matched on condition: " + policy.getCondition());
@@ -284,6 +293,7 @@ final class AnalysisReconciler {
         hasChanged |= diffField(comments, AnalysisCommentField.CVSSV4_SCORE, cvssV4Score, null);
         hasChanged |= diffField(comments, AnalysisCommentField.OWASP_VECTOR, owaspVector, null);
         hasChanged |= diffField(comments, AnalysisCommentField.OWASP_SCORE, owaspScore, null);
+        hasChanged |= diffPolicyAnnotations(comments, policyAnnotations, List.of());
 
         if (this.vulnPolicyId != null) {
             hasChanged = true;
@@ -303,6 +313,7 @@ final class AnalysisReconciler {
                 AnalysisResponse.NOT_SET,
                 null,
                 false,
+                null,
                 null,
                 null,
                 null,
@@ -335,6 +346,21 @@ final class AnalysisReconciler {
         }
 
         return false;
+    }
+
+    private static boolean diffPolicyAnnotations(
+            final List<String> comments,
+            @Nullable List<AppliedPolicyAnnotation> existing,
+            @Nullable List<AppliedPolicyAnnotation> desired) {
+        if (annotationsEqual(existing, desired)) {
+            return false;
+        }
+
+        comments.add(AnalysisCommentFormatter.formatComment(
+                AnalysisCommentField.POLICY_ANNOTATIONS,
+                formatAnnotations(existing),
+                formatAnnotations(desired)));
+        return true;
     }
 
     record Result(

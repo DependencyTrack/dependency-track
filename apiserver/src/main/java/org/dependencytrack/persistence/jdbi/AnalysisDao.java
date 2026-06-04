@@ -21,20 +21,28 @@ package org.dependencytrack.persistence.jdbi;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.AppliedPolicyAnnotation;
 import org.dependencytrack.model.FindingKey;
 import org.dependencytrack.model.Severity;
+import org.dependencytrack.persistence.converter.PolicyAnnotationsJsonConverter;
+import org.dependencytrack.persistence.jdbi.mapping.PolicyAnnotationsColumnMapper;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.SqlStatements;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public final class AnalysisDao {
 
     private final Handle handle;
+    private static final PolicyAnnotationsColumnMapper POLICY_ANNOTATIONS_COLUMN_MAPPER =
+            new PolicyAnnotationsColumnMapper();
+
+
 
     public AnalysisDao(Handle handle) {
         this.handle = handle;
@@ -56,7 +64,9 @@ public final class AnalysisDao {
             @Nullable String cvssV4Vector,
             @Nullable Double cvssV4Score,
             @Nullable String owaspVector,
-            @Nullable Double owaspScore) {
+            @Nullable Double owaspScore,
+            @Nullable List<AppliedPolicyAnnotation> policyAnnotations
+    ) {
     }
 
     private static final RowMapper<Map.Entry<FindingKey, Analysis>> FINDING_ANALYSIS_ROW_MAPPER =
@@ -86,7 +96,8 @@ public final class AnalysisDao {
                             rs.getString("CVSSV4VECTOR"),
                             rs.getObject("CVSSV4SCORE", Double.class),
                             rs.getString("OWASPVECTOR"),
-                            rs.getObject("OWASPSCORE", Double.class)));
+                            rs.getObject("OWASPSCORE", Double.class),
+                            POLICY_ANNOTATIONS_COLUMN_MAPPER.map(rs, "POLICY_ANNOTATIONS", ctx)));
 
     public Map<FindingKey, Analysis> getForProjectFindings(long projectId, Collection<FindingKey> findingKeys) {
         if (findingKeys.isEmpty()) {
@@ -123,6 +134,7 @@ public final class AnalysisDao {
                              , CAST("CVSSV4SCORE" AS DOUBLE PRECISION) AS "CVSSV4SCORE"
                              , "OWASPVECTOR"
                              , CAST("OWASPSCORE" AS DOUBLE PRECISION) AS "OWASPSCORE"
+                             , "POLICY_ANNOTATIONS"
                           FROM "ANALYSIS"
                          WHERE "PROJECT_ID" = :projectId
                            AND ("COMPONENT_ID", "VULNERABILITY_ID")
@@ -167,6 +179,7 @@ public final class AnalysisDao {
                              , CAST("CVSSV4SCORE" AS DOUBLE PRECISION) AS "CVSSV4SCORE"
                              , "OWASPVECTOR"
                              , CAST("OWASPSCORE" AS DOUBLE PRECISION) AS "OWASPSCORE"
+                             , "POLICY_ANNOTATIONS"
                           FROM "ANALYSIS"
                          WHERE "PROJECT_ID" = :projectId
                            AND "VULNERABILITY_POLICY_ID" IS NOT NULL
@@ -205,7 +218,8 @@ public final class AnalysisDao {
             @Nullable String cvssV4Vector,
             @Nullable Double cvssV4Score,
             @Nullable String owaspVector,
-            @Nullable Double owaspScore) {
+            @Nullable Double owaspScore,
+    @Nullable List<AppliedPolicyAnnotation> policyAnnotations) {
     }
 
     public Map<FindingKey, Long> makeAnalyses(Collection<MakeAnalysisCommand> commands) {
@@ -231,6 +245,7 @@ public final class AnalysisDao {
         final var cvssV4Scores = new Double[commands.size()];
         final var owaspVectors = new String[commands.size()];
         final var owaspScores = new Double[commands.size()];
+        final var policyAnnotationsJsons = new String[commands.size()];
 
         int i = 0;
         for (final MakeAnalysisCommand command : commands) {
@@ -254,6 +269,7 @@ public final class AnalysisDao {
             cvssV4Scores[i] = command.cvssV4Score();
             owaspVectors[i] = command.owaspVector();
             owaspScores[i] = command.owaspScore();
+            policyAnnotationsJsons[i] = PolicyAnnotationsJsonConverter.toJson(command.policyAnnotations());
             i++;
         }
 
@@ -284,6 +300,7 @@ public final class AnalysisDao {
                         , "CVSSV4SCORE"
                         , "OWASPVECTOR"
                         , "OWASPSCORE"
+                        , "POLICY_ANNOTATIONS"
                         )
                         SELECT project_id
                              , component_id
@@ -303,6 +320,7 @@ public final class AnalysisDao {
                              , cvss_v4_score
                              , owasp_vector
                              , owasp_score
+                             , CAST(policy_annotations AS jsonb)
                           FROM UNNEST (
                             :projectIds
                           , :componentIds
@@ -322,6 +340,7 @@ public final class AnalysisDao {
                           , :cvssV4Scores
                           , :owaspVectors
                           , :owaspScores
+                          , :policyAnnotationsJsons
                           ) AS t (
                             project_id
                           , component_id
@@ -341,6 +360,7 @@ public final class AnalysisDao {
                           , cvss_v4_score
                           , owasp_vector
                           , owasp_score
+                          , policy_annotations
                           )
                           LEFT JOIN cte_vuln_policy AS vp
                             ON vp."NAME" = t.vuln_policy_name
@@ -363,6 +383,7 @@ public final class AnalysisDao {
                           , "CVSSV4SCORE" = EXCLUDED."CVSSV4SCORE"
                           , "OWASPVECTOR" = EXCLUDED."OWASPVECTOR"
                           , "OWASPSCORE" = EXCLUDED."OWASPSCORE"
+                          , "POLICY_ANNOTATIONS" = EXCLUDED."POLICY_ANNOTATIONS"
                         WHERE (
                             a."VULNERABILITY_POLICY_ID"
                           , a."STATE"
@@ -379,6 +400,7 @@ public final class AnalysisDao {
                           , a."CVSSV4SCORE"
                           , a."OWASPVECTOR"
                           , a."OWASPSCORE"
+                          , a."POLICY_ANNOTATIONS"
                           ) IS DISTINCT FROM (
                             EXCLUDED."VULNERABILITY_POLICY_ID"
                           , EXCLUDED."STATE"
@@ -395,6 +417,7 @@ public final class AnalysisDao {
                           , EXCLUDED."CVSSV4SCORE"
                           , EXCLUDED."OWASPVECTOR"
                           , EXCLUDED."OWASPSCORE"
+                          , EXCLUDED."POLICY_ANNOTATIONS"
                           )
                         RETURNING "ID"
                                 , "COMPONENT_ID"
@@ -418,6 +441,7 @@ public final class AnalysisDao {
                 .bind("cvssV4Scores", cvssV4Scores)
                 .bind("owaspVectors", owaspVectors)
                 .bind("owaspScores", owaspScores)
+                .bind("policyAnnotationsJsons", policyAnnotationsJsons)
                 .executeAndReturnGeneratedKeys()
                 .map((rs, ctx) -> Map.entry(
                         new FindingKey(rs.getLong("COMPONENT_ID"), rs.getLong("VULNERABILITY_ID")),

@@ -43,4 +43,5 @@ public record Finding(Component component, UUID project, Vulnerability vulnerabi
     public record Analysis(String state, Boolean isSuppressed) {
     }
 
+
 }

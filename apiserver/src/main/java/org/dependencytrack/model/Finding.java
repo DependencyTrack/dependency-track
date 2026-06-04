@@ -99,6 +99,7 @@ public final class Finding implements Serializable {
 
         optValue(analysis, "state", findingRow.analysisState());
         optValue(analysis, "isSuppressed", findingRow.suppressed(), false);
+        optValue(analysis, "policyAnnotations", findingRow.policyAnnotationsJson());
         if (findingRow.vulnPublished() != null) {
             optValue(vulnerability, "published", Date.from(findingRow.vulnPublished()));
         }

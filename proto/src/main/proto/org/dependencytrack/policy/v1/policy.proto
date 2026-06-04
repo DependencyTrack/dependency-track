@@ -66,21 +66,41 @@ message Component {
   optional string license_name = 50;
   optional string license_expression = 51;
   optional License resolved_license = 52;
-  // When the component current version last modified.
+
+  // When the current version was published.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
   optional google.protobuf.Timestamp published_at = 53;
+
+  // Latest available version.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
   optional string latest_version = 54;
 
   // MD5 hash of the corresponding package artifact as reported by its upstream repository.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
   optional string package_artifact_md5 = 55;
 
   // SHA-1 hash of the corresponding package artifact as reported by its upstream repository.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
   optional string package_artifact_sha1 = 56;
 
   // SHA-256 hash of the corresponding package artifact as reported by its upstream repository.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
   optional string package_artifact_sha256 = 57;
 
   // SHA-512 hash of the corresponding package artifact as reported by its upstream repository.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
   optional string package_artifact_sha512 = 58;
+
+  // When the latest version was published.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional google.protobuf.Timestamp latest_version_published_at = 59;
 
   message Property {
     string group = 1;

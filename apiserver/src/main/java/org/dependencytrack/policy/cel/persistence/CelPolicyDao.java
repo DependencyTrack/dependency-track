@@ -88,7 +88,9 @@ public final class CelPolicyDao {
             fetchColumns.add("c.\"LICENSE_ID\" AS resolved_license_id");
         }
 
-        final boolean shouldJoinPm = protoFieldNames.contains("latest_version");
+        final boolean shouldJoinPm =
+                protoFieldNames.contains("latest_version")
+                        || protoFieldNames.contains("latest_version_published_at");
         final boolean shouldJoinPam =
                 shouldJoinPm
                         || protoFieldNames.contains("published_at")
@@ -666,7 +668,9 @@ public final class CelPolicyDao {
 
         final List<String> fetchColumns = new ArrayList<>(selectColumns(COMPONENT_FIELDS, componentRequirements));
 
-        final boolean shouldJoinPm = componentRequirements.contains("latest_version");
+        final boolean shouldJoinPm =
+                componentRequirements.contains("latest_version")
+                        || componentRequirements.contains("latest_version_published_at");
         final boolean shouldJoinPam =
                 shouldJoinPm
                         || componentRequirements.contains("published_at")

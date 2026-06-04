@@ -223,7 +223,10 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
     }
 
     @Override
-    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    @PermissionRequired({
+            Permissions.Constants.PORTFOLIO_MANAGEMENT,
+            Permissions.Constants.PORTFOLIO_MANAGEMENT_CREATE
+    })
     public Response cloneProject(final UUID projectUuid, final CloneProjectRequest request) {
         final UUID clonedProjectUuid = inJdbiTransaction(getAlpineRequest(), handle -> {
             requireProjectAccess(handle, projectUuid);

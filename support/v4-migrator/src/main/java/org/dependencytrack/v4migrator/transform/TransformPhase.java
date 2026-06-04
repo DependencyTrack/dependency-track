@@ -59,12 +59,18 @@ public final class TransformPhase {
                 h.execute("ANALYZE \"%s\".src_%s".formatted(options.stagingSchema, t.name()));
             }
         });
+        final long start = System.nanoTime();
+        long totalRows = 0;
+        int tableCount = 0;
         for (final TableMigration t : TableRegistry.transformed()) {
-            transformOne(t);
+            totalRows += transformOne(t);
+            tableCount++;
         }
+        final long ms = (System.nanoTime() - start) / 1_000_000;
+        LOGGER.info("Transform phase completed: {} table(s), {} row(s) in {} ms", tableCount, totalRows, ms);
     }
 
-    private void transformOne(final TableMigration t) {
+    private long transformOne(final TableMigration t) {
         LOGGER.info("Transforming {}", t.name());
         final long start = System.nanoTime();
         markState(t.name(), "IN_PROGRESS");
@@ -86,6 +92,7 @@ public final class TransformPhase {
             } else {
                 LOGGER.info("  -> done in {} ms", ms);
             }
+            return rows;
         } catch (final RuntimeException e) {
             markState(t.name(), "FAILED");
             throw e;

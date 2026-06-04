@@ -105,13 +105,49 @@ class VerifyIT {
 
         // Schema head OK.
         assertThat(output).contains("OK    Flyway head = " + Preflight.EXPECTED_FLYWAY_HEAD);
-        // Row counts table is present.
+        // Row counts table is present, including the Note column.
         assertThat(output).contains("[Row counts]");
+        assertThat(output).containsPattern("Table\\s+Source\\s+Staging\\s+v5\\s+Note");
         assertThat(output).contains("LICENSE");
         assertThat(output).contains("TEAM");
+        // The two same-named teams dedup, and that reduction is explained as expected.
+        assertThat(output).containsPattern("TEAM\\s+.*expected: dedup by NAME");
+        // The dropped malformed LICENSE UUID is attributed to the probes section.
+        assertThat(output).containsPattern("LICENSE\\s+.*see \\[Probes]");
+        // Reductions are never rendered as alarmist data-loss warnings.
+        assertThat(output).doesNotContain("WARN");
         // Probe section reports the malformed UUID for LICENSE.
         assertThat(output).containsPattern("LICENSE\\s+\\d+ malformed UUID\\(s\\) dropped");
         // Constraints section emits a non-zero CHECK count.
         assertThat(output).matches("(?s).*\\[Constraints].*[1-9][0-9]* CHECK constraint.*");
+        // Explicit terminator so operators/automation can detect completion.
+        assertThat(output).contains("== verify complete ==");
+    }
+
+    /**
+     * The migration guide recommends running verify directly after bootstrap, when no staging schema
+     * exists and only the PERMISSION catalog is seeded. That workflow must not surface spurious
+     * discrepancy warnings. A freshly started target container mirrors that post-bootstrap state.
+     */
+    @Test
+    void verifyAfterBootstrapEmitsNoDiscrepancyWarnings() {
+        try (final V5TargetContainer freshTarget = new V5TargetContainer().start()) {
+            final GlobalOptions global = new GlobalOptions();
+            global.targetUrl = freshTarget.jdbcUrl();
+            global.targetUser = freshTarget.username();
+            global.targetPass = freshTarget.password();
+            global.stagingSchema = "dt_v4_migration";
+            global.logLevel = "INFO";
+
+            final ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            try (PrintStream ps = new PrintStream(buf)) {
+                new VerifyPhase(global, freshTarget.jdbi(), ps).run();
+            }
+            final String output = buf.toString();
+
+            assertThat(output).contains("[Row counts]");
+            assertThat(output).doesNotContain("WARN");
+            assertThat(output).contains("== verify complete ==");
+        }
     }
 }

@@ -491,7 +491,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
     @Test
     public void cloneProjectShouldReturnUuidOfClonedProject() {
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -523,7 +523,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
     @Test
     public void cloneProjectShouldMarkNewProjectAsLatestWhenRequested() {
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -563,7 +563,7 @@ public class ProjectsResourceTest extends ResourceTest {
     public void cloneProjectShouldReturnForbiddenWhenAclIsEnabledAndProjectIsNotAccessible() {
         enablePortfolioAccessControl();
 
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -591,7 +591,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
     @Test
     public void cloneProjectShouldReturnNotFoundWhenProjectDoesNotExist() {
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final Response response = jersey.target("/projects/c5b13f13-f2f0-4a30-97b5-94d164a345f6/clone")
                 .request()
@@ -614,7 +614,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
     @Test
     public void cloneProjectShouldReturnConflictWhenNewVersionAlreadyExists() {
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -643,7 +643,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
     @Test
     public void cloneProjectShouldUpdateMetrics() {
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final Project project = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, null, false, false);
 

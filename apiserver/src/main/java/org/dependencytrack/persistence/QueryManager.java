@@ -32,14 +32,11 @@ import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
-import io.github.resilience4j.retry.Retry;
-import io.github.resilience4j.retry.RetryConfig;
 import org.apache.commons.lang3.ClassUtils;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Bom;
-import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ComponentOccurrence;
@@ -91,8 +88,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.function.Predicate;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED;
 
@@ -419,32 +414,12 @@ public class QueryManager extends AlpineQueryManager {
         return getProjectQueryManager().getLatestProjectVersion(name);
     }
 
-    public PaginatedResult getProjectsWithoutDescendantsOf(final boolean excludeInactive, final Project project) {
-        return getProjectQueryManager().getProjectsWithoutDescendantsOf(excludeInactive, project);
-    }
-
-    public PaginatedResult getProjectsWithoutDescendantsOf(final String name, final boolean excludeInactive, final Project project) {
-        return getProjectQueryManager().getProjectsWithoutDescendantsOf(name, excludeInactive, project);
-    }
-
     public boolean hasAccess(final Principal principal, final Project project) {
         return getProjectQueryManager().hasAccess(principal, project);
     }
 
     void preprocessACLs(final Query<?> query, final String inputFilter, final Map<String, Object> params) {
         getProjectQueryManager().preprocessACLs(query, inputFilter, params);
-    }
-
-    public PaginatedResult getChildrenProjects(final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
-        return getProjectQueryManager().getChildrenProjects(uuid, includeMetrics, excludeInactive);
-    }
-
-    public PaginatedResult getChildrenProjects(final Tag tag, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
-        return getProjectQueryManager().getChildrenProjects(tag, uuid, includeMetrics, excludeInactive);
-    }
-
-    public PaginatedResult getChildrenProjects(final Classifier classifier, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
-        return getProjectQueryManager().getChildrenProjects(classifier, uuid, includeMetrics, excludeInactive);
     }
 
     public boolean doesProjectExist(final String name, final String version) {
@@ -1040,30 +1015,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Fetch multiple objects from the data store by their ID.
-     *
-     * @param clazz       {@link Class} of the objects to fetch
-     * @param ids         IDs of the objects to fetch
-     * @param fetchGroups The fetch groups to use
-     * @param <T>         Type of the objects to fetch
-     * @return The fetched objects
-     * @since 5.0.0
-     */
-    public <T> List<T> getObjectsById(final Class<T> clazz, final Collection<Long> ids, final Collection<String> fetchGroups) {
-        final Query<T> query = pm.newQuery(clazz);
-        try {
-            if (fetchGroups != null && !fetchGroups.isEmpty()) {
-                query.getFetchPlan().setGroups(fetchGroups);
-            }
-            query.setFilter(":ids.contains(this.id)");
-            query.setNamedParameters(Map.of("ids", ids));
-            return List.copyOf(query.executeList());
-        } finally {
-            query.closeAll();
-        }
-    }
-
-    /**
      * Detach a persistent object using the provided fetch groups.
      * <p>
      * {@code fetchGroups} will override any other fetch groups set on the {@link PersistenceManager},
@@ -1094,20 +1045,6 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     /**
-     * Fetch a list of object from the datastore by theirs {@link UUID}
-     *
-     * @param clazz Class of the object to fetch
-     * @param uuids {@link UUID} list of uuids to fetch
-     * @param <T>   Type of the object
-     * @return The list of objects found
-     * @since 4.9.0
-     */
-    public <T> List<T> getObjectsByUuids(final Class<T> clazz, final List<UUID> uuids) {
-        final Query<T> query = getObjectsByUuidsQuery(clazz, uuids);
-        return query.executeList();
-    }
-
-    /**
      * Create the query to fetch a list of object from the datastore by theirs {@link UUID}
      *
      * @param clazz Class of the object to fetch
@@ -1120,44 +1057,6 @@ public class QueryManager extends AlpineQueryManager {
         final Query<T> query = pm.newQuery(clazz, ":uuids.contains(uuid)");
         query.setParameters(uuids);
         return query;
-    }
-
-    /**
-     * Fetch an object from the datastore by its {@link UUID}, using the provided fetch groups.
-     * <p>
-     * {@code fetchGroups} will override any other fetch groups set on the {@link PersistenceManager},
-     * even the default one. If inclusion of the default fetch group is desired, it must be
-     * included in {@code fetchGroups} explicitly.
-     * <p>
-     * Eventually, this may be moved to {@link AbstractAlpineQueryManager}.
-     *
-     * @param clazz       Class of the object to fetch
-     * @param uuid        {@link UUID} of the object to fetch
-     * @param fetchGroups Fetch groups to use for this operation
-     * @param <T>         Type of the object
-     * @return The object if found, otherwise {@code null}
-     * @since 4.6.0
-     */
-    public <T> T getObjectByUuid(final Class<T> clazz, final UUID uuid, final List<String> fetchGroups) {
-        final Query<T> query = pm.newQuery(clazz);
-        try {
-            query.setFilter("uuid == :uuid");
-            query.setParameters(uuid);
-            query.getFetchPlan().setGroups(fetchGroups);
-            return query.executeUnique();
-        } finally {
-            query.closeAll();
-        }
-    }
-
-    public <T> T runInRetryableTransaction(final Callable<T> supplier, final Predicate<Throwable> retryOn) {
-        final var retryConfig = RetryConfig.custom()
-                .retryOnException(retryOn)
-                .maxAttempts(3)
-                .build();
-
-        return Retry.of("runInRetryableTransaction", retryConfig)
-                .executeSupplier(() -> callInTransaction(supplier));
     }
 
     /**
@@ -1187,21 +1086,6 @@ public class QueryManager extends AlpineQueryManager {
             final List<VulnerableSoftware> vsList,
             final Vulnerability.Source source) {
         getVulnerableSoftwareQueryManager().synchronizeVulnerableSoftware(persistentVuln, vsList, source);
-    }
-
-    /**
-     * Execute a give {@link Query} and ensure that resources associated with it are released post execution.
-     *
-     * @param query      The {@link Query} to execute
-     * @param parameters The parameters of the query
-     * @return The result of the query
-     */
-    public Object executeAndClose(final Query<?> query, final Object... parameters) {
-        try {
-            return query.executeWithArray(parameters);
-        } finally {
-            query.closeAll();
-        }
     }
 
     public List<Component> getComponentsByPurl(String purl) {

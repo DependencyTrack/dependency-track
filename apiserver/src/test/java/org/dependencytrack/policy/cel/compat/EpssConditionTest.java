@@ -78,8 +78,11 @@ public class EpssConditionTest extends PersistenceCapableTest {
                 new Object[]{MATCHES, "0.666", 0.666, false},
                 // Vulnerability without EPSS score.
                 new Object[]{NUMERIC_EQUAL, "0.666", null, false},
+                new Object[]{NUMERIC_NOT_EQUAL, "0.666", null, false},
+                new Object[]{NUMERIC_GREATER_THAN, "0.666", null, false},
+                new Object[]{NUMERIC_GREATER_THAN_OR_EQUAL, "0.666", null, false},
                 new Object[]{NUMERIC_LESSER_THAN_OR_EQUAL, "0.666", null, false},
-                new Object[]{NUMERIC_LESS_THAN, "0.666", null, false},
+                new Object[]{NUMERIC_LESS_THAN, "0.666", null, false}
                 // No condition value.
                 new Object[]{NUMERIC_EQUAL, "", 0.666, false},
                 // Invalid condition value.

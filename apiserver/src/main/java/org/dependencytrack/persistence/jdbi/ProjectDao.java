@@ -27,6 +27,7 @@ import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.dependencytrack.exception.AlreadyExistsException;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
+import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
@@ -477,6 +478,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                  , "PROJECT"."GROUP"
                  , "PROJECT"."LAST_BOM_IMPORTED" AS "lastBomImport"
                  , "PROJECT"."LAST_BOM_IMPORTED_FORMAT" AS "lastBomImportFormat"
+                 , "PROJECT"."LAST_VULNERABILITY_ANALYSIS" AS "lastVulnerabilityAnalysis"
                  , CASE
                      WHEN "PROJECT"."COLLECTION_LOGIC" IS NOT NULL
                      THEN cm."inheritedRiskScore"
@@ -494,6 +496,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                  , "PROJECT"."IS_LATEST" AS "isLatest"
                  , "PROJECT"."INACTIVE_SINCE" AS "inactiveSince"
                  , "PROJECT"."COLLECTION_LOGIC" AS "collectionLogic"
+                 , collection_tag."NAME" AS "collectionTagName"
                  , (
                      SELECT JSONB_AGG(JSONB_BUILD_OBJECT('id', "ID", 'name', "NAME"))
                        FROM "TAG"
@@ -508,6 +511,15 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                          ON "PROJECT_ACCESS_TEAMS"."TEAM_ID" = "TEAM"."ID"
                       WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
                    ) AS "teamsJson"
+                 , (
+                     SELECT JSONB_STRIP_NULLS(JSONB_BUILD_OBJECT(
+                              'supplier', "SUPPLIER"::JSONB,
+                              'authors', "AUTHORS"::JSONB,
+                              'tools', "TOOLS"::JSONB
+                            ))
+                       FROM "PROJECT_METADATA"
+                      WHERE "PROJECT_METADATA"."PROJECT_ID" = "PROJECT"."ID"
+                   ) AS "metadataJson"
             <#if includeMetrics>
                  , CASE
                      WHEN "PROJECT"."COLLECTION_LOGIC" IS NOT NULL
@@ -515,6 +527,9 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                      ELSE (SELECT TO_JSONB(m) FROM (${leafMetricsSubquery}) AS m)
                    END AS "metricsJson"
             </#if>
+                 , parent."UUID" AS "parentUuid"
+                 , parent."NAME" AS "parentName"
+                 , parent."VERSION" AS "parentVersion"
               FROM "PROJECT"
             <#--
                 NB: We are forced to do this lateral join unconditionally, because callers expect
@@ -522,8 +537,13 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                 LAST_RISKSCORE column. In a future query backing a hypothetical API v2 endpoint,
                 lastInheritedRiskScore should be an expandable field to work around this.
             -->
+              LEFT JOIN "PROJECT" AS parent
+                ON "PROJECT"."PARENT_PROJECT_ID" IS NOT NULL
+               AND parent."ID" = "PROJECT"."PARENT_PROJECT_ID"
               LEFT JOIN LATERAL (${collectionMetricsSubquery}) AS cm
                 ON "PROJECT"."COLLECTION_LOGIC" IS NOT NULL
+              LEFT JOIN "TAG" AS collection_tag
+                ON collection_tag."ID" = "PROJECT"."COLLECTION_TAG_ID"
              WHERE ${apiProjectAclCondition}
                AND ${whereConditions?join(" AND ")}
             <#if apiOrderByClause??>
@@ -826,6 +846,8 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
         };
         private static final TypeReference<ProjectMetrics> METRICS_TYPE_REF = new TypeReference<>() {
         };
+        private static final TypeReference<ProjectMetadata> METADATA_TYPE_REF = new TypeReference<>() {
+        };
 
         private final RowMapper<Project> projectMapper = BeanMapper.of(Project.class);
 
@@ -839,6 +861,20 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                     deserializeJson(rs, columnName, TAGS_TYPE_REF), project::setTags);
             maybeSet(rs, "metricsJson", (_, columnName) ->
                     deserializeJson(rs, columnName, METRICS_TYPE_REF), project::setMetrics);
+            maybeSet(rs, "metadataJson", (_, columnName) ->
+                    deserializeJson(rs, columnName, METADATA_TYPE_REF), project::setMetadata);
+            maybeSet(rs, "collectionTagName", ResultSet::getString,
+                    collectionTagName -> project.setCollectionTag(new Tag(collectionTagName)));
+
+            final var parentUuid = rs.getObject("parentUuid", UUID.class);
+            if (parentUuid != null) {
+                final var parent = new Project();
+                parent.setUuid(parentUuid);
+                parent.setName(rs.getString("parentName"));
+                parent.setVersion(rs.getString("parentVersion"));
+                project.setParent(parent);
+            }
+
             return project;
         }
     }

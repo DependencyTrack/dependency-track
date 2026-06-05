@@ -21,16 +21,13 @@ package org.dependencytrack.persistence;
 import alpine.model.ApiKey;
 import alpine.model.Team;
 import alpine.model.User;
-import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
-import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.ProjectProperty;
 import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.Tag;
@@ -52,8 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -112,12 +107,16 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     public Project getProject(final String name, final String version) {
         final Query<Project> query = pm.newQuery(Project.class);
 
-        final var filterBuilder = new ProjectQueryFilterBuilder()
-                .withName(name)
-                .withVersion(version);
+        final var params = new HashMap<String, Object>();
+        params.put("name", name);
 
-        final String queryFilter = filterBuilder.buildFilter();
-        final Map<String, Object> params = filterBuilder.getParams();
+        final String queryFilter;
+        if (version == null) {
+            queryFilter = "(name == :name) && (version == null)";
+        } else {
+            params.put("version", version);
+            queryFilter = "(name == :name) && (version == :version)";
+        }
 
         preprocessACLs(query, queryFilter, params);
         query.setRange(0, 1);
@@ -142,12 +141,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     public Project getLatestProjectVersion(final String name) {
         final Query<Project> query = pm.newQuery(Project.class);
 
-        final var filterBuilder = new ProjectQueryFilterBuilder()
-                .withName(name)
-                .onlyLatestVersion();
-
-        final String queryFilter = filterBuilder.buildFilter();
-        final Map<String, Object> params = filterBuilder.getParams();
+        final var params = new HashMap<String, Object>();
+        params.put("name", name);
+        final String queryFilter = "(name == :name) && (isLatest == true)";
 
         preprocessACLs(query, queryFilter, params);
         query.setRange(0, 1);
@@ -595,170 +591,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         return hasPermission(apiKey, Permissions.ACCESS_MANAGEMENT.name());
     }
 
-    @Override
-    public PaginatedResult getChildrenProjects(final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
-        final PaginatedResult result;
-        final Query<Project> query = pm.newQuery(Project.class);
-        if (orderBy == null) {
-            query.setOrdering("name asc, version desc, id asc");
-        }
-
-        var filterBuilder = new ProjectQueryFilterBuilder()
-                .excludeInactive(excludeInactive)
-                .withParent(uuid);
-
-        if (filter != null) {
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
-            final Tag tag = getTagByName(filter.trim());
-
-            if (tag != null) {
-                filterBuilder = filterBuilder.withFuzzyNameOrExactTag(filterString, tag);
-
-            } else {
-                filterBuilder = filterBuilder.withFuzzyName(filterString);
-            }
-        }
-
-        final String queryFilter = filterBuilder.buildFilter();
-        final Map<String, Object> params = filterBuilder.getParams();
-
-        preprocessACLs(query, queryFilter, params);
-        query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
-        result = execute(query, params);
-        if (!result.getObjects().isEmpty() && includeMetrics) {
-            populateMetrics(result.getList(Project.class));
-        }
-        return result;
-    }
-
-    @Override
-    public PaginatedResult getChildrenProjects(final Classifier classifier, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
-        final PaginatedResult result;
-        final Query<Project> query = pm.newQuery(Project.class);
-        if (orderBy == null) {
-            query.setOrdering("name asc, id asc");
-        }
-
-        final var filterBuilder = new ProjectQueryFilterBuilder()
-                .excludeInactive(excludeInactive)
-                .withParent(uuid)
-                .withClassifier(classifier);
-
-        final String queryFilter = filterBuilder.buildFilter();
-        final Map<String, Object> params = filterBuilder.getParams();
-
-        preprocessACLs(query, queryFilter, params);
-        query.getFetchPlan().addGroup(Project.FetchGroup.ALL.name());
-        result = execute(query, params);
-
-        if (!result.getObjects().isEmpty() && includeMetrics) {
-            populateMetrics(result.getList(Project.class));
-        }
-
-        return result;
-    }
-
-    @Override
-    public PaginatedResult getChildrenProjects(final Tag tag, final UUID uuid, final boolean includeMetrics, final boolean excludeInactive) {
-        final PaginatedResult result;
-        final Query<Project> query = pm.newQuery(Project.class);
-        if (orderBy == null) {
-            query.setOrdering("name asc, id asc");
-        }
-
-        var filterBuilder = new ProjectQueryFilterBuilder()
-                .excludeInactive(excludeInactive)
-                .withParent(uuid)
-                .withTag(tag);
-
-        if (filter != null) {
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
-            filterBuilder = filterBuilder.withFuzzyName(filterString);
-        }
-
-        final String queryFilter = filterBuilder.buildFilter();
-        final Map<String, Object> params = filterBuilder.getParams();
-
-        preprocessACLs(query, queryFilter, params);
-        result = execute(query, params);
-
-        if (!result.getObjects().isEmpty() && includeMetrics) {
-            populateMetrics(result.getList(Project.class));
-        }
-
-        return result;
-    }
-
-    @Override
-    public PaginatedResult getProjectsWithoutDescendantsOf(final boolean exludeInactive, final Project project) {
-        final PaginatedResult result;
-        final Query<Project> query = pm.newQuery(Project.class);
-        if (orderBy == null) {
-            query.setOrdering("name asc, version desc, id asc");
-        }
-
-        var filterBuilder = new ProjectQueryFilterBuilder()
-                .excludeInactive(exludeInactive);
-
-        if (filter != null) {
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
-            final Tag tag = getTagByName(filter.trim());
-
-            if (tag != null) {
-                filterBuilder = filterBuilder.withFuzzyNameOrExactTag(filterString, tag);
-
-            } else {
-                filterBuilder = filterBuilder.withFuzzyName(filterString);
-            }
-        }
-
-        final String queryFilter = filterBuilder.buildFilter();
-        final Map<String, Object> params = filterBuilder.getParams();
-
-        preprocessACLs(query, queryFilter, params);
-        result = execute(query, params);
-
-        result.setObjects(result.getList(Project.class).stream().filter(p -> !isChildOf(p, project.getUuid()) && !p.getUuid().equals(project.getUuid())).toList());
-        result.setTotal(result.getObjects().size());
-
-        return result;
-    }
-
-    @Override
-    public PaginatedResult getProjectsWithoutDescendantsOf(final String name, final boolean excludeInactive, Project project) {
-        final PaginatedResult result;
-        final Query<Project> query = pm.newQuery(Project.class);
-        if (orderBy == null) {
-            query.setOrdering("name asc, version desc, id asc");
-        }
-
-        var filterBuilder = new ProjectQueryFilterBuilder()
-                .excludeInactive(excludeInactive)
-                .withName(name);
-
-        if (filter != null) {
-            final String filterString = ".*" + filter.toLowerCase() + ".*";
-            final Tag tag = getTagByName(filter.trim());
-
-            if (tag != null) {
-                filterBuilder = filterBuilder.withFuzzyNameOrExactTag(filterString, tag);
-
-            } else {
-                filterBuilder = filterBuilder.withFuzzyName(filterString);
-            }
-        }
-
-        final String queryFilter = filterBuilder.buildFilter();
-        final Map<String, Object> params = filterBuilder.getParams();
-
-        preprocessACLs(query, queryFilter, params);
-        result = execute(query, params);
-
-        result.setObjects(result.getList(Project.class).stream().filter(p -> !isChildOf(p, project.getUuid()) && !p.getUuid().equals(project.getUuid())).toList());
-        result.setTotal(result.getObjects().size());
-
-        return result;
-    }
 
     /**
      * Check whether a {@link Project} with a given {@code name} and {@code version} exists.
@@ -837,19 +669,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         preprocessACLs(query, "name == :name", params);
         query.setNamedParameters(params);
         return executeAndCloseResultList(query, ProjectVersion.class);
-    }
-
-    private void populateMetrics(final Collection<Project> projects) {
-        final Map<Long, Project> projectById = projects.stream()
-                .collect(Collectors.toMap(Project::getId, Function.identity()));
-        final List<ProjectMetrics> metricsList = withJdbiHandle(
-                handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(projectById.keySet()));
-        for (final ProjectMetrics metrics : metricsList) {
-            final Project project = projectById.get(metrics.getProjectId());
-            if (project != null) {
-                project.setMetrics(metrics);
-            }
-        }
     }
 
 }

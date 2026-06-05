@@ -18,35 +18,28 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
-import alpine.model.Team;
-import alpine.persistence.PaginatedResult;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.github.packageurl.PackageURL;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.dependencytrack.exception.AlreadyExistsException;
-import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Classifier;
+import org.dependencytrack.model.ExternalReference;
+import org.dependencytrack.model.OrganizationalContact;
+import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ProjectMetrics;
-import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
-import org.dependencytrack.persistence.jdbi.mapping.ExternalReferenceMapper;
-import org.dependencytrack.persistence.jdbi.mapping.OrganizationalContactMapper;
-import org.dependencytrack.persistence.jdbi.mapping.OrganizationalEntityMapper;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsConciseQuery;
-import org.jdbi.v3.core.mapper.RowMapper;
-import org.jdbi.v3.core.mapper.reflect.BeanMapper;
+import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.statement.Query;
 import org.jdbi.v3.core.statement.SqlStatements;
-import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterColumnMapper;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMap;
@@ -57,11 +50,10 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jspecify.annotations.Nullable;
 import org.postgresql.util.PSQLException;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,8 +62,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.deserializeJson;
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
 import static org.dependencytrack.util.PersistenceUtil.escapeLikePattern;
 
 /**
@@ -461,6 +451,39 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             int vulnerabilities) {
     }
 
+    record ListProjectsRow(
+            UUID uuid,
+            @Nullable String group,
+            String name,
+            @Nullable String version,
+            @Nullable Classifier classifier,
+            @Nullable String description,
+            @Nullable String publisher,
+            @Nullable PackageURL purl,
+            @Nullable String swidTagId,
+            @Nullable String cpe,
+            @Nullable String directDependencies,
+            boolean isLatest,
+            @Nullable Date inactiveSince,
+            @Nullable Date lastBomImport,
+            @Nullable String lastBomImportFormat,
+            @Nullable Date lastVulnerabilityAnalysis,
+            @Nullable Double lastInheritedRiskScore,
+            @Nullable List<ExternalReference> externalReferences,
+            @Nullable OrganizationalEntity supplier,
+            @Nullable OrganizationalEntity manufacturer,
+            @Nullable List<OrganizationalContact> authors,
+            @Nullable List<String> tagNames,
+            @Json @ColumnName("metadataJson") @Nullable ProjectMetadata metadata,
+            @Json @ColumnName("metricsJson") @Nullable ProjectMetrics metrics,
+            @Nullable ProjectCollectionLogic collectionLogic,
+            @Nullable String collectionTagName,
+            @Nullable UUID parentUuid,
+            @Nullable String parentName,
+            @Nullable String parentVersion,
+            boolean hasChildren) {
+    }
+
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="includeMetrics" type="boolean" -->
             <#-- @ftlvariable name="whereConditions" type="java.util.Collection<String>" -->
@@ -470,47 +493,46 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             <#-- @ftlvariable name="apiOffsetLimitClause" type="String" -->
             <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
             SELECT "PROJECT"."ID" AS "id"
-                 , "PROJECT"."CLASSIFIER"
+                 , "PROJECT"."CLASSIFIER" AS "classifier"
                  , "PROJECT"."CPE"
                  , "PROJECT"."DESCRIPTION"
-                 , "PROJECT"."DIRECT_DEPENDENCIES" AS "directDependencies"
-                 , "PROJECT"."EXTERNAL_REFERENCES" AS "externalReferences"
-                 , "PROJECT"."GROUP"
+                 , "PROJECT"."DIRECT_DEPENDENCIES"
+                 , "PROJECT"."EXTERNAL_REFERENCES"
+                 , "PROJECT"."GROUP" AS "group"
                  , "PROJECT"."LAST_BOM_IMPORTED" AS "lastBomImport"
                  , "PROJECT"."LAST_BOM_IMPORTED_FORMAT" AS "lastBomImportFormat"
-                 , "PROJECT"."LAST_VULNERABILITY_ANALYSIS" AS "lastVulnerabilityAnalysis"
+                 , "PROJECT"."LAST_VULNERABILITY_ANALYSIS"
                  , CASE
                      WHEN "PROJECT"."COLLECTION_LOGIC" IS NOT NULL
                      THEN cm."inheritedRiskScore"
                      ELSE "PROJECT"."LAST_RISKSCORE"
                    END AS "lastInheritedRiskScore"
+                 , (
+                     SELECT EXISTS(
+                       SELECT 1
+                         FROM "PROJECT" AS "CHILD_PROJECT"
+                        WHERE "CHILD_PROJECT"."PARENT_PROJECT_ID" = "PROJECT"."ID")
+                   ) AS "hasChildren"
                  , "PROJECT"."NAME" AS "name"
                  , "PROJECT"."PUBLISHER"
-                 , "PROJECT"."PURL" AS "projectPurl"
+                 , "PROJECT"."PURL"
                  , "PROJECT"."SWIDTAGID"
                  , "PROJECT"."UUID"
-                 , "PROJECT"."VERSION" AS "version"
+                 , "PROJECT"."VERSION"
                  , "PROJECT"."SUPPLIER"
                  , "PROJECT"."MANUFACTURER"
                  , "PROJECT"."AUTHORS"
                  , "PROJECT"."IS_LATEST" AS "isLatest"
                  , "PROJECT"."INACTIVE_SINCE" AS "inactiveSince"
-                 , "PROJECT"."COLLECTION_LOGIC" AS "collectionLogic"
+                 , "PROJECT"."COLLECTION_LOGIC"
                  , collection_tag."NAME" AS "collectionTagName"
                  , (
-                     SELECT JSONB_AGG(JSONB_BUILD_OBJECT('id', "ID", 'name', "NAME"))
+                     SELECT ARRAY_AGG("TAG"."NAME")
                        FROM "TAG"
                       INNER JOIN "PROJECTS_TAGS"
                          ON "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
                       WHERE "TAG"."ID" = "PROJECTS_TAGS"."TAG_ID"
-                   ) AS "tagsJson"
-                 , (
-                     SELECT JSONB_AGG(JSONB_BUILD_OBJECT('id', "ID", 'name', "NAME"))
-                       FROM "TEAM"
-                      INNER JOIN "PROJECT_ACCESS_TEAMS"
-                         ON "PROJECT_ACCESS_TEAMS"."TEAM_ID" = "TEAM"."ID"
-                      WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
-                   ) AS "teamsJson"
+                   ) AS "tagNames"
                  , (
                      SELECT JSONB_STRIP_NULLS(JSONB_BUILD_OBJECT(
                               'supplier', "SUPPLIER"::JSONB,
@@ -549,7 +571,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             <#if apiOrderByClause??>
                 ${apiOrderByClause}
             <#else>
-                ORDER BY "name" ASC, "version" DESC
+                ORDER BY "name", "id"
             </#if>
             ${apiOffsetLimitClause!}
             """)
@@ -565,40 +587,28 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @AllowApiOrdering.Column(name = "lastBomImportFormat"),
             @AllowApiOrdering.Column(name = "lastInheritedRiskScore")
     })
-    @RegisterColumnMapper(ExternalReferenceMapper.class)
-    @RegisterColumnMapper(OrganizationalEntityMapper.class)
-    @RegisterColumnMapper(OrganizationalContactMapper.class)
-    @RegisterRowMapper(ProjectListRowMapper.class)
+    @RegisterConstructorMapper(ListProjectsRow.class)
     @AllowUnusedBindings
-    List<Project> getProjects(
+    List<ListProjectsRow> getProjects(
             @Define ArrayList<String> whereConditions,
             @BindMap Map<String, Object> queryParams,
             @Define boolean includeMetrics,
             @Define String collectionMetricsSubquery,
             @Define String leafMetricsSubquery);
 
-    default PaginatedResult getProjects(
-            String nameFilter,
-            String classifierFilter,
-            String tagFilter,
-            String teamFilter,
-            String notAssignedToTeamWithUuid,
-            String searchText,
-            boolean excludeInactive,
-            boolean onlyRoot,
-            boolean includeMetrics) {
+    default Page<ListProjectsRow> getProjects(ListProjectsQuery query) {
         final var whereConditions = new ArrayList<String>();
         final var queryParams = new HashMap<String, Object>();
         whereConditions.add("TRUE");
-        if (nameFilter != null) {
+        if (query.nameFilter() != null) {
             whereConditions.add("\"PROJECT\".\"NAME\" = :nameFilter");
-            queryParams.put("nameFilter", nameFilter);
+            queryParams.put("nameFilter", query.nameFilter());
         }
-        if (classifierFilter != null) {
+        if (query.classifierFilter() != null) {
             whereConditions.add("\"PROJECT\".\"CLASSIFIER\" = :classifierFilter");
-            queryParams.put("classifierFilter", classifierFilter);
+            queryParams.put("classifierFilter", query.classifierFilter());
         }
-        if (tagFilter != null) {
+        if (query.tagFilter() != null) {
             whereConditions.add(/* language=SQL */ """
                     EXISTS (
                       SELECT 1
@@ -608,9 +618,9 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                        WHERE "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
                          AND "TAG"."NAME" = :tagFilter
                     )""");
-            queryParams.put("tagFilter", tagFilter);
+            queryParams.put("tagFilter", query.tagFilter());
         }
-        if (teamFilter != null) {
+        if (query.teamFilter() != null) {
             whereConditions.add(/* language=SQL */ """
                     EXISTS (
                       SELECT 1
@@ -620,9 +630,9 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                        WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
                          AND "TEAM"."NAME" = :teamFilter
                     )""");
-            queryParams.put("teamFilter", teamFilter);
+            queryParams.put("teamFilter", query.teamFilter());
         }
-        if (notAssignedToTeamWithUuid != null) {
+        if (query.notAssignedToTeamWithUuidFilter() != null) {
             whereConditions.add(/* language=SQL */ """
                     NOT EXISTS (
                       SELECT 1
@@ -630,17 +640,39 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                        INNER JOIN "TEAM"
                           ON "TEAM"."ID" = "PROJECT_ACCESS_TEAMS"."TEAM_ID"
                        WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
-                         AND "TEAM"."UUID" = :notAssignedToTeamWithUuid
+                         AND "TEAM"."UUID" = :notAssignedToTeamWithUuidFilter
                     )""");
-            queryParams.put("notAssignedToTeamWithUuid", notAssignedToTeamWithUuid);
+            queryParams.put("notAssignedToTeamWithUuidFilter", query.notAssignedToTeamWithUuidFilter());
         }
-        if (excludeInactive) {
+        if (query.parentUuidFilter() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    EXISTS (
+                      SELECT 1
+                        FROM "PROJECT" AS "PARENT_PROJECT"
+                       WHERE "PARENT_PROJECT"."ID" = "PROJECT"."PARENT_PROJECT_ID"
+                         AND "PARENT_PROJECT"."UUID" = :parentUuidFilter
+                    )""");
+            queryParams.put("parentUuidFilter", query.parentUuidFilter());
+        }
+        if (query.excludeDescendantsOfUuid() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    NOT EXISTS (
+                      SELECT 1
+                        FROM "PROJECT_HIERARCHY"
+                       INNER JOIN "PROJECT" AS "ANCESTOR_PROJECT"
+                          ON "ANCESTOR_PROJECT"."ID" = "PROJECT_HIERARCHY"."PARENT_PROJECT_ID"
+                       WHERE "ANCESTOR_PROJECT"."UUID" = :excludeDescendantsOfUuid
+                         AND "PROJECT_HIERARCHY"."CHILD_PROJECT_ID" = "PROJECT"."ID"
+                    )""");
+            queryParams.put("excludeDescendantsOfUuid", query.excludeDescendantsOfUuid());
+        }
+        if (query.excludeInactive()) {
             whereConditions.add("\"PROJECT\".\"INACTIVE_SINCE\" IS NULL");
         }
-        if (onlyRoot) {
+        if (query.onlyRoot()) {
             whereConditions.add("\"PROJECT\".\"PARENT_PROJECT_ID\" IS NULL");
         }
-        if (searchText != null) {
+        if (query.searchText() != null) {
             whereConditions.add(/* language=SQL */ """
                     (
                       LOWER("PROJECT"."NAME") LIKE ('%' || LOWER(:searchTextLike) || '%') ESCAPE '!'
@@ -653,8 +685,8 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                            AND "TAG"."NAME" = :searchText
                       )
                     )""");
-            queryParams.put("searchText", searchText);
-            queryParams.put("searchTextLike", escapeLikePattern(searchText));
+            queryParams.put("searchText", query.searchText());
+            queryParams.put("searchTextLike", escapeLikePattern(query.searchText()));
         }
 
         return withJitDisabled(() -> {
@@ -668,14 +700,17 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                     /* threshold */ null,
                     "\"PROJECT\".\"ID\"");
 
-            final List<Project> projects = getProjects(
+            final List<ListProjectsRow> rows = getProjects(
                     whereConditions,
                     queryParams,
-                    includeMetrics,
+                    query.includeMetrics(),
                     COLLECTION_METRICS_SUBQUERY,
                     LEAF_METRICS_SUBQUERY);
 
-            return (new PaginatedResult()).objects(projects).total(totalCount.value());
+            return new Page<>(
+                    rows,
+                    /* nextPageToken */ null,
+                    new TotalCount(totalCount.value(), TotalCount.Type.EXACT));
         });
     }
 
@@ -837,47 +872,6 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
              WHERE "UUID" = :uuid
             """)
     void updateLastVulnAnalysis(@Bind UUID uuid);
-
-    class ProjectListRowMapper implements RowMapper<Project> {
-
-        private static final TypeReference<Set<Tag>> TAGS_TYPE_REF = new TypeReference<>() {
-        };
-        private static final TypeReference<Set<Team>> TEAMS_TYPE_REF = new TypeReference<>() {
-        };
-        private static final TypeReference<ProjectMetrics> METRICS_TYPE_REF = new TypeReference<>() {
-        };
-        private static final TypeReference<ProjectMetadata> METADATA_TYPE_REF = new TypeReference<>() {
-        };
-
-        private final RowMapper<Project> projectMapper = BeanMapper.of(Project.class);
-
-        @Override
-        public Project map(final ResultSet rs, final StatementContext ctx) throws SQLException {
-            final Project project = projectMapper.map(rs, ctx);
-            maybeSet(rs, "projectPurl", ResultSet::getString, project::setPurl);
-            maybeSet(rs, "teamsJson", (_, columnName) ->
-                    deserializeJson(rs, columnName, TEAMS_TYPE_REF), project::setAccessTeams);
-            maybeSet(rs, "tagsJson", (_, columnName) ->
-                    deserializeJson(rs, columnName, TAGS_TYPE_REF), project::setTags);
-            maybeSet(rs, "metricsJson", (_, columnName) ->
-                    deserializeJson(rs, columnName, METRICS_TYPE_REF), project::setMetrics);
-            maybeSet(rs, "metadataJson", (_, columnName) ->
-                    deserializeJson(rs, columnName, METADATA_TYPE_REF), project::setMetadata);
-            maybeSet(rs, "collectionTagName", ResultSet::getString,
-                    collectionTagName -> project.setCollectionTag(new Tag(collectionTagName)));
-
-            final var parentUuid = rs.getObject("parentUuid", UUID.class);
-            if (parentUuid != null) {
-                final var parent = new Project();
-                parent.setUuid(parentUuid);
-                parent.setName(rs.getString("parentName"));
-                parent.setVersion(rs.getString("parentVersion"));
-                project.setParent(parent);
-            }
-
-            return project;
-        }
-    }
 
     default <T> T withJitDisabled(Supplier<T> supplier) {
         return getHandle().inTransaction(trx -> {

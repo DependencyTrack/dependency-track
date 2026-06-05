@@ -135,7 +135,7 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals(100, json.size());
         Assertions.assertEquals("Acme Example", json.getJsonObject(0).getString("name"));
-        Assertions.assertEquals("999", json.getJsonObject(0).getString("version"));
+        Assertions.assertEquals("0", json.getJsonObject(0).getString("version"));
     }
 
     @Test
@@ -230,12 +230,14 @@ class ProjectResourceTest extends ResourceTest {
                      } ]
                    },
                    "isLatest" : false,
-                   "active" : true
+                   "active" : true,
+                   "hasChildren" : false
                  } ]
                 """);
     }
 
-    @Test // https://github.com/DependencyTrack/dependency-track/issues/2583
+    @Test
+        // https://github.com/DependencyTrack/dependency-track/issues/2583
     void getProjectsWithAclEnabledTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
         enablePortfolioAccessControl();
@@ -277,20 +279,20 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [
                   {
                       "name" : "acme-app-1",
                       "uuid" : "${json-unit.any-string}",
-                      "externalReferences" : [ ],
                       "isLatest" : false,
-                      "active" : true
+                      "active" : true,
+                      "hasChildren" : false
                     }, {
                       "name" : "acme-app-2",
                       "uuid" : "${json-unit.any-string}",
-                      "externalReferences" : [ ],
                       "isLatest" : false,
-                      "active" : true
+                      "active" : true,
+                      "hasChildren" : false
                   }
                 ]
                 """);
@@ -303,14 +305,14 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [
                   {
                       "name" : "acme-app-3",
                       "uuid" : "${json-unit.any-string}",
-                      "externalReferences" : [ ],
                       "isLatest" : false,
-                      "active" : true
+                      "active" : true,
+                      "hasChildren" : false
                   }
                 ]
                 """);
@@ -345,7 +347,7 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [
                   {
                       "name" : "acme-app-b",
@@ -353,9 +355,9 @@ class ProjectResourceTest extends ResourceTest {
                       "tags" : [ {
                         "name" : "foo"
                       } ],
-                      "externalReferences":[],
                       "isLatest" : false,
-                      "active" : true
+                      "active" : true,
+                      "hasChildren" : false
                   }
                 ]
                 """);
@@ -381,13 +383,13 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [ {
                    "name" : "acme-app-a",
                    "uuid" : "${json-unit.any-string}",
-                   "externalReferences" : [ ],
                    "isLatest" : false,
-                   "active" : true
+                   "active" : true,
+                   "hasChildren" : false
                  } ]
                 """);
     }
@@ -429,7 +431,7 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals(100, json.size());
         Assertions.assertEquals("Acme Example", json.getJsonObject(0).getString("name"));
-        Assertions.assertEquals("999", json.getJsonObject(0).getString("version"));
+        Assertions.assertEquals("0", json.getJsonObject(0).getString("version"));
     }
 
     @Test
@@ -547,9 +549,9 @@ class ProjectResourceTest extends ResourceTest {
                 [ {
                    "name" : "acme-app-a",
                    "uuid" : "${json-unit.any-string}",
-                   "externalReferences" : [ ],
                    "isLatest" : false,
-                   "active" : true
+                   "active" : true,
+                   "hasChildren" : true
                  }, {
                    "parent": {
                      "uuid": "${json-unit.any-string}",
@@ -558,9 +560,9 @@ class ProjectResourceTest extends ResourceTest {
                    "name" : "acme-app-b",
                    "uuid" : "${json-unit.any-string}",
                    "inactiveSince" : "${json-unit.any-number}",
-                   "externalReferences" : [ ],
                    "isLatest" : false,
-                   "active" : false
+                   "active" : false,
+                   "hasChildren" : false
                  } ]
                 """);
 
@@ -576,9 +578,9 @@ class ProjectResourceTest extends ResourceTest {
                 [ {
                    "name" : "acme-app-a",
                    "uuid" : "${json-unit.any-string}",
-                   "externalReferences" : [ ],
                    "isLatest" : false,
-                   "active" : true
+                   "active" : true,
+                   "hasChildren" : true
                  } ]
                 """);
     }
@@ -2918,22 +2920,170 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    void getChildrenProjectsTest() {
+    void shouldListChildrenProjects() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
         Project parent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
         Project child = qm.createProject("DEF", null, "1.0", null, parent, null, null, false);
         qm.createProject("GHI", null, "1.0", null, parent, null, null, false);
         qm.createProject("JKL", null, "1.0", null, child, null, null, false);
-        Response response = jersey.target(V1_PROJECT + "/" + parent.getUuid().toString() + "/children")
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + parent.getUuid().toString() + "/children")
                 .request()
                 .header(X_API_KEY, apiKey)
-                .get(Response.class);
-        Assertions.assertEquals(200, response.getStatus(), 0);
-        Assertions.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals("DEF", json.getJsonObject(0).getString("name"));
-        Assertions.assertEquals("GHI", json.getJsonObject(1).getString("name"));
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("2");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "name": "DEF",
+                    "version": "1.0",
+                    "uuid": "${json-unit.any-string}",
+                    "isLatest": false,
+                    "active": true,
+                    "parent": {
+                      "uuid": "${json-unit.any-string}",
+                      "name": "ABC",
+                      "version": "1.0"
+                    },
+                    "hasChildren": true
+                  },
+                  {
+                    "name": "GHI",
+                    "version": "1.0",
+                    "uuid": "${json-unit.any-string}",
+                    "isLatest": false,
+                    "active": true,
+                    "parent": {
+                      "uuid": "${json-unit.any-string}",
+                      "name": "ABC",
+                      "version": "1.0"
+                    },
+                    "hasChildren": false
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    void shouldReturn404WhenGettingChildrenOfUnknownProject() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + UUID.randomUUID() + "/children")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    void shouldReturn403WhenGettingChildrenOfInaccessibleProject() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        enablePortfolioAccessControl();
+
+        final Project parent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + parent.getUuid() + "/children")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(403);
+    }
+
+    @Test
+    void shouldListChildrenProjectsByClassifier() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project parent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+        final Project library = qm.createProject("DEF", null, "1.0", null, parent, null, null, false);
+        library.setClassifier(Classifier.LIBRARY);
+        final Project application = qm.createProject("GHI", null, "1.0", null, parent, null, null, false);
+        application.setClassifier(Classifier.APPLICATION);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + parent.getUuid() + "/children/classifier/" + Classifier.LIBRARY)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "name": "DEF",
+                    "version": "1.0",
+                    "classifier": "LIBRARY",
+                    "uuid": "${json-unit.any-string}",
+                    "isLatest": false,
+                    "active": true,
+                    "parent": {
+                      "uuid": "${json-unit.any-string}",
+                      "name": "ABC",
+                      "version": "1.0"
+                    },
+                    "hasChildren": false
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    void shouldListChildrenProjectsByTag() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project parent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+        final Project tagged = qm.createProject("DEF", null, "1.0", null, parent, null, null, false);
+        qm.bind(tagged, List.of(qm.createTag("foo")));
+        qm.createProject("GHI", null, "1.0", null, parent, null, null, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + parent.getUuid() + "/children/tag/foo")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "name": "DEF",
+                    "version": "1.0",
+                    "uuid": "${json-unit.any-string}",
+                    "isLatest": false,
+                    "active": true,
+                    "parent": {
+                      "uuid": "${json-unit.any-string}",
+                      "name": "ABC",
+                      "version": "1.0"
+                    },
+                    "tags": [
+                      { "name": "foo" }
+                    ],
+                    "hasChildren": false
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    void shouldReturnEmptyChildrenListForUnknownTag() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project parent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+        qm.createProject("DEF", null, "1.0", null, parent, null, null, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + parent.getUuid() + "/children/tag/does-not-exist")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("0");
+        assertThat(getPlainTextBody(response)).isEqualTo("[]");
     }
 
     @Test
@@ -3000,23 +3150,60 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    void getProjectsWithoutDescendantsOfTest() {
+    void shouldListProjectsWithoutDescendantsOf() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
-        Project grandParent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
-        Project parent = qm.createProject("DEF", null, "1.0", null, grandParent, null, null, false);
-        Project child = qm.createProject("GHI", null, "1.0", null, parent, null, null, false);
+
+        final Project grandParent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+        final Project parent = qm.createProject("DEF", null, "1.0", null, grandParent, null, null, false);
+        final Project child = qm.createProject("GHI", null, "1.0", null, parent, null, null, false);
         qm.createProject("JKL", null, "1.0", null, child, null, null, false);
 
-        Response response = jersey.target(V1_PROJECT + "/withoutDescendantsOf/" + parent.getUuid())
+        final Response response = jersey
+                .target(V1_PROJECT + "/withoutDescendantsOf/" + parent.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
-                .get(Response.class);
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "name": "ABC",
+                    "version": "1.0",
+                    "uuid": "${json-unit.any-string}",
+                    "isLatest": false,
+                    "active": true,
+                    "hasChildren": true
+                  }
+                ]
+                """);
+    }
 
-        Assertions.assertEquals(200, response.getStatus(), 0);
-        Assertions.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals("ABC", json.getJsonObject(0).getString("name"));
+    @Test
+    void shouldReturn404WhenGettingProjectsWithoutDescendantsOfUnknownProject() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/withoutDescendantsOf/" + UUID.randomUUID())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    void shouldReturn403WhenGettingProjectsWithoutDescendantsOfInaccessibleProject() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        enablePortfolioAccessControl();
+
+        final Project root = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/withoutDescendantsOf/" + root.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(403);
     }
 
     @Test

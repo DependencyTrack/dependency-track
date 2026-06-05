@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.model.ApiKey;
 import alpine.model.Team;
 import alpine.model.User;
-import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -55,21 +54,23 @@ import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
-import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
+import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsConciseQuery;
+import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
 import org.dependencytrack.resources.v1.vo.ConciseProject;
+import org.dependencytrack.resources.v1.vo.ListProjectsResponseItem;
 import org.jdbi.v3.core.Handle;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
@@ -129,7 +130,7 @@ public class ProjectResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all projects",
                     headers = @Header(name = TOTAL_COUNT_HEADER, schema = @Schema(format = "integer"), description = "The total number of projects"),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Project.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ListProjectsResponseItem.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
@@ -150,19 +151,20 @@ public class ProjectResource extends AbstractApiResource {
                     return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
                 }
             }
-            final PaginatedResult projectPages = withJdbiHandle(getAlpineRequest(), handle -> handle
-                    .attach(ProjectDao.class)
-                    .getProjects(
-                            name,
-                            /* classifierFilter */ null,
-                            /* tagFilter */ null,
-                            /* teamFilter */ null,
-                            notAssignedToTeamWithUuid,
-                            getAlpineRequest().getFilter(),
-                            excludeInactive,
-                            onlyRoot,
-                            /* includeMetrics */ true));
-            return Response.ok(projectPages.getObjects()).header(TOTAL_COUNT_HEADER, projectPages.getTotal()).build();
+            final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+                    getAlpineRequest(),
+                    handle -> handle.attach(ProjectDao.class).getProjects(
+                            new ListProjectsQuery()
+                                    .withNameFilter(name)
+                                    .withNotAssignedToTeamWithUuidFilter(notAssignedToTeamWithUuid)
+                                    .withSearchText(getAlpineRequest().getFilter())
+                                    .withExcludeInactive(excludeInactive)
+                                    .withOnlyRoot(onlyRoot)
+                                    .withIncludeMetrics(true)));
+            return Response
+                    .ok(ListProjectsResponseItem.of(projectsPage.items()))
+                    .header(TOTAL_COUNT_HEADER, projectsPage.totalCount().value())
+                    .build();
         }
     }
 
@@ -406,7 +408,7 @@ public class ProjectResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all projects by tag",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of projects", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Project.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ListProjectsResponseItem.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
@@ -418,9 +420,19 @@ public class ProjectResource extends AbstractApiResource {
             @QueryParam("excludeInactive") boolean excludeInactive,
             @Parameter(description = "Optionally excludes children projects from being returned")
             @QueryParam("onlyRoot") boolean onlyRoot) {
-        final PaginatedResult projectPages = withJdbiHandle(getAlpineRequest(), handle -> handle.attach(ProjectDao.class)
-                .getProjects(null, null, tagString, null, null, getAlpineRequest().getFilter(), excludeInactive, onlyRoot, true));
-        return Response.ok(projectPages.getObjects()).header(TOTAL_COUNT_HEADER, projectPages.getTotal()).build();
+        final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+                getAlpineRequest(),
+                handle -> handle.attach(ProjectDao.class).getProjects(
+                        new ListProjectsQuery()
+                                .withTagFilter(tagString)
+                                .withSearchText(getAlpineRequest().getFilter())
+                                .withExcludeInactive(excludeInactive)
+                                .withOnlyRoot(onlyRoot)
+                                .withIncludeMetrics(true)));
+        return Response
+                .ok(ListProjectsResponseItem.of(projectsPage.items()))
+                .header(TOTAL_COUNT_HEADER, projectsPage.totalCount().value())
+                .build();
     }
 
     @GET
@@ -436,26 +448,31 @@ public class ProjectResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all projects by classifier",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of projects", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Project.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ListProjectsResponseItem.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getProjectsByClassifier(
             @Parameter(description = "The classifier to query on", required = true)
-            @PathParam("classifier") String classifierString,
+            @PathParam("classifier") Classifier classifier,
             @Parameter(description = "Optionally excludes inactive projects from being returned", required = false)
             @QueryParam("excludeInactive") boolean excludeInactive,
             @Parameter(description = "Optionally excludes children projects from being returned", required = false)
             @QueryParam("onlyRoot") boolean onlyRoot) {
-        try {
-            final Classifier classifier = Classifier.valueOf(classifierString);
-            final PaginatedResult projectPages = withJdbiHandle(getAlpineRequest(), handle -> handle.attach(ProjectDao.class)
-                    .getProjects(null, classifier.name(), null, null, null, getAlpineRequest().getFilter(), excludeInactive, onlyRoot, true));
-            return Response.ok(projectPages.getObjects()).header(TOTAL_COUNT_HEADER, projectPages.getTotal()).build();
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("The classifier type specified is not valid.").build();
-        }
+        final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+                getAlpineRequest(),
+                handle -> handle.attach(ProjectDao.class).getProjects(
+                        new ListProjectsQuery()
+                                .withClassifierFilter(classifier.name())
+                                .withSearchText(getAlpineRequest().getFilter())
+                                .withExcludeInactive(excludeInactive)
+                                .withOnlyRoot(onlyRoot)
+                                .withIncludeMetrics(true)));
+        return Response
+                .ok(ListProjectsResponseItem.of(projectsPage.items()))
+                .header(TOTAL_COUNT_HEADER, projectsPage.totalCount().value())
+                .build();
     }
 
     @PUT
@@ -735,7 +752,7 @@ public class ProjectResource extends AbstractApiResource {
 
             try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, updatedProject.getUuid().toString());
                  var _ = MDC.putCloseable(MDC_PROJECT_NAME, updatedProject.getName());
-                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())){
+                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())) {
 
                 LOGGER.info("Project {} updated by {}", updatedProject, super.getPrincipal().getName());
             }
@@ -900,7 +917,7 @@ public class ProjectResource extends AbstractApiResource {
 
             try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, updatedProject.getUuid().toString());
                  var _ = MDC.putCloseable(MDC_PROJECT_NAME, updatedProject.getName());
-                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())){
+                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, updatedProject.getVersion())) {
 
                 LOGGER.info("Project {} updated by {}", updatedProject, super.getPrincipal().getName());
             }
@@ -1076,7 +1093,7 @@ public class ProjectResource extends AbstractApiResource {
 
                 try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, sourceProject.getUuid().toString());
                      var _ = MDC.putCloseable(MDC_PROJECT_NAME, sourceProject.getName());
-                     var _ = MDC.putCloseable(MDC_PROJECT_VERSION, sourceProject.getVersion())){
+                     var _ = MDC.putCloseable(MDC_PROJECT_VERSION, sourceProject.getVersion())) {
 
                     LOGGER.info("Project {} is being cloned by {}", sourceProject, super.getPrincipal().getName());
                 }
@@ -1124,7 +1141,7 @@ public class ProjectResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all children for a project",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of projects", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Project.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ListProjectsResponseItem.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(
@@ -1138,16 +1155,22 @@ public class ProjectResource extends AbstractApiResource {
                                         @PathParam("uuid") @ValidUuid String uuid,
                                         @Parameter(description = "Optionally excludes inactive projects from being returned", required = false)
                                         @QueryParam("excludeInactive") boolean excludeInactive) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final Project project = qm.getObjectByUuid(Project.class, uuid);
-            if (project != null) {
-                requireAccess(qm, project);
-                final PaginatedResult result = qm.getChildrenProjects(project.getUuid(), true, excludeInactive);
-                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
-            }
-        }
+        final UUID parentUuid = UUID.fromString(uuid);
+        final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+                getAlpineRequest(),
+                handle -> {
+                    requireProjectAccess(handle, parentUuid);
+                    return handle.attach(ProjectDao.class).getProjects(
+                            new ListProjectsQuery()
+                                    .withParentUuidFilter(parentUuid)
+                                    .withSearchText(getAlpineRequest().getFilter())
+                                    .withExcludeInactive(excludeInactive)
+                                    .withIncludeMetrics(true));
+                });
+        return Response
+                .ok(ListProjectsResponseItem.of(projectsPage.items()))
+                .header(TOTAL_COUNT_HEADER, projectsPage.totalCount().value())
+                .build();
     }
 
     @GET
@@ -1163,7 +1186,7 @@ public class ProjectResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all children for a project by classifier",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of projects", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Project.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ListProjectsResponseItem.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(
@@ -1175,22 +1198,28 @@ public class ProjectResource extends AbstractApiResource {
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getChildrenProjectsByClassifier(
             @Parameter(description = "The classifier to query on", required = true)
-            @PathParam("classifier") String classifierString,
+            @PathParam("classifier") Classifier classifier,
             @Parameter(description = "The UUID of the project to get the children from", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
             @Parameter(description = "Optionally excludes inactive projects from being returned", required = false)
             @QueryParam("excludeInactive") boolean excludeInactive) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final Project project = qm.getObjectByUuid(Project.class, uuid);
-            if (project != null) {
-                requireAccess(qm, project);
-                final Classifier classifier = Classifier.valueOf(classifierString);
-                final PaginatedResult result = qm.getChildrenProjects(classifier, project.getUuid(), true, excludeInactive);
-                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
-            }
-        }
+        final UUID parentUuid = UUID.fromString(uuid);
+        final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+                getAlpineRequest(),
+                handle -> {
+                    requireProjectAccess(handle, parentUuid);
+                    return handle.attach(ProjectDao.class).getProjects(
+                            new ListProjectsQuery()
+                                    .withClassifierFilter(classifier.name())
+                                    .withParentUuidFilter(parentUuid)
+                                    .withSearchText(getAlpineRequest().getFilter())
+                                    .withExcludeInactive(excludeInactive)
+                                    .withIncludeMetrics(true));
+                });
+        return Response
+                .ok(ListProjectsResponseItem.of(projectsPage.items()))
+                .header(TOTAL_COUNT_HEADER, projectsPage.totalCount().value())
+                .build();
     }
 
     @GET
@@ -1206,7 +1235,7 @@ public class ProjectResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all children for a project by tag",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of projects", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Project.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ListProjectsResponseItem.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(
@@ -1223,17 +1252,23 @@ public class ProjectResource extends AbstractApiResource {
             @PathParam("uuid") @ValidUuid String uuid,
             @Parameter(description = "Optionally excludes inactive projects from being returned", required = false)
             @QueryParam("excludeInactive") boolean excludeInactive) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final Project project = qm.getObjectByUuid(Project.class, uuid);
-            if (project != null) {
-                requireAccess(qm, project);
-                final Tag tag = qm.getTagByName(tagString);
-                final PaginatedResult result = qm.getChildrenProjects(tag, project.getUuid(), true, excludeInactive);
-                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
-            }
-        }
+        final UUID parentUuid = UUID.fromString(uuid);
+        final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+                getAlpineRequest(),
+                handle -> {
+                    requireProjectAccess(handle, parentUuid);
+                    return handle.attach(ProjectDao.class).getProjects(
+                            new ListProjectsQuery()
+                                    .withTagFilter(tagString)
+                                    .withParentUuidFilter(parentUuid)
+                                    .withSearchText(getAlpineRequest().getFilter())
+                                    .withExcludeInactive(excludeInactive)
+                                    .withIncludeMetrics(true));
+                });
+        return Response
+                .ok(ListProjectsResponseItem.of(projectsPage.items()))
+                .header(TOTAL_COUNT_HEADER, projectsPage.totalCount().value())
+                .build();
     }
 
     @GET
@@ -1249,7 +1284,7 @@ public class ProjectResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all projects without the descendants of the selected project",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of projects", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Project.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ListProjectsResponseItem.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(
@@ -1266,15 +1301,23 @@ public class ProjectResource extends AbstractApiResource {
             @QueryParam("name") String name,
             @Parameter(description = "Optionally excludes inactive projects from being returned", required = false)
             @QueryParam("excludeInactive") boolean excludeInactive) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final Project project = qm.getObjectByUuid(Project.class, uuid);
-            if (project != null) {
-                requireAccess(qm, project);
-                final PaginatedResult result = (name != null) ? qm.getProjectsWithoutDescendantsOf(name, excludeInactive, project) : qm.getProjectsWithoutDescendantsOf(excludeInactive, project);
-                return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();
-            }
-        }
+        final UUID rootUuid = UUID.fromString(uuid);
+        final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+                getAlpineRequest(),
+                handle -> {
+                    requireProjectAccess(handle, rootUuid);
+                    return handle.attach(ProjectDao.class).getProjects(
+                            new ListProjectsQuery()
+                                    .withNameFilter(name)
+                                    .withExcludeDescendantsOfUuid(rootUuid)
+                                    .withSearchText(getAlpineRequest().getFilter())
+                                    .withExcludeInactive(excludeInactive)
+                                    .withIncludeMetrics(true));
+                });
+        return Response
+                .ok(ListProjectsResponseItem.of(projectsPage.items()))
+                .header(TOTAL_COUNT_HEADER, projectsPage.totalCount().value())
+                .build();
     }
+
 }

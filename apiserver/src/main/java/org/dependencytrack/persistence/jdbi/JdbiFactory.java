@@ -26,9 +26,13 @@ import io.micrometer.core.instrument.Metrics;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.pagination.SimplePageTokenEncoder;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.mapping.ExternalReferencesColumnMapper;
+import org.dependencytrack.persistence.jdbi.mapping.OrganizationalContactsColumnMapper;
+import org.dependencytrack.persistence.jdbi.mapping.OrganizationalEntityColumnMapper;
 import org.dependencytrack.persistence.jdbi.mapping.PackageArtifactMetadataRowMapper;
 import org.dependencytrack.persistence.jdbi.mapping.PackageMetadataRowMapper;
 import org.dependencytrack.support.jdbi.exception.ExceptionTranslationPlugin;
+import org.dependencytrack.support.jdbi.mapping.DateColumnMapper;
 import org.dependencytrack.support.jdbi.mapping.PurlColumnMapper;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleCallback;
@@ -179,6 +183,10 @@ public class JdbiFactory {
                 .setSqlLogger(new QueryTimingSqlLogger(Metrics.globalRegistry))
                 .registerArrayType(Date.class, "TIMESTAMPTZ")
                 .registerArrayType(Timestamp.class, "TIMESTAMPTZ")
+                .registerColumnMapper(new DateColumnMapper())
+                .registerColumnMapper(new ExternalReferencesColumnMapper())
+                .registerColumnMapper(new OrganizationalContactsColumnMapper())
+                .registerColumnMapper(new OrganizationalEntityColumnMapper())
                 .registerColumnMapper(new PurlColumnMapper())
                 .registerRowMapper(new PackageMetadataRowMapper())
                 .registerRowMapper(new PackageArtifactMetadataRowMapper());

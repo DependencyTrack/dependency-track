@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>common-parent</artifactId>
-        <version>5.0.0-rc.5</version>
+        <version>5.0.0-rc.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>common-datasource</artifactId>

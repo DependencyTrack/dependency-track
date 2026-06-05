@@ -4,7 +4,8 @@
 
 > [!IMPORTANT]
 > Substantial changes must be accompanied by an [Architecture Decision Record](./docs/adr/).
-> See the [criteria in `CONTRIBUTING.md`](./CONTRIBUTING.md#architecture-decision-records) before starting work.
+> See the [criteria in `CONTRIBUTING.md`](./CONTRIBUTING.md#architecture-decision-records) for when
+> an ADR is required, and [`docs/adr/README.md`](./docs/adr/README.md) for how to write one.
 
 ## Prerequisites
 

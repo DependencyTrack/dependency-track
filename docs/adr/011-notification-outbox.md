@@ -109,6 +109,47 @@ Noteworthy details:
 * Notifications can atomically be emitted as part of database transactions
 * Kafka and the notification-publisher service remain unchanged for now
 
+## Follow-up (2026-01-28)
+
+The Kafka step is gone. As planned in [ADR-001] and [ADR-002], notification
+publishing now runs on the [dex] engine. The relay no longer sends Kafka records.
+For each notification it routes, the relay starts a `PublishNotificationWorkflow`
+run in dex. Dex then delivers the notification to its destination, such as Slack,
+a webhook, or email. This replaces the old `notification-publisher` service.
+
+Large notifications are stored in file storage to keep the workflow history small.
+In that case, only the file metadata is passed as the workflow argument. Smaller
+notifications are passed inline. The outbox table, advisory lock, ordering, and
+at-least-once delivery work the same as before.
+
+```mermaid
+sequenceDiagram
+    actor P as PostgreSQL
+    actor R as Relay
+    actor F as FileStorage
+    actor D as Dex
+
+    activate R
+    R ->> P: Begin Trx
+    R ->> P: Acquire advisory lock
+    P -->> R: Lock acquired
+    R ->> P: Poll NOTIFICATION_OUTBOX
+    P -->> R: Notifications
+    R ->> R: Route notifications
+    opt payload exceeds threshold
+        R ->> F: Store notification payload
+        F -->> R: File metadata
+    end
+    R ->> D: Create PublishNotificationWorkflow runs
+    D -->> R: Runs created
+    R -->> P: Delete notifications
+    R ->> P: Commit Trx
+    deactivate R
+```
+
+[ADR-001]: ./001-drop-kafka-dependency.md
+[ADR-002]: ./002-workflow-orchestration.md
 [UUIDv7]: https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_7_(timestamp_and_random)
 [advisory locks]: https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS
+[dex]: ../../dex
 [transactional outbox]: https://microservices.io/patterns/data/transactional-outbox.html

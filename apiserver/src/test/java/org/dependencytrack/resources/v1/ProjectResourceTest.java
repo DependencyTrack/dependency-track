@@ -152,9 +152,10 @@ class ProjectResourceTest extends ResourceTest {
         project.setClassifier(Classifier.APPLICATION);
         project.setDescription("project description");
         project.setExternalReferences(List.of(new ExternalReference()));
-        project.setLastBomImport(new java.util.Date());
+        project.setLastBomImport(new Date());
         project.setLastBomImportFormat("projectBomFormat");
         project.setLastInheritedRiskScore(7.7);
+        project.setLastVulnerabilityAnalysis(new Date());
         project.setPublisher("projectPublisher");
 
         final var projectContact = new OrganizationalContact();
@@ -173,13 +174,23 @@ class ProjectResourceTest extends ResourceTest {
 
         qm.bind(project, List.of(qm.createTag("foo")));
 
+        final var metadataAuthor = new OrganizationalContact();
+        metadataAuthor.setName("metadataAuthorName");
+        final var metadataSupplier = new OrganizationalEntity();
+        metadataSupplier.setName("metadataSupplierName");
+        final var metadata = new ProjectMetadata();
+        metadata.setProject(project);
+        metadata.setAuthors(List.of(metadataAuthor));
+        metadata.setSupplier(metadataSupplier);
+        qm.persist(metadata);
+
         final Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [ {
                    "publisher" : "projectPublisher",
                    "manufacturer" : {
@@ -208,7 +219,16 @@ class ProjectResourceTest extends ResourceTest {
                    "lastBomImport" : "${json-unit.any-number}",
                    "lastBomImportFormat" : "projectBomFormat",
                    "lastInheritedRiskScore" : 7.7,
+                   "lastVulnerabilityAnalysis" : "${json-unit.any-number}",
                    "externalReferences" : [ { } ],
+                   "metadata" : {
+                     "supplier" : {
+                       "name" : "metadataSupplierName"
+                     },
+                     "authors" : [ {
+                       "name" : "metadataAuthorName"
+                     } ]
+                   },
                    "isLatest" : false,
                    "active" : true
                  } ]
@@ -523,7 +543,7 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("2");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [ {
                    "name" : "acme-app-a",
                    "uuid" : "${json-unit.any-string}",
@@ -531,6 +551,10 @@ class ProjectResourceTest extends ResourceTest {
                    "isLatest" : false,
                    "active" : true
                  }, {
+                   "parent": {
+                     "uuid": "${json-unit.any-string}",
+                     "name": "acme-app-a"
+                   },
                    "name" : "acme-app-b",
                    "uuid" : "${json-unit.any-string}",
                    "inactiveSince" : "${json-unit.any-number}",
@@ -548,7 +572,7 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [ {
                    "name" : "acme-app-a",
                    "uuid" : "${json-unit.any-string}",

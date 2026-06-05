@@ -30,6 +30,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -102,6 +104,27 @@ class NotificationRuleStubIT {
                         'not json', 'PORTFOLIO',
                         'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
                 """);
+            // Scheduled rule — TRIGGER_TYPE and SCHEDULE_* columns must be preserved.
+            h.execute("""
+                INSERT INTO "NOTIFICATIONRULE" (
+                    "ID", "ENABLED", "LOG_SUCCESSFUL_PUBLISH", "MESSAGE", "NAME",
+                    "NOTIFICATION_LEVEL", "NOTIFY_CHILDREN", "NOTIFY_ON", "PUBLISHER",
+                    "PUBLISHER_CONFIG", "SCOPE", "UUID",
+                    "TRIGGER_TYPE", "SCHEDULE_CRON",
+                    "SCHEDULE_LAST_TRIGGERED_AT", "SCHEDULE_NEXT_TRIGGER_AT",
+                    "SCHEDULE_SKIP_UNCHANGED"
+                )
+                VALUES (12, TRUE, TRUE, 'Daily', 'Scheduled Rule',
+                        'INFORMATIONAL', TRUE,
+                        'NEW_VULNERABILITIES_SUMMARY', 1,
+                        '{"destination": "https://hooks.slack.com/sched"}',
+                        'PORTFOLIO',
+                        'cccccccc-cccc-cccc-cccc-cccccccccccc',
+                        'SCHEDULE', '0 6 * * *',
+                        TIMESTAMP WITH TIME ZONE '2026-06-04 06:00:00+00',
+                        TIMESTAMP WITH TIME ZONE '2026-06-05 06:00:00+00',
+                        TRUE)
+                """);
         });
 
         runPipeline();
@@ -112,19 +135,27 @@ class NotificationRuleStubIT {
                            "NOTIFICATION_LEVEL"::text AS notification_level,
                            "NOTIFY_ON",
                            "PUBLISHER_CONFIG"::text AS publisher_config,
-                           "TRIGGER_TYPE"
+                           "TRIGGER_TYPE",
+                           "SCHEDULE_CRON",
+                           "SCHEDULE_LAST_TRIGGERED_AT",
+                           "SCHEDULE_NEXT_TRIGGER_AT",
+                           "SCHEDULE_SKIP_UNCHANGED"
                       FROM "NOTIFICATIONRULE"
                      ORDER BY "ID"
                     """).mapToMap().list());
 
-        assertThat(rows).hasSize(2);
+        assertThat(rows).hasSize(3);
 
         final Map<String, Object> good = rows.get(0);
         assertThat(good).containsEntry("id", 10L)
             .containsEntry("enabled", false)
             .containsEntry("name", "Good Rule")
             .containsEntry("notification_level", "INFORMATIONAL")
-            .containsEntry("trigger_type", "EVENT");
+            .containsEntry("trigger_type", "EVENT")
+            .containsEntry("schedule_cron", null)
+            .containsEntry("schedule_last_triggered_at", null)
+            .containsEntry("schedule_next_trigger_at", null)
+            .containsEntry("schedule_skip_unchanged", null);
         assertThat((String[]) ((java.sql.Array) good.get("notify_on")).getArray())
             .containsExactly("BOM_PROCESSED", "NEW_VULNERABILITY");
         assertThat((String) good.get("publisher_config"))
@@ -141,6 +172,21 @@ class NotificationRuleStubIT {
         assertThat((String) bad.get("publisher_config"))
             .contains("\"destinationUrl\"")
             .contains("https://example.com");
+
+        final Map<String, Object> scheduled = rows.get(2);
+        assertThat(scheduled).containsEntry("id", 12L)
+            .containsEntry("enabled", false)
+            .containsEntry("name", "Scheduled Rule")
+            .containsEntry("notification_level", "INFORMATIONAL")
+            .containsEntry("trigger_type", "SCHEDULE")
+            .containsEntry("schedule_cron", "0 6 * * *")
+            .containsEntry("schedule_skip_unchanged", true);
+        assertThat(((Timestamp) scheduled.get("schedule_last_triggered_at")).toInstant())
+            .isEqualTo(Instant.parse("2026-06-04T06:00:00Z"));
+        assertThat(((Timestamp) scheduled.get("schedule_next_trigger_at")).toInstant())
+            .isEqualTo(Instant.parse("2026-06-05T06:00:00Z"));
+        assertThat((String[]) ((java.sql.Array) scheduled.get("notify_on")).getArray())
+            .containsExactly("NEW_VULNERABILITIES_SUMMARY");
     }
 
     private void runPipeline() throws Exception {

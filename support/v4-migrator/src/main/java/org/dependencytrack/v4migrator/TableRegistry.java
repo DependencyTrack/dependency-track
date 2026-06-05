@@ -1465,8 +1465,9 @@ public final class TableRegistry {
      * rewritten through {@code notificationpublisher_canonical_id_map}; rules whose publisher
      * cannot be mapped are dropped by the inner join. All rules are loaded with
      * {@code ENABLED=FALSE} (operators re-enable post-migration after reviewing the
-     * regenerated config). {@code TRIGGER_TYPE} hard-set to {@code 'EVENT'}; schedule columns
-     * and {@code FILTER_EXPRESSION} NULL on import (v4 has no equivalent).
+     * regenerated config). {@code TRIGGER_TYPE} and {@code SCHEDULE_*} columns are carried
+     * through from v4 unchanged. {@code FILTER_EXPRESSION} is NULL on import (v4 has no
+     * equivalent).
      */
     private static final TableMigration NOTIFICATIONRULE = new TableMigration(
         "NOTIFICATIONRULE",
@@ -1484,6 +1485,11 @@ public final class TableRegistry {
           , "PUBLISHER_CONFIG"            text
           , "SCOPE"                       varchar(255) NOT NULL
           , "UUID"                        varchar(36) NOT NULL
+          , "TRIGGER_TYPE"                varchar(255) NOT NULL
+          , "SCHEDULE_CRON"               varchar(255)
+          , "SCHEDULE_LAST_TRIGGERED_AT"  timestamptz
+          , "SCHEDULE_NEXT_TRIGGER_AT"    timestamptz
+          , "SCHEDULE_SKIP_UNCHANGED"     boolean
         )
         """,
         """
@@ -1499,12 +1505,18 @@ public final class TableRegistry {
              , "PUBLISHER_CONFIG"
              , "SCOPE"
              , "UUID"
+             , "TRIGGER_TYPE"
+             , "SCHEDULE_CRON"
+             , "SCHEDULE_LAST_TRIGGERED_AT"
+             , "SCHEDULE_NEXT_TRIGGER_AT"
+             , "SCHEDULE_SKIP_UNCHANGED"
           FROM "%s"."NOTIFICATIONRULE"
          ORDER BY "ID"
         """,
         List.of("ID", "ENABLED", "LOG_SUCCESSFUL_PUBLISH", "MESSAGE", "NAME",
             "NOTIFICATION_LEVEL", "NOTIFY_CHILDREN", "NOTIFY_ON", "PUBLISHER",
-            "PUBLISHER_CONFIG", "SCOPE", "UUID"),
+            "PUBLISHER_CONFIG", "SCOPE", "UUID", "TRIGGER_TYPE", "SCHEDULE_CRON",
+            "SCHEDULE_LAST_TRIGGERED_AT", "SCHEDULE_NEXT_TRIGGER_AT", "SCHEDULE_SKIP_UNCHANGED"),
         """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'NOTIFICATIONRULE', "ID", "UUID"
@@ -1560,11 +1572,11 @@ public final class TableRegistry {
              , CASE p."EXTENSION_NAME" WHEN 'console' THEN NULL::jsonb WHEN 'email' THEN CASE WHEN COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', '') = '' THEN jsonb_build_object('recipientAddresses', jsonb_build_array()) ELSE jsonb_build_object('recipientAddresses', jsonb_build_array("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination')) END WHEN 'jira' THEN jsonb_build_object( 'projectKey', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'EXAMPLE'), 'issueType',  COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'jiraTicketType', 'TASK')) WHEN 'mattermost' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'msteams' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'slack' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'webex' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'webhook' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) ELSE NULL::jsonb END
              , r."SCOPE"
              , r."UUID"::uuid
-             , 'EVENT'
-             , NULL
-             , NULL
-             , NULL
-             , NULL
+             , r."TRIGGER_TYPE"
+             , r."SCHEDULE_CRON"
+             , r."SCHEDULE_LAST_TRIGGERED_AT"
+             , r."SCHEDULE_NEXT_TRIGGER_AT"
+             , r."SCHEDULE_SKIP_UNCHANGED"
              , NULL
           FROM "%1$s".src_notificationrule r
           JOIN "%1$s".notificationpublisher_canonical_id_map m ON m.orig_id = r."PUBLISHER"

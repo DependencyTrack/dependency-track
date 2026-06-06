@@ -26,6 +26,11 @@ capabilities of Software Bill of Materials (SBOM).
 > * Migrating from v4 to v5? See [V5_MIGRATION.md](./V5_MIGRATION.md).
 > * v4 will reach end-of-life *~6 months* after v5 GA.
 
+## Quickstart
+
+Want to kick the tires? Follow the [Quickstart tutorial](https://dependencytrack.github.io/docs/next/tutorials/quickstart/)
+to get a local instance running with Docker Compose in a few minutes.
+
 ## Documentation
 
 User-facing documentation is rendered at [dependencytrack.github.io/docs/next](https://dependencytrack.github.io/docs/next/) and maintained in the [docs](https://github.com/DependencyTrack/docs) repository.

@@ -40,6 +40,8 @@ import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.filestorage.api.FileStorage.requireValidFileName;
@@ -122,17 +124,34 @@ final class LocalFileStorage implements FileStorage {
         return deleted;
     }
 
+    @SuppressWarnings("BusyWait")
     private OutputStream openOutputStream(Path filePath) throws IOException {
-        // Concurrent directory cleanup from delete() can race with directory creation
-        // and file open, causing various FileSystemExceptions. Retry a bounded number
-        // of times to handle these transient race conditions.
-        final int maxAttempts = 3;
-        for (int attempt = 1; ; attempt++) {
+        final long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+
+        int attempt = 0;
+        while (true) {
             try {
                 Files.createDirectories(filePath.getParent());
                 return Files.newOutputStream(filePath);
             } catch (FileSystemException e) {
-                if (attempt >= maxAttempts) {
+                // It's possible that we're trying to create a file in a directory that was
+                // deleted by a concurrent deleteEmptyParentDirectories call.
+                // Retry up to 5 seconds with an exponential backoff of 1-16ms.
+                //
+                // Note that we can't use (arguably more correct) file locks here,
+                // because the underlying storage may use a network filesystem.
+
+                if (System.nanoTime() >= deadlineNanos) {
+                    throw e;
+                }
+
+                final long backoffCapMillis = Math.min(16L, 1L << Math.min(attempt++, 4));
+                final long backoffMillis = ThreadLocalRandom.current().nextLong(1, backoffCapMillis + 1);
+
+                try {
+                    Thread.sleep(backoffMillis);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
                     throw e;
                 }
             }

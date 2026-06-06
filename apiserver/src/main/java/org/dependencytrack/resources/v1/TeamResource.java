@@ -126,7 +126,7 @@ public class TeamResource extends AbstractApiResource {
     public Response getTeam(
             @Parameter(description = "The UUID of the team to retrieve", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Team team = qm.getObjectByUuid(Team.class, uuid, Team.FetchGroup.ALL.name());
             if (team != null) {
                 return Response.ok(team).build();
@@ -161,7 +161,7 @@ public class TeamResource extends AbstractApiResource {
         final Validator validator = super.getValidator();
         failOnValidationError(validator.validateProperty(jsonTeam, "name"));
 
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final Team team;
             try {
                 team = qm.createTeam(jsonTeam.getName());
@@ -202,7 +202,7 @@ public class TeamResource extends AbstractApiResource {
         failOnValidationError(
                 validator.validateProperty(jsonTeam, "name")
         );
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid());
             if (team != null) {
                 team.setName(jsonTeam.getName());
@@ -230,7 +230,7 @@ public class TeamResource extends AbstractApiResource {
     })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
     public Response deleteTeam(Team jsonTeam) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid(), Team.FetchGroup.ALL.name());
                 if (team != null) {
@@ -254,7 +254,7 @@ public class TeamResource extends AbstractApiResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response availableTeams() {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             boolean isAllTeams =
                     super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
                             || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
@@ -298,7 +298,7 @@ public class TeamResource extends AbstractApiResource {
     public Response generateApiKey(
             @Parameter(description = "The UUID of the team to generate a key for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
                 final ApiKey apiKey = qm.createApiKey(team);
@@ -329,7 +329,7 @@ public class TeamResource extends AbstractApiResource {
     public Response regenerateApiKey(
             @Parameter(description = "The public ID for the API key or for Legacy the complete Key to regenerate", required = true)
             @PathParam("publicIdOrKey") String publicIdOrKey) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
             if (apiKey == null) {
                 try {
@@ -370,7 +370,7 @@ public class TeamResource extends AbstractApiResource {
             @Parameter(description = "The public ID for the API key or for Legacy the complete Key to comment on", required = true)
             @PathParam("publicIdOrKey") final String publicIdOrKey,
             final String comment) {
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.getPersistenceManager().setProperty(PROPERTY_RETAIN_VALUES, "true");
 
             return qm.callInTransaction(() -> {
@@ -410,7 +410,7 @@ public class TeamResource extends AbstractApiResource {
     public Response deleteApiKey(
             @Parameter(description = "The public ID for the API key or for Legacy the full Key to delete", required = true)
             @PathParam("publicIdOrKey") String publicIdOrKey) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 ApiKey apiKey = qm.getApiKeyByPublicId(publicIdOrKey);
                 if (apiKey == null) {
@@ -448,7 +448,7 @@ public class TeamResource extends AbstractApiResource {
             @ApiResponse(responseCode = "404", description = "No Team for the given API key found")
     })
     public Response getSelf() {
-        try (var qm = new QueryManager()) {
+        try (var qm = new QueryManager(getAlpineRequest())) {
             if (isApiKey()) {
                 final var apiKey = qm.getApiKeyByPublicId(((ApiKey) getPrincipal()).getPublicId());
                 final var team = apiKey.getTeams().stream().findFirst();

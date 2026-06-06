@@ -50,6 +50,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Project;
@@ -344,8 +345,8 @@ public class ProjectResource extends AbstractApiResource {
     public Response getLatestProjectByName(
             @Parameter(description = "The name of the project to retrieve the latest version of", required = true)
             @PathParam("name") String name) {
-        try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getLatestProjectVersion(name);
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Project project = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(name));
             if (project != null) {
                 requireAccess(qm, project);
                 return Response.ok(project).build();
@@ -382,8 +383,8 @@ public class ProjectResource extends AbstractApiResource {
             @QueryParam("name") String name,
             @Parameter(description = "The version of the project to query on", required = true)
             @QueryParam("version") String version) {
-        try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getProject(name, version);
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Project project = ProjectAccess.unrestricted(() -> qm.getProject(name, version));
             if (project != null) {
                 requireAccess(qm, project);
                 return Response.ok(project).build();
@@ -529,9 +530,9 @@ public class ProjectResource extends AbstractApiResource {
         } else if (jsonProject.getClassifier() == null) {
             jsonProject.setClassifier(Classifier.APPLICATION);
         }
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             if (jsonProject.isLatest()) {
-                final Project oldLatest = qm.getLatestProjectVersion(jsonProject.getName());
+                final Project oldLatest = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(jsonProject.getName()));
                 if (oldLatest != null) {
                     requireAccess(qm, oldLatest);
                 }
@@ -695,7 +696,7 @@ public class ProjectResource extends AbstractApiResource {
         } else if (jsonProject.getClassifier() == null) {
             jsonProject.setClassifier(Classifier.APPLICATION);
         }
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final Project updatedProject = qm.callInTransaction(() -> {
                 Project project = qm.getObjectByUuid(Project.class, jsonProject.getUuid());
                 if (project == null) {
@@ -722,7 +723,7 @@ public class ProjectResource extends AbstractApiResource {
                 }
                 // if project is newly set to latest, ensure user has access to current latest version to modify it
                 if (jsonProject.isLatest() && !project.isLatest()) {
-                    final Project oldLatest = qm.getLatestProjectVersion(name);
+                    final Project oldLatest = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(name));
                     if (oldLatest != null) {
                         requireAccess(qm, oldLatest);
                     }
@@ -816,7 +817,7 @@ public class ProjectResource extends AbstractApiResource {
                 validator.validateProperty(jsonProject, "swidTagId")
         );
 
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final Project updatedProject = qm.callInTransaction(() -> {
                 Project project = qm.getObjectByUuid(Project.class, uuid);
                 if (project == null) {
@@ -829,7 +830,7 @@ public class ProjectResource extends AbstractApiResource {
                 // if project is newly set to latest, ensure user has access to current latest version to modify it
                 if (jsonProject.isLatest() && !project.isLatest()) {
                     final var oldName = jsonProject.getName() != null ? jsonProject.getName() : project.getName();
-                    final Project oldLatest = qm.getLatestProjectVersion(oldName);
+                    final Project oldLatest = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(oldName));
                     if (oldLatest != null) {
                         requireAccess(qm, oldLatest);
                     }
@@ -979,7 +980,7 @@ public class ProjectResource extends AbstractApiResource {
     public Response deleteProject(
             @Parameter(description = "The UUID of the project to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.runInTransaction(() -> {
                 final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
                 if (project == null) {
@@ -1060,7 +1061,7 @@ public class ProjectResource extends AbstractApiResource {
                 validator.validateProperty(jsonRequest, "project"),
                 validator.validateProperty(jsonRequest, "version")
         );
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.runInTransaction(() -> {
                 final Project sourceProject = qm.getObjectByUuid(Project.class, jsonRequest.getProject(), Project.FetchGroup.ALL.name());
                 if (sourceProject == null) {
@@ -1078,7 +1079,7 @@ public class ProjectResource extends AbstractApiResource {
                 }
                 // if project is newly set to latest, ensure user has access to current latest version to modify it
                 if (jsonRequest.makeCloneLatest() && !sourceProject.isLatest()) {
-                    final Project oldLatest = qm.getLatestProjectVersion(sourceProject.getName());
+                    final Project oldLatest = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(sourceProject.getName()));
                     if (oldLatest != null) {
                         requireAccess(qm, oldLatest);
                     }

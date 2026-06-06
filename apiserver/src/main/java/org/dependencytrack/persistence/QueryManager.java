@@ -33,6 +33,7 @@ import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.datanucleus.api.jdo.JDOQuery;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
@@ -1125,11 +1126,9 @@ public class QueryManager extends AlpineQueryManager {
      * @since 4.12.0
      */
     public Map.Entry<String, Map<String, Object>> getProjectAclSqlCondition(final String projectTableAlias) {
-        if (request == null
-                || principal == null
-                || !isEnabled(ACCESS_MANAGEMENT_ACL_ENABLED)
-                || request.getEffectivePermissions().contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS))
+        if (isPortfolioAclBypassed(principal)) {
             return Map.entry("TRUE", Collections.emptyMap());
+        }
 
         final Map<String, Object> params = new HashMap<>();
         final String conditionTemplate;
@@ -1181,6 +1180,13 @@ public class QueryManager extends AlpineQueryManager {
         }
 
         return "OFFSET %d FETCH NEXT %d ROWS ONLY".formatted(pagination.getOffset(), pagination.getLimit());
+    }
+
+    protected boolean isPortfolioAclBypassed(Principal principal) {
+        return principal == null
+                || ProjectAccess.isUnrestricted()
+                || !isEnabled(ACCESS_MANAGEMENT_ACL_ENABLED)
+                || (request != null && request.getEffectivePermissions().contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS));
     }
 
 }

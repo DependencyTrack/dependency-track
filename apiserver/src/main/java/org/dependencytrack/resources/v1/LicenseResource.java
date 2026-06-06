@@ -128,7 +128,7 @@ public class LicenseResource extends AbstractApiResource {
     public Response getLicense(
             @Parameter(description = "The SPDX License ID of the license to retrieve", required = true)
             @PathParam("licenseId") String licenseId) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final License license = qm.getLicense(licenseId);
             if (license != null) {
                 return Response.ok(license).build();
@@ -160,7 +160,7 @@ public class LicenseResource extends AbstractApiResource {
                 validator.validateProperty(jsonLicense, "name"),
                 validator.validateProperty(jsonLicense, "licenseId")
         );
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 License license = qm.getLicense(jsonLicense.getLicenseId());
                 if (license == null) {
@@ -191,7 +191,7 @@ public class LicenseResource extends AbstractApiResource {
     public Response deleteLicense(
             @Parameter(description = "The SPDX License ID of the license to delete", required = true)
             @PathParam("licenseId") String licenseId) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final License license = qm.getLicense(licenseId);
                 if (license != null) {

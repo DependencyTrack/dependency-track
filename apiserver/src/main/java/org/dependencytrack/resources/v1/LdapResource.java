@@ -141,7 +141,7 @@ public class LdapResource extends AbstractApiResource {
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_READ })
     public Response retrieveLdapGroups(@Parameter(description = "The UUID of the team to retrieve mappings for", schema = @Schema(type = "string", format = "uuid"), required = true)
                                        @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
                 final List<MappedLdapGroup> mappings = qm.getMappedLdapGroups(team);
@@ -176,7 +176,7 @@ public class LdapResource extends AbstractApiResource {
                 validator.validateProperty(request, "team"),
                 validator.validateProperty(request, "dn")
         );
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Team team = qm.getObjectByUuid(Team.class, request.getTeam());
                 if (team != null) {
@@ -209,7 +209,7 @@ public class LdapResource extends AbstractApiResource {
     public Response deleteMapping(
             @Parameter(description = "The UUID of the mapping to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final MappedLdapGroup mapping = qm.getObjectByUuid(MappedLdapGroup.class, uuid);
                 if (mapping != null) {

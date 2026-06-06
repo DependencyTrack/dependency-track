@@ -128,7 +128,7 @@ class ServiceResource extends AbstractApiResource {
     public Response getServiceByUuid(
             @Parameter(description = "The UUID of the service to retrieve", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final ServiceComponent service = qm.getObjectByUuid(ServiceComponent.class, uuid);
             if (service != null) {
                 requireAccess(qm, service.getProject());
@@ -172,7 +172,7 @@ class ServiceResource extends AbstractApiResource {
                 validator.validateProperty(jsonService, "description")
         );
 
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Project project = qm.getObjectByUuid(Project.class, uuid);
                 if (project == null) {
@@ -230,7 +230,7 @@ class ServiceResource extends AbstractApiResource {
                 validator.validateProperty(jsonService, "group"),
                 validator.validateProperty(jsonService, "description")
         );
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 ServiceComponent service = qm.getObjectByUuid(ServiceComponent.class, jsonService.getUuid());
                 if (service != null) {
@@ -279,7 +279,7 @@ class ServiceResource extends AbstractApiResource {
     public Response deleteService(
             @Parameter(description = "The UUID of the service to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final ServiceComponent service = qm.getObjectByUuid(ServiceComponent.class, uuid, ServiceComponent.FetchGroup.ALL.name());
                 if (service != null) {

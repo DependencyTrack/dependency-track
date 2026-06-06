@@ -48,6 +48,7 @@ import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.filestorage.api.FileStorage;
@@ -145,7 +146,7 @@ public class VexResource extends AbstractApiResource {
             @Parameter(description = "The CycloneDX Spec variant exported (defaults to: '" + DEFAULT_EXPORT_VERSION + "')")
             @QueryParam("version") String version
     ) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             String versionParameter = Objects.toString(StringUtils.trimToNull(version), DEFAULT_EXPORT_VERSION);
             Version cdxOutputVersion = Version.fromVersionString(versionParameter);
             if (cdxOutputVersion == null) {
@@ -226,7 +227,7 @@ public class VexResource extends AbstractApiResource {
                     validator.validateProperty(request, "project"),
                     validator.validateProperty(request, "vex")
             );
-            try (QueryManager qm = new QueryManager()) {
+            try (QueryManager qm = new QueryManager(getAlpineRequest())) {
                 return qm.callInTransaction(() -> {
                     final Project project = qm.getObjectByUuid(Project.class, request.getProject());
                     return process(qm, project, request.getVex());
@@ -238,9 +239,9 @@ public class VexResource extends AbstractApiResource {
                     validator.validateProperty(request, "projectVersion"),
                     validator.validateProperty(request, "vex")
             );
-            try (QueryManager qm = new QueryManager()) {
+            try (QueryManager qm = new QueryManager(getAlpineRequest())) {
                 return qm.callInTransaction(() -> {
-                    Project project = qm.getProject(request.getProjectName(), request.getProjectVersion());
+                    Project project = ProjectAccess.unrestricted(() -> qm.getProject(request.getProjectName(), request.getProjectVersion()));
                     return process(qm, project, request.getVex());
                 });
             }
@@ -291,18 +292,18 @@ public class VexResource extends AbstractApiResource {
                               @FormDataParam("projectVersion") String projectVersion,
                               @Parameter(schema = @Schema(type = "string")) @FormDataParam("vex") final List<FormDataBodyPart> artifactParts) {
         if (projectUuid != null) {
-            try (QueryManager qm = new QueryManager()) {
+            try (QueryManager qm = new QueryManager(getAlpineRequest())) {
                 return qm.callInTransaction(() -> {
                     final Project project = qm.getObjectByUuid(Project.class, projectUuid);
                     return process(qm, project, artifactParts);
                 });
             }
         } else {
-            try (QueryManager qm = new QueryManager()) {
+            try (QueryManager qm = new QueryManager(getAlpineRequest())) {
                 return qm.callInTransaction(() -> {
                     final String trimmedProjectName = StringUtils.trimToNull(projectName);
                     final String trimmedProjectVersion = StringUtils.trimToNull(projectVersion);
-                    Project project = qm.getProject(trimmedProjectName, trimmedProjectVersion);
+                    Project project = ProjectAccess.unrestricted(() -> qm.getProject(trimmedProjectName, trimmedProjectVersion));
                     return process(qm, project, artifactParts);
                 });
             }

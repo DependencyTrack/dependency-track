@@ -60,6 +60,15 @@ public class AuthorizationFilterTest extends JerseyTest {
                     getAlpineRequest().getEffectivePermissions())).build();
         }
 
+        @GET
+        @Path("/unprotected")
+        @Produces(MediaType.APPLICATION_JSON)
+        public Response getUnprotected() {
+            return Response.ok(Map.of(
+                    "effectivePermissions",
+                    getAlpineRequest().getEffectivePermissions())).build();
+        }
+
     }
 
     @AfterEach
@@ -72,9 +81,34 @@ public class AuthorizationFilterTest extends JerseyTest {
     protected Application configure() {
         forceSet(TestProperties.CONTAINER_PORT, "0");
         return new ResourceConfig(TestResource.class)
-                .register(AuthenticationFeature.class)
-                .register(AuthorizationFeature.class)
+                .register(AuthFeature.class)
                 .register(ApiFilter.class);
+    }
+
+    @Test
+    void shouldPopulateEffectivePermissionsOnRequestsWithoutPermissionRequired() {
+        final String apiKey;
+        try (final var qm = new AlpineQueryManager()) {
+            final Permission bazPermission = qm.createPermission("BAZ", null);
+
+            final Team team = qm.createTeam("foo");
+            team.getPermissions().add(bazPermission);
+
+            apiKey = qm.createApiKey(team).getKey();
+        }
+
+        final Response response = target("/unprotected")
+                .request()
+                .header("X-Api-Key", apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(response.readEntity(String.class))
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "effectivePermissions": ["BAZ"]
+                        }
+                        """);
     }
 
     @Test

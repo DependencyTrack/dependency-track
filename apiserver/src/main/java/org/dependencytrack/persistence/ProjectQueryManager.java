@@ -24,7 +24,6 @@ import alpine.model.User;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.datanucleus.api.jdo.JDOQuery;
-import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
@@ -449,10 +448,9 @@ final class ProjectQueryManager extends QueryManager {
 
     @Override
     public boolean hasAccess(final Principal principal, final Project project) {
-        if (!isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)
-                || principal == null // System request (e.g. MetricsUpdateTask, etc) where there isn't a principal
-                || getEffectivePermissions(principal).contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS))
+        if (isPortfolioAclBypassed(principal)) {
             return true;
+        }
 
         final Query<?> query;
         switch (principal) {
@@ -493,9 +491,7 @@ final class ProjectQueryManager extends QueryManager {
     }
 
     void preprocessACLs(final Query<?> query, final String inputFilter, final Map<String, Object> params) {
-        if (principal == null
-            || !isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)
-            || getEffectivePermissions(principal).contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)) {
+        if (isPortfolioAclBypassed(principal)) {
             query.setFilter(inputFilter);
             return;
         }

@@ -1,5 +1,5 @@
 /*
- * This file is part of Alpine.
+ * This file is part of Dependency-Track.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- * Copyright (c) Steve Springett. All Rights Reserved.
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
 package alpine.server.filters;
 
@@ -24,24 +24,15 @@ import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.FeatureContext;
 import jakarta.ws.rs.ext.Provider;
 
-import java.lang.reflect.Method;
-
-/**
- * Mandates that all resources requested are authenticated unless they are annotated
- * with {@link AuthenticationNotRequired}.
- *
- * @author Steve Springett
- * @see AuthenticationFilter
- * @since 1.0.0
- */
+/// @since 5.0.0
 @Provider
-public class AuthenticationFeature implements DynamicFeature {
+public final class AuthFeature implements DynamicFeature {
 
     @Override
     public void configure(ResourceInfo resourceInfo, FeatureContext context) {
-        final Method method = resourceInfo.getResourceMethod();
-        if (!method.isAnnotationPresent(AuthenticationNotRequired.class)) {
+        if (!resourceInfo.getResourceMethod().isAnnotationPresent(AuthenticationNotRequired.class)) {
             context.register(AuthenticationFilter.class);
+            context.register(AuthorizationFilter.class);
         }
     }
 

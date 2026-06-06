@@ -113,7 +113,7 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
                 validator.validateProperty(json, "propertyName"),
                 validator.validateProperty(json, "propertyValue")
         );
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final ConfigProperty property = qm.getConfigProperty(json.getGroupName(), json.getPropertyName());
                 return updatePropertyValue(qm, json, property);
@@ -149,7 +149,7 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             );
         }
         List<Object> returnList = new ArrayList<>();
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             qm.runInTransaction(() -> {
                 for (ConfigProperty item : list) {
                     final ConfigProperty property = qm.getConfigProperty(item.getGroupName(), item.getPropertyName());

@@ -26,6 +26,7 @@ import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.persistence.Ordering;
+import org.dependencytrack.persistence.jdbi.ApiRequestConfig.AlwaysByOrdering;
 import org.dependencytrack.persistence.jdbi.ApiRequestConfig.OrderingColumn;
 import org.jdbi.v3.core.qualifier.QualifiedType;
 import org.jdbi.v3.core.statement.StatementContext;
@@ -136,15 +137,12 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
                                     .map(OrderingColumn::name)
                                     .toList()));
 
-            orderingBuilder.append("ORDER BY ");
-            if (orderingColumn.queryName() == null) {
-                orderingBuilder
-                        .append("\"")
-                        .append(ordering.by())
-                        .append("\"");
-            } else {
-                orderingBuilder.append(orderingColumn.queryName());
-            }
+            final String orderByColumnSql =
+                    orderingColumn.queryName() != null
+                            ? orderingColumn.queryName()
+                            : "\"" + ordering.by() + "\"";
+
+            orderingBuilder.append("ORDER BY ").append(orderByColumnSql);
 
             if (ordering.direction() != null && ordering.direction() != OrderDirection.UNSPECIFIED) {
                 orderingBuilder
@@ -152,36 +150,13 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
                         .append(ordering.direction() == OrderDirection.ASCENDING ? "ASC" : "DESC");
             }
 
-            if (!config.orderingAlwaysBy().isBlank() && (ordering.by() == null || !ordering.by().equals(config.orderingAlwaysBy()))) {
-                final String[] alwaysByParts = config.orderingAlwaysBy().split("\\s");
-                if (alwaysByParts.length > 2) {
-                    throw new IllegalArgumentException("alwaysBy must consist of no more than two parts");
-                }
-
-                final OrderingColumn orderingColumnAlwaysBy = config
-                        .orderingAllowedColumn(alwaysByParts[0])
-                        .orElseThrow(() -> new InvalidSortFieldException(
-                                alwaysByParts[0],
-                                config.orderingAllowedColumns().stream()
-                                        .map(OrderingColumn::name)
-                                        .toList()));
-
-                if (orderingColumnAlwaysBy.queryName() == null) {
-                    orderingBuilder
-                            .append(orderingBuilder.isEmpty() ? "ORDER BY \"" : ", \"")
-                            .append(orderingColumnAlwaysBy.name())
-                            .append("\"");
-                } else {
-                    orderingBuilder
-                            .append(orderingBuilder.isEmpty() ? "ORDER BY " : ", ")
-                            .append(orderingColumnAlwaysBy.queryName());
-                }
-
-                if (alwaysByParts.length == 2
-                        && ("asc".equalsIgnoreCase(alwaysByParts[1]) || "desc".equalsIgnoreCase(alwaysByParts[1]))) {
+            final AlwaysByOrdering alwaysBy = config.orderingAlwaysBy();
+            if (alwaysBy != null && !alwaysBy.queryName().equals(orderByColumnSql)) {
+                orderingBuilder.append(", ").append(alwaysBy.queryName());
+                if (alwaysBy.direction() != null && alwaysBy.direction() != OrderDirection.UNSPECIFIED) {
                     orderingBuilder
                             .append(" ")
-                            .append(alwaysByParts[1]);
+                            .append(alwaysBy.direction() == OrderDirection.ASCENDING ? "ASC" : "DESC");
                 }
             }
         }

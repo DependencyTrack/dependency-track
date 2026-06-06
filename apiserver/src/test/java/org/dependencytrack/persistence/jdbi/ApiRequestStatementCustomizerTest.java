@@ -30,6 +30,7 @@ import alpine.resources.AlpineRequest;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.exception.InvalidSortFieldException;
+import org.dependencytrack.persistence.jdbi.ApiRequestConfig.AlwaysByOrdering;
 import org.dependencytrack.persistence.jdbi.ApiRequestConfig.OrderingColumn;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.core.statement.StatementCustomizer;
@@ -223,12 +224,12 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testWithAlpineRequestOrderingWithAlwaysByNotAllowed() {
+    public void shouldNotLeakAlwaysByInInvalidSortFieldException() {
         final var request = new AlpineRequest(
                 /* principal */ null,
                 /* pagination */ null,
                 /* filter */ null,
-                /* orderBy */ "valueA",
+                /* orderBy */ "foobar",
                 /* orderDirection */ OrderDirection.DESCENDING
         );
 
@@ -236,7 +237,7 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 .isThrownBy(() -> useJdbiHandle(request, handle -> handle
                         .configure(ApiRequestConfig.class, config -> {
                             config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
-                            config.setOrderingAlwaysBy("foobar");
+                            config.setOrderingAlwaysBy(new AlwaysByOrdering("fa.\"ID\""));
                         })
                         .createQuery(TEST_QUERY_TEMPLATE)
                         .mapTo(Integer.class)
@@ -244,34 +245,14 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 .withMessage("Sorting by field 'foobar' is not supported")
                 .satisfies(e -> {
                     assertThat(e.getFieldName()).isEqualTo("foobar");
-                    assertThat(e.getAllowedFieldNames()).containsOnly("valueA");
+                    assertThat(e.getAllowedFieldNames())
+                            .containsOnly("valueA")
+                            .doesNotContain("fa.\"ID\"");
                 });
     }
 
     @Test
-    public void testWithAlpineRequestOrderingWithAlwaysByInvalidFormat() {
-        final var request = new AlpineRequest(
-                /* principal */ null,
-                /* pagination */ null,
-                /* filter */ null,
-                /* orderBy */ "valueA",
-                /* orderDirection */ OrderDirection.DESCENDING
-        );
-
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> useJdbiHandle(request, handle -> handle
-                        .configure(ApiRequestConfig.class, config -> {
-                            config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
-                            config.setOrderingAlwaysBy("foo bar baz");
-                        })
-                        .createQuery(TEST_QUERY_TEMPLATE)
-                        .mapTo(Integer.class)
-                        .findOne()))
-                .withMessage("alwaysBy must consist of no more than two parts");
-    }
-
-    @Test
-    public void testWithAlpineRequestOrderingWithAlwaysByMatchingOrderBy() {
+    public void shouldNotAppendAlwaysByWhenItMatchesOrderBy() {
         final var request = new AlpineRequest(
                 /* principal */ null,
                 /* pagination */ null,
@@ -283,7 +264,7 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
         useJdbiHandle(request, handle -> handle
                 .configure(ApiRequestConfig.class, config -> {
                     config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
-                    config.setOrderingAlwaysBy("valueA");
+                    config.setOrderingAlwaysBy(new AlwaysByOrdering("\"valueA\""));
                 })
                 .addCustomizer(inspectStatement(ctx -> {
                     assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
@@ -309,8 +290,8 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
 
         useJdbiHandle(request, handle -> handle
                 .configure(ApiRequestConfig.class, config -> {
-                    config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA"), new OrderingColumn("valueB")));
-                    config.setOrderingAlwaysBy("valueB");
+                    config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
+                    config.setOrderingAlwaysBy(new AlwaysByOrdering("\"valueB\""));
                 })
                 .addCustomizer(inspectStatement(ctx -> {
                     assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
@@ -336,39 +317,12 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
 
         useJdbiHandle(request, handle -> handle
                 .configure(ApiRequestConfig.class, config -> {
-                    config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA"), new OrderingColumn("valueB")));
-                    config.setOrderingAlwaysBy("valueB asc");
+                    config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
+                    config.setOrderingAlwaysBy(new AlwaysByOrdering("\"valueB\"", OrderDirection.ASCENDING));
                 })
                 .addCustomizer(inspectStatement(ctx -> {
                     assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
-                            SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE ORDER BY "valueA" DESC, "valueB" asc
-                            """);
-
-                    assertThat(ctx.getBinding()).hasToString("{}");
-                }))
-                .createQuery(TEST_QUERY_TEMPLATE)
-                .mapTo(Integer.class)
-                .findOne());
-    }
-
-    @Test
-    public void testWithAlpineRequestOrderingWithOnlyAlwaysBy() {
-        final var request = new AlpineRequest(
-                /* principal */ null,
-                /* pagination */ null,
-                /* filter */ null,
-                /* orderBy */ "valueB",
-                /* orderDirection */ null
-        );
-
-        useJdbiHandle(request, handle -> handle
-                .configure(ApiRequestConfig.class, config -> {
-                    config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueB")));
-                    config.setOrderingAlwaysBy("valueB");
-                })
-                .addCustomizer(inspectStatement(ctx -> {
-                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
-                            SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE ORDER BY "valueB"
+                            SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE ORDER BY "valueA" DESC, "valueB" ASC
                             """);
 
                     assertThat(ctx.getBinding()).hasToString("{}");

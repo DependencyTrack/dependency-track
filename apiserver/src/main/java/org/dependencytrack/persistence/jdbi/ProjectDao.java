@@ -227,7 +227,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             <#-- @ftlvariable name="apiOrderByClause" type="String" -->
             <#-- @ftlvariable name="apiOffsetLimitClause" type="String" -->
             <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
-            SELECT "PROJECT"."ID" AS "id"
+            SELECT "PROJECT"."ID"
                  , "PROJECT"."UUID" AS "uuid"
                  , "GROUP" AS "group"
                  , "NAME" AS "name"
@@ -285,12 +285,11 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             <#if apiOrderByClause??>
               ${apiOrderByClause}
             <#else>
-             ORDER BY "name", "id"
+             ORDER BY "name", "PROJECT"."ID"
             </#if>
             ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = "id", by = {
-            @AllowApiOrdering.Column(name = "id"),
+    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "\"PROJECT\".\"ID\""), by = {
             @AllowApiOrdering.Column(name = "group"),
             @AllowApiOrdering.Column(name = "name"),
             @AllowApiOrdering.Column(name = "version"),
@@ -492,7 +491,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             <#-- @ftlvariable name="apiOrderByClause" type="String" -->
             <#-- @ftlvariable name="apiOffsetLimitClause" type="String" -->
             <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
-            SELECT "PROJECT"."ID" AS "id"
+            SELECT "PROJECT"."ID"
                  , "PROJECT"."CLASSIFIER" AS "classifier"
                  , "PROJECT"."CPE"
                  , "PROJECT"."DESCRIPTION"
@@ -571,12 +570,11 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             <#if apiOrderByClause??>
                 ${apiOrderByClause}
             <#else>
-                ORDER BY "name", "id"
+                ORDER BY "name", "PROJECT"."ID"
             </#if>
             ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = "id", by = {
-            @AllowApiOrdering.Column(name = "id"),
+    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "\"PROJECT\".\"ID\""), by = {
             @AllowApiOrdering.Column(name = "group"),
             @AllowApiOrdering.Column(name = "name"),
             @AllowApiOrdering.Column(name = "version"),

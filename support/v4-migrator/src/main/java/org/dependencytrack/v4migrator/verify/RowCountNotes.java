@@ -46,10 +46,11 @@ final class RowCountNotes {
         Map.entry("VULNERABLESOFTWARE", "dropped rows without vulnerability refs or with invalid UUID"),
         Map.entry("USER", "consolidated from MANAGED/LDAP/OIDC users; invalid rows skipped"),
         // Permission join tables: v4-only permissions are dropped during the rename remap, while
-        // PORTFOLIO_ACCESS_CONTROL_BYPASS is fanned out for ACCESS_MANAGEMENT holders. The net delta
-        // is a deterministic function of the remap, not a loss indicator either way.
-        Map.entry("TEAMS_PERMISSIONS", "permissions remapped (v4-only dropped); BYPASS fan-out added; net delta expected"),
-        Map.entry("USERS_PERMISSIONS", "permissions remapped (v4-only dropped); BYPASS fan-out added; net delta expected"),
+        // v5-only permissions (PORTFOLIO_ACCESS_CONTROL_BYPASS, SECRET_MANAGEMENT) are fanned out
+        // for the v4 holders of their v4-era equivalents. The net delta is a deterministic
+        // function of the remap, not a loss indicator either way.
+        Map.entry("TEAMS_PERMISSIONS", "permissions remapped (v4-only dropped); v5-only permission fan-outs added; net delta expected"),
+        Map.entry("USERS_PERMISSIONS", "permissions remapped (v4-only dropped); v5-only permission fan-outs added; net delta expected"),
         Map.entry("PROJECT_ACCESS_TEAMS", "dropped rows with NULL TEAM_ID; dedup on (PROJECT_ID, TEAM_ID)"),
         Map.entry("PROJECT_ACCESS_USERS", "derived from PROJECT_ACCESS_TEAMS join USERS_TEAMS; dedup on (PROJECT_ID, USER_ID)")
     );

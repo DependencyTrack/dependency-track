@@ -599,10 +599,11 @@ public final class TableRegistry {
      * seeded during {@code bootstrap} (see {@link PermissionCatalog}); transform here
      * just builds {@code permission_name_map} by inner-joining v4 NAME against the
      * already-seeded v5 PERMISSION table. v4 permission names that no longer exist in
-     * v5 (e.g. {@code VIEW_BADGES}) drop out of the map. Implication fan-out (v4
-     * {@code ACCESS_MANAGEMENT} -> v5 {@code PORTFOLIO_ACCESS_CONTROL_BYPASS}) is
-     * applied on the join-table {@code tgt_*} tables. See {@code TEAMS_PERMISSIONS} and
-     * the consolidated {@code USERS_PERMISSIONS} transforms.
+     * v5 (e.g. {@code VIEW_BADGES}) drop out of the map. Implication fan-outs (v4
+     * {@code ACCESS_MANAGEMENT} -> v5 {@code PORTFOLIO_ACCESS_CONTROL_BYPASS}, and v4
+     * {@code SYSTEM_CONFIGURATION} -> v5 {@code SECRET_MANAGEMENT}) are applied on the
+     * join-table {@code tgt_*} tables. See {@code TEAMS_PERMISSIONS} and the consolidated
+     * {@code USERS_PERMISSIONS} transforms.
      */
     private static final TableMigration PERMISSION = new TableMigration(
         "PERMISSION",
@@ -726,16 +727,32 @@ public final class TableRegistry {
           JOIN "%1$s".permission_name_map m ON m.orig_id = j."PERMISSION_ID"
         ON CONFLICT DO NOTHING;
 
-        -- Implication fan-out: v4 ACCESS_MANAGEMENT carried implicit portfolio-access-control
-        -- bypass. v5 split that into the explicit PORTFOLIO_ACCESS_CONTROL_BYPASS permission
-        -- (v5.6.0-31). Grant it to every user that holds ACCESS_MANAGEMENT in v4. The v5.6.0-31
-        -- changeset also matched ACCESS_MANAGEMENT_CREATE, but that permission did not exist
-        -- in v4, so the v4-to-v5 path filters on the umbrella only.
+        -- Implication fan-outs: v4 carried two v5-only permissions implicitly via their
+        -- v4-era equivalents. v5 split each into a dedicated permission, and the migrator
+        -- preserves v4 authorization semantics by granting the new permission to every v4
+        -- holder of the equivalent. The target permissions are seeded by PermissionCatalog
+        -- during bootstrap; the inner join against "PERMISSION" produces zero rows (rather
+        -- than a NULL PERMISSION_ID constraint violation) if a catalog row is missing.
+        --
+        --   ACCESS_MANAGEMENT    -> PORTFOLIO_ACCESS_CONTROL_BYPASS (v5.6.0-31). The v5.6.0-31
+        --                          changeset also matched ACCESS_MANAGEMENT_CREATE, but that
+        --                          permission did not exist in v4, so the v4-to-v5 path
+        --                          filters on the umbrella only.
+        --   SYSTEM_CONFIGURATION -> SECRET_MANAGEMENT. v4 had no separate secret-management
+        --                          permission; repository basic-auth passwords and analyzer /
+        --                          vulnerability-source API credentials were configurable by
+        --                          anyone with SYSTEM_CONFIGURATION. Only the umbrella is
+        --                          fanned out; the _CREATE / _UPDATE / _DELETE variants did
+        --                          not exist in v4.
         INSERT INTO "%1$s".tgt_users_permissions ("USER_ID", "PERMISSION_ID")
-        SELECT DISTINCT up."USER_ID", (SELECT "ID" FROM "PERMISSION" WHERE "NAME" = 'PORTFOLIO_ACCESS_CONTROL_BYPASS')
+        SELECT DISTINCT up."USER_ID", tgt."ID"
           FROM "%1$s".tgt_users_permissions up
-          JOIN "PERMISSION" p ON p."ID" = up."PERMISSION_ID"
-         WHERE p."NAME" = 'ACCESS_MANAGEMENT'
+          JOIN "PERMISSION" src ON src."ID" = up."PERMISSION_ID"
+          JOIN "PERMISSION" tgt ON tgt."NAME" = CASE src."NAME"
+              WHEN 'ACCESS_MANAGEMENT'    THEN 'PORTFOLIO_ACCESS_CONTROL_BYPASS'
+              WHEN 'SYSTEM_CONFIGURATION' THEN 'SECRET_MANAGEMENT'
+          END
+         WHERE src."NAME" IN ('ACCESS_MANAGEMENT', 'SYSTEM_CONFIGURATION')
         ON CONFLICT DO NOTHING
         """,
         """
@@ -2980,15 +2997,18 @@ public final class TableRegistry {
           JOIN "%1$s".permission_name_map  pm ON pm.orig_id = j."PERMISSION_ID"
         ON CONFLICT DO NOTHING;
 
-        -- Implication fan-out: see the matching USERS_PERMISSIONS step. v4 ACCESS_MANAGEMENT
-        -- carried implicit portfolio-access-control bypass; v5 split that into
-        -- PORTFOLIO_ACCESS_CONTROL_BYPASS (v5.6.0-31). Grant it to every team that holds
-        -- ACCESS_MANAGEMENT in v4.
+        -- Implication fan-outs: see the matching USERS_PERMISSIONS step for the rationale.
+        --   ACCESS_MANAGEMENT    -> PORTFOLIO_ACCESS_CONTROL_BYPASS
+        --   SYSTEM_CONFIGURATION -> SECRET_MANAGEMENT
         INSERT INTO "%1$s".tgt_teams_permissions ("TEAM_ID", "PERMISSION_ID")
-        SELECT DISTINCT tp."TEAM_ID", (SELECT "ID" FROM "PERMISSION" WHERE "NAME" = 'PORTFOLIO_ACCESS_CONTROL_BYPASS')
+        SELECT DISTINCT tp."TEAM_ID", tgt."ID"
           FROM "%1$s".tgt_teams_permissions tp
-          JOIN "PERMISSION" p ON p."ID" = tp."PERMISSION_ID"
-         WHERE p."NAME" = 'ACCESS_MANAGEMENT'
+          JOIN "PERMISSION" src ON src."ID" = tp."PERMISSION_ID"
+          JOIN "PERMISSION" tgt ON tgt."NAME" = CASE src."NAME"
+              WHEN 'ACCESS_MANAGEMENT'    THEN 'PORTFOLIO_ACCESS_CONTROL_BYPASS'
+              WHEN 'SYSTEM_CONFIGURATION' THEN 'SECRET_MANAGEMENT'
+          END
+         WHERE src."NAME" IN ('ACCESS_MANAGEMENT', 'SYSTEM_CONFIGURATION')
         ON CONFLICT DO NOTHING
         """,
         """

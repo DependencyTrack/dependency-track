@@ -28,8 +28,8 @@ import org.jdbi.v3.core.Jdbi;
  * <p>The migrator owns v5 PERMISSION seeding because downstream join-table loads
  * ({@code USERS_PERMISSIONS}, {@code TEAMS_PERMISSIONS}) need to FK-resolve v5
  * permission IDs (including v5-only entries such as
- * {@code PORTFOLIO_ACCESS_CONTROL_BYPASS}) before the apiserver runs its own
- * seeding step on first post-migration boot.
+ * {@code PORTFOLIO_ACCESS_CONTROL_BYPASS} and {@code SECRET_MANAGEMENT}) before
+ * the apiserver runs its own seeding step on first post-migration boot.
  *
  * <p>Seeding runs in {@code bootstrap} rather than {@code transform} so that a
  * documented "drop v5 schema, re-bootstrap, re-run load" recovery (see ADR-023

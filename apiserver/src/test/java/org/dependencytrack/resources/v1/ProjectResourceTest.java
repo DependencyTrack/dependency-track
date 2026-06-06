@@ -158,7 +158,6 @@ class ProjectResourceTest extends ResourceTest {
                           "detail": "Sorting by field 'invalidField' is not supported",
                           "invalidField": "invalidField",
                           "supportedFields": [
-                            "id",
                             "group",
                             "name",
                             "version",
@@ -195,7 +194,6 @@ class ProjectResourceTest extends ResourceTest {
                           "detail": "Sorting by field 'invalidField' is not supported",
                           "invalidField": "invalidField",
                           "supportedFields": [
-                            "id",
                             "group",
                             "name",
                             "version",

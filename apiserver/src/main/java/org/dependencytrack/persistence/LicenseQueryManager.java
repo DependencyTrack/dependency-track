@@ -28,7 +28,7 @@ import javax.jdo.Query;
 import java.util.List;
 import java.util.Map;
 
-final class LicenseQueryManager extends QueryManager implements IQueryManager {
+final class LicenseQueryManager extends QueryManager {
 
     /**
      * Constructs a new QueryManager.

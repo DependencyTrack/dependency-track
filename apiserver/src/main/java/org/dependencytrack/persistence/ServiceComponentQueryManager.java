@@ -29,7 +29,7 @@ import javax.jdo.Query;
 import java.util.List;
 import java.util.UUID;
 
-final class ServiceComponentQueryManager extends QueryManager implements IQueryManager {
+final class ServiceComponentQueryManager extends QueryManager {
 
     /**
      * Constructs a new QueryManager.
@@ -54,17 +54,6 @@ final class ServiceComponentQueryManager extends QueryManager implements IQueryM
                 """);
         query.setParameters(project.getId());
         return executeAndCloseResultUnique(query, Boolean.class);
-    }
-
-    /**
-     * Creates a new ServiceComponent.
-     * @param service the ServiceComponent to persist
-     * @param commitIndex specifies if the search index should be committed (an expensive operation)
-     * @return a new ServiceComponent
-     */
-    public ServiceComponent createServiceComponent(ServiceComponent service, boolean commitIndex) {
-        final ServiceComponent result = persist(service);
-        return result;
     }
 
     /**

@@ -31,8 +31,8 @@ import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
-import org.apache.commons.lang3.ClassUtils;
 import org.datanucleus.api.jdo.JDOQuery;
+import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
@@ -771,10 +771,6 @@ public class QueryManager extends AlpineQueryManager {
         return getServiceComponentQueryManager().hasServiceComponents(project);
     }
 
-    public ServiceComponent createServiceComponent(ServiceComponent service, boolean commitIndex) {
-        return getServiceComponentQueryManager().createServiceComponent(service, commitIndex);
-    }
-
     public List<ServiceComponent> getAllServiceComponents(Project project) {
         return getServiceComponentQueryManager().getAllServiceComponents(project);
     }
@@ -797,10 +793,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<Component> getAllVulnerableComponents(Project project, Vulnerability vulnerability) {
         return getVulnerabilityQueryManager().getAllVulnerableComponents(project, vulnerability);
-    }
-
-    public List<Vulnerability> getAllVulnerabilities(Component component, boolean includeSuppressed) {
-        return getVulnerabilityQueryManager().getAllVulnerabilities(component, includeSuppressed);
     }
 
     public List<Vulnerability> getVulnerabilities(Project project, boolean includeSuppressed) {
@@ -867,10 +859,6 @@ public class QueryManager extends AlpineQueryManager {
         return getNotificationQueryManager().getNotificationPublisher(name);
     }
 
-    public NotificationPublisher getDefaultNotificationPublisherByName(String publisherName) {
-        return getNotificationQueryManager().getDefaultNotificationPublisherByName(publisherName);
-    }
-
     public NotificationPublisher createNotificationPublisher(
             @NonNull String name,
             String description,
@@ -880,10 +868,6 @@ public class QueryManager extends AlpineQueryManager {
             boolean defaultPublisher) {
         return getNotificationQueryManager().createNotificationPublisher(
                 name, description, extensionName, templateContent, templateMimeType, defaultPublisher);
-    }
-
-    public NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
-        return getNotificationQueryManager().updateNotificationPublisher(transientPublisher);
     }
 
     /**
@@ -932,24 +916,6 @@ public class QueryManager extends AlpineQueryManager {
 
     public void truncateNotificationOutbox() {
         getNotificationQueryManager().truncateNotificationOutbox();
-    }
-
-    public boolean hasAccessManagementPermission(final Object principal) {
-        if (principal instanceof final User user) {
-            return hasAccessManagementPermission(user);
-        } else if (principal instanceof final ApiKey apiKey) {
-            return hasAccessManagementPermission(apiKey);
-        }
-
-        throw new IllegalArgumentException("Provided principal is of invalid type " + ClassUtils.getName(principal));
-    }
-
-    public boolean hasAccessManagementPermission(final User user) {
-        return getProjectQueryManager().hasAccessManagementPermission(user);
-    }
-
-    public boolean hasAccessManagementPermission(final ApiKey apiKey) {
-        return getProjectQueryManager().hasAccessManagementPermission(apiKey);
     }
 
     public List<TagQueryManager.TagListRow> getTags() {
@@ -1162,7 +1128,7 @@ public class QueryManager extends AlpineQueryManager {
         if (request == null
                 || principal == null
                 || !isEnabled(ACCESS_MANAGEMENT_ACL_ENABLED)
-                || hasAccessManagementPermission(principal))
+                || request.getEffectivePermissions().contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS))
             return Map.entry("TRUE", Collections.emptyMap());
 
         final Map<String, Object> params = new HashMap<>();

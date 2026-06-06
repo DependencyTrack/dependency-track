@@ -55,7 +55,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
-final class ProjectQueryManager extends QueryManager implements IQueryManager {
+final class ProjectQueryManager extends QueryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectQueryManager.class);
 
@@ -580,17 +580,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         return false;
     }
-
-    @Override
-    public boolean hasAccessManagementPermission(final User user) {
-        return hasPermission(user, Permissions.Constants.ACCESS_MANAGEMENT, true);
-    }
-
-    @Override
-    public boolean hasAccessManagementPermission(final ApiKey apiKey) {
-        return hasPermission(apiKey, Permissions.ACCESS_MANAGEMENT.name());
-    }
-
 
     /**
      * Check whether a {@link Project} with a given {@code name} and {@code version} exists.

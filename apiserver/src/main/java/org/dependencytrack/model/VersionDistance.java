@@ -123,7 +123,7 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
         validate();
     }
 
-    public VersionDistance(String distance) throws NumberFormatException, IllegalArgumentException {
+    public VersionDistance(String distance) throws IllegalArgumentException {
         epoch = 0;
         major = 0;
         minor = 0;

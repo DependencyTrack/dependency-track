@@ -71,7 +71,6 @@ import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
 import org.dependencytrack.resources.v1.vo.ConciseProject;
 import org.dependencytrack.resources.v1.vo.ListProjectsResponseItem;
-import org.jdbi.v3.core.Handle;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +95,6 @@ import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.createLocalJdbi;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.isPersistent;
@@ -576,8 +574,10 @@ public class ProjectResource extends AbstractApiResource {
                         userTeams = List.of();
                     }
 
-                    boolean isAdmin = qm.hasAccessManagementPermission(principal);
-                    List<Team> visibleTeams = isAdmin ? qm.getTeams().getList(Team.class) : userTeams;
+                    boolean canSeeAllTeams =
+                            super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
+                                    || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
+                    List<Team> visibleTeams = canSeeAllTeams ? qm.getTeams().getList(Team.class) : userTeams;
                     final var visibleTeamByUuid = new HashMap<UUID, Team>(visibleTeams.size());
                     final var visibleTeamByName = new HashMap<String, Team>(visibleTeams.size());
                     for (final Team visibleTeam : visibleTeams) {
@@ -993,17 +993,10 @@ public class ProjectResource extends AbstractApiResource {
                 try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());
                      var _ = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
                      var _ = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
-
                     LOGGER.info("Project {} deletion request by {}", project, super.getPrincipal().getName());
                 }
 
-                try (final Handle jdbiHandle = createLocalJdbi(qm).open()) {
-                    final var projectDao = jdbiHandle.attach(ProjectDao.class);
-                    projectDao.deleteProject(project.getUuid());
-                } catch (RuntimeException e) {
-                    LOGGER.error("Failed to delete project", e);
-                    throw new ServerErrorException(Response.Status.INTERNAL_SERVER_ERROR);
-                }
+                qm.delete(project);
             });
         }
 

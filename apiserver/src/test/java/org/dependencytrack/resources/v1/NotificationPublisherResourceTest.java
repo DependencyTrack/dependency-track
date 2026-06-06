@@ -292,7 +292,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
 
         new DefaultNotificationPublisherInitializer().seedDefaultPublishers(pluginManager);
 
-        final NotificationPublisher slackPublisher = qm.getDefaultNotificationPublisherByName("Slack");
+        final NotificationPublisher slackPublisher = qm.getNotificationPublisher("Slack");
         assertThat(slackPublisher).isNotNull();
 
         final var updateRequest = new UpdateNotificationPublisherRequest(
@@ -437,7 +437,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
 
         new DefaultNotificationPublisherInitializer().seedDefaultPublishers(pluginManager);
 
-        final NotificationPublisher slackPublisher = qm.getDefaultNotificationPublisherByName("Slack");
+        final NotificationPublisher slackPublisher = qm.getNotificationPublisher("Slack");
 
         final Response response = jersey.target(
                         "%s/%s/configSchema".formatted(V1_NOTIFICATION_PUBLISHER, slackPublisher.getUuid()))
@@ -460,7 +460,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
 
         new DefaultNotificationPublisherInitializer().seedDefaultPublishers(pluginManager);
 
-        NotificationPublisher slackPublisher = qm.getDefaultNotificationPublisherByName("Slack");
+        NotificationPublisher slackPublisher = qm.getNotificationPublisher("Slack");
         slackPublisher.setName(slackPublisher.getName() + " Test Rule");
         qm.persist(slackPublisher);
         qm.detach(NotificationPublisher.class, slackPublisher.getId());

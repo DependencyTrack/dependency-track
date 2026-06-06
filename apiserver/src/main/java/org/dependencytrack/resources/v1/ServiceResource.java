@@ -48,13 +48,9 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.persistence.jdbi.ServiceComponentDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
-import org.jdbi.v3.core.Handle;
-
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.createLocalJdbi;
 
 /**
  * JAX-RS resources for processing services.
@@ -199,7 +195,7 @@ class ServiceResource extends AbstractApiResource {
                 service.setCrossesTrustBoundary(jsonService.getCrossesTrustBoundary());
                 service.setData(jsonService.getData());
                 service.setExternalReferences(jsonService.getExternalReferences());
-                service = qm.createServiceComponent(service, true);
+                service = qm.persist(service);
                 return Response.status(Response.Status.CREATED).entity(service).build();
             });
         }
@@ -288,10 +284,7 @@ class ServiceResource extends AbstractApiResource {
                 final ServiceComponent service = qm.getObjectByUuid(ServiceComponent.class, uuid, ServiceComponent.FetchGroup.ALL.name());
                 if (service != null) {
                     requireAccess(qm, service.getProject());
-                    try (final Handle jdbiHandle = createLocalJdbi(qm).open()) {
-                        final var serviceComponentDao = jdbiHandle.attach(ServiceComponentDao.class);
-                        serviceComponentDao.deleteServiceComponent(service.getUuid());
-                    }
+                    qm.delete(service);
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
                     return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the service could not be found.").build();

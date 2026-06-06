@@ -255,7 +255,9 @@ public class TeamResource extends AbstractApiResource {
     })
     public Response availableTeams() {
         try (QueryManager qm = new QueryManager()) {
-            boolean isAllTeams = qm.hasAccessManagementPermission(getPrincipal());
+            boolean isAllTeams =
+                    super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
+                            || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
             List<Team> teams = new ArrayList<>();
             if (isAllTeams) {
                 var paginatedResult = qm.getTeams();

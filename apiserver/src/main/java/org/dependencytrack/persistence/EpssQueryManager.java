@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-final class EpssQueryManager extends QueryManager implements IQueryManager {
+final class EpssQueryManager extends QueryManager {
 
     EpssQueryManager(final PersistenceManager pm) {
         super(pm);

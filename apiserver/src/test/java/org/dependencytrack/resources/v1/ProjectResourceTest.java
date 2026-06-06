@@ -3529,7 +3529,8 @@ class ProjectResourceTest extends ResourceTest {
                         assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
                     });
 
-                    assertThat(qm.getAllVulnerabilities(clonedComponent, false)).containsOnly(vuln);
+                    assertThat(qm.getVulnerabilities(clonedComponent, false).getList(Vulnerability.class))
+                            .satisfiesExactly(v -> assertThat(v.getId()).isEqualTo(vuln.getId()));
 
                     assertThat(qm.getAnalysis(clonedComponent, vuln)).satisfies(clonedAnalysis -> {
                         assertThat(clonedAnalysis.getId()).isNotEqualTo(analysisId);

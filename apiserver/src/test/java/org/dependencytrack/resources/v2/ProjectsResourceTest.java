@@ -490,6 +490,32 @@ public class ProjectsResourceTest extends ResourceTest {
     }
 
     @Test
+    public void shouldReturn400WhenSortByFieldIsNotSupportedForListProjectComponents() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var project = prepareProject();
+
+        final Response response = jersey
+                .target("/projects/" + project.getUuid() + "/components")
+                .queryParam("sort_by", "invalid_field")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "type": "/problems/invalid-sort-field",
+                  "status": 400,
+                  "title": "Invalid sort field",
+                  "detail": "Sorting by field 'invalid_field' is not supported",
+                  "invalid_field": "invalid_field",
+                  "supported_fields": ["name", "group", "last_inherited_risk_score", "package_artifact_metadata.published_at"]
+                }
+                """);
+    }
+
+    @Test
     public void cloneProjectShouldReturnUuidOfClonedProject() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 

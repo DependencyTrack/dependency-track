@@ -88,6 +88,14 @@ get:
         application/json:
           schema:
             $ref: "./schemas/list-project-components-response.yaml"
+    "400":
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            anyOf:
+              - $ref: "../../shared/schemas/invalid-sort-field-problem-details.yaml"
+              - $ref: "../../shared/schemas/problem-details.yaml"
     "401":
       $ref: "../../shared/responses/generic-unauthorized-error.yaml"
     "403":

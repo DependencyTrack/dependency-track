@@ -29,7 +29,6 @@ import javax.jdo.metadata.MemberMetadata;
 import javax.jdo.metadata.TypeMetadata;
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -209,16 +208,8 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
             if (foundPersistentMember) {
                 query.setOrdering(orderBy + " " + orderDirection.name().toLowerCase());
             } else {
-                // Is it a non-persistent (transient) field?
-                final boolean foundNonPersistentMember = Arrays.stream(iq.getCandidateClass().getDeclaredFields())
-                        .anyMatch(field -> field.getName().equals(candidateField));
-                if (foundNonPersistentMember) {
-                    throw new NotSortableException(iq.getCandidateClass().getSimpleName(), candidateField,
-                            "The field is computed and can not be queried or sorted by");
-                }
-
-                throw new NotSortableException(iq.getCandidateClass().getSimpleName(), candidateField,
-                        "The field does not exist");
+                throw new IllegalArgumentException(
+                        "Sorting by field '%s' is not supported".formatted(candidateField));
             }
         }
         return query;

@@ -43,7 +43,7 @@ import java.util.Set;
  * through this filter have the necessary permissions to do so.
  *
  * @author Steve Springett
- * @see AuthorizationFeature
+ * @see AuthFeature
  * @since 1.0.0
  */
 @Priority(Priorities.AUTHORIZATION)
@@ -68,28 +68,27 @@ public class AuthorizationFilter implements ContainerRequestFilter {
         try (final var qm = new AlpineQueryManager()) {
             effectivePermissions = qm.getEffectivePermissions(principal);
         }
+        requestContext.setProperty(EFFECTIVE_PERMISSIONS_PROPERTY, effectivePermissions);
 
         final PermissionRequired annotation = resourceInfo.getResourceMethod().getDeclaredAnnotation(PermissionRequired.class);
-        final Set<String> permissions = Set.of(annotation.value());
-
-        final boolean hasNoRequiredPermission = Collections.disjoint(permissions, effectivePermissions);
-        if (hasNoRequiredPermission) {
-            final String requestUri = requestContext.getUriInfo().getRequestUri().toString();
-            final String requestPrincipal;
-
-            switch (principal) {
-                case ApiKey apiKey -> requestPrincipal = "API Key " + apiKey.getMaskedKey();
-                case User user -> requestPrincipal = user.getUsername();
-                default -> throw new IllegalStateException("Unexpected principal type: " + principal.getClass().getName());
-            }
-
-            LOGGER.info(SecurityMarkers.SECURITY_FAILURE, "Unauthorized access attempt made by %s to %s"
-                    .formatted(requestPrincipal, requestUri));
-
-            throw new ForbiddenException(Response.status(Response.Status.FORBIDDEN).build());
-        } else {
-            requestContext.setProperty(EFFECTIVE_PERMISSIONS_PROPERTY, effectivePermissions);
+        if (annotation == null) {
+            return;
         }
+
+        if (!Collections.disjoint(Set.of(annotation.value()), effectivePermissions)) {
+            return;
+        }
+
+        final String requestPrincipal = switch (principal) {
+            case ApiKey apiKey -> "API Key " + apiKey.getMaskedKey();
+            case User user -> user.getUsername();
+            default -> throw new IllegalStateException("Unexpected principal type: " + principal.getClass().getName());
+        };
+
+        LOGGER.info(SecurityMarkers.SECURITY_FAILURE, "Unauthorized access attempt made by %s to %s"
+                .formatted(requestPrincipal, requestContext.getUriInfo().getRequestUri().toString()));
+
+        throw new ForbiddenException(Response.status(Response.Status.FORBIDDEN).build());
     }
 
 }

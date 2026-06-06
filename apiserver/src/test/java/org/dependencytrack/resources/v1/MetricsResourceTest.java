@@ -19,8 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import alpine.server.resources.GlobalExceptionHandler;
 import jakarta.ws.rs.core.Response;
 import net.javacrumbs.jsonunit.core.Option;
@@ -64,8 +63,7 @@ public class MetricsResourceTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(MetricsResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class)
+                    .register(AuthFeature.class)
                     .register(new AbstractBinder() {
                         @Override
                         protected void configure() {

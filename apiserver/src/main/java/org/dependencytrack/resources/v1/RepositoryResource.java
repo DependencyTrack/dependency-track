@@ -203,7 +203,7 @@ public class RepositoryResource extends AbstractApiResource {
                     .entity("A password secret name is required when authentication is enabled.")
                     .build();
         }
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final boolean exists = qm.repositoryExist(jsonRepository.getType(), StringUtils.trimToNull(jsonRepository.getIdentifier()));
                 if (!exists) {
@@ -265,7 +265,7 @@ public class RepositoryResource extends AbstractApiResource {
                     .entity("A password secret name is required when authentication is enabled.")
                     .build();
         }
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 Repository repository = qm.getObjectByUuid(Repository.class, jsonRepository.getUuid());
                 if (repository != null) {
@@ -309,7 +309,7 @@ public class RepositoryResource extends AbstractApiResource {
     public Response deleteRepository(
             @Parameter(description = "The UUID of the repository to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Repository repository = qm.getObjectByUuid(Repository.class, uuid);
                 if (repository != null) {

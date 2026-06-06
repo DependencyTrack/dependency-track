@@ -30,11 +30,9 @@ import javax.jdo.metadata.TypeMetadata;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
@@ -341,32 +339,6 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
     public <T> T detach(final T object) {
         try (var _ = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
             return pm.detachCopy(object);
-        }
-    }
-
-    /**
-     * Refreshes and detaches an objects.
-     * @param pcs the instances to detach
-     * @param <T> the type to return
-     * @return the detached instances
-     * @since 1.3.0
-     */
-    public <T> List<T> detach(List<T> pcs) {
-        try (var _ = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
-            return new ArrayList<>(pm.detachCopyAll(pcs));
-        }
-    }
-
-    /**
-     * Refreshes and detaches an objects.
-     * @param pcs the instances to detach
-     * @param <T> the type to return
-     * @return the detached instances
-     * @since 1.3.0
-     */
-    public <T> Set<T> detach(Set<T> pcs) {
-        try (var _ = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
-            return new LinkedHashSet<>(pm.detachCopyAll(pcs));
         }
     }
 

@@ -97,7 +97,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
     })
     public Response createComponent(final CreateComponentRequest request) {
         final UUID projectUuid = request.getProjectUuid();
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.callInTransaction(() -> {
                 final Project project = qm.getObjectByUuid(Project.class, projectUuid);
                 if (project == null) {

@@ -23,6 +23,7 @@ import alpine.model.User;
 import alpine.persistence.OrderDirection;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.persistence.Ordering;
 import org.dependencytrack.persistence.jdbi.ApiRequestConfig.OrderingColumn;
@@ -203,6 +204,7 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
     private void defineProjectAclCondition(final StatementContext ctx) throws SQLException {
         if (apiRequest == null
                 || apiRequest.getPrincipal() == null
+                || ProjectAccess.isUnrestricted()
                 || !isAclEnabled(ctx)
                 || apiRequest.getEffectivePermissions().contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)) {
             ctx.define(ATTRIBUTE_API_PROJECT_ACL_CONDITION, "TRUE");

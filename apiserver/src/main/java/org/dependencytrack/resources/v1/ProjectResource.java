@@ -50,6 +50,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Project;
@@ -71,7 +72,6 @@ import org.dependencytrack.resources.v1.vo.BomUploadResponse;
 import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
 import org.dependencytrack.resources.v1.vo.ConciseProject;
 import org.dependencytrack.resources.v1.vo.ListProjectsResponseItem;
-import org.jdbi.v3.core.Handle;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +96,6 @@ import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.createLocalJdbi;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.isPersistent;
@@ -346,8 +345,8 @@ public class ProjectResource extends AbstractApiResource {
     public Response getLatestProjectByName(
             @Parameter(description = "The name of the project to retrieve the latest version of", required = true)
             @PathParam("name") String name) {
-        try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getLatestProjectVersion(name);
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Project project = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(name));
             if (project != null) {
                 requireAccess(qm, project);
                 return Response.ok(project).build();
@@ -384,8 +383,8 @@ public class ProjectResource extends AbstractApiResource {
             @QueryParam("name") String name,
             @Parameter(description = "The version of the project to query on", required = true)
             @QueryParam("version") String version) {
-        try (QueryManager qm = new QueryManager()) {
-            final Project project = qm.getProject(name, version);
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final Project project = ProjectAccess.unrestricted(() -> qm.getProject(name, version));
             if (project != null) {
                 requireAccess(qm, project);
                 return Response.ok(project).build();
@@ -531,9 +530,9 @@ public class ProjectResource extends AbstractApiResource {
         } else if (jsonProject.getClassifier() == null) {
             jsonProject.setClassifier(Classifier.APPLICATION);
         }
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             if (jsonProject.isLatest()) {
-                final Project oldLatest = qm.getLatestProjectVersion(jsonProject.getName());
+                final Project oldLatest = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(jsonProject.getName()));
                 if (oldLatest != null) {
                     requireAccess(qm, oldLatest);
                 }
@@ -576,8 +575,10 @@ public class ProjectResource extends AbstractApiResource {
                         userTeams = List.of();
                     }
 
-                    boolean isAdmin = qm.hasAccessManagementPermission(principal);
-                    List<Team> visibleTeams = isAdmin ? qm.getTeams().getList(Team.class) : userTeams;
+                    boolean canSeeAllTeams =
+                            super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
+                                    || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
+                    List<Team> visibleTeams = canSeeAllTeams ? qm.getTeams().getList(Team.class) : userTeams;
                     final var visibleTeamByUuid = new HashMap<UUID, Team>(visibleTeams.size());
                     final var visibleTeamByName = new HashMap<String, Team>(visibleTeams.size());
                     for (final Team visibleTeam : visibleTeams) {
@@ -695,7 +696,7 @@ public class ProjectResource extends AbstractApiResource {
         } else if (jsonProject.getClassifier() == null) {
             jsonProject.setClassifier(Classifier.APPLICATION);
         }
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final Project updatedProject = qm.callInTransaction(() -> {
                 Project project = qm.getObjectByUuid(Project.class, jsonProject.getUuid());
                 if (project == null) {
@@ -722,7 +723,7 @@ public class ProjectResource extends AbstractApiResource {
                 }
                 // if project is newly set to latest, ensure user has access to current latest version to modify it
                 if (jsonProject.isLatest() && !project.isLatest()) {
-                    final Project oldLatest = qm.getLatestProjectVersion(name);
+                    final Project oldLatest = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(name));
                     if (oldLatest != null) {
                         requireAccess(qm, oldLatest);
                     }
@@ -816,7 +817,7 @@ public class ProjectResource extends AbstractApiResource {
                 validator.validateProperty(jsonProject, "swidTagId")
         );
 
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final Project updatedProject = qm.callInTransaction(() -> {
                 Project project = qm.getObjectByUuid(Project.class, uuid);
                 if (project == null) {
@@ -829,7 +830,7 @@ public class ProjectResource extends AbstractApiResource {
                 // if project is newly set to latest, ensure user has access to current latest version to modify it
                 if (jsonProject.isLatest() && !project.isLatest()) {
                     final var oldName = jsonProject.getName() != null ? jsonProject.getName() : project.getName();
-                    final Project oldLatest = qm.getLatestProjectVersion(oldName);
+                    final Project oldLatest = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(oldName));
                     if (oldLatest != null) {
                         requireAccess(qm, oldLatest);
                     }
@@ -979,7 +980,7 @@ public class ProjectResource extends AbstractApiResource {
     public Response deleteProject(
             @Parameter(description = "The UUID of the project to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.runInTransaction(() -> {
                 final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
                 if (project == null) {
@@ -993,17 +994,10 @@ public class ProjectResource extends AbstractApiResource {
                 try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());
                      var _ = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
                      var _ = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
-
                     LOGGER.info("Project {} deletion request by {}", project, super.getPrincipal().getName());
                 }
 
-                try (final Handle jdbiHandle = createLocalJdbi(qm).open()) {
-                    final var projectDao = jdbiHandle.attach(ProjectDao.class);
-                    projectDao.deleteProject(project.getUuid());
-                } catch (RuntimeException e) {
-                    LOGGER.error("Failed to delete project", e);
-                    throw new ServerErrorException(Response.Status.INTERNAL_SERVER_ERROR);
-                }
+                qm.delete(project);
             });
         }
 
@@ -1067,7 +1061,7 @@ public class ProjectResource extends AbstractApiResource {
                 validator.validateProperty(jsonRequest, "project"),
                 validator.validateProperty(jsonRequest, "version")
         );
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.runInTransaction(() -> {
                 final Project sourceProject = qm.getObjectByUuid(Project.class, jsonRequest.getProject(), Project.FetchGroup.ALL.name());
                 if (sourceProject == null) {
@@ -1085,7 +1079,7 @@ public class ProjectResource extends AbstractApiResource {
                 }
                 // if project is newly set to latest, ensure user has access to current latest version to modify it
                 if (jsonRequest.makeCloneLatest() && !sourceProject.isLatest()) {
-                    final Project oldLatest = qm.getLatestProjectVersion(sourceProject.getName());
+                    final Project oldLatest = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(sourceProject.getName()));
                     if (oldLatest != null) {
                         requireAccess(qm, oldLatest);
                     }

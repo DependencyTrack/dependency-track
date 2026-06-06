@@ -48,8 +48,7 @@ import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
-public class NotificationQueryManager extends QueryManager implements IQueryManager {
-
+public class NotificationQueryManager extends QueryManager {
 
     /**
      * Constructs a new QueryManager.
@@ -224,19 +223,6 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
     }
 
     /**
-     * Retrieves a DefaultNotificationPublisher by its name.
-     * @param name The name of the DefaultNotificationPublisher
-     * @return a DefaultNotificationPublisher
-     */
-    @Override
-    public NotificationPublisher getDefaultNotificationPublisherByName(final String name) {
-        final Query<NotificationPublisher> query = pm.newQuery(NotificationPublisher.class, "name == :name && defaultPublisher == true");
-        query.getFetchPlan().addGroup(NotificationPublisher.FetchGroup.ALL.name());
-        query.setRange(0, 1);
-        return singleResult(query.execute(name));
-    }
-
-    /**
      * Creates a NotificationPublisher object.
      * @param name The name of the NotificationPublisher
      * @return a NotificationPublisher
@@ -259,25 +245,6 @@ public class NotificationQueryManager extends QueryManager implements IQueryMana
             publisher.setDefaultPublisher(defaultPublisher);
             return pm.makePersistent(publisher);
         });
-    }
-
-    /**
-     * Updates a NotificationPublisher.
-     * @return a NotificationPublisher object
-     */
-    @Override
-    public NotificationPublisher updateNotificationPublisher(NotificationPublisher transientPublisher) {
-        final var publisher = getObjectById(NotificationPublisher.class, transientPublisher.getId());
-        if (publisher != null) {
-            publisher.setName(transientPublisher.getName());
-            publisher.setDescription(transientPublisher.getDescription());
-            publisher.setExtensionName(transientPublisher.getExtensionName());
-            publisher.setTemplate(transientPublisher.getTemplate());
-            publisher.setTemplateMimeType(transientPublisher.getTemplateMimeType());
-            publisher.setDefaultPublisher(transientPublisher.isDefaultPublisher());
-            return persist(publisher);
-        }
-        return null;
     }
 
     /**

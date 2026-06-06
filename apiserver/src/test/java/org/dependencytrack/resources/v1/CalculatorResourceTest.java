@@ -19,8 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
@@ -39,8 +38,7 @@ public class CalculatorResourceTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(CalculatorResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class));
+                    .register(AuthFeature.class));
 
     @Test
     public void getCvssScoresV3Test() {

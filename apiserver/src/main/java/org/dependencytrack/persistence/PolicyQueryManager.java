@@ -54,7 +54,7 @@ import static org.dependencytrack.notification.api.NotificationFactory.createPol
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
-final class PolicyQueryManager extends QueryManager implements IQueryManager {
+final class PolicyQueryManager extends QueryManager {
 
     /**
      * Constructs a new QueryManager.

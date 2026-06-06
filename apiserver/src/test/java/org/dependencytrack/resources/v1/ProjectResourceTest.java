@@ -24,8 +24,7 @@ import alpine.model.ManagedUser;
 import alpine.model.Team;
 import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import alpine.server.resources.GlobalExceptionHandler;
 import com.github.packageurl.PackageURL;
 import jakarta.json.Json;
@@ -115,8 +114,7 @@ class ProjectResourceTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(ProjectResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class)
+                    .register(AuthFeature.class)
                     .register(GlobalExceptionHandler.class));
 
     @Test
@@ -3529,7 +3527,8 @@ class ProjectResourceTest extends ResourceTest {
                         assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
                     });
 
-                    assertThat(qm.getAllVulnerabilities(clonedComponent, false)).containsOnly(vuln);
+                    assertThat(qm.getVulnerabilities(clonedComponent, false).getList(Vulnerability.class))
+                            .satisfiesExactly(v -> assertThat(v.getId()).isEqualTo(vuln.getId()));
 
                     assertThat(qm.getAnalysis(clonedComponent, vuln)).satisfies(clonedAnalysis -> {
                         assertThat(clonedAnalysis.getId()).isNotEqualTo(analysisId);
@@ -4283,6 +4282,42 @@ class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assertions.assertEquals(403, response.getStatus(), 0);
+    }
+
+    @Test
+    void createProjectIsLatestPreviousLatestInaccessibleTest() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
+        enablePortfolioAccessControl();
+
+        final var previousLatest = new Project();
+        previousLatest.setName("acme-app");
+        previousLatest.setVersion("1.0.0");
+        previousLatest.setIsLatest(true);
+        qm.persist(previousLatest);
+
+        final Response response = jersey
+                .target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "version": "2.0.0",
+                          "isLatest": true
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 403,
+                  "title": "Project access denied",
+                  "detail": "Access to the requested project is forbidden"
+                }
+                """);
+
+        qm.getPersistenceManager().refresh(previousLatest);
+        assertThat(previousLatest.isLatest()).isTrue();
+        assertThat(qm.getProject("acme-app", "2.0.0")).isNull();
     }
 
     @Test

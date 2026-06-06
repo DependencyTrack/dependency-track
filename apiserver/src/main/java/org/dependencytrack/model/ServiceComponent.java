@@ -25,6 +25,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
@@ -42,12 +46,7 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Serialized;
 import javax.jdo.annotations.Unique;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -276,26 +275,12 @@ public class ServiceComponent implements Serializable {
         return data;
     }
 
-    public void addData(DataClassification data) {
-        if (this.data == null) {
-            this.data = new ArrayList<>();
-        }
-        this.data.add(data);
-    }
-
     public void setData(List<DataClassification> data) {
         this.data = data;
     }
 
     public List<ExternalReference> getExternalReferences() {
         return externalReferences;
-    }
-
-    public void addExternalReference(ExternalReference externalReferences) {
-        if (this.externalReferences == null) {
-            this.externalReferences = new ArrayList<>();
-        }
-        this.externalReferences.add(externalReferences);
     }
 
     public void setExternalReferences(List<ExternalReference> externalReferences) {

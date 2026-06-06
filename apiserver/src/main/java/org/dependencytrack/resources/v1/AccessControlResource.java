@@ -149,7 +149,7 @@ public class AccessControlResource extends AbstractApiResource {
                 validator.validateProperty(request, "team"),
                 validator.validateProperty(request, "project")
         );
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.runInTransaction(() -> {
                 final Team team = qm.getObjectByUuid(Team.class, request.getTeam());
                 if (team == null) {
@@ -198,7 +198,7 @@ public class AccessControlResource extends AbstractApiResource {
             @PathParam("teamUuid") @ValidUuid String teamUuid,
             @Parameter(description = "The UUID of the project to delete the mapping for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("projectUuid") @ValidUuid String projectUuid) {
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.runInTransaction(() -> {
                 final Team team = qm.getObjectByUuid(Team.class, teamUuid);
                 if (team == null) {

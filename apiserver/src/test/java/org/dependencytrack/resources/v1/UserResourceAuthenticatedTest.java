@@ -26,8 +26,7 @@ import alpine.model.User;
 import alpine.model.UserSession;
 import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
@@ -64,8 +63,7 @@ class UserResourceAuthenticatedTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(UserResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class));
+                    .register(AuthFeature.class));
 
     private ManagedUser testUser;
     private String sessionToken;

@@ -88,7 +88,7 @@ public class PermissionResource extends AbstractApiResource {
     })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_READ})
     public Response getAllPermissions() {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final List<Permission> permissions = qm.getPermissions();
             return Response.ok(permissions).build();
         }
@@ -118,7 +118,7 @@ public class PermissionResource extends AbstractApiResource {
             @PathParam("username") String username,
             @Parameter(description = "A valid permission", required = true)
             @PathParam("permission") String permissionName) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 User principal = qm.getUser(username);
                 if (principal == null) {
@@ -165,7 +165,7 @@ public class PermissionResource extends AbstractApiResource {
             @PathParam("username") String username,
             @Parameter(description = "A valid permission", required = true)
             @PathParam("permission") String permissionName) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 User principal = qm.getUser(username);
                 if (principal == null) {
@@ -211,7 +211,7 @@ public class PermissionResource extends AbstractApiResource {
             @PathParam("uuid") @ValidUuid String uuid,
             @Parameter(description = "A valid permission", required = true)
             @PathParam("permission") String permissionName) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 Team team = qm.getObjectByUuid(Team.class, uuid);
                 if (team == null) {
@@ -257,7 +257,7 @@ public class PermissionResource extends AbstractApiResource {
             @PathParam("uuid") @ValidUuid String uuid,
             @Parameter(description = "A valid permission", required = true)
             @PathParam("permission") String permissionName) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 Team team = qm.getObjectByUuid(Team.class, uuid, Team.FetchGroup.ALL.name());
                 if (team == null) {
@@ -298,7 +298,7 @@ public class PermissionResource extends AbstractApiResource {
     @PermissionRequired({ Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_UPDATE })
     public Response setUserPermissions(
             @Parameter(description = "A username and valid list permission") @Valid UserPermissionsSetRequest request) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 User user = qm.getUser(request.username());
                 if (user == null)
@@ -354,7 +354,7 @@ public class PermissionResource extends AbstractApiResource {
     })
     @PermissionRequired({ Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_UPDATE })
     public Response setTeamPermissions(@Parameter(description = "Team UUID and requested permissions") @Valid TeamPermissionsSetRequest request) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 Team team = qm.getObjectByUuid(Team.class, request.team(), Team.FetchGroup.ALL.name());
                 if (team == null)

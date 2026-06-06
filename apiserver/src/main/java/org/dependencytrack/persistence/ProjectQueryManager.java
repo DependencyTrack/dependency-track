@@ -24,7 +24,6 @@ import alpine.model.User;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.datanucleus.api.jdo.JDOQuery;
-import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
@@ -55,7 +54,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistentAll;
 
-final class ProjectQueryManager extends QueryManager implements IQueryManager {
+final class ProjectQueryManager extends QueryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectQueryManager.class);
 
@@ -449,10 +448,9 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
 
     @Override
     public boolean hasAccess(final Principal principal, final Project project) {
-        if (!isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)
-                || principal == null // System request (e.g. MetricsUpdateTask, etc) where there isn't a principal
-                || getEffectivePermissions(principal).contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS))
+        if (isPortfolioAclBypassed(principal)) {
             return true;
+        }
 
         final Query<?> query;
         switch (principal) {
@@ -493,9 +491,7 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
     }
 
     void preprocessACLs(final Query<?> query, final String inputFilter, final Map<String, Object> params) {
-        if (principal == null
-            || !isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED)
-            || getEffectivePermissions(principal).contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)) {
+        if (isPortfolioAclBypassed(principal)) {
             query.setFilter(inputFilter);
             return;
         }
@@ -580,17 +576,6 @@ final class ProjectQueryManager extends QueryManager implements IQueryManager {
         }
         return false;
     }
-
-    @Override
-    public boolean hasAccessManagementPermission(final User user) {
-        return hasPermission(user, Permissions.Constants.ACCESS_MANAGEMENT, true);
-    }
-
-    @Override
-    public boolean hasAccessManagementPermission(final ApiKey apiKey) {
-        return hasPermission(apiKey, Permissions.ACCESS_MANAGEMENT.name());
-    }
-
 
     /**
      * Check whether a {@link Project} with a given {@code name} and {@code version} exists.

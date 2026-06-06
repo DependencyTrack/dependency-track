@@ -109,10 +109,6 @@ public class JdbiFactory {
      * Usage of the global instance should be preferred to make the best possible use of JDBI's
      * internal caching mechanisms. However, this instance can't participate in transactions
      * initiated by JDO (via {@link QueryManager} or {@link PersistenceManager}).
-     * <p>
-     * If {@link Jdbi} usage in an active JDO {@link javax.jdo.Transaction} is desired,
-     * use {@link #createLocalJdbi(QueryManager)} instead, which will use the same {@link Connection}
-     * as the provided {@link QueryManager}.
      *
      * @return The global {@link Jdbi} instance
      */
@@ -134,40 +130,8 @@ public class JdbiFactory {
                 .jdbi();
     }
 
-    /**
-     * Create a new local {@link Jdbi} instance.
-     * <p>
-     * The instance will use the same {@link Connection} used by the given {@link QueryManager},
-     * allowing it to participate in {@link javax.jdo.Transaction}s initiated by {@code qm}.
-     * <p>
-     * Because using local {@link Jdbi} instances has a high performance impact (e.g. due to ineffective caching),
-     * this method will throw if {@code qm} is not participating in an active {@link javax.jdo.Transaction}
-     * already.
-     * <p>
-     * Just like {@link QueryManager} itself, {@link Jdbi} instances created by this method are <em>not</em>
-     * thread safe!
-     *
-     * @param qm The {@link QueryManager} to use the underlying {@link Connection} of
-     * @return A new {@link Jdbi} instance
-     * @throws IllegalStateException When the given {@link QueryManager} is not participating
-     *                               in an active {@link javax.jdo.Transaction}
-     */
-    public static Jdbi createLocalJdbi(final QueryManager qm) {
-        return createLocalJdbi(qm.getPersistenceManager());
-    }
-
     public static Jdbi createLocalJdbi(final DataSource dataSource) {
         return customizeJdbi(Jdbi.create(dataSource));
-    }
-
-    private static Jdbi createLocalJdbi(final PersistenceManager pm) {
-        if (!pm.currentTransaction().isActive()) {
-            throw new IllegalStateException("""
-                    Local JDBI instances must not be used outside of an active JDO transaction. \
-                    Use the global instance instead if combining JDBI with JDO transactions is not needed.""");
-        }
-
-        return customizeJdbi(Jdbi.create(new JdoConnectionFactory(pm)));
     }
 
     private record GlobalInstanceHolder(Jdbi jdbi, DataSource dataSource) {

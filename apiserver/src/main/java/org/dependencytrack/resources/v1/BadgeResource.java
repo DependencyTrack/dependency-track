@@ -75,7 +75,7 @@ public class BadgeResource extends AbstractApiResource {
     public Response getProjectVulnerabilitiesBadge(
             @Parameter(description = "The UUID of the project to retrieve metrics for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             if (!qm.isEnabled(GENERAL_BADGE_ENABLED)) {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
@@ -118,7 +118,7 @@ public class BadgeResource extends AbstractApiResource {
             @PathParam("name") String name,
             @Parameter(description = "The version of the project to query on", required = true)
             @PathParam("version") String version) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             if (!qm.isEnabled(GENERAL_BADGE_ENABLED)) {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
@@ -159,7 +159,7 @@ public class BadgeResource extends AbstractApiResource {
     public Response getProjectPolicyViolationsBadge(
             @Parameter(description = "The UUID of the project to retrieve a badge for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             if (!qm.isEnabled(GENERAL_BADGE_ENABLED)) {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
@@ -202,7 +202,7 @@ public class BadgeResource extends AbstractApiResource {
             @PathParam("name") String name,
             @Parameter(description = "The version of the project to query on", required = true)
             @PathParam("version") String version) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             if (!qm.isEnabled(GENERAL_BADGE_ENABLED)) {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }

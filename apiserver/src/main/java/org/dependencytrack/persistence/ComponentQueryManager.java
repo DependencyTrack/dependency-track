@@ -61,7 +61,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.assertNonPersistent;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
-final class ComponentQueryManager extends QueryManager implements IQueryManager {
+final class ComponentQueryManager extends QueryManager {
 
     /**
      * Constructs a new QueryManager.
@@ -115,7 +115,6 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
      * @return a List of Dependency objects
      */
     public PaginatedResult getComponents(final Project project, final boolean includeMetrics, final boolean onlyOutdated, final boolean onlyDirect) {
-        List<Component> componentsResult = new ArrayList<>();
         String queryString = """
                         SELECT "A0"."ID" AS "id",
                         "A0"."NAME" AS "name",

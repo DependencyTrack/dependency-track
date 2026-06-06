@@ -24,8 +24,7 @@ import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
@@ -98,8 +97,7 @@ public class FindingResourceTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(FindingResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class)
+                    .register(AuthFeature.class)
                     .register(new AbstractBinder() {
                         @Override
                         protected void configure() {

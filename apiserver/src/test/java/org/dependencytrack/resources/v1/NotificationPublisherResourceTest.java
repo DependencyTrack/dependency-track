@@ -19,8 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
@@ -66,8 +65,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(NotificationPublisherResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class)
+                    .register(AuthFeature.class)
                     .register(new AbstractBinder() {
                         @Override
                         protected void configure() {
@@ -292,7 +290,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
 
         new DefaultNotificationPublisherInitializer().seedDefaultPublishers(pluginManager);
 
-        final NotificationPublisher slackPublisher = qm.getDefaultNotificationPublisherByName("Slack");
+        final NotificationPublisher slackPublisher = qm.getNotificationPublisher("Slack");
         assertThat(slackPublisher).isNotNull();
 
         final var updateRequest = new UpdateNotificationPublisherRequest(
@@ -437,7 +435,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
 
         new DefaultNotificationPublisherInitializer().seedDefaultPublishers(pluginManager);
 
-        final NotificationPublisher slackPublisher = qm.getDefaultNotificationPublisherByName("Slack");
+        final NotificationPublisher slackPublisher = qm.getNotificationPublisher("Slack");
 
         final Response response = jersey.target(
                         "%s/%s/configSchema".formatted(V1_NOTIFICATION_PUBLISHER, slackPublisher.getUuid()))
@@ -460,7 +458,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
 
         new DefaultNotificationPublisherInitializer().seedDefaultPublishers(pluginManager);
 
-        NotificationPublisher slackPublisher = qm.getDefaultNotificationPublisherByName("Slack");
+        NotificationPublisher slackPublisher = qm.getNotificationPublisher("Slack");
         slackPublisher.setName(slackPublisher.getName() + " Test Rule");
         qm.persist(slackPublisher);
         qm.detach(NotificationPublisher.class, slackPublisher.getId());

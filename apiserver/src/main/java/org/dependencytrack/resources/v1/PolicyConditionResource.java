@@ -97,7 +97,7 @@ public class PolicyConditionResource extends AbstractApiResource {
         failOnValidationError(
                 validator.validateProperty(jsonPolicyCondition, "value")
         );
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             PolicyCondition pcUpdated = qm.callInTransaction(() -> {
                 Policy policy = qm.getObjectByUuid(Policy.class, uuid);
                 if (policy != null) {
@@ -142,7 +142,7 @@ public class PolicyConditionResource extends AbstractApiResource {
         failOnValidationError(
                 validator.validateProperty(jsonPolicyCondition, "value")
         );
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             PolicyCondition pcUpdated = qm.callInTransaction(() -> {
                 PolicyCondition pc = qm.getObjectByUuid(PolicyCondition.class, jsonPolicyCondition.getUuid());
                 if (pc != null) {
@@ -179,7 +179,7 @@ public class PolicyConditionResource extends AbstractApiResource {
     public Response deletePolicyCondition(
             @Parameter(description = "The UUID of the policy condition to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final PolicyCondition pc = qm.getObjectByUuid(PolicyCondition.class, uuid);
                 if (pc != null) {

@@ -23,6 +23,7 @@ import alpine.model.User;
 import alpine.persistence.OrderDirection;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.persistence.Ordering;
 import org.dependencytrack.persistence.jdbi.ApiRequestConfig.OrderingColumn;
 import org.jdbi.v3.core.qualifier.QualifiedType;
@@ -124,11 +125,15 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
                 return;
             }
             if (config.orderingAllowedColumns().isEmpty()) {
-                throw new IllegalArgumentException("Ordering is not allowed");
+                throw new InvalidSortFieldException(apiRequest.getOrderBy());
             }
-            final OrderingColumn orderingColumn = config.orderingAllowedColumn(ordering.by())
-                    .orElseThrow(() -> new IllegalArgumentException("Ordering by column %s is not allowed; Allowed columns are: %s"
-                            .formatted(ordering.by(), config.orderingAllowedColumns().stream().map(OrderingColumn::name).toList())));
+            final OrderingColumn orderingColumn = config
+                    .orderingAllowedColumn(ordering.by())
+                    .orElseThrow(() -> new InvalidSortFieldException(
+                            ordering.by(),
+                            config.orderingAllowedColumns().stream()
+                                    .map(OrderingColumn::name)
+                                    .toList()));
 
             orderingBuilder.append("ORDER BY ");
             if (orderingColumn.queryName() == null) {
@@ -152,9 +157,13 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
                     throw new IllegalArgumentException("alwaysBy must consist of no more than two parts");
                 }
 
-                final OrderingColumn orderingColumnAlwaysBy = config.orderingAllowedColumn(alwaysByParts[0])
-                        .orElseThrow(() -> new IllegalArgumentException("Ordering by column %s is not allowed; Allowed columns are: %s"
-                                .formatted(alwaysByParts[0], config.orderingAllowedColumns().stream().map(OrderingColumn::name).toList())));
+                final OrderingColumn orderingColumnAlwaysBy = config
+                        .orderingAllowedColumn(alwaysByParts[0])
+                        .orElseThrow(() -> new InvalidSortFieldException(
+                                alwaysByParts[0],
+                                config.orderingAllowedColumns().stream()
+                                        .map(OrderingColumn::name)
+                                        .toList()));
 
                 if (orderingColumnAlwaysBy.queryName() == null) {
                     orderingBuilder
@@ -183,8 +192,8 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
 
     private void definePagination(final StatementContext ctx) {
         if (apiRequest != null
-            && apiRequest.getPagination() != null
-            && apiRequest.getPagination().isPaginated()) {
+                && apiRequest.getPagination() != null
+                && apiRequest.getPagination().isPaginated()) {
             ctx.define(ATTRIBUTE_API_OFFSET_LIMIT_CLAUSE, "OFFSET :paginationOffset FETCH NEXT :paginationLimit ROWS ONLY");
             ctx.getBinding().addNamed("paginationOffset", apiRequest.getPagination().getOffset());
             ctx.getBinding().addNamed("paginationLimit", apiRequest.getPagination().getLimit());

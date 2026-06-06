@@ -38,6 +38,7 @@ import org.dependencytrack.api.v2.model.ProjectState;
 import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.pagination.Page;
+import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.exception.ProjectAccessDeniedException;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
@@ -53,8 +54,6 @@ import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.query.ListComponentsQuery;
 import org.dependencytrack.resources.AbstractApiResource;
-import org.dependencytrack.resources.v2.exception.ProblemDetailsException;
-import org.dependencytrack.resources.v2.exception.ProblemType;
 import org.dependencytrack.util.InternalComponentIdentifier;
 import org.dependencytrack.util.PurlUtil;
 import org.owasp.security.logging.SecurityMarkers;
@@ -182,7 +181,8 @@ public class ComponentsResource extends AbstractApiResource implements Component
                 case "name" -> ListComponentsQuery.SortBy.NAME;
                 case "group" -> ListComponentsQuery.SortBy.GROUP;
                 case "last_inherited_risk_score" -> ListComponentsQuery.SortBy.LAST_RISKSCORE;
-                default -> throw ProblemDetailsException.of(ProblemType.INVALID_SORT_BY, "Invalid sort_by: " + sortBy);
+                default -> throw new InvalidSortFieldException(
+                        sortBy, List.of("name", "group", "last_inherited_risk_score"));
             };
 
             final Page<Component> componentsPage = handle.attach(ComponentDao.class)

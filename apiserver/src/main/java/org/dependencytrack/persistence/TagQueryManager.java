@@ -20,12 +20,12 @@ package org.dependencytrack.persistence;
 
 import alpine.model.ApiKey;
 import alpine.model.User;
-import alpine.persistence.NotSortableException;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.exception.TagOperationFailedException;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Policy;
@@ -142,7 +142,9 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("Tag", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of(
+                    "name", "projectCount", "collectionProjectCount",
+                    "policyCount", "notificationRuleCount", "vulnerabilityCount"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
@@ -378,7 +380,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("TaggedProject", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of("name", "version"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
@@ -480,7 +482,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("TaggedCollectionProject", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of("name", "version"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
@@ -528,7 +530,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("TaggedPolicy", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of("name"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
@@ -723,7 +725,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("TaggedNotificationRule", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of("name"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
@@ -814,7 +816,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("TaggedVulnerability", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of("vulnId"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();

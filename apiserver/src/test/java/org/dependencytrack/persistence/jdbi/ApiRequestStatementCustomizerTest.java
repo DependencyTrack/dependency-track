@@ -29,6 +29,7 @@ import alpine.persistence.Pagination;
 import alpine.resources.AlpineRequest;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.persistence.jdbi.ApiRequestConfig.OrderingColumn;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.core.statement.StatementCustomizer;
@@ -158,14 +159,18 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* orderDirection */ OrderDirection.DESCENDING
         );
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
+        assertThatExceptionOfType(InvalidSortFieldException.class)
                 .isThrownBy(() -> useJdbiHandle(request, handle -> handle
                         .configure(ApiRequestConfig.class, config ->
                                 config.setOrderingAllowedColumns(Collections.emptySet()))
                         .createQuery(TEST_QUERY_TEMPLATE)
                         .mapTo(Integer.class)
                         .findOne()))
-                .withMessage("Ordering is not allowed");
+                .withMessage("Sorting by field 'value' is not supported")
+                .satisfies(e -> {
+                    assertThat(e.getFieldName()).isEqualTo("value");
+                    assertThat(e.getAllowedFieldNames()).isNull();
+                });
     }
 
     @Test
@@ -178,14 +183,18 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* orderDirection */ OrderDirection.DESCENDING
         );
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
+        assertThatExceptionOfType(InvalidSortFieldException.class)
                 .isThrownBy(() -> useJdbiHandle(request, handle -> handle
                         .configure(ApiRequestConfig.class, config ->
                                 config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA"))))
                         .createQuery(TEST_QUERY_TEMPLATE)
                         .mapTo(Integer.class)
                         .findOne()))
-                .withMessage("Ordering by column foobar is not allowed; Allowed columns are: [valueA]");
+                .withMessage("Sorting by field 'foobar' is not supported")
+                .satisfies(e -> {
+                    assertThat(e.getFieldName()).isEqualTo("foobar");
+                    assertThat(e.getAllowedFieldNames()).containsOnly("valueA");
+                });
     }
 
     @Test
@@ -223,7 +232,7 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                 /* orderDirection */ OrderDirection.DESCENDING
         );
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
+        assertThatExceptionOfType(InvalidSortFieldException.class)
                 .isThrownBy(() -> useJdbiHandle(request, handle -> handle
                         .configure(ApiRequestConfig.class, config -> {
                             config.setOrderingAllowedColumns(Set.of(new OrderingColumn("valueA")));
@@ -232,7 +241,11 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                         .createQuery(TEST_QUERY_TEMPLATE)
                         .mapTo(Integer.class)
                         .findOne()))
-                .withMessage("Ordering by column foobar is not allowed; Allowed columns are: [valueA]");
+                .withMessage("Sorting by field 'foobar' is not supported")
+                .satisfies(e -> {
+                    assertThat(e.getFieldName()).isEqualTo("foobar");
+                    assertThat(e.getAllowedFieldNames()).containsOnly("valueA");
+                });
     }
 
     @Test

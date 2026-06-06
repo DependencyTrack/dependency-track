@@ -139,6 +139,80 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldReturn400WhenSortNameIsNotSupportedForGetProjects() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .queryParam("sortName", "invalidField")
+                .queryParam("sortOrder", "asc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response))
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "type": "/problems/invalid-sort-field",
+                          "status": 400,
+                          "title": "Invalid sort field",
+                          "detail": "Sorting by field 'invalidField' is not supported",
+                          "invalidField": "invalidField",
+                          "supportedFields": [
+                            "id",
+                            "group",
+                            "name",
+                            "version",
+                            "classifier",
+                            "inactiveSince",
+                            "isLatest",
+                            "lastBomImport",
+                            "lastBomImportFormat",
+                            "lastInheritedRiskScore"
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
+    void shouldReturn400WhenSortNameIsNotSupportedForGetProjectsConcise() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Response response = jersey.target(V1_PROJECT + "/concise")
+                .queryParam("sortName", "invalidField")
+                .queryParam("sortOrder", "asc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response))
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "type": "/problems/invalid-sort-field",
+                          "status": 400,
+                          "title": "Invalid sort field",
+                          "detail": "Sorting by field 'invalidField' is not supported",
+                          "invalidField": "invalidField",
+                          "supportedFields": [
+                            "id",
+                            "group",
+                            "name",
+                            "version",
+                            "classifier",
+                            "inactiveSince",
+                            "isLatest",
+                            "lastBomImport",
+                            "lastBomImportFormat",
+                            "lastRiskScore"
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
     void getProjectsWithDataTest() throws Exception {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
         var project = qm.createProject("Acme Example", null, "1.0", null, null, new PackageURL(RepositoryType.MAVEN.toString(), "foo", "acme", "1.0", null, null), null, false);

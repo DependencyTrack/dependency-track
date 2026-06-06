@@ -27,13 +27,13 @@ import alpine.model.Team;
 import alpine.model.User;
 import alpine.persistence.AbstractAlpineQueryManager;
 import alpine.persistence.AlpineQueryManager;
-import alpine.persistence.NotSortableException;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.apache.commons.lang3.ClassUtils;
 import org.datanucleus.api.jdo.JDOQuery;
+import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.Bom;
@@ -216,12 +216,10 @@ public class QueryManager extends AlpineQueryManager {
                 final boolean foundNonPersistentMember = Arrays.stream(iq.getCandidateClass().getDeclaredFields())
                         .anyMatch(field -> field.getName().equals(candidateField));
                 if (foundNonPersistentMember) {
-                    throw new NotSortableException(iq.getCandidateClass().getSimpleName(), candidateField,
-                            "The field is computed and can not be queried or sorted by");
+                    throw new InvalidSortFieldException(candidateField);
                 }
 
-                throw new NotSortableException(iq.getCandidateClass().getSimpleName(), candidateField,
-                        "The field does not exist");
+                throw new InvalidSortFieldException(candidateField);
             }
         }
         return query;

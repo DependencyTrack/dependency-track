@@ -86,6 +86,14 @@ public class AuthorizationFilterTest extends JerseyTest {
     }
 
     @Test
+    void shouldAllowCorsPreflightWithoutAuthentication() {
+        final Response response = target("/unprotected")
+                .request()
+                .options();
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
     void shouldPopulateEffectivePermissionsOnRequestsWithoutPermissionRequired() {
         final String apiKey;
         try (final var qm = new AlpineQueryManager()) {

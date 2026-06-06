@@ -24,6 +24,7 @@ import alpine.persistence.AlpineQueryManager;
 import alpine.server.auth.PermissionRequired;
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
@@ -58,6 +59,12 @@ public class AuthorizationFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
+        // Bypass authorization for CORS preflight.
+        // AuthenticationFilter does the same, so no principal is available to authorize against.
+        if (HttpMethod.OPTIONS.equals(requestContext.getMethod())) {
+            return;
+        }
+
         final Principal principal = (Principal) requestContext.getProperty("Principal");
         if (principal == null) {
             LOGGER.info(SecurityMarkers.SECURITY_FAILURE, "A request was made without the assertion of a valid user principal");

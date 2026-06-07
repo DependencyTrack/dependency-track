@@ -278,11 +278,11 @@ public interface FindingDao {
             <#if apiOrderByClause??>
               ${apiOrderByClause}
             <#else>
-             ORDER BY fa."ID"
+             ORDER BY c."ID", v."ID"
             </#if>
              ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "fa.\"ID\""), by = {
+    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""), by = {
             @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
             @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
             @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
@@ -481,10 +481,12 @@ public interface FindingDao {
              </#if>
              <#if apiOrderByClause??>
               ${apiOrderByClause}
+             <#else>
+              ORDER BY c."ID", v."ID"
              </#if>
              ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "fa.\"ID\""), by = {
+    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""), by = {
             @AllowApiOrdering.Column(name = "vulnerability.title", queryName = "v.\"TITLE\""),
             @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
             @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),

@@ -29,26 +29,21 @@ import java.util.function.Supplier;
 /// @since 5.0.0
 public final class ProjectAccess {
 
-    private static final ThreadLocal<Boolean> UNRESTRICTED = ThreadLocal.withInitial(() -> false);
+    private static final ScopedValue<Boolean> UNRESTRICTED = ScopedValue.newInstance();
 
     private ProjectAccess() {
     }
 
     public static <T> T unrestricted(Supplier<T> supplier) {
-        if (UNRESTRICTED.get()) {
+        if (isUnrestricted()) {
             return supplier.get();
         }
 
-        UNRESTRICTED.set(true);
-        try {
-            return supplier.get();
-        } finally {
-            UNRESTRICTED.remove();
-        }
+        return ScopedValue.where(UNRESTRICTED, true).call(supplier::get);
     }
 
     public static boolean isUnrestricted() {
-        return UNRESTRICTED.get();
+        return UNRESTRICTED.isBound() && UNRESTRICTED.get();
     }
 
 }

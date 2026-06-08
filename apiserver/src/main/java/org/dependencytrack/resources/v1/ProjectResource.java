@@ -480,7 +480,12 @@ public class ProjectResource extends AbstractApiResource {
     @Operation(
             summary = "Creates a new project",
             description = """
-                    <p>If a parent project exists, <code>parent.uuid</code> is required</p>
+                    <p>
+                      To create the project under a parent, set <code>parent</code> to an object
+                      containing the parent's <code>uuid</code>. To create a top-level project,
+                      omit <code>parent</code> or set it to <code>null</code>. Providing
+                      <code>parent</code> without a non-null <code>uuid</code> is rejected with 400.
+                    </p>
                     <p>
                       When portfolio access control is enabled, one or more teams to grant access
                       to can be provided via <code>accessTeams</code>. Either <code>uuid</code> or
@@ -538,8 +543,15 @@ public class ProjectResource extends AbstractApiResource {
                 }
             }
             final Project createdProject = qm.callInTransaction(() -> {
-                if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
-                    Project parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
+                if (jsonProject.getParent() != null) {
+                    final UUID parentUuid = jsonProject.getParent().getUuid();
+                    if (parentUuid == null) {
+                        throw new ClientErrorException(Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity("parent.uuid must be provided when parent is set")
+                                .build());
+                    }
+                    final Project parent = qm.getObjectByUuid(Project.class, parentUuid);
                     if (parent == null) {
                         throw new NoSuchElementException("Parent project could not be found");
                     }
@@ -653,7 +665,14 @@ public class ProjectResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Updates a project",
-            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>"
+            description = """
+                    <p>
+                      To re-parent the project, set <code>parent</code> to an object containing
+                      the new parent's <code>uuid</code>. Omit <code>parent</code> (or set it to
+                      <code>null</code>) to leave the parent unchanged. Providing <code>parent</code>
+                      without a non-null <code>uuid</code> is rejected with 400.
+                    </p>
+                    <p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>"""
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -661,6 +680,7 @@ public class ProjectResource extends AbstractApiResource {
                     description = "The updated project",
                     content = @Content(schema = @Schema(implementation = Project.class))
             ),
+            @ApiResponse(responseCode = "400", description = "Bad Request"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(
                     responseCode = "403",
@@ -707,8 +727,15 @@ public class ProjectResource extends AbstractApiResource {
                 }
                 requireAccess(qm, project);
 
-                if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
-                    Project parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
+                if (jsonProject.getParent() != null) {
+                    final UUID parentUuid = jsonProject.getParent().getUuid();
+                    if (parentUuid == null) {
+                        throw new ClientErrorException(Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity("parent.uuid must be provided when parent is set")
+                                .build());
+                    }
+                    final Project parent = qm.getObjectByUuid(Project.class, parentUuid);
                     if (parent == null) {
                         throw new NoSuchElementException("Parent project could not be found");
                     }
@@ -775,7 +802,14 @@ public class ProjectResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Partially updates a project",
-            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>"
+            description = """
+                    <p>
+                      To re-parent the project, set <code>parent</code> to an object containing
+                      the new parent's <code>uuid</code>. Omit <code>parent</code> (or set it to
+                      <code>null</code>) to leave the parent unchanged. Providing <code>parent</code>
+                      without a non-null <code>uuid</code> is rejected with 400.
+                    </p>
+                    <p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong> or <strong>PORTFOLIO_MANAGEMENT_UPDATE</strong></p>"""
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -783,6 +817,7 @@ public class ProjectResource extends AbstractApiResource {
                     description = "The updated project",
                     content = @Content(schema = @Schema(implementation = Project.class))
             ),
+            @ApiResponse(responseCode = "400", description = "Bad Request"),
             @ApiResponse(
                     responseCode = "403",
                     description = "Access to the requested project, the provided parent, or the previous latest project version, is forbidden",
@@ -858,8 +893,15 @@ public class ProjectResource extends AbstractApiResource {
                     project.setClassifier(null);
                     modified = true;
                 }
-                if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
-                    final Project parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
+                if (jsonProject.getParent() != null) {
+                    final UUID parentUuid = jsonProject.getParent().getUuid();
+                    if (parentUuid == null) {
+                        throw new ClientErrorException(Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity("parent.uuid must be provided when parent is set")
+                                .build());
+                    }
+                    final Project parent = qm.getObjectByUuid(Project.class, parentUuid);
                     if (parent == null) {
                         throw new ClientErrorException(Response
                                 .status(Response.Status.NOT_FOUND)

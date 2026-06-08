@@ -18,18 +18,27 @@
  */
 package org.dependencytrack.persistence.jdbi.mapping;
 
-import org.dependencytrack.model.OrganizationalEntity;
-import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
+import org.apache.commons.lang3.SerializationUtils;
+import org.dependencytrack.model.ExternalReference;
 import org.jdbi.v3.core.mapper.ColumnMapper;
 import org.jdbi.v3.core.statement.StatementContext;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
-public class OrganizationalEntityMapper implements ColumnMapper<OrganizationalEntity> {
+@NullMarked
+public final class ExternalReferencesColumnMapper implements ColumnMapper<List<ExternalReference>> {
 
     @Override
-    public OrganizationalEntity map(ResultSet r, int columnNumber, StatementContext ctx) throws SQLException {
-        return new OrganizationalEntityJsonConverter().convertToAttribute(r.getString(columnNumber));
+    public @Nullable List<ExternalReference> map(ResultSet r, int columnNumber, StatementContext ctx) throws SQLException {
+        if (r.getBytes(columnNumber) == null) {
+            return null;
+        }
+
+        return SerializationUtils.deserialize(r.getBytes(columnNumber));
     }
+
 }

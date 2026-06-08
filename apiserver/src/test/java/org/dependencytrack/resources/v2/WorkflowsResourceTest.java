@@ -381,6 +381,30 @@ class WorkflowsResourceTest extends ResourceTest {
     }
 
     @Test
+    public void shouldReturn400WhenSortByFieldIsNotSupportedForListWorkflowRuns() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
+
+        final Response response = jersey
+                .target("/internal/workflow-runs")
+                .queryParam("sort_by", "invalid_field")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "type": "/problems/invalid-sort-field",
+                  "status": 400,
+                  "title": "Invalid sort field",
+                  "detail": "Sorting by field 'invalid_field' is not supported",
+                  "invalid_field": "invalid_field",
+                  "supported_fields": ["id", "created_at", "completed_at"]
+                }
+                """);
+    }
+
+    @Test
     public void listWorkflowRunHistoryShouldReturnWorkflowRunHistory() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 

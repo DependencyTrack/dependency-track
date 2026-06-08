@@ -202,7 +202,7 @@ get:
         application/problem+json:
           schema:
             anyOf:
-              - $ref: "../../shared/schemas/json-schema-validation-problem-details.yaml"
+              - $ref: "../../shared/schemas/invalid-sort-field-problem-details.yaml"
               - $ref: "../../shared/schemas/problem-details.yaml"
     "401":
       $ref: "../../shared/responses/generic-unauthorized-error.yaml"

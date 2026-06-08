@@ -16,7 +16,24 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.persistence;
+package alpine.server.filters;
 
-interface IQueryManager {
+import alpine.server.auth.AuthenticationNotRequired;
+import jakarta.ws.rs.container.DynamicFeature;
+import jakarta.ws.rs.container.ResourceInfo;
+import jakarta.ws.rs.core.FeatureContext;
+import jakarta.ws.rs.ext.Provider;
+
+/// @since 5.0.0
+@Provider
+public final class AuthFeature implements DynamicFeature {
+
+    @Override
+    public void configure(ResourceInfo resourceInfo, FeatureContext context) {
+        if (!resourceInfo.getResourceMethod().isAnnotationPresent(AuthenticationNotRequired.class)) {
+            context.register(AuthenticationFilter.class);
+            context.register(AuthorizationFilter.class);
+        }
+    }
+
 }

@@ -112,7 +112,7 @@ public class NotificationPublisherResource extends AbstractApiResource {
             Permissions.Constants.SYSTEM_CONFIGURATION_READ
     })
     public Response getAllNotificationPublishers() {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final List<NotificationPublisher> publishers = qm.getAllNotificationPublishers();
             return Response.ok(publishers).build();
         }

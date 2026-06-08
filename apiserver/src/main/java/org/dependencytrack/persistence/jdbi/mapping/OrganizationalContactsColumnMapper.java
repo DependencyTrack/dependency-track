@@ -27,10 +27,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-public class OrganizationalContactMapper implements ColumnMapper<List<OrganizationalContact>> {
+public final class OrganizationalContactsColumnMapper implements ColumnMapper<List<OrganizationalContact>> {
 
     @Override
     public List<OrganizationalContact> map(ResultSet r, int columnNumber, StatementContext ctx) throws SQLException {
         return new OrganizationalContactsJsonConverter().convertToAttribute(r.getString(columnNumber));
     }
+
 }

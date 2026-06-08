@@ -41,7 +41,7 @@ import java.util.List;
 import static org.dependencytrack.notification.api.NotificationFactory.createVulnerabilityAnalysisDecisionChangeNotification;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
-public class AnalysisQueryManager extends QueryManager implements IQueryManager {
+public class AnalysisQueryManager extends QueryManager {
 
 
     /**

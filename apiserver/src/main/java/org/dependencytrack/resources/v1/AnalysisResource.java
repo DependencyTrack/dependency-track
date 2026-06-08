@@ -97,7 +97,7 @@ public class AnalysisResource extends AbstractApiResource {
                 new ValidationTask(RegexSequence.Pattern.UUID, componentUuid, "Component is not a valid UUID"),
                 new ValidationTask(RegexSequence.Pattern.UUID, vulnerabilityUuid, "Vulnerability is not a valid UUID")
         );
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             if (StringUtils.trimToNull(projectUuid) != null) {
                 final Project project = qm.getObjectByUuid(Project.class, projectUuid);
                 if (project == null) {

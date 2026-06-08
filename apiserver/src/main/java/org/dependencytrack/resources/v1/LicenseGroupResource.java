@@ -111,7 +111,7 @@ public class LicenseGroupResource extends AbstractApiResource {
     public Response getLicenseGroup(
             @Parameter(description = "The UUID of the license group to retrieve", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final LicenseGroup licenseGroup = qm.getObjectByUuid(LicenseGroup.class, uuid);
             if (licenseGroup != null) {
                 return Response.ok(licenseGroup).build();
@@ -144,7 +144,7 @@ public class LicenseGroupResource extends AbstractApiResource {
                 validator.validateProperty(jsonLicenseGroup, "name")
         );
 
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 LicenseGroup licenseGroup = qm.getLicenseGroup(StringUtils.trimToNull(jsonLicenseGroup.getName()));
                 if (licenseGroup == null) {
@@ -179,7 +179,7 @@ public class LicenseGroupResource extends AbstractApiResource {
         failOnValidationError(
                 validator.validateProperty(jsonLicenseGroup, "name")
         );
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 LicenseGroup licenseGroup = qm.getObjectByUuid(LicenseGroup.class, jsonLicenseGroup.getUuid());
                 if (licenseGroup != null) {
@@ -210,7 +210,7 @@ public class LicenseGroupResource extends AbstractApiResource {
     public Response deleteLicenseGroup(
             @Parameter(description = "The UUID of the license group to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final LicenseGroup licenseGroup = qm.getObjectByUuid(LicenseGroup.class, uuid);
                 if (licenseGroup != null) {
@@ -247,7 +247,7 @@ public class LicenseGroupResource extends AbstractApiResource {
             @PathParam("uuid") @ValidUuid String uuid,
             @Parameter(description = "A valid license", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("licenseUuid") @ValidUuid String licenseUuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 LicenseGroup licenseGroup = qm.getObjectByUuid(LicenseGroup.class, uuid);
                 if (licenseGroup == null) {
@@ -293,7 +293,7 @@ public class LicenseGroupResource extends AbstractApiResource {
             @PathParam("uuid") @ValidUuid String uuid,
             @Parameter(description = "A valid license", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("licenseUuid") @ValidUuid String licenseUuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 LicenseGroup licenseGroup = qm.getObjectByUuid(LicenseGroup.class, uuid);
                 if (licenseGroup == null) {

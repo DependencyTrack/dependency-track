@@ -193,12 +193,8 @@ public class RepositoryResource extends AbstractApiResource {
                 validator.validateProperty(jsonRepository, "identifier"),
                 validator.validateProperty(jsonRepository, "url")
         );
-        if (jsonRepository.isAuthenticationRequired() == null) {
-            jsonRepository.setAuthenticationRequired(false);
-        }
         final String passwordSecretName = StringUtils.trimToNull(jsonRepository.getPassword());
-        if (Boolean.TRUE.equals(jsonRepository.isAuthenticationRequired())
-                && passwordSecretName == null) {
+        if (jsonRepository.isAuthenticationRequired() && passwordSecretName == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("A password secret name is required when authentication is enabled.")
                     .build();
@@ -255,12 +251,8 @@ public class RepositoryResource extends AbstractApiResource {
         failOnValidationError(validator.validateProperty(jsonRepository, "identifier"),
                 validator.validateProperty(jsonRepository, "url")
         );
-        if (jsonRepository.isAuthenticationRequired() == null) {
-            jsonRepository.setAuthenticationRequired(false);
-        }
         final String passwordSecretName = StringUtils.trimToNull(jsonRepository.getPassword());
-        if (Boolean.TRUE.equals(jsonRepository.isAuthenticationRequired())
-                && passwordSecretName == null) {
+        if (jsonRepository.isAuthenticationRequired() && passwordSecretName == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("A password secret name is required when authentication is enabled.")
                     .build();

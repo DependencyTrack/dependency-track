@@ -57,4 +57,12 @@ public final class GlobalOptions {
             description = "Run preflight and print a plan; do not mutate any database.")
     public boolean dryRun;
 
+    @Option(names = "--socket-timeout",
+            description = "Upper bound, in seconds, on any single PostgreSQL network read. "
+                + "When set, a stalled connection (dropped peer, broken firewall flow) surfaces "
+                + "as a SQLException instead of hanging indefinitely. Must exceed the longest "
+                + "expected single statement. 0 disables. Default: ${DEFAULT-VALUE}.",
+            defaultValue = "0")
+    public int socketTimeoutSeconds;
+
 }

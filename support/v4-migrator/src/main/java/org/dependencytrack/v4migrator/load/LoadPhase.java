@@ -75,14 +75,11 @@ public final class LoadPhase {
         long totalRows = 0;
         int tableCount = 0;
         preLoad();
-        try {
-            for (final TableMigration t : TableRegistry.loaded()) {
-                totalRows += loadOne(t);
-                tableCount++;
-            }
-        } finally {
-            postLoad();
+        for (final TableMigration t : TableRegistry.loaded()) {
+            totalRows += loadOne(t);
+            tableCount++;
         }
+        postLoad();
 
         if (dropStagingAfter) {
             LOGGER.info("Dropping staging schema (--drop-staging set).");

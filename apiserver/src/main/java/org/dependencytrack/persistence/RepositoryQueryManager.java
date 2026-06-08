@@ -143,7 +143,7 @@ public class RepositoryQueryManager extends QueryManager {
         repo.setEnabled(enabled);
         repo.setInternal(internal);
         repo.setAuthenticationRequired(isAuthenticationRequired);
-        if (Boolean.TRUE.equals(isAuthenticationRequired) && (username != null || password != null)) {
+        if (isAuthenticationRequired && (username != null || password != null)) {
             repo.setUsername(StringUtils.trimToNull(username));
             repo.setPassword(StringUtils.trimToNull(password));
         }

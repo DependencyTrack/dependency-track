@@ -76,8 +76,6 @@ message Component {
   // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
   // available immediately. Policies should explicitly check presence using the has() macro.
   optional string latest_version = 54;
-  // Whether the component is direct dependency of the project.
-  optional bool is_direct_dependency = 55;
 
   // MD5 hash of the corresponding package artifact as reported by its upstream repository.
   // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
@@ -103,6 +101,9 @@ message Component {
   // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
   // available immediately. Policies should explicitly check presence using the has() macro.
   optional google.protobuf.Timestamp latest_version_published_at = 59;
+
+  // Whether the component is direct dependency of the project.
+  optional bool is_direct_dependency = 60;
 
   message Property {
     string group = 1;

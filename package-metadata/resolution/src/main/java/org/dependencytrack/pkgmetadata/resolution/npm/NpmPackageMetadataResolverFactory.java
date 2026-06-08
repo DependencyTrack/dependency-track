@@ -57,6 +57,15 @@ public final class NpmPackageMetadataResolverFactory implements PackageMetadataR
             return null;
         }
 
+        // NPM package names are either `name` or `@scope/name` with a single scope segment,
+        // as per https://github.com/npm/validate-npm-package-name.
+        // Malformed package names like `scope/name` or `scope1/scope2/name` cause NPM
+        // to respond with 405 instead of 404.
+        final String namespace = purl.getNamespace();
+        if (namespace != null && (!namespace.startsWith("@") || namespace.contains("/"))) {
+            return null;
+        }
+
         try {
             return aPackageURL()
                     .withType(purl.getType())

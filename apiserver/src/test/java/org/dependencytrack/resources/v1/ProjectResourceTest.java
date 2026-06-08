@@ -2320,6 +2320,26 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldReturnBadRequestWhenCreatingProjectWithNullParentUuid() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
+
+        final Response response = jersey
+                .target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "parent": {
+                            "uuid": null
+                          },
+                          "name": "acme-app"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("parent.uuid must be provided when parent is set");
+    }
+
+    @Test
     void createProjectInaccessibleParentTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
         enablePortfolioAccessControl();
@@ -2576,6 +2596,31 @@ class ProjectResourceTest extends ResourceTest {
                   "detail": "Parent project could not be found"
                 }
                 """);
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenUpdatingProjectWithNullParentUuid() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final Response response = jersey
+                .target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "parent": {
+                            "uuid": null
+                          },
+                          "uuid": "%s",
+                          "name": "acme-app"
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("parent.uuid must be provided when parent is set");
     }
 
     @Test
@@ -2838,6 +2883,29 @@ class ProjectResourceTest extends ResourceTest {
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getParent()).isNotNull();
         assertThat(project.getParent().getUuid()).isEqualTo(parent.getUuid());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenPatchingProjectWithNullParentUuid() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+
+        final Project project = qm.createProject("DEF", null, "2.0", null, null, null, null, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
+                .method(HttpMethod.PATCH, Entity.json(/* language=JSON */ """
+                        {
+                          "parent": {
+                            "uuid": null
+                          }
+                        }
+                        """));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("parent.uuid must be provided when parent is set");
     }
 
     @Test

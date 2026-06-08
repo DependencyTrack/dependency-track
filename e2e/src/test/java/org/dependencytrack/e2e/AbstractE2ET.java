@@ -83,12 +83,12 @@ abstract class AbstractE2ET {
                 .withEnv("DT_DATASOURCE_URL", "jdbc:postgresql://postgres:5432/dtrack")
                 .withEnv("DT_DATASOURCE_USERNAME", "dtrack")
                 .withEnv("DT_DATASOURCE_PASSWORD", "dtrack")
-                .withEnv("ALPINE_BCRYPT_ROUNDS", "4")
+                .withEnv("DT_BCRYPT_ROUNDS", "4")
                 .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("org.dependencytrack.e2e.apiserver")))
-                .waitingFor(Wait.forLogMessage(".*Dependency-Track is ready.*", 1))
+                .waitingFor(Wait.forHttp("/health").forPort(9000).forStatusCode(200))
                 .withNetworkAliases("apiserver")
                 .withNetwork(internalNetwork)
-                .withExposedPorts(8080);
+                .withExposedPorts(8080, 9000);
         customizeApiServerContainer(container);
         return container;
     }

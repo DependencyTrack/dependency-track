@@ -19,7 +19,6 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.model.Team;
-import alpine.persistence.PaginatedResult;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -44,14 +43,18 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
+import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
+import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.AclMappingRequest;
+import org.dependencytrack.resources.v1.vo.ListProjectsResponseItem;
 
 import java.util.NoSuchElementException;
 
@@ -84,12 +87,12 @@ public class AccessControlResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "Projects assigned to the specified team",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of projects", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Project.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ListProjectsResponseItem.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the team could not be found"),
     })
-    @PermissionRequired({ Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_READ })
+    @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_READ})
     public Response retrieveProjects(@Parameter(description = "The UUID of the team to retrieve mappings for", schema = @Schema(type = "string", format = "uuid"), required = true)
                                      @PathParam("uuid") @ValidUuid String uuid,
                                      @Parameter(description = "Optionally excludes inactive projects from being returned")
@@ -99,9 +102,18 @@ public class AccessControlResource extends AbstractApiResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Team team = qm.getObjectByUuid(Team.class, uuid);
             if (team != null) {
-                final PaginatedResult projectPages = withJdbiHandle(getAlpineRequest(), handle ->
-                        handle.attach(ProjectDao.class).getProjects(null, null, null, team.getName(), null, excludeInactive, onlyRoot, false));
-                return Response.ok(projectPages.getObjects()).header(TOTAL_COUNT_HEADER, projectPages.getTotal()).build();
+                final Page<ListProjectsRow> projectsPage = withJdbiHandle(
+                        getAlpineRequest(),
+                        handle -> handle.attach(ProjectDao.class).getProjects(
+                                new ListProjectsQuery()
+                                        .withTeamFilter(team.getName())
+                                        .withSearchText(getAlpineRequest().getFilter())
+                                        .withExcludeInactive(excludeInactive)
+                                        .withOnlyRoot(onlyRoot)));
+                return Response
+                        .ok(ListProjectsResponseItem.of(projectsPage.items()))
+                        .header(TOTAL_COUNT_HEADER, projectsPage.totalCount().value())
+                        .build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the team could not be found.").build();
             }
@@ -137,7 +149,7 @@ public class AccessControlResource extends AbstractApiResource {
                 validator.validateProperty(request, "team"),
                 validator.validateProperty(request, "project")
         );
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.runInTransaction(() -> {
                 final Team team = qm.getObjectByUuid(Team.class, request.getTeam());
                 if (team == null) {
@@ -186,7 +198,7 @@ public class AccessControlResource extends AbstractApiResource {
             @PathParam("teamUuid") @ValidUuid String teamUuid,
             @Parameter(description = "The UUID of the project to delete the mapping for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("projectUuid") @ValidUuid String projectUuid) {
-        try (final var qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.runInTransaction(() -> {
                 final Team team = qm.getObjectByUuid(Team.class, teamUuid);
                 if (team == null) {

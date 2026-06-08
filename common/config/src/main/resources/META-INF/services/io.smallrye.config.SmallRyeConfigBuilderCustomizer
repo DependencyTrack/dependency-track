@@ -1,2 +1,1 @@
 org.dependencytrack.common.config.ConfigPropertyRelocateCustomizer
-org.dependencytrack.common.config.LegacyPropertyFallbackCustomizer

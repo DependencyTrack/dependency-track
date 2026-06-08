@@ -33,6 +33,7 @@ import org.dependencytrack.api.v2.model.ListProjectComponentsResponseItem;
 import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.pagination.Page;
+import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PackageArtifactMetadata;
@@ -45,8 +46,6 @@ import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
 import org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery;
 import org.dependencytrack.resources.AbstractApiResource;
-import org.dependencytrack.resources.v2.exception.ProblemDetailsException;
-import org.dependencytrack.resources.v2.exception.ProblemType;
 import org.dependencytrack.util.PurlUtil;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
@@ -107,7 +106,8 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                 case "group" -> ListProjectComponentsQuery.SortBy.GROUP;
                 case "last_inherited_risk_score" -> ListProjectComponentsQuery.SortBy.LAST_RISKSCORE;
                 case "package_artifact_metadata.published_at" -> ListProjectComponentsQuery.SortBy.PUBLISHED_AT;
-                default -> throw ProblemDetailsException.of(ProblemType.INVALID_SORT_BY, "Invalid sort_by: " + sortBy);
+                default -> throw new InvalidSortFieldException(
+                        sortBy, List.of("name", "group", "last_inherited_risk_score", "package_artifact_metadata.published_at"));
             };
 
             final Page<Component> componentsPage = handle
@@ -224,7 +224,10 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
     }
 
     @Override
-    @PermissionRequired(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+    @PermissionRequired({
+            Permissions.Constants.PORTFOLIO_MANAGEMENT,
+            Permissions.Constants.PORTFOLIO_MANAGEMENT_CREATE
+    })
     public Response cloneProject(final UUID projectUuid, final CloneProjectRequest request) {
         final UUID clonedProjectUuid = inJdbiTransaction(getAlpineRequest(), handle -> {
             requireProjectAccess(handle, projectUuid);

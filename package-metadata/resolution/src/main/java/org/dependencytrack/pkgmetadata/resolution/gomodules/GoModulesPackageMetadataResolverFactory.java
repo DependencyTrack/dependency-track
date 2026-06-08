@@ -30,14 +30,10 @@ import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.jspecify.annotations.Nullable;
 
 import java.net.http.HttpClient;
-import java.time.Duration;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 
 public final class GoModulesPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
-
-    private static final Duration FRESH_FOR = Duration.ofHours(12);
-    private static final long MAX_BYTES = 4L * 1024 * 1024;
 
     private @Nullable ObjectMapper objectMapper;
     private @Nullable CachingHttpClient cachingHttpClient;
@@ -83,9 +79,7 @@ public final class GoModulesPackageMetadataResolverFactory implements PackageMet
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
-                serviceRegistry.require(CacheManager.class).getCache("responses"),
-                FRESH_FOR,
-                MAX_BYTES);
+                serviceRegistry.require(CacheManager.class).getCache("responses"));
     }
 
     @Override

@@ -55,7 +55,12 @@ public final class CelPolicyFieldMappingRegistry {
             new FieldMapping("license_name", "c.\"LICENSE\""),
             new FieldMapping("license_expression", "c.\"LICENSE_EXPRESSION\""),
             new FieldMapping("published_at", "pam.\"PUBLISHED_AT\""),
-            new FieldMapping("latest_version", "pm.\"LATEST_VERSION\""));
+            new FieldMapping("latest_version", "pm.\"LATEST_VERSION\""),
+            new FieldMapping("latest_version_published_at", "pm.\"LATEST_VERSION_PUBLISHED_AT\""),
+            new FieldMapping("package_artifact_md5", "pam.\"HASH_MD5\""),
+            new FieldMapping("package_artifact_sha1", "pam.\"HASH_SHA1\""),
+            new FieldMapping("package_artifact_sha256", "pam.\"HASH_SHA256\""),
+            new FieldMapping("package_artifact_sha512", "pam.\"HASH_SHA512\""));
 
     static final List<FieldMapping> COMPONENT_PROPERTY_FIELDS = List.of(
             new FieldMapping("group", "cp.\"GROUPNAME\""),

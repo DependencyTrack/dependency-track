@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.pkgmetadata.resolution.gem;
 
-import com.github.packageurl.PackageURLBuilder;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import org.dependencytrack.cache.api.CacheManager;
@@ -40,6 +39,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
 
+import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -84,7 +84,7 @@ class GemPackageMetadataResolverTest {
                         ]
                         """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("gem")
                 .withName("rails")
                 .withVersion("7.1.3")
@@ -103,11 +103,64 @@ class GemPackageMetadataResolverTest {
     }
 
     @Test
+    void shouldSkipPrereleaseWhenSelectingLatest(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/api/v1/versions/rails.json"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(/* language=JSON */ """
+                                [
+                                  {"number": "8.0.0.rc1", "prerelease": true, "created_at": "2024-09-01T10:00:00Z"},
+                                  {"number": "7.1.3", "prerelease": false, "created_at": "2024-01-15T10:30:00Z"},
+                                  {"number": "7.1.2", "prerelease": false, "created_at": "2023-12-01T08:00:00Z"}
+                                ]
+                                """)));
+
+        final var purl = aPackageURL()
+                .withType("gem")
+                .withName("rails")
+                .withVersion("7.1.3")
+                .build();
+
+        final var repo = new PackageRepository("rubygems", wmRuntimeInfo.getHttpBaseUrl(), null, null);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
+
+        assertThat(result).isNotNull();
+        assertThat(result.latestVersion()).isEqualTo("7.1.3");
+        assertThat(result.latestVersionPublishedAt())
+                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+    }
+
+    @Test
+    void shouldFallBackToFirstEntryWhenAllVersionsArePrerelease(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/api/v1/versions/early-gem.json"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(/* language=JSON */ """
+                                [
+                                  {"number": "0.2.0.rc1", "prerelease": true, "created_at": "2024-05-01T10:00:00Z"},
+                                  {"number": "0.1.0.alpha", "prerelease": true, "created_at": "2024-02-01T10:00:00Z"}
+                                ]
+                                """)));
+
+        final var purl = aPackageURL()
+                .withType("gem")
+                .withName("early-gem")
+                .withVersion("0.2.0.rc1")
+                .build();
+
+        final var repo = new PackageRepository("rubygems", wmRuntimeInfo.getHttpBaseUrl(), null, null);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
+
+        assertThat(result).isNotNull();
+        assertThat(result.latestVersion()).isEqualTo("0.2.0.rc1");
+    }
+
+    @Test
     void shouldReturnNullWhenPackageNotFound(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/versions/nonexistent.json"))
                 .willReturn(aResponse().withStatus(404)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("gem")
                 .withName("nonexistent")
                 .withVersion("1.0.0")
@@ -121,7 +174,7 @@ class GemPackageMetadataResolverTest {
 
     @Test
     void shouldThrowWhenRepositoryIsNull() throws Exception {
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("gem")
                 .withName("rails")
                 .withVersion("1.0.0")
@@ -142,7 +195,7 @@ class GemPackageMetadataResolverTest {
                         ]
                         """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("gem")
                 .withName("rails")
                 .withVersion("7.1.2")
@@ -171,7 +224,7 @@ class GemPackageMetadataResolverTest {
                         ]
                         """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("gem")
                 .withName("rails")
                 .withVersion("9.9.9")
@@ -192,7 +245,7 @@ class GemPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/api/v1/versions/rails.json"))
                 .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "30")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("gem")
                 .withName("rails")
                 .withVersion("1.0.0")
@@ -209,7 +262,7 @@ class GemPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/api/v1/versions/rails.json"))
                 .willReturn(aResponse().withStatus(503)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("gem")
                 .withName("rails")
                 .withVersion("1.0.0")
@@ -227,7 +280,7 @@ class GemPackageMetadataResolverTest {
                         [{"number": "7.1.3", "created_at": "2024-01-15T10:30:00Z"}]
                         """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("gem")
                 .withName("rails")
                 .withVersion("7.1.3")

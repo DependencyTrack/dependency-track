@@ -21,7 +21,6 @@ package alpine.server.auth;
 import alpine.common.validation.LdapStringSanitizer;
 import alpine.config.AlpineConfigKeys;
 import alpine.model.LdapUser;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
@@ -77,21 +76,21 @@ public class LdapConnectionWrapper {
         this.bindUsername = config.getOptionalValue(AlpineConfigKeys.LDAP_BIND_USERNAME, String.class).orElse(null);
         this.bindPassword = config.getOptionalValue(AlpineConfigKeys.LDAP_BIND_PASSWORD, String.class).orElse(null);
         this.securityAuth = config.getOptionalValue(AlpineConfigKeys.LDAP_SECURITY_AUTH, String.class).orElse(null);
-        this.authUsernameFmt = config.getOptionalValue(AlpineConfigKeys.LDAP_AUTH_USERNAME_FMT, String.class).orElse(null);
+        this.authUsernameFmt = config.getOptionalValue(AlpineConfigKeys.LDAP_USERNAME_FORMAT, String.class).orElse(null);
         this.userGroupsFilter = config.getOptionalValue(AlpineConfigKeys.LDAP_USER_GROUPS_FILTER, String.class).orElse(null);
-        this.groupsSearchFilter = config.getOptionalValue(AlpineConfigKeys.LDAP_GROUPS_SEARCH_FILTER, String.class).orElse(null);
+        this.groupsSearchFilter = config.getOptionalValue(AlpineConfigKeys.LDAP_GROUP_SEARCH_FILTER, String.class).orElse(null);
         this.ldapEnabled = config.getValue(AlpineConfigKeys.LDAP_ENABLED, Boolean.class);
         this.ldapUrl = config.getOptionalValue(AlpineConfigKeys.LDAP_SERVER_URL, String.class).orElse(null);
         this.baseDn = config.getOptionalValue(AlpineConfigKeys.LDAP_BASEDN, String.class).orElse(null);
-        this.attributeMail = config.getValue(AlpineConfigKeys.LDAP_ATTRIBUTE_MAIL, String.class);
-        this.attributeName = config.getValue(AlpineConfigKeys.LDAP_ATTRIBUTE_NAME, String.class);
+        this.attributeMail = config.getValue(AlpineConfigKeys.LDAP_MAIL_ATTRIBUTE, String.class);
+        this.attributeName = config.getValue(AlpineConfigKeys.LDAP_NAME_ATTRIBUTE, String.class);
         this.userProvisioning = config.getValue(AlpineConfigKeys.LDAP_USER_PROVISIONING, Boolean.class);
         this.teamSynchronization = config.getValue(AlpineConfigKeys.LDAP_TEAM_SYNCHRONIZATION, Boolean.class);
-        this.ldapSslTls = StringUtils.isNotBlank(this.ldapUrl) && this.ldapUrl.startsWith("ldaps:");
+        this.ldapSslTls = this.ldapUrl != null && !this.ldapUrl.isBlank() && this.ldapUrl.startsWith("ldaps:");
     }
 
     public boolean isLdapConfigured() {
-        return ldapEnabled && StringUtils.isNotBlank(ldapUrl);
+        return ldapEnabled && ldapUrl != null && !ldapUrl.isBlank();
     }
 
     public String getAttributeMail() {
@@ -118,11 +117,11 @@ public class LdapConnectionWrapper {
      */
     public LdapContext createLdapContext(final String userDn, final String password) throws NamingException {
         LOGGER.debug("Creating LDAP context for: {}", userDn);
-        if (StringUtils.isEmpty(userDn) || StringUtils.isEmpty(password)) {
+        if (userDn == null || userDn.isEmpty() || password == null || password.isEmpty()) {
             throw new NamingException("Username or password cannot be empty or null");
         }
         final Hashtable<String, String> env = new Hashtable<>();
-        if (StringUtils.isNotBlank(securityAuth)) {
+        if (securityAuth != null && !securityAuth.isBlank()) {
             env.put(Context.SECURITY_AUTHENTICATION, securityAuth);
         }
         env.put(Context.SECURITY_PRINCIPAL, userDn);
@@ -230,7 +229,7 @@ public class LdapConnectionWrapper {
 
     /**
      * Performs a search for the specified username. Internally, this method queries on
-     * the attribute defined by {@link AlpineConfigKeys#LDAP_ATTRIBUTE_NAME}.
+     * the attribute defined by {@link AlpineConfigKeys#LDAP_NAME_ATTRIBUTE}.
      *
      * @param ctx      the DirContext to use
      * @param username the username to query on
@@ -249,7 +248,7 @@ public class LdapConnectionWrapper {
 
     /**
      * Performs a search for the specified username. Internally, this method queries on
-     * the attribute defined by {@link AlpineConfigKeys#LDAP_ATTRIBUTE_NAME}.
+     * the attribute defined by {@link AlpineConfigKeys#LDAP_NAME_ATTRIBUTE}.
      *
      * @param ctx      the DirContext to use
      * @param username the username to query on
@@ -324,7 +323,7 @@ public class LdapConnectionWrapper {
 
     /**
      * Formats the principal in username@domain format or in a custom format if is specified in the config file.
-     * If LDAP_AUTH_USERNAME_FMT is configured to a non-empty value, the substring %s in this value will be replaced with the entered username.
+     * If LDAP_USERNAME_FORMAT is configured to a non-empty value, the substring %s in this value will be replaced with the entered username.
      * The recommended format of this value depends on your LDAP server(Active Directory, OpenLDAP, etc.).
      * Examples:
      * alpine.ldap.auth.username.format=%s
@@ -335,7 +334,7 @@ public class LdapConnectionWrapper {
      * @since 1.4.0
      */
     private String formatPrincipal(final String username) {
-        if (StringUtils.isNotBlank(authUsernameFmt)) {
+        if (authUsernameFmt != null && !authUsernameFmt.isBlank()) {
             return String.format(authUsernameFmt, username);
         }
         return username;

@@ -772,68 +772,6 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
     }
 
     /**
-     * Determines if the specified User has been assigned the specified permission.
-     * @param user the User to query
-     * @param permissionName the name of the permission
-     * @param includeTeams if true, will query all Team membership assigned to the user for the specified permission
-     * @return true if the user has the permission assigned, false if not
-     * @since 1.0.0
-     */
-    public boolean hasPermission(final User user, String permissionName, boolean includeTeams) {
-        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                SELECT EXISTS (
-                  SELECT 1
-                    FROM "USERS_PERMISSIONS" up
-                   INNER JOIN "PERMISSION" p
-                      ON p."ID" = up."PERMISSION_ID"
-                   WHERE up."USER_ID" = :userId
-                     AND p."NAME" = :permissionName
-                  UNION ALL
-                  SELECT 1
-                    FROM "USERS_TEAMS" ut
-                   INNER JOIN "TEAMS_PERMISSIONS" tp
-                      ON tp."TEAM_ID" = ut."TEAM_ID"
-                   INNER JOIN "PERMISSION" p
-                      ON p."ID" = tp."PERMISSION_ID"
-                   WHERE :includeTeams = TRUE
-                     AND ut."USER_ID" = :userId
-                     AND p."NAME" = :permissionName
-                )
-                """);
-        query.setNamedParameters(Map.of(
-                "userId", user.getId(),
-                "permissionName", permissionName,
-                "includeTeams", includeTeams));
-        return executeAndCloseResultUnique(query, Boolean.class);
-    }
-
-    /**
-     * Determines if the specified ApiKey has been assigned the specified permission.
-     * @param apiKey the ApiKey to query
-     * @param permissionName the name of the permission
-     * @return true if the apiKey has the permission assigned, false if not
-     * @since 1.1.1
-     */
-    public boolean hasPermission(final ApiKey apiKey, String permissionName) {
-        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                SELECT EXISTS (
-                  SELECT 1
-                    FROM "APIKEYS_TEAMS" at
-                   INNER JOIN "TEAMS_PERMISSIONS" tp
-                      ON tp."TEAM_ID" = at."TEAM_ID"
-                   INNER JOIN "PERMISSION" p
-                      ON p."ID" = tp."PERMISSION_ID"
-                   WHERE at."APIKEY_ID" = :apiKeyId
-                     AND p."NAME" = :permissionName
-                )
-                """);
-        query.setNamedParameters(Map.of(
-                "apiKeyId", apiKey.getId(),
-                "permissionName", permissionName));
-        return executeAndCloseResultUnique(query, Boolean.class);
-    }
-
-    /**
      * Retrieves a MappedLdapGroup object for the specified Team and LDAP group.
      * @param team a Team object
      * @param dn a String representation of Distinguished Name

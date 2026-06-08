@@ -66,7 +66,9 @@ class PackageMetadataIT {
         source.jdbi().useHandle(h -> {
             h.execute("""
                 INSERT INTO "PROJECT" ("ID", "NAME", "VERSION", "UUID")
-                VALUES (1, 'P', '1.0', '00000000-0000-0000-0000-000000000001')
+                VALUES (1, 'P', '1.0', '00000000-0000-0000-0000-000000000001'),
+                       (2, 'Q', '1.0', '00000000-0000-0000-0000-000000000002'),
+                       (3, 'R', '1.0', '00000000-0000-0000-0000-000000000003')
                 """);
 
             // Good Maven component: PURLCOORDINATES -> 'pkg:maven/com.example/foo' after @-split.
@@ -79,6 +81,37 @@ class PackageMetadataIT {
                     '00000000-0000-0000-0000-000000000010', 1,
                     'pkg:maven/com.example/foo@1.0.0',
                     'pkg:maven/com.example/foo@1.0.0'
+                )
+                """);
+
+            // Duplicate of component 1 in a different project: identical NAME/GROUP/PURL.
+            // Exercises the c_unique pre-dedup path — multi-project portfolios commonly have
+            // the same package repeated thousands of times, and we must not let that fan out
+            // into a multi-million-row join. Expected: collapses to the same single
+            // PACKAGE_METADATA row as component 1.
+            h.execute("""
+                INSERT INTO "COMPONENT" (
+                    "ID", "NAME", "GROUP", "UUID", "PROJECT_ID", "PURL", "PURLCOORDINATES"
+                )
+                VALUES (
+                    3, 'foo', 'com.example',
+                    '00000000-0000-0000-0000-000000000030', 2,
+                    'pkg:maven/com.example/foo@1.0.0',
+                    'pkg:maven/com.example/foo@1.0.0'
+                )
+                """);
+
+            // Same package, different version: the @-strip yields the same stripped PURL,
+            // so dedup must still collapse this into one row regardless of version variance.
+            h.execute("""
+                INSERT INTO "COMPONENT" (
+                    "ID", "NAME", "GROUP", "UUID", "PROJECT_ID", "PURL", "PURLCOORDINATES"
+                )
+                VALUES (
+                    4, 'foo', 'com.example',
+                    '00000000-0000-0000-0000-000000000040', 3,
+                    'pkg:maven/com.example/foo@2.0.0',
+                    'pkg:maven/com.example/foo@2.0.0'
                 )
                 """);
 

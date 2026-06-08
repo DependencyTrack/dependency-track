@@ -22,8 +22,7 @@ import alpine.model.MappedOidcGroup;
 import alpine.model.OidcGroup;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
@@ -47,8 +46,7 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(OidcResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class));
+                    .register(AuthFeature.class));
 
     @Test
     public void retrieveGroupsShouldReturnListOfGroups() {

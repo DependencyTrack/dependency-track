@@ -46,7 +46,7 @@ java \
   -Ddt.datasource.url="jdbc:postgresql://localhost:${CONTAINER_PORT}/dtrack" \
   -Ddt.datasource.username="dtrack" \
   -Ddt.datasource.password="dtrack" \
-  -Ddt.init.and.exit=true \
+  -Ddt.init-tasks.exit-after-completion=true \
   -jar "${APISERVER_JAR}"
 
 docker exec "${CONTAINER_ID}" pg_dump -Udtrack --schema-only --no-owner --no-privileges dtrack \

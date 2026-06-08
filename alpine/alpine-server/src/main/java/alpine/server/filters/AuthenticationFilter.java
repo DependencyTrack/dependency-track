@@ -45,7 +45,7 @@ import java.security.Principal;
  * authenticated.
  *
  * @author Steve Springett
- * @see AuthenticationFeature
+ * @see AuthFeature
  * @since 1.0.0
  */
 @Priority(Priorities.AUTHENTICATION)

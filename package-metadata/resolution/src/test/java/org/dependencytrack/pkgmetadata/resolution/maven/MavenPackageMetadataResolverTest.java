@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.pkgmetadata.resolution.maven;
 
-import com.github.packageurl.PackageURLBuilder;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.smallrye.config.SmallRyeConfigBuilder;
@@ -47,6 +46,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
 
+import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -112,7 +112,7 @@ class MavenPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(200)
                         .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -152,7 +152,7 @@ class MavenPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(200)
                         .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -197,7 +197,7 @@ class MavenPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(200)
                         .withHeader("Last-Modified", "Thu, 02 Mar 2023 10:00:00 GMT")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -241,7 +241,7 @@ class MavenPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(200)
                         .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -258,11 +258,86 @@ class MavenPackageMetadataResolverTest {
     }
 
     @Test
+    void shouldPreferHighestStableVersionOverUnstableLatest(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/io/micrometer/micrometer-observation/maven-metadata.xml"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(/* language=XML */ """
+                                <?xml version="1.0" encoding="UTF-8"?>
+                                <metadata>
+                                  <groupId>io.micrometer</groupId>
+                                  <artifactId>micrometer-observation</artifactId>
+                                  <versioning>
+                                    <latest>1.17.0-RC1</latest>
+                                    <release>1.17.0-RC1</release>
+                                    <versions>
+                                      <version>1.16.4</version>
+                                      <version>1.16.5</version>
+                                      <version>1.17.0-M1</version>
+                                      <version>1.17.0-M2</version>
+                                      <version>1.17.0-RC1</version>
+                                    </versions>
+                                  </versioning>
+                                </metadata>
+                                """)));
+        stubFor(head(urlPathEqualTo("/io/micrometer/micrometer-observation/1.16.5/micrometer-observation-1.16.5.jar"))
+                .willReturn(aResponse().withStatus(200)
+                        .withHeader("Last-Modified", "Mon, 14 Apr 2025 09:00:00 GMT")));
+
+        final var purl = aPackageURL()
+                .withType("maven")
+                .withNamespace("io.micrometer")
+                .withName("micrometer-observation")
+                .build();
+
+        final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
+
+        assertThat(result).isNotNull();
+        assertThat(result.latestVersion()).isEqualTo("1.16.5");
+        assertThat(result.latestVersionPublishedAt())
+                .isEqualTo(Instant.parse("2025-04-14T09:00:00Z"));
+    }
+
+    @Test
+    void shouldFallBackToLatestWhenAllVersionsAreUnstable(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        stubFor(get(urlPathEqualTo("/com/example/mylib/maven-metadata.xml"))
+                .willReturn(aResponse().withStatus(200).withBody(/* language=XML */ """
+                        <?xml version="1.0" encoding="UTF-8"?>
+                        <metadata>
+                          <groupId>com.example</groupId>
+                          <artifactId>mylib</artifactId>
+                          <versioning>
+                            <latest>2.0.0-RC1</latest>
+                            <versions>
+                              <version>2.0.0-M1</version>
+                              <version>2.0.0-RC1</version>
+                            </versions>
+                          </versioning>
+                        </metadata>
+                        """)));
+        stubFor(head(urlPathEqualTo("/com/example/mylib/2.0.0-RC1/mylib-2.0.0-RC1.jar"))
+                .willReturn(aResponse().withStatus(404)));
+
+        final var purl = aPackageURL()
+                .withType("maven")
+                .withNamespace("com.example")
+                .withName("mylib")
+                .build();
+
+        final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
+        final PackageMetadata result = resolver.resolve(purl, repo, null);
+
+        assertThat(result).isNotNull();
+        assertThat(result.latestVersion()).isEqualTo("2.0.0-RC1");
+    }
+
+    @Test
     void shouldReturnNullWhenMetadataXmlNotFound(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/com/example/mylib/maven-metadata.xml"))
                 .willReturn(aResponse().withStatus(404)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -277,7 +352,7 @@ class MavenPackageMetadataResolverTest {
 
     @Test
     void shouldThrowWhenRepositoryIsNull() throws Exception {
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -307,7 +382,7 @@ class MavenPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(200)
                         .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709  mylib-1.0.0.jar")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -341,7 +416,7 @@ class MavenPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar.sha1"))
                 .willReturn(aResponse().withStatus(200).withBody("abc123")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -376,7 +451,7 @@ class MavenPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(200)
                         .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -403,7 +478,7 @@ class MavenPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/com/example/mylib/maven-metadata.xml"))
                 .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "20")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -421,7 +496,7 @@ class MavenPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/com/example/mylib/maven-metadata.xml"))
                 .willReturn(aResponse().withStatus(503)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -453,7 +528,7 @@ class MavenPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(200)
                         .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -491,7 +566,7 @@ class MavenPackageMetadataResolverTest {
                         </metadata>
                         """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -519,7 +594,7 @@ class MavenPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar.sha1"))
                 .willReturn(aResponse().withStatus(404)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -549,7 +624,7 @@ class MavenPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar.sha1"))
                 .willReturn(aResponse().withStatus(404)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -573,7 +648,7 @@ class MavenPackageMetadataResolverTest {
                         </metadata>
                         """)));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -614,7 +689,7 @@ class MavenPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(200)
                         .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")
@@ -645,7 +720,7 @@ class MavenPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(200)
                         .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
-        final var purl = PackageURLBuilder.aPackageURL()
+        final var purl = aPackageURL()
                 .withType("maven")
                 .withNamespace("com.example")
                 .withName("mylib")

@@ -19,8 +19,6 @@
 package alpine.common.util;
 
 import alpine.config.AlpineConfigKeys;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
@@ -31,6 +29,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -78,7 +77,7 @@ public final class ProxyUtil {
             return null;
         }
 
-        final String host = config.getOptionalValue(AlpineConfigKeys.HTTP_PROXY_ADDRESS, String.class).orElse(null);
+        final String host = config.getOptionalValue(AlpineConfigKeys.HTTP_PROXY_HOST, String.class).orElse(null);
         if (host == null) {
             return null;
         }
@@ -93,12 +92,12 @@ public final class ProxyUtil {
         port.ifPresent(proxyCfg::setPort);
 
         if (username != null) {
-            final Pair<String, String> domainUsername = parseProxyUsername(username);
-            Optional.ofNullable(domainUsername.getLeft()).ifPresent(proxyCfg::setDomain);
-            Optional.ofNullable(domainUsername.getRight()).ifPresent(proxyCfg::setUsername);
+            final Map.Entry<String, String> domainUsername = parseProxyUsername(username);
+            Optional.ofNullable(domainUsername.getKey()).ifPresent(proxyCfg::setDomain);
+            Optional.ofNullable(domainUsername.getValue()).ifPresent(proxyCfg::setUsername);
         }
         if (password != null) {
-            proxyCfg.setPassword(StringUtils.trimToNull(password));
+            proxyCfg.setPassword(password);
         }
         if (noProxy != null) {
             proxyCfg.setNoProxy(Set.of(noProxy.split(",")));
@@ -176,9 +175,9 @@ public final class ProxyUtil {
             final String[] credentials = proxyUrl.getUserInfo().split(":");
             if (credentials.length > 0) {
                 final String username = URLDecoder.decode(credentials[0], StandardCharsets.UTF_8);
-                final Pair<String, String> domainUsername = parseProxyUsername(username);
-                Optional.ofNullable(domainUsername.getLeft()).ifPresent(proxyCfg::setDomain);
-                Optional.ofNullable(domainUsername.getRight()).ifPresent(proxyCfg::setUsername);
+                final Map.Entry<String, String> domainUsername = parseProxyUsername(username);
+                Optional.ofNullable(domainUsername.getKey()).ifPresent(proxyCfg::setDomain);
+                Optional.ofNullable(domainUsername.getValue()).ifPresent(proxyCfg::setUsername);
             }
             if (credentials.length == 2) {
                 proxyCfg.setPassword(URLDecoder.decode(credentials[1], StandardCharsets.UTF_8));
@@ -194,17 +193,17 @@ public final class ProxyUtil {
      * Ported from Dependency-Track's {@code ManagedHttpClientFactory}.
      *
      * @param username The username to parse
-     * @return A {@link Pair} consisting of the user's domain (if any), and the username
+     * @return A {@link Map.Entry} consisting of the user's domain (if any), and the username
      * @see <a href="https://github.com/DependencyTrack/dependency-track/blob/4.7.0/src/main/java/org/dependencytrack/common/ManagedHttpClientFactory.java">Source</a>
      */
-    private static Pair<String, String> parseProxyUsername(final String username) {
+    private static Map.Entry<String, String> parseProxyUsername(final String username) {
         if (username.contains("\\")) {
-            return Pair.of(
+            return new AbstractMap.SimpleEntry<>(
                     username.substring(0, username.indexOf("\\")),
                     username.substring(username.indexOf("\\") + 1)
             );
         }
-        return Pair.of(null, username);
+        return new AbstractMap.SimpleEntry<>(null, username);
     }
 
 }

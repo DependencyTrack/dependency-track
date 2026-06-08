@@ -59,11 +59,11 @@ services:
         limits:
           memory: 1g
     environment:
-      ALPINE_BCRYPT_ROUNDS: "4"
+      DT_BCRYPT_ROUNDS: "4"
       DT_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/dtrack"
       DT_DATASOURCE_USERNAME: "dtrack"
       DT_DATASOURCE_PASSWORD: "dtrack"
-      DT_TELEMETRY_SUBMISSION_ENABLED_DEFAULT: "false"
+      DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED: "false"
     healthcheck:
       test: [ "NONE" ]
     volumes:

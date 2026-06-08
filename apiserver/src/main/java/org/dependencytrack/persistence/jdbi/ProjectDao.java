@@ -18,78 +18,216 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
-import alpine.model.Team;
-import alpine.persistence.PaginatedResult;
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.github.packageurl.PackageURL;
+import org.dependencytrack.common.pagination.Page;
+import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.dependencytrack.exception.AlreadyExistsException;
-import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Classifier;
+import org.dependencytrack.model.ExternalReference;
+import org.dependencytrack.model.OrganizationalContact;
+import org.dependencytrack.model.OrganizationalEntity;
 import org.dependencytrack.model.ProjectCollectionLogic;
+import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ProjectMetrics;
-import org.dependencytrack.model.Tag;
 import org.dependencytrack.persistence.jdbi.command.CloneProjectCommand;
-import org.dependencytrack.persistence.jdbi.mapping.ExternalReferenceMapper;
-import org.dependencytrack.persistence.jdbi.mapping.OrganizationalContactMapper;
-import org.dependencytrack.persistence.jdbi.mapping.OrganizationalEntityMapper;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsConciseQuery;
-import org.jdbi.v3.core.mapper.RowMapper;
-import org.jdbi.v3.core.mapper.reflect.BeanMapper;
+import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.statement.Query;
-import org.jdbi.v3.core.statement.StatementContext;
+import org.jdbi.v3.core.statement.SqlStatements;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterColumnMapper;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindMap;
 import org.jdbi.v3.sqlobject.customizer.Define;
-import org.jdbi.v3.sqlobject.customizer.DefineNamedBindings;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jspecify.annotations.Nullable;
 import org.postgresql.util.PSQLException;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.deserializeJson;
-import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
+import static org.dependencytrack.util.PersistenceUtil.escapeLikePattern;
 
 /**
  * @since 5.0.0
  */
 @RegisterConstructorMapper(ProjectDao.ConciseProjectListRow.class)
-public interface ProjectDao extends SqlObject {
+public interface ProjectDao extends SqlObject, PaginationSupport {
+
+    /// Aggregates `PROJECTMETRICS` rows of a single collection project's
+    /// descendants into one row. Intended to be embedded as the body of a
+    /// correlated LATERAL subquery.
+    ///
+    /// The outer query must alias the source project as `"PROJECT"` and is
+    /// responsible for the `LEFT JOIN LATERAL (...)` wrapper, as well as
+    /// enforcing portfolio ACL on `"PROJECT"`. Because ACLs are inherited,
+    /// this query does not perform additional ACL checks.
+    ///
+    /// When the outer row is not a collection (`COLLECTION_LOGIC IS NULL`),
+    /// the recursive seed short-circuits, making the impact negligible.
+    ///
+    /// Conceptually similar to [MetricsDao#getMostRecentCollectionProjectMetrics].
+    /// Keep them in sync when the recursion rules change.
+    String COLLECTION_METRICS_SUBQUERY = /* language=SQL */ """
+            WITH RECURSIVE collection_descendants AS (
+              SELECT "PROJECT"."ID" AS root_id
+                   , child."ID" AS project_id
+                   , child."COLLECTION_LOGIC"
+                   , child."COLLECTION_TAG_ID"
+                FROM "PROJECT_HIERARCHY" AS ph
+               INNER JOIN "PROJECT" AS child
+                  ON child."ID" = ph."CHILD_PROJECT_ID"
+                 AND child."INACTIVE_SINCE" IS NULL
+                 AND (
+                   "PROJECT"."COLLECTION_LOGIC" != 'AGGREGATE_DIRECT_CHILDREN_WITH_TAG'
+                   OR EXISTS (
+                     SELECT 1
+                       FROM "PROJECTS_TAGS" AS pt
+                      WHERE pt."PROJECT_ID" = child."ID"
+                        AND pt."TAG_ID" = "PROJECT"."COLLECTION_TAG_ID"
+                   )
+                 )
+                 AND (
+                   "PROJECT"."COLLECTION_LOGIC" != 'AGGREGATE_LATEST_VERSION_CHILDREN'
+                   OR child."IS_LATEST"
+                 )
+               WHERE "PROJECT"."COLLECTION_LOGIC" IS NOT NULL
+                 AND ph."PARENT_PROJECT_ID" = "PROJECT"."ID"
+                 AND ph."DEPTH" = 1
+               UNION ALL
+              SELECT cd.root_id
+                   , child."ID"
+                   , child."COLLECTION_LOGIC"
+                   , child."COLLECTION_TAG_ID"
+                FROM collection_descendants cd
+               INNER JOIN "PROJECT_HIERARCHY" AS ph
+                  ON ph."PARENT_PROJECT_ID" = cd.project_id
+                 AND ph."DEPTH" = 1
+               INNER JOIN "PROJECT" AS child
+                  ON child."ID" = ph."CHILD_PROJECT_ID"
+               WHERE cd."COLLECTION_LOGIC" IS NOT NULL
+                 AND child."INACTIVE_SINCE" IS NULL
+                 AND (
+                   cd."COLLECTION_LOGIC" != 'AGGREGATE_DIRECT_CHILDREN_WITH_TAG'
+                   OR EXISTS (
+                     SELECT 1
+                       FROM "PROJECTS_TAGS" AS pt
+                      WHERE pt."PROJECT_ID" = child."ID"
+                        AND pt."TAG_ID" = cd."COLLECTION_TAG_ID"
+                   )
+                 )
+                 AND (
+                   cd."COLLECTION_LOGIC" != 'AGGREGATE_LATEST_VERSION_CHILDREN'
+                   OR child."IS_LATEST"
+                 )
+            ) CYCLE project_id SET is_cycle USING path
+            SELECT COALESCE(SUM(pm."COMPONENTS"), 0) AS components
+                 , COALESCE(SUM(pm."VULNERABLECOMPONENTS"), 0) AS "vulnerableComponents"
+                 , COALESCE(SUM(pm."VULNERABILITIES"), 0) AS vulnerabilities
+                 , COALESCE(SUM(pm."CRITICAL"), 0) AS critical
+                 , COALESCE(SUM(pm."HIGH"), 0) AS high
+                 , COALESCE(SUM(pm."MEDIUM"), 0) AS medium
+                 , COALESCE(SUM(pm."LOW"), 0) AS low
+                 , COALESCE(SUM(pm."UNASSIGNED_SEVERITY"), 0) AS unassigned
+                 , COALESCE(SUM(pm."RISKSCORE"), 0) AS "inheritedRiskScore"
+                 , COALESCE(SUM(pm."FINDINGS_TOTAL"), 0) AS "findingsTotal"
+                 , COALESCE(SUM(pm."FINDINGS_AUDITED"), 0) AS "findingsAudited"
+                 , COALESCE(SUM(pm."FINDINGS_UNAUDITED"), 0) AS "findingsUnaudited"
+                 , COALESCE(SUM(pm."SUPPRESSED"), 0) AS suppressed
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_TOTAL"), 0) AS "policyViolationsTotal"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_FAIL"), 0) AS "policyViolationsFail"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_WARN"), 0) AS "policyViolationsWarn"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_INFO"), 0) AS "policyViolationsInfo"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_AUDITED"), 0) AS "policyViolationsAudited"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_UNAUDITED"), 0) AS "policyViolationsUnaudited"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_SECURITY_TOTAL"), 0) AS "policyViolationsSecurityTotal"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_SECURITY_AUDITED"), 0) AS "policyViolationsSecurityAudited"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_SECURITY_UNAUDITED"), 0) AS "policyViolationsSecurityUnaudited"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_LICENSE_TOTAL"), 0) AS "policyViolationsLicenseTotal"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_LICENSE_AUDITED"), 0) AS "policyViolationsLicenseAudited"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_LICENSE_UNAUDITED"), 0) AS "policyViolationsLicenseUnaudited"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_OPERATIONAL_TOTAL"), 0) AS "policyViolationsOperationalTotal"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_OPERATIONAL_AUDITED"), 0) AS "policyViolationsOperationalAudited"
+                 , COALESCE(SUM(pm."POLICYVIOLATIONS_OPERATIONAL_UNAUDITED"), 0) AS "policyViolationsOperationalUnaudited"
+                 , MIN(pm."FIRST_OCCURRENCE") AS "firstOccurrence"
+                 , MAX(pm."LAST_OCCURRENCE") AS "lastOccurrence"
+              FROM collection_descendants cd
+              LEFT JOIN LATERAL (
+                SELECT *
+                  FROM "PROJECTMETRICS"
+                 WHERE "PROJECT_ID" = cd.project_id
+                 ORDER BY "LAST_OCCURRENCE" DESC
+                 LIMIT 1
+              ) pm ON TRUE
+             WHERE cd."COLLECTION_LOGIC" IS NULL
+            """;
+
+    /// Selects the most recent `PROJECTMETRICS` row for a single non-collection project.
+    /// Columns are aliased to match the [ProjectMetrics] property names.
+    ///
+    /// The outer query must alias the source project as `"PROJECT"`.
+    String LEAF_METRICS_SUBQUERY = /* language=SQL */ """
+            SELECT "COMPONENTS" AS components
+                 , "VULNERABLECOMPONENTS" AS "vulnerableComponents"
+                 , "VULNERABILITIES" AS vulnerabilities
+                 , "CRITICAL" AS critical
+                 , "HIGH" AS high
+                 , "MEDIUM" AS medium
+                 , "LOW" AS low
+                 , "UNASSIGNED_SEVERITY" AS unassigned
+                 , "RISKSCORE" AS "inheritedRiskScore"
+                 , "FINDINGS_TOTAL" AS "findingsTotal"
+                 , "FINDINGS_AUDITED" AS "findingsAudited"
+                 , "FINDINGS_UNAUDITED" AS "findingsUnaudited"
+                 , "SUPPRESSED" AS suppressed
+                 , "POLICYVIOLATIONS_TOTAL" AS "policyViolationsTotal"
+                 , "POLICYVIOLATIONS_FAIL" AS "policyViolationsFail"
+                 , "POLICYVIOLATIONS_WARN" AS "policyViolationsWarn"
+                 , "POLICYVIOLATIONS_INFO" AS "policyViolationsInfo"
+                 , "POLICYVIOLATIONS_AUDITED" AS "policyViolationsAudited"
+                 , "POLICYVIOLATIONS_UNAUDITED" AS "policyViolationsUnaudited"
+                 , "POLICYVIOLATIONS_SECURITY_TOTAL" AS "policyViolationsSecurityTotal"
+                 , "POLICYVIOLATIONS_SECURITY_AUDITED" AS "policyViolationsSecurityAudited"
+                 , "POLICYVIOLATIONS_SECURITY_UNAUDITED" AS "policyViolationsSecurityUnaudited"
+                 , "POLICYVIOLATIONS_LICENSE_TOTAL" AS "policyViolationsLicenseTotal"
+                 , "POLICYVIOLATIONS_LICENSE_AUDITED" AS "policyViolationsLicenseAudited"
+                 , "POLICYVIOLATIONS_LICENSE_UNAUDITED" AS "policyViolationsLicenseUnaudited"
+                 , "POLICYVIOLATIONS_OPERATIONAL_TOTAL" AS "policyViolationsOperationalTotal"
+                 , "POLICYVIOLATIONS_OPERATIONAL_AUDITED" AS "policyViolationsOperationalAudited"
+                 , "POLICYVIOLATIONS_OPERATIONAL_UNAUDITED" AS "policyViolationsOperationalUnaudited"
+                 , "FIRST_OCCURRENCE" AS "firstOccurrence"
+                 , "LAST_OCCURRENCE" AS "lastOccurrence"
+              FROM "PROJECTMETRICS"
+             WHERE "PROJECTMETRICS"."PROJECT_ID" = "PROJECT"."ID"
+             ORDER BY "PROJECTMETRICS"."LAST_OCCURRENCE" DESC
+             LIMIT 1
+            """;
 
     @SqlQuery(/* language=InjectedFreeMarker */ """
-            <#-- @ftlvariable name="nameFilter" type="Boolean" -->
-            <#-- @ftlvariable name="versionFilter" type="Boolean" -->
-            <#-- @ftlvariable name="classifierFilter" type="Boolean" -->
-            <#-- @ftlvariable name="tagFilter" type="Boolean" -->
-            <#-- @ftlvariable name="teamFilter" type="Boolean" -->
-            <#-- @ftlvariable name="activeFilter" type="Boolean" -->
-            <#-- @ftlvariable name="onlyRootFilter" type="Boolean" -->
-            <#-- @ftlvariable name="parentUuidFilter" type="Boolean" -->
-            <#-- @ftlvariable name="includeMetrics" type="Boolean" -->
-            <#-- @ftlvariable name="apiFilterParameter" type="String" -->
+            <#-- @ftlvariable name="includeMetrics" type="boolean" -->
+            <#-- @ftlvariable name="whereConditions" type="java.util.Collection<String>" -->
+            <#-- @ftlvariable name="collectionMetricsSubquery" type="String" -->
+            <#-- @ftlvariable name="leafMetricsSubquery" type="String" -->
             <#-- @ftlvariable name="apiOrderByClause" type="String" -->
             <#-- @ftlvariable name="apiOffsetLimitClause" type="String" -->
             <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
-            <#-- @ftlvariable name="apiParentProjectAclCondition" type="String" -->
-            SELECT "PROJECT"."ID" AS "id"
+            SELECT "PROJECT"."ID"
                  , "PROJECT"."UUID" AS "uuid"
                  , "GROUP" AS "group"
                  , "NAME" AS "name"
@@ -99,110 +237,59 @@ public interface ProjectDao extends SqlObject {
                  , "PROJECT"."IS_LATEST" AS "isLatest"
                  , "PROJECT"."COLLECTION_LOGIC" AS "collectionLogic"
                  , "PROJECT"."COLLECTION_TAG_ID" AS "collectionTagId"
-                 , (SELECT ARRAY_AGG("TAG"."NAME")
-                      FROM "TAG"
-                     INNER JOIN "PROJECTS_TAGS"
-                        ON "PROJECTS_TAGS"."TAG_ID" = "TAG"."ID"
-                     WHERE "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID") AS "tags"
-                 , (SELECT ARRAY_AGG("TEAM"."NAME")
-                      FROM "TEAM"
-                     INNER JOIN "PROJECT_ACCESS_TEAMS"
-                        ON "PROJECT_ACCESS_TEAMS"."TEAM_ID" = "TEAM"."ID"
-                     WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID") AS "teams"
+                 , (
+                     SELECT ARRAY_AGG("TAG"."NAME")
+                       FROM "TAG"
+                      INNER JOIN "PROJECTS_TAGS"
+                         ON "PROJECTS_TAGS"."TAG_ID" = "TAG"."ID"
+                      WHERE "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
+                   ) AS "tags"
+                 , (
+                     SELECT ARRAY_AGG("TEAM"."NAME")
+                       FROM "TEAM"
+                      INNER JOIN "PROJECT_ACCESS_TEAMS"
+                         ON "PROJECT_ACCESS_TEAMS"."TEAM_ID" = "TEAM"."ID"
+                      WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
+                   ) AS "teams"
                  , "PROJECT"."LAST_BOM_IMPORTED" AS "lastBomImport"
                  , "PROJECT"."LAST_BOM_IMPORTED_FORMAT" AS "lastBomImportFormat"
-                 , "PROJECT"."LAST_RISKSCORE" AS "lastRiskScore"
-                 , (SELECT EXISTS(
-                     SELECT 1
-                       FROM "PROJECT" AS "CHILD_PROJECT"
-                      WHERE "CHILD_PROJECT"."PARENT_PROJECT_ID" = "PROJECT"."ID")) AS "hasChildren"
+                 , CASE
+                     WHEN "PROJECT"."COLLECTION_LOGIC" IS NOT NULL
+                     THEN cm."inheritedRiskScore"
+                     ELSE "PROJECT"."LAST_RISKSCORE"
+                   END AS "lastRiskScore"
+                 , (
+                     SELECT EXISTS(
+                       SELECT 1
+                         FROM "PROJECT" AS "CHILD_PROJECT"
+                        WHERE "CHILD_PROJECT"."PARENT_PROJECT_ID" = "PROJECT"."ID")
+                   ) AS "hasChildren"
             <#if includeMetrics>
-                 , (SELECT TO_JSONB(m)
-                      FROM (
-                        SELECT "COMPONENTS"
-                             , "CRITICAL"
-                             , "HIGH"
-                             , "LOW"
-                             , "MEDIUM"
-                             , "POLICYVIOLATIONS_FAIL"
-                             , "POLICYVIOLATIONS_INFO"
-                             , "POLICYVIOLATIONS_LICENSE_TOTAL"
-                             , "POLICYVIOLATIONS_OPERATIONAL_TOTAL"
-                             , "POLICYVIOLATIONS_SECURITY_TOTAL"
-                             , "POLICYVIOLATIONS_TOTAL"
-                             , "POLICYVIOLATIONS_WARN"
-                             , "RISKSCORE"
-                             , "UNASSIGNED_SEVERITY"
-                             , "VULNERABILITIES"
-                          FROM "PROJECTMETRICS"
-                         WHERE "PROJECTMETRICS"."PROJECT_ID" = "PROJECT"."ID"
-                           AND "PROJECT"."COLLECTION_LOGIC" IS NULL
-                         ORDER BY "PROJECTMETRICS"."LAST_OCCURRENCE" DESC
-                         LIMIT 1
-                      ) AS m
-                   ) AS "metrics"
+                 , CASE
+                     WHEN "PROJECT"."COLLECTION_LOGIC" IS NOT NULL
+                     THEN TO_JSONB(cm.*)
+                     ELSE (SELECT TO_JSONB(m) FROM (${leafMetricsSubquery}) AS m)
+                   END AS "metrics"
             </#if>
-                 , COUNT(*) OVER() AS "totalCount"
               FROM "PROJECT"
+            <#--
+                NB: We are forced to do this lateral join unconditionally, because callers expect
+                lastRiskScore to be returned, but collection projects have no precomputed
+                LAST_RISKSCORE column. In a future query backing a hypothetical API v2 endpoint,
+                lastRiskScore should be an expandable field to work around this.
+            -->
+              LEFT JOIN LATERAL (${collectionMetricsSubquery}) AS cm
+                ON "PROJECT"."COLLECTION_LOGIC" IS NOT NULL
              WHERE ${apiProjectAclCondition}
-            <#if nameFilter>
-               AND "PROJECT"."NAME" = :nameFilter
-            </#if>
-            <#if versionFilter>
-               AND "PROJECT"."VERSION" = :versionFilter
-            </#if>
-            <#if classifierFilter>
-               AND "PROJECT"."CLASSIFIER" = :classifierFilter
-            </#if>
-            <#if tagFilter>
-               AND EXISTS(
-                 SELECT 1
-                   FROM "PROJECTS_TAGS"
-                  INNER JOIN "TAG"
-                     ON "TAG"."ID" = "PROJECTS_TAGS"."TAG_ID"
-                  WHERE "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
-                    AND "TAG"."NAME" = :tagFilter)
-            </#if>
-            <#if teamFilter>
-               AND EXISTS(
-                 SELECT 1
-                   FROM "PROJECT_ACCESS_TEAMS"
-                  INNER JOIN "TEAM"
-                     ON "TEAM"."ID" = "PROJECT_ACCESS_TEAMS"."TEAM_ID"
-                  WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
-                    AND "TEAM"."NAME" = :teamFilter)
-            </#if>
-            <#if activeFilter && activeFilter == true>
-                AND "PROJECT"."INACTIVE_SINCE" IS NULL
-            </#if>
-            <#if onlyRootFilter>
-               AND (NOT :onlyRootFilter OR "PROJECT"."PARENT_PROJECT_ID" IS NULL)
-            <#elseif parentUuidFilter>
-               AND EXISTS(
-                     SELECT 1
-                       FROM "PROJECT" AS "PARENT_PROJECT"
-                      WHERE "PARENT_PROJECT"."ID" = "PROJECT"."PARENT_PROJECT_ID"
-                        AND "PARENT_PROJECT"."UUID" = :parentUuidFilter
-                        AND ${apiParentProjectAclCondition})
-            </#if>
-            <#if apiFilterParameter??>
-               AND (LOWER("PROJECT"."NAME") LIKE ('%' || LOWER(${apiFilterParameter}) || '%')
-                    OR EXISTS (SELECT 1 FROM "TAG" WHERE "TAG"."NAME" = ${apiFilterParameter}))
-            </#if>
+               AND ${whereConditions?join(" AND ")}
             <#if apiOrderByClause??>
               ${apiOrderByClause}
             <#else>
-             ORDER BY "name" ASC, "version" DESC
+             ORDER BY "name", "PROJECT"."ID"
             </#if>
             ${apiOffsetLimitClause!}
             """)
-    @DefineNamedBindings
-    @DefineApiProjectAclCondition(
-            name = "apiParentProjectAclCondition",
-            projectIdColumn = "\"PARENT_PROJECT\".\"ID\""
-    )
-    @AllowApiOrdering(alwaysBy = "id", by = {
-            @AllowApiOrdering.Column(name = "id"),
+    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "\"PROJECT\".\"ID\""), by = {
             @AllowApiOrdering.Column(name = "group"),
             @AllowApiOrdering.Column(name = "name"),
             @AllowApiOrdering.Column(name = "version"),
@@ -213,57 +300,115 @@ public interface ProjectDao extends SqlObject {
             @AllowApiOrdering.Column(name = "lastBomImportFormat"),
             @AllowApiOrdering.Column(name = "lastRiskScore")
     })
+    @AllowUnusedBindings
     List<ConciseProjectListRow> queryPageConcise(
-            @Bind String nameFilter,
-            @Bind String versionFilter,
-            @Bind String classifierFilter,
-            @Bind String tagFilter,
-            @Bind String teamFilter,
-            @Bind Boolean activeFilter,
-            @Bind Boolean onlyRootFilter,
-            @Bind UUID parentUuidFilter,
-            @Define boolean includeMetrics);
+            @Define ArrayList<String> whereConditions,
+            @BindMap Map<String, Object> queryParams,
+            @Define boolean includeMetrics,
+            @Define String collectionMetricsSubquery,
+            @Define String leafMetricsSubquery);
 
-    default List<ConciseProjectListRow> getPageConcise(ListProjectsConciseQuery query) {
-        List<ConciseProjectListRow> rows = queryPageConcise(
-                query.nameFilter(),
-                query.versionFilter(),
-                query.classifierFilter(),
-                query.tagFilter(),
-                query.teamFilter(),
-                query.activeFilter(),
-                query.onlyRootFilter(),
-                query.parentUuidFilter(),
-                query.includeMetrics());
-        if (!query.includeMetrics() || rows.isEmpty()) {
-            return rows;
+    default Page<ConciseProjectListRow> getPageConcise(ListProjectsConciseQuery query) {
+        if (query.parentUuidFilter() != null
+                && !Boolean.TRUE.equals(isAccessible(query.parentUuidFilter()))) {
+            return Page.empty();
         }
 
-        // Metrics of collection projects cannot reasonably be queried inline.
-        // If this result set contains collections, query their metrics separately.
-        // Note that collection metrics are retrieved in bulk, and does not cause N+1.
-        final Set<Long> collectionIds = rows.stream()
-                .filter(row -> row.collectionLogic() != null && row.metrics() == null)
-                .map(ConciseProjectListRow::id)
-                .collect(Collectors.toSet());
-        if (collectionIds.isEmpty()) {
-            return rows;
+        final var whereConditions = new ArrayList<String>();
+        final var queryParams = new HashMap<String, Object>();
+        whereConditions.add("TRUE");
+        if (query.nameFilter() != null) {
+            whereConditions.add("\"PROJECT\".\"NAME\" = :nameFilter");
+            queryParams.put("nameFilter", query.nameFilter());
+        }
+        if (query.versionFilter() != null) {
+            whereConditions.add("\"PROJECT\".\"VERSION\" = :versionFilter");
+            queryParams.put("versionFilter", query.versionFilter());
+        }
+        if (query.classifierFilter() != null) {
+            whereConditions.add("\"PROJECT\".\"CLASSIFIER\" = :classifierFilter");
+            queryParams.put("classifierFilter", query.classifierFilter());
+        }
+        if (query.tagFilter() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    EXISTS (
+                      SELECT 1
+                        FROM "PROJECTS_TAGS"
+                       INNER JOIN "TAG"
+                          ON "TAG"."ID" = "PROJECTS_TAGS"."TAG_ID"
+                       WHERE "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
+                         AND "TAG"."NAME" = :tagFilter
+                    )""");
+            queryParams.put("tagFilter", query.tagFilter());
+        }
+        if (query.teamFilter() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    EXISTS (
+                      SELECT 1
+                        FROM "PROJECT_ACCESS_TEAMS"
+                       INNER JOIN "TEAM"
+                          ON "TEAM"."ID" = "PROJECT_ACCESS_TEAMS"."TEAM_ID"
+                       WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
+                         AND "TEAM"."NAME" = :teamFilter
+                    )""");
+            queryParams.put("teamFilter", query.teamFilter());
+        }
+        if (Boolean.TRUE.equals(query.activeFilter())) {
+            whereConditions.add("\"PROJECT\".\"INACTIVE_SINCE\" IS NULL");
+        }
+        if (query.onlyRootFilter() != null) {
+            if (query.onlyRootFilter()) {
+                whereConditions.add("\"PROJECT\".\"PARENT_PROJECT_ID\" IS NULL");
+            }
+        } else if (query.parentUuidFilter() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    EXISTS (
+                      SELECT 1
+                        FROM "PROJECT" AS "PARENT_PROJECT"
+                       WHERE "PARENT_PROJECT"."ID" = "PROJECT"."PARENT_PROJECT_ID"
+                         AND "PARENT_PROJECT"."UUID" = :parentUuidFilter
+                    )""");
+            queryParams.put("parentUuidFilter", query.parentUuidFilter());
+        }
+        if (query.searchText() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    (
+                      LOWER("PROJECT"."NAME") LIKE ('%' || LOWER(:searchTextLike) || '%') ESCAPE '!'
+                      OR EXISTS (
+                        SELECT 1
+                          FROM "PROJECTS_TAGS"
+                         INNER JOIN "TAG"
+                            ON "TAG"."ID" = "PROJECTS_TAGS"."TAG_ID"
+                         WHERE "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
+                           AND "TAG"."NAME" = :searchText
+                      )
+                    )""");
+            queryParams.put("searchText", query.searchText());
+            queryParams.put("searchTextLike", escapeLikePattern(query.searchText()));
         }
 
-        final Map<Long, ProjectMetrics> collectionMetricsById = getHandle()
-                .attach(MetricsDao.class)
-                .getMostRecentCollectionProjectMetrics(collectionIds)
-                .stream()
-                .collect(Collectors.toMap(ProjectMetrics::getProjectId, Function.identity()));
+        return withJitDisabled(() -> {
+            // NB: Count is executed separately from the main query, because including
+            // `COUNT(*) OVER()` in the main query forces Postgres to materialize all rows,
+            // including LATERAL joins *BEFORE* applying filters and limits.
+            //
+            // Since calculating metrics for collection projects requires recursive subqueries,
+            // this would be extremely expensive. Counting in a separate query bypasses this.
+            final TotalCount totalCount = getBoundedTotalCountWithProjectAcl(
+                    "FROM \"PROJECT\" WHERE " + String.join(" AND ", whereConditions),
+                    queryParams,
+                    /* threshold */ null,
+                    "\"PROJECT\".\"ID\"");
 
-        return rows.stream()
-                .map(row -> {
-                    final ProjectMetrics pm = collectionMetricsById.get(row.id());
-                    return pm != null
-                            ? row.withMetrics(ConciseProjectMetricsRow.of(pm))
-                            : row;
-                })
-                .toList();
+            final List<ConciseProjectListRow> rows = queryPageConcise(
+                    whereConditions,
+                    queryParams,
+                    query.includeMetrics(),
+                    COLLECTION_METRICS_SUBQUERY,
+                    LEAF_METRICS_SUBQUERY);
+
+            return new Page<>(rows, /* nextPageToken */ null, totalCount);
+        });
     }
 
     record ConciseProjectListRow(
@@ -283,255 +428,288 @@ public interface ProjectDao extends SqlObject {
             @Nullable String lastBomImportFormat,
             @Nullable Double lastRiskScore,
             boolean hasChildren,
-            @Nullable @Json ConciseProjectMetricsRow metrics,
-            long totalCount) {
-
-        ConciseProjectListRow withMetrics(@Nullable ConciseProjectMetricsRow metrics) {
-            return new ConciseProjectListRow(
-                    this.id,
-                    this.uuid,
-                    this.group,
-                    this.name,
-                    this.version,
-                    this.classifier,
-                    this.inactiveSince,
-                    this.isLatest,
-                    this.collectionLogic,
-                    this.collectionTagId,
-                    this.tags,
-                    this.teams,
-                    this.lastBomImport,
-                    this.lastBomImportFormat,
-                    this.lastRiskScore,
-                    this.hasChildren,
-                    metrics,
-                    this.totalCount);
-        }
-
+            @Nullable @Json ConciseProjectMetricsRow metrics) {
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     record ConciseProjectMetricsRow(
             int components,
             int critical,
             int high,
             int low,
             int medium,
-            @JsonAlias("policyviolations_fail") int policyViolationsFail,
-            @JsonAlias("policyviolations_info") int policyViolationsInfo,
-            @JsonAlias("policyviolations_license_total") int policyViolationsLicenseTotal,
-            @JsonAlias("policyviolations_operational_total") int policyViolationsOperationalTotal,
-            @JsonAlias("policyviolations_security_total") int policyViolationsSecurityTotal,
-            @JsonAlias("policyviolations_total") int policyViolationsTotal,
-            @JsonAlias("policyviolations_warn") int policyViolationsWarn,
-            @JsonAlias("riskscore") double riskScore,
-            @JsonAlias("unassigned_severity") int unassigned,
+            int policyViolationsFail,
+            int policyViolationsInfo,
+            int policyViolationsLicenseTotal,
+            int policyViolationsOperationalTotal,
+            int policyViolationsSecurityTotal,
+            int policyViolationsTotal,
+            int policyViolationsWarn,
+            double inheritedRiskScore,
+            int unassigned,
             int vulnerabilities) {
-
-        static ConciseProjectMetricsRow of(ProjectMetrics pm) {
-            return new ConciseProjectMetricsRow(
-                    pm.getComponents(),
-                    pm.getCritical(),
-                    pm.getHigh(),
-                    pm.getLow(),
-                    pm.getMedium(),
-                    pm.getPolicyViolationsFail(),
-                    pm.getPolicyViolationsInfo(),
-                    pm.getPolicyViolationsLicenseTotal(),
-                    pm.getPolicyViolationsOperationalTotal(),
-                    pm.getPolicyViolationsSecurityTotal(),
-                    pm.getPolicyViolationsTotal(),
-                    pm.getPolicyViolationsWarn(),
-                    pm.getInheritedRiskScore(),
-                    pm.getUnassigned(),
-                    pm.getVulnerabilities());
-        }
-
     }
 
-    record ProjectListRow(Project project, long totalCount) {
+    record ListProjectsRow(
+            UUID uuid,
+            @Nullable String group,
+            String name,
+            @Nullable String version,
+            @Nullable Classifier classifier,
+            @Nullable String description,
+            @Nullable String publisher,
+            @Nullable PackageURL purl,
+            @Nullable String swidTagId,
+            @Nullable String cpe,
+            @Nullable String directDependencies,
+            boolean isLatest,
+            @Nullable Date inactiveSince,
+            @Nullable Date lastBomImport,
+            @Nullable String lastBomImportFormat,
+            @Nullable Date lastVulnerabilityAnalysis,
+            @Nullable Double lastInheritedRiskScore,
+            @Nullable List<ExternalReference> externalReferences,
+            @Nullable OrganizationalEntity supplier,
+            @Nullable OrganizationalEntity manufacturer,
+            @Nullable List<OrganizationalContact> authors,
+            @Nullable List<String> tagNames,
+            @Json @ColumnName("metadataJson") @Nullable ProjectMetadata metadata,
+            @Json @ColumnName("metricsJson") @Nullable ProjectMetrics metrics,
+            @Nullable ProjectCollectionLogic collectionLogic,
+            @Nullable String collectionTagName,
+            @Nullable UUID parentUuid,
+            @Nullable String parentName,
+            @Nullable String parentVersion,
+            boolean hasChildren) {
     }
 
     @SqlQuery(/* language=InjectedFreeMarker */ """
-            <#-- @ftlvariable name="nameFilter" type="String" -->
-            <#-- @ftlvariable name="classifierFilter" type="Boolean" -->
-            <#-- @ftlvariable name="teamFilter" type="String" -->
-            <#-- @ftlvariable name="tagFilter" type="String" -->
-            <#-- @ftlvariable name="notAssignedToTeamWithUuid" type="String" -->
-            <#-- @ftlvariable name="onlyRoot" type="Boolean" -->
-            <#-- @ftlvariable name="apiFilterParameter" type="String" -->
+            <#-- @ftlvariable name="includeMetrics" type="boolean" -->
+            <#-- @ftlvariable name="whereConditions" type="java.util.Collection<String>" -->
+            <#-- @ftlvariable name="collectionMetricsSubquery" type="String" -->
+            <#-- @ftlvariable name="leafMetricsSubquery" type="String" -->
             <#-- @ftlvariable name="apiOrderByClause" type="String" -->
             <#-- @ftlvariable name="apiOffsetLimitClause" type="String" -->
             <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
-            <#-- @ftlvariable name="apiParentProjectAclCondition" type="String" -->
-            SELECT "PROJECT"."ID" AS "id"
-                 , "PROJECT"."CLASSIFIER"
+            SELECT "PROJECT"."ID"
+                 , "PROJECT"."CLASSIFIER" AS "classifier"
                  , "PROJECT"."CPE"
                  , "PROJECT"."DESCRIPTION"
-                 , "PROJECT"."DIRECT_DEPENDENCIES" AS "directDependencies"
-                 , "PROJECT"."EXTERNAL_REFERENCES" AS "externalReferences"
-                 , "PROJECT"."GROUP"
+                 , "PROJECT"."DIRECT_DEPENDENCIES"
+                 , "PROJECT"."EXTERNAL_REFERENCES"
+                 , "PROJECT"."GROUP" AS "group"
                  , "PROJECT"."LAST_BOM_IMPORTED" AS "lastBomImport"
                  , "PROJECT"."LAST_BOM_IMPORTED_FORMAT" AS "lastBomImportFormat"
-                 , "PROJECT"."LAST_RISKSCORE" AS "lastInheritedRiskScore"
+                 , "PROJECT"."LAST_VULNERABILITY_ANALYSIS"
+                 , CASE
+                     WHEN "PROJECT"."COLLECTION_LOGIC" IS NOT NULL
+                     THEN cm."inheritedRiskScore"
+                     ELSE "PROJECT"."LAST_RISKSCORE"
+                   END AS "lastInheritedRiskScore"
+                 , (
+                     SELECT EXISTS(
+                       SELECT 1
+                         FROM "PROJECT" AS "CHILD_PROJECT"
+                        WHERE "CHILD_PROJECT"."PARENT_PROJECT_ID" = "PROJECT"."ID")
+                   ) AS "hasChildren"
                  , "PROJECT"."NAME" AS "name"
                  , "PROJECT"."PUBLISHER"
-                 , "PROJECT"."PURL" AS "projectPurl"
+                 , "PROJECT"."PURL"
                  , "PROJECT"."SWIDTAGID"
                  , "PROJECT"."UUID"
-                 , "PROJECT"."VERSION" AS "version"
+                 , "PROJECT"."VERSION"
                  , "PROJECT"."SUPPLIER"
                  , "PROJECT"."MANUFACTURER"
                  , "PROJECT"."AUTHORS"
                  , "PROJECT"."IS_LATEST" AS "isLatest"
                  , "PROJECT"."INACTIVE_SINCE" AS "inactiveSince"
-                 , "PROJECT"."COLLECTION_LOGIC" AS "collectionLogic"
-                 , (SELECT JSONB_AGG(JSONB_BUILD_OBJECT('id', "ID", 'name', "NAME"))
-                        FROM "TAG"
-                        INNER JOIN "PROJECTS_TAGS"
-                            ON "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
-                        WHERE "TAG"."ID" = "PROJECTS_TAGS"."TAG_ID"
-                    ) AS "tagsJson"
-                 , (SELECT JSONB_AGG(JSONB_BUILD_OBJECT('id', "ID", 'name', "NAME"))
-                        FROM "TEAM"
-                        INNER JOIN "PROJECT_ACCESS_TEAMS"
-                            ON "PROJECT_ACCESS_TEAMS"."TEAM_ID" = "TEAM"."ID"
-                        WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
-                    ) AS "teamsJson"
-                 , COUNT(*) OVER() AS "totalCount"
+                 , "PROJECT"."COLLECTION_LOGIC"
+                 , collection_tag."NAME" AS "collectionTagName"
+                 , (
+                     SELECT ARRAY_AGG("TAG"."NAME")
+                       FROM "TAG"
+                      INNER JOIN "PROJECTS_TAGS"
+                         ON "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
+                      WHERE "TAG"."ID" = "PROJECTS_TAGS"."TAG_ID"
+                   ) AS "tagNames"
+                 , (
+                     SELECT JSONB_STRIP_NULLS(JSONB_BUILD_OBJECT(
+                              'supplier', "SUPPLIER"::JSONB,
+                              'authors', "AUTHORS"::JSONB,
+                              'tools', "TOOLS"::JSONB
+                            ))
+                       FROM "PROJECT_METADATA"
+                      WHERE "PROJECT_METADATA"."PROJECT_ID" = "PROJECT"."ID"
+                   ) AS "metadataJson"
+            <#if includeMetrics>
+                 , CASE
+                     WHEN "PROJECT"."COLLECTION_LOGIC" IS NOT NULL
+                     THEN TO_JSONB(cm.*)
+                     ELSE (SELECT TO_JSONB(m) FROM (${leafMetricsSubquery}) AS m)
+                   END AS "metricsJson"
+            </#if>
+                 , parent."UUID" AS "parentUuid"
+                 , parent."NAME" AS "parentName"
+                 , parent."VERSION" AS "parentVersion"
               FROM "PROJECT"
+            <#--
+                NB: We are forced to do this lateral join unconditionally, because callers expect
+                lastInheritedRiskScore to be returned, but collection projects have no precomputed
+                LAST_RISKSCORE column. In a future query backing a hypothetical API v2 endpoint,
+                lastInheritedRiskScore should be an expandable field to work around this.
+            -->
+              LEFT JOIN "PROJECT" AS parent
+                ON "PROJECT"."PARENT_PROJECT_ID" IS NOT NULL
+               AND parent."ID" = "PROJECT"."PARENT_PROJECT_ID"
+              LEFT JOIN LATERAL (${collectionMetricsSubquery}) AS cm
+                ON "PROJECT"."COLLECTION_LOGIC" IS NOT NULL
+              LEFT JOIN "TAG" AS collection_tag
+                ON collection_tag."ID" = "PROJECT"."COLLECTION_TAG_ID"
              WHERE ${apiProjectAclCondition}
-            <#if nameFilter>
-               AND "PROJECT"."NAME" = :nameFilter
-            </#if>
-            <#if classifierFilter>
-               AND "PROJECT"."CLASSIFIER" = :classifierFilter
-            </#if>
-            <#if tagFilter>
-               AND EXISTS(
-                 SELECT 1
-                   FROM "PROJECTS_TAGS"
-                  INNER JOIN "TAG"
-                     ON "TAG"."ID" = "PROJECTS_TAGS"."TAG_ID"
-                  WHERE "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
-                    AND "TAG"."NAME" = :tagFilter)
-            </#if>
-            <#if teamFilter>
-               AND EXISTS(
-                 SELECT 1
-                   FROM "PROJECT_ACCESS_TEAMS"
-                  INNER JOIN "TEAM"
-                     ON "TEAM"."ID" = "PROJECT_ACCESS_TEAMS"."TEAM_ID"
-                  WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
-                    AND "TEAM"."NAME" = :teamFilter)
-            </#if>
-            <#if notAssignedToTeamWithUuid>
-               AND NOT EXISTS(
-                 SELECT 1
-                   FROM "PROJECT_ACCESS_TEAMS"
-                  INNER JOIN "TEAM"
-                     ON "TEAM"."ID" = "PROJECT_ACCESS_TEAMS"."TEAM_ID"
-                  WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
-                    AND "TEAM"."UUID" = :notAssignedToTeamWithUuid)
-            </#if>
-            <#if excludeInactive>
-                AND "PROJECT"."INACTIVE_SINCE" IS NULL
-            </#if>
-            <#if onlyRoot>
-               AND ("PROJECT"."PARENT_PROJECT_ID" IS NULL)
-            </#if>
-            <#if apiFilterParameter??>
-               AND (LOWER("PROJECT"."NAME") LIKE ('%' || LOWER(${apiFilterParameter}) || '%')
-                    OR EXISTS (SELECT 1 FROM "TAG" WHERE "TAG"."NAME" = ${apiFilterParameter}))
-            </#if>
+               AND ${whereConditions?join(" AND ")}
             <#if apiOrderByClause??>
                 ${apiOrderByClause}
             <#else>
-                ORDER BY "name" ASC, "version" DESC
+                ORDER BY "name", "PROJECT"."ID"
             </#if>
             ${apiOffsetLimitClause!}
             """)
-    @DefineNamedBindings
-    @AllowUnusedBindings
-    @DefineApiProjectAclCondition(
-            name = "apiParentProjectAclCondition",
-            projectIdColumn = "\"PARENT_PROJECT\".\"ID\""
-    )
-    @AllowApiOrdering(alwaysBy = "id", by = {
-            @AllowApiOrdering.Column(name = "id"),
+    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "\"PROJECT\".\"ID\""), by = {
+            @AllowApiOrdering.Column(name = "group"),
             @AllowApiOrdering.Column(name = "name"),
-            @AllowApiOrdering.Column(name = "version")
+            @AllowApiOrdering.Column(name = "version"),
+            @AllowApiOrdering.Column(name = "classifier"),
+            @AllowApiOrdering.Column(name = "inactiveSince"),
+            @AllowApiOrdering.Column(name = "isLatest"),
+            @AllowApiOrdering.Column(name = "lastBomImport"),
+            @AllowApiOrdering.Column(name = "lastBomImportFormat"),
+            @AllowApiOrdering.Column(name = "lastInheritedRiskScore")
     })
-    @RegisterColumnMapper(ExternalReferenceMapper.class)
-    @RegisterColumnMapper(OrganizationalEntityMapper.class)
-    @RegisterColumnMapper(OrganizationalContactMapper.class)
-    @RegisterRowMapper(ProjectListRowMapper.class)
-    List<ProjectListRow> getProjects(
-            @Bind String nameFilter,
-            @Bind String classifierFilter,
-            @Bind String tagFilter,
-            @Bind String teamFilter,
-            @Bind String notAssignedToTeamWithUuid,
-            @Define boolean excludeInactive,
-            @Define boolean onlyRoot
-    );
+    @RegisterConstructorMapper(ListProjectsRow.class)
+    @AllowUnusedBindings
+    List<ListProjectsRow> getProjects(
+            @Define ArrayList<String> whereConditions,
+            @BindMap Map<String, Object> queryParams,
+            @Define boolean includeMetrics,
+            @Define String collectionMetricsSubquery,
+            @Define String leafMetricsSubquery);
 
-    default PaginatedResult getProjects(
-            String nameFilter,
-            String classifierFilter,
-            String tagFilter,
-            String teamFilter,
-            String notAssignedToTeamWithUuid,
-            boolean excludeInactive,
-            boolean onlyRoot,
-            boolean includeMetrics) {
-        final List<ProjectListRow> projectListRows = getProjects(
-                nameFilter,
-                classifierFilter,
-                tagFilter,
-                teamFilter,
-                notAssignedToTeamWithUuid,
-                excludeInactive,
-                onlyRoot);
-        final long totalCount = !projectListRows.isEmpty()
-                ? projectListRows.getFirst().totalCount()
-                : 0;
-        final List<Project> projects = projectListRows.stream()
-                .map(ProjectListRow::project)
-                .toList();
-
-        if (includeMetrics) {
-            final Map<Long, Project> projectById = projects.stream()
-                    .filter(project -> project.getCollectionLogic() == null)
-                    .collect(Collectors.toMap(Project::getId, Function.identity()));
-            final List<ProjectMetrics> metricsList = getHandle()
-                    .attach(MetricsDao.class)
-                    .getMostRecentProjectMetrics(projectById.keySet());
-
-            for (final ProjectMetrics metrics : metricsList) {
-                final Project project = projectById.get(metrics.getProjectId());
-                if (project != null) {
-                    project.setMetrics(metrics);
-                }
-            }
-
-            final Map<Long, Project> collectionById = projects.stream()
-                    .filter(project -> project.getCollectionLogic() != null)
-                    .collect(Collectors.toMap(Project::getId, Function.identity()));
-            if (!collectionById.isEmpty()) {
-                final List<ProjectMetrics> collectionMetrics = getHandle()
-                        .attach(MetricsDao.class)
-                        .getMostRecentCollectionProjectMetrics(collectionById.keySet());
-
-                for (final ProjectMetrics metrics : collectionMetrics) {
-                    final Project collection = collectionById.get(metrics.getProjectId());
-                    if (collection != null) {
-                        collection.setMetrics(metrics);
-                    }
-                }
-            }
+    default Page<ListProjectsRow> getProjects(ListProjectsQuery query) {
+        final var whereConditions = new ArrayList<String>();
+        final var queryParams = new HashMap<String, Object>();
+        whereConditions.add("TRUE");
+        if (query.nameFilter() != null) {
+            whereConditions.add("\"PROJECT\".\"NAME\" = :nameFilter");
+            queryParams.put("nameFilter", query.nameFilter());
+        }
+        if (query.classifierFilter() != null) {
+            whereConditions.add("\"PROJECT\".\"CLASSIFIER\" = :classifierFilter");
+            queryParams.put("classifierFilter", query.classifierFilter());
+        }
+        if (query.tagFilter() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    EXISTS (
+                      SELECT 1
+                        FROM "PROJECTS_TAGS"
+                       INNER JOIN "TAG"
+                          ON "TAG"."ID" = "PROJECTS_TAGS"."TAG_ID"
+                       WHERE "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
+                         AND "TAG"."NAME" = :tagFilter
+                    )""");
+            queryParams.put("tagFilter", query.tagFilter());
+        }
+        if (query.teamFilter() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    EXISTS (
+                      SELECT 1
+                        FROM "PROJECT_ACCESS_TEAMS"
+                       INNER JOIN "TEAM"
+                          ON "TEAM"."ID" = "PROJECT_ACCESS_TEAMS"."TEAM_ID"
+                       WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
+                         AND "TEAM"."NAME" = :teamFilter
+                    )""");
+            queryParams.put("teamFilter", query.teamFilter());
+        }
+        if (query.notAssignedToTeamWithUuidFilter() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    NOT EXISTS (
+                      SELECT 1
+                        FROM "PROJECT_ACCESS_TEAMS"
+                       INNER JOIN "TEAM"
+                          ON "TEAM"."ID" = "PROJECT_ACCESS_TEAMS"."TEAM_ID"
+                       WHERE "PROJECT_ACCESS_TEAMS"."PROJECT_ID" = "PROJECT"."ID"
+                         AND "TEAM"."UUID" = :notAssignedToTeamWithUuidFilter
+                    )""");
+            queryParams.put("notAssignedToTeamWithUuidFilter", query.notAssignedToTeamWithUuidFilter());
+        }
+        if (query.parentUuidFilter() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    EXISTS (
+                      SELECT 1
+                        FROM "PROJECT" AS "PARENT_PROJECT"
+                       WHERE "PARENT_PROJECT"."ID" = "PROJECT"."PARENT_PROJECT_ID"
+                         AND "PARENT_PROJECT"."UUID" = :parentUuidFilter
+                    )""");
+            queryParams.put("parentUuidFilter", query.parentUuidFilter());
+        }
+        if (query.excludeDescendantsOfUuid() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    NOT EXISTS (
+                      SELECT 1
+                        FROM "PROJECT_HIERARCHY"
+                       INNER JOIN "PROJECT" AS "ANCESTOR_PROJECT"
+                          ON "ANCESTOR_PROJECT"."ID" = "PROJECT_HIERARCHY"."PARENT_PROJECT_ID"
+                       WHERE "ANCESTOR_PROJECT"."UUID" = :excludeDescendantsOfUuid
+                         AND "PROJECT_HIERARCHY"."CHILD_PROJECT_ID" = "PROJECT"."ID"
+                    )""");
+            queryParams.put("excludeDescendantsOfUuid", query.excludeDescendantsOfUuid());
+        }
+        if (query.excludeInactive()) {
+            whereConditions.add("\"PROJECT\".\"INACTIVE_SINCE\" IS NULL");
+        }
+        if (query.onlyRoot()) {
+            whereConditions.add("\"PROJECT\".\"PARENT_PROJECT_ID\" IS NULL");
+        }
+        if (query.searchText() != null) {
+            whereConditions.add(/* language=SQL */ """
+                    (
+                      LOWER("PROJECT"."NAME") LIKE ('%' || LOWER(:searchTextLike) || '%') ESCAPE '!'
+                      OR EXISTS (
+                        SELECT 1
+                          FROM "PROJECTS_TAGS"
+                         INNER JOIN "TAG"
+                            ON "TAG"."ID" = "PROJECTS_TAGS"."TAG_ID"
+                         WHERE "PROJECTS_TAGS"."PROJECT_ID" = "PROJECT"."ID"
+                           AND "TAG"."NAME" = :searchText
+                      )
+                    )""");
+            queryParams.put("searchText", query.searchText());
+            queryParams.put("searchTextLike", escapeLikePattern(query.searchText()));
         }
 
-        return (new PaginatedResult()).objects(projects).total(totalCount);
+        return withJitDisabled(() -> {
+            // Count is run separately so the LATERAL fan-out and per-row SubPlans
+            // in the page query stay bounded to the page rows. Without this, the
+            // `COUNT(*) OVER()` window function would force materialization of
+            // every filtered row through the LATERAL.
+            final TotalCount totalCount = getBoundedTotalCountWithProjectAcl(
+                    "FROM \"PROJECT\" WHERE " + String.join(" AND ", whereConditions),
+                    queryParams,
+                    /* threshold */ null,
+                    "\"PROJECT\".\"ID\"");
+
+            final List<ListProjectsRow> rows = getProjects(
+                    whereConditions,
+                    queryParams,
+                    query.includeMetrics(),
+                    COLLECTION_METRICS_SUBQUERY,
+                    LEAF_METRICS_SUBQUERY);
+
+            return new Page<>(
+                    rows,
+                    /* nextPageToken */ null,
+                    new TotalCount(totalCount.value(), TotalCount.Type.EXACT));
+        });
     }
 
     @SqlUpdate("""
@@ -693,25 +871,15 @@ public interface ProjectDao extends SqlObject {
             """)
     void updateLastVulnAnalysis(@Bind UUID uuid);
 
-    class ProjectListRowMapper implements RowMapper<ProjectListRow> {
-
-        private static final TypeReference<Set<Tag>> TAGS_TYPE_REF = new TypeReference<>() {
-        };
-        private static final TypeReference<Set<Team>> TEAMS_TYPE_REF = new TypeReference<>() {
-        };
-
-        private final RowMapper<Project> projectMapper = BeanMapper.of(Project.class);
-
-        @Override
-        public ProjectListRow map(final ResultSet rs, final StatementContext ctx) throws SQLException {
-            final Project project = projectMapper.map(rs, ctx);
-            maybeSet(rs, "projectPurl", ResultSet::getString, project::setPurl);
-            maybeSet(rs, "teamsJson", (_, columnName) ->
-                    deserializeJson(rs, columnName, TEAMS_TYPE_REF), project::setAccessTeams);
-            maybeSet(rs, "tagsJson", (_, columnName) ->
-                    deserializeJson(rs, columnName, TAGS_TYPE_REF), project::setTags);
-            final ProjectListRow projectListRow = new ProjectListRow(project, rs.getInt("totalCount"));
-            return projectListRow;
-        }
+    default <T> T withJitDisabled(Supplier<T> supplier) {
+        return getHandle().inTransaction(trx -> {
+            trx.createUpdate("SET LOCAL jit = OFF")
+                    // The handle may carry bindings from ApiRequestStatementCustomizer
+                    // (e.g. pagination offset / limit) that this statement doesn't consume.
+                    .configure(SqlStatements.class, cfg -> cfg.setUnusedBindingAllowed(true))
+                    .execute();
+            return supplier.get();
+        });
     }
+
 }

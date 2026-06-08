@@ -28,7 +28,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-final class BomQueryManager extends QueryManager implements IQueryManager {
+final class BomQueryManager extends QueryManager {
 
     /**
      * Constructs a new QueryManager.

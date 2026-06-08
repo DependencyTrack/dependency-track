@@ -332,7 +332,7 @@ public class OidcAuthenticationServiceTest {
     public void authenticateShouldProvisionAndApplyDefaultTeamsAndReturnNewUserWhenUserDoesNotExistAndProvisioningIsEnabled() throws Exception {
         final Config config = configWith(Map.of(
                 AlpineConfigKeys.OIDC_USER_PROVISIONING, "true",
-                AlpineConfigKeys.OIDC_TEAMS_DEFAULT, "teamName"));
+                AlpineConfigKeys.OIDC_DEFAULT_TEAMS, "teamName"));
 
         try (final var qm = new AlpineQueryManager()) {
             var teamToAssign = new Team();

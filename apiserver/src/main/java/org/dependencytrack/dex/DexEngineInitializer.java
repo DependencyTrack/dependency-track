@@ -41,6 +41,7 @@ import org.dependencytrack.dex.listener.DelayedBomProcessedNotificationEmitter;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.metrics.FetchProjectMetricsUpdateCandidatesActivity;
 import org.dependencytrack.metrics.RefreshGlobalPortfolioMetricsActivity;
+import org.dependencytrack.metrics.RefreshVulnerabilityMetricsActivity;
 import org.dependencytrack.metrics.UpdatePortfolioMetricsWorkflow;
 import org.dependencytrack.metrics.UpdateProjectMetricsActivity;
 import org.dependencytrack.notification.ProcessScheduledNotificationRuleActivity;
@@ -228,7 +229,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                 new ImportBomActivity(
                         fileStorage,
                         engine,
-                        config.getOptionalValue("dt.tmp.delay.bom.processed.notification", boolean.class).orElse(false)),
+                        config.getOptionalValue("dt.tmp.delay-bom-processed-notification", boolean.class).orElse(false)),
                 protoConverter(ImportBomArg.class),
                 voidConverter(),
                 Duration.ofMinutes(5));
@@ -303,6 +304,11 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter(),
                 Duration.ofMinutes(5));
         engine.registerActivity(
+                new RefreshVulnerabilityMetricsActivity(),
+                voidConverter(),
+                voidConverter(),
+                Duration.ofMinutes(5));
+        engine.registerActivity(
                 new ResolvePackageMetadataActivity(pluginManager, secretManager),
                 protoConverter(ResolvePackageMetadataActivityArg.class),
                 voidConverter(),
@@ -357,7 +363,7 @@ public final class DexEngineInitializer implements ServletContextListener {
             }
         }
         if (config
-                .getOptionalValue("dt.tmp.delay.bom.processed.notification", boolean.class)
+                .getOptionalValue("dt.tmp.delay-bom-processed-notification", boolean.class)
                 .orElse(false)) {
             engine.addEventListener(new DelayedBomProcessedNotificationEmitter());
         }
@@ -402,12 +408,12 @@ public final class DexEngineInitializer implements ServletContextListener {
 
         // Metrics.
         engineConfig.metrics().setMeterRegistry(meterRegistry);
-        config.getOptionalValue("dt.dex-engine.metrics.collector.enabled", boolean.class)
+        config.getOptionalValue("dt.dex-engine.metrics-collector.enabled", boolean.class)
                 .ifPresent(engineConfig.metrics()::setCollectorEnabled);
-        config.getOptionalValue("dt.dex-engine.metrics.collector.initial-delay-ms", long.class)
+        config.getOptionalValue("dt.dex-engine.metrics-collector.initial-delay-ms", long.class)
                 .map(Duration::ofMillis)
                 .ifPresent(engineConfig.metrics()::setCollectorInitialDelay);
-        config.getOptionalValue("dt.dex-engine.metrics.collector.interval-ms", long.class)
+        config.getOptionalValue("dt.dex-engine.metrics-collector.interval-ms", long.class)
                 .map(Duration::ofMillis)
                 .ifPresent(engineConfig.metrics()::setCollectorInterval);
 
@@ -454,13 +460,14 @@ public final class DexEngineInitializer implements ServletContextListener {
                 .ifPresent(engineConfig.runHistoryCache()::setMaxSize);
 
         // Maintenance.
-        config.getOptionalValue("dt.dex-engine.maintenance.worker.initial-delay-ms", long.class)
+        config.getOptionalValue("dt.dex-engine.maintenance.worker-initial-delay-ms", long.class)
                 .map(Duration::ofMillis)
                 .ifPresent(engineConfig.maintenance()::setWorkerInitialDelay);
-        config.getOptionalValue("dt.dex-engine.maintenance.worker.interval-ms", long.class)
+        config.getOptionalValue("dt.dex-engine.maintenance.worker-interval-ms", long.class)
                 .map(Duration::ofMillis)
                 .ifPresent(engineConfig.maintenance()::setWorkerInterval);
-        config.getOptionalValue("dt.dex-engine.maintenance.run-retention-duration", Duration.class)
+        config.getOptionalValue("dt.dex-engine.maintenance.run-retention-ms", long.class)
+                .map(Duration::ofMillis)
                 .ifPresent(engineConfig.maintenance()::setRunRetentionDuration);
         config.getOptionalValue("dt.dex-engine.maintenance.run-deletion-batch-size", int.class)
                 .ifPresent(engineConfig.maintenance()::setRunDeletionBatchSize);

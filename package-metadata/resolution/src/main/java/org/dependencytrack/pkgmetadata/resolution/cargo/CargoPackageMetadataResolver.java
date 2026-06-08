@@ -77,7 +77,9 @@ final class CargoPackageMetadataResolver implements PackageMetadataResolver {
 
         final CargoCrateDocument crateDoc = parseDocument(body);
         final String latestVersion = crateDoc.crate() != null
-                ? crateDoc.crate().newestVersion()
+                ? (crateDoc.crate().maxStableVersion() != null
+                        ? crateDoc.crate().maxStableVersion()
+                        : crateDoc.crate().newestVersion())
                 : null;
         if (latestVersion == null) {
             return null;

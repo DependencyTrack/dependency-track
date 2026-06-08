@@ -24,8 +24,7 @@ import alpine.model.ManagedUser;
 import alpine.model.Team;
 import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import alpine.server.resources.GlobalExceptionHandler;
 import com.github.packageurl.PackageURL;
 import jakarta.json.Json;
@@ -115,8 +114,7 @@ class ProjectResourceTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(ProjectResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class)
+                    .register(AuthFeature.class)
                     .register(GlobalExceptionHandler.class));
 
     @Test
@@ -135,7 +133,79 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals(100, json.size());
         Assertions.assertEquals("Acme Example", json.getJsonObject(0).getString("name"));
-        Assertions.assertEquals("999", json.getJsonObject(0).getString("version"));
+        Assertions.assertEquals("0", json.getJsonObject(0).getString("version"));
+    }
+
+    @Test
+    void shouldReturn400WhenSortNameIsNotSupportedForGetProjects() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .queryParam("sortName", "invalidField")
+                .queryParam("sortOrder", "asc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response))
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "type": "/problems/invalid-sort-field",
+                          "status": 400,
+                          "title": "Invalid sort field",
+                          "detail": "Sorting by field 'invalidField' is not supported",
+                          "invalidField": "invalidField",
+                          "supportedFields": [
+                            "group",
+                            "name",
+                            "version",
+                            "classifier",
+                            "inactiveSince",
+                            "isLatest",
+                            "lastBomImport",
+                            "lastBomImportFormat",
+                            "lastInheritedRiskScore"
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
+    void shouldReturn400WhenSortNameIsNotSupportedForGetProjectsConcise() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Response response = jersey.target(V1_PROJECT + "/concise")
+                .queryParam("sortName", "invalidField")
+                .queryParam("sortOrder", "asc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response))
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "type": "/problems/invalid-sort-field",
+                          "status": 400,
+                          "title": "Invalid sort field",
+                          "detail": "Sorting by field 'invalidField' is not supported",
+                          "invalidField": "invalidField",
+                          "supportedFields": [
+                            "group",
+                            "name",
+                            "version",
+                            "classifier",
+                            "inactiveSince",
+                            "isLatest",
+                            "lastBomImport",
+                            "lastBomImportFormat",
+                            "lastRiskScore"
+                          ]
+                        }
+                        """);
     }
 
     @Test
@@ -152,9 +222,10 @@ class ProjectResourceTest extends ResourceTest {
         project.setClassifier(Classifier.APPLICATION);
         project.setDescription("project description");
         project.setExternalReferences(List.of(new ExternalReference()));
-        project.setLastBomImport(new java.util.Date());
+        project.setLastBomImport(new Date());
         project.setLastBomImportFormat("projectBomFormat");
         project.setLastInheritedRiskScore(7.7);
+        project.setLastVulnerabilityAnalysis(new Date());
         project.setPublisher("projectPublisher");
 
         final var projectContact = new OrganizationalContact();
@@ -173,13 +244,23 @@ class ProjectResourceTest extends ResourceTest {
 
         qm.bind(project, List.of(qm.createTag("foo")));
 
+        final var metadataAuthor = new OrganizationalContact();
+        metadataAuthor.setName("metadataAuthorName");
+        final var metadataSupplier = new OrganizationalEntity();
+        metadataSupplier.setName("metadataSupplierName");
+        final var metadata = new ProjectMetadata();
+        metadata.setProject(project);
+        metadata.setAuthors(List.of(metadataAuthor));
+        metadata.setSupplier(metadataSupplier);
+        qm.persist(metadata);
+
         final Response response = jersey.target(V1_PROJECT)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [ {
                    "publisher" : "projectPublisher",
                    "manufacturer" : {
@@ -208,14 +289,25 @@ class ProjectResourceTest extends ResourceTest {
                    "lastBomImport" : "${json-unit.any-number}",
                    "lastBomImportFormat" : "projectBomFormat",
                    "lastInheritedRiskScore" : 7.7,
+                   "lastVulnerabilityAnalysis" : "${json-unit.any-number}",
                    "externalReferences" : [ { } ],
+                   "metadata" : {
+                     "supplier" : {
+                       "name" : "metadataSupplierName"
+                     },
+                     "authors" : [ {
+                       "name" : "metadataAuthorName"
+                     } ]
+                   },
                    "isLatest" : false,
-                   "active" : true
+                   "active" : true,
+                   "hasChildren" : false
                  } ]
                 """);
     }
 
-    @Test // https://github.com/DependencyTrack/dependency-track/issues/2583
+    @Test
+        // https://github.com/DependencyTrack/dependency-track/issues/2583
     void getProjectsWithAclEnabledTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
         enablePortfolioAccessControl();
@@ -257,20 +349,20 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [
                   {
                       "name" : "acme-app-1",
                       "uuid" : "${json-unit.any-string}",
-                      "externalReferences" : [ ],
                       "isLatest" : false,
-                      "active" : true
+                      "active" : true,
+                      "hasChildren" : false
                     }, {
                       "name" : "acme-app-2",
                       "uuid" : "${json-unit.any-string}",
-                      "externalReferences" : [ ],
                       "isLatest" : false,
-                      "active" : true
+                      "active" : true,
+                      "hasChildren" : false
                   }
                 ]
                 """);
@@ -283,14 +375,14 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [
                   {
                       "name" : "acme-app-3",
                       "uuid" : "${json-unit.any-string}",
-                      "externalReferences" : [ ],
                       "isLatest" : false,
-                      "active" : true
+                      "active" : true,
+                      "hasChildren" : false
                   }
                 ]
                 """);
@@ -325,7 +417,7 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [
                   {
                       "name" : "acme-app-b",
@@ -333,9 +425,9 @@ class ProjectResourceTest extends ResourceTest {
                       "tags" : [ {
                         "name" : "foo"
                       } ],
-                      "externalReferences":[],
                       "isLatest" : false,
-                      "active" : true
+                      "active" : true,
+                      "hasChildren" : false
                   }
                 ]
                 """);
@@ -361,13 +453,13 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [ {
                    "name" : "acme-app-a",
                    "uuid" : "${json-unit.any-string}",
-                   "externalReferences" : [ ],
                    "isLatest" : false,
-                   "active" : true
+                   "active" : true,
+                   "hasChildren" : false
                  } ]
                 """);
     }
@@ -409,7 +501,7 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals(100, json.size());
         Assertions.assertEquals("Acme Example", json.getJsonObject(0).getString("name"));
-        Assertions.assertEquals("999", json.getJsonObject(0).getString("version"));
+        Assertions.assertEquals("0", json.getJsonObject(0).getString("version"));
     }
 
     @Test
@@ -523,20 +615,24 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("2");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [ {
                    "name" : "acme-app-a",
                    "uuid" : "${json-unit.any-string}",
-                   "externalReferences" : [ ],
                    "isLatest" : false,
-                   "active" : true
+                   "active" : true,
+                   "hasChildren" : true
                  }, {
+                   "parent": {
+                     "uuid": "${json-unit.any-string}",
+                     "name": "acme-app-a"
+                   },
                    "name" : "acme-app-b",
                    "uuid" : "${json-unit.any-string}",
                    "inactiveSince" : "${json-unit.any-number}",
-                   "externalReferences" : [ ],
                    "isLatest" : false,
-                   "active" : false
+                   "active" : false,
+                   "hasChildren" : false
                  } ]
                 """);
 
@@ -548,13 +644,13 @@ class ProjectResourceTest extends ResourceTest {
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 [ {
                    "name" : "acme-app-a",
                    "uuid" : "${json-unit.any-string}",
-                   "externalReferences" : [ ],
                    "isLatest" : false,
-                   "active" : true
+                   "active" : true,
+                   "hasChildren" : true
                  } ]
                 """);
     }
@@ -581,6 +677,7 @@ class ProjectResourceTest extends ResourceTest {
         Assertions.assertNotNull(json.getJsonArray("versions").getJsonObject(100).getString("uuid"));
         Assertions.assertNotEquals("", json.getJsonArray("versions").getJsonObject(100).getString("uuid"));
         Assertions.assertEquals("100", json.getJsonArray("versions").getJsonObject(100).getString("version"));
+        Assertions.assertFalse(json.getJsonArray("versions").getJsonObject(100).getBoolean("isLatest"));
     }
 
     @Test
@@ -661,6 +758,68 @@ class ProjectResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals("DEF", json.getJsonObject(0).getString("name"));
+    }
+
+    @Test
+    void shouldSortProjectsByLastInheritedRiskScoreIncludingCollectionProjects() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        projectA.setLastInheritedRiskScore(10.0);
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        projectB.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(projectB, List.of(), false);
+
+        final var projectC = new Project();
+        projectC.setName("acme-app-c");
+        projectC.setParent(projectB);
+        projectC.setLastInheritedRiskScore(6.0);
+        qm.persist(projectC);
+
+        final var projectD = new Project();
+        projectD.setName("acme-app-d");
+        projectD.setLastInheritedRiskScore(5.0);
+        qm.persist(projectD);
+
+        useJdbiHandle(handle -> {
+            final var testDao = handle.attach(MetricsTestDao.class);
+            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
+            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+
+            final var childMetrics = new ProjectMetrics();
+            childMetrics.setProjectId(projectC.getId());
+            childMetrics.setInheritedRiskScore(7.0);
+            childMetrics.setFirstOccurrence(Date.from(dbNow));
+            childMetrics.setLastOccurrence(Date.from(dbNow));
+            testDao.createProjectMetrics(childMetrics);
+        });
+
+        final Response response = jersey
+                .target(V1_PROJECT)
+                .queryParam(ORDER_BY, "lastInheritedRiskScore")
+                .queryParam(SORT, SORT_DESC)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json)
+                .extracting(value -> ((JsonObject) value).getString("name"))
+                .containsExactly(
+                        "acme-app-a",
+                        "acme-app-b",
+                        "acme-app-c",
+                        "acme-app-d");
+        assertThat(json)
+                .extracting(value -> ((JsonObject) value).getJsonNumber("lastInheritedRiskScore").doubleValue())
+                .containsExactly(10.0, 7.0, 6.0, 5.0);
     }
 
     @Test
@@ -1826,7 +1985,7 @@ class ProjectResourceTest extends ResourceTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .withMatcher("parentUuid", equalTo(parentProject.getUuid().toString()))
                 .withMatcher("childUuid", equalTo(childProject.getUuid().toString()))
-                .isEqualTo("""
+                .isEqualTo(/* language=JSON */ """
                         {
                           "name": "acme-app",
                           "version": "1.0.0",
@@ -1853,6 +2012,7 @@ class ProjectResourceTest extends ResourceTest {
                             {
                               "uuid": "${json-unit.matches:projectUuid}",
                               "version": "1.0.0",
+                              "isLatest": false,
                               "active": true
                             }
                           ]
@@ -1897,6 +2057,7 @@ class ProjectResourceTest extends ResourceTest {
                             {
                               "uuid": "${json-unit.matches:projectUuid}",
                               "version": "1.0.0",
+                              "isLatest": false,
                               "active": true
                             }
                           ]
@@ -2829,22 +2990,170 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    void getChildrenProjectsTest() {
+    void shouldListChildrenProjects() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
         Project parent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
         Project child = qm.createProject("DEF", null, "1.0", null, parent, null, null, false);
         qm.createProject("GHI", null, "1.0", null, parent, null, null, false);
         qm.createProject("JKL", null, "1.0", null, child, null, null, false);
-        Response response = jersey.target(V1_PROJECT + "/" + parent.getUuid().toString() + "/children")
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + parent.getUuid().toString() + "/children")
                 .request()
                 .header(X_API_KEY, apiKey)
-                .get(Response.class);
-        Assertions.assertEquals(200, response.getStatus(), 0);
-        Assertions.assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals("DEF", json.getJsonObject(0).getString("name"));
-        Assertions.assertEquals("GHI", json.getJsonObject(1).getString("name"));
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("2");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "name": "DEF",
+                    "version": "1.0",
+                    "uuid": "${json-unit.any-string}",
+                    "isLatest": false,
+                    "active": true,
+                    "parent": {
+                      "uuid": "${json-unit.any-string}",
+                      "name": "ABC",
+                      "version": "1.0"
+                    },
+                    "hasChildren": true
+                  },
+                  {
+                    "name": "GHI",
+                    "version": "1.0",
+                    "uuid": "${json-unit.any-string}",
+                    "isLatest": false,
+                    "active": true,
+                    "parent": {
+                      "uuid": "${json-unit.any-string}",
+                      "name": "ABC",
+                      "version": "1.0"
+                    },
+                    "hasChildren": false
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    void shouldReturn404WhenGettingChildrenOfUnknownProject() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + UUID.randomUUID() + "/children")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    void shouldReturn403WhenGettingChildrenOfInaccessibleProject() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        enablePortfolioAccessControl();
+
+        final Project parent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + parent.getUuid() + "/children")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(403);
+    }
+
+    @Test
+    void shouldListChildrenProjectsByClassifier() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project parent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+        final Project library = qm.createProject("DEF", null, "1.0", null, parent, null, null, false);
+        library.setClassifier(Classifier.LIBRARY);
+        final Project application = qm.createProject("GHI", null, "1.0", null, parent, null, null, false);
+        application.setClassifier(Classifier.APPLICATION);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + parent.getUuid() + "/children/classifier/" + Classifier.LIBRARY)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "name": "DEF",
+                    "version": "1.0",
+                    "classifier": "LIBRARY",
+                    "uuid": "${json-unit.any-string}",
+                    "isLatest": false,
+                    "active": true,
+                    "parent": {
+                      "uuid": "${json-unit.any-string}",
+                      "name": "ABC",
+                      "version": "1.0"
+                    },
+                    "hasChildren": false
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    void shouldListChildrenProjectsByTag() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project parent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+        final Project tagged = qm.createProject("DEF", null, "1.0", null, parent, null, null, false);
+        qm.bind(tagged, List.of(qm.createTag("foo")));
+        qm.createProject("GHI", null, "1.0", null, parent, null, null, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + parent.getUuid() + "/children/tag/foo")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "name": "DEF",
+                    "version": "1.0",
+                    "uuid": "${json-unit.any-string}",
+                    "isLatest": false,
+                    "active": true,
+                    "parent": {
+                      "uuid": "${json-unit.any-string}",
+                      "name": "ABC",
+                      "version": "1.0"
+                    },
+                    "tags": [
+                      { "name": "foo" }
+                    ],
+                    "hasChildren": false
+                  }
+                ]
+                """);
+    }
+
+    @Test
+    void shouldReturnEmptyChildrenListForUnknownTag() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project parent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+        qm.createProject("DEF", null, "1.0", null, parent, null, null, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + parent.getUuid() + "/children/tag/does-not-exist")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("0");
+        assertThat(getPlainTextBody(response)).isEqualTo("[]");
     }
 
     @Test
@@ -2911,23 +3220,60 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
-    void getProjectsWithoutDescendantsOfTest() {
+    void shouldListProjectsWithoutDescendantsOf() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
-        Project grandParent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
-        Project parent = qm.createProject("DEF", null, "1.0", null, grandParent, null, null, false);
-        Project child = qm.createProject("GHI", null, "1.0", null, parent, null, null, false);
+
+        final Project grandParent = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+        final Project parent = qm.createProject("DEF", null, "1.0", null, grandParent, null, null, false);
+        final Project child = qm.createProject("GHI", null, "1.0", null, parent, null, null, false);
         qm.createProject("JKL", null, "1.0", null, child, null, null, false);
 
-        Response response = jersey.target(V1_PROJECT + "/withoutDescendantsOf/" + parent.getUuid())
+        final Response response = jersey
+                .target(V1_PROJECT + "/withoutDescendantsOf/" + parent.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
-                .get(Response.class);
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "name": "ABC",
+                    "version": "1.0",
+                    "uuid": "${json-unit.any-string}",
+                    "isLatest": false,
+                    "active": true,
+                    "hasChildren": true
+                  }
+                ]
+                """);
+    }
 
-        Assertions.assertEquals(200, response.getStatus(), 0);
-        Assertions.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals("ABC", json.getJsonObject(0).getString("name"));
+    @Test
+    void shouldReturn404WhenGettingProjectsWithoutDescendantsOfUnknownProject() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/withoutDescendantsOf/" + UUID.randomUUID())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(404);
+    }
+
+    @Test
+    void shouldReturn403WhenGettingProjectsWithoutDescendantsOfInaccessibleProject() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        enablePortfolioAccessControl();
+
+        final Project root = qm.createProject("ABC", null, "1.0", null, null, null, null, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/withoutDescendantsOf/" + root.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(403);
     }
 
     @Test
@@ -3179,7 +3525,8 @@ class ProjectResourceTest extends ResourceTest {
                         assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
                     });
 
-                    assertThat(qm.getAllVulnerabilities(clonedComponent, false)).containsOnly(vuln);
+                    assertThat(qm.getVulnerabilities(clonedComponent, false).getList(Vulnerability.class))
+                            .satisfiesExactly(v -> assertThat(v.getId()).isEqualTo(vuln.getId()));
 
                     assertThat(qm.getAnalysis(clonedComponent, vuln)).satisfies(clonedAnalysis -> {
                         assertThat(clonedAnalysis.getId()).isNotEqualTo(analysisId);
@@ -3313,14 +3660,17 @@ class ProjectResourceTest extends ResourceTest {
 
         Assertions.assertNotNull(json.getJsonArray("versions").getJsonObject(0).getJsonString("uuid").getString());
         Assertions.assertEquals("1.0", json.getJsonArray("versions").getJsonObject(0).getJsonString("version").getString());
+        Assertions.assertFalse(json.getJsonArray("versions").getJsonObject(0).getBoolean("isLatest"));
         Assertions.assertTrue(json.getJsonArray("versions").getJsonObject(0).getBoolean("active"));
 
         Assertions.assertNotNull(json.getJsonArray("versions").getJsonObject(1).getJsonString("uuid").getString());
         Assertions.assertEquals("2.0", json.getJsonArray("versions").getJsonObject(1).getJsonString("version").getString());
+        Assertions.assertFalse(json.getJsonArray("versions").getJsonObject(0).getBoolean("isLatest"));
         Assertions.assertTrue(json.getJsonArray("versions").getJsonObject(0).getBoolean("active"));
 
         Assertions.assertNotNull(json.getJsonArray("versions").getJsonObject(2).getJsonString("uuid").getString());
         Assertions.assertEquals("3.0", json.getJsonArray("versions").getJsonObject(2).getJsonString("version").getString());
+        Assertions.assertFalse(json.getJsonArray("versions").getJsonObject(0).getBoolean("isLatest"));
         Assertions.assertTrue(json.getJsonArray("versions").getJsonObject(0).getBoolean("active"));
     }
 
@@ -3470,7 +3820,7 @@ class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "name": "acme-app-parent",
                   "version": "1.0.0",
@@ -3493,6 +3843,7 @@ class ProjectResourceTest extends ResourceTest {
                     {
                       "uuid": "${json-unit.any-string}",
                       "version": "1.0.0",
+                      "isLatest": false,
                       "active": true
                     }
                   ]
@@ -3504,7 +3855,7 @@ class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).isEqualTo("""
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
                   "name": "acme-app",
                   "version": "1.0.0",
@@ -3523,6 +3874,7 @@ class ProjectResourceTest extends ResourceTest {
                     {
                       "uuid": "${json-unit.any-string}",
                       "version": "1.0.0",
+                      "isLatest": false,
                       "active": true
                     }
                   ]
@@ -3928,6 +4280,42 @@ class ProjectResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         Assertions.assertEquals(403, response.getStatus(), 0);
+    }
+
+    @Test
+    void createProjectIsLatestPreviousLatestInaccessibleTest() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
+        enablePortfolioAccessControl();
+
+        final var previousLatest = new Project();
+        previousLatest.setName("acme-app");
+        previousLatest.setVersion("1.0.0");
+        previousLatest.setIsLatest(true);
+        qm.persist(previousLatest);
+
+        final Response response = jersey
+                .target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "version": "2.0.0",
+                          "isLatest": true
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 403,
+                  "title": "Project access denied",
+                  "detail": "Access to the requested project is forbidden"
+                }
+                """);
+
+        qm.getPersistenceManager().refresh(previousLatest);
+        assertThat(previousLatest.isLatest()).isTrue();
+        assertThat(qm.getProject("acme-app", "2.0.0")).isNull();
     }
 
     @Test
@@ -4428,6 +4816,188 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldSortConciseListByLastRiskScoreIncludingCollectionProjects() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        projectA.setLastInheritedRiskScore(10.0);
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        projectB.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(projectB, List.of(), false);
+
+        final var projectC = new Project();
+        projectC.setName("acme-app-c");
+        projectC.setParent(projectB);
+        projectC.setLastInheritedRiskScore(6.0);
+        qm.persist(projectC);
+
+        final var projectD = new Project();
+        projectD.setName("acme-app-d");
+        projectD.setLastInheritedRiskScore(5.0);
+        qm.persist(projectD);
+
+        useJdbiHandle(handle -> {
+            final var testDao = handle.attach(MetricsTestDao.class);
+            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
+            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+
+            final var childMetrics = new ProjectMetrics();
+            childMetrics.setProjectId(projectC.getId());
+            childMetrics.setInheritedRiskScore(7.0);
+            childMetrics.setFirstOccurrence(Date.from(dbNow));
+            childMetrics.setLastOccurrence(Date.from(dbNow));
+            testDao.createProjectMetrics(childMetrics);
+        });
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/concise")
+                .queryParam("sortName", "lastRiskScore")
+                .queryParam("sortOrder", "desc")
+                .queryParam("includeMetrics", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
+
+        final JsonArray jsonArray = parseJsonArray(response);
+        assertThat(jsonArray).hasSize(4);
+        assertThat(jsonArray)
+                .extracting(value -> ((JsonObject) value).getString("name"))
+                .containsExactly(
+                        "acme-app-a",
+                        "acme-app-b",
+                        "acme-app-c",
+                        "acme-app-d");
+        assertThat(jsonArray)
+                .extracting(value -> ((JsonObject) value).getJsonNumber("lastRiskScore").doubleValue())
+                .containsExactly(10.0, 7.0, 6.0, 5.0);
+
+        final JsonObject collectionObj = jsonArray.getJsonObject(1);
+        assertThatJson(collectionObj.getJsonObject("metrics").toString())
+                .withOptions(Option.IGNORING_EXTRA_FIELDS)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "inheritedRiskScore": 7.0
+                        }
+                        """);
+    }
+
+    @Test
+    void shouldSortConciseListByLastRiskScoreWithoutMetricsExpansion() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        projectA.setLastInheritedRiskScore(3.0);
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        projectB.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(projectB, List.of(), false);
+
+        final var projectC = new Project();
+        projectC.setName("acme-app-c");
+        projectC.setParent(projectB);
+        projectC.setLastInheritedRiskScore(2.0);
+        qm.persist(projectC);
+
+        useJdbiHandle(handle -> {
+            final var testDao = handle.attach(MetricsTestDao.class);
+            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
+            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+
+            final var childMetrics = new ProjectMetrics();
+            childMetrics.setProjectId(projectC.getId());
+            childMetrics.setInheritedRiskScore(8.0);
+            childMetrics.setFirstOccurrence(Date.from(dbNow));
+            childMetrics.setLastOccurrence(Date.from(dbNow));
+            testDao.createProjectMetrics(childMetrics);
+        });
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/concise")
+                .queryParam("sortName", "lastRiskScore")
+                .queryParam("sortOrder", "desc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
+
+        final JsonArray jsonArray = parseJsonArray(response);
+        assertThat(jsonArray)
+                .extracting(value -> ((JsonObject) value).getString("name"))
+                .containsExactly("acme-app-b", "acme-app-a", "acme-app-c");
+        assertThat(jsonArray.getJsonObject(0).containsKey("metrics")).isFalse();
+    }
+
+    @Test
+    void shouldReturnCollectionProjectMetricsForChildrenConciseEndpoint() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var parent = new Project();
+        parent.setName("parent-collection");
+        parent.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.createProject(parent, List.of(), false);
+
+        final var nestedCollection = new Project();
+        nestedCollection.setName("nested-collection");
+        nestedCollection.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        nestedCollection.setParent(parent);
+        qm.createProject(nestedCollection, List.of(), false);
+
+        final var leafGrandchild = new Project();
+        leafGrandchild.setName("leaf-grandchild");
+        leafGrandchild.setParent(nestedCollection);
+        qm.persist(leafGrandchild);
+
+        useJdbiHandle(handle -> {
+            final var testDao = handle.attach(MetricsTestDao.class);
+            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
+            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+
+            final var grandchildMetrics = new ProjectMetrics();
+            grandchildMetrics.setProjectId(leafGrandchild.getId());
+            grandchildMetrics.setInheritedRiskScore(4.0);
+            grandchildMetrics.setCritical(2);
+            grandchildMetrics.setFirstOccurrence(Date.from(dbNow));
+            grandchildMetrics.setLastOccurrence(Date.from(dbNow));
+            testDao.createProjectMetrics(grandchildMetrics);
+        });
+
+        final Response response = jersey.target(V1_PROJECT + "/concise/" + parent.getUuid() + "/children")
+                .queryParam("includeMetrics", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+
+        final JsonArray jsonArray = parseJsonArray(response);
+        assertThat(jsonArray).hasSize(1);
+        final JsonObject nested = jsonArray.getJsonObject(0);
+        assertThat(nested.getString("name")).isEqualTo("nested-collection");
+        // The nested collection's metrics aggregate recursively from its leaf descendant.
+        assertThatJson(nested.getJsonObject("metrics").toString())
+                .withOptions(Option.IGNORING_EXTRA_FIELDS)
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "critical": 2,
+                          "inheritedRiskScore": 4.0
+                        }
+                        """);
+    }
+
+    @Test
     void shouldCreateCollectionProjectWithoutClassifier() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
@@ -4717,6 +5287,122 @@ class ProjectResourceTest extends ResourceTest {
                 .inPath("$.versions[*].uuid")
                 .isArray()
                 .containsExactly(accessibleVersion.getUuid().toString());
+    }
+
+    @Test
+    void shouldFilterProjectsBySearchTextOnNameAndTag() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        qm.persist(projectB);
+        qm.bind(projectB, List.of(qm.createTag("tag-foo")));
+
+        final var projectC = new Project();
+        projectC.setName("acme-app-c");
+        qm.persist(projectC);
+        qm.bind(projectC, List.of(qm.createTag("tag-bar")));
+
+        Response response = jersey
+                .target(V1_PROJECT)
+                .queryParam("searchText", "acme-app-a")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-a");
+
+        response = jersey
+                .target(V1_PROJECT)
+                .queryParam("searchText", "tag-foo")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-b");
+
+        response = jersey
+                .target(V1_PROJECT)
+                .queryParam("searchText", "tag-bar")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-c");
+    }
+
+    @Test
+    void shouldFilterConciseProjectsBySearchTextOnNameAndTag() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var projectA = new Project();
+        projectA.setName("acme-app-a");
+        qm.persist(projectA);
+
+        final var projectB = new Project();
+        projectB.setName("acme-app-b");
+        qm.persist(projectB);
+        qm.bind(projectB, List.of(qm.createTag("tag-foo")));
+
+        final var projectC = new Project();
+        projectC.setName("acme-app-c");
+        qm.persist(projectC);
+        qm.bind(projectC, List.of(qm.createTag("tag-bar")));
+
+        Response response = jersey
+                .target(V1_PROJECT + "/concise")
+                .queryParam("searchText", "acme-app-a")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-a");
+
+        response = jersey
+                .target(V1_PROJECT + "/concise")
+                .queryParam("searchText", "tag-foo")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-b");
+
+        response = jersey
+                .target(V1_PROJECT + "/concise")
+                .queryParam("searchText", "tag-bar")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].name")
+                .isArray()
+                .containsExactlyInAnyOrder("acme-app-c");
     }
 
 }

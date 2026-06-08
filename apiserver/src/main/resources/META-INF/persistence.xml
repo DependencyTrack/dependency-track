@@ -57,7 +57,6 @@
     <class>org.dependencytrack.model.ViolationAnalysisComment</class>
     <class>org.dependencytrack.model.ViolationAnalysisState</class>
     <class>org.dependencytrack.model.Vulnerability</class>
-    <class>org.dependencytrack.model.VulnerabilityMetrics</class>
     <class>org.dependencytrack.model.VulnerableSoftware</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <shared-cache-mode>NONE</shared-cache-mode>

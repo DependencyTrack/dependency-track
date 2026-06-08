@@ -70,7 +70,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
-import static org.dependencytrack.util.TaskUtil.getCronScheduleForTask;
 import static org.dependencytrack.util.TaskUtil.getCronScheduleFromConfig;
 
 /**
@@ -181,77 +180,77 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
         return List.of(
                 recurringTask(
                         "Package Metadata Maintenance",
-                        getCronScheduleForTask(PackageMetadataMaintenanceTask.class),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_PACKAGE_METADATA_MAINTENANCE_CRON),
                         new PackageMetadataMaintenanceTask()),
                 recurringTask(
                         "Defect Dojo Upload",
-                        getCronScheduleForTask(DefectDojoUploadTask.class),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_DEFECT_DOJO_UPLOAD_CRON),
                         new DefectDojoUploadTask(HttpClient.INSTANCE, secretManager)),
                 recurringTaskTriggeredOnFirstRun(
                         "EPSS Mirror",
-                        getCronScheduleForTask(EpssMirrorTask.class),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_EPSS_MIRROR_CRON),
                         new EpssMirrorTask(HttpClient.INSTANCE)),
                 recurringTask(
                         "Fortify SSC Upload",
-                        getCronScheduleForTask(FortifySscUploadTask.class),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_FORTIFY_SSC_UPLOAD_CRON),
                         new FortifySscUploadTask(HttpClient.INSTANCE, secretManager)),
                 recurringTaskTriggeredOnFirstRun(
                         "GitHub Advisories Mirror",
-                        getCronScheduleFromConfig(config, "dt.task.git.hub.advisory.mirror.cron"),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_GITHUB_ADVISORY_VULN_DATA_SOURCE_MIRROR_CRON),
                         () -> vulnDataSourceMirrorService.trigger("github", null)),
                 recurringTask(
                         "Kenna Security Upload",
-                        getCronScheduleForTask(KennaSecurityUploadTask.class),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_KENNA_SECURITY_UPLOAD_CRON),
                         new KennaSecurityUploadTask(HttpClient.INSTANCE, secretManager)),
                 recurringTask(
                         "Metrics Maintenance",
-                        getCronScheduleForTask(MetricsMaintenanceTask.class),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_METRICS_MAINTENANCE_CRON),
                         new MetricsMaintenanceTask()),
                 recurringTaskTriggeredOnFirstRun(
                         "NVD Mirror",
-                        getCronScheduleFromConfig(config, "dt.task.nist.mirror.cron"),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_NVD_VULN_DATA_SOURCE_MIRROR_CRON),
                         () -> vulnDataSourceMirrorService.trigger("nvd", null)),
                 recurringTaskTriggeredOnFirstRun(
                         "OSV Mirror",
-                        getCronScheduleFromConfig(config, "dt.task.osv.mirror.cron"),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_OSV_VULN_DATA_SOURCE_MIRROR_CRON),
                         () -> vulnDataSourceMirrorService.trigger("osv", null)),
                 recurringTask(
                         "Package Metadata Resolution",
-                        getCronScheduleFromConfig(config, "dt.task.package-metadata-resolution.cron"),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_PACKAGE_METADATA_RESOLUTION_CRON),
                         () -> dexEngine.createRun(
                                 new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class)
                                         .withWorkflowInstanceId(ResolvePackageMetadataWorkflow.INSTANCE_ID))),
                 recurringTask(
                         "Portfolio Metrics Update",
-                        getCronScheduleFromConfig(config, "dt.task.portfolio-metrics-update.cron"),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_PORTFOLIO_METRICS_UPDATE_CRON),
                         () -> dexEngine.createRun(
                                 new CreateWorkflowRunRequest<>(UpdatePortfolioMetricsWorkflow.class)
                                         .withWorkflowInstanceId(UpdatePortfolioMetricsWorkflow.INSTANCE_ID))),
                 recurringTask(
                         "Portfolio Vulnerability Analysis",
-                        getCronScheduleForTask(VulnerabilityAnalysisTask.class),
-                        new VulnerabilityAnalysisTask(dexEngine)),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_PORTFOLIO_ANALYSIS_CRON),
+                        new PortfolioAnalysisTask(dexEngine)),
                 recurringTask(
                         "Project Maintenance",
-                        getCronScheduleForTask(ProjectMaintenanceTask.class),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_PROJECT_MAINTENANCE_CRON),
                         new ProjectMaintenanceTask()),
                 recurringTask(
                         "Tag Maintenance",
-                        getCronScheduleForTask(TagMaintenanceTask.class),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_TAG_MAINTENANCE_CRON),
                         new TagMaintenanceTask()),
                 recurringTask(
                         "Vulnerability Database Maintenance",
-                        getCronScheduleForTask(VulnerabilityDatabaseMaintenanceTask.class),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_VULN_DATABASE_MAINTENANCE_CRON),
                         new VulnerabilityDatabaseMaintenanceTask()),
                 recurringTask(
                         "Vulnerability Metrics Update",
-                        getCronScheduleForTask(VulnerabilityMetricsUpdateTask.class),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_VULN_METRICS_UPDATE_CRON),
                         new VulnerabilityMetricsUpdateTask()),
                 recurringTaskTriggeredOnFirstRun(
                         "Vulnerability Policy Bundle Sync",
-                        getCronScheduleFromConfig(config, "dt.task.vulnerability-policy-bundle-sync.cron"),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_VULN_POLICY_BUNDLE_SYNC_CRON),
                         () -> {
-                            if (config.getOptionalValue(ConfigKeys.VULNERABILITY_POLICY_BUNDLE_URL, String.class).isEmpty()) {
+                            if (config.getOptionalValue(ConfigKeys.VULN_POLICY_BUNDLE_URL, String.class).isEmpty()) {
                                 return;
                             }
 
@@ -264,11 +263,11 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                         }),
                 recurringTask(
                         "Expired Session Cleanup",
-                        getCronScheduleFromConfig(config, "dt.task.expired-session-cleanup.cron"),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_EXPIRED_SESSION_CLEANUP_CRON),
                         () -> new SessionTokenService().deleteExpiredSessions()),
                 recurringTask(
                         "Scheduled Notification Dispatch",
-                        getCronScheduleFromConfig(config, "dt.task.scheduled-notification-dispatch.cron"),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_SCHEDULED_NOTIFICATION_DISPATCH_CRON),
                         () -> {
                             final Set<String> ruleNames = withJdbiHandle(
                                     handle -> new ScheduledNotificationDao(handle)
@@ -286,7 +285,7 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                         }),
                 recurringTaskTriggeredOnFirstRun(
                         "Telemetry Submission",
-                        getCronScheduleFromConfig(config, "dt.task.telemetry-submission.cron"),
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_TELEMETRY_SUBMISSION_CRON),
                         new TelemetrySubmissionTask(HttpClient.INSTANCE, config)));
     }
 

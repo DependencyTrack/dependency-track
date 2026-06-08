@@ -19,6 +19,10 @@
 package org.dependencytrack.pkgmetadata.resolution.maven;
 
 import com.github.packageurl.PackageURL;
+import io.github.nscuro.versatile.VersionFactory;
+import io.github.nscuro.versatile.spi.InvalidVersionException;
+import io.github.nscuro.versatile.spi.Version;
+import io.github.nscuro.versatile.version.KnownVersioningSchemes;
 import org.dependencytrack.pkgmetadata.resolution.api.HashAlgorithm;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
@@ -54,6 +58,7 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
     private static final Logger LOGGER = LoggerFactory.getLogger(MavenPackageMetadataResolver.class);
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
     private static final Pattern LATEST_PATTERN = Pattern.compile("<latest>([^<]+)</latest>");
+    private static final Pattern RELEASE_PATTERN = Pattern.compile("<release>([^<]+)</release>");
     private static final Pattern VERSION_PATTERN = Pattern.compile("<version>([^<]+)</version>");
 
     private final CachingHttpClient cachingHttpClient;
@@ -155,20 +160,81 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
     }
 
     private static @Nullable String parseLatestVersion(String xml) {
-        final Matcher latestMatcher = LATEST_PATTERN.matcher(xml);
-        if (latestMatcher.find()) {
-            return latestMatcher.group(1);
-        }
+        // NB: <latest> and <release> do not reliably point to current stable versions.
+        // They may be out-of-date, or point to RC versions. So we walk the entire
+        // <versions> array, <latest>, AND <release>, and pick the highest stable
+        // among all of them.
+        final var candidate = new HighestStableVersionCandidate();
 
-        // Fall back to last <version> in <versions> list.
-        // Sometimes the latest version is not explicitly recorded.
-        String lastVersion = null;
         final Matcher versionMatcher = VERSION_PATTERN.matcher(xml);
         while (versionMatcher.find()) {
-            lastVersion = versionMatcher.group(1);
+            candidate.offer(versionMatcher.group(1));
         }
 
-        return lastVersion;
+        final String releaseRaw = firstMatch(xml, RELEASE_PATTERN);
+        candidate.offer(releaseRaw);
+
+        final String latestRaw = firstMatch(xml, LATEST_PATTERN);
+        candidate.offer(latestRaw);
+
+        if (candidate.highestStableRaw != null) {
+            return candidate.highestStableRaw;
+        }
+
+        if (releaseRaw != null) {
+            return releaseRaw;
+        }
+
+        if (latestRaw != null) {
+            return latestRaw;
+        }
+
+        return candidate.lastSeenRaw;
+    }
+
+    private static final class HighestStableVersionCandidate {
+
+        private @Nullable String highestStableRaw;
+        private @Nullable Version highestStableVersion;
+        private @Nullable String lastSeenRaw;
+
+        private void offer(@Nullable String raw) {
+            if (raw == null) {
+                return;
+            }
+
+            final String normalized = raw.strip();
+            if (normalized.isEmpty()) {
+                return;
+            }
+
+            lastSeenRaw = normalized;
+
+            final Version parsed;
+            try {
+                parsed = VersionFactory.forScheme(KnownVersioningSchemes.SCHEME_MAVEN, normalized);
+            } catch (InvalidVersionException e) {
+                LOGGER.debug("Skipping version because parsing it failed: {}", normalized, e);
+                return;
+            }
+
+            if (parsed.isStable()
+                    && (highestStableVersion == null || parsed.compareTo(highestStableVersion) > 0)) {
+                highestStableRaw = normalized;
+                highestStableVersion = parsed;
+            }
+        }
+
+    }
+
+    private static @Nullable String firstMatch(String input, Pattern pattern) {
+        final Matcher matcher = pattern.matcher(input);
+        if (!matcher.find()) {
+            return null;
+        }
+
+        final String match = matcher.group(1).strip();
+        return !match.isEmpty() ? match : null;
     }
 
     private @Nullable Instant resolvePublishedAt(

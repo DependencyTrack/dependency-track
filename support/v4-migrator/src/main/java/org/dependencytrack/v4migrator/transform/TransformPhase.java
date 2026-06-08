@@ -50,12 +50,27 @@ public final class TransformPhase {
         target.useHandle(h -> h.execute(
             "DELETE FROM \"%s\".migration_state WHERE phase = 'LOAD'"
                 .formatted(options.stagingSchema)));
+        // src_* tables are bulk-loaded via COPY into UNLOGGED tables and autovacuum may not
+        // analyze them in time. Without stats the planner defaults to nested-loop joins for
+        // transforms like PACKAGE_METADATA, which can stall for hours on production-sized
+        // datasets.
+        target.useHandle(h -> {
+            for (final TableMigration t : TableRegistry.extracted()) {
+                h.execute("ANALYZE \"%s\".src_%s".formatted(options.stagingSchema, t.name()));
+            }
+        });
+        final long start = System.nanoTime();
+        long totalRows = 0;
+        int tableCount = 0;
         for (final TableMigration t : TableRegistry.transformed()) {
-            transformOne(t);
+            totalRows += transformOne(t);
+            tableCount++;
         }
+        final long ms = (System.nanoTime() - start) / 1_000_000;
+        LOGGER.info("Transform phase completed: {} table(s), {} row(s) in {} ms", tableCount, totalRows, ms);
     }
 
-    private void transformOne(final TableMigration t) {
+    private long transformOne(final TableMigration t) {
         LOGGER.info("Transforming {}", t.name());
         final long start = System.nanoTime();
         markState(t.name(), "IN_PROGRESS");
@@ -77,6 +92,7 @@ public final class TransformPhase {
             } else {
                 LOGGER.info("  -> done in {} ms", ms);
             }
+            return rows;
         } catch (final RuntimeException e) {
             markState(t.name(), "FAILED");
             throw e;

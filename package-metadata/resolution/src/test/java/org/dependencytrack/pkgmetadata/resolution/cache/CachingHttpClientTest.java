@@ -69,7 +69,6 @@ class CachingHttpClientTest {
 
     private static final String CACHE_NAME = "test-cache";
     private static final String PATH = "/resource";
-    private static final long MAX_BYTES = 16L * 1024 * 1024;
 
     private CacheManager cacheManager;
     private Cache cache;
@@ -98,7 +97,7 @@ class CachingHttpClientTest {
                         .withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")
                         .withBody("hello")));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         assertThat(body).isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
@@ -112,7 +111,7 @@ class CachingHttpClientTest {
                         .withHeader("ETag", "\"abc\"")
                         .withBody("hello")));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         final byte[] secondBody = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
@@ -136,7 +135,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(304)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -162,7 +161,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(304)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -189,7 +188,7 @@ class CachingHttpClientTest {
                         .withBody("second")));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -205,7 +204,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(200).withBody("hello")));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -220,7 +219,7 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .willReturn(aResponse().withStatus(503)));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         assertThatExceptionOfType(RetryableResolutionException.class)
                 .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null));
     }
@@ -231,7 +230,7 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .willReturn(aResponse().withStatus(status)));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isNull();
         assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isNull();
         verify(1, getRequestedFor(urlPathEqualTo(PATH)));
@@ -243,7 +242,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(404)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -268,7 +267,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(410)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
         final byte[] afterGone = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -286,7 +285,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(404)
                         .withHeader("Cache-Control", "no-store")));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
@@ -308,7 +307,7 @@ class CachingHttpClientTest {
                         .withBody("hello")));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isNull();
         clock.advance(Duration.ofMinutes(2));
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -329,7 +328,7 @@ class CachingHttpClientTest {
                         .withBody("hello")));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(24), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(24), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         // Within the upstream-declared max-age: served from cache.
@@ -354,7 +353,7 @@ class CachingHttpClientTest {
                         .withBody("hello")));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         clock.advance(Duration.ofMinutes(2));
@@ -371,7 +370,7 @@ class CachingHttpClientTest {
                         .withBody("hello")));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(30));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -387,7 +386,7 @@ class CachingHttpClientTest {
                         .withHeader("Cache-Control", "no-store")
                         .withBody("hello")));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         final byte[] firstBody = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         final byte[] secondBody = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
@@ -412,7 +411,7 @@ class CachingHttpClientTest {
                 .whenScenarioStateIs("warmed")
                 .willReturn(aResponse().withStatus(304)));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         // Without advancing the clock, the next call must still revalidate.
@@ -440,7 +439,7 @@ class CachingHttpClientTest {
                         .withHeader("Cache-Control", "max-age=600")));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         clock.advance(Duration.ofMinutes(2));
@@ -469,7 +468,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(304)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         // Past the upstream max-age: triggers revalidation.
@@ -492,27 +491,32 @@ class CachingHttpClientTest {
     @Test
     void shouldRejectInvalidConstructorArguments() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> new CachingHttpClient(httpClient, cache, Duration.ZERO, MAX_BYTES));
+                .isThrownBy(() -> new CachingHttpClient(httpClient, cache, Duration.ZERO));
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> new CachingHttpClient(httpClient, cache, Duration.ofSeconds(-1), MAX_BYTES));
+                .isThrownBy(() -> new CachingHttpClient(httpClient, cache, Duration.ofSeconds(-1)));
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> new CachingHttpClient(httpClient, cache, Duration.ofHours(1), 0));
+                .isThrownBy(() -> new CachingHttpClient(httpClient, cache, Duration.ofHours(1), 0, 0));
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> new CachingHttpClient(httpClient, cache, Duration.ofHours(1), -1));
+                .isThrownBy(() -> new CachingHttpClient(httpClient, cache, Duration.ofHours(1), -1, -1));
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> new CachingHttpClient(
-                        httpClient, cache, Duration.ofHours(1), (long) Integer.MAX_VALUE + 1));
+                        httpClient, cache, Duration.ofHours(1), (long) Integer.MAX_VALUE + 1, (long) Integer.MAX_VALUE + 1));
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> new CachingHttpClient(httpClient, cache, Duration.ofHours(1), 1024, 512));
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> new CachingHttpClient(
+                        httpClient, cache, Duration.ofHours(1), 1024, (long) Integer.MAX_VALUE + 1));
     }
 
     @Test
-    void shouldThrowWhenResponseBodyExceedsMaxBytes(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldThrowWhenResponseBodyExceedsMaxCompressedBytes(WireMockRuntimeInfo wmRuntimeInfo) {
         final byte[] payload = new byte[2048];
         stubFor(get(urlPathEqualTo(PATH))
                 .willReturn(aResponse().withStatus(200)
                         .withHeader("ETag", "\"big\"")
                         .withBody(payload)));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), 1024);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), 1024, 1024);
 
         assertThatExceptionOfType(UncheckedIOException.class)
                 .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null));
@@ -535,7 +539,7 @@ class CachingHttpClientTest {
                 .whenScenarioStateIs("recovered")
                 .willReturn(aResponse().withStatus(200).withBody("hello")));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
 
         assertThatExceptionOfType(UncheckedIOException.class)
                 .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null));
@@ -567,7 +571,7 @@ class CachingHttpClientTest {
                 ? aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)
                 : retryAfterSeconds > 0
                   ? aResponse().withStatus(failureStatus)
-                    .withHeader("Retry-After", String.valueOf(retryAfterSeconds))
+                .withHeader("Retry-After", String.valueOf(retryAfterSeconds))
                   : aResponse().withStatus(failureStatus);
         stubFor(get(urlPathEqualTo(PATH))
                 .inScenario(label)
@@ -575,7 +579,7 @@ class CachingHttpClientTest {
                 .willReturn(failureResponse));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
 
@@ -600,7 +604,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(200).withFixedDelay(2_000).withBody("late")));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
 
@@ -619,7 +623,7 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
 
         assertThatExceptionOfType(UncheckedIOException.class)
                 .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null));
@@ -638,7 +642,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(503)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isNull();
         clock.advance(Duration.ofMinutes(2));
 
@@ -666,7 +670,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(304)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
 
@@ -696,7 +700,7 @@ class CachingHttpClientTest {
                         .withHeader("Content-Length", "1234")
                         .withHeader("Server", "nginx")));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         final HttpHeaders headers = cachingHttpClient.head(
                 headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
 
@@ -723,7 +727,7 @@ class CachingHttpClientTest {
                         .withHeader("ETag", "\"v1\"")
                         .withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         final HttpHeaders headers = cachingHttpClient.head(
                 headRequestBuilderFor(wmRuntimeInfo), null, name -> false);
 
@@ -746,7 +750,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(304)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
         clock.advance(Duration.ofMinutes(2));
         final HttpHeaders headers = cachingHttpClient.head(
@@ -764,7 +768,7 @@ class CachingHttpClientTest {
         stubFor(head(urlPathEqualTo(PATH))
                 .willReturn(aResponse().withStatus(404)));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         assertThat(cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, name -> false)).isNull();
         assertThat(cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, name -> false)).isNull();
 
@@ -786,7 +790,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(503)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.head(headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
         clock.advance(Duration.ofMinutes(2));
 
@@ -802,7 +806,7 @@ class CachingHttpClientTest {
         stubFor(head(urlPathEqualTo(PATH))
                 .willReturn(aResponse().withStatus(304)));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         assertThatExceptionOfType(UncheckedIOException.class)
                 .isThrownBy(() -> cachingHttpClient.head(
                         headRequestBuilderFor(wmRuntimeInfo), null, name -> false));
@@ -819,7 +823,7 @@ class CachingHttpClientTest {
                         .withHeader("ETag", "\"head\"")
                         .withHeader("Content-Length", "5")));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         final HttpHeaders headers = cachingHttpClient.head(
                 headRequestBuilderFor(wmRuntimeInfo), null, "content-length"::equalsIgnoreCase);
@@ -834,7 +838,7 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .willReturn(aResponse().withStatus(200).withBody("hello")));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         verify(getRequestedFor(urlPathEqualTo(PATH))
@@ -846,7 +850,7 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .willReturn(aResponse().withStatus(200).withBody("hello")));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         cachingHttpClient.get(
                 HttpRequest.newBuilder()
                         .uri(URI.create(wmRuntimeInfo.getHttpBaseUrl() + PATH))
@@ -876,7 +880,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(304)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
@@ -885,7 +889,7 @@ class CachingHttpClientTest {
     }
 
     @Test
-    void shouldRejectGzipDecodedBodyExceedingMaxBytes(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldRejectGzipDecodedBodyExceedingMaxDecodedBytes(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         // 64 KiB of zeros compresses to ~80 bytes.
         // Well below the wire cap but above the decoded cap.
         final byte[] payload = new byte[64 * 1024];
@@ -895,10 +899,29 @@ class CachingHttpClientTest {
                         .withHeader("Content-Encoding", "gzip")
                         .withBody(gzipped)));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), 1024);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), 8 * 1024, 8 * 1024);
 
         assertThatExceptionOfType(UncheckedIOException.class)
                 .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null));
+    }
+
+    @Test
+    void shouldAcceptGzipDecodedBodyWhenWithinDecodedCapButExceedingCompressedCap(
+            WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        // 64 KiB of zeros compresses to ~80 bytes.
+        // Passes the 1 KiB wire cap, and the 128 KiB decoded
+        // cap accommodates the uncompressed payload.
+        final byte[] payload = new byte[64 * 1024];
+        final byte[] gzipped = gzip(payload);
+        stubFor(get(urlPathEqualTo(PATH))
+                .willReturn(aResponse().withStatus(200)
+                        .withHeader("Content-Encoding", "gzip")
+                        .withBody(gzipped)));
+
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), 1024, 128 * 1024);
+        final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
+
+        assertThat(body).isEqualTo(payload);
     }
 
     @ParameterizedTest(name = "[{index}] Content-Encoding={0}")
@@ -914,7 +937,7 @@ class CachingHttpClientTest {
         }
         stubFor(get(urlPathEqualTo(PATH)).willReturn(stub));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         final byte[] result = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         assertThat(result).isEqualTo(body.getBytes(StandardCharsets.UTF_8));
@@ -928,7 +951,7 @@ class CachingHttpClientTest {
                         .withHeader("ETag", "\"v1\"")
                         .withBody(payload)));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         assertThat(body).isEqualTo(payload);
@@ -948,7 +971,7 @@ class CachingHttpClientTest {
                         .withHeader("ETag", "\"v1\"")
                         .withBody(gzipped)));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         final byte[] expected = "hello".getBytes(StandardCharsets.UTF_8);
         assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isEqualTo(expected);
         assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isEqualTo(expected);
@@ -973,7 +996,7 @@ class CachingHttpClientTest {
         stubFor(get(urlPathEqualTo(PATH))
                 .willReturn(aResponse().withStatus(304)));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         assertThat(cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null)).isNull();
 
         // Refreshed entry must remain bodyless, not a cached empty 200.
@@ -997,7 +1020,7 @@ class CachingHttpClientTest {
                         .withHeader("ETag", "\"v1\"")
                         .withBody("fresh")));
 
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
         final byte[] body = cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
 
         assertThat(body).isEqualTo("fresh".getBytes(StandardCharsets.UTF_8));
@@ -1019,7 +1042,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "60")));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
 
@@ -1038,7 +1061,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(429).withHeader("Retry-After", "60")));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1), clock);
         assertThatExceptionOfType(RetryableResolutionException.class)
                 .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null));
 
@@ -1068,7 +1091,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(304)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
 
@@ -1095,7 +1118,7 @@ class CachingHttpClientTest {
                 .willReturn(aResponse().withStatus(503)));
 
         final var clock = new MutableClock();
-        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), MAX_BYTES, clock);
+        final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofMinutes(1), clock);
         cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null);
         clock.advance(Duration.ofMinutes(2));
 

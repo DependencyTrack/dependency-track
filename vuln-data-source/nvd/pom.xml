@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>vuln-data-source-parent</artifactId>
-        <version>5.0.0-rc.2-SNAPSHOT</version>
+        <version>5.1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>vuln-data-source-nvd</artifactId>

@@ -278,11 +278,11 @@ public interface FindingDao {
             <#if apiOrderByClause??>
               ${apiOrderByClause}
             <#else>
-             ORDER BY fa."ID"
+             ORDER BY c."ID", v."ID"
             </#if>
              ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = "attribution.id", by = {
+    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""), by = {
             @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
             @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
             @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
@@ -296,7 +296,6 @@ public interface FindingDao {
             @AllowApiOrdering.Column(name = "component.version", queryName = "c.\"VERSION\""),
             @AllowApiOrdering.Column(name = "analysis.state", queryName = "a.\"STATE\""),
             @AllowApiOrdering.Column(name = "analysis.isSuppressed", queryName = "a.\"SUPPRESSED\""),
-            @AllowApiOrdering.Column(name = "attribution.id", queryName = "fa.\"ID\""),
             @AllowApiOrdering.Column(name = "attribution.attributedOn", queryName = "fa.\"ATTRIBUTED_ON\"")
     })
     @DefineNamedBindings
@@ -482,10 +481,12 @@ public interface FindingDao {
              </#if>
              <#if apiOrderByClause??>
               ${apiOrderByClause}
+             <#else>
+              ORDER BY c."ID", v."ID"
              </#if>
              ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = "attribution.id", by = {
+    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""), by = {
             @AllowApiOrdering.Column(name = "vulnerability.title", queryName = "v.\"TITLE\""),
             @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
             @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
@@ -499,7 +500,6 @@ public interface FindingDao {
             @AllowApiOrdering.Column(name = "component.version", queryName = "c.\"VERSION\""),
             @AllowApiOrdering.Column(name = "analysis.state", queryName = "a.\"STATE\""),
             @AllowApiOrdering.Column(name = "analysis.isSuppressed", queryName = "a.\"SUPPRESSED\""),
-            @AllowApiOrdering.Column(name = "attribution.id", queryName = "fa.\"ID\""),
             @AllowApiOrdering.Column(name = "attribution.attributedOn", queryName = "fa.\"ATTRIBUTED_ON\"")
     })
     @DefineNamedBindings
@@ -639,8 +639,7 @@ public interface FindingDao {
             </#if>
             ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = "vulnerability.id", by = {
-            @AllowApiOrdering.Column(name = "vulnerability.id", queryName = "v.\"ID\""),
+    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "v.\"ID\""), by = {
             @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
             @AllowApiOrdering.Column(name = "vulnerability.title", queryName = "v.\"TITLE\""),
             @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),

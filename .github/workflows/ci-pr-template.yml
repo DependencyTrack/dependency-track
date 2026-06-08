@@ -24,6 +24,7 @@ permissions: {}
 
 jobs:
   validate:
+    name: Validate PR Template
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR body

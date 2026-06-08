@@ -23,11 +23,31 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.policy.cel.compat.CelPolicyScriptSourceBuilder.escapeQuotes;
 
-public class CelPolicyScriptSourceBuilderTest {
+class CelPolicyScriptSourceBuilderTest {
 
     @Test
-    public void testEscapeQuotes() {
+    void shouldEscapeQuote() {
         assertThat(escapeQuotes("\"foobar")).isEqualTo("\\\"foobar");
+    }
+
+    @Test
+    void shouldEscapeBackslash() {
+        assertThat(escapeQuotes("foo\\bar")).isEqualTo("foo\\\\bar");
+    }
+
+    @Test
+    void shouldEscapeBackslashBeforeQuote() {
+        assertThat(escapeQuotes("foo\\\"bar")).isEqualTo("foo\\\\\\\"bar");
+    }
+
+    @Test
+    void shouldEscapeTrailingBackslash() {
+        assertThat(escapeQuotes("foo\\")).isEqualTo("foo\\\\");
+    }
+
+    @Test
+    void shouldReturnInputWhenNothingToEscape() {
+        assertThat(escapeQuotes("foobar")).isEqualTo("foobar");
     }
 
 }

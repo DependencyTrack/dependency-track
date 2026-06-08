@@ -37,7 +37,7 @@ public class ProxyUtilTest {
 
         final Config config = new SmallRyeConfigBuilder()
                 .withDefaultValues(Map.of(
-                        AlpineConfigKeys.HTTP_PROXY_ADDRESS, "proxy.http.example.com",
+                        AlpineConfigKeys.HTTP_PROXY_HOST, "proxy.http.example.com",
                         AlpineConfigKeys.HTTP_PROXY_PORT, "6666",
                         AlpineConfigKeys.HTTP_PROXY_USERNAME, "domain\\username",
                         AlpineConfigKeys.HTTP_PROXY_PASSWORD, "pa$%word",

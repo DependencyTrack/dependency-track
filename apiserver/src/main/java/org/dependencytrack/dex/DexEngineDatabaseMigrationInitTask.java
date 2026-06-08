@@ -48,7 +48,7 @@ public final class DexEngineDatabaseMigrationInitTask implements InitTask {
 
     @Override
     public String name() {
-        return "dex.engine.database.migration";
+        return "dex-engine-database-migration";
     }
 
     @Override

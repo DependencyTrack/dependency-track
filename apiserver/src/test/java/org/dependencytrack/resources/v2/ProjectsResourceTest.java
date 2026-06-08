@@ -493,8 +493,34 @@ public class ProjectsResourceTest extends ResourceTest {
     }
 
     @Test
+    public void shouldReturn400WhenSortByFieldIsNotSupportedForListProjectComponents() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var project = prepareProject();
+
+        final Response response = jersey
+                .target("/projects/" + project.getUuid() + "/components")
+                .queryParam("sort_by", "invalid_field")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "type": "/problems/invalid-sort-field",
+                  "status": 400,
+                  "title": "Invalid sort field",
+                  "detail": "Sorting by field 'invalid_field' is not supported",
+                  "invalid_field": "invalid_field",
+                  "supported_fields": ["name", "group", "last_inherited_risk_score", "package_artifact_metadata.published_at"]
+                }
+                """);
+    }
+
+    @Test
     public void cloneProjectShouldReturnUuidOfClonedProject() {
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -526,7 +552,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
     @Test
     public void cloneProjectShouldMarkNewProjectAsLatestWhenRequested() {
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -566,7 +592,7 @@ public class ProjectsResourceTest extends ResourceTest {
     public void cloneProjectShouldReturnForbiddenWhenAclIsEnabledAndProjectIsNotAccessible() {
         enablePortfolioAccessControl();
 
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -594,7 +620,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
     @Test
     public void cloneProjectShouldReturnNotFoundWhenProjectDoesNotExist() {
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final Response response = jersey.target("/projects/c5b13f13-f2f0-4a30-97b5-94d164a345f6/clone")
                 .request()
@@ -617,7 +643,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
     @Test
     public void cloneProjectShouldReturnConflictWhenNewVersionAlreadyExists() {
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -646,7 +672,7 @@ public class ProjectsResourceTest extends ResourceTest {
 
     @Test
     public void cloneProjectShouldUpdateMetrics() {
-        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT);
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
 
         final Project project = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, null, false, false);
 

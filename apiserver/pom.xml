@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>dependency-track-parent</artifactId>
-        <version>5.0.0-rc.2-SNAPSHOT</version>
+        <version>5.1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>apiserver</artifactId>
@@ -19,14 +19,12 @@
 
         <!-- Dependency Versions -->
         <lib.cloud-sql-postgres-socket-factory.version>1.28.3</lib.cloud-sql-postgres-socket-factory.version>
-        <lib.commons-compress.version>1.28.0</lib.commons-compress.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>12.1.0</lib.cyclonedx-java.version>
         <lib.micrometer-jvm-extras.version>0.3.0</lib.micrometer-jvm-extras.version>
-        <lib.swagger-parser.version>2.1.42</lib.swagger-parser.version>
+        <lib.swagger-parser.version>2.1.43</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
         <lib.woodstox.version>7.2.0</lib.woodstox.version>
-        <lib.httpclient.version>4.5.14</lib.httpclient.version>
         <lib.javacron.version>1.4.0</lib.javacron.version>
 
         <!-- CycloneDX CLI -->
@@ -381,8 +379,8 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus-simpleclient</artifactId>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-exposition-textformats</artifactId>
         </dependency>
         <dependency>
             <groupId>io.github.mweirauch</groupId>
@@ -404,17 +402,6 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${lib.httpclient.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpmime</artifactId>
-            <version>${lib.httpclient.version}</version>
         </dependency>
 
         <dependency>
@@ -442,13 +429,6 @@
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>postgres-socket-factory</artifactId>
             <version>${lib.cloud-sql-postgres-socket-factory.version}</version>
-        </dependency>
-
-        <!-- Commons Compress -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>${lib.commons-compress.version}</version>
         </dependency>
 
         <!-- Resilience4J -->
@@ -819,7 +799,7 @@
                                             <value>dev</value>
                                         </systemProperty>
                                         <systemProperty>
-                                            <key>dev.services.enabled</key>
+                                            <key>dt.dev-services.enabled</key>
                                             <value>true</value>
                                         </systemProperty>
                                     </systemProperties>

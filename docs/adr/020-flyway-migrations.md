@@ -49,7 +49,7 @@ Stored procedures, functions, and views move from the project's homegrown
 which provide the same semantics out of the box.
 
 Standalone migration execution reuses the existing init-task framework. Setting
-`dt.init.and.exit=true` runs all init tasks, including `DatabaseMigrationInitTask`,
+`dt.init-tasks.exit-after-completion=true` runs all init tasks, including `DatabaseMigrationInitTask`,
 and exits before the HTTP server starts. No new CLI surface is added.
 
 The custom Java change classes that backed Liquibase transformations are
@@ -99,4 +99,4 @@ in version order. Hand-applying that SQL out-of-band is discouraged regardless,
 because it would not update Flyway's `flyway_schema_history` table and would
 cause Flyway to attempt to re-apply the same migrations on the next run.
 Operators wanting a controlled migration step should run the API server with
-`dt.init.and.exit=true` so migrations execute and history is recorded.
+`dt.init-tasks.exit-after-completion=true` so migrations execute and history is recorded.

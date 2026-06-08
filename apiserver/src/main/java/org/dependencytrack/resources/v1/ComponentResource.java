@@ -167,7 +167,7 @@ public class ComponentResource extends AbstractApiResource {
             @PathParam("uuid") @ValidUuid String uuid,
             @Parameter(description = "Optionally includes third-party metadata about the component from external repositories")
             @QueryParam("includeRepositoryMetaData") boolean includeRepositoryMetaData) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
                 requireAccess(qm, component.getProject());
@@ -346,7 +346,7 @@ public class ComponentResource extends AbstractApiResource {
                 validator.validateProperty(jsonComponent, "sha3_512")
         );
 
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 Component parent = null;
                 if (jsonComponent.getParent() != null && jsonComponent.getParent().getUuid() != null) {
@@ -458,7 +458,7 @@ public class ComponentResource extends AbstractApiResource {
                 validator.validateProperty(jsonComponent, "sha3_256"),
                 validator.validateProperty(jsonComponent, "sha3_512")
         );
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Component component = qm.getObjectByUuid(Component.class, jsonComponent.getUuid());
                 if (component != null) {
@@ -546,7 +546,7 @@ public class ComponentResource extends AbstractApiResource {
     public Response deleteComponent(
             @Parameter(description = "The UUID of the component to delete", schema = @Schema(format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Component component = qm.getObjectByUuid(Component.class, uuid, Component.FetchGroup.ALL.name());
                 if (component != null) {
@@ -609,7 +609,7 @@ public class ComponentResource extends AbstractApiResource {
             @PathParam("projectUuid") @ValidUuid String projectUuid,
             @Parameter(description = "List of UUIDs of the components (separated by |) to get the expanded dependency graph for", required = true)
             @PathParam("componentUuids") @ValidUuid String componentUuids) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             if (project == null) {
                 return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the project could not be found.").build();

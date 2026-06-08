@@ -34,10 +34,11 @@ public record ListProjectsConciseQuery(
         @Nullable Boolean activeFilter,
         @Nullable Boolean onlyRootFilter,
         @Nullable UUID parentUuidFilter,
+        @Nullable String searchText,
         boolean includeMetrics) {
 
     public ListProjectsConciseQuery() {
-        this(null, null, null, null, null, null, null, null, false);
+        this(null, null, null, null, null, null, null, null, null, false);
     }
 
     public ListProjectsConciseQuery withNameFilter(@Nullable String nameFilter) {
@@ -50,6 +51,7 @@ public record ListProjectsConciseQuery(
                 this.activeFilter,
                 this.onlyRootFilter,
                 this.parentUuidFilter,
+                this.searchText,
                 this.includeMetrics);
     }
 
@@ -63,6 +65,7 @@ public record ListProjectsConciseQuery(
                 this.activeFilter,
                 this.onlyRootFilter,
                 this.parentUuidFilter,
+                this.searchText,
                 this.includeMetrics);
     }
 
@@ -76,6 +79,7 @@ public record ListProjectsConciseQuery(
                 this.activeFilter,
                 this.onlyRootFilter,
                 this.parentUuidFilter,
+                this.searchText,
                 this.includeMetrics);
     }
 
@@ -89,6 +93,7 @@ public record ListProjectsConciseQuery(
                 this.activeFilter,
                 this.onlyRootFilter,
                 this.parentUuidFilter,
+                this.searchText,
                 this.includeMetrics);
     }
 
@@ -102,6 +107,7 @@ public record ListProjectsConciseQuery(
                 this.activeFilter,
                 this.onlyRootFilter,
                 this.parentUuidFilter,
+                this.searchText,
                 this.includeMetrics);
     }
 
@@ -115,6 +121,7 @@ public record ListProjectsConciseQuery(
                 activeFilter,
                 this.onlyRootFilter,
                 this.parentUuidFilter,
+                this.searchText,
                 this.includeMetrics);
     }
 
@@ -128,6 +135,7 @@ public record ListProjectsConciseQuery(
                 this.activeFilter,
                 onlyRootFilter,
                 this.parentUuidFilter,
+                this.searchText,
                 this.includeMetrics);
     }
 
@@ -141,6 +149,21 @@ public record ListProjectsConciseQuery(
                 this.activeFilter,
                 this.onlyRootFilter,
                 parentUuidFilter,
+                this.searchText,
+                this.includeMetrics);
+    }
+
+    public ListProjectsConciseQuery withSearchText(@Nullable String searchText) {
+        return new ListProjectsConciseQuery(
+                this.nameFilter,
+                this.versionFilter,
+                this.classifierFilter,
+                this.tagFilter,
+                this.teamFilter,
+                this.activeFilter,
+                this.onlyRootFilter,
+                this.parentUuidFilter,
+                searchText,
                 this.includeMetrics);
     }
 
@@ -154,6 +177,7 @@ public record ListProjectsConciseQuery(
                 this.activeFilter,
                 this.onlyRootFilter,
                 this.parentUuidFilter,
+                this.searchText,
                 includeMetrics);
     }
 

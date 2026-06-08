@@ -23,8 +23,7 @@ import alpine.model.IConfigProperty;
 import alpine.model.ManagedUser;
 import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import com.fasterxml.jackson.core.StreamReadConstraints;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -129,8 +128,7 @@ class BomResourceTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(BomResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class)
+                    .register(AuthFeature.class)
                     .register(MultiPartFeature.class)
                     .register(new AbstractBinder() {
                         @Override
@@ -1375,6 +1373,45 @@ class BomResourceTest extends ResourceTest {
                 new Object[] { null, true, true },
                 new Object[] { null, false, false },
         };
+    }
+
+    @Test
+    void uploadBomAutoCreateIsLatestPreviousLatestInaccessibleTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        enablePortfolioAccessControl();
+
+        final var previousLatest = new Project();
+        previousLatest.setName("acme-app");
+        previousLatest.setVersion("1.0.0");
+        previousLatest.setIsLatest(true);
+        qm.persist(previousLatest);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey
+                .target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "2.0.0",
+                          "autoCreate": true,
+                          "isLatest": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 403,
+                  "title": "Project access denied",
+                  "detail": "Access to the previous latest project version is forbidden"
+                }
+                """);
+
+        qm.getPersistenceManager().refresh(previousLatest);
+        assertThat(previousLatest.isLatest()).isTrue();
+        assertThat(qm.getProject("acme-app", "2.0.0")).isNull();
     }
 
     @Test

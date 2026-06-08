@@ -21,6 +21,7 @@ package org.dependencytrack.persistence.jdbi;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.ProjectMetrics;
+import org.dependencytrack.model.VulnerabilityMetrics;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -175,6 +176,23 @@ public interface MetricsDao extends SqlObject {
             REFRESH MATERIALIZED VIEW CONCURRENTLY "PORTFOLIOMETRICS_GLOBAL"
             """)
     void refreshGlobalPortfolioMetrics();
+
+    @SqlUpdate("""
+            REFRESH MATERIALIZED VIEW CONCURRENTLY "VULNERABILITYMETRICS"
+            """)
+    void refreshVulnerabilityMetrics();
+
+    @SqlQuery("""
+            SELECT "YEAR" AS "year"
+                 , NULLIF("MONTH", 0) AS "month"
+                 , "COUNT" AS "count"
+                 , "MEASURED_AT" AS "measuredAt"
+              FROM "VULNERABILITYMETRICS"
+             ORDER BY "YEAR"
+                    , NULLIF("MONTH", 0) NULLS LAST
+            """)
+    @RegisterBeanMapper(VulnerabilityMetrics.class)
+    List<VulnerabilityMetrics> getVulnerabilityMetrics();
 
     @SqlQuery("""
             SELECT *, "RISKSCORE" AS inherited_risk_score FROM "PROJECTMETRICS"

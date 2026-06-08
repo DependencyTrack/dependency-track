@@ -22,6 +22,7 @@ import org.dependencytrack.dex.api.Workflow;
 import org.dependencytrack.dex.api.WorkflowContext;
 import org.dependencytrack.dex.api.WorkflowSpec;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
+import org.dependencytrack.metrics.RefreshVulnerabilityMetricsActivity;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
 import org.jspecify.annotations.Nullable;
 
@@ -40,6 +41,7 @@ public final class MirrorVulnDataSourceWorkflow implements Workflow<MirrorVulnDa
         }
 
         ctx.activity(MirrorVulnDataSourceActivity.class).call(arg).await();
+        ctx.activity(RefreshVulnerabilityMetricsActivity.class).call().await();
         return null;
     }
 

@@ -19,7 +19,6 @@
 package org.dependencytrack.persistence.jdbi;
 
 import org.dependencytrack.PersistenceCapableTest;
-import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
@@ -27,7 +26,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class JdbiFactoryTest extends PersistenceCapableTest {
 
@@ -60,39 +58,6 @@ public class JdbiFactoryTest extends PersistenceCapableTest {
             final Optional<String> projectName = JdbiFactory.createJdbi().withHandle(handle ->
                     handle.createQuery("SELECT \"NAME\" FROM \"PROJECT\"").mapTo(String.class).findFirst());
             assertThat(projectName).isNotPresent();
-        });
-    }
-
-    @Test
-    public void testLocalInstanceOutsideOfJdoTransaction() {
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> JdbiFactory.createLocalJdbi(qm))
-                .withMessageContaining("Local JDBI instances must not be used outside of an active JDO transaction");
-    }
-
-    @Test
-    public void testLocalInstanceWithJdoTransaction() {
-        qm.runInTransaction(() -> {
-            // Create a new project.
-            final var project = new Project();
-            project.setName("acme-app");
-            project.setVersion("1.0.0");
-            qm.getPersistenceManager().makePersistent(project);
-
-            // Query for the created project, despite its creation not having been committed yet.
-            // Because the local JDBI instance uses the same connection as the QueryManager,
-            // it must be able to see the yet-uncommitted change.
-            final Optional<String> projectName = JdbiFactory.createLocalJdbi(qm).withHandle(handle ->
-                    handle.createQuery("SELECT \"NAME\" FROM \"PROJECT\"").mapTo(String.class).findFirst());
-            assertThat(projectName).contains("acme-app");
-
-            // Ensure the connection is still usable after being returned from JDBI,
-            // by creating another record using the QueryManager.
-            final var component = new Component();
-            component.setProject(project);
-            component.setName("acme-lib");
-            component.setVersion("2.0.0");
-            qm.getPersistenceManager().makePersistent(component);
         });
     }
 

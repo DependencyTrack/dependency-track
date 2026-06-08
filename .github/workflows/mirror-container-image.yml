@@ -38,12 +38,12 @@ jobs:
         && github.event.registry_package.package_version.container_metadata.tag.name != ''
     steps:
     - name: Login to Docker Hub
-      uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # tag=v4.1.0
+      uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # tag=v4.2.0
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
     - name: Setup Crane
-      uses: imjasonh/setup-crane@6da1ae018866400525525ce74ff892880c099987 # tag=v0.5
+      uses: imjasonh/setup-crane@59c71e96a00b28651f10369ba3359a6d730740a0 # tag=v0.6
     - name: Mirror image to Docker Hub
       env:
         PACKAGE_NAMESPACE: ${{ github.event.registry_package.namespace }}

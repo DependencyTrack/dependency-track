@@ -40,14 +40,25 @@ public record ConciseProjectMetrics(
         @Schema(description = "Number of policy violations with status WARN", requiredMode = Schema.RequiredMode.REQUIRED) int policyViolationsWarn,
         @Schema(description = "The inherited risk score", requiredMode = Schema.RequiredMode.REQUIRED) double inheritedRiskScore,
         @Schema(description = "Number of vulnerabilities with unassigned severity", requiredMode = Schema.RequiredMode.REQUIRED) int unassigned,
-        @Schema(description = "Total number of vulnerabilities", requiredMode = Schema.RequiredMode.REQUIRED) int vulnerabilities
-) {
+        @Schema(description = "Total number of vulnerabilities", requiredMode = Schema.RequiredMode.REQUIRED) int vulnerabilities) {
 
     public ConciseProjectMetrics(final ConciseProjectMetricsRow row) {
-        this(row.components(), row.critical(), row.high(), row.low(), row.medium(),
-                row.policyViolationsFail(), row.policyViolationsInfo(), row.policyViolationsLicenseTotal(),
-                row.policyViolationsOperationalTotal(), row.policyViolationsSecurityTotal(), row.policyViolationsTotal(),
-                row.policyViolationsWarn(), row.riskScore(), row.unassigned(), row.vulnerabilities());
+        this(
+                row.components(),
+                row.critical(),
+                row.high(),
+                row.low(),
+                row.medium(),
+                row.policyViolationsFail(),
+                row.policyViolationsInfo(),
+                row.policyViolationsLicenseTotal(),
+                row.policyViolationsOperationalTotal(),
+                row.policyViolationsSecurityTotal(),
+                row.policyViolationsTotal(),
+                row.policyViolationsWarn(),
+                row.inheritedRiskScore(),
+                row.unassigned(),
+                row.vulnerabilities());
     }
 
 }

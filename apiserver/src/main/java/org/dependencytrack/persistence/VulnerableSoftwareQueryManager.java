@@ -39,7 +39,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.dependencytrack.util.PersistenceUtil.assertNonPersistentAll;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
-final class VulnerableSoftwareQueryManager extends QueryManager implements IQueryManager {
+final class VulnerableSoftwareQueryManager extends QueryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VulnerableSoftwareQueryManager.class);
 

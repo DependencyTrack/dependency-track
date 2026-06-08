@@ -55,6 +55,7 @@ import org.cyclonedx.CycloneDxMediaType;
 import org.cyclonedx.Version;
 import org.cyclonedx.exception.GeneratorException;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.auth.ProjectAccess;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
@@ -368,7 +369,7 @@ public class BomResource extends AbstractApiResource {
                     validator.validateProperty(request, "project"),
                     validator.validateProperty(request, "bom")
             );
-            try (QueryManager qm = new QueryManager()) {
+            try (QueryManager qm = new QueryManager(getAlpineRequest())) {
                 projectInfo = qm.callInTransaction(() -> {
                     final Project project = qm.getObjectByUuid(Project.class, request.getProject());
                     if (project == null) {
@@ -394,7 +395,7 @@ public class BomResource extends AbstractApiResource {
                     validator.validateProperty(request, "projectVersion"),
                     validator.validateProperty(request, "bom")
             );
-            try (final var qm = new QueryManager()) {
+            try (final var qm = new QueryManager(getAlpineRequest())) {
                 projectInfo = qm.callInTransaction(() -> {
                     Project project = qm.getProject(request.getProjectName(), request.getProjectVersion());
                     if (project == null && request.isAutoCreate()) {
@@ -424,7 +425,7 @@ public class BomResource extends AbstractApiResource {
                             }
                             final String trimmedProjectName = StringUtils.trimToNull(request.getProjectName());
                             if (request.isLatest()) {
-                                final Project oldLatest = qm.getLatestProjectVersion(trimmedProjectName);
+                                final Project oldLatest = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(trimmedProjectName));
                                 if (oldLatest != null) {
                                     requireAccess(qm, oldLatest, "Access to the previous latest project version is forbidden");
                                 }
@@ -548,7 +549,7 @@ public class BomResource extends AbstractApiResource {
 
         final ProjectInfo projectInfo;
         if (projectUuid != null) { // behavior in v3.0.0
-            try (QueryManager qm = new QueryManager()) {
+            try (QueryManager qm = new QueryManager(getAlpineRequest())) {
                 projectInfo = qm.callInTransaction(() -> {
                     final Project project = qm.getObjectByUuid(Project.class, projectUuid);
                     if (project == null) {
@@ -569,7 +570,7 @@ public class BomResource extends AbstractApiResource {
                 });
             }
         } else { // additional behavior added in v3.1.0
-            try (QueryManager qm = new QueryManager()) {
+            try (QueryManager qm = new QueryManager(getAlpineRequest())) {
                 projectInfo = qm.callInTransaction(() -> {
                     final String trimmedProjectName = StringUtils.trimToNull(projectName);
                     final String trimmedProjectVersion = StringUtils.trimToNull(projectVersion);
@@ -595,7 +596,7 @@ public class BomResource extends AbstractApiResource {
                                 requireAccess(qm, parent, "Access to the specified parent project is forbidden");
                             }
                             if (isLatest) {
-                                final Project oldLatest = qm.getLatestProjectVersion(trimmedProjectName);
+                                final Project oldLatest = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(trimmedProjectName));
                                 if (oldLatest != null) {
                                     requireAccess(qm, oldLatest, "Access to the previous latest project version is forbidden");
                                 }

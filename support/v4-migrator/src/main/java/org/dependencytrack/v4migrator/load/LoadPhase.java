@@ -71,19 +71,23 @@ public final class LoadPhase {
         final StagingSchema staging = new StagingSchema(target, options.stagingSchema);
         staging.ensure();
 
+        final long start = System.nanoTime();
+        long totalRows = 0;
+        int tableCount = 0;
         preLoad();
-        try {
-            for (final TableMigration t : TableRegistry.loaded()) {
-                loadOne(t);
-            }
-        } finally {
-            postLoad();
+        for (final TableMigration t : TableRegistry.loaded()) {
+            totalRows += loadOne(t);
+            tableCount++;
         }
+        postLoad();
 
         if (dropStagingAfter) {
             LOGGER.info("Dropping staging schema (--drop-staging set).");
             staging.drop();
         }
+
+        final long ms = (System.nanoTime() - start) / 1_000_000;
+        LOGGER.info("Load phase completed: {} table(s), {} row(s) in {} ms", tableCount, totalRows, ms);
     }
 
     private void preLoad() {
@@ -91,17 +95,27 @@ public final class LoadPhase {
         // does not run the per-row ancestor walk; we load the pre-built closure directly.
         // Disable PROJECT_ACCESS_USERS write-blocking trigger so the derived backfill can
         // insert directly; v5 normally maintains this table exclusively via triggers.
+        // Disable the PROJECT_ACCESS_USERS-populating triggers on PROJECT_ACCESS_TEAMS and
+        // USERS_TEAMS so the migrator's pre-computed tgt_project_access_users remains the
+        // sole source of truth for the PROJECT_ACCESS_USERS load; otherwise those triggers
+        // fire during the parent loads and shadow the direct INSERT (which then reports 0
+        // rows due to ON CONFLICT DO NOTHING).
         target.useHandle(h -> {
             h.execute("ALTER TABLE \"PROJECT\" DISABLE TRIGGER USER");
             h.execute("ALTER TABLE \"PROJECT_ACCESS_USERS\" DISABLE TRIGGER USER");
+            h.execute("ALTER TABLE \"PROJECT_ACCESS_TEAMS\" DISABLE TRIGGER USER");
+            h.execute("ALTER TABLE \"USERS_TEAMS\" DISABLE TRIGGER USER");
         });
         prepareMetricsPartitions();
     }
 
     private void postLoad() {
+        LOGGER.info("Finalizing load: re-enabling triggers and resetting identity sequences");
         target.useHandle(h -> {
             h.execute("ALTER TABLE \"PROJECT\" ENABLE TRIGGER USER");
             h.execute("ALTER TABLE \"PROJECT_ACCESS_USERS\" ENABLE TRIGGER USER");
+            h.execute("ALTER TABLE \"PROJECT_ACCESS_TEAMS\" ENABLE TRIGGER USER");
+            h.execute("ALTER TABLE \"USERS_TEAMS\" ENABLE TRIGGER USER");
         });
 
         // Restart IDENTITY sequence for each loaded table that preserved v4 IDs.
@@ -114,13 +128,17 @@ public final class LoadPhase {
             }
         });
         // ANALYZE every loaded table for fresh planner statistics.
+        final List<TableMigration> loaded = TableRegistry.loaded();
+        LOGGER.info("Analyzing {} loaded table(s)", loaded.size());
         target.useHandle(h -> {
-            for (final TableMigration t : TableRegistry.loaded()) {
+            for (final TableMigration t : loaded) {
                 h.execute("ANALYZE \"%s\"".formatted(t.name()));
             }
         });
         // Refresh PORTFOLIOMETRICS_GLOBAL after PROJECTMETRICS is in place.
+        LOGGER.info("Refreshing PORTFOLIOMETRICS_GLOBAL materialized view");
         target.useHandle(h -> h.execute("REFRESH MATERIALIZED VIEW \"PORTFOLIOMETRICS_GLOBAL\""));
+        LOGGER.info("Applying v5.7.0 cleanup deletes");
         replayV570CleanupDeletes();
     }
 
@@ -266,7 +284,7 @@ public final class LoadPhase {
         });
     }
 
-    private void loadOne(final TableMigration t) {
+    private long loadOne(final TableMigration t) {
         LOGGER.info("Loading {} into v5", t.name());
         markState(t.name(), "IN_PROGRESS", 0);
         final long expected = expectedRows(t.name());
@@ -276,6 +294,7 @@ public final class LoadPhase {
                 final int inserted = target.inTransaction(h -> h.execute(t.loadSql().formatted(options.stagingSchema)));
                 markState(t.name(), "COMPLETED", inserted);
                 reporter.done(inserted);
+                return inserted;
             } catch (final RuntimeException e) {
                 reporter.fail();
                 markState(t.name(), "FAILED", 0);

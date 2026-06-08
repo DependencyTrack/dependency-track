@@ -22,7 +22,7 @@
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track-parent</artifactId>
     <packaging>pom</packaging>
-    <version>5.0.0-rc.2-SNAPSHOT</version>
+    <version>5.1.0-SNAPSHOT</version>
 
     <modules>
         <module>common</module>
@@ -130,7 +130,7 @@
         <lib.datanucleus-core.version>6.0.11</lib.datanucleus-core.version>
         <lib.datanucleus-javax-jdo.version>3.2.1</lib.datanucleus-javax-jdo.version>
         <lib.datanucleus-rdbms.version>6.0.11</lib.datanucleus-rdbms.version>
-        <lib.db-scheduler.version>16.10.0</lib.db-scheduler.version>
+        <lib.db-scheduler.version>16.11.0</lib.db-scheduler.version>
         <lib.flyway.version>12.6.1</lib.flyway.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.greenmail.version>2.1.8</lib.greenmail.version>
@@ -138,17 +138,17 @@
         <lib.httpclient5.version>5.6.1</lib.httpclient5.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
-        <lib.jackson.version>2.21.3</lib.jackson.version>
+        <lib.jackson.version>2.22.0</lib.jackson.version>
         <lib.jdbi.version>3.53.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
         <lib.jetty.version>12.1.9</lib.jetty.version>
         <lib.json-schema-validator.version>1.5.9</lib.json-schema-validator.version>
-        <lib.json-unit.version>5.1.1</lib.json-unit.version>
+        <lib.json-unit.version>5.1.2</lib.json-unit.version>
         <lib.jspecify.version>1.0.0</lib.jspecify.version>
         <lib.junit-jupiter.version>6.1.0</lib.junit-jupiter.version>
         <lib.kafka-clients.version>4.3.0</lib.kafka-clients.version>
         <lib.kotlin.version>2.3.21</lib.kotlin.version>
-        <lib.logback.version>1.5.32</lib.logback.version>
+        <lib.logback.version>1.5.33</lib.logback.version>
         <lib.micrometer.version>1.16.5</lib.micrometer.version>
         <lib.microprofile-config.version>3.1.1</lib.microprofile-config.version>
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
@@ -170,7 +170,7 @@
         <lib.system-stubs.version>2.1.8</lib.system-stubs.version>
         <lib.testcontainers.version>2.0.5</lib.testcontainers.version>
         <lib.tink.version>1.21.0</lib.tink.version>
-        <lib.versatile.version>0.18.1</lib.versatile.version>
+        <lib.versatile.version>0.18.3</lib.versatile.version>
         <lib.wiremock.version>3.13.2</lib.wiremock.version>
         <lib.zstd-jni.version>1.5.7-9</lib.zstd-jni.version>
         <!-- Number of JVM processes to use for unit test parallelization -->
@@ -254,6 +254,16 @@
                 <groupId>org.datanucleus</groupId>
                 <artifactId>javax.jdo</artifactId>
                 <version>${lib.datanucleus-javax-jdo.version}</version>
+                <exclusions>
+                    <!--
+                        Legacy baggage used for JNDI lookups of the API.
+                        We don't use that, and a 2MB JAR is too large to carry along for nothing.
+                    -->
+                    <exclusion>
+                        <groupId>org.glassfish.corba</groupId>
+                        <artifactId>glassfish-corba-omgapi</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.datanucleus</groupId>
@@ -446,6 +456,16 @@
                 <groupId>io.minio</groupId>
                 <artifactId>minio</artifactId>
                 <version>${lib.minio.version}</version>
+                <exclusions>
+                    <!--
+                        Only used by MinIO for client-side encryption.
+                        Schlepping a 9MB JAR along for features we don't use is not worth it.
+                    -->
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcprov-jdk18on</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -613,7 +633,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.5</version>
+                    <version>3.5.6</version>
                     <configuration>
                         <argLine>
                             @{argLine}
@@ -735,7 +755,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>13.4.2</version>
+                        <version>13.5.0</version>
                     </dependency>
                 </dependencies>
             </plugin>

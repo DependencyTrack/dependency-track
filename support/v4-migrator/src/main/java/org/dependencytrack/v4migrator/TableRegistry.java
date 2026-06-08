@@ -46,7 +46,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "COMMENT"
              , "ISCUSTOMLICENSE"
              , "ISDEPRECATED"
@@ -156,7 +156,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID", "NAME", "UUID"
+        SELECT CAST("ID" AS bigint) AS "ID", "NAME", "UUID"
           FROM "%s"."TEAM"
          ORDER BY "ID"
         """,
@@ -206,7 +206,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID", "NAME"
+        SELECT CAST("ID" AS bigint) AS "ID", "NAME"
           FROM "%s"."TAG"
          ORDER BY "ID"
         """,
@@ -252,7 +252,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "USERNAME"
              , "DN"
              , "EMAIL"
@@ -280,7 +280,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "USERNAME"
              , "PASSWORD"
              , "FULLNAME"
@@ -310,7 +310,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "USERNAME"
              , "SUBJECT_IDENTIFIER"
              , "EMAIL"
@@ -331,7 +331,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "TEAM_ID", "LDAPUSER_ID"
+        SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("LDAPUSER_ID" AS bigint) AS "LDAPUSER_ID"
           FROM "%s"."LDAPUSERS_TEAMS"
         """,
         List.of("TEAM_ID", "LDAPUSER_ID"),
@@ -348,7 +348,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "TEAM_ID", "MANAGEDUSER_ID"
+        SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("MANAGEDUSER_ID" AS bigint) AS "MANAGEDUSER_ID"
           FROM "%s"."MANAGEDUSERS_TEAMS"
         """,
         List.of("TEAM_ID", "MANAGEDUSER_ID"),
@@ -365,7 +365,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "TEAM_ID", "OIDCUSERS_ID"
+        SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("OIDCUSERS_ID" AS bigint) AS "OIDCUSERS_ID"
           FROM "%s"."OIDCUSERS_TEAMS"
         """,
         List.of("TEAM_ID", "OIDCUSERS_ID"),
@@ -595,13 +595,14 @@ public final class TableRegistry {
     );
 
     /**
-     * Source-only mirror of v4 {@code PERMISSION}. The migrator seeds v5 {@code PERMISSION}
-     * with the full v5 catalog (ON CONFLICT DO NOTHING) and builds
-     * {@code permission_name_map} by inner-joining v4 NAME against v5 PERMISSION.
-     * v4 permission names that no longer exist in v5 (e.g. {@code VIEW_BADGES}) drop out
-     * of the map. Implication fan-out (v4 {@code ACCESS_MANAGEMENT} ->
-     * v5 {@code PORTFOLIO_ACCESS_CONTROL_BYPASS}) is applied on the join-table
-     * {@code tgt_*} tables. See {@code TEAMS_PERMISSIONS} and the consolidated
+     * Source-only mirror of v4 {@code PERMISSION}. The v5 {@code PERMISSION} catalog is
+     * seeded during {@code bootstrap} (see {@link PermissionCatalog}); transform here
+     * just builds {@code permission_name_map} by inner-joining v4 NAME against the
+     * already-seeded v5 PERMISSION table. v4 permission names that no longer exist in
+     * v5 (e.g. {@code VIEW_BADGES}) drop out of the map. Implication fan-outs (v4
+     * {@code ACCESS_MANAGEMENT} -> v5 {@code PORTFOLIO_ACCESS_CONTROL_BYPASS}, and v4
+     * {@code SYSTEM_CONFIGURATION} -> v5 {@code SECRET_MANAGEMENT}) are applied on the
+     * join-table {@code tgt_*} tables. See {@code TEAMS_PERMISSIONS} and the consolidated
      * {@code USERS_PERMISSIONS} transforms.
      */
     private static final TableMigration PERMISSION = new TableMigration(
@@ -614,62 +615,12 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID", "DESCRIPTION", "NAME"
+        SELECT CAST("ID" AS bigint) AS "ID", "DESCRIPTION", "NAME"
           FROM "%s"."PERMISSION"
          ORDER BY "ID"
         """,
         List.of("ID", "DESCRIPTION", "NAME"),
         """
-        -- Seed v5 PERMISSION with the full catalog from apiserver's
-        -- org.dependencytrack.auth.Permissions enum at Flyway head 202605111028.
-        -- Keep this in sync with the enum; the migrator owns v5 PERMISSION seeding so
-        -- that join-table loads further down can resolve v5-only permission IDs (e.g.
-        -- PORTFOLIO_ACCESS_CONTROL_BYPASS) before the apiserver runs its own seeding
-        -- step on first post-migration boot.
-        INSERT INTO "PERMISSION" ("NAME", "DESCRIPTION") VALUES
-            ('BOM_UPLOAD', 'Allows the ability to upload CycloneDX Software Bill of Materials (SBOM)'),
-            ('VIEW_PORTFOLIO', 'Provides the ability to view the portfolio of projects, components, and licenses'),
-            ('PORTFOLIO_ACCESS_CONTROL_BYPASS', 'Provides the ability to bypass portfolio access control, granting access to all projects'),
-            ('PORTFOLIO_MANAGEMENT', 'Allows the creation, modification, and deletion of data in the portfolio'),
-            ('PORTFOLIO_MANAGEMENT_CREATE', 'Allows the creation of data in the portfolio'),
-            ('PORTFOLIO_MANAGEMENT_READ', 'Allows the reading of data in the portfolio'),
-            ('PORTFOLIO_MANAGEMENT_UPDATE', 'Allows the updating of data in the portfolio'),
-            ('PORTFOLIO_MANAGEMENT_DELETE', 'Allows the deletion of data in the portfolio'),
-            ('VIEW_VULNERABILITY', 'Provides the ability to view the vulnerabilities projects are affected by'),
-            ('VULNERABILITY_ANALYSIS', 'Provides all abilities to make analysis decisions on vulnerabilities'),
-            ('VULNERABILITY_ANALYSIS_CREATE', 'Provides the ability to upload supported VEX documents to a project'),
-            ('VULNERABILITY_ANALYSIS_READ', 'Provides the ability read the VEX document for a project'),
-            ('VULNERABILITY_ANALYSIS_UPDATE', 'Provides the ability to make analysis decisions on vulnerabilities and upload supported VEX documents for a project'),
-            ('VIEW_POLICY_VIOLATION', 'Provides the ability to view policy violations'),
-            ('VULNERABILITY_MANAGEMENT', 'Allows all management permissions of internally-defined vulnerabilities'),
-            ('VULNERABILITY_MANAGEMENT_CREATE', 'Allows creation of internally-defined vulnerabilities'),
-            ('VULNERABILITY_MANAGEMENT_READ', 'Allows reading internally-defined vulnerabilities'),
-            ('VULNERABILITY_MANAGEMENT_UPDATE', 'Allows updating internally-defined vulnerabilities and vulnerability tags'),
-            ('VULNERABILITY_MANAGEMENT_DELETE', 'Allows management of internally-defined vulnerabilities'),
-            ('POLICY_VIOLATION_ANALYSIS', 'Provides the ability to make analysis decisions on policy violations'),
-            ('ACCESS_MANAGEMENT', 'Allows the management of users, teams, and API keys'),
-            ('ACCESS_MANAGEMENT_CREATE', 'Allows create permissions of users, teams, and API keys'),
-            ('ACCESS_MANAGEMENT_READ', 'Allows read permissions of users, teams, and API keys'),
-            ('ACCESS_MANAGEMENT_UPDATE', 'Allows update permissions of users, teams, and API keys'),
-            ('ACCESS_MANAGEMENT_DELETE', 'Allows delete permissions of users, teams, and API keys'),
-            ('SECRET_MANAGEMENT', 'Grants full secret management access'),
-            ('SECRET_MANAGEMENT_CREATE', 'Grants the ability to create secrets'),
-            ('SECRET_MANAGEMENT_UPDATE', 'Grants the ability to update secrets'),
-            ('SECRET_MANAGEMENT_DELETE', 'Grants the ability to delete secrets'),
-            ('SYSTEM_CONFIGURATION', 'Allows all access to configuration of the system including notifications, repositories, and email settings'),
-            ('SYSTEM_CONFIGURATION_CREATE', 'Allows creating configuration of the system including notifications, repositories, and email settings'),
-            ('SYSTEM_CONFIGURATION_READ', 'Allows reading the configuration of the system including notifications, repositories, and email settings'),
-            ('SYSTEM_CONFIGURATION_UPDATE', 'Allows updating the configuration of the system including notifications, repositories, and email settings'),
-            ('SYSTEM_CONFIGURATION_DELETE', 'Allows deleting the configuration of the system including notifications, repositories, and email settings'),
-            ('PROJECT_CREATION_UPLOAD', 'Provides the ability to optionally create project (if non-existent) on BOM or scan upload'),
-            ('POLICY_MANAGEMENT', 'Allows the creation, modification, and deletion of policy'),
-            ('POLICY_MANAGEMENT_CREATE', 'Allows the creation of a policy'),
-            ('POLICY_MANAGEMENT_READ', 'Allows reading of policies'),
-            ('POLICY_MANAGEMENT_UPDATE', 'Allows the modification of a policy'),
-            ('POLICY_MANAGEMENT_DELETE', 'Allows the deletion of a policy'),
-            ('TAG_MANAGEMENT', 'Allows the modification and deletion of tags'),
-            ('TAG_MANAGEMENT_DELETE', 'Allows the deletion of a tag')
-        ON CONFLICT ("NAME") DO NOTHING;
         DROP TABLE IF EXISTS "%1$s".permission_name_map;
         CREATE UNLOGGED TABLE "%1$s".permission_name_map (
             orig_id BIGINT NOT NULL PRIMARY KEY
@@ -693,7 +644,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "LDAPUSER_ID", "PERMISSION_ID"
+        SELECT CAST("LDAPUSER_ID" AS bigint) AS "LDAPUSER_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."LDAPUSERS_PERMISSIONS"
         """,
         List.of("LDAPUSER_ID", "PERMISSION_ID"),
@@ -710,7 +661,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "MANAGEDUSER_ID", "PERMISSION_ID"
+        SELECT CAST("MANAGEDUSER_ID" AS bigint) AS "MANAGEDUSER_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."MANAGEDUSERS_PERMISSIONS"
         """,
         List.of("MANAGEDUSER_ID", "PERMISSION_ID"),
@@ -727,7 +678,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "OIDCUSER_ID", "PERMISSION_ID"
+        SELECT CAST("OIDCUSER_ID" AS bigint) AS "OIDCUSER_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."OIDCUSERS_PERMISSIONS"
         """,
         List.of("OIDCUSER_ID", "PERMISSION_ID"),
@@ -776,16 +727,32 @@ public final class TableRegistry {
           JOIN "%1$s".permission_name_map m ON m.orig_id = j."PERMISSION_ID"
         ON CONFLICT DO NOTHING;
 
-        -- Implication fan-out: v4 ACCESS_MANAGEMENT carried implicit portfolio-access-control
-        -- bypass. v5 split that into the explicit PORTFOLIO_ACCESS_CONTROL_BYPASS permission
-        -- (v5.6.0-31). Grant it to every user that holds ACCESS_MANAGEMENT in v4. The v5.6.0-31
-        -- changeset also matched ACCESS_MANAGEMENT_CREATE, but that permission did not exist
-        -- in v4, so the v4-to-v5 path filters on the umbrella only.
+        -- Implication fan-outs: v4 carried two v5-only permissions implicitly via their
+        -- v4-era equivalents. v5 split each into a dedicated permission, and the migrator
+        -- preserves v4 authorization semantics by granting the new permission to every v4
+        -- holder of the equivalent. The target permissions are seeded by PermissionCatalog
+        -- during bootstrap; the inner join against "PERMISSION" produces zero rows (rather
+        -- than a NULL PERMISSION_ID constraint violation) if a catalog row is missing.
+        --
+        --   ACCESS_MANAGEMENT    -> PORTFOLIO_ACCESS_CONTROL_BYPASS (v5.6.0-31). The v5.6.0-31
+        --                          changeset also matched ACCESS_MANAGEMENT_CREATE, but that
+        --                          permission did not exist in v4, so the v4-to-v5 path
+        --                          filters on the umbrella only.
+        --   SYSTEM_CONFIGURATION -> SECRET_MANAGEMENT. v4 had no separate secret-management
+        --                          permission; repository basic-auth passwords and analyzer /
+        --                          vulnerability-source API credentials were configurable by
+        --                          anyone with SYSTEM_CONFIGURATION. Only the umbrella is
+        --                          fanned out; the _CREATE / _UPDATE / _DELETE variants did
+        --                          not exist in v4.
         INSERT INTO "%1$s".tgt_users_permissions ("USER_ID", "PERMISSION_ID")
-        SELECT DISTINCT up."USER_ID", (SELECT "ID" FROM "PERMISSION" WHERE "NAME" = 'PORTFOLIO_ACCESS_CONTROL_BYPASS')
+        SELECT DISTINCT up."USER_ID", tgt."ID"
           FROM "%1$s".tgt_users_permissions up
-          JOIN "PERMISSION" p ON p."ID" = up."PERMISSION_ID"
-         WHERE p."NAME" = 'ACCESS_MANAGEMENT'
+          JOIN "PERMISSION" src ON src."ID" = up."PERMISSION_ID"
+          JOIN "PERMISSION" tgt ON tgt."NAME" = CASE src."NAME"
+              WHEN 'ACCESS_MANAGEMENT'    THEN 'PORTFOLIO_ACCESS_CONTROL_BYPASS'
+              WHEN 'SYSTEM_CONFIGURATION' THEN 'SECRET_MANAGEMENT'
+          END
+         WHERE src."NAME" IN ('ACCESS_MANAGEMENT', 'SYSTEM_CONFIGURATION')
         ON CONFLICT DO NOTHING
         """,
         """
@@ -810,7 +777,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID", "NAME", "UUID"
+        SELECT CAST("ID" AS bigint) AS "ID", "NAME", "UUID"
           FROM "%s"."OIDCGROUP"
          ORDER BY "ID"
         """,
@@ -859,7 +826,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "NAME"
              , "RISKWEIGHT"
              , "UUID"
@@ -920,7 +887,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "LICENSEGROUP_ID", "LICENSE_ID"
+        SELECT CAST("LICENSEGROUP_ID" AS bigint) AS "LICENSEGROUP_ID", CAST("LICENSE_ID" AS bigint) AS "LICENSE_ID"
           FROM "%s"."LICENSEGROUP_LICENSE"
         """,
         List.of("LICENSEGROUP_ID", "LICENSE_ID"),
@@ -969,7 +936,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHENTICATIONREQUIRED"
              , "ENABLED"
              , "IDENTIFIER"
@@ -1103,12 +1070,12 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "ACTIVE"
              , "AUTHORS"
              , "CLASSIFIER"
              , "COLLECTION_LOGIC"
-             , "COLLECTION_TAG"
+             , CAST("COLLECTION_TAG" AS bigint) AS "COLLECTION_TAG"
              , "CPE"
              , "DESCRIPTION"
              , "DIRECT_DEPENDENCIES"
@@ -1121,7 +1088,7 @@ public final class TableRegistry {
              , "LAST_VULNERABILITY_ANALYSIS"
              , "MANUFACTURER"
              , "NAME"
-             , "PARENT_PROJECT_ID"
+             , CAST("PARENT_PROJECT_ID" AS bigint) AS "PARENT_PROJECT_ID"
              , "PUBLISHER"
              , "PURL"
              , "SUPPLIER"
@@ -1430,7 +1397,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "DEFAULT_PUBLISHER"
              , "DESCRIPTION"
              , "NAME"
@@ -1515,8 +1482,9 @@ public final class TableRegistry {
      * rewritten through {@code notificationpublisher_canonical_id_map}; rules whose publisher
      * cannot be mapped are dropped by the inner join. All rules are loaded with
      * {@code ENABLED=FALSE} (operators re-enable post-migration after reviewing the
-     * regenerated config). {@code TRIGGER_TYPE} hard-set to {@code 'EVENT'}; schedule columns
-     * and {@code FILTER_EXPRESSION} NULL on import (v4 has no equivalent).
+     * regenerated config). {@code TRIGGER_TYPE} and {@code SCHEDULE_*} columns are carried
+     * through from v4 unchanged. {@code FILTER_EXPRESSION} is NULL on import (v4 has no
+     * equivalent).
      */
     private static final TableMigration NOTIFICATIONRULE = new TableMigration(
         "NOTIFICATIONRULE",
@@ -1534,10 +1502,15 @@ public final class TableRegistry {
           , "PUBLISHER_CONFIG"            text
           , "SCOPE"                       varchar(255) NOT NULL
           , "UUID"                        varchar(36) NOT NULL
+          , "TRIGGER_TYPE"                varchar(255) NOT NULL
+          , "SCHEDULE_CRON"               varchar(255)
+          , "SCHEDULE_LAST_TRIGGERED_AT"  timestamptz
+          , "SCHEDULE_NEXT_TRIGGER_AT"    timestamptz
+          , "SCHEDULE_SKIP_UNCHANGED"     boolean
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "ENABLED"
              , "LOG_SUCCESSFUL_PUBLISH"
              , "MESSAGE"
@@ -1545,16 +1518,22 @@ public final class TableRegistry {
              , "NOTIFICATION_LEVEL"
              , "NOTIFY_CHILDREN"
              , "NOTIFY_ON"
-             , "PUBLISHER"
+             , CAST("PUBLISHER" AS bigint) AS "PUBLISHER"
              , "PUBLISHER_CONFIG"
              , "SCOPE"
              , "UUID"
+             , "TRIGGER_TYPE"
+             , "SCHEDULE_CRON"
+             , "SCHEDULE_LAST_TRIGGERED_AT"
+             , "SCHEDULE_NEXT_TRIGGER_AT"
+             , "SCHEDULE_SKIP_UNCHANGED"
           FROM "%s"."NOTIFICATIONRULE"
          ORDER BY "ID"
         """,
         List.of("ID", "ENABLED", "LOG_SUCCESSFUL_PUBLISH", "MESSAGE", "NAME",
             "NOTIFICATION_LEVEL", "NOTIFY_CHILDREN", "NOTIFY_ON", "PUBLISHER",
-            "PUBLISHER_CONFIG", "SCOPE", "UUID"),
+            "PUBLISHER_CONFIG", "SCOPE", "UUID", "TRIGGER_TYPE", "SCHEDULE_CRON",
+            "SCHEDULE_LAST_TRIGGERED_AT", "SCHEDULE_NEXT_TRIGGER_AT", "SCHEDULE_SKIP_UNCHANGED"),
         """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'NOTIFICATIONRULE', "ID", "UUID"
@@ -1580,7 +1559,10 @@ public final class TableRegistry {
           , "LOG_SUCCESSFUL_PUBLISH"      boolean
           , "MESSAGE"                     varchar(1024)
           , "NAME"                        varchar(255) NOT NULL
-          , "NOTIFICATION_LEVEL"          notification_level
+          -- Stored as text + CHECK rather than the native "notification_level" enum so a
+          -- target-side DROP SCHEMA public CASCADE does not transitively drop this column.
+          -- Keep the value list in sync with migration/.../V202605022031__init.sql.
+          , "NOTIFICATION_LEVEL"          varchar(255) CHECK ("NOTIFICATION_LEVEL" IN ('INFORMATIONAL', 'WARNING', 'ERROR'))
           , "NOTIFY_CHILDREN"             boolean
           , "NOTIFY_ON"                   text[]
           , "PUBLISHER"                   bigint
@@ -1600,18 +1582,18 @@ public final class TableRegistry {
              , r."LOG_SUCCESSFUL_PUBLISH"
              , r."MESSAGE"
              , r."NAME"
-             , CASE WHEN r."NOTIFICATION_LEVEL" IS NULL THEN NULL ELSE r."NOTIFICATION_LEVEL"::notification_level END
+             , r."NOTIFICATION_LEVEL"
              , r."NOTIFY_CHILDREN"
              , CASE WHEN r."NOTIFY_ON" IS NULL THEN NULL ELSE string_to_array(r."NOTIFY_ON", ',') END
              , m.canonical_id
              , CASE p."EXTENSION_NAME" WHEN 'console' THEN NULL::jsonb WHEN 'email' THEN CASE WHEN COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', '') = '' THEN jsonb_build_object('recipientAddresses', jsonb_build_array()) ELSE jsonb_build_object('recipientAddresses', jsonb_build_array("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination')) END WHEN 'jira' THEN jsonb_build_object( 'projectKey', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'EXAMPLE'), 'issueType',  COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'jiraTicketType', 'TASK')) WHEN 'mattermost' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'msteams' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'slack' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'webex' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'webhook' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) ELSE NULL::jsonb END
              , r."SCOPE"
              , r."UUID"::uuid
-             , 'EVENT'
-             , NULL
-             , NULL
-             , NULL
-             , NULL
+             , r."TRIGGER_TYPE"
+             , r."SCHEDULE_CRON"
+             , r."SCHEDULE_LAST_TRIGGERED_AT"
+             , r."SCHEDULE_NEXT_TRIGGER_AT"
+             , r."SCHEDULE_SKIP_UNCHANGED"
              , NULL
           FROM "%1$s".src_notificationrule r
           JOIN "%1$s".notificationpublisher_canonical_id_map m ON m.orig_id = r."PUBLISHER"
@@ -1645,7 +1627,7 @@ public final class TableRegistry {
              , "LOG_SUCCESSFUL_PUBLISH"
              , "MESSAGE"
              , "NAME"
-             , "NOTIFICATION_LEVEL"
+             , CASE WHEN "NOTIFICATION_LEVEL" IS NULL THEN NULL ELSE "NOTIFICATION_LEVEL"::notification_level END
              , "NOTIFY_CHILDREN"
              , "NOTIFY_ON"
              , "PUBLISHER"
@@ -1675,7 +1657,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "NOTIFICATIONRULE_ID", "TAG_ID"
+        SELECT CAST("NOTIFICATIONRULE_ID" AS bigint) AS "NOTIFICATIONRULE_ID", CAST("TAG_ID" AS bigint) AS "TAG_ID"
           FROM "%s"."NOTIFICATIONRULE_TAGS"
         """,
         List.of("NOTIFICATIONRULE_ID", "TAG_ID"),
@@ -1713,7 +1695,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "NOTIFICATIONRULE_ID", "TEAM_ID"
+        SELECT CAST("NOTIFICATIONRULE_ID" AS bigint) AS "NOTIFICATIONRULE_ID", CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
           FROM "%s"."NOTIFICATIONRULE_TEAMS"
         """,
         List.of("NOTIFICATIONRULE_ID", "TEAM_ID"),
@@ -1757,7 +1739,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "INCLUDE_CHILDREN"
              , "NAME"
              , "ONLY_LATEST_PROJECT_VERSION"
@@ -1837,9 +1819,9 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "OPERATOR"
-             , "POLICY_ID"
+             , CAST("POLICY_ID" AS bigint) AS "POLICY_ID"
              , "SUBJECT"
              , "UUID"
              , "VALUE"
@@ -1910,7 +1892,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "POLICY_ID", "TAG_ID"
+        SELECT CAST("POLICY_ID" AS bigint) AS "POLICY_ID", CAST("TAG_ID" AS bigint) AS "TAG_ID"
           FROM "%s"."POLICY_TAGS"
         """,
         List.of("POLICY_ID", "TAG_ID"),
@@ -1950,7 +1932,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "POLICY_ID", "PROJECT_ID"
+        SELECT CAST("POLICY_ID" AS bigint) AS "POLICY_ID", CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
           FROM "%s"."POLICY_PROJECTS"
         """,
         List.of("POLICY_ID", "PROJECT_ID"),
@@ -1992,7 +1974,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "NOTIFICATIONRULE_ID", "PROJECT_ID"
+        SELECT CAST("NOTIFICATIONRULE_ID" AS bigint) AS "NOTIFICATIONRULE_ID", CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
           FROM "%s"."NOTIFICATIONRULE_PROJECTS"
         """,
         List.of("NOTIFICATIONRULE_ID", "PROJECT_ID"),
@@ -2031,9 +2013,9 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHORS"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SUPPLIER"
           FROM "%s"."PROJECT_METADATA"
         """,
@@ -2109,7 +2091,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "PROJECT_ID", "TEAM_ID"
+        SELECT CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID", CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
           FROM "%s"."PROJECT_ACCESS_TEAMS"
         """,
         List.of("PROJECT_ID", "TEAM_ID"),
@@ -2178,7 +2160,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "PROJECT_ID", "TAG_ID"
+        SELECT CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID", CAST("TAG_ID" AS bigint) AS "TAG_ID"
           FROM "%s"."PROJECTS_TAGS"
         """,
         List.of("PROJECT_ID", "TAG_ID"),
@@ -2266,7 +2248,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHORS"
              , "BLAKE2B_256"
              , "BLAKE2B_384"
@@ -2289,12 +2271,12 @@ public final class TableRegistry {
              , "MD5"
              , "NAME"
              , "TEXT"
-             , "PARENT_COMPONENT_ID"
-             , "PROJECT_ID"
+             , CAST("PARENT_COMPONENT_ID" AS bigint) AS "PARENT_COMPONENT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "PUBLISHER"
              , "PURL"
              , "PURLCOORDINATES"
-             , "LICENSE_ID"
+             , CAST("LICENSE_ID" AS bigint) AS "LICENSE_ID"
              , "SCOPE"
              , "SHA1"
              , "SHA_256"
@@ -2600,7 +2582,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHENTICATED"
              , "X_TRUST_BOUNDARY"
              , "DATA"
@@ -2611,8 +2593,8 @@ public final class TableRegistry {
              , "LAST_RISKSCORE"
              , "NAME"
              , "TEXT"
-             , "PARENT_SERVICECOMPONENT_ID"
-             , "PROJECT_ID"
+             , CAST("PARENT_SERVICECOMPONENT_ID" AS bigint) AS "PARENT_SERVICECOMPONENT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "PROVIDER_ID"
              , "UUID"
              , "VERSION"
@@ -2758,7 +2740,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "LAST_CHECK"
              , "LATEST_VERSION"
              , "NAME"
@@ -2777,14 +2759,20 @@ public final class TableRegistry {
     /**
      * Derived {@code PACKAGE_METADATA} per schema-changes §7.7 / Liquibase changeset
      * v5.7.0-52. Joins {@code REPOSITORY_META_COMPONENT} to {@code COMPONENT} on
-     * {@code (NAME, NAMESPACE/GROUP)} with symmetric NULL match and a PURL scheme match by
-     * repository type. Output {@code PURL} is the PURL coordinates with the {@code @version}
-     * suffix stripped. Rows whose resulting PURL contains any of {@code @ ? & #} are skipped
-     * to satisfy the v5 {@code PACKAGE_METADATA_PURL_CHECK} constraint. {@code DISTINCT ON
-     * (PURL)} keeps the newest {@code LAST_CHECK} per PURL. {@code RESOLVED_BY},
-     * {@code RESOLVED_FROM}, {@code LATEST_VERSION_PUBLISHED_AT} have no v4 source and are
-     * left NULL, matching the Liquibase changeset which only projects PURL, LATEST_VERSION,
-     * and RESOLVED_AT (= LAST_CHECK).
+     * {@code (NAME, NAMESPACE/GROUP, repository type)} with symmetric NULL match. Output
+     * {@code PURL} is the PURL coordinates with the {@code @version} suffix stripped. Rows
+     * whose resulting PURL contains any of {@code @ ? & #} are skipped to satisfy the v5
+     * {@code PACKAGE_METADATA_PURL_CHECK} constraint. {@code DISTINCT ON (PURL)} keeps the
+     * newest {@code LAST_CHECK} per PURL. {@code RESOLVED_BY}, {@code RESOLVED_FROM},
+     * {@code LATEST_VERSION_PUBLISHED_AT} have no v4 source and are left NULL, matching the
+     * Liquibase changeset which only projects PURL, LATEST_VERSION, and RESOLVED_AT (=
+     * LAST_CHECK).
+     *
+     * <p>{@code src_component} is pre-deduplicated to one row per
+     * {@code (NAME, GROUP, type, stripped PURL)} tuple before the join. Without this, the
+     * equality on {@code NAME} alone is non-selective in multi-project deployments where the
+     * same package appears in thousands of components, producing a multi-million-row
+     * intermediate result that {@code DISTINCT ON} then has to sort to disk.
      */
     private static final TableMigration PACKAGE_METADATA = new TableMigration(
         "PACKAGE_METADATA",
@@ -2809,28 +2797,33 @@ public final class TableRegistry {
           , "RESOLVED_FROM"
           , "RESOLVED_AT"
         )
-        SELECT DISTINCT ON (t."PURL") t."PURL"
-             , t."LATEST_VERSION"
+        WITH c_unique AS (
+            SELECT DISTINCT
+                   c."NAME"
+                 , c."GROUP"
+                 , substring(lower(c."PURL") FROM '^pkg:([^/]+)/') AS "TYPE"
+                 , split_part(c."PURLCOORDINATES", '@', 1) AS "PURL"
+              FROM "%1$s".src_component c
+             WHERE c."PURLCOORDINATES" IS NOT NULL
+               AND lower(c."PURL") LIKE 'pkg:%%'
+        )
+        SELECT DISTINCT ON (cu."PURL") cu."PURL"
+             , rmc."LATEST_VERSION"
              , NULL
              , NULL
              , NULL
-             , t."LAST_CHECK"
-          FROM (
-            SELECT split_part(c."PURLCOORDINATES", '@', 1) AS "PURL"
-                 , rmc."LATEST_VERSION"
-                 , rmc."LAST_CHECK"
-              FROM "%1$s".src_repository_meta_component rmc
-              JOIN "%1$s".src_component c
-                ON c."NAME" = rmc."NAME"
-               AND (c."GROUP" = rmc."NAMESPACE"
-                    OR (c."GROUP" IS NULL AND rmc."NAMESPACE" IS NULL))
-               AND LOWER(c."PURL") LIKE ('pkg:' || LOWER(rmc."REPOSITORY_TYPE") || '/%%')
-          ) t
-         WHERE t."PURL" NOT LIKE '%%@%%'
-           AND t."PURL" NOT LIKE '%%?%%'
-           AND t."PURL" NOT LIKE '%%&%%'
-           AND t."PURL" NOT LIKE '%%#%%'
-         ORDER BY t."PURL", t."LAST_CHECK" DESC NULLS LAST
+             , rmc."LAST_CHECK"
+          FROM c_unique cu
+          JOIN "%1$s".src_repository_meta_component rmc
+            ON cu."NAME" = rmc."NAME"
+           AND (cu."GROUP" = rmc."NAMESPACE"
+                OR (cu."GROUP" IS NULL AND rmc."NAMESPACE" IS NULL))
+           AND cu."TYPE" = lower(rmc."REPOSITORY_TYPE")
+         WHERE cu."PURL" NOT LIKE '%%@%%'
+           AND cu."PURL" NOT LIKE '%%?%%'
+           AND cu."PURL" NOT LIKE '%%&%%'
+           AND cu."PURL" NOT LIKE '%%#%%'
+         ORDER BY cu."PURL", rmc."LAST_CHECK" DESC NULLS LAST
         """,
         """
         INSERT INTO "PACKAGE_METADATA" (
@@ -2870,7 +2863,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "COMMENT"
              , "CREATED"
              , "IS_LEGACY"
@@ -2946,7 +2939,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "TEAM_ID", "APIKEY_ID"
+        SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("APIKEY_ID" AS bigint) AS "APIKEY_ID"
           FROM "%s"."APIKEYS_TEAMS"
         """,
         List.of("TEAM_ID", "APIKEY_ID"),
@@ -2986,7 +2979,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "TEAM_ID", "PERMISSION_ID"
+        SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."TEAMS_PERMISSIONS"
         """,
         List.of("TEAM_ID", "PERMISSION_ID"),
@@ -3004,15 +2997,18 @@ public final class TableRegistry {
           JOIN "%1$s".permission_name_map  pm ON pm.orig_id = j."PERMISSION_ID"
         ON CONFLICT DO NOTHING;
 
-        -- Implication fan-out: see the matching USERS_PERMISSIONS step. v4 ACCESS_MANAGEMENT
-        -- carried implicit portfolio-access-control bypass; v5 split that into
-        -- PORTFOLIO_ACCESS_CONTROL_BYPASS (v5.6.0-31). Grant it to every team that holds
-        -- ACCESS_MANAGEMENT in v4.
+        -- Implication fan-outs: see the matching USERS_PERMISSIONS step for the rationale.
+        --   ACCESS_MANAGEMENT    -> PORTFOLIO_ACCESS_CONTROL_BYPASS
+        --   SYSTEM_CONFIGURATION -> SECRET_MANAGEMENT
         INSERT INTO "%1$s".tgt_teams_permissions ("TEAM_ID", "PERMISSION_ID")
-        SELECT DISTINCT tp."TEAM_ID", (SELECT "ID" FROM "PERMISSION" WHERE "NAME" = 'PORTFOLIO_ACCESS_CONTROL_BYPASS')
+        SELECT DISTINCT tp."TEAM_ID", tgt."ID"
           FROM "%1$s".tgt_teams_permissions tp
-          JOIN "PERMISSION" p ON p."ID" = tp."PERMISSION_ID"
-         WHERE p."NAME" = 'ACCESS_MANAGEMENT'
+          JOIN "PERMISSION" src ON src."ID" = tp."PERMISSION_ID"
+          JOIN "PERMISSION" tgt ON tgt."NAME" = CASE src."NAME"
+              WHEN 'ACCESS_MANAGEMENT'    THEN 'PORTFOLIO_ACCESS_CONTROL_BYPASS'
+              WHEN 'SYSTEM_CONFIGURATION' THEN 'SECRET_MANAGEMENT'
+          END
+         WHERE src."NAME" IN ('ACCESS_MANAGEMENT', 'SYSTEM_CONFIGURATION')
         ON CONFLICT DO NOTHING
         """,
         """
@@ -3037,9 +3033,9 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "DN"
-             , "TEAM_ID"
+             , CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
              , "UUID"
           FROM "%s"."MAPPEDLDAPGROUP"
          ORDER BY "ID"
@@ -3097,9 +3093,9 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
-             , "GROUP_ID"
-             , "TEAM_ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
+             , CAST("GROUP_ID" AS bigint) AS "GROUP_ID"
+             , CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
              , "UUID"
           FROM "%s"."MAPPEDOIDCGROUP"
          ORDER BY "ID"
@@ -3195,7 +3191,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "CREATED"
              , "CREDITS"
              , "CVSSV2BASESCORE"
@@ -3285,7 +3281,11 @@ public final class TableRegistry {
           , "PUBLISHED"                   timestamp with time zone
           , "RECOMMENDATION"              text
           , "REFERENCES"                  text
-          , "SEVERITY"                    severity
+          -- Stored as text + CHECK rather than the native "severity" enum so a target-side
+          -- DROP SCHEMA public CASCADE (a common manual reset between load attempts) does
+          -- not transitively drop this column. Keep the value list in sync with
+          -- migration/.../V202605022031__init.sql.
+          , "SEVERITY"                    varchar(255) CHECK ("SEVERITY" IN ('UNASSIGNED', 'INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'))
           , "SOURCE"                      varchar(255) NOT NULL
           , "SUBTITLE"                    varchar(255)
           , "TITLE"                       varchar(255)
@@ -3354,7 +3354,9 @@ public final class TableRegistry {
              , "PUBLISHED"
              , "RECOMMENDATION"
              , "REFERENCES"
-             , "SEVERITY"::severity
+             -- v4 allows NULL "SEVERITY"; treat that as the canonical UNASSIGNED sentinel
+             -- so the v5 column is never NULL.
+             , COALESCE("SEVERITY", 'UNASSIGNED')
              , "SOURCE"
              , "SUBTITLE"
              , "TITLE"
@@ -3426,7 +3428,7 @@ public final class TableRegistry {
              , "PUBLISHED"
              , "RECOMMENDATION"
              , "REFERENCES"
-             , "SEVERITY"
+             , "SEVERITY"::severity
              , "SOURCE"
              , "SUBTITLE"
              , "TITLE"
@@ -3486,7 +3488,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "CPE22"
              , "CPE23"
              , "EDITION"
@@ -3713,7 +3715,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "COUNT"
              , "MEASURED_AT"
              , "MONTH"
@@ -3783,7 +3785,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "CVE_ID"
              , "GHSA_ID"
              , "GSD_ID"
@@ -4000,7 +4002,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "COMPONENT_ID", "VULNERABILITY_ID"
+        SELECT CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID", CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID"
           FROM "%s"."COMPONENTS_VULNERABILITIES"
         """,
         List.of("COMPONENT_ID", "VULNERABILITY_ID"),
@@ -4040,7 +4042,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "VULNERABILITY_ID", "SERVICECOMPONENT_ID"
+        SELECT CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID", CAST("SERVICECOMPONENT_ID" AS bigint) AS "SERVICECOMPONENT_ID"
           FROM "%s"."SERVICECOMPONENTS_VULNERABILITIES"
         """,
         List.of("VULNERABILITY_ID", "SERVICECOMPONENT_ID"),
@@ -4080,7 +4082,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"
+        SELECT CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID", CAST("VULNERABLESOFTWARE_ID" AS bigint) AS "VULNERABLESOFTWARE_ID"
           FROM "%s"."VULNERABLESOFTWARE_VULNERABILITIES"
         """,
         List.of("VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"),
@@ -4127,13 +4129,13 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "FIRST_SEEN"
              , "LAST_SEEN"
              , "SOURCE"
              , "UUID"
-             , "VULNERABILITY"
-             , "VULNERABLE_SOFTWARE"
+             , CAST("VULNERABILITY" AS bigint) AS "VULNERABILITY"
+             , CAST("VULNERABLE_SOFTWARE" AS bigint) AS "VULNERABLE_SOFTWARE"
           FROM "%s"."AFFECTEDVERSIONATTRIBUTION"
          ORDER BY "ID"
         """,
@@ -4207,11 +4209,11 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "BOM_FORMAT"
              , "BOM_VERSION"
              , "IMPORTED"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SERIAL_NUMBER"
              , "SPEC_VERSION"
              , "UUID"
@@ -4309,9 +4311,9 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "IMPORTED"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SERIAL_NUMBER"
              , "SPEC_VERSION"
              , "UUID"
@@ -4411,15 +4413,15 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "ALT_ID"
              , "ANALYZERIDENTITY"
              , "ATTRIBUTED_ON"
-             , "COMPONENT_ID"
-             , "PROJECT_ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "REFERENCE_URL"
              , "UUID"
-             , "VULNERABILITY_ID"
+             , CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID"
           FROM "%s"."FINDINGATTRIBUTION"
          ORDER BY "ID"
         """,
@@ -4531,10 +4533,10 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
-             , "COMPONENT_ID"
-             , "POLICYCONDITION_ID"
-             , "PROJECT_ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
+             , CAST("POLICYCONDITION_ID" AS bigint) AS "POLICYCONDITION_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "TEXT"
              , "TIMESTAMP"
              , "TYPE"
@@ -4646,15 +4648,15 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "DETAILS"
              , "JUSTIFICATION"
              , "RESPONSE"
              , "STATE"
-             , "COMPONENT_ID"
-             , "PROJECT_ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SUPPRESSED"
-             , "VULNERABILITY_ID"
+             , CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID"
           FROM "%s"."ANALYSIS"
          ORDER BY "ID"
         """,
@@ -4790,8 +4792,8 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
-             , "ANALYSIS_ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
+             , CAST("ANALYSIS_ID" AS bigint) AS "ANALYSIS_ID"
              , "COMMENT"
              , "COMMENTER"
              , "TIMESTAMP"
@@ -4861,11 +4863,11 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "STATE"
-             , "COMPONENT_ID"
-             , "POLICYVIOLATION_ID"
-             , "PROJECT_ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
+             , CAST("POLICYVIOLATION_ID" AS bigint) AS "POLICYVIOLATION_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SUPPRESSED"
           FROM "%s"."VIOLATIONANALYSIS"
          ORDER BY "ID"
@@ -4936,11 +4938,11 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "COMMENT"
              , "COMMENTER"
              , "TIMESTAMP"
-             , "VIOLATIONANALYSIS_ID"
+             , CAST("VIOLATIONANALYSIS_ID" AS bigint) AS "VIOLATIONANALYSIS_ID"
           FROM "%s"."VIOLATIONANALYSISCOMMENT"
          ORDER BY "ID"
         """,
@@ -5005,7 +5007,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "DESCRIPTION"
              , "GROUPNAME"
              , "PROPERTYNAME"
@@ -5078,10 +5080,10 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "DESCRIPTION"
              , "GROUPNAME"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "PROPERTYNAME"
              , "PROPERTYTYPE"
              , "PROPERTYVALUE"
@@ -5159,8 +5161,8 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
-             , "COMPONENT_ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
              , "DESCRIPTION"
              , "GROUPNAME"
              , "PROPERTYNAME"
@@ -5281,8 +5283,8 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
-             , "COMPONENT_ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
+             , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
              , "CRITICAL"
              , "FINDINGS_AUDITED"
              , "FINDINGS_TOTAL"
@@ -5308,7 +5310,7 @@ public final class TableRegistry {
              , "POLICYVIOLATIONS_TOTAL"
              , "POLICYVIOLATIONS_UNAUDITED"
              , "POLICYVIOLATIONS_WARN"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SUPPRESSED"
              , "UNASSIGNED_SEVERITY"
              , "VULNERABILITIES"
@@ -5585,7 +5587,7 @@ public final class TableRegistry {
         )
         """,
         """
-        SELECT "ID"
+        SELECT CAST("ID" AS bigint) AS "ID"
              , "COLLECTION_LOGIC"
              , "COLLECTION_LOGIC_CHANGED"
              , "COMPONENTS"
@@ -5614,7 +5616,7 @@ public final class TableRegistry {
              , "POLICYVIOLATIONS_TOTAL"
              , "POLICYVIOLATIONS_UNAUDITED"
              , "POLICYVIOLATIONS_WARN"
-             , "PROJECT_ID"
+             , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SUPPRESSED"
              , "UNASSIGNED_SEVERITY"
              , "VULNERABILITIES"

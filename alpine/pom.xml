@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>dependency-track-parent</artifactId>
-        <version>5.0.0-rc.2-SNAPSHOT</version>
+        <version>5.1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>alpine-parent</artifactId>
@@ -74,8 +74,6 @@
 
         <!-- Dependency Versions -->
         <lib.bcrypt.version>0.4</lib.bcrypt.version>
-        <lib.commons.collections4.version>4.5.0</lib.commons.collections4.version>
-        <lib.commons.io.version>2.22.0</lib.commons.io.version>
         <lib.h2.version>2.4.240</lib.h2.version>
         <lib.logstash-logback-encoder.version>8.1</lib.logstash-logback-encoder.version>
         <lib.nimbus-oauth2-oidc-sdk.version>11.37.2</lib.nimbus-oauth2-oidc-sdk.version>
@@ -87,17 +85,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Misc helper libraries -->
-            <dependency>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-                <version>${lib.commons.io.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-collections4</artifactId>
-                <version>${lib.commons.collections4.version}</version>
-            </dependency>
             <!-- JSON API specification and default implementation -->
             <dependency>
                 <groupId>org.eclipse.parsson</groupId>

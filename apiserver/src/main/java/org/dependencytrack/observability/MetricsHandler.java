@@ -21,7 +21,7 @@ package org.dependencytrack.observability;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
-import io.prometheus.client.exporter.common.TextFormat;
+import io.prometheus.metrics.expositionformats.PrometheusTextFormatWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.owasp.security.logging.SecurityMarkers;
@@ -70,7 +70,7 @@ final class MetricsHandler implements HttpHandler {
                 return;
             }
 
-            exchange.getResponseHeaders().set("Content-Type", TextFormat.CONTENT_TYPE_004);
+            exchange.getResponseHeaders().set("Content-Type", PrometheusTextFormatWriter.CONTENT_TYPE);
             exchange.sendResponseHeaders(200, 0);
             meterRegistry.scrape(exchange.getResponseBody());
         }

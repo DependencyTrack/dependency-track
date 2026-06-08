@@ -31,14 +31,10 @@ import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.jspecify.annotations.Nullable;
 
 import java.net.http.HttpClient;
-import java.time.Duration;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 
 public final class NpmPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
-
-    private static final Duration FRESH_FOR = Duration.ofHours(12);
-    private static final long MAX_BYTES = 16L * 1024 * 1024;
 
     private @Nullable ObjectMapper objectMapper;
     private @Nullable CachingHttpClient cachingHttpClient;
@@ -58,6 +54,15 @@ public final class NpmPackageMetadataResolverFactory implements PackageMetadataR
         if (!PackageURL.StandardTypes.NPM.equals(purl.getType())
                 || purl.getName() == null
                 || purl.getVersion() == null) {
+            return null;
+        }
+
+        // NPM package names are either `name` or `@scope/name` with a single scope segment,
+        // as per https://github.com/npm/validate-npm-package-name.
+        // Malformed package names like `scope/name` or `scope1/scope2/name` cause NPM
+        // to respond with 405 instead of 404.
+        final String namespace = purl.getNamespace();
+        if (namespace != null && (!namespace.startsWith("@") || namespace.contains("/"))) {
             return null;
         }
 
@@ -85,9 +90,7 @@ public final class NpmPackageMetadataResolverFactory implements PackageMetadataR
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
-                serviceRegistry.require(CacheManager.class).getCache("responses"),
-                FRESH_FOR,
-                MAX_BYTES);
+                serviceRegistry.require(CacheManager.class).getCache("responses"));
     }
 
     @Override

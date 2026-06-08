@@ -45,6 +45,7 @@ import org.dependencytrack.dex.proto.event.v1.ChildRunCompleted;
 import org.dependencytrack.dex.proto.event.v1.ChildRunFailed;
 import org.dependencytrack.dex.proto.event.v1.TimerElapsed;
 import org.dependencytrack.dex.proto.event.v1.WorkflowEvent;
+import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.proto.internal.workflow.v1.ArgumentArtifact;
 import org.dependencytrack.proto.internal.workflow.v1.ArgumentCommon;
 import org.dependencytrack.proto.internal.workflow.v1.ArgumentMetrics;
@@ -161,7 +162,9 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
                             case "id" -> ListWorkflowRunsRequest.SortBy.ID;
                             case "created_at" -> ListWorkflowRunsRequest.SortBy.CREATED_AT;
                             case "completed_at" -> ListWorkflowRunsRequest.SortBy.COMPLETED_AT;
-                            case null, default -> null;
+                            case null -> null;
+                            default -> throw new InvalidSortFieldException(
+                                    sortBy, List.of("id", "created_at", "completed_at"));
                         })
                         .withSortDirection(mapSortDirection(sortDirection))
                         .withPageToken(pageToken)

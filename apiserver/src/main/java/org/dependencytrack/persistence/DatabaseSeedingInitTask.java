@@ -80,7 +80,7 @@ public final class DatabaseSeedingInitTask implements InitTask {
 
     @Override
     public String name() {
-        return "database.seeding";
+        return "database-seeding";
     }
 
     @Override

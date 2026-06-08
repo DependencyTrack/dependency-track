@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
+import alpine.persistence.OrderDirection;
 import org.jdbi.v3.core.config.ConfigRegistry;
 import org.jdbi.v3.core.extension.SimpleExtensionConfigurer;
 import org.jdbi.v3.core.extension.annotation.UseExtensionConfigurer;
@@ -48,12 +49,13 @@ public @interface AllowApiOrdering {
     Column[] by();
 
     /**
-     * Name of the column that should always be included in the {@code ORDER BY}
-     * clause. A corresponding {@link Column} must be provided to {@link #by()}.
+     * Tiebreaker column appended after the user-supplied {@code ORDER BY} on every query.
      * <p>
-     * Can optionally include the ordering direction as {@code asc} or {@code desc}.
+     * Unlike {@link #by()}, the tiebreaker is never exposed to API consumers, so internal
+     * columns (e.g. row IDs) can be used without leaking into
+     * {@link org.dependencytrack.exception.InvalidSortFieldException#getAllowedFieldNames()}.
      */
-    String alwaysBy() default "";
+    AlwaysBy alwaysBy() default @AlwaysBy;
 
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
@@ -79,6 +81,23 @@ public @interface AllowApiOrdering {
 
     }
 
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    @interface AlwaysBy {
+
+        /**
+         * Raw SQL column expression appended to the {@code ORDER BY} clause as a tiebreaker.
+         */
+        String queryName() default "";
+
+        /**
+         * Optional sort direction for the tiebreaker.
+         */
+        OrderDirection direction() default OrderDirection.UNSPECIFIED;
+
+    }
+
     final class ExtensionConfigurer extends SimpleExtensionConfigurer {
 
         @Override
@@ -86,7 +105,11 @@ public @interface AllowApiOrdering {
             final var allowOrderingAnnotation = (AllowApiOrdering) annotation;
 
             final var config = configRegistry.get(ApiRequestConfig.class);
-            config.setOrderingAlwaysBy(allowOrderingAnnotation.alwaysBy());
+            final String alwaysByQueryName = trimToNull(allowOrderingAnnotation.alwaysBy().queryName());
+            config.setOrderingAlwaysBy(
+                    alwaysByQueryName != null
+                            ? new ApiRequestConfig.AlwaysByOrdering(alwaysByQueryName, allowOrderingAnnotation.alwaysBy().direction())
+                            : null);
             config.setOrderingAllowedColumns(Arrays.stream(allowOrderingAnnotation.by())
                     .map(column -> new ApiRequestConfig.OrderingColumn(
                             column.name(),

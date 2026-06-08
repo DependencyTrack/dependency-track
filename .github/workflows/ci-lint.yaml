@@ -41,8 +41,8 @@ concurrency:
 permissions: { }
 
 jobs:
-  lint:
-    name: Lint
+  lint-java:
+    name: Lint Java
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -58,3 +58,70 @@ jobs:
           cache: 'maven'
       - name: Lint
         run: make lint-java
+
+  lint-protobuf:
+    name: Lint Protobuf
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@a47c93e0b1648d5651a065437926377d060baa99 # tag=v1.50.0
+        with:
+          github_token: ${{ github.token }}
+      - name: Lint Protobuf
+        uses: bufbuild/buf-lint-action@06f9dd823d873146471cfaaf108a993fe00e5325 # tag=v1.1.1
+        with:
+          input: .
+
+  protobuf-breaking-changes:
+    name: Protobuf Breaking Changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@a47c93e0b1648d5651a065437926377d060baa99 # tag=v1.50.0
+        with:
+          github_token: ${{ github.token }}
+      - name: Detect Breaking Changes
+        uses: bufbuild/buf-breaking-action@c57b3d842a5c3f3b454756ef65305a50a587c5ba # tag=v1.1.4
+        with:
+          input: .
+          against: "https://github.com/${{ github.repository }}.git#branch=${{ github.base_ref }}"
+
+  lint-openapi:
+    name: Lint OpenAPI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
+      - name: Lint OpenAPI Spec
+        run: make lint-openapi
+
+  openapi-breaking-changes:
+    name: OpenAPI Breaking Changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
+      - name: Detect Breaking Changes
+        uses: oasdiff/oasdiff-action/breaking@50e6a3413e5aa9c3ae4d8393c34745be44288b46 # tag=v0.0.48
+        with:
+          base: https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/api/src/main/openapi/openapi.yaml
+          revision: api/src/main/openapi/openapi.yaml
+          fail-on: ERR

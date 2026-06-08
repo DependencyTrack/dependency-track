@@ -124,11 +124,59 @@ class BootstrapIT {
                 .one());
         assertThat(head).isEqualTo(Preflight.EXPECTED_FLYWAY_HEAD);
 
+        // PERMISSION catalog must be seeded by bootstrap so that downstream load phases
+        // can FK-resolve permission IDs even if the operator follows the documented
+        // "drop v5 schema, re-bootstrap, re-run load" recovery (issue #6217).
+        final long permissionCount = jdbi().withHandle(h ->
+            h.createQuery("SELECT count(*) FROM \"PERMISSION\"").mapTo(Long.class).one());
+        assertThat(permissionCount).isEqualTo(42L);
+        final boolean hasV5OnlyPermission = jdbi().withHandle(h ->
+            h.createQuery("""
+                    SELECT EXISTS (
+                        SELECT 1 FROM "PERMISSION"
+                         WHERE "NAME" = 'PORTFOLIO_ACCESS_CONTROL_BYPASS')
+                    """)
+                .mapTo(Boolean.class).one());
+        assertThat(hasV5OnlyPermission).isTrue();
+
         // Default-mode preflight now passes (schema applied, no user data, no PERMISSION pre-seed needed).
         final PreflightResult after = new Preflight(jdbi(), null, opts, Mode.DEFAULT).run();
         assertThat(after.ok())
             .as("default preflight should pass after bootstrap; failures: %s", after.failures())
             .isTrue();
+    }
+
+    @Test
+    @Order(4)
+    void shouldRemainIdempotentWhenBootstrapInvokedTwice() {
+        final GlobalOptions opts = optsForContainer();
+        opts.stagingSchema = "dt_v4_migration_bootstrap";
+
+        final long countBefore = jdbi().withHandle(h ->
+            h.createQuery("SELECT count(*) FROM \"PERMISSION\"").mapTo(Long.class).one());
+
+        final ByteArrayOutputStream capture = new ByteArrayOutputStream();
+        final PrintStream origOut = System.out;
+        final PrintStream origErr = System.err;
+        System.setOut(new PrintStream(capture, true));
+        System.setErr(new PrintStream(capture, true));
+        final int exit;
+        try {
+            exit = new CommandLine(new V4Migrator()).execute(
+                "bootstrap",
+                "--target-url", container.getJdbcUrl(),
+                "--target-user", container.getUsername(),
+                "--target-pass", container.getPassword(),
+                "--staging-schema", opts.stagingSchema);
+        } finally {
+            System.setOut(origOut);
+            System.setErr(origErr);
+        }
+        assertThat(exit).as("second bootstrap output: %s", capture).isEqualTo(ExitCode.OK);
+
+        final long countAfter = jdbi().withHandle(h ->
+            h.createQuery("SELECT count(*) FROM \"PERMISSION\"").mapTo(Long.class).one());
+        assertThat(countAfter).isEqualTo(countBefore);
     }
 
     private GlobalOptions optsForContainer() {

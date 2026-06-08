@@ -63,8 +63,8 @@ public final class S3FileStorageProvider implements FileStorageProvider {
                 .httpClient(httpClient, /* close */ true)
                 .endpoint(config.getValue("dt.file-storage.s3.endpoint", String.class));
 
-        final var accessKey = config.getOptionalValue("dt.file-storage.s3.access.key", String.class).orElse(null);
-        final var secretKey = config.getOptionalValue("dt.file-storage.s3.secret.key", String.class).orElse(null);
+        final var accessKey = config.getOptionalValue("dt.file-storage.s3.access-key", String.class).orElse(null);
+        final var secretKey = config.getOptionalValue("dt.file-storage.s3.secret-key", String.class).orElse(null);
         if (accessKey != null && secretKey != null) {
             clientBuilder.credentials(accessKey, secretKey);
         }
@@ -77,7 +77,7 @@ public final class S3FileStorageProvider implements FileStorageProvider {
         requireBucketExists(s3Client, bucketName);
 
         final int compressionLevel = config
-                .getOptionalValue("dt.file-storage.s3.compression.level", int.class)
+                .getOptionalValue("dt.file-storage.s3.compression-level", int.class)
                 .orElse(5);
         if (compressionLevel < Zstd.minCompressionLevel() || compressionLevel > Zstd.maxCompressionLevel()) {
             throw new IllegalStateException(

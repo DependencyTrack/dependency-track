@@ -555,6 +555,19 @@ final class CelPolicyFunctions {
         };
     }
 
+    static boolean hasPackageArtifactHashMismatch(Component component) {
+        return hashesDiffer(component.getMd5(), component.getPackageArtifactMd5())
+                || hashesDiffer(component.getSha1(), component.getPackageArtifactSha1())
+                || hashesDiffer(component.getSha256(), component.getPackageArtifactSha256())
+                || hashesDiffer(component.getSha512(), component.getPackageArtifactSha512());
+    }
+
+    private static boolean hashesDiffer(String componentHash, String pkgArtifactHash) {
+        return !componentHash.isEmpty()
+                && !pkgArtifactHash.isEmpty()
+                && !componentHash.equalsIgnoreCase(pkgArtifactHash);
+    }
+
     @SuppressWarnings("unchecked")
     static boolean spdxExprAllows(String expr, List<?> ids) {
         return SpdxExpressions.allows(expr, (List<String>) ids);

@@ -43,7 +43,7 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_TOKEN }}
     - name: Setup Crane
-      uses: imjasonh/setup-crane@6da1ae018866400525525ce74ff892880c099987 # tag=v0.5
+      uses: imjasonh/setup-crane@59c71e96a00b28651f10369ba3359a6d730740a0 # tag=v0.6
     - name: Mirror image to Docker Hub
       env:
         PACKAGE_NAMESPACE: ${{ github.event.registry_package.namespace }}

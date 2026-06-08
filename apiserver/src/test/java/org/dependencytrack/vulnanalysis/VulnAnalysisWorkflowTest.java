@@ -612,16 +612,106 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         qm.getPersistenceManager().evictAll();
         assertThat(qm.getAnalysis(component, vuln)).satisfies(analysis -> {
             assertThat(analysis.getPolicyAnnotations())
-                    .extracting(AppliedPolicyAnnotation::key, AppliedPolicyAnnotation::value, AppliedPolicyAnnotation::policyName)
-                    .containsExactly(
-                            tuple("compliance", "pci-dss", "annotationPolicy"),
-                            tuple("owner", "security-team", "annotationPolicy"));
+                    .extracting(AppliedPolicyAnnotation::policyName, AppliedPolicyAnnotation::annotator)
+                    .containsExactly(tuple("annotationPolicy", "testAuthor"));
             assertThat(analysis.getPolicyAnnotations())
                     .allMatch(annotation -> annotation.appliedAt() != null);
             assertThat(analysis.getAnalysisComments())
-                    .extracting(AnalysisComment::getComment)
-                    .anyMatch(comment -> comment.startsWith("Policy annotations:"));
+                    .extracting(AnalysisComment::getCommenter, AnalysisComment::getComment)
+                    .contains(tuple(
+                            "annotationPolicy",
+                            "Policy annotations: (None) → [annotationPolicy (testAuthor)]"));
         });
+
+        assertThat(qm.getNotificationOutbox())
+                .filteredOn(notification -> notification.getGroup() == GROUP_PROJECT_AUDIT_CHANGE)
+                .singleElement()
+                .satisfies(notification -> assertThat(notification.getSubject()
+                        .unpack(org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject.class)
+                        .getAnalysis()
+                        .getPolicyAnnotationsList())
+                        .extracting(
+                                org.dependencytrack.notification.proto.v1.AppliedPolicyAnnotation::getPolicyName,
+                                org.dependencytrack.notification.proto.v1.AppliedPolicyAnnotation::getAnnotator)
+                        .containsExactly(tuple("annotationPolicy", "testAuthor")));
+    }
+
+    @Test
+    void analysisThroughMultiplePoliciesWithSameConditionTest() {
+        var vuln = new Vulnerability();
+        vuln.setVulnId("INT-151");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.CRITICAL);
+        vuln = qm.persist(vuln);
+
+        final var vs = new VulnerableSoftware();
+        vs.setPurlType("maven");
+        vs.setPurlNamespace("com.example");
+        vs.setPurlName("acme-lib");
+        vs.setVersionStartIncluding("1.0.0");
+        vs.setVersionEndExcluding("2.0.0");
+        vs.setVulnerable(true);
+        vs.addVulnerability(vuln);
+        qm.persist(vs);
+
+        var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project = qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setGroup("com.example");
+        component.setName("acme-lib");
+        component.setVersion("1.1.0");
+        component.setPurl("pkg:maven/com.example/acme-lib@1.1.0");
+        qm.persist(component);
+
+        final var policyAnalysisA = new VulnerabilityPolicyAnalysis();
+        policyAnalysisA.setState(VulnerabilityPolicyAnalysis.State.EXPLOITABLE);
+        policyAnalysisA.setAnnotations(List.of(new PolicyAnnotation("gem", "gem-policy-a")));
+
+        final var policyAnalysisB = new VulnerabilityPolicyAnalysis();
+        policyAnalysisB.setState(VulnerabilityPolicyAnalysis.State.EXPLOITABLE);
+        policyAnalysisB.setAnnotations(List.of(new PolicyAnnotation("gem", "gem-policy-b")));
+
+        createPolicy("gem-policy-a", "author-a", "true", policyAnalysisA, List.of());
+        createPolicy("gem-policy-b", "author-b", "true", policyAnalysisB, List.of());
+
+        final UUID runId = workflowTest.getEngine().createRun(
+                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+                        .withArgument(VulnAnalysisWorkflowArg.newBuilder()
+                                .setProjectUuid(project.getUuid().toString())
+                                .build()));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getAnalysis(component, vuln)).satisfies(analysis -> {
+            assertThat(analysis.getPolicyAnnotations())
+                    .extracting(AppliedPolicyAnnotation::policyName, AppliedPolicyAnnotation::annotator)
+                    .containsExactlyInAnyOrder(
+                            tuple("gem-policy-a", "author-a"),
+                            tuple("gem-policy-b", "author-b"));
+            assertThat(analysis.getAnalysisComments())
+                    .extracting(AnalysisComment::getCommenter, AnalysisComment::getComment)
+                    .contains(
+                            tuple("gem-policy-a", "Policy annotations: (None) → [gem-policy-a (author-a)]"),
+                            tuple("gem-policy-b", "Policy annotations: (None) → [gem-policy-b (author-b)]"));
+        });
+
+        assertThat(qm.getNotificationOutbox())
+                .filteredOn(notification -> notification.getGroup() == GROUP_PROJECT_AUDIT_CHANGE)
+                .singleElement()
+                .satisfies(notification -> assertThat(notification.getSubject()
+                        .unpack(org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject.class)
+                        .getAnalysis()
+                        .getPolicyAnnotationsList())
+                        .extracting(
+                                org.dependencytrack.notification.proto.v1.AppliedPolicyAnnotation::getPolicyName,
+                                org.dependencytrack.notification.proto.v1.AppliedPolicyAnnotation::getAnnotator)
+                        .containsExactlyInAnyOrder(
+                                tuple("gem-policy-a", "author-a"),
+                                tuple("gem-policy-b", "author-b")));
     }
 
     @Test
@@ -1101,7 +1191,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         analysisA.setCvssV4Score(BigDecimal.valueOf(4.4));
         analysisA.setSuppressed(true);
         analysisA.setPolicyAnnotations(List.of(
-                new AppliedPolicyAnnotation("compliance", "pci", "Foo", Instant.parse("2020-01-01T00:00:00Z"))));
+                new AppliedPolicyAnnotation("Foo", Instant.parse("2020-01-01T00:00:00Z"), "author")));
         qm.persist(analysisA);
         useJdbiHandle(jdbiHandle -> jdbiHandle.createUpdate("""
                         UPDATE
@@ -1165,7 +1255,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
             assertThat(a.getPolicyAnnotations()).isNull();
             assertThat(a.getAnalysisComments())
                     .extracting(AnalysisComment::getCommenter)
-                    .containsOnly("[Policy{None}]");
+                    .containsOnly("Policy");
             assertThat(a.getAnalysisComments())
                     .extracting(AnalysisComment::getComment)
                     .containsExactlyInAnyOrder(
@@ -1184,7 +1274,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                             "CVSSv4 Vector: oldCvssV4Vector → (None)",
                             "CVSSv4 Score: 4.4 → (None)",
                             "Unsuppressed",
-                            "Policy annotations: [compliance=pci] → (None)");
+                            "Policy annotations: [Foo (author)] → (None)");
         });
 
         // The manually applied analysis must not be touched.

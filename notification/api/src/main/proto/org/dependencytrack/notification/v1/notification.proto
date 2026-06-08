@@ -240,12 +240,19 @@ message UserSubject {
   optional string email = 2;
 }
 
+message AppliedPolicyAnnotation {
+  string policy_name = 1;
+  optional google.protobuf.Timestamp applied_at = 2;
+  optional string annotator = 3;
+}
+
 message VulnerabilityAnalysis {
   Component component = 1;
   Project project = 2;
   Vulnerability vulnerability = 3;
   optional string state = 4;
   optional bool suppressed = 5;
+  repeated AppliedPolicyAnnotation policy_annotations = 6;
 }
 
 message PolicyViolationAnalysis {

@@ -30,58 +30,137 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.dependencytrack.vulnanalysis.PolicyAnnotationSupport.annotationsEqual;
-import static org.dependencytrack.vulnanalysis.PolicyAnnotationSupport.desiredAnnotations;
+import static org.dependencytrack.vulnanalysis.PolicyAnnotationSupport.desiredAnnotationsFromPolicies;
 import static org.dependencytrack.vulnanalysis.PolicyAnnotationSupport.formatAnnotations;
 
 class PolicyAnnotationSupportTest {
 
     @Test
-    void annotationsEqualIgnoresMetadata() {
+    void annotationsEqualIgnoresAppliedAtAndAnnotator() {
         final var existing = List.of(
-                new AppliedPolicyAnnotation("compliance", "pci", "old-policy", Instant.parse("2020-01-01T00:00:00Z")));
+                new AppliedPolicyAnnotation("test-policy", Instant.parse("2020-01-01T00:00:00Z"), "author-a"));
         final var desired = List.of(
-                new AppliedPolicyAnnotation("compliance", "pci", "new-policy", Instant.parse("2026-01-01T00:00:00Z")));
+                new AppliedPolicyAnnotation("test-policy", Instant.parse("2026-01-01T00:00:00Z"), "author-b"));
 
         assertThat(annotationsEqual(existing, desired)).isTrue();
     }
 
     @Test
-    void annotationsEqualDetectsKeyValueChanges() {
+    void annotationsEqualDetectsPolicyNameChanges() {
         final var existing = List.of(
-                new AppliedPolicyAnnotation("compliance", "pci", "policy", Instant.now()));
+                new AppliedPolicyAnnotation("gem-policy", Instant.now(), "author"));
         final var desired = List.of(
-                new AppliedPolicyAnnotation("compliance", "sox", "policy", Instant.now()));
+                new AppliedPolicyAnnotation("csra-policy", Instant.now(), "author"));
 
         assertThat(annotationsEqual(existing, desired)).isFalse();
     }
 
     @Test
-    void desiredAnnotationsSkipsBlankKeys() {
+    void desiredAnnotationsFromPoliciesMergesAllMatches() {
+        final var gemPolicy = new VulnerabilityPolicy();
+        gemPolicy.setName("gem-policy");
+        gemPolicy.setAuthor("author-gem");
+        final var gemAnalysis = new VulnerabilityPolicyAnalysis();
+        gemAnalysis.setAnnotations(List.of(new PolicyAnnotation("gem", "gem")));
+        gemPolicy.setAnalysis(gemAnalysis);
+
+        final var csraPolicy = new VulnerabilityPolicy();
+        csraPolicy.setName("csra-policy");
+        csraPolicy.setAuthor("author-csra");
+        final var csraAnalysis = new VulnerabilityPolicyAnalysis();
+        csraAnalysis.setAnnotations(List.of(new PolicyAnnotation("gem", "csra")));
+        csraPolicy.setAnalysis(csraAnalysis);
+
+        assertThat(desiredAnnotationsFromPolicies(List.of(gemPolicy, csraPolicy)))
+                .extracting(
+                        AppliedPolicyAnnotation::policyName,
+                        AppliedPolicyAnnotation::annotator)
+                .containsExactly(
+                        tuple("gem-policy", "author-gem"),
+                        tuple("csra-policy", "author-csra"));
+    }
+
+    @Test
+    void policyCommenterUsesPolicyNameOnly() {
+        assertThat(PolicyAnnotationSupport.policyCommenter("gem-policy")).isEqualTo("gem-policy");
+    }
+
+    @Test
+    void annotationAuditCommentsOnFirstApplyCreatesEntryPerPolicy() {
+        final var gemA = new AppliedPolicyAnnotation("gem-policy-a", Instant.now(), "author-a");
+        final var gemB = new AppliedPolicyAnnotation("gem-policy-b", Instant.now(), "author-b");
+
+        assertThat(PolicyAnnotationSupport.annotationAuditComments(null, List.of(gemA, gemB), "Policy"))
+                .extracting(
+                        PolicyAnnotationSupport.AnnotationAuditComment::commenter,
+                        PolicyAnnotationSupport.AnnotationAuditComment::comment)
+                .containsExactly(
+                        tuple("gem-policy-a", "Policy annotations: (None) → [gem-policy-a (author-a)]"),
+                        tuple("gem-policy-b", "Policy annotations: (None) → [gem-policy-b (author-b)]"));
+    }
+
+    @Test
+    void annotationAuditCommentsOnChangeUsesCombinedDiff() {
+        final var existing = List.of(new AppliedPolicyAnnotation("gem-policy-a", Instant.now(), "author-a"));
+        final var desired = List.of(
+                new AppliedPolicyAnnotation("gem-policy-a", Instant.now(), "author-a"),
+                new AppliedPolicyAnnotation("gem-policy-b", Instant.now(), "author-b"));
+
+        assertThat(PolicyAnnotationSupport.annotationAuditComments(existing, desired, "owner-policy"))
+                .extracting(
+                        PolicyAnnotationSupport.AnnotationAuditComment::commenter,
+                        PolicyAnnotationSupport.AnnotationAuditComment::comment)
+                .containsExactly(tuple(
+                        "owner-policy",
+                        "Policy annotations: [gem-policy-a (author-a)] → [gem-policy-a (author-a), gem-policy-b (author-b)]"));
+    }
+
+    @Test
+    void hasExistingAnnotationsDetectsEmpty() {
+        assertThat(PolicyAnnotationSupport.hasExistingAnnotations(null)).isFalse();
+        assertThat(PolicyAnnotationSupport.hasExistingAnnotations(List.of())).isFalse();
+        assertThat(PolicyAnnotationSupport.hasExistingAnnotations(List.of(
+                new AppliedPolicyAnnotation("gem-policy", Instant.now(), "author")))).isTrue();
+    }
+
+    @Test
+    void desiredAnnotationsFromPoliciesUsesPolicyNameAndAuthor() {
         final var policy = new VulnerabilityPolicy();
         policy.setName("test-policy");
+        policy.setAuthor("policy-author");
 
         final var policyAnalysis = new VulnerabilityPolicyAnalysis();
-        policyAnalysis.setAnnotations(List.of(
-                new PolicyAnnotation("compliance", "pci"),
-                new PolicyAnnotation("  ", "ignored"),
-                new PolicyAnnotation("owner", null)));
+        policyAnalysis.setAnnotations(List.of(new PolicyAnnotation("ignored", "ignored")));
+        policy.setAnalysis(policyAnalysis);
 
-        final List<AppliedPolicyAnnotation> desired = desiredAnnotations(policy, policyAnalysis);
+        final List<AppliedPolicyAnnotation> desired = desiredAnnotationsFromPolicies(List.of(policy));
 
-        assertThat(desired).hasSize(2);
-        assertThat(desired)
-                .extracting(AppliedPolicyAnnotation::key, AppliedPolicyAnnotation::value, AppliedPolicyAnnotation::policyName)
-                .containsExactly(
-                        tuple("compliance", "pci", "test-policy"),
-                        tuple("owner", null, "test-policy"));
+        assertThat(desired).hasSize(1);
+        assertThat(desired.getFirst())
+                .extracting(
+                        AppliedPolicyAnnotation::policyName,
+                        AppliedPolicyAnnotation::annotator)
+                .containsExactly("test-policy", "policy-author");
+    }
+
+    @Test
+    void formatAnnotatorForAuditUsesLocalPartOfEmail() {
+        assertThat(PolicyAnnotationSupport.formatAnnotatorForAudit("jane.doe@security.example.com"))
+                .isEqualTo("jane.doe");
+        assertThat(PolicyAnnotationSupport.formatAnnotatorForAudit("Security Team"))
+                .isEqualTo("Security Team");
+        assertThat(PolicyAnnotationSupport.formatAnnotatorForAudit(null)).isNull();
     }
 
     @Test
     void formatAnnotationsTest() {
         assertThat(formatAnnotations(null)).isEqualTo("(None)");
         assertThat(formatAnnotations(List.of(
-                new AppliedPolicyAnnotation("owner", "security", "policy", Instant.now()))))
-                .isEqualTo("[owner=security]");
+                new AppliedPolicyAnnotation("gem-policy", Instant.now(), "security@example.com"))))
+                .isEqualTo("[gem-policy (security)]");
+        assertThat(formatAnnotations(List.of(
+                new AppliedPolicyAnnotation("gem-policy", Instant.now(), "Security Team"))))
+                .isEqualTo("[gem-policy (Security Team)]");
     }
 
 }

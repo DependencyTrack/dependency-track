@@ -182,7 +182,10 @@ public final class AnalysisDao {
                              , "POLICY_ANNOTATIONS"
                           FROM "ANALYSIS"
                          WHERE "PROJECT_ID" = :projectId
-                           AND "VULNERABILITY_POLICY_ID" IS NOT NULL
+                           AND (
+                                "VULNERABILITY_POLICY_ID" IS NOT NULL
+                             OR COALESCE(JSONB_ARRAY_LENGTH("POLICY_ANNOTATIONS"), 0) > 0
+                           )
                         <#if hasExclusions>
                            AND ("COMPONENT_ID", "VULNERABILITY_ID") NOT IN (
                                  SELECT *

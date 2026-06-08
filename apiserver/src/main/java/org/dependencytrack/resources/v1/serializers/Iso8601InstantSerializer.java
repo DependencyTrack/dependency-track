@@ -16,25 +16,25 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.model;
+package org.dependencytrack.resources.v1.serializers;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.dependencytrack.resources.v1.serializers.Iso8601InstantSerializer;
-import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
-import java.io.Serializable;
+import java.io.IOException;
 import java.time.Instant;
 
-/**
- * Policy-driven annotation materialized on an {@link Analysis} record.
- *
- * @since 5.0.0
- */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record AppliedPolicyAnnotation(
-        String policyName,
-        @JsonSerialize(using = Iso8601InstantSerializer.class)
-        Instant appliedAt,
-        @Nullable String annotator) implements Serializable {
+public class Iso8601InstantSerializer extends StdSerializer<Instant> {
+
+    public Iso8601InstantSerializer() {
+        super(Instant.class);
+    }
+
+    @Override
+    public void serialize(final Instant value, final JsonGenerator gen, final SerializerProvider serializers)
+            throws IOException {
+        gen.writeString(value.toString());
+    }
+
 }

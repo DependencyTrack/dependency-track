@@ -397,6 +397,7 @@ public interface NotificationSubjectDao extends SqlObject {
                              , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
                              , req.analysis_state AS "vulnAnalysisState"
                              , req.suppressed AS "isVulnAnalysisSuppressed"
+                             , a."POLICY_ANNOTATIONS"::text AS "policyAnnotationsJson"
                              , format('/api/v1/vulnerability/source/%s/vuln/%s/projects', v."SOURCE", v."VULNID") AS "affectedProjectsApiUrl"
                              , format('/vulnerabilities/%s/%s/affectedProjects', v."SOURCE", v."VULNID") AS "affectedProjectsFrontendUrl"
                           FROM UNNEST(:componentIds, :vulnDbIds, :analysisStates, :suppressions) WITH ORDINALITY

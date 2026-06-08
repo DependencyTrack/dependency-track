@@ -20,6 +20,7 @@ package org.dependencytrack.persistence.converter;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -27,7 +28,11 @@ import org.dependencytrack.model.AppliedPolicyAnnotation;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class PolicyAnnotationsJsonConverter extends AbstractJsonConverter<List<AppliedPolicyAnnotation>> {
 
@@ -60,10 +65,51 @@ public class PolicyAnnotationsJsonConverter extends AbstractJsonConverter<List<A
         }
 
         try {
-            return JSON_MAPPER.readValue(json, TYPE_REF);
+            final JsonNode root = JSON_MAPPER.readTree(json);
+            if (!root.isArray()) {
+                return JSON_MAPPER.readValue(json, TYPE_REF);
+            }
+
+            final var annotations = new ArrayList<AppliedPolicyAnnotation>();
+            for (final JsonNode node : root) {
+                final AppliedPolicyAnnotation annotation = parseAnnotationNode(node);
+                if (annotation != null) {
+                    annotations.add(annotation);
+                }
+            }
+            return annotations.isEmpty() ? null : List.copyOf(annotations);
         } catch (IOException e) {
             throw new IllegalArgumentException("Failed to deserialize policy annotations", e);
         }
+    }
+
+    private static @Nullable AppliedPolicyAnnotation parseAnnotationNode(final JsonNode node) {
+        String policyName = textOrNull(node, "policyName");
+        if (isBlank(policyName)) {
+            policyName = textOrNull(node, "value");
+        }
+        if (isBlank(policyName)) {
+            return null;
+        }
+
+        Instant appliedAt = null;
+        if (node.hasNonNull("appliedAt")) {
+            try {
+                appliedAt = JSON_MAPPER.treeToValue(node.get("appliedAt"), Instant.class);
+            } catch (JacksonException ignored) {
+                // Fall through with null appliedAt.
+            }
+        }
+
+        return new AppliedPolicyAnnotation(policyName, appliedAt, textOrNull(node, "annotator"));
+    }
+
+    private static @Nullable String textOrNull(final JsonNode node, final String field) {
+        if (!node.hasNonNull(field)) {
+            return null;
+        }
+        final String value = node.get(field).asText();
+        return isBlank(value) ? null : value;
     }
 
     @Override

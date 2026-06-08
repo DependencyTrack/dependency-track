@@ -47,6 +47,7 @@ import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyEvaluator;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyOperation;
+import org.dependencytrack.policy.vulnerability.VulnerabilityPolicySupport;
 import org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg.AnalyzerResult;
@@ -500,7 +501,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                 })
                 .collect(Collectors.toSet());
 
-        final Map<Long, Map<Long, VulnerabilityPolicy>> policyResults =
+        final Map<Long, Map<Long, List<VulnerabilityPolicy>>> policyResults =
                 evaluateVulnPolicies(projectId, vulnDbIdsByComponentId);
 
         if (Thread.interrupted()) {
@@ -626,14 +627,14 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         return activeFindings;
     }
 
-    private Map<Long, Map<Long, VulnerabilityPolicy>> evaluateVulnPolicies(
+    private Map<Long, Map<Long, List<VulnerabilityPolicy>>> evaluateVulnPolicies(
             long projectId,
             Map<Long, Set<Long>> vulnIdsByComponentId) {
         if (vulnIdsByComponentId.isEmpty()) {
             return Map.of();
         }
 
-        final Map<Long, Map<Long, VulnerabilityPolicy>> evaluationResult =
+        final Map<Long, Map<Long, List<VulnerabilityPolicy>>> evaluationResult =
                 vulnPolicyEvaluator.evaluateAll(projectId, vulnIdsByComponentId);
         if (evaluationResult.isEmpty()) {
             LOGGER.debug("Vulnerability policy evaluation did not yield any results");
@@ -642,27 +643,32 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
         // Policies with mode LOG do not require any database changes.
         // Log them now, and omit them from the result returned by this method.
-        final var applicableResult = new HashMap<Long, Map<Long, VulnerabilityPolicy>>();
+        final var applicableResult = new HashMap<Long, Map<Long, List<VulnerabilityPolicy>>>();
         for (final var entry : evaluationResult.entrySet()) {
             final long componentId = entry.getKey();
-            final Map<Long, VulnerabilityPolicy> policyByVulnDbId = entry.getValue();
+            final Map<Long, List<VulnerabilityPolicy>> policyByVulnDbId = entry.getValue();
 
             for (final var vulnEntry : policyByVulnDbId.entrySet()) {
                 final long vulnDbId = vulnEntry.getKey();
-                final VulnerabilityPolicy policy = vulnEntry.getValue();
+                final var applicablePolicies = new ArrayList<VulnerabilityPolicy>();
 
-                if (policy.getOperationMode() == VulnerabilityPolicyOperation.LOG) {
-                    LOGGER.info(
-                            "Vulnerability policy '{}' matched for component {} and vulnerability {}",
-                            policy.getName(),
-                            componentId,
-                            vulnDbId);
-                    continue;
+                for (final VulnerabilityPolicy policy : vulnEntry.getValue()) {
+                    if (policy.getOperationMode() == VulnerabilityPolicyOperation.LOG) {
+                        LOGGER.info(
+                                "Vulnerability policy '{}' matched for component {} and vulnerability {}",
+                                policy.getName(),
+                                componentId,
+                                vulnDbId);
+                        continue;
+                    }
+                    applicablePolicies.add(policy);
                 }
 
-                applicableResult
-                        .computeIfAbsent(componentId, k -> new HashMap<>())
-                        .put(vulnEntry.getKey(), policy);
+                if (!applicablePolicies.isEmpty()) {
+                    applicableResult
+                            .computeIfAbsent(componentId, k -> new HashMap<>())
+                            .put(vulnDbId, List.copyOf(applicablePolicies));
+                }
             }
         }
 
@@ -672,7 +678,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
     private List<Notification> applyVulnPolicyResults(
             Handle handle,
             long projectId,
-            Map<Long, Map<Long, VulnerabilityPolicy>> policyResults,
+            Map<Long, Map<Long, List<VulnerabilityPolicy>>> policyResults,
             Map<Long, Set<Long>> activeFindings) {
         final var analysisDao = new AnalysisDao(handle);
         final var reconcileResults = new ArrayList<AnalysisReconciler.Result>();
@@ -695,18 +701,29 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
             for (final var componentEntry : policyResults.entrySet()) {
                 final long componentId = componentEntry.getKey();
-                final Map<Long, VulnerabilityPolicy> policyByVulnDbId = componentEntry.getValue();
+                final Map<Long, List<VulnerabilityPolicy>> policyByVulnDbId = componentEntry.getValue();
 
                 for (final var vulnEntry : policyByVulnDbId.entrySet()) {
                     final long vulnDbId = vulnEntry.getKey();
-                    final VulnerabilityPolicy policy = vulnEntry.getValue();
+                    final List<VulnerabilityPolicy> matchedPolicies = vulnEntry.getValue();
+                    final var mergedAnnotations =
+                            PolicyAnnotationSupport.desiredAnnotationsFromPolicies(matchedPolicies);
+                    final VulnerabilityPolicy triagePolicy = matchedPolicies.stream()
+                            .filter(policy -> !VulnerabilityPolicySupport.isAnnotationOnly(policy))
+                            .findFirst()
+                            .orElse(null);
 
                     final var findingKey = new FindingKey(componentId, vulnDbId);
                     final Analysis existingAnalysis = existingAnalysisByFindingKey.get(findingKey);
                     LOGGER.debug("Reconciling analysis for {}", findingKey);
 
                     final var analysisReconciler = new AnalysisReconciler(projectId, componentId, vulnDbId, existingAnalysis);
-                    final AnalysisReconciler.Result reconcileResult = analysisReconciler.reconcile(policy);
+                    final AnalysisReconciler.Result reconcileResult;
+                    if (triagePolicy != null) {
+                        reconcileResult = analysisReconciler.reconcile(triagePolicy, mergedAnnotations);
+                    } else {
+                        reconcileResult = analysisReconciler.reconcilePolicyAnnotations(mergedAnnotations);
+                    }
                     if (reconcileResult != null) {
                         reconcileResults.add(reconcileResult);
                     }
@@ -730,7 +747,12 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
             LOGGER.debug("Un-applying stale policy analysis for {}", findingKey);
             final var reconciler = new AnalysisReconciler(projectId, findingKey.componentId(), findingKey.vulnDbId(), analysis);
-            final AnalysisReconciler.Result unapplyResult = reconciler.reconcileForNoPolicy();
+            final AnalysisReconciler.Result unapplyResult;
+            if (analysis.vulnPolicyId() != null) {
+                unapplyResult = reconciler.reconcileForNoPolicy();
+            } else {
+                unapplyResult = reconciler.reconcilePolicyAnnotations(List.of());
+            }
             if (unapplyResult != null) {
                 reconcileResults.add(unapplyResult);
             }
@@ -760,10 +782,12 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         final int commentsCreated = analysisDao.createComments(createCommentCommands);
         LOGGER.debug("Created {} analysis comment(s)", commentsCreated);
 
-        // Build notifications for analyses where state or suppression changed.
+        // Build notifications for analyses where state, suppression, or policy annotations changed.
         final List<AnalysisReconciler.Result> auditChangeResults =
                 reconcileResults.stream()
-                        .filter(result -> result.analysisStateChanged() || result.suppressionChanged())
+                        .filter(result -> result.analysisStateChanged()
+                                || result.suppressionChanged()
+                                || result.policyAnnotationsChanged())
                         .toList();
         if (auditChangeResults.isEmpty()) {
             return List.of();
@@ -793,7 +817,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                             subject.getVulnerability(),
                             subject.getAnalysis(),
                             result.analysisStateChanged(),
-                            result.suppressionChanged()));
+                            result.suppressionChanged(),
+                            result.policyAnnotationsChanged()));
         }
 
         return notifications;

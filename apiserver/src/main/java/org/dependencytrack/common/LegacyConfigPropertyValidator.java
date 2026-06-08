@@ -112,6 +112,7 @@ public final class LegacyConfigPropertyValidator {
             "alpine.worker.threads");
 
     static final Map<String, String> LEGACY_V5_RC1_PROPERTY_RENAMES = buildLegacyV5Rc1Renames();
+    private static final Set<String> STANDARD_SYSTEM_ENV_VARS = Set.of("NO_PROXY");
 
     private LegacyConfigPropertyValidator() {
     }
@@ -175,7 +176,10 @@ public final class LegacyConfigPropertyValidator {
 
             // We previously aliased `dt.X` to `X`. Make sure the latter is also recognized.
             final String bareName = oldName.substring("dt.".length());
-            if (config.getConfigValue(bareName).getValue() != null) {
+            final ConfigValue bareValue = config.getConfigValue(bareName);
+            if (bareValue.getValue() != null
+                    && (!bareValue.getSourceName().startsWith(EnvConfigSource.NAME)
+                            || !STANDARD_SYSTEM_ENV_VARS.contains(envForm(bareName)))) {
                 present.put(bareName, newName);
             }
         });

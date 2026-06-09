@@ -85,7 +85,7 @@ final class EmailNotificationPublisher implements NotificationPublisher {
 
         try {
             final var message = new MimeMessage(session);
-            message.setSender(new InternetAddress(senderAddress));
+            message.setFrom(new InternetAddress(senderAddress));
             message.setRecipients(Message.RecipientType.TO, recipients);
             message.setSubject(messageSubject);
 

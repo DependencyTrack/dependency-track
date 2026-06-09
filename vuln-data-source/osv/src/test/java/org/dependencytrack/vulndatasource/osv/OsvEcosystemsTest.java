@@ -53,6 +53,13 @@ class OsvEcosystemsTest {
             "Alpine:v3.22, AlpineDistribution, alpine-3.22",
             "alpine:v3.18, AlpineDistribution, alpine-3.18",
             "Alpine:3.16, AlpineDistribution, alpine-3.16",
+            "Red Hat:rhel_aus:8.4::appstream, RedhatDistribution, redhat-8",
+            "Red Hat:rhel:9::appstream, RedhatDistribution, redhat-9",
+            "Red Hat:rhel_eus:8.6::baseos, RedhatDistribution, redhat-8",
+            "Red Hat:enterprise_linux:8::baseos, RedhatDistribution, redhat-8",
+            "Red Hat:openshift:4.18::el8, RedhatDistribution, redhat-8",
+            "Red Hat:satellite:6.16::el8, RedhatDistribution, redhat-8",
+            "redhat:rhel:9::appstream, RedhatDistribution, redhat-9",
     })
     void shouldResolve(String ecosystem, String expectedType, String expectedQualifier) {
         final OsDistribution distro = OsvEcosystems.toOsDistribution(ecosystem);
@@ -71,6 +78,11 @@ class OsvEcosystemsTest {
     @Test
     void shouldReturnNullForUnknownEcosystem() {
         assertThat(OsvEcosystems.toOsDistribution("Fedora:38")).isNull();
+    }
+
+    @Test
+    void shouldReturnNullForRedHatCpeWithoutVersion() {
+        assertThat(OsvEcosystems.toOsDistribution("Red Hat:rhel_aus")).isNull();
     }
 
     @Test

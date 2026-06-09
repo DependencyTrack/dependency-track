@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * @since 4.14.0
  */
-public sealed interface OsDistribution permits AlpineDistribution, DebianDistribution, UbuntuDistribution {
+public sealed interface OsDistribution permits AlpineDistribution, DebianDistribution, RedhatDistribution, UbuntuDistribution {
 
     String purlQualifierValue();
 
@@ -58,6 +58,10 @@ public sealed interface OsDistribution permits AlpineDistribution, DebianDistrib
             if ("ubuntu".equalsIgnoreCase(purl.getNamespace())) {
                 return UbuntuDistribution.of(distroQualifier);
             }
+        }
+
+        if ("rpm".equals(purl.getType()) && "redhat".equalsIgnoreCase(purl.getNamespace())) {
+            return RedhatDistribution.of(distroQualifier);
         }
 
         return null;

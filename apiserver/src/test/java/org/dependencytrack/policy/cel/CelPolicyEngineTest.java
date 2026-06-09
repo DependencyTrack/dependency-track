@@ -21,6 +21,7 @@ package org.dependencytrack.policy.cel;
 import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
@@ -41,6 +42,7 @@ import org.dependencytrack.model.Tools;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
+import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
@@ -2469,6 +2471,47 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+    }
+
+    @Test
+    void shouldNotEvaluateSuppressedVulnerabilities() {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+                vulns.exists(v, v.id == "CVE-001")
+                """, PolicyViolation.Type.SECURITY);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentUnsuppressed = new Component();
+        componentUnsuppressed.setProject(project);
+        componentUnsuppressed.setName("acme-lib-a");
+        qm.persist(componentUnsuppressed);
+
+        final var componentSuppressed = new Component();
+        componentSuppressed.setProject(project);
+        componentSuppressed.setName("acme-lib-b");
+        qm.persist(componentSuppressed);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, componentUnsuppressed, "internal");
+        qm.addVulnerability(vuln, componentSuppressed, "internal");
+
+        qm.makeAnalysis(
+                new MakeAnalysisCommand(componentSuppressed, vuln)
+                        .withState(AnalysisState.FALSE_POSITIVE)
+                        .withSuppress(true));
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(componentUnsuppressed)).hasSize(1);
+        assertThat(qm.getAllPolicyViolations(componentSuppressed)).isEmpty();
     }
 
 }

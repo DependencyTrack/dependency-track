@@ -131,7 +131,7 @@
         <lib.datanucleus-javax-jdo.version>3.2.1</lib.datanucleus-javax-jdo.version>
         <lib.datanucleus-rdbms.version>6.0.11</lib.datanucleus-rdbms.version>
         <lib.db-scheduler.version>16.11.0</lib.db-scheduler.version>
-        <lib.flyway.version>12.6.1</lib.flyway.version>
+        <lib.flyway.version>12.7.0</lib.flyway.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.greenmail.version>2.1.8</lib.greenmail.version>
         <lib.hikaricp.version>7.0.2</lib.hikaricp.version>

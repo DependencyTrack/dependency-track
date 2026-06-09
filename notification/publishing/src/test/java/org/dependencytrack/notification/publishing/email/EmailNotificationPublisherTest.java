@@ -20,6 +20,7 @@ package org.dependencytrack.notification.publishing.email;
 
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetup;
+import jakarta.mail.Address;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
@@ -32,6 +33,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -87,6 +90,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
     private void validateBomConsumedNotificationPublish() {
         final ReceivedMessage message = getReceivedMessage();
+        assertThat(message.from()).containsExactly("dependencytrack@example.com");
         assertThat(message.subject()).isEqualTo("[Dependency-Track] Bill of Materials Consumed");
         assertThat(message.content()).isEqualToNormalizingNewlines("""
                 Bill of Materials Consumed
@@ -110,6 +114,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
     private void validateBomProcessingFailedNotificationPublish() {
         final ReceivedMessage message = getReceivedMessage();
+        assertThat(message.from()).containsExactly("dependencytrack@example.com");
         assertThat(message.subject()).isEqualTo("[Dependency-Track] Bill of Materials Processing Failed");
         assertThat(message.content()).isEqualToNormalizingNewlines("""
                 Bill of Materials Processing Failed
@@ -138,6 +143,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
     private void validateBomValidationFailedNotificationPublish() {
         final ReceivedMessage message = getReceivedMessage();
+        assertThat(message.from()).containsExactly("dependencytrack@example.com");
         assertThat(message.subject()).isEqualTo("[Dependency-Track] Bill of Materials Validation Failed");
         assertThat(message.content()).isEqualToNormalizingNewlines("""
                 Bill of Materials Validation Failed
@@ -170,6 +176,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
     private void validateNewVulnerabilityNotificationPublish() {
         final ReceivedMessage message = getReceivedMessage();
+        assertThat(message.from()).containsExactly("dependencytrack@example.com");
         assertThat(message.subject()).isEqualTo("[Dependency-Track] New Vulnerability Identified on Project: [projectName : projectVersion]");
         assertThat(message.content()).isEqualToNormalizingNewlines("""
                 New Vulnerability Identified on Project: [projectName : projectVersion]
@@ -202,6 +209,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
     private void validateNewVulnerableDependencyNotificationPublish() {
         final ReceivedMessage message = getReceivedMessage();
+        assertThat(message.from()).containsExactly("dependencytrack@example.com");
         assertThat(message.subject()).isEqualTo("[Dependency-Track] Vulnerable Dependency Introduced on Project: [projectName : projectVersion]");
         assertThat(message.content()).isEqualToNormalizingNewlines("""
                 Vulnerable Dependency Introduced on Project: [projectName : projectVersion]
@@ -236,6 +244,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
     private void validateNewVulnerabilitiesSummaryNotificationPublish() {
         final ReceivedMessage message = getReceivedMessage();
+        assertThat(message.from()).containsExactly("dependencytrack@example.com");
         assertThat(message.subject()).isEqualTo("[Dependency-Track] New Vulnerabilities Summary");
         assertThat(message.content()).isEqualToIgnoringWhitespace("""
                 New Vulnerabilities Summary
@@ -286,6 +295,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
     private void validateNewPolicyViolationsSummaryNotificationPublish() {
         final ReceivedMessage message = getReceivedMessage();
+        assertThat(message.from()).containsExactly("dependencytrack@example.com");
         assertThat(message.subject()).isEqualTo("[Dependency-Track] New Policy Violations Summary");
         assertThat(message.content()).isEqualToIgnoringWhitespace("""
                 New Policy Violations Summary
@@ -334,7 +344,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 """);
     }
 
-    private record ReceivedMessage(String subject, String content) {
+    private record ReceivedMessage(List<String> from, String subject, String content) {
     }
 
     private ReceivedMessage getReceivedMessage() {
@@ -349,7 +359,11 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
             assertThat(content.getCount()).isEqualTo(1);
             assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
 
+            final Address[] from = message.getFrom();
             return new ReceivedMessage(
+                    from != null
+                            ? Arrays.stream(from).map(Address::toString).toList()
+                            : List.of(),
                     message.getSubject(),
                     (String) content.getBodyPart(0).getContent());
         } catch (IOException e) {

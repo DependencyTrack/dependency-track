@@ -81,6 +81,29 @@ class BootstrapIT {
 
     @Test
     @Order(2)
+    void shouldRejectPreBootstrapWhenV4SchemaMarkersPresent() {
+        jdbi().useHandle(h -> {
+            h.execute("CREATE TABLE \"SCHEMAVERSION\" (id int)");
+            h.execute("CREATE TABLE \"EVENTSERVICELOG\" (id int)");
+        });
+        try {
+            final GlobalOptions opts = optsForContainer();
+            final PreflightResult result = new Preflight(jdbi(), null, opts, Mode.PRE_BOOTSTRAP).run();
+            assertThat(result.ok()).isFalse();
+            assertThat(result.failures())
+                .anyMatch(f -> f.contains("v4 Dependency-Track database")
+                    && f.contains("SCHEMAVERSION")
+                    && f.contains("EVENTSERVICELOG"));
+        } finally {
+            jdbi().useHandle(h -> {
+                h.execute("DROP TABLE \"SCHEMAVERSION\"");
+                h.execute("DROP TABLE \"EVENTSERVICELOG\"");
+            });
+        }
+    }
+
+    @Test
+    @Order(3)
     void defaultPreflightRejectsFreshDbWithActionableMessage() {
         final GlobalOptions opts = optsForContainer();
         opts.stagingSchema = "dt_v4_migration_default_check";
@@ -90,7 +113,7 @@ class BootstrapIT {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     void bootstrapAppliesFlywayUpToExpectedHead() {
         final GlobalOptions opts = optsForContainer();
         opts.stagingSchema = "dt_v4_migration_bootstrap";
@@ -147,7 +170,7 @@ class BootstrapIT {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     void shouldRemainIdempotentWhenBootstrapInvokedTwice() {
         final GlobalOptions opts = optsForContainer();
         opts.stagingSchema = "dt_v4_migration_bootstrap";

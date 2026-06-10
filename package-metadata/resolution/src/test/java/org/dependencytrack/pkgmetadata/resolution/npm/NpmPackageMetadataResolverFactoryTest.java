@@ -36,10 +36,12 @@ class NpmPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest
     @ParameterizedTest
     @CsvSource(nullValues = "", value = {
             "pkg:npm/foo@1.0, pkg:npm/foo@1.0",
-            "pkg:npm/ns/foo@1.0, pkg:npm/ns/foo@1.0",
+            "pkg:npm/%40scope/foo@1.0, pkg:npm/%40scope/foo@1.0",
             "pkg:pypi/foo@1.0, ",
             "pkg:npm/foo, ",
-            "pkg:npm/ns/foo@1.0?key=value#sub/path, pkg:npm/ns/foo@1.0",
+            "pkg:npm/%40scope/foo@1.0?key=value#sub/path, pkg:npm/%40scope/foo@1.0",
+            "pkg:npm/ns/foo@1.0, ",
+            "pkg:npm/angular/cli/node_modules/open@8.4.0, ",
     })
     void shouldNormalize(String input, String expected) throws Exception {
         assertThat(factory.normalize(new PackageURL(input)))

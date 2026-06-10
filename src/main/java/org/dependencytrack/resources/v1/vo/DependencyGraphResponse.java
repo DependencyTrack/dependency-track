@@ -26,7 +26,7 @@ import java.util.UUID;
 /**
  * Response-Object that represent light component or service for rendering DependencyGraph
  *
- * @author Nathan Mittelette <mittelette.nathan@gmail.com>
+ * @author Nathan Mittelette &lt;mittelette.nathan&#64;gmail.com&gt;
  * @since 4.9.0
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)

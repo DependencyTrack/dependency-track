@@ -71,7 +71,7 @@ import java.util.concurrent.TimeUnit;
  * Artifactory doesn't provide the PackageBaseAddress resource,
  * <a href="https://learn.microsoft.com/en-us/nuget/api/overview">despite Microsoft stating it is required</a>. JFrog
  * <a href="https://jfrog.com/help/r/jfrog-artifactory-documentation/nuget-repositories">state here it is not supported
- * as at September 2025./a>.
+ * as at September 2025</a>.
  * <p>
  * Artifactory also doesn't provide "published" data as of August 2025 so no dates will be included in the response from
  * those feeds. Other third party feeds may also omit the published dates.
@@ -354,7 +354,7 @@ public class NugetMetaAnalyzer extends AbstractMetaAnalyzer {
      *
      * @param leaves            Items to be scanned
      * @param includePreRelease include pre-release versions in latest version lookup
-     * @return {@link AbridgedNugetCatalogEntry containing the latest version found in the leaves collection
+     * @return {@link AbridgedNugetCatalogEntry} containing the latest version found in the leaves collection
      */
     private AbridgedNugetCatalogEntry findHighestVersionFromLeaves(final JSONArray leaves, final boolean includePreRelease) {
 

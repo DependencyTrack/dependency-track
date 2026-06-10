@@ -28,7 +28,7 @@ import java.util.UUID;
 /**
  * Response-Object that contains only a subset of a {@link Team}
  * 
- * @author Ronny "Sephiroth" Perinke <sephiroth@sephiroth-j.de>
+ * @author Ronny "Sephiroth" Perinke &lt;sephiroth&#64;sephiroth-j.de&gt;
  * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/861">gh-issue 861</a>
  */
 public final class TeamSelfResponse {

@@ -119,9 +119,15 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
         with:
           persist-credentials: false
+      - name: Checkout base ref
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
       - name: Detect Breaking Changes
         uses: oasdiff/oasdiff-action/breaking@f30668f65075c93440bd59ce2de73ce9e78751f4 # tag=v0.0.51
         with:
-          base: https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/api/src/main/openapi/openapi.yaml
+          base: base/api/src/main/openapi/openapi.yaml
           revision: api/src/main/openapi/openapi.yaml
           fail-on: ERR

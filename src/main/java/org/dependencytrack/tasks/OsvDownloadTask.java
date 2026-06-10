@@ -658,7 +658,7 @@ public class OsvDownloadTask implements LoggableSubscriber {
                     Vulnerability.class,
                     VulnerableSoftware.class);
             qm.runInTransaction(() -> {
-                final Vulnerability existingVulnerability = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId());
+                final Vulnerability existingVulnerability = qm.getVulnerabilityByVulnId(vulnerability.getSource(), vulnerability.getVulnId(), false, false);
                 final Vulnerability.Source vulnerabilitySource = extractSource(advisory.getId());
                 final ConfigPropertyConstants vulnAuthoritativeSourceToggle = switch (vulnerabilitySource) {
                     case NVD -> VULNERABILITY_SOURCE_NVD_ENABLED;

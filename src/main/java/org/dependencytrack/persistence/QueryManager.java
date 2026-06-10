@@ -806,19 +806,23 @@ public class QueryManager extends AlpineQueryManager {
     }
 
     public Vulnerability getVulnerabilityByVulnId(String source, String vulnId) {
-        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, false);
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, false, true);
     }
 
     public Vulnerability getVulnerabilityByVulnId(String source, String vulnId, boolean includeVulnerableSoftware) {
-        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware, true);
+    }
+
+    public Vulnerability getVulnerabilityByVulnId(String source, String vulnId, boolean includeVulnerableSoftware, boolean includeComponentsAndAliases) {
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware, includeComponentsAndAliases);
     }
 
     public Vulnerability getVulnerabilityByVulnId(Vulnerability.Source source, String vulnId) {
-        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, false);
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, false, true);
     }
 
     public Vulnerability getVulnerabilityByVulnId(Vulnerability.Source source, String vulnId, boolean includeVulnerableSoftware) {
-        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
+        return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware, true);
     }
 
     public void addVulnerability(Vulnerability vulnerability, Component component, AnalyzerIdentity analyzerIdentity) {

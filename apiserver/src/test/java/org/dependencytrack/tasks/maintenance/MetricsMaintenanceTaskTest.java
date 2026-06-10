@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -142,8 +143,9 @@ public class MetricsMaintenanceTaskTest extends PersistenceCapableTest {
                 MAINTENANCE_METRICS_RETENTION_DAYS.getDescription());
 
         new MetricsMaintenanceTask().run();
-        var today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-        var tomorrow = LocalDate.now().plusDays(1).format(DateTimeFormatter.BASIC_ISO_DATE);
+        final LocalDate todayDate = LocalDate.now(ZoneOffset.UTC);
+        var today = todayDate.format(DateTimeFormatter.BASIC_ISO_DATE);
+        var tomorrow = todayDate.plusDays(1).format(DateTimeFormatter.BASIC_ISO_DATE);
 
         var metricsPartitions = metricsDao.getProjectMetricsPartitions();
         assertThat(metricsPartitions.getFirst()).isEqualTo("\"PROJECTMETRICS_%s\"".formatted(today));

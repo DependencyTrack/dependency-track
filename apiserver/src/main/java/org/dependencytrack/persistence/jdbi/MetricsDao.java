@@ -65,12 +65,12 @@ public interface MetricsDao extends SqlObject {
             <#if apiProjectAclCondition?c_lower_case == 'true'>
             SELECT *
               FROM "PORTFOLIOMETRICS_GLOBAL"
-             WHERE "LAST_OCCURRENCE" >= CURRENT_DATE - (INTERVAL '1 day' * (:days - 1))
+             WHERE "LAST_OCCURRENCE" >= CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS date) - (INTERVAL '1 day' * (:days - 1))
              ORDER BY "LAST_OCCURRENCE";
             <#else>
             WITH
             date_range AS(
-              SELECT DATE_TRUNC('day', CURRENT_DATE - (INTERVAL '1 day' * day)) AS metrics_date
+              SELECT DATE_TRUNC('day', CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS date) - (INTERVAL '1 day' * day)) AS metrics_date
                 FROM GENERATE_SERIES(0, GREATEST(:days - 1, 0)) day
             ),
             projects_in_scope AS(
@@ -90,9 +90,9 @@ public interface MetricsDao extends SqlObject {
                    FROM projects_in_scope
                   INNER JOIN "PROJECTMETRICS" pm
                      ON pm."PROJECT_ID" = projects_in_scope."ID"
-                  WHERE pm."LAST_OCCURRENCE" < date_range.metrics_date + INTERVAL '1 day'
+                  WHERE pm."LAST_OCCURRENCE" < (date_range.metrics_date + INTERVAL '1 day') AT TIME ZONE 'UTC'
                     -- Consider data from previous day in case we don't have any for today.
-                    AND pm."LAST_OCCURRENCE" >= date_range.metrics_date - INTERVAL '1 day'
+                    AND pm."LAST_OCCURRENCE" >= (date_range.metrics_date - INTERVAL '1 day') AT TIME ZONE 'UTC'
                   ORDER BY pm."PROJECT_ID", pm."LAST_OCCURRENCE" DESC
                ) AS latest_metrics ON TRUE
             ),
@@ -172,15 +172,37 @@ public interface MetricsDao extends SqlObject {
     @RegisterBeanMapper(PortfolioMetrics.class)
     List<PortfolioMetrics> getPortfolioMetricsForDays(@Bind int days);
 
-    @SqlUpdate("""
-            REFRESH MATERIALIZED VIEW CONCURRENTLY "PORTFOLIOMETRICS_GLOBAL"
-            """)
-    void refreshGlobalPortfolioMetrics();
+    default void refreshGlobalPortfolioMetrics() {
+        if (!getHandle().isInTransaction()) {
+            // Required so SET LOCAL doesn't silently no-op.
+            throw new IllegalStateException(
+                    "refreshGlobalPortfolioMetrics must run inside a transaction");
+        }
 
-    @SqlUpdate("""
-            REFRESH MATERIALIZED VIEW CONCURRENTLY "VULNERABILITYMETRICS"
-            """)
-    void refreshVulnerabilityMetrics();
+        // NB: All other metrics operations explicitly cast timestamps to UTC
+        // and do not require this workaround. Setting the local timezone here
+        // was done to avoid having to drop and re-create the materialized view
+        // via schema migration. If the view ever needs updating for unrelated
+        // reasons, this workaround could be removed.
+        getHandle().execute("SET LOCAL TIME ZONE 'UTC'");
+        getHandle().execute("REFRESH MATERIALIZED VIEW CONCURRENTLY \"PORTFOLIOMETRICS_GLOBAL\"");
+    }
+
+    default void refreshVulnerabilityMetrics() {
+        if (!getHandle().isInTransaction()) {
+            // Required so SET LOCAL doesn't silently no-op.
+            throw new IllegalStateException(
+                    "refreshVulnerabilityMetrics must run inside a transaction");
+        }
+
+        // NB: All other metrics operations explicitly cast timestamps to UTC
+        // and do not require this workaround. Setting the local timezone here
+        // was done to avoid having to drop and re-create the materialized view
+        // via schema migration. If the view ever needs updating for unrelated
+        // reasons, this workaround could be removed.
+        getHandle().execute("SET LOCAL TIME ZONE 'UTC'");
+        getHandle().execute("REFRESH MATERIALIZED VIEW CONCURRENTLY \"VULNERABILITYMETRICS\"");
+    }
 
     @SqlQuery("""
             SELECT "YEAR" AS "year"
@@ -242,7 +264,7 @@ public interface MetricsDao extends SqlObject {
     @RegisterBeanMapper(ProjectMetrics.class)
     List<ProjectMetrics> getMostRecentProjectMetrics(@Bind Collection<Long> projectIds);
 
-@SqlQuery("""
+    @SqlQuery("""
             WITH RECURSIVE
             collection_descendants AS(
               SELECT child."ID" AS project_id
@@ -302,8 +324,8 @@ public interface MetricsDao extends SqlObject {
                WHERE "COLLECTION_LOGIC" IS NULL
             ),
             date_range AS(
-              SELECT d::DATE AS metrics_date
-                FROM GENERATE_SERIES(:since::DATE, CURRENT_DATE, '1 day') d
+              SELECT CAST(d AS date) AS metrics_date
+                FROM GENERATE_SERIES(CAST(:since AS date), CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS date), '1 day') d
             ),
             latest_daily_child_metrics AS(
               SELECT date_range.metrics_date
@@ -315,8 +337,8 @@ public interface MetricsDao extends SqlObject {
                     FROM leaf_descendants
                    INNER JOIN "PROJECTMETRICS" pm
                       ON pm."PROJECT_ID" = leaf_descendants."ID"
-                   WHERE pm."LAST_OCCURRENCE" < date_range.metrics_date + INTERVAL '1 day'
-                     AND pm."LAST_OCCURRENCE" >= date_range.metrics_date - INTERVAL '1 day'
+                   WHERE pm."LAST_OCCURRENCE" < (date_range.metrics_date + INTERVAL '1 day') AT TIME ZONE 'UTC'
+                     AND pm."LAST_OCCURRENCE" >= (date_range.metrics_date - INTERVAL '1 day') AT TIME ZONE 'UTC'
                    ORDER BY pm."PROJECT_ID", pm."LAST_OCCURRENCE" DESC
                 ) AS latest_metrics ON TRUE
             ),
@@ -554,6 +576,7 @@ public interface MetricsDao extends SqlObject {
     @SqlUpdate("""
             DO $$
             DECLARE
+                today_utc DATE := CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS date);
                 target_date DATE;
                 next_date DATE;
                 partition_suffix TEXT;
@@ -564,8 +587,8 @@ public interface MetricsDao extends SqlObject {
                 metric_tables TEXT[] := ARRAY['PROJECTMETRICS', 'DEPENDENCYMETRICS'];
             BEGIN
                 FOR day_offset IN 0..1 LOOP
-                    target_date := CURRENT_DATE + day_offset;
-                    next_date := CURRENT_DATE + day_offset + 1;
+                    target_date := today_utc + day_offset;
+                    next_date := target_date + 1;
                     partition_suffix := to_char(target_date, 'YYYYMMDD');
             
                     FOREACH table_name IN ARRAY metric_tables
@@ -585,8 +608,8 @@ public interface MetricsDao extends SqlObject {
                                 'ALTER TABLE %I ATTACH PARTITION %I FOR VALUES FROM (%L) TO (%L);',
                                 table_name,
                                 partition_name,
-                                target_date,
-                                next_date
+                                CAST(target_date AS timestamp) AT TIME ZONE 'UTC',
+                                CAST(next_date AS timestamp) AT TIME ZONE 'UTC'
                             );
                         END IF;
                     END LOOP;
@@ -600,7 +623,7 @@ public interface MetricsDao extends SqlObject {
             SELECT inhrelid::regclass::text AS partition_name
             FROM pg_inherits
             WHERE inhparent = CAST(:parentTable AS regclass)
-              AND to_date(split_part(replace(inhrelid::regclass::text, '"', ''), '_', 2), 'YYYYMMDD') <= CURRENT_DATE - :retentionDays
+              AND to_date(split_part(replace(inhrelid::regclass::text, '"', ''), '_', 2), 'YYYYMMDD') <= CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS date) - :retentionDays
             ORDER BY partition_name
             """)
     List<String> getExpiredPartitions(@Bind String parentTable, @Bind int retentionDays);
@@ -639,11 +662,11 @@ public interface MetricsDao extends SqlObject {
 
     default boolean isPartitionDetachPending(String parentTable, String partition) {
         return getHandle().createQuery("""
-                SELECT inhdetachpending
-                  FROM pg_inherits
-                  WHERE inhparent = CAST(:parentTable AS regclass)
-                    AND inhrelid = CAST(:partition AS regclass)
-                """)
+                        SELECT inhdetachpending
+                          FROM pg_inherits
+                          WHERE inhparent = CAST(:parentTable AS regclass)
+                            AND inhrelid = CAST(:partition AS regclass)
+                        """)
                 .bind("parentTable", parentTable)
                 .bind("partition", partition)
                 .mapTo(Boolean.class)

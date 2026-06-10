@@ -18,29 +18,12 @@
  */
 package org.dependencytrack.dex.engine.migration;
 
-import org.flywaydb.core.Flyway;
-
 import javax.sql.DataSource;
 
-public final class MigrationExecutor {
+public final class MigrationExecutor extends org.dependencytrack.support.flyway.MigrationExecutor {
 
-    private final Flyway flyway;
-
-    public MigrationExecutor(final DataSource dataSource) {
-        this.flyway = Flyway.configure()
-                .dataSource(dataSource)
-                .baselineVersion("0.0.0")
-                .baselineOnMigrate(true)
-                .cleanDisabled(true)
-                .placeholderReplacement(false)
-                .table("dex_schema_history")
-                .locations("classpath:org/dependencytrack/dex/engine/migration")
-                .loggers("slf4j")
-                .load();
-    }
-
-    public void execute() {
-        flyway.migrate();
+    public MigrationExecutor(DataSource dataSource) {
+        super(dataSource, "0.0.0", "classpath:org/dependencytrack/dex/engine/migration", "dex_schema_history", null, false);
     }
 
 }

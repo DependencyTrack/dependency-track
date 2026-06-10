@@ -223,6 +223,19 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(searchFindings.apply("%char")).containsExactly("FOO-100");
         assertThat(searchFindings.apply("char_x")).containsExactly("FOO-100");
         assertThat(searchFindings.apply("alph_")).isEmpty();
+        assertThat(searchFindings.apply(vulnBar.getUuid().toString()))
+                .containsExactly("BAR-200");
+        assertThat(searchFindings.apply(vulnBar.getUuid().toString().toUpperCase()))
+                .containsExactly("BAR-200");
+        assertThat(searchFindings.apply(componentBeta.getUuid().toString()))
+                .containsExactly("BAR-200");
+        assertThat(searchFindings.apply(
+                componentBeta.getUuid() + ":" + vulnBar.getUuid()))
+                .containsExactly("BAR-200");
+        assertThat(searchFindings.apply(
+                componentAlpha.getUuid() + ":" + vulnBar.getUuid()))
+                .isEmpty();
+        assertThat(searchFindings.apply(UUID.randomUUID().toString())).isEmpty();
     }
 
     @Test

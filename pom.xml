@@ -131,7 +131,7 @@
         <lib.datanucleus-javax-jdo.version>3.2.1</lib.datanucleus-javax-jdo.version>
         <lib.datanucleus-rdbms.version>6.0.11</lib.datanucleus-rdbms.version>
         <lib.db-scheduler.version>16.11.0</lib.db-scheduler.version>
-        <lib.flyway.version>12.6.1</lib.flyway.version>
+        <lib.flyway.version>12.7.0</lib.flyway.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.greenmail.version>2.1.8</lib.greenmail.version>
         <lib.hikaricp.version>7.0.2</lib.hikaricp.version>
@@ -141,7 +141,7 @@
         <lib.jackson.version>2.22.0</lib.jackson.version>
         <lib.jdbi.version>3.53.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
-        <lib.jetty.version>12.1.9</lib.jetty.version>
+        <lib.jetty.version>12.1.10</lib.jetty.version>
         <lib.json-schema-validator.version>1.5.9</lib.json-schema-validator.version>
         <lib.json-unit.version>5.1.2</lib.json-unit.version>
         <lib.jspecify.version>1.0.0</lib.jspecify.version>

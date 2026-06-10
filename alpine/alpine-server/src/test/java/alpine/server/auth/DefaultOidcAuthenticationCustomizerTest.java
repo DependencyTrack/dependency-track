@@ -94,7 +94,7 @@ class DefaultOidcAuthenticationCustomizerTest {
         }
 
         @Test
-        void shouldAssumeEmptyTeamsWhenTeamClaimIsNotPresent() {
+        void shouldLeaveGroupsNullWhenTeamsClaimIsAbsent() {
             final var customizer = new DefaultOidcAuthenticationCustomizer("username", "groups");
 
             final var claims = new ClaimsSet(
@@ -109,7 +109,58 @@ class DefaultOidcAuthenticationCustomizerTest {
             assertThat(profile.getSubject()).isEqualTo("subject-foo");
             assertThat(profile.getUsername()).isEqualTo("username");
             assertThat(profile.getEmail()).isEqualTo("user@example.com");
-            assertThat(profile.getGroups()).isEmpty();
+            assertThat(profile.getGroups()).isNull();
+        }
+
+        @Test
+        void shouldLeaveGroupsNullWhenTeamsClaimNameIsNotConfigured() {
+            final var customizer = new DefaultOidcAuthenticationCustomizer("username", null);
+
+            final var claims = new ClaimsSet(
+                    new JSONObject(
+                            Map.ofEntries(
+                                    Map.entry("sub", "subject-foo"),
+                                    Map.entry("username", "username"),
+                                    Map.entry("email", "user@example.com"),
+                                    Map.entry("groups", List.of("group-foo")))));
+
+            final OidcProfile profile = customizer.createProfile(claims);
+            assertThat(profile).isNotNull();
+            assertThat(profile.getGroups()).isNull();
+        }
+
+        @Test
+        void shouldReturnEmptyGroupsWhenTeamsClaimIsPresentButEmptyString() {
+            final var customizer = new DefaultOidcAuthenticationCustomizer("username", "groups");
+
+            final var claims = new ClaimsSet(
+                    new JSONObject(
+                            Map.ofEntries(
+                                    Map.entry("sub", "subject-foo"),
+                                    Map.entry("username", "username"),
+                                    Map.entry("email", "user@example.com"),
+                                    Map.entry("groups", ""))));
+
+            final OidcProfile profile = customizer.createProfile(claims);
+            assertThat(profile).isNotNull();
+            assertThat(profile.getGroups()).isNotNull().isEmpty();
+        }
+
+        @Test
+        void shouldReturnEmptyGroupsWhenTeamsClaimIsPresentButEmptyList() {
+            final var customizer = new DefaultOidcAuthenticationCustomizer("username", "groups");
+
+            final var claims = new ClaimsSet(
+                    new JSONObject(
+                            Map.ofEntries(
+                                    Map.entry("sub", "subject-foo"),
+                                    Map.entry("username", "username"),
+                                    Map.entry("email", "user@example.com"),
+                                    Map.entry("groups", List.of()))));
+
+            final OidcProfile profile = customizer.createProfile(claims);
+            assertThat(profile).isNotNull();
+            assertThat(profile.getGroups()).isNotNull().isEmpty();
         }
 
     }

@@ -142,7 +142,9 @@ public class FindingResource extends AbstractApiResource {
             in = ParameterIn.QUERY,
             description = """
                     Case-insensitive substring filter matched against component name, \
-                    component group, and vulnerability ID."""
+                    component group, and vulnerability ID. Additionally matched as an \
+                    exact value against component UUID, vulnerability UUID, and the \
+                    `componentUuid:vulnerabilityUuid` pair."""
     )
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
     public Response getFindingsByProject(@Parameter(description = "The UUID of the project", schema = @Schema(type = "string", format = "uuid"), required = true)

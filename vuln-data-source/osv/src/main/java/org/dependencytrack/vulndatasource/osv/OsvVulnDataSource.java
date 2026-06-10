@@ -37,10 +37,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -265,8 +267,15 @@ final class OsvVulnDataSource implements VulnDataSource {
             throw new UncheckedIOException("Failed to create temp file", e);
         }
 
+        // Some ecosystems contain spaces, e.g. "Red Hat".
+        // NB: URLEncoder encodes spaces as "+", but GCS (where OSV hosts its data dumps)
+        // requires spaces to be percent-encoded.
+        final String encodedEcosystem = URLEncoder
+                .encode(ecosystem, StandardCharsets.UTF_8)
+                .replace("+", "%20");
+
         final var request = HttpRequest.newBuilder()
-                .uri(URI.create("%s/%s/all.zip".formatted(dataUrl, ecosystem)))
+                .uri(URI.create("%s/%s/all.zip".formatted(dataUrl, encodedEcosystem)))
                 .GET()
                 .build();
 

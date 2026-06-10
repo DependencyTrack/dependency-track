@@ -273,6 +273,9 @@ public interface FindingDao {
                  LOWER(c."NAME") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!'
                  OR LOWER(c."GROUP") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!'
                  OR LOWER(v."VULNID") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!'
+                 OR CAST(v."UUID" AS TEXT) = LOWER(:searchText)
+                 OR CAST(c."UUID" AS TEXT) = LOWER(:searchText)
+                 OR LOWER(CAST(c."UUID" AS TEXT) || ':' || CAST(v."UUID" AS TEXT)) = LOWER(:searchText)
                )
             </#if>
             <#if apiOrderByClause??>

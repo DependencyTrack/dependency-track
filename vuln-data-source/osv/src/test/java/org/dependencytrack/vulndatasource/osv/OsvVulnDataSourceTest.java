@@ -20,7 +20,6 @@ package org.dependencytrack.vulndatasource.osv;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.google.protobuf.util.JsonFormat;
@@ -47,6 +46,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
@@ -232,6 +232,42 @@ class OsvVulnDataSourceTest {
     }
 
     @Test
+    void shouldPercentEncodeSpacesInEcosystemNameForFullArchive(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        final var zipBytes = new ByteArrayOutputStream();
+        try (var zos = new ZipOutputStream(zipBytes)) {
+            zos.putNextEntry(new ZipEntry("osv-advisory.json"));
+            zos.write(/* language=JSON */ """
+                    {
+                      "id": "OSV-1",
+                      "summary": "test",
+                      "affected": [],
+                      "modified": "2024-01-01T00:00:00Z"
+                    }
+                    """.getBytes());
+            zos.closeEntry();
+        }
+        stubFor(get(urlEqualTo("/Red%20Hat/all.zip"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/zip")
+                        .withBody(zipBytes.toByteArray())));
+
+        try (var dataSource = new OsvVulnDataSource(
+                null,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("Red Hat"),
+                HttpClient.newHttpClient(),
+                false)) {
+            assertTrue(dataSource.hasNext());
+            assertThat(dataSource.next().getVulnerabilitiesList().getFirst().getId()).isEqualTo("OSV-1");
+        }
+
+        verify(getRequestedFor(urlEqualTo("/Red%20Hat/all.zip")));
+        verify(0, getRequestedFor(urlPathMatching(".*/Red\\+Hat/.*")));
+    }
+
+    @Test
     void shouldSkipDirectoryAndNonJsonEntriesInFullArchive(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         ByteArrayOutputStream zipBytes = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(zipBytes)) {
@@ -310,8 +346,8 @@ class OsvVulnDataSourceTest {
             assertThat(dataSource.hasNext()).isFalse();
         }
 
-        WireMock.verify(getRequestedFor(urlEqualTo("/maven/all.zip")));
-        WireMock.verify(0, getRequestedFor(urlPathMatching(".*/modified_id\\.csv")));
+        verify(getRequestedFor(urlEqualTo("/maven/all.zip")));
+        verify(0, getRequestedFor(urlPathMatching(".*/modified_id\\.csv")));
     }
 
     @Test
@@ -352,8 +388,8 @@ class OsvVulnDataSourceTest {
             assertThat(dataSource.hasNext()).isFalse();
         }
 
-        WireMock.verify(getRequestedFor(urlEqualTo("/maven/all.zip")));
-        WireMock.verify(0, getRequestedFor(urlPathMatching(".*/modified_id\\.csv")));
+        verify(getRequestedFor(urlEqualTo("/maven/all.zip")));
+        verify(0, getRequestedFor(urlPathMatching(".*/modified_id\\.csv")));
     }
 
     @Test
@@ -394,9 +430,9 @@ class OsvVulnDataSourceTest {
             assertThat(dataSource.hasNext()).isFalse();
         }
 
-        WireMock.verify(getRequestedFor(urlEqualTo("/maven/modified_id.csv")));
-        WireMock.verify(getRequestedFor(urlEqualTo("/maven/OSV-123.json")));
-        WireMock.verify(0, getRequestedFor(urlEqualTo("/maven/all.zip")));
+        verify(getRequestedFor(urlEqualTo("/maven/modified_id.csv")));
+        verify(getRequestedFor(urlEqualTo("/maven/OSV-123.json")));
+        verify(0, getRequestedFor(urlEqualTo("/maven/all.zip")));
     }
 
     @Test
@@ -429,13 +465,13 @@ class OsvVulnDataSourceTest {
                 HttpClient.newHttpClient(),
                 false)) {
             assertThat(dataSource.hasNext()).isTrue();
-            WireMock.verify(1, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
+            verify(1, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
 
             dataSource.next();
-            WireMock.verify(1, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
+            verify(1, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
 
             assertThat(dataSource.hasNext()).isTrue();
-            WireMock.verify(2, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
+            verify(2, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
 
             dataSource.next();
             assertThat(dataSource.hasNext()).isFalse();
@@ -488,9 +524,9 @@ class OsvVulnDataSourceTest {
             assertThat(dataSource.hasNext()).isFalse();
         }
 
-        WireMock.verify(getRequestedFor(urlEqualTo("/maven/modified_id.csv")));
-        WireMock.verify(getRequestedFor(urlEqualTo("/maven/all.zip")));
-        WireMock.verify(0, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
+        verify(getRequestedFor(urlEqualTo("/maven/modified_id.csv")));
+        verify(getRequestedFor(urlEqualTo("/maven/all.zip")));
+        verify(0, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
     }
 
 }

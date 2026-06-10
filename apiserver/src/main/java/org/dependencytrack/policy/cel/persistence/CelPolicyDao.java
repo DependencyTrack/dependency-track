@@ -192,6 +192,14 @@ public final class CelPolicyDao {
                                 AND fa."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
                                 AND fa."DELETED_AT" IS NULL
                            )
+                           AND NOT EXISTS (
+                             SELECT 1
+                               FROM "ANALYSIS" AS a
+                              WHERE a."PROJECT_ID" = :projectId
+                                AND a."COMPONENT_ID" = cv."COMPONENT_ID"
+                                AND a."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
+                                AND a."SUPPRESSED" IS TRUE
+                           )
                         """)
                 .bind("projectId", projectId)
                 .reduceResultSet(

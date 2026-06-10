@@ -28,7 +28,6 @@ import org.eclipse.microprofile.config.ConfigProvider;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import static java.util.function.Predicate.not;
 
@@ -61,13 +60,16 @@ public class DefaultOidcAuthenticationCustomizer implements OidcAuthenticationCu
 
         profile.setSubject(claimsSet.getStringClaim(UserInfo.SUB_CLAIM_NAME));
         profile.setUsername(claimsSet.getStringClaim(usernameClaimName));
-        profile.setGroups(switch (claimsSet.getClaim(teamsClaimName)) {
+        final Object groupsClaim = teamsClaimName != null
+                ? claimsSet.getClaim(teamsClaimName)
+                : null;
+        profile.setGroups(switch (groupsClaim) {
             case String groupsString -> Arrays.stream(groupsString.split(","))
                     .map(String::trim)
                     .filter(not(String::isEmpty))
                     .toList();
             case Collection<?> _ -> claimsSet.getStringListClaim(teamsClaimName);
-            case null, default -> Collections.emptyList();
+            case null, default -> null;
         });
         profile.setEmail(claimsSet.getStringClaim(UserInfo.EMAIL_CLAIM_NAME));
 

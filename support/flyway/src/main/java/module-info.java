@@ -20,10 +20,10 @@
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-module org.dependencytrack.dex.engine.migration {
-    exports org.dependencytrack.dex.engine.migration;
+module org.dependencytrack.support.flyway {
+    exports org.dependencytrack.support.flyway;
 
+    requires flyway.core;
     requires java.sql;
-    requires org.dependencytrack.support.flyway;
     requires org.jspecify;
 }

@@ -131,3 +131,8 @@ jobs:
           base: base/api/src/main/openapi/openapi.yaml
           revision: api/src/main/openapi/openapi.yaml
           fail-on: ERR
+          # We accept the risk of external references (GHSA-fhj3-7267-7vv5) because:
+          #   * The GITHUB_TOKEN for all lint jobs has zero permissions.
+          #   * All actions/checkout steps set persist-credentials to false.
+          #   * Our multi-file setup requires resolving of external (file) references.
+          allow-external-refs: true

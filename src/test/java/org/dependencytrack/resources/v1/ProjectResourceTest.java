@@ -71,17 +71,17 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Stream;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -568,6 +568,24 @@ class ProjectResourceTest extends ResourceTest {
                         """.formatted(parentProject.getUuid())));
         assertThat(response.getStatus()).isEqualTo(409);
         assertThat(getPlainTextBody(response)).isEqualTo("An inactive Parent cannot be selected as parent");
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenCreatingProjectWithNullParentUuid() {
+        final Response response = jersey
+                .target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "parent": {
+                            "uuid": null
+                          },
+                          "name": "acme-app"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("parent.uuid must be provided when parent is set");
     }
 
     @Test
@@ -1321,6 +1339,29 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldReturnBadRequestWhenUpdatingProjectWithNullParentUuid() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final Response response = jersey
+                .target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "parent": {
+                            "uuid": null
+                          },
+                          "uuid": "%s",
+                          "name": "acme-app"
+                        }
+                        """.formatted(project.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("parent.uuid must be provided when parent is set");
+    }
+
+    @Test
     void deleteProjectTest() {
         Project project = qm.createProject("ABC", null, "1.0", null, null, null, true, false);
         Response response = jersey.target(V1_PROJECT + "/" + project.getUuid().toString())
@@ -1713,6 +1754,27 @@ class ProjectResourceTest extends ResourceTest {
         qm.getPersistenceManager().evictAll();
         assertThat(project.getParent()).isNotNull();
         assertThat(project.getParent().getUuid()).isEqualTo(parent.getUuid());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenPatchingProjectWithNullParentUuid() {
+        final Project project = qm.createProject("DEF", null, "2.0", null, null, null, false, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
+                .method(HttpMethod.PATCH, Entity.json(/* language=JSON */ """
+                        {
+                          "parent": {
+                            "uuid": null
+                          }
+                        }
+                        """));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("parent.uuid must be provided when parent is set");
     }
 
     @Test

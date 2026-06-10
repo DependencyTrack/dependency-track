@@ -37,23 +37,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
-import jakarta.validation.constraints.Size;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.MDC;
-import org.dependencytrack.auth.Permissions;
-import org.dependencytrack.event.CloneProjectEvent;
-import org.dependencytrack.model.Classifier;
-import org.dependencytrack.model.Project;
-import org.dependencytrack.model.Tag;
-import org.dependencytrack.model.validation.ValidUuid;
-import org.dependencytrack.persistence.QueryManager;
-import org.dependencytrack.resources.v1.openapi.PaginatedApi;
-import org.dependencytrack.resources.v1.problems.ProblemDetails;
-import org.dependencytrack.resources.v1.problems.ProjectOperationProblemDetails;
-import org.dependencytrack.resources.v1.vo.BomUploadResponse;
-import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
-
 import jakarta.validation.Validator;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -68,6 +53,21 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.commons.lang3.StringUtils;
+import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.event.CloneProjectEvent;
+import org.dependencytrack.model.Classifier;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.model.Tag;
+import org.dependencytrack.model.validation.ValidUuid;
+import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.resources.v1.openapi.PaginatedApi;
+import org.dependencytrack.resources.v1.problems.ProblemDetails;
+import org.dependencytrack.resources.v1.problems.ProjectOperationProblemDetails;
+import org.dependencytrack.resources.v1.vo.BomUploadResponse;
+import org.dependencytrack.resources.v1.vo.CloneProjectRequest;
+import org.slf4j.MDC;
+
 import javax.jdo.FetchGroup;
 import java.security.Principal;
 import java.util.Collection;
@@ -79,12 +79,11 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import static java.util.Objects.requireNonNullElseGet;
+import static org.dependencytrack.common.MdcKeys.MDC_EVENT_TOKEN;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
-import static org.dependencytrack.common.MdcKeys.MDC_EVENT_TOKEN;
-
-import static java.util.Objects.requireNonNullElseGet;
 import static org.dependencytrack.util.PersistenceUtil.isPersistent;
 
 /**
@@ -323,7 +322,12 @@ public class ProjectResource extends AlpineResource {
     @Operation(
             summary = "Creates a new project",
             description = """
-                    <p>If a parent project exists, <code>parent.uuid</code> is required</p>
+                    <p>
+                      To create the project under a parent, set <code>parent</code> to an object
+                      containing the parent's <code>uuid</code>. To create a top-level project,
+                      omit <code>parent</code> or set it to <code>null</code>. Providing
+                      <code>parent</code> without a non-null <code>uuid</code> is rejected with 400.
+                    </p>
                     <p>
                       When portfolio access control is enabled, one or more teams to grant access
                       to can be provided via <code>accessTeams</code>. Either <code>uuid</code> or
@@ -391,8 +395,27 @@ public class ProjectResource extends AlpineResource {
                     }
                 }
 
-                if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
-                    Project parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
+                if (jsonProject.getParent() != null) {
+                    final UUID parentUuid = jsonProject.getParent().getUuid();
+                    if (parentUuid == null) {
+                        throw new ClientErrorException(Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity("parent.uuid must be provided when parent is set")
+                                .build());
+                    }
+                    Project parent = qm.getObjectByUuid(Project.class, parentUuid);
+                    if (parent == null) {
+                        throw new ClientErrorException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity("The UUID of the parent project could not be found.")
+                                .build());
+                    }
+                    if (!qm.hasAccess(super.getPrincipal(), parent)) {
+                        throw new ClientErrorException(Response
+                                .status(Response.Status.FORBIDDEN)
+                                .entity("Access to the specified parent project is forbidden")
+                                .build());
+                    }
                     jsonProject.setParent(parent);
                 }
 
@@ -494,7 +517,15 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Updates a project",
-            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+            description = """
+                    <p>
+                      To re-parent the project, set <code>parent</code> to an object containing
+                      the new parent's <code>uuid</code>. Omit <code>parent</code> (or set it to
+                      <code>null</code>) to leave the parent unchanged. Providing <code>parent</code>
+                      without a non-null <code>uuid</code> is rejected with 400.
+                    </p>
+                    <p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>
+                    """
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -502,6 +533,7 @@ public class ProjectResource extends AlpineResource {
                     description = "The updated project",
                     content = @Content(schema = @Schema(implementation = Project.class))
             ),
+            @ApiResponse(responseCode = "400", description = "Bad Request"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "403", description = "The project version cannot be set as latest version " +
                     "because access to current latest version is forbidden."),
@@ -547,6 +579,30 @@ public class ProjectResource extends AlpineResource {
                             .status(Response.Status.FORBIDDEN)
                             .entity("Access to the specified project is forbidden")
                             .build());
+                }
+
+                if (jsonProject.getParent() != null) {
+                    final UUID parentUuid = jsonProject.getParent().getUuid();
+                    if (parentUuid == null) {
+                        throw new ClientErrorException(Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity("parent.uuid must be provided when parent is set")
+                                .build());
+                    }
+                    final Project parent = qm.getObjectByUuid(Project.class, parentUuid);
+                    if (parent == null) {
+                        throw new ClientErrorException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity("The UUID of the parent project could not be found.")
+                                .build());
+                    }
+                    if (!qm.hasAccess(super.getPrincipal(), parent)) {
+                        throw new ClientErrorException(Response
+                                .status(Response.Status.FORBIDDEN)
+                                .entity("Access to the specified parent project is forbidden")
+                                .build());
+                    }
+                    jsonProject.setParent(parent);
                 }
 
                 String name = StringUtils.trimToNull(jsonProject.getName());
@@ -605,7 +661,15 @@ public class ProjectResource extends AlpineResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Partially updates a project",
-            description = "<p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>"
+            description = """
+                    <p>
+                      To re-parent the project, set <code>parent</code> to an object containing
+                      the new parent's <code>uuid</code>. Omit <code>parent</code> (or set it to
+                      <code>null</code>) to leave the parent unchanged. Providing <code>parent</code>
+                      without a non-null <code>uuid</code> is rejected with 400.
+                    </p>
+                    <p>Requires permission <strong>PORTFOLIO_MANAGEMENT</strong></p>
+                    """
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -613,6 +677,7 @@ public class ProjectResource extends AlpineResource {
                     description = "The updated project",
                     content = @Content(schema = @Schema(implementation = Project.class))
             ),
+            @ApiResponse(responseCode = "400", description = "Bad Request"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the project could not be found"),
             @ApiResponse(responseCode = "409", description = """
@@ -698,8 +763,15 @@ public class ProjectResource extends AlpineResource {
                 modified |= setIfDifferent(jsonProject, project, Project::getManufacturer, Project::setManufacturer);
                 modified |= setIfDifferent(jsonProject, project, Project::getSupplier, Project::setSupplier);
                 modified |= setIfDifferent(jsonProject, project, Project::isLatest, Project::setIsLatest);
-                if (jsonProject.getParent() != null && jsonProject.getParent().getUuid() != null) {
-                    final Project parent = qm.getObjectByUuid(Project.class, jsonProject.getParent().getUuid());
+                if (jsonProject.getParent() != null) {
+                    final UUID parentUuid = jsonProject.getParent().getUuid();
+                    if (parentUuid == null) {
+                        throw new ClientErrorException(Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity("parent.uuid must be provided when parent is set")
+                                .build());
+                    }
+                    final Project parent = qm.getObjectByUuid(Project.class, parentUuid);
                     if (parent == null) {
                         throw new ClientErrorException(Response
                                 .status(Response.Status.NOT_FOUND)

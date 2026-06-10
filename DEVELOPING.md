@@ -207,6 +207,10 @@ For repeatable migrations, edit the relevant `R__*.sql` file directly, no new fi
 > Flyway rejects checksum mismatches on existing deployments.
 > Add a new migration instead.
 
+> [!NOTE]
+> Migrations run with `outOfOrder=true` so they can be backported to patch branches
+> without blocking the next minor upgrade. See [`RELEASING.md`](./RELEASING.md#4-flyway-migrations).
+
 ## Build Cache
 
 We use Maven [build caching](https://maven.apache.org/extensions/maven-build-cache-extension/) to speed

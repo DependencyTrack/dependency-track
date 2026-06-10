@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Date;
@@ -38,8 +39,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class MetricsDaoTest extends PersistenceCapableTest {
@@ -146,9 +149,7 @@ public class MetricsDaoTest extends PersistenceCapableTest {
     public void testCreateMetricsPartitions() {
         metricsDao.createMetricsPartitions();
 
-        final LocalDate todayDate = jdbiHandle.createQuery("SELECT CURRENT_DATE")
-                .mapTo(LocalDate.class)
-                .one();
+        final LocalDate todayDate = LocalDate.now(ZoneOffset.UTC);
         var today = todayDate.format(DateTimeFormatter.BASIC_ISO_DATE);
         var tomorrow = todayDate.plusDays(1).format(DateTimeFormatter.BASIC_ISO_DATE);
 
@@ -170,7 +171,7 @@ public class MetricsDaoTest extends PersistenceCapableTest {
     @Test
     public void testDropPartitionsWithPendingDetach() throws Exception {
         metricsTestDao.createPartitionForDaysAgo("PROJECTMETRICS", 91);
-        final String partitionSuffix = LocalDate.now().minusDays(91).format(DateTimeFormatter.BASIC_ISO_DATE);
+        final String partitionSuffix = LocalDate.now(ZoneOffset.UTC).minusDays(91).format(DateTimeFormatter.BASIC_ISO_DATE);
         final String partitionName = "\"PROJECTMETRICS_%s\"".formatted(partitionSuffix);
 
         // Simulate the partition into 'pending_detach' state
@@ -206,4 +207,45 @@ public class MetricsDaoTest extends PersistenceCapableTest {
         }
         assertThat(metricsDao.dropPartitions("\"PROJECTMETRICS\"", List.of(partitionName))).isEqualTo(1);
     }
+
+    @Test
+    public void shouldCreatePartitionsWithUtcBoundsRegardlessOfSessionTimeZone() {
+        // Regression for https://github.com/DependencyTrack/dependency-track/issues/6341.
+        // Partition bounds for the timestamptz-partitioned metrics tables must be anchored
+        // to UTC midnight independent of the session timezone. Otherwise, consecutive
+        // maintenance runs under different timezones produce overlapping or gapped ranges.
+        try {
+            jdbiHandle.execute("SET TIME ZONE 'Europe/Paris'");
+            metricsDao.createMetricsPartitions();
+
+            jdbiHandle.execute("SET TIME ZONE 'America/Los_Angeles'");
+            metricsDao.createMetricsPartitions();
+
+            jdbiHandle.execute("SET TIME ZONE 'UTC'");
+            final List<String> projectBounds = jdbiHandle.createQuery("""
+                            SELECT pg_get_expr(c.relpartbound, c.oid)
+                              FROM pg_class c
+                              JOIN pg_inherits i
+                                ON i.inhrelid = c.oid
+                             WHERE i.inhparent = CAST(:parent AS regclass)
+                             ORDER BY c.relname
+                            """)
+                    .bind("parent", "\"PROJECTMETRICS\"")
+                    .mapTo(String.class)
+                    .list();
+            assertThat(projectBounds)
+                    .hasSize(2)
+                    .allSatisfy(bound -> assertThat(bound).contains(" 00:00:00+00"));
+        } finally {
+            jdbiHandle.execute("SET TIME ZONE DEFAULT");
+        }
+    }
+
+    @Test
+    public void shouldRejectRefreshGlobalPortfolioMetricsOutsideTransaction() {
+        assertThatThrownBy(() ->
+                useJdbiHandle(handle -> handle.attach(MetricsDao.class).refreshGlobalPortfolioMetrics()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
 }

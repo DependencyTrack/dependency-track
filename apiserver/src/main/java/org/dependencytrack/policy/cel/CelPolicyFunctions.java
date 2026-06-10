@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Period;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -538,16 +538,16 @@ final class CelPolicyFunctions {
             return false;
         }
         Instant instant = Instant.ofEpochSecond(componentPublishedDate.getSeconds(), componentPublishedDate.getNanos());
-        final LocalDate publishedDate = LocalDate.ofInstant(instant, ZoneId.systemDefault());
+        final LocalDate publishedDate = LocalDate.ofInstant(instant, ZoneOffset.UTC);
         final LocalDate ageDate = publishedDate.plus(agePeriod);
-        final LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        final LocalDate today = LocalDate.now(ZoneOffset.UTC);
         return switch (comparator) {
             case "NUMERIC_GREATER_THAN", ">" -> ageDate.isBefore(today);
             case "NUMERIC_GREATER_THAN_OR_EQUAL", ">=" -> ageDate.isEqual(today) || ageDate.isBefore(today);
             case "NUMERIC_EQUAL", "==" -> ageDate.isEqual(today);
             case "NUMERIC_NOT_EQUAL", "!=" -> !ageDate.isEqual(today);
             case "NUMERIC_LESSER_THAN_OR_EQUAL", "<=" -> ageDate.isEqual(today) || ageDate.isAfter(today);
-            case "NUMERIC_LESS_THAN", "<" -> ageDate.isAfter(LocalDate.now(ZoneId.systemDefault()));
+            case "NUMERIC_LESS_THAN", "<" -> ageDate.isAfter(today);
             default -> {
                 LOGGER.warn("%s: Operator %s is not supported for component age conditions".formatted(COMPARE_AGE.functionName(), comparator));
                 yield false;

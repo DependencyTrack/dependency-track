@@ -26,6 +26,7 @@ import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 public interface MetricsTestDao extends SqlObject {
@@ -118,7 +119,7 @@ public interface MetricsTestDao extends SqlObject {
         String partitionName = tableName + "_" + partitionSuffix;
         String sql = String.format("""
             CREATE TABLE IF NOT EXISTS %s PARTITION OF %s
-            FOR VALUES FROM ('%s') TO ('%s');
+            FOR VALUES FROM (CAST('%s' AS timestamp) AT TIME ZONE 'UTC') TO (CAST('%s' AS timestamp) AT TIME ZONE 'UTC');
         """,
                 "\"" + partitionName + "\"",
                 "\"" + tableName + "\"",
@@ -129,7 +130,7 @@ public interface MetricsTestDao extends SqlObject {
     }
 
     default void createPartitionForDaysAgo(String tableName, int daysAgo) {
-        LocalDate targetDate = LocalDate.now().minusDays(daysAgo);
+        LocalDate targetDate = LocalDate.now(ZoneOffset.UTC).minusDays(daysAgo);
         createMetricsPartitionsForDate(tableName, targetDate);
     }
 }

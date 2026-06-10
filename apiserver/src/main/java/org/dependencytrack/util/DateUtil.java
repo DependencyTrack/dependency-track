@@ -30,14 +30,15 @@ public final class DateUtil {
     }
 
     /**
-     * Convenience method that parses a date in yyyyMMdd format and
-     * returns a Date object. If the parsing fails, null is returned.
+     * Convenience method that parses a date in yyyyMMdd format as UTC midnight
+     * and returns a Date object. If the parsing fails, null is returned.
      * @param yyyyMMdd the date string to parse
      * @return a Date object
      * @since 3.0.0
      */
     public static Date parseShortDate(final String yyyyMMdd) {
         final SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
         try {
             return format.parse(yyyyMMdd);
         } catch (ParseException e) {

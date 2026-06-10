@@ -26,13 +26,14 @@ import alpine.model.OidcUser;
 import alpine.model.Team;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.persistence.PersistenceManagerFactory;
+import com.nimbusds.openid.connect.sdk.claims.ClaimsSet;
 import io.smallrye.config.SmallRyeConfigBuilder;
+import net.minidev.json.JSONObject;
 import org.assertj.core.api.Assertions;
 import org.eclipse.microprofile.config.Config;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 import java.util.Collections;
@@ -41,6 +42,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 public class OidcAuthenticationServiceTest {
 
@@ -127,15 +131,15 @@ public class OidcAuthenticationServiceTest {
         final var profile = new OidcProfile();
         profile.setSubject(existingUser.getSubjectIdentifier());
         profile.setUsername(existingUser.getUsername());
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(defaultConfig(), oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
 
         final var authenticatedUser = (OidcUser) authService.authenticate();
-        Assertions.assertThat(authenticatedUser.getId()).isEqualTo(existingUser.getId());
-        Assertions.assertThat(authenticatedUser.getUsername()).isEqualTo(existingUser.getUsername());
-        Assertions.assertThat(authenticatedUser.getTeams()).isNullOrEmpty();
-        Assertions.assertThat(authenticatedUser.getEmail()).isNull();
+        assertThat(authenticatedUser.getId()).isEqualTo(existingUser.getId());
+        assertThat(authenticatedUser.getUsername()).isEqualTo(existingUser.getUsername());
+        assertThat(authenticatedUser.getTeams()).isNullOrEmpty();
+        assertThat(authenticatedUser.getEmail()).isNull();
     }
 
     @Test
@@ -151,15 +155,15 @@ public class OidcAuthenticationServiceTest {
         final var profile = new OidcProfile();
         profile.setSubject(existingUser.getSubjectIdentifier());
         profile.setUsername(existingUser.getUsername());
-        Mockito.when(userInfoAuthenticatorMock.authenticate(ArgumentMatchers.eq(ACCESS_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(userInfoAuthenticatorMock.authenticate(eq(ACCESS_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(defaultConfig(), oidcConfigurationMock, null, userInfoAuthenticatorMock, null, ACCESS_TOKEN);
 
         final var authenticatedUser = (OidcUser) authService.authenticate();
-        Assertions.assertThat(authenticatedUser.getId()).isEqualTo(existingUser.getId());
-        Assertions.assertThat(authenticatedUser.getUsername()).isEqualTo(existingUser.getUsername());
-        Assertions.assertThat(authenticatedUser.getTeams()).isNullOrEmpty();
-        Assertions.assertThat(authenticatedUser.getEmail()).isNull();
+        assertThat(authenticatedUser.getId()).isEqualTo(existingUser.getId());
+        assertThat(authenticatedUser.getUsername()).isEqualTo(existingUser.getUsername());
+        assertThat(authenticatedUser.getTeams()).isNullOrEmpty();
+        assertThat(authenticatedUser.getEmail()).isNull();
     }
 
     @Test
@@ -213,14 +217,14 @@ public class OidcAuthenticationServiceTest {
         profile.setSubject("subject");
         profile.setUsername("username");
         profile.setGroups(List.of("groupName"));
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(config, oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
 
         final var authenticatedUser = (OidcUser) authService.authenticate();
-        Assertions.assertThat(authenticatedUser.getId()).isEqualTo(existingUser.getId());
-        Assertions.assertThat(authenticatedUser.getTeams()).hasSize(1);
-        Assertions.assertThat(authenticatedUser.getTeams().get(0).getName()).isEqualTo("teamName");
+        assertThat(authenticatedUser.getId()).isEqualTo(existingUser.getId());
+        assertThat(authenticatedUser.getTeams()).hasSize(1);
+        assertThat(authenticatedUser.getTeams().get(0).getName()).isEqualTo("teamName");
     }
 
     @Test
@@ -249,21 +253,21 @@ public class OidcAuthenticationServiceTest {
         idTokenProfile.setSubject("subject");
         idTokenProfile.setUsername("username");
         idTokenProfile.setEmail("username@example.com");
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(idTokenProfile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(idTokenProfile);
 
         final var userInfoProfile = new OidcProfile();
         userInfoProfile.setSubject("subject");
         userInfoProfile.setGroups(List.of("groupName"));
-        Mockito.when(userInfoAuthenticatorMock.authenticate(ArgumentMatchers.eq(ACCESS_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(userInfoProfile);
+        when(userInfoAuthenticatorMock.authenticate(eq(ACCESS_TOKEN), any(OidcProfileCreator.class))).thenReturn(userInfoProfile);
 
         final var authService = new OidcAuthenticationService(config, oidcConfigurationMock, idTokenAuthenticatorMock, userInfoAuthenticatorMock, ID_TOKEN, ACCESS_TOKEN);
 
         final var provisionedUser = (OidcUser) authService.authenticate();
-        Assertions.assertThat(provisionedUser.getUsername()).isEqualTo("username");
-        Assertions.assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
-        Assertions.assertThat(provisionedUser.getTeams()).hasSize(1);
-        Assertions.assertThat(provisionedUser.getTeams().get(0).getName()).isEqualTo("teamName");
-        Assertions.assertThat(provisionedUser.getEmail()).isEqualTo("username@example.com");
+        assertThat(provisionedUser.getUsername()).isEqualTo("username");
+        assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
+        assertThat(provisionedUser.getTeams()).hasSize(1);
+        assertThat(provisionedUser.getTeams().get(0).getName()).isEqualTo("teamName");
+        assertThat(provisionedUser.getEmail()).isEqualTo("username@example.com");
     }
 
     @Test
@@ -277,12 +281,12 @@ public class OidcAuthenticationServiceTest {
         idTokenProfile.setSubject("subject");
         idTokenProfile.setUsername("username");
         idTokenProfile.setEmail("username@example.com");
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(idTokenProfile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(idTokenProfile);
 
         final var userInfoProfile = new OidcProfile();
         userInfoProfile.setSubject("subject");
         userInfoProfile.setUsername("username");
-        Mockito.when(userInfoAuthenticatorMock.authenticate(ArgumentMatchers.eq(ACCESS_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(userInfoProfile);
+        when(userInfoAuthenticatorMock.authenticate(eq(ACCESS_TOKEN), any(OidcProfileCreator.class))).thenReturn(userInfoProfile);
 
         final var authService = new OidcAuthenticationService(config, oidcConfigurationMock, idTokenAuthenticatorMock, userInfoAuthenticatorMock, ID_TOKEN, ACCESS_TOKEN);
 
@@ -297,7 +301,7 @@ public class OidcAuthenticationServiceTest {
         final var profile = new OidcProfile();
         profile.setSubject("subject");
         profile.setUsername("username");
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(defaultConfig(), oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
 
@@ -315,17 +319,17 @@ public class OidcAuthenticationServiceTest {
         profile.setSubject("subject");
         profile.setUsername("username");
         profile.setEmail("username@example.com");
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(config, oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
 
         final var provisionedUser = (OidcUser) authService.authenticate();
-        Assertions.assertThat(provisionedUser).isNotNull();
-        Assertions.assertThat(provisionedUser.getUsername()).isEqualTo("username");
-        Assertions.assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
-        Assertions.assertThat(provisionedUser.getEmail()).isEqualTo("username@example.com");
-        Assertions.assertThat(provisionedUser.getTeams()).isNullOrEmpty();
-        Assertions.assertThat(provisionedUser.getPermissions()).isNullOrEmpty();
+        assertThat(provisionedUser).isNotNull();
+        assertThat(provisionedUser.getUsername()).isEqualTo("username");
+        assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
+        assertThat(provisionedUser.getEmail()).isEqualTo("username@example.com");
+        assertThat(provisionedUser.getTeams()).isNullOrEmpty();
+        assertThat(provisionedUser.getPermissions()).isNullOrEmpty();
     }
 
     @Test
@@ -344,18 +348,18 @@ public class OidcAuthenticationServiceTest {
         profile.setSubject("subject");
         profile.setUsername("username");
         profile.setEmail("username@example.com");
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(config, oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
 
         final var provisionedUser = (OidcUser) authService.authenticate();
-        Assertions.assertThat(provisionedUser).isNotNull();
-        Assertions.assertThat(provisionedUser.getUsername()).isEqualTo("username");
-        Assertions.assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
-        Assertions.assertThat(provisionedUser.getEmail()).isEqualTo("username@example.com");
-        Assertions.assertThat(provisionedUser.getTeams()).hasSize(1);
-        Assertions.assertThat(provisionedUser.getTeams().get(0).getName()).isEqualTo("teamName");
-        Assertions.assertThat(provisionedUser.getPermissions()).isNullOrEmpty();
+        assertThat(provisionedUser).isNotNull();
+        assertThat(provisionedUser.getUsername()).isEqualTo("username");
+        assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
+        assertThat(provisionedUser.getEmail()).isEqualTo("username@example.com");
+        assertThat(provisionedUser.getTeams()).hasSize(1);
+        assertThat(provisionedUser.getTeams().get(0).getName()).isEqualTo("teamName");
+        assertThat(provisionedUser.getPermissions()).isNullOrEmpty();
     }
 
     @Test
@@ -385,18 +389,18 @@ public class OidcAuthenticationServiceTest {
         profile.setUsername("username");
         profile.setGroups(List.of("groupName"));
         profile.setEmail("username@example.com");
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(config, oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
 
         final var provisionedUser = (OidcUser) authService.authenticate();
-        Assertions.assertThat(provisionedUser).isNotNull();
-        Assertions.assertThat(provisionedUser.getUsername()).isEqualTo("username");
-        Assertions.assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
-        Assertions.assertThat(provisionedUser.getEmail()).isEqualTo("username@example.com");
-        Assertions.assertThat(provisionedUser.getTeams()).hasSize(1);
-        Assertions.assertThat(provisionedUser.getTeams().get(0).getName()).isEqualTo("teamName");
-        Assertions.assertThat(provisionedUser.getPermissions()).isNullOrEmpty();
+        assertThat(provisionedUser).isNotNull();
+        assertThat(provisionedUser.getUsername()).isEqualTo("username");
+        assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
+        assertThat(provisionedUser.getEmail()).isEqualTo("username@example.com");
+        assertThat(provisionedUser.getTeams()).hasSize(1);
+        assertThat(provisionedUser.getTeams().get(0).getName()).isEqualTo("teamName");
+        assertThat(provisionedUser.getPermissions()).isNullOrEmpty();
     }
 
     @Test
@@ -409,17 +413,17 @@ public class OidcAuthenticationServiceTest {
         profile.setSubject("subject");
         profile.setUsername("username");
         profile.setEmail("username@example.com");
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(defaultConfig(), oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
 
         final var provisionedUser = (OidcUser) authService.authenticate();
-        Assertions.assertThat(provisionedUser).isNotNull();
-        Assertions.assertThat(provisionedUser.getUsername()).isEqualTo("username");
-        Assertions.assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
-        Assertions.assertThat(provisionedUser.getEmail()).isEqualTo("username@example.com");
-        Assertions.assertThat(provisionedUser.getTeams()).isNullOrEmpty();
-        Assertions.assertThat(provisionedUser.getPermissions()).isNullOrEmpty();
+        assertThat(provisionedUser).isNotNull();
+        assertThat(provisionedUser.getUsername()).isEqualTo("username");
+        assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
+        assertThat(provisionedUser.getEmail()).isEqualTo("username@example.com");
+        assertThat(provisionedUser.getTeams()).isNullOrEmpty();
+        assertThat(provisionedUser.getPermissions()).isNullOrEmpty();
     }
 
     @Test
@@ -435,17 +439,17 @@ public class OidcAuthenticationServiceTest {
         profile.setSubject("subject");
         profile.setUsername("username");
         profile.setEmail("username666@example.com");
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(defaultConfig(), oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
 
         final var provisionedUser = (OidcUser) authService.authenticate();
-        Assertions.assertThat(provisionedUser).isNotNull();
-        Assertions.assertThat(provisionedUser.getUsername()).isEqualTo("username");
-        Assertions.assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
-        Assertions.assertThat(provisionedUser.getEmail()).isEqualTo("username666@example.com");
-        Assertions.assertThat(provisionedUser.getTeams()).isNullOrEmpty();
-        Assertions.assertThat(provisionedUser.getPermissions()).isNullOrEmpty();
+        assertThat(provisionedUser).isNotNull();
+        assertThat(provisionedUser.getUsername()).isEqualTo("username");
+        assertThat(provisionedUser.getSubjectIdentifier()).isEqualTo("subject");
+        assertThat(provisionedUser.getEmail()).isEqualTo("username666@example.com");
+        assertThat(provisionedUser.getTeams()).isNullOrEmpty();
+        assertThat(provisionedUser.getPermissions()).isNullOrEmpty();
 
         try (final var qm = new AlpineQueryManager()) {
             final OidcUser user = qm.getOidcUser("username");
@@ -467,7 +471,7 @@ public class OidcAuthenticationServiceTest {
         profile.setSubject("changedSubject");
         profile.setUsername("username");
         profile.setEmail("username@example.com");
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(defaultConfig(), oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
 
@@ -508,12 +512,12 @@ public class OidcAuthenticationServiceTest {
         profile.setSubject("subject");
         profile.setUsername("username");
         profile.setGroups(Collections.emptyList());
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(config, oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
 
         final var authenticatedUser = (OidcUser) authService.authenticate();
-        Assertions.assertThat(authenticatedUser.getTeams()).isNullOrEmpty();
+        assertThat(authenticatedUser.getTeams()).isNullOrEmpty();
     }
 
     @Test
@@ -538,12 +542,65 @@ public class OidcAuthenticationServiceTest {
         profile.setSubject("subject");
         profile.setUsername("username");
         profile.setGroups(List.of("groupName"));
-        Mockito.when(idTokenAuthenticatorMock.authenticate(ArgumentMatchers.eq(ID_TOKEN), ArgumentMatchers.any(OidcProfileCreator.class))).thenReturn(profile);
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class))).thenReturn(profile);
 
         final var authService = new OidcAuthenticationService(config, oidcConfigurationMock, idTokenAuthenticatorMock, null, ID_TOKEN, null);
 
         final var authenticatedUser = (OidcUser) authService.authenticate();
-        Assertions.assertThat(authenticatedUser.getTeams()).isNullOrEmpty();
+        assertThat(authenticatedUser.getTeams()).isNullOrEmpty();
+    }
+
+    @Test
+    public void authenticateShouldFallThroughToUserInfoWhenIdTokenLacksGroupsClaimAndTeamSyncIsEnabled() throws Exception {
+        final Config config = configWith(Map.of(
+                AlpineConfigKeys.OIDC_USER_PROVISIONING, "true",
+                AlpineConfigKeys.OIDC_TEAM_SYNCHRONIZATION, "true",
+                AlpineConfigKeys.OIDC_TEAMS_CLAIM, "groups"));
+
+        try (final var qm = new AlpineQueryManager()) {
+            var group = new OidcGroup();
+            group.setName("groupName");
+            group = qm.persist(group);
+
+            var teamToSync = new Team();
+            teamToSync.setName("teamName");
+            teamToSync = qm.persist(teamToSync);
+
+            final var mappedGroup = new MappedOidcGroup();
+            mappedGroup.setGroup(group);
+            mappedGroup.setTeam(teamToSync);
+            qm.persist(mappedGroup);
+        }
+
+        final var customizer = new DefaultOidcAuthenticationCustomizer(USERNAME_CLAIM_NAME, "groups");
+        final OidcProfile idTokenProfile = customizer.createProfile(
+                new ClaimsSet(new JSONObject(Map.ofEntries(
+                        Map.entry("sub", "subject"),
+                        Map.entry(USERNAME_CLAIM_NAME, "username"),
+                        Map.entry("email", "username@example.com")))));
+        final OidcProfile userInfoProfile = customizer.createProfile(
+                new ClaimsSet(new JSONObject(Map.ofEntries(
+                        Map.entry("sub", "subject"),
+                        Map.entry(USERNAME_CLAIM_NAME, "username"),
+                        Map.entry("groups", List.of("groupName"))))));
+        assertThat(idTokenProfile.getGroups()).isNull();
+
+        when(idTokenAuthenticatorMock.authenticate(eq(ID_TOKEN), any(OidcProfileCreator.class)))
+                .thenReturn(idTokenProfile);
+        when(userInfoAuthenticatorMock.authenticate(eq(ACCESS_TOKEN), any(OidcProfileCreator.class)))
+                .thenReturn(userInfoProfile);
+
+        final var authService = new OidcAuthenticationService(
+                config, oidcConfigurationMock, idTokenAuthenticatorMock, userInfoAuthenticatorMock, ID_TOKEN, ACCESS_TOKEN);
+
+        final var authenticatedUser = (OidcUser) authService.authenticate();
+
+        Mockito.verify(userInfoAuthenticatorMock).authenticate(eq(ACCESS_TOKEN), any(OidcProfileCreator.class));
+        assertThat(authenticatedUser).isNotNull();
+        assertThat(authenticatedUser.getUsername()).isEqualTo("username");
+        assertThat(authenticatedUser.getSubjectIdentifier()).isEqualTo("subject");
+        assertThat(authenticatedUser.getTeams()).hasSize(1);
+        assertThat(authenticatedUser.getTeams().getFirst().getName()).isEqualTo("teamName");
     }
 
 }

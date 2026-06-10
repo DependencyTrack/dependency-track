@@ -22,7 +22,7 @@
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track-parent</artifactId>
     <packaging>pom</packaging>
-    <version>5.0.0</version>
+    <version>5.0.1-SNAPSHOT</version>
 
     <modules>
         <module>common</module>

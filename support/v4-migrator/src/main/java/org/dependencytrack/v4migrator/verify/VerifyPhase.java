@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -259,9 +260,24 @@ public final class VerifyPhase {
                     .mapTo(Long.class)
                     .one());
         } catch (final RuntimeException e) {
-            LOGGER.debug("count(*) failed for {}: {}", qualifiedTable, e.toString());
+            // Some registry entries declare a transform that does not materialize a tgt_*
+            // table of the same name (e.g. PERMISSION builds permission_name_map against
+            // the v5 catalog seeded at bootstrap). Treat a missing relation as a normal
+            // "no row count to report" outcome and only log unexpected failures.
+            if (!isUndefinedTable(e)) {
+                LOGGER.debug("count(*) failed for {}: {}", qualifiedTable, e.toString());
+            }
             return null;
         }
+    }
+
+    private static boolean isUndefinedTable(final Throwable t) {
+        for (Throwable c = t; c != null; c = c.getCause()) {
+            if (c instanceof SQLException sql && "42P01".equals(sql.getSQLState())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String qualified(final String table) {

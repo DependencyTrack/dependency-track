@@ -248,4 +248,53 @@ public class MetricsDaoTest extends PersistenceCapableTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+
+    @Test
+    public void shouldKeepDependencyMetricsWhenComponentDeleted() {
+        final var project = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        qm.createComponent(component, false);
+
+        metricsTestDao.createPartitionForDaysAgo("DEPENDENCYMETRICS", 0);
+        final var metrics = new DependencyMetrics();
+        metrics.setProjectId(project.getId());
+        metrics.setComponentId(component.getId());
+        metrics.setVulnerabilities(1);
+        metrics.setFirstOccurrence(Date.from(Instant.now()));
+        metrics.setLastOccurrence(Date.from(Instant.now()));
+        metricsTestDao.createDependencyMetrics(metrics);
+
+        final long componentId = component.getId();
+        jdbiHandle.execute("DELETE FROM \"COMPONENT\" WHERE \"ID\" = ?", componentId);
+
+        final List<DependencyMetrics> surviving =
+                metricsDao.getDependencyMetricsSince(
+                        componentId, Instant.now().minus(Duration.ofDays(1)));
+        assertThat(surviving).hasSize(1);
+    }
+
+    @Test
+    public void shouldKeepProjectMetricsWhenProjectDeleted() {
+        final var project = qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+
+        metricsTestDao.createPartitionForDaysAgo("PROJECTMETRICS", 0);
+        final var metrics = new ProjectMetrics();
+        metrics.setProjectId(project.getId());
+        metrics.setVulnerabilities(1);
+        metrics.setFirstOccurrence(Date.from(Instant.now()));
+        metrics.setLastOccurrence(Date.from(Instant.now()));
+        metricsTestDao.createProjectMetrics(metrics);
+
+        final long projectId = project.getId();
+        jdbiHandle.execute("DELETE FROM \"PROJECT\" WHERE \"ID\" = ?", projectId);
+
+        final List<ProjectMetrics> surviving =
+                metricsDao.getProjectMetricsSince(
+                        projectId, Instant.now().minus(Duration.ofDays(1)));
+        assertThat(surviving).hasSize(1);
+    }
+
 }

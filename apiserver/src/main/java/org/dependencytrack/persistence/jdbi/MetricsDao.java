@@ -37,9 +37,20 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-/**
- * @since 5.0.0
- */
+/// DAO for interacting with time series metrics.
+///
+/// ### Orphans
+///
+/// Rows in `DEPENDENCYMETRICS` and `PROJECTMETRICS` may reference
+/// deleted `COMPONENT` or `PROJECT` rows. The FKs were dropped to
+/// eliminate lock contention between partition maintenance,
+/// project / component deletion, and metrics updates (see ADR 029).
+/// Orphans are naturally cleaned up as part of partition maintenance.
+///
+/// All read paths must therefore be keyed by a still-existing parent IDs.
+/// **Do not add joins that expose orphan rows without an explicit existence filter**!
+///
+/// @since 5.0.0
 public interface MetricsDao extends SqlObject {
 
     Pattern VALID_TABLE_IDENTIFIER_PATTERN = Pattern.compile("^\"[A-Z][A-Z0-9_]+\"$");
@@ -654,7 +665,7 @@ public interface MetricsDao extends SqlObject {
             } else {
                 getHandle().execute("ALTER TABLE %s DETACH PARTITION %s CONCURRENTLY".formatted(parentTable, partition));
             }
-            getHandle().execute("DROP TABLE IF EXISTS %s CASCADE".formatted(partition));
+            getHandle().execute("DROP TABLE IF EXISTS %s".formatted(partition));
             deletedCount++;
         }
         return deletedCount;

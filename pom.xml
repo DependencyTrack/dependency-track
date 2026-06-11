@@ -159,7 +159,7 @@
         <lib.open-feign.version>13.12</lib.open-feign.version>
         <lib.open-vulnerability-clients.version>9.0.5</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
-        <lib.pebble.version>4.1.1</lib.pebble.version>
+        <lib.pebble.version>4.1.2</lib.pebble.version>
         <lib.postgresql.version>42.7.11</lib.postgresql.version>
         <lib.prometheus.version>1.6.1</lib.prometheus.version>
         <lib.protobuf-java.version>4.35.0</lib.protobuf-java.version>

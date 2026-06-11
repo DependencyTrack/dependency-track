@@ -2055,6 +2055,173 @@ class BomResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldReturnForbiddenWhenAutoCreateButProjectExistsInaccessible() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        enablePortfolioAccessControl();
+
+        final var existing = new Project();
+        existing.setName("acme-app");
+        existing.setVersion("1.0.0");
+        qm.persist(existing);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "autoCreate": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(403);
+
+        final Project found = qm.getProject("acme-app", "1.0.0");
+        assertThat(found).isNotNull();
+        assertThat(found.getUuid()).isEqualTo(existing.getUuid());
+    }
+
+    @Test
+    void shouldReturnForbiddenWhenMultipartAutoCreateButProjectExistsInaccessible() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        enablePortfolioAccessControl();
+
+        final var existing = new Project();
+        existing.setName("Acme Example");
+        existing.setVersion("1.0");
+        qm.persist(existing);
+
+        final var multiPart = new FormDataMultiPart()
+                .field("bom", resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8), MediaType.APPLICATION_XML_TYPE)
+                .field("projectName", "Acme Example")
+                .field("projectVersion", "1.0")
+                .field("autoCreate", "true");
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig()
+                        .register(MultiPartFeature.class)
+                        .connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response = client
+                .target(jersey.target(V1_BOM).getUri())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        assertThat(response.getStatus()).isEqualTo(403);
+
+        final Project found = qm.getProject("Acme Example", "1.0");
+        assertThat(found).isNotNull();
+        assertThat(found.getUuid()).isEqualTo(existing.getUuid());
+    }
+
+    @Test
+    void shouldMatchExistingProjectWhenNameAndVersionContainSurroundingWhitespace() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+
+        final var existing = new Project();
+        existing.setName("acme-app");
+        existing.setVersion("1.0.0");
+        qm.persist(existing);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey
+                .target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "  acme-app  ",
+                          "projectVersion": "  1.0.0  ",
+                          "autoCreate": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final Project found = qm.getProject("acme-app", "1.0.0");
+        assertThat(found).isNotNull();
+        assertThat(found.getUuid()).isEqualTo(existing.getUuid());
+    }
+
+    @Test
+    void shouldReturnForbiddenWhenParentProjectByNameIsInaccessible() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        enablePortfolioAccessControl();
+
+        final var parent = new Project();
+        parent.setName("Acme Parent");
+        parent.setVersion("1.0");
+        qm.persist(parent);
+
+        final String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+        final Response response = jersey
+                .target(V1_BOM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "Acme Example",
+                          "projectVersion": "1.0",
+                          "parentName": "Acme Parent",
+                          "parentVersion": "1.0",
+                          "autoCreate": true,
+                          "bom": "%s"
+                        }
+                        """.formatted(bomString)));
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 403,
+                  "title": "Project access denied",
+                  "detail": "Access to the specified parent project is forbidden"
+                }
+                """);
+
+        assertThat(qm.getProject("Acme Example", "1.0")).isNull();
+    }
+
+    @Test
+    void shouldReturnForbiddenWhenMultipartParentProjectByNameIsInaccessible() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        enablePortfolioAccessControl();
+
+        final var parent = new Project();
+        parent.setName("Acme Parent");
+        parent.setVersion("1.0");
+        qm.persist(parent);
+
+        final var multiPart = new FormDataMultiPart()
+                .field("bom", resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8), MediaType.APPLICATION_XML_TYPE)
+                .field("projectName", "Acme Example")
+                .field("projectVersion", "1.0")
+                .field("parentName", "Acme Parent")
+                .field("parentVersion", "1.0")
+                .field("autoCreate", "true");
+
+        final var client = ClientBuilder.newClient(
+                new ClientConfig()
+                        .register(MultiPartFeature.class)
+                        .connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response = client
+                .target(jersey.target(V1_BOM).getUri())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 403,
+                  "title": "Project access denied",
+                  "detail": "Access to the specified parent project is forbidden"
+                }
+                """);
+
+        assertThat(qm.getProject("Acme Example", "1.0")).isNull();
+    }
+
+    @Test
     void shouldRejectBomUploadForCollectionProject() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
         final var project = new Project();

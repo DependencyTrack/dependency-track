@@ -120,6 +120,7 @@ import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_T
 import static org.dependencytrack.notification.api.NotificationFactory.createBomValidationFailedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 /**
  * JAX-RS resources for processing bill-of-material (bom) documents.
@@ -189,9 +190,9 @@ public class BomResource extends AbstractApiResource {
             @QueryParam("version") String version
     ) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            String versionParameter =  Objects.toString(StringUtils.trimToNull(version), DEFAULT_EXPORT_VERSION);
+            String versionParameter = Objects.toString(StringUtils.trimToNull(version), DEFAULT_EXPORT_VERSION);
             Version cdxOutputVersion = Version.fromVersionString(versionParameter);
-            if(cdxOutputVersion == null) {
+            if (cdxOutputVersion == null) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM version specified.").build();
             }
 
@@ -397,7 +398,16 @@ public class BomResource extends AbstractApiResource {
             );
             try (final var qm = new QueryManager(getAlpineRequest())) {
                 projectInfo = qm.callInTransaction(() -> {
-                    Project project = qm.getProject(request.getProjectName(), request.getProjectVersion());
+                    final String trimmedProjectName = StringUtils.trimToNull(request.getProjectName());
+                    final String trimmedProjectVersion = StringUtils.trimToNull(request.getProjectVersion());
+
+                    // NB: Bypass portfolio ACL for this lookup since it would otherwise filter out existing
+                    // projects that are inaccessible. `autoCreate=true` would then lead to us trying to create
+                    // a project that already exists, triggering a unique constraint violation.
+                    // Access to the project (and potentially its parent) is asserted explicitly via requireAccess().
+                    Project project = ProjectAccess.unrestricted(
+                            () -> qm.getProject(trimmedProjectName, trimmedProjectVersion));
+
                     if (project == null && request.isAutoCreate()) {
                         if (hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT) || hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT_CREATE) || hasPermission(Permissions.Constants.PROJECT_CREATION_UPLOAD)) {
                             Project parent = null;
@@ -412,7 +422,7 @@ public class BomResource extends AbstractApiResource {
                                     );
                                     final String trimmedParentName = StringUtils.trimToNull(request.getParentName());
                                     final String trimmedParentVersion = StringUtils.trimToNull(request.getParentVersion());
-                                    parent = qm.getProject(trimmedParentName, trimmedParentVersion);
+                                    parent = ProjectAccess.unrestricted(() -> qm.getProject(trimmedParentName, trimmedParentVersion));
                                 }
 
                                 if (parent == null) {
@@ -423,16 +433,25 @@ public class BomResource extends AbstractApiResource {
                                 }
                                 requireAccess(qm, parent, "Access to the specified parent project is forbidden");
                             }
-                            final String trimmedProjectName = StringUtils.trimToNull(request.getProjectName());
                             if (request.isLatest()) {
                                 final Project oldLatest = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(trimmedProjectName));
                                 if (oldLatest != null) {
                                     requireAccess(qm, oldLatest, "Access to the previous latest project version is forbidden");
                                 }
                             }
-                            project = qm.createProject(trimmedProjectName, null,
-                                    StringUtils.trimToNull(request.getProjectVersion()), request.getProjectTags(), parent,
-                                    null, null, request.isLatest(), true);
+                            try {
+                                project = qm.createProject(trimmedProjectName, null,
+                                        trimmedProjectVersion, request.getProjectTags(), parent,
+                                        null, null, request.isLatest(), true);
+                            } catch (RuntimeException e) {
+                                if (isUniqueConstraintViolation(e)) {
+                                    throw new WebApplicationException(Response
+                                            .status(Response.Status.CONFLICT)
+                                            .entity("A project with the specified name and version already exists.")
+                                            .build());
+                                }
+                                throw e;
+                            }
                             Principal principal = getPrincipal();
                             qm.updateNewProjectACL(project, principal);
                             new JdoNotificationEmitter(qm).emit(
@@ -574,7 +593,14 @@ public class BomResource extends AbstractApiResource {
                 projectInfo = qm.callInTransaction(() -> {
                     final String trimmedProjectName = StringUtils.trimToNull(projectName);
                     final String trimmedProjectVersion = StringUtils.trimToNull(projectVersion);
-                    Project project = qm.getProject(trimmedProjectName, trimmedProjectVersion);
+
+                    // NB: Bypass portfolio ACL for this lookup since it would otherwise filter out existing
+                    // projects that are inaccessible. `autoCreate=true` would then lead to us trying to create
+                    // a project that already exists, triggering a unique constraint violation.
+                    // Access to the project (and potentially its parent) is asserted explicitly via requireAccess().
+                    Project project = ProjectAccess.unrestricted(
+                            () -> qm.getProject(trimmedProjectName, trimmedProjectVersion));
+
                     if (project == null && autoCreate) {
                         if (hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT) || hasPermission(Permissions.Constants.PORTFOLIO_MANAGEMENT_CREATE) || hasPermission(Permissions.Constants.PROJECT_CREATION_UPLOAD)) {
                             Project parent = null;
@@ -584,7 +610,7 @@ public class BomResource extends AbstractApiResource {
                                 } else {
                                     final String trimmedParentName = StringUtils.trimToNull(parentName);
                                     final String trimmedParentVersion = StringUtils.trimToNull(parentVersion);
-                                    parent = qm.getProject(trimmedParentName, trimmedParentVersion);
+                                    parent = ProjectAccess.unrestricted(() -> qm.getProject(trimmedParentName, trimmedParentVersion));
                                 }
 
                                 if (parent == null) {
@@ -601,7 +627,17 @@ public class BomResource extends AbstractApiResource {
                                     requireAccess(qm, oldLatest, "Access to the previous latest project version is forbidden");
                                 }
                             }
-                            project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, requestTags, parent, null, null, isLatest, true);
+                            try {
+                                project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, requestTags, parent, null, null, isLatest, true);
+                            } catch (RuntimeException e) {
+                                if (isUniqueConstraintViolation(e)) {
+                                    throw new WebApplicationException(Response
+                                            .status(Response.Status.CONFLICT)
+                                            .entity("A project with the specified name and version already exists.")
+                                            .build());
+                                }
+                                throw e;
+                            }
                             Principal principal = getPrincipal();
                             qm.updateNewProjectACL(project, principal);
                             new JdoNotificationEmitter(qm).emit(

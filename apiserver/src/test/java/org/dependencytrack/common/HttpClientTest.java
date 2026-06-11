@@ -23,11 +23,24 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.Authenticator;
 import java.net.InetAddress;
 import java.net.PasswordAuthentication;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -159,6 +172,84 @@ class HttpClientTest {
         assertThat(client.authenticator()).isEmpty();
     }
 
+    @Test
+    void shouldSendBasicProxyAuthorizationOverHttpsConnect() throws Exception {
+        // Start a fake HTTP proxy: first CONNECT yields a 407 Basic challenge,
+        // second CONNECT captures headers and returns 502. We only care that the
+        // JDK retries with Proxy-Authorization, not that the tunnel succeeds.
+        //
+        // NB: Two accepts are required because the JDK closes the first connection after receiving the 407.
+        try (final var proxy = new ServerSocket(0, 50, InetAddress.getLoopbackAddress())) {
+            final CompletableFuture<List<String>> secondRequest = new CompletableFuture<>();
+
+            final Thread acceptor = Thread.startVirtualThread(() -> {
+                try (final Socket firstConnection = proxy.accept()) {
+                    readRequestLines(firstConnection);
+                    final String response = """
+                            HTTP/1.1 407 Proxy Authentication Required
+                            Proxy-Authenticate: Basic realm="proxy"
+                            Content-Length: 0
+                            Connection: close
+                            
+                            """.replace("\n", "\r\n");
+                    firstConnection.getOutputStream().write(
+                            response.getBytes(StandardCharsets.US_ASCII));
+                    firstConnection.getOutputStream().flush();
+                } catch (IOException e) {
+                    secondRequest.completeExceptionally(e);
+                    return;
+                }
+
+                try (final Socket secondConnection = proxy.accept()) {
+                    secondRequest.complete(readRequestLines(secondConnection));
+                    final String response = """
+                            HTTP/1.1 502 Bad Gateway
+                            Content-Length: 0
+                            Connection: close
+                            
+                            """.replace("\n", "\r\n");
+                    secondConnection.getOutputStream().write(
+                            response.getBytes(StandardCharsets.US_ASCII));
+                    secondConnection.getOutputStream().flush();
+                } catch (IOException e) {
+                    secondRequest.completeExceptionally(e);
+                }
+            });
+
+            final var proxyConfig = new ProxyConfig();
+            proxyConfig.setHost(proxy.getInetAddress().getHostAddress());
+            proxyConfig.setPort(proxy.getLocalPort());
+            proxyConfig.setUsername("user");
+            proxyConfig.setPassword("pass");
+
+            try (final HttpClient client = HttpClient.create(
+                    new SmallRyeConfigBuilder().build(),
+                    proxyConfig,
+                    new SimpleMeterRegistry(),
+                    () -> TEST_CLUSTER_ID)) {
+                try {
+                    client.send(
+                            HttpRequest.newBuilder(URI.create("https://target.example.com/")).build(),
+                            HttpResponse.BodyHandlers.discarding());
+                } catch (IOException _) {
+                    // Expected since tunnel is never established due to 502 response.
+                }
+            }
+
+            final List<String> secondRequestLines = secondRequest.get(10, TimeUnit.SECONDS);
+            acceptor.join(TimeUnit.SECONDS.toMillis(50));
+
+            assertThat(secondRequestLines).isNotEmpty();
+            assertThat(secondRequestLines.getFirst()).startsWith("CONNECT target.example.com:443 ");
+            final String expectedCredentials =
+                    Base64.getEncoder().encodeToString(
+                            "user:pass".getBytes(StandardCharsets.UTF_8));
+            assertThat(secondRequestLines).anyMatch(
+                    line -> line.equalsIgnoreCase(
+                            "Proxy-Authorization: Basic " + expectedCredentials));
+        }
+    }
+
     private static PasswordAuthentication requestProxyAuth(Authenticator authenticator) throws Exception {
         return Authenticator.requestPasswordAuthentication(
                 authenticator,
@@ -185,6 +276,21 @@ class HttpClientTest {
                 URI.create("https://server.example.com").toURL(),
                 Authenticator.RequestorType.SERVER
         );
+    }
+
+    private static List<String> readRequestLines(final Socket socket) throws IOException {
+        final var reader = new BufferedReader(
+                new InputStreamReader(
+                        socket.getInputStream(),
+                        StandardCharsets.US_ASCII));
+
+        final var lines = new ArrayList<String>();
+        String line;
+        while ((line = reader.readLine()) != null && !line.isEmpty()) {
+            lines.add(line);
+        }
+
+        return lines;
     }
 
 }

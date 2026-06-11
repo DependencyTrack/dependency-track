@@ -567,6 +567,7 @@
                         --add-opens java.base/java.util.concurrent=ALL-UNNAMED
                         -javaagent:${settings.localRepository}/org/mockito/mockito-core/${lib.mockito.version}/mockito-core-${lib.mockito.version}.jar
                         -Xshare:off
+                        -Djdk.http.auth.tunneling.disabledSchemes=
                     </argLine>
                     <systemPropertyVariables>
                         <unitTestLogLevel>${unitTestLogLevel}</unitTestLogLevel>

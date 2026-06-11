@@ -24,6 +24,9 @@ import org.dependencytrack.support.distrometadata.OsDistribution;
 import org.dependencytrack.support.distrometadata.UbuntuDistribution;
 import org.jspecify.annotations.Nullable;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 final class OsvEcosystems {
 
     private OsvEcosystems() {
@@ -53,6 +56,15 @@ final class OsvEcosystems {
             }
             default -> null;
         };
+    }
+
+    static String encodeEcosystem(String ecosystem) {
+        // Some ecosystems contain spaces, e.g. "Red Hat".
+        // NB: URLEncoder encodes spaces as "+", but GCS (where OSV hosts its data dumps)
+        // requires spaces to be percent-encoded.
+        return URLEncoder
+                .encode(ecosystem, StandardCharsets.UTF_8)
+                .replace("+", "%20");
     }
 
 }

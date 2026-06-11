@@ -40,6 +40,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static java.util.function.Predicate.not;
+import static org.dependencytrack.vulndatasource.osv.OsvEcosystems.encodeEcosystem;
 
 /**
  * @since 5.0.0
@@ -123,7 +124,7 @@ sealed interface OsvAdvisorySource extends Iterator<Osv>, Closeable {
             LOGGER.debug("Downloading advisory {}", advisoryId);
 
             final var request = HttpRequest.newBuilder()
-                    .uri(URI.create("%s/%s/%s.json".formatted(dataUrl, ecosystem, advisoryId)))
+                    .uri(URI.create("%s/%s/%s.json".formatted(dataUrl, encodeEcosystem(ecosystem), advisoryId)))
                     .GET()
                     .build();
 

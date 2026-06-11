@@ -89,6 +89,7 @@ CMD [ \
         --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
         --enable-native-access=ALL-UNNAMED \
         --sun-misc-unsafe-memory-access=allow \
+        -Djdk.http.auth.tunneling.disabledSchemes= \
         -cp 'dependency-track-apiserver.jar:lib/*' \
         org.dependencytrack.Application \
         -context ${CONTEXT}" \

@@ -643,6 +643,8 @@ public class ProjectResource extends AbstractApiResource {
                     throw new ServerErrorException(Response.Status.INTERNAL_SERVER_ERROR);
                 }
 
+                qm.updateNewProjectACL(project, principal);
+
                 new JdoNotificationEmitter(qm).emit(
                         createProjectCreatedNotification(
                                 NotificationModelConverter.convert(project)));

@@ -9,8 +9,10 @@ This guide is for contributors. It covers how PAC is implemented, how to apply i
 and how to bypass it when that is the right thing to do.
 
 > [!IMPORTANT]
-> PAC controls **access**, not **permissions**. The set of permissions a principal holds is independent of which
-> projects they can reach. There are no per-project permissions.
+> PAC controls **access**, not **permissions**.
+> 
+> The set of permissions a principal holds is independent of which projects they can reach.
+> There are no per-project permissions.
 
 ## Toggle and bypass permission
 
@@ -41,7 +43,7 @@ of the target project, *including the project itself*, reachable through PH.
 
 Four independent layers enforce PAC.
 
-### 1. JDBI list queries
+### JDBI list queries
 
 `ApiRequestStatementCustomizer.defineProjectAclCondition` runs for every JDBI `Handle` opened with a non-`null`
 `AlpineRequest`. It exposes a FreeMarker attribute called `apiProjectAclCondition` to the SQL template.
@@ -86,7 +88,7 @@ Boolean isAccessible(@Bind UUID componentUuid);
 For paged endpoints, use `PaginationSupport.getBoundedTotalCountWithProjectAcl` to compute totals.
 It applies the same condition to the count query.
 
-### 2. JDO list queries
+### JDO list queries
 
 For JDO queries whose candidate class is `Project`, or has exactly one `Project`-typed member,
 call `ProjectQueryManager.preprocessACLs` before executing the query:
@@ -101,7 +103,7 @@ final Project project = singleResult(query.executeWithMap(params));
 the predicate degrades to `false`. For an unknown principal type, it is `false`. When PAC is bypassed
 (i.e. feature disabled, bypass permission, `null` principal, `unrestricted` scope), the predicate is skipped entirely.
 
-### 3. JDO per-row checks
+### JDO per-row checks
 
 `QueryManager.hasAccess(principal, project)` tests access to a single project. Resource code uses it through
 `AbstractApiResource.requireAccess(qm, project, ...)`, which throws `ProjectAccessDeniedException` when access is
@@ -112,7 +114,7 @@ final Project project = qm.getObjectByUuid(Project.class, uuid);
 requireAccess(qm, project);
 ```
 
-### 4. JDBI per-row checks
+### JDBI per-row checks
 
 `ProjectDao.isAccessible(UUID)` and `ComponentDao.isAccessible(UUID)` return `null` if no row exists, `true` if the
 principal has access, and `false` otherwise. Resource code uses them through
@@ -126,22 +128,34 @@ responses respectively, and do not need to be caught manually.
 
 Pick the layer that matches the shape of the endpoint or query.
 
-* **JDBI list or single-row queries.** Open the handle with an `AlpineRequest`. In a REST resource that is
-  `super.getAlpineRequest()`. Interpolate `${apiProjectAclCondition}` in the query and add `@DefineApiProjectAclCondition`
-  if the project ID lives on a different column or alias. Use `getBoundedTotalCountWithProjectAcl` for paged totals.
+### JDBI list or single-row queries
 
-  The no-argument overloads (`JdbiFactory.withJdbiHandle(handle -> ...)` etc.) resolve the condition to `TRUE` so
-  that background tasks can run without a principal. Calling them from a REST endpoint that uses
-  `${apiProjectAclCondition}` silently disables PAC. Always pass `getAlpineRequest()` in resource code.
-* **Single-object REST endpoints.** Fetch the entity, then call `requireAccess(qm, project)`,
-  `requireProjectAccess(handle, uuid)` or `requireComponentAccess(handle, uuid)` before returning anything to the client.
-  Never return a freshly fetched project or component without one of these!
-* **JDO list queries.** Call `preprocessACLs(query, filter, params)` before `executeWithMap(params)`. This applies to
-  every query whose candidate reaches `Project`.
-* **Embedded project collections.** JDO does not filter child collections on parent entities (for example
-  `Policy.projects` or `NotificationRule.projects`). When a response embeds such a collection, filter it before
-  serialization using `AbstractApiResource.filterAccessibleProjects(...)`. This is a stop-gap and is marked as such in
-  the source. New endpoints should expose the child collection as a paged sub-resource instead.
+Open the handle with an `AlpineRequest`. In a REST resource that is `super.getAlpineRequest()`.
+Interpolate `${apiProjectAclCondition}` in the query and add `@DefineApiProjectAclCondition`
+if the project ID lives on a different column or alias. Use `getBoundedTotalCountWithProjectAcl` for paged totals.
+
+The no-argument overloads (`JdbiFactory.withJdbiHandle(handle -> ...)` etc.) resolve the condition to `TRUE` so
+that background tasks can run without a principal. Calling them from a REST endpoint that uses
+`${apiProjectAclCondition}` silently disables PAC. Always pass `getAlpineRequest()` in resource code.
+
+### Single-object REST endpoints
+
+Fetch the entity, then call `requireAccess(qm, project)`, `requireProjectAccess(handle, uuid)`
+or `requireComponentAccess(handle, uuid)` before returning anything to the client.
+Never return a freshly fetched project or component without one of these!
+
+### JDO list queries
+
+Call `preprocessACLs(query, filter, params)` before `executeWithMap(params)`.
+This applies to every query whose candidate reaches `Project`.
+
+### Embedded project collections
+
+JDO does not filter child collections on parent entities (for example `Policy.projects` or `NotificationRule.projects`).
+When a response embeds such a collection, filter it before serialization using `AbstractApiResource.filterAccessibleProjects(...)`.
+This is a stop-gap and is marked as such in the source. New endpoints should expose the child collection as a paged sub-resource instead.
+
+### Test coverage
 
 > [!IMPORTANT]
 > Any change that touches PAC-sensitive code **must** ship with tests. Tests are the most reliable defence against

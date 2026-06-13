@@ -2,6 +2,11 @@
 
 > Please also read [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md).
 
+> [!TIP]
+> Contributor documentation lives in [`docs/`](./docs/). Start with
+> [`docs/PROJECT_STRUCTURE.md`](./docs/PROJECT_STRUCTURE.md) for the module layout,
+> and see [`docs/adr/`](./docs/adr/) for Architecture Decision Records.
+
 > [!IMPORTANT]
 > Substantial changes must be accompanied by an [Architecture Decision Record](./docs/adr/).
 > See the [criteria in `CONTRIBUTING.md`](./CONTRIBUTING.md#architecture-decision-records) for when

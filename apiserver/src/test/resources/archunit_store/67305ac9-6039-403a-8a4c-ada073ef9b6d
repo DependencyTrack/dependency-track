@@ -51,10 +51,6 @@ org.dependencytrack.resources.v1.ProjectResource.getProject(java.lang.String) de
 org.dependencytrack.resources.v1.ProjectResource.getProject(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.Project as Swagger response schema
 org.dependencytrack.resources.v1.ProjectResource.patchProject(java.lang.String, org.dependencytrack.model.Project) declares JDO model class org.dependencytrack.model.Project as Swagger response schema
 org.dependencytrack.resources.v1.ProjectResource.updateProject(org.dependencytrack.model.Project) declares JDO model class org.dependencytrack.model.Project as Swagger response schema
-org.dependencytrack.resources.v1.RepositoryResource.createRepository(org.dependencytrack.model.Repository) declares JDO model class org.dependencytrack.model.Repository as Swagger response schema
-org.dependencytrack.resources.v1.RepositoryResource.getRepositories() declares JDO model class org.dependencytrack.model.Repository as Swagger response schema
-org.dependencytrack.resources.v1.RepositoryResource.getRepositoriesByType(org.dependencytrack.model.RepositoryType) declares JDO model class org.dependencytrack.model.Repository as Swagger response schema
-org.dependencytrack.resources.v1.RepositoryResource.updateRepository(org.dependencytrack.model.Repository) declares JDO model class org.dependencytrack.model.Repository as Swagger response schema
 org.dependencytrack.resources.v1.ServiceResource.createService(java.lang.String, org.dependencytrack.model.ServiceComponent) declares JDO model class org.dependencytrack.model.ServiceComponent as Swagger response schema
 org.dependencytrack.resources.v1.ServiceResource.getAllServices(java.lang.String) declares JDO model class org.dependencytrack.model.ServiceComponent as Swagger response schema
 org.dependencytrack.resources.v1.ServiceResource.getServiceByUuid(java.lang.String) declares JDO model class org.dependencytrack.model.ServiceComponent as Swagger response schema

@@ -1,0 +1,32 @@
+org.dependencytrack.resources.v1.ComponentResource.createComponent(java.lang.String, org.dependencytrack.model.Component) accepts JDO model class org.dependencytrack.model.Component as request body
+org.dependencytrack.resources.v1.ComponentResource.updateComponent(org.dependencytrack.model.Component) accepts JDO model class org.dependencytrack.model.Component as request body
+org.dependencytrack.resources.v1.ConfigPropertyResource.updateConfigProperty(alpine.model.ConfigProperty) accepts JDO model class alpine.model.ConfigProperty as request body
+org.dependencytrack.resources.v1.ConfigPropertyResource.updateConfigProperty(java.util.List) accepts JDO model class alpine.model.ConfigProperty as request body
+org.dependencytrack.resources.v1.LicenseGroupResource.createLicenseGroup(org.dependencytrack.model.LicenseGroup) accepts JDO model class org.dependencytrack.model.LicenseGroup as request body
+org.dependencytrack.resources.v1.LicenseGroupResource.updateLicenseGroup(org.dependencytrack.model.LicenseGroup) accepts JDO model class org.dependencytrack.model.LicenseGroup as request body
+org.dependencytrack.resources.v1.LicenseResource.createLicense(org.dependencytrack.model.License) accepts JDO model class org.dependencytrack.model.License as request body
+org.dependencytrack.resources.v1.NotificationRuleResource.deleteNotificationRule(org.dependencytrack.model.NotificationRule) accepts JDO model class org.dependencytrack.model.NotificationRule as request body
+org.dependencytrack.resources.v1.OidcResource.createGroup(alpine.model.OidcGroup) accepts JDO model class alpine.model.OidcGroup as request body
+org.dependencytrack.resources.v1.OidcResource.updateGroup(alpine.model.OidcGroup) accepts JDO model class alpine.model.OidcGroup as request body
+org.dependencytrack.resources.v1.PolicyResource.createPolicy(org.dependencytrack.model.Policy) accepts JDO model class org.dependencytrack.model.Policy as request body
+org.dependencytrack.resources.v1.PolicyResource.updatePolicy(org.dependencytrack.model.Policy) accepts JDO model class org.dependencytrack.model.Policy as request body
+org.dependencytrack.resources.v1.ProjectResource.createProject(org.dependencytrack.model.Project) accepts JDO model class org.dependencytrack.model.Project as request body
+org.dependencytrack.resources.v1.ProjectResource.patchProject(java.lang.String, org.dependencytrack.model.Project) accepts JDO model class org.dependencytrack.model.Project as request body
+org.dependencytrack.resources.v1.ProjectResource.updateProject(org.dependencytrack.model.Project) accepts JDO model class org.dependencytrack.model.Project as request body
+org.dependencytrack.resources.v1.RepositoryResource.createRepository(org.dependencytrack.model.Repository) accepts JDO model class org.dependencytrack.model.Repository as request body
+org.dependencytrack.resources.v1.RepositoryResource.updateRepository(org.dependencytrack.model.Repository) accepts JDO model class org.dependencytrack.model.Repository as request body
+org.dependencytrack.resources.v1.ServiceResource.createService(java.lang.String, org.dependencytrack.model.ServiceComponent) accepts JDO model class org.dependencytrack.model.ServiceComponent as request body
+org.dependencytrack.resources.v1.ServiceResource.updateService(org.dependencytrack.model.ServiceComponent) accepts JDO model class org.dependencytrack.model.ServiceComponent as request body
+org.dependencytrack.resources.v1.TeamResource.createTeam(alpine.model.Team) accepts JDO model class alpine.model.Team as request body
+org.dependencytrack.resources.v1.TeamResource.deleteTeam(alpine.model.Team) accepts JDO model class alpine.model.Team as request body
+org.dependencytrack.resources.v1.TeamResource.updateTeam(alpine.model.Team) accepts JDO model class alpine.model.Team as request body
+org.dependencytrack.resources.v1.UserResource.createLdapUser(alpine.model.LdapUser) accepts JDO model class alpine.model.LdapUser as request body
+org.dependencytrack.resources.v1.UserResource.createManagedUser(alpine.model.ManagedUser) accepts JDO model class alpine.model.ManagedUser as request body
+org.dependencytrack.resources.v1.UserResource.createOidcUser(alpine.model.OidcUser) accepts JDO model class alpine.model.OidcUser as request body
+org.dependencytrack.resources.v1.UserResource.deleteLdapUser(alpine.model.LdapUser) accepts JDO model class alpine.model.LdapUser as request body
+org.dependencytrack.resources.v1.UserResource.deleteManagedUser(alpine.model.ManagedUser) accepts JDO model class alpine.model.ManagedUser as request body
+org.dependencytrack.resources.v1.UserResource.deleteOidcUser(alpine.model.OidcUser) accepts JDO model class alpine.model.OidcUser as request body
+org.dependencytrack.resources.v1.UserResource.updateManagedUser(alpine.model.ManagedUser) accepts JDO model class alpine.model.ManagedUser as request body
+org.dependencytrack.resources.v1.UserResource.updateSelf(alpine.model.ManagedUser) accepts JDO model class alpine.model.ManagedUser as request body
+org.dependencytrack.resources.v1.VulnerabilityResource.createVulnerability(org.dependencytrack.model.Vulnerability) accepts JDO model class org.dependencytrack.model.Vulnerability as request body
+org.dependencytrack.resources.v1.VulnerabilityResource.updateVulnerability(org.dependencytrack.model.Vulnerability) accepts JDO model class org.dependencytrack.model.Vulnerability as request body

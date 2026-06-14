@@ -18,13 +18,6 @@
  */
 package org.dependencytrack.model;
 
-import alpine.server.json.TrimmedStringDeserializer;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.Index;
@@ -43,56 +36,44 @@ import java.util.UUID;
  */
 @PersistenceCapable(table = "REPOSITORY")
 @Unique(name = "REPOSITORY_COMPOUND_IDX", members = {"type", "identifier"})
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Repository implements Serializable {
 
     private static final long serialVersionUID = -3875882921059813747L;
 
     @PrimaryKey
     @Persistent(valueStrategy = IdGeneratorStrategy.NATIVE)
-    @JsonIgnore
     private long id;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "TYPE", jdbcType = "VARCHAR", allowsNull = "false")
-    @NotNull
     private RepositoryType type;
 
     @Persistent
     @Column(name = "IDENTIFIER", allowsNull = "false")
-    @NotBlank
-    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String identifier;
 
     @Persistent
     @Column(name = "URL")
-    @NotBlank
-    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String url;
 
     @Persistent
     @Column(name = "RESOLUTION_ORDER")
-    @NotNull
     private int resolutionOrder;
 
     @Persistent
     @Column(name = "ENABLED")
-    @NotNull
     private boolean enabled;
 
     @Persistent
     @Column(name = "INTERNAL")
-    @NotNull
     private Boolean internal; // New column, must allow nulls on existing databases
 
     @Persistent
     @Column(name = "AUTHENTICATIONREQUIRED", allowsNull = "false", defaultValue = "false")
-    @NotNull
     private boolean authenticationRequired;
 
     @Persistent
     @Column(name = "USERNAME")
-    @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String username;
 
     @Persistent
@@ -102,7 +83,6 @@ public class Repository implements Serializable {
     @Persistent(customValueStrategy = "uuid")
     @Index(name = "REPOSITORY_UUID_IDX") // Cannot be @Unique. Microsoft SQL Server throws an exception
     @Column(name = "UUID", sqlType = "UUID", allowsNull = "true")
-    @NotNull
     private UUID uuid;
 
     public long getId() {

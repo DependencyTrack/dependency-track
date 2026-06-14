@@ -2,7 +2,6 @@ org.dependencytrack.resources.v1.ComponentResource.createComponent(java.lang.Str
 org.dependencytrack.resources.v1.ComponentResource.updateComponent(org.dependencytrack.model.Component) accepts JDO model class org.dependencytrack.model.Component as request body
 org.dependencytrack.resources.v1.ConfigPropertyResource.updateConfigProperty(alpine.model.ConfigProperty) accepts JDO model class alpine.model.ConfigProperty as request body
 org.dependencytrack.resources.v1.ConfigPropertyResource.updateConfigProperty(java.util.List) accepts JDO model class alpine.model.ConfigProperty as request body
-org.dependencytrack.resources.v1.LicenseResource.createLicense(org.dependencytrack.model.License) accepts JDO model class org.dependencytrack.model.License as request body
 org.dependencytrack.resources.v1.NotificationRuleResource.deleteNotificationRule(org.dependencytrack.model.NotificationRule) accepts JDO model class org.dependencytrack.model.NotificationRule as request body
 org.dependencytrack.resources.v1.OidcResource.createGroup(alpine.model.OidcGroup) accepts JDO model class alpine.model.OidcGroup as request body
 org.dependencytrack.resources.v1.OidcResource.updateGroup(alpine.model.OidcGroup) accepts JDO model class alpine.model.OidcGroup as request body

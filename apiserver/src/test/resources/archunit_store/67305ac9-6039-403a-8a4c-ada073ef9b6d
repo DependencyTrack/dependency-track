@@ -1,0 +1,100 @@
+org.dependencytrack.resources.v1.AnalysisResource.retrieveAnalysis(java.lang.String, java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.Analysis as Swagger response schema
+org.dependencytrack.resources.v1.AnalysisResource.updateAnalysis(org.dependencytrack.resources.v1.vo.AnalysisRequest) declares JDO model class org.dependencytrack.model.Analysis as Swagger response schema
+org.dependencytrack.resources.v1.ComponentResource.createComponent(java.lang.String, org.dependencytrack.model.Component) declares JDO model class org.dependencytrack.model.Component as Swagger response schema
+org.dependencytrack.resources.v1.ComponentResource.getAllComponents(java.lang.String, boolean, boolean) declares JDO model class org.dependencytrack.model.Component as Swagger response schema
+org.dependencytrack.resources.v1.ComponentResource.getComponentByHash(java.lang.String) declares JDO model class org.dependencytrack.model.Component as Swagger response schema
+org.dependencytrack.resources.v1.ComponentResource.getComponentByIdentity(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, boolean, boolean) declares JDO model class org.dependencytrack.model.Component as Swagger response schema
+org.dependencytrack.resources.v1.ComponentResource.getComponentByUuid(java.lang.String, boolean) declares JDO model class org.dependencytrack.model.Component as Swagger response schema
+org.dependencytrack.resources.v1.ComponentResource.getOccurrences(java.util.UUID) declares JDO model class org.dependencytrack.model.ComponentOccurrence as Swagger response schema
+org.dependencytrack.resources.v1.ComponentResource.updateComponent(org.dependencytrack.model.Component) declares JDO model class org.dependencytrack.model.Component as Swagger response schema
+org.dependencytrack.resources.v1.ConfigPropertyResource.getConfigProperties() declares JDO model class alpine.model.ConfigProperty as Swagger response schema
+org.dependencytrack.resources.v1.ConfigPropertyResource.getPublicConfigProperty(java.lang.String, java.lang.String) declares JDO model class alpine.model.ConfigProperty as Swagger response schema
+org.dependencytrack.resources.v1.ConfigPropertyResource.updateConfigProperty(alpine.model.ConfigProperty) declares JDO model class alpine.model.ConfigProperty as Swagger response schema
+org.dependencytrack.resources.v1.ConfigPropertyResource.updateConfigProperty(java.util.List) declares JDO model class alpine.model.ConfigProperty as Swagger response schema
+org.dependencytrack.resources.v1.LdapResource.addMapping(org.dependencytrack.resources.v1.vo.MappedLdapGroupRequest) declares JDO model class alpine.model.MappedLdapGroup as Swagger response schema
+org.dependencytrack.resources.v1.LdapResource.retrieveLdapGroups(java.lang.String) declares JDO model class alpine.model.MappedLdapGroup as Swagger response schema
+org.dependencytrack.resources.v1.LicenseGroupResource.addLicenseToLicenseGroup(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.LicenseGroup as Swagger response schema
+org.dependencytrack.resources.v1.LicenseGroupResource.createLicenseGroup(org.dependencytrack.model.LicenseGroup) declares JDO model class org.dependencytrack.model.LicenseGroup as Swagger response schema
+org.dependencytrack.resources.v1.LicenseGroupResource.getLicenseGroup(java.lang.String) declares JDO model class org.dependencytrack.model.LicenseGroup as Swagger response schema
+org.dependencytrack.resources.v1.LicenseGroupResource.getLicenseGroups() declares JDO model class org.dependencytrack.model.LicenseGroup as Swagger response schema
+org.dependencytrack.resources.v1.LicenseGroupResource.removeLicenseFromLicenseGroup(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.LicenseGroup as Swagger response schema
+org.dependencytrack.resources.v1.LicenseGroupResource.updateLicenseGroup(org.dependencytrack.model.LicenseGroup) declares JDO model class org.dependencytrack.model.LicenseGroup as Swagger response schema
+org.dependencytrack.resources.v1.LicenseResource.createLicense(org.dependencytrack.model.License) declares JDO model class org.dependencytrack.model.License as Swagger response schema
+org.dependencytrack.resources.v1.LicenseResource.getLicense(java.lang.String) declares JDO model class org.dependencytrack.model.License as Swagger response schema
+org.dependencytrack.resources.v1.LicenseResource.getLicenseListing() declares JDO model class org.dependencytrack.model.License as Swagger response schema
+org.dependencytrack.resources.v1.LicenseResource.getLicenses() declares JDO model class org.dependencytrack.model.License as Swagger response schema
+org.dependencytrack.resources.v1.NotificationPublisherResource.createNotificationPublisher(org.dependencytrack.resources.v1.vo.CreateNotificationPublisherRequest) declares JDO model class org.dependencytrack.model.NotificationPublisher as Swagger response schema
+org.dependencytrack.resources.v1.NotificationPublisherResource.getAllNotificationPublishers() declares JDO model class org.dependencytrack.model.NotificationPublisher as Swagger response schema
+org.dependencytrack.resources.v1.NotificationPublisherResource.updateNotificationPublisher(org.dependencytrack.resources.v1.vo.UpdateNotificationPublisherRequest) declares JDO model class org.dependencytrack.model.NotificationPublisher as Swagger response schema
+org.dependencytrack.resources.v1.NotificationRuleResource.addProjectToRule(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.NotificationRule as Swagger response schema
+org.dependencytrack.resources.v1.NotificationRuleResource.addTeamToRule(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.NotificationRule as Swagger response schema
+org.dependencytrack.resources.v1.NotificationRuleResource.createNotificationRule(org.dependencytrack.resources.v1.vo.CreateNotificationRuleRequest) declares JDO model class org.dependencytrack.model.NotificationRule as Swagger response schema
+org.dependencytrack.resources.v1.NotificationRuleResource.createScheduledNotificationRule(org.dependencytrack.resources.v1.vo.CreateScheduledNotificationRuleRequest) declares JDO model class org.dependencytrack.model.NotificationRule as Swagger response schema
+org.dependencytrack.resources.v1.NotificationRuleResource.getAllNotificationRules(org.dependencytrack.model.NotificationTriggerType) declares JDO model class org.dependencytrack.model.NotificationRule as Swagger response schema
+org.dependencytrack.resources.v1.NotificationRuleResource.removeProjectFromRule(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.NotificationRule as Swagger response schema
+org.dependencytrack.resources.v1.NotificationRuleResource.removeTeamFromRule(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.NotificationRule as Swagger response schema
+org.dependencytrack.resources.v1.NotificationRuleResource.updateNotificationRule(org.dependencytrack.resources.v1.vo.UpdateNotificationRuleRequest) declares JDO model class org.dependencytrack.model.NotificationRule as Swagger response schema
+org.dependencytrack.resources.v1.OidcResource.addMapping(org.dependencytrack.resources.v1.vo.MappedOidcGroupRequest) declares JDO model class alpine.model.MappedOidcGroup as Swagger response schema
+org.dependencytrack.resources.v1.OidcResource.createGroup(alpine.model.OidcGroup) declares JDO model class alpine.model.OidcGroup as Swagger response schema
+org.dependencytrack.resources.v1.OidcResource.retrieveGroups() declares JDO model class alpine.model.OidcGroup as Swagger response schema
+org.dependencytrack.resources.v1.OidcResource.retrieveTeamsMappedToGroup(java.lang.String) declares JDO model class alpine.model.Team as Swagger response schema
+org.dependencytrack.resources.v1.OidcResource.updateGroup(alpine.model.OidcGroup) declares JDO model class alpine.model.OidcGroup as Swagger response schema
+org.dependencytrack.resources.v1.PermissionResource.addPermissionToTeam(java.lang.String, java.lang.String) declares JDO model class alpine.model.Team as Swagger response schema
+org.dependencytrack.resources.v1.PermissionResource.addPermissionToUser(java.lang.String, java.lang.String) declares JDO model class alpine.model.User as Swagger response schema
+org.dependencytrack.resources.v1.PermissionResource.removePermissionFromTeam(java.lang.String, java.lang.String) declares JDO model class alpine.model.Team as Swagger response schema
+org.dependencytrack.resources.v1.PermissionResource.removePermissionFromUser(java.lang.String, java.lang.String) declares JDO model class alpine.model.User as Swagger response schema
+org.dependencytrack.resources.v1.PermissionResource.setTeamPermissions(org.dependencytrack.resources.v1.vo.TeamPermissionsSetRequest) declares JDO model class alpine.model.Team as Swagger response schema
+org.dependencytrack.resources.v1.PermissionResource.setUserPermissions(org.dependencytrack.resources.v1.vo.UserPermissionsSetRequest) declares JDO model class alpine.model.User as Swagger response schema
+org.dependencytrack.resources.v1.PolicyResource.addProjectToPolicy(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.Policy as Swagger response schema
+org.dependencytrack.resources.v1.PolicyResource.createPolicy(org.dependencytrack.model.Policy) declares JDO model class org.dependencytrack.model.Policy as Swagger response schema
+org.dependencytrack.resources.v1.PolicyResource.getPolicies() declares JDO model class org.dependencytrack.model.Policy as Swagger response schema
+org.dependencytrack.resources.v1.PolicyResource.getPolicy(java.lang.String) declares JDO model class org.dependencytrack.model.Policy as Swagger response schema
+org.dependencytrack.resources.v1.PolicyResource.removeProjectFromPolicy(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.Policy as Swagger response schema
+org.dependencytrack.resources.v1.PolicyResource.updatePolicy(org.dependencytrack.model.Policy) declares JDO model class org.dependencytrack.model.Policy as Swagger response schema
+org.dependencytrack.resources.v1.PolicyViolationResource.getViolations(boolean, boolean, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.PolicyViolation as Swagger response schema
+org.dependencytrack.resources.v1.PolicyViolationResource.getViolationsByComponent(java.lang.String, boolean) declares JDO model class org.dependencytrack.model.PolicyViolation as Swagger response schema
+org.dependencytrack.resources.v1.PolicyViolationResource.getViolationsByProject(java.lang.String, boolean) declares JDO model class org.dependencytrack.model.PolicyViolation as Swagger response schema
+org.dependencytrack.resources.v1.ProjectResource.createProject(org.dependencytrack.model.Project) declares JDO model class org.dependencytrack.model.Project as Swagger response schema
+org.dependencytrack.resources.v1.ProjectResource.getLatestProjectByName(java.lang.String) declares JDO model class org.dependencytrack.model.Project as Swagger response schema
+org.dependencytrack.resources.v1.ProjectResource.getProject(java.lang.String) declares JDO model class org.dependencytrack.model.Project as Swagger response schema
+org.dependencytrack.resources.v1.ProjectResource.getProject(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.Project as Swagger response schema
+org.dependencytrack.resources.v1.ProjectResource.patchProject(java.lang.String, org.dependencytrack.model.Project) declares JDO model class org.dependencytrack.model.Project as Swagger response schema
+org.dependencytrack.resources.v1.ProjectResource.updateProject(org.dependencytrack.model.Project) declares JDO model class org.dependencytrack.model.Project as Swagger response schema
+org.dependencytrack.resources.v1.RepositoryResource.createRepository(org.dependencytrack.model.Repository) declares JDO model class org.dependencytrack.model.Repository as Swagger response schema
+org.dependencytrack.resources.v1.RepositoryResource.getRepositories() declares JDO model class org.dependencytrack.model.Repository as Swagger response schema
+org.dependencytrack.resources.v1.RepositoryResource.getRepositoriesByType(org.dependencytrack.model.RepositoryType) declares JDO model class org.dependencytrack.model.Repository as Swagger response schema
+org.dependencytrack.resources.v1.RepositoryResource.updateRepository(org.dependencytrack.model.Repository) declares JDO model class org.dependencytrack.model.Repository as Swagger response schema
+org.dependencytrack.resources.v1.ServiceResource.createService(java.lang.String, org.dependencytrack.model.ServiceComponent) declares JDO model class org.dependencytrack.model.ServiceComponent as Swagger response schema
+org.dependencytrack.resources.v1.ServiceResource.getAllServices(java.lang.String) declares JDO model class org.dependencytrack.model.ServiceComponent as Swagger response schema
+org.dependencytrack.resources.v1.ServiceResource.getServiceByUuid(java.lang.String) declares JDO model class org.dependencytrack.model.ServiceComponent as Swagger response schema
+org.dependencytrack.resources.v1.ServiceResource.updateService(org.dependencytrack.model.ServiceComponent) declares JDO model class org.dependencytrack.model.ServiceComponent as Swagger response schema
+org.dependencytrack.resources.v1.TagResource.getTagsForPolicy(java.lang.String) declares JDO model class org.dependencytrack.model.Tag as Swagger response schema
+org.dependencytrack.resources.v1.TeamResource.createTeam(alpine.model.Team) declares JDO model class alpine.model.Team as Swagger response schema
+org.dependencytrack.resources.v1.TeamResource.generateApiKey(java.lang.String) declares JDO model class alpine.model.ApiKey as Swagger response schema
+org.dependencytrack.resources.v1.TeamResource.getTeam(java.lang.String) declares JDO model class alpine.model.Team as Swagger response schema
+org.dependencytrack.resources.v1.TeamResource.getTeams() declares JDO model class alpine.model.Team as Swagger response schema
+org.dependencytrack.resources.v1.TeamResource.regenerateApiKey(java.lang.String) declares JDO model class alpine.model.ApiKey as Swagger response schema
+org.dependencytrack.resources.v1.TeamResource.updateApiKeyComment(java.lang.String, java.lang.String) declares JDO model class alpine.model.ApiKey as Swagger response schema
+org.dependencytrack.resources.v1.TeamResource.updateTeam(alpine.model.Team) declares JDO model class alpine.model.Team as Swagger response schema
+org.dependencytrack.resources.v1.UserResource.addTeamToUser(java.lang.String, org.dependencytrack.model.IdentifiableObject) declares JDO model class alpine.model.User as Swagger response schema
+org.dependencytrack.resources.v1.UserResource.createLdapUser(alpine.model.LdapUser) declares JDO model class alpine.model.LdapUser as Swagger response schema
+org.dependencytrack.resources.v1.UserResource.createManagedUser(alpine.model.ManagedUser) declares JDO model class alpine.model.ManagedUser as Swagger response schema
+org.dependencytrack.resources.v1.UserResource.createOidcUser(alpine.model.OidcUser) declares JDO model class alpine.model.OidcUser as Swagger response schema
+org.dependencytrack.resources.v1.UserResource.getLdapUsers() declares JDO model class alpine.model.LdapUser as Swagger response schema
+org.dependencytrack.resources.v1.UserResource.getManagedUsers() declares JDO model class alpine.model.ManagedUser as Swagger response schema
+org.dependencytrack.resources.v1.UserResource.getSelf() declares JDO model class alpine.model.User as Swagger response schema
+org.dependencytrack.resources.v1.UserResource.removeTeamFromUser(java.lang.String, org.dependencytrack.model.IdentifiableObject) declares JDO model class alpine.model.User as Swagger response schema
+org.dependencytrack.resources.v1.UserResource.setUserTeams(org.dependencytrack.resources.v1.vo.TeamsSetRequest) declares JDO model class alpine.model.User as Swagger response schema
+org.dependencytrack.resources.v1.UserResource.updateManagedUser(alpine.model.ManagedUser) declares JDO model class alpine.model.ManagedUser as Swagger response schema
+org.dependencytrack.resources.v1.UserResource.updateSelf(alpine.model.ManagedUser) declares JDO model class alpine.model.ManagedUser as Swagger response schema
+org.dependencytrack.resources.v1.ViolationAnalysisResource.retrieveAnalysis(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.ViolationAnalysis as Swagger response schema
+org.dependencytrack.resources.v1.ViolationAnalysisResource.updateAnalysis(org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest) declares JDO model class org.dependencytrack.model.ViolationAnalysis as Swagger response schema
+org.dependencytrack.resources.v1.VulnerabilityResource.createVulnerability(org.dependencytrack.model.Vulnerability) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
+org.dependencytrack.resources.v1.VulnerabilityResource.getAllVulnerabilities() declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
+org.dependencytrack.resources.v1.VulnerabilityResource.getVulnerabilitiesByComponent(java.lang.String, boolean) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
+org.dependencytrack.resources.v1.VulnerabilityResource.getVulnerabilitiesByProject(java.lang.String, boolean) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
+org.dependencytrack.resources.v1.VulnerabilityResource.getVulnerabilitiesByTag(java.lang.String) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
+org.dependencytrack.resources.v1.VulnerabilityResource.getVulnerabilityByUuid(java.lang.String) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
+org.dependencytrack.resources.v1.VulnerabilityResource.getVulnerabilityByVulnId(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
+org.dependencytrack.resources.v1.VulnerabilityResource.updateVulnerability(org.dependencytrack.model.Vulnerability) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
+org.dependencytrack.resources.v1.VulnerabilityResource.updateVulnerabilityTags(java.util.List, java.lang.String) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema

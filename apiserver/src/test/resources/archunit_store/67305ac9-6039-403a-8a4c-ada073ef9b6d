@@ -66,8 +66,6 @@ org.dependencytrack.resources.v1.UserResource.removeTeamFromUser(java.lang.Strin
 org.dependencytrack.resources.v1.UserResource.setUserTeams(org.dependencytrack.resources.v1.vo.TeamsSetRequest) declares JDO model class alpine.model.User as Swagger response schema
 org.dependencytrack.resources.v1.UserResource.updateManagedUser(alpine.model.ManagedUser) declares JDO model class alpine.model.ManagedUser as Swagger response schema
 org.dependencytrack.resources.v1.UserResource.updateSelf(alpine.model.ManagedUser) declares JDO model class alpine.model.ManagedUser as Swagger response schema
-org.dependencytrack.resources.v1.ViolationAnalysisResource.retrieveAnalysis(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.ViolationAnalysis as Swagger response schema
-org.dependencytrack.resources.v1.ViolationAnalysisResource.updateAnalysis(org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest) declares JDO model class org.dependencytrack.model.ViolationAnalysis as Swagger response schema
 org.dependencytrack.resources.v1.VulnerabilityResource.createVulnerability(org.dependencytrack.model.Vulnerability) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
 org.dependencytrack.resources.v1.VulnerabilityResource.getAllVulnerabilities() declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
 org.dependencytrack.resources.v1.VulnerabilityResource.getVulnerabilitiesByComponent(java.lang.String, boolean) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema

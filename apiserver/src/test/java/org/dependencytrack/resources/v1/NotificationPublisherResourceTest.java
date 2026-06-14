@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import io.smallrye.config.SmallRyeConfigBuilder;
-import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -260,25 +259,27 @@ class NotificationPublisherResourceTest extends ResourceTest {
     void updateNotificationPublisherTest() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        NotificationPublisher notificationPublisher = qm.createNotificationPublisher(
+        final NotificationPublisher notificationPublisher = qm.createNotificationPublisher(
                 "Example Publisher", "Publisher description",
                 "slack", "template", "text/html",
                 false
         );
         notificationPublisher.setName("Updated Publisher name");
-        Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
+        final Response response = jersey.target(V1_NOTIFICATION_PUBLISHER).request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(notificationPublisher, MediaType.APPLICATION_JSON));
-        Assertions.assertEquals(200, response.getStatus(), 0);
-        JsonObject json = parseJsonObject(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals("Updated Publisher name", json.getString("name"));
-        Assertions.assertFalse(json.getBoolean("defaultPublisher"));
-        Assertions.assertEquals("Publisher description", json.getString("description"));
-        Assertions.assertEquals("template", json.getString("template"));
-        Assertions.assertEquals("text/html", json.getString("templateMimeType"));
-        Assertions.assertEquals(notificationPublisher.getUuid().toString(), json.getString("uuid"));
-        Assertions.assertEquals("slack", json.getString("extensionName"));
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "name": "Updated Publisher name",
+                  "description": "Publisher description",
+                  "extensionName": "slack",
+                  "template": "template",
+                  "templateMimeType": "text/html",
+                  "defaultPublisher": false,
+                  "uuid": "%s"
+                }
+                """.formatted(notificationPublisher.getUuid()));
     }
 
     @Test

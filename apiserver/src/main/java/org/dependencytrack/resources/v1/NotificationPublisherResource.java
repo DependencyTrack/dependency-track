@@ -63,6 +63,7 @@ import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.vo.CreateNotificationPublisherRequest;
+import org.dependencytrack.resources.v1.vo.NotificationPublisherResponse;
 import org.dependencytrack.resources.v1.vo.UpdateNotificationPublisherRequest;
 import org.jspecify.annotations.Nullable;
 import org.owasp.security.logging.SecurityMarkers;
@@ -113,7 +114,7 @@ public class NotificationPublisherResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "A list of all notification publishers",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationPublisher.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationPublisherResponse.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
@@ -122,8 +123,11 @@ public class NotificationPublisherResource extends AbstractApiResource {
             Permissions.Constants.SYSTEM_CONFIGURATION_READ
     })
     public Response getAllNotificationPublishers() {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            final List<NotificationPublisher> publishers = qm.getAllNotificationPublishers();
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+            final List<NotificationPublisherResponse> publishers =
+                    qm.getAllNotificationPublishers().stream()
+                            .map(NotificationPublisherResponse::of)
+                            .toList();
             return Response.ok(publishers).build();
         }
     }
@@ -139,7 +143,7 @@ public class NotificationPublisherResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "201",
                     description = "The created notification publisher",
-                    content = @Content(schema = @Schema(implementation = NotificationPublisher.class))
+                    content = @Content(schema = @Schema(implementation = NotificationPublisherResponse.class))
             ),
             @ApiResponse(responseCode = "400", description = "Invalid notification class or trying to modify a default publisher"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -173,9 +177,15 @@ public class NotificationPublisherResource extends AbstractApiResource {
             });
         }
 
-        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Created notification publisher '{}'", createdPublisher.getName());
+        LOGGER.info(
+                SecurityMarkers.SECURITY_AUDIT,
+                "Created notification publisher '{}'",
+                createdPublisher.getName());
 
-        return Response.status(Response.Status.CREATED).entity(createdPublisher).build();
+        return Response
+                .status(Response.Status.CREATED)
+                .entity(NotificationPublisherResponse.of(createdPublisher))
+                .build();
     }
 
     @POST
@@ -189,7 +199,7 @@ public class NotificationPublisherResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "The updated notification publisher",
-                    content = @Content(schema = @Schema(implementation = NotificationPublisher.class))
+                    content = @Content(schema = @Schema(implementation = NotificationPublisherResponse.class))
             ),
             @ApiResponse(responseCode = "400", description = "Invalid notification class or trying to modify a default publisher"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -238,9 +248,14 @@ public class NotificationPublisherResource extends AbstractApiResource {
             });
         }
 
-        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Updated notification publisher '{}'", updatedPublisher.getName());
+        LOGGER.info(
+                SecurityMarkers.SECURITY_AUDIT,
+                "Updated notification publisher '{}'",
+                updatedPublisher.getName());
 
-        return Response.ok(updatedPublisher).build();
+        return Response
+                .ok(NotificationPublisherResponse.of(updatedPublisher))
+                .build();
     }
 
     @DELETE
@@ -263,19 +278,27 @@ public class NotificationPublisherResource extends AbstractApiResource {
     })
     public Response deleteNotificationPublisher(
             @Parameter(description = "The UUID of the notification publisher to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
-            @PathParam("notificationPublisherUuid") @ValidUuid String notificationPublisherUuid) {
+            @PathParam("notificationPublisherUuid") @ValidUuid String uuid) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final NotificationPublisher notificationPublisher = qm.getObjectByUuid(NotificationPublisher.class, notificationPublisherUuid);
-                if (notificationPublisher != null) {
-                    if (notificationPublisher.isDefaultPublisher()) {
-                        return Response.status(Response.Status.BAD_REQUEST).entity("Deleting a default notification publisher is forbidden.").build();
+                final var publisher = qm.getObjectByUuid(NotificationPublisher.class, uuid);
+                if (publisher != null) {
+                    if (publisher.isDefaultPublisher()) {
+                        return Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity("Deleting a default notification publisher is forbidden.")
+                                .build();
                     } else {
-                        qm.delete(notificationPublisher);
-                        return Response.status(Response.Status.NO_CONTENT).build();
+                        qm.delete(publisher);
+                        return Response
+                                .status(Response.Status.NO_CONTENT)
+                                .build();
                     }
                 } else {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the notification rule could not be found.").build();
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The UUID of the notification rule could not be found.")
+                            .build();
                 }
             });
         }
@@ -344,7 +367,7 @@ public class NotificationPublisherResource extends AbstractApiResource {
             @Parameter(description = "The UUID of the rule to test", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String ruleUuid) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
-            final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            final var rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
             if (rule == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
@@ -384,7 +407,10 @@ public class NotificationPublisherResource extends AbstractApiResource {
             return Response.ok().build();
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending the notification.").build();
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Exception occurred while sending the notification.")
+                    .build();
         }
     }
 

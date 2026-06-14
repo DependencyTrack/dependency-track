@@ -7,10 +7,6 @@ org.dependencytrack.resources.v1.ComponentResource.getComponentByIdentity(java.l
 org.dependencytrack.resources.v1.ComponentResource.getComponentByUuid(java.lang.String, boolean) declares JDO model class org.dependencytrack.model.Component as Swagger response schema
 org.dependencytrack.resources.v1.ComponentResource.getOccurrences(java.util.UUID) declares JDO model class org.dependencytrack.model.ComponentOccurrence as Swagger response schema
 org.dependencytrack.resources.v1.ComponentResource.updateComponent(org.dependencytrack.model.Component) declares JDO model class org.dependencytrack.model.Component as Swagger response schema
-org.dependencytrack.resources.v1.ConfigPropertyResource.getConfigProperties() declares JDO model class alpine.model.ConfigProperty as Swagger response schema
-org.dependencytrack.resources.v1.ConfigPropertyResource.getPublicConfigProperty(java.lang.String, java.lang.String) declares JDO model class alpine.model.ConfigProperty as Swagger response schema
-org.dependencytrack.resources.v1.ConfigPropertyResource.updateConfigProperty(alpine.model.ConfigProperty) declares JDO model class alpine.model.ConfigProperty as Swagger response schema
-org.dependencytrack.resources.v1.ConfigPropertyResource.updateConfigProperty(java.util.List) declares JDO model class alpine.model.ConfigProperty as Swagger response schema
 org.dependencytrack.resources.v1.LdapResource.addMapping(org.dependencytrack.resources.v1.vo.MappedLdapGroupRequest) declares JDO model class alpine.model.MappedLdapGroup as Swagger response schema
 org.dependencytrack.resources.v1.LdapResource.retrieveLdapGroups(java.lang.String) declares JDO model class alpine.model.MappedLdapGroup as Swagger response schema
 org.dependencytrack.resources.v1.NotificationRuleResource.addProjectToRule(java.lang.String, java.lang.String) declares JDO model class org.dependencytrack.model.NotificationRule as Swagger response schema

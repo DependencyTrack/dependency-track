@@ -76,6 +76,7 @@ import java.util.UUID;
                 @Persistent(name = "licenseId"),
                 @Persistent(name = "osiApproved"),
                 @Persistent(name = "fsfLibre"),
+                @Persistent(name = "deprecatedLicenseId"),
                 @Persistent(name = "customLicense")
         })
 })

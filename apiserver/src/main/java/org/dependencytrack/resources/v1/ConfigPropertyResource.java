@@ -82,9 +82,12 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
+    @PermissionRequired({
+            Permissions.Constants.SYSTEM_CONFIGURATION,
+            Permissions.Constants.SYSTEM_CONFIGURATION_READ
+    })
     public Response getConfigProperties() {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final List<ConfigProperty> configProperties = qm.getConfigProperties();
             return Response.ok(configProperties).build();
         }
@@ -105,7 +108,10 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The config property could not be found"),
     })
-    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE})
+    @PermissionRequired({
+            Permissions.Constants.SYSTEM_CONFIGURATION,
+            Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE
+    })
     public Response updateConfigProperty(ConfigProperty json) {
         final Validator validator = super.getValidator();
         failOnValidationError(
@@ -113,10 +119,11 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
                 validator.validateProperty(json, "propertyName"),
                 validator.validateProperty(json, "propertyValue")
         );
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final ConfigProperty property = qm.getConfigProperty(json.getGroupName(), json.getPropertyName());
-                return updatePropertyValue(qm, json, property);
+                final ConfigProperty property = qm.getConfigProperty(
+                        json.getGroupName(), json.getPropertyName());
+                return updatePropertyValue(json, property);
             });
         }
     }
@@ -138,7 +145,10 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "One or more config properties could not be found"),
     })
-    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE})
+    @PermissionRequired({
+            Permissions.Constants.SYSTEM_CONFIGURATION,
+            Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE
+    })
     public Response updateConfigProperty(List<ConfigProperty> list) {
         final Validator validator = super.getValidator();
         for (ConfigProperty item : list) {
@@ -148,15 +158,18 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
                     validator.validateProperty(item, "propertyValue")
             );
         }
-        List<Object> returnList = new ArrayList<>();
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+
+        final var returnList = new ArrayList<>();
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             qm.runInTransaction(() -> {
                 for (ConfigProperty item : list) {
-                    final ConfigProperty property = qm.getConfigProperty(item.getGroupName(), item.getPropertyName());
-                    returnList.add(updatePropertyValue(qm, item, property).getEntity());
+                    final ConfigProperty property = qm.getConfigProperty(
+                            item.getGroupName(), item.getPropertyName());
+                    returnList.add(updatePropertyValue(item, property).getEntity());
                 }
             });
         }
+
         return Response.ok(returnList).build();
     }
 
@@ -174,14 +187,16 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             @PathParam("groupName") String groupName,
             @Parameter(description = "The property name of the value to retrieve", required = true)
             @PathParam("propertyName") String propertyName) {
-        ConfigProperty configProperty = new ConfigProperty();
+        final var configProperty = new ConfigProperty();
         configProperty.setGroupName(groupName);
         configProperty.setPropertyName(propertyName);
-        ConfigPropertyConstants publicConfigProperty = ConfigPropertyConstants.ofProperty(configProperty);
+
+        final var publicConfigProperty = ConfigPropertyConstants.ofProperty(configProperty);
         if (!publicConfigProperty.getIsPublic()) {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             ConfigProperty property = qm.getConfigProperty(groupName, propertyName);
             return Response.ok(property).build();
         }

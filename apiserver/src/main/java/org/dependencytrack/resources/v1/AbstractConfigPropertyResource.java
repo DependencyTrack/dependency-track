@@ -58,22 +58,6 @@ abstract class AbstractConfigPropertyResource extends AbstractApiResource {
         this.secretManager = secretManager;
     }
 
-    Response updatePropertyValue(IConfigProperty json, @Nullable IConfigProperty property) {
-        if (property == null) {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity("The config property could not be found.")
-                    .build();
-        }
-
-        final Response check = applyPropertyValue(json.getPropertyValue(), property);
-        if (check != null) {
-            return check;
-        }
-
-        return Response.ok(property).build();
-    }
-
     @Nullable Response applyPropertyValue(@Nullable String requestedValue, IConfigProperty property) {
         PersistenceUtil.assertPersistent(property, "property must be persistent");
 

@@ -116,7 +116,7 @@ public class UserResource extends AbstractApiResource {
     @AuthenticationNotRequired
     public Response validateCredentials(@FormParam("username") String username, @FormParam("password") String password) {
         final Authenticator auth = new Authenticator(username, password);
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 try {
                     final Principal principal = auth.authenticate();
@@ -167,7 +167,7 @@ public class UserResource extends AbstractApiResource {
             return Response.status(Response.Status.NO_CONTENT).build();
         }
 
-        try (final QueryManager qm = new QueryManager()) {
+        try (final QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 try {
                     final Principal principal = authService.authenticate();
@@ -204,7 +204,7 @@ public class UserResource extends AbstractApiResource {
                                         @FormParam("newPassword") String newPassword, @FormParam("confirmPassword") String confirmPassword) {
         final Authenticator auth = new Authenticator(username, password);
         AtomicReference<Principal> principal = new AtomicReference<>();
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 try {
                     try {
@@ -342,7 +342,7 @@ public class UserResource extends AbstractApiResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getSelf() {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             if (getPrincipal() instanceof final User user) {
                 return Response
                         .ok(qm.getUser(user.getUsername()))
@@ -369,7 +369,7 @@ public class UserResource extends AbstractApiResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response updateSelf(ManagedUser jsonUser) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             if (super.isLdapUser()) {
                 final LdapUser user = qm.getLdapUser(getPrincipal().getName());
                 return Response.status(Response.Status.BAD_REQUEST).entity(user).build();
@@ -417,12 +417,8 @@ public class UserResource extends AbstractApiResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getSelfPermissions() {
-        try (final var qm = new QueryManager()) {
-            if (getPrincipal() instanceof final User user) {
-                return Response
-                        .ok(qm.getEffectivePermissions(user))
-                        .build();
-            }
+        if (getPrincipal() instanceof User) {
+            return Response.ok(getEffectivePermissions()).build();
         }
 
         return Response.status(401).build();
@@ -448,7 +444,7 @@ public class UserResource extends AbstractApiResource {
     })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_CREATE})
     public Response createLdapUser(LdapUser jsonUser) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 if (StringUtils.isBlank(jsonUser.getUsername())) {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Username cannot be null or blank.").build();
@@ -483,7 +479,7 @@ public class UserResource extends AbstractApiResource {
     })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
     public Response deleteLdapUser(LdapUser jsonUser) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final LdapUser user = qm.getLdapUser(jsonUser.getUsername());
                 if (user != null) {
@@ -520,7 +516,7 @@ public class UserResource extends AbstractApiResource {
     })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_CREATE})
     public Response createManagedUser(ManagedUser jsonUser) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 if (StringUtils.isBlank(jsonUser.getUsername())) {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Username cannot be null or blank.").build();
@@ -575,7 +571,7 @@ public class UserResource extends AbstractApiResource {
     })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_UPDATE})
     public Response updateManagedUser(ManagedUser jsonUser) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
                 if (user != null) {
@@ -619,7 +615,7 @@ public class UserResource extends AbstractApiResource {
     })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
     public Response deleteManagedUser(ManagedUser jsonUser) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
                 if (user != null) {
@@ -656,7 +652,7 @@ public class UserResource extends AbstractApiResource {
     })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_CREATE})
     public Response createOidcUser(final OidcUser jsonUser) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 if (StringUtils.isBlank(jsonUser.getUsername())) {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Username cannot be null or blank.").build();
@@ -691,7 +687,7 @@ public class UserResource extends AbstractApiResource {
     })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
     public Response deleteOidcUser(final OidcUser jsonUser) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final OidcUser user = qm.getOidcUser(jsonUser.getUsername());
                 if (user != null) {
@@ -732,7 +728,7 @@ public class UserResource extends AbstractApiResource {
             @PathParam("username") String username,
             @Parameter(description = "The UUID of the team to associate username with", required = true)
             IdentifiableObject identifiableObject) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Team team = qm.getObjectByUuid(Team.class, identifiableObject.getUuid());
                 if (team == null) {
@@ -779,7 +775,7 @@ public class UserResource extends AbstractApiResource {
             @PathParam("username") String username,
             @Parameter(description = "The UUID of the team to un-associate username from", required = true)
             IdentifiableObject identifiableObject) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Team team = qm.getObjectByUuid(Team.class, identifiableObject.getUuid());
                 if (team == null) {
@@ -818,7 +814,7 @@ public class UserResource extends AbstractApiResource {
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_UPDATE})
     public Response setUserTeams(
             @Parameter(description = "Username and list of UUIDs to assign to user", required = true) @Valid TeamsSetRequest request) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 User principal = qm.getUser(request.username());
                 if (principal == null) {

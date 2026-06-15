@@ -1,0 +1,58 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
+ */
+package org.dependencytrack.resources.v1.vo;
+
+import alpine.server.json.TrimmedStringDeserializer;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import org.dependencytrack.model.RepositoryType;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
+/// @since 5.1.0
+@NullMarked
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record CreateRepositoryRequest(
+        @NotNull
+        @Schema(description = "Type of the repository", requiredMode = Schema.RequiredMode.REQUIRED)
+        RepositoryType type,
+        @NotBlank
+        @JsonDeserialize(using = TrimmedStringDeserializer.class)
+        @Schema(description = "Unique identifier of the repository within its type", requiredMode = Schema.RequiredMode.REQUIRED)
+        String identifier,
+        @NotBlank
+        @JsonDeserialize(using = TrimmedStringDeserializer.class)
+        @Schema(description = "URL of the repository", requiredMode = Schema.RequiredMode.REQUIRED)
+        String url,
+        @Schema(description = "Whether the repository is enabled", requiredMode = Schema.RequiredMode.REQUIRED)
+        boolean enabled,
+        @Schema(description = "Whether the repository is internal to the organization")
+        @Nullable Boolean internal,
+        @Schema(description = "Whether the repository requires authentication", requiredMode = Schema.RequiredMode.REQUIRED)
+        boolean authenticationRequired,
+        @JsonDeserialize(using = TrimmedStringDeserializer.class)
+        @Schema(description = "Username to authenticate with")
+        @Nullable String username,
+        @JsonDeserialize(using = TrimmedStringDeserializer.class)
+        @Schema(description = "Name of the secret holding the password or token")
+        @Nullable String password) {
+}

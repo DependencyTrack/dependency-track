@@ -38,7 +38,7 @@ public class CpeConditionTest extends PersistenceCapableTest {
                 // MATCHES with exact match
                 new Object[]{MATCHES, "cpe:/a:acme:application:1.0.0", "cpe:/a:acme:application:1.0.0", true},
                 // MATCHES with regex match
-                new Object[]{MATCHES, "cpe:/a:acme:\\\\w+:[0-9].0.0", "cpe:/a:acme:application:1.0.0", true},
+                new Object[]{MATCHES, "cpe:/a:acme:\\w+:[0-9].0.0", "cpe:/a:acme:application:1.0.0", true},
                 // MATCHES with no match
                 new Object[]{MATCHES, "cpe:/a:acme:application:1.0.0", "cpe:/a:acme:application:9.9.9", false},
                 // NO_MATCH with no match

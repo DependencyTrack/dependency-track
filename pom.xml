@@ -22,12 +22,13 @@
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track-parent</artifactId>
     <packaging>pom</packaging>
-    <version>5.0.0-rc.5-SNAPSHOT</version>
+    <version>5.1.0-SNAPSHOT</version>
 
     <modules>
         <module>common</module>
         <module>support/cyclonedx-proto</module>
         <module>support/datanucleus-plugin</module>
+        <module>support/flyway</module>
         <module>support/jdbi</module>
         <module>support/os-distro-metadata</module>
         <module>support/smallrye-config-secret-handler-file</module>
@@ -130,25 +131,25 @@
         <lib.datanucleus-core.version>6.0.11</lib.datanucleus-core.version>
         <lib.datanucleus-javax-jdo.version>3.2.1</lib.datanucleus-javax-jdo.version>
         <lib.datanucleus-rdbms.version>6.0.11</lib.datanucleus-rdbms.version>
-        <lib.db-scheduler.version>16.10.0</lib.db-scheduler.version>
-        <lib.flyway.version>12.6.1</lib.flyway.version>
+        <lib.db-scheduler.version>16.12.0</lib.db-scheduler.version>
+        <lib.flyway.version>12.7.0</lib.flyway.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.greenmail.version>2.1.8</lib.greenmail.version>
-        <lib.hikaricp.version>7.0.2</lib.hikaricp.version>
+        <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
         <lib.httpclient5.version>5.6.1</lib.httpclient5.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
-        <lib.jackson.version>2.21.3</lib.jackson.version>
+        <lib.jackson.version>2.22.0</lib.jackson.version>
         <lib.jdbi.version>3.53.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
-        <lib.jetty.version>12.1.9</lib.jetty.version>
+        <lib.jetty.version>12.1.10</lib.jetty.version>
         <lib.json-schema-validator.version>1.5.9</lib.json-schema-validator.version>
-        <lib.json-unit.version>5.1.1</lib.json-unit.version>
+        <lib.json-unit.version>5.1.2</lib.json-unit.version>
         <lib.jspecify.version>1.0.0</lib.jspecify.version>
         <lib.junit-jupiter.version>6.1.0</lib.junit-jupiter.version>
         <lib.kafka-clients.version>4.3.0</lib.kafka-clients.version>
-        <lib.kotlin.version>2.3.21</lib.kotlin.version>
-        <lib.logback.version>1.5.32</lib.logback.version>
+        <lib.kotlin.version>2.4.0</lib.kotlin.version>
+        <lib.logback.version>1.5.34</lib.logback.version>
         <lib.micrometer.version>1.16.5</lib.micrometer.version>
         <lib.microprofile-config.version>3.1.1</lib.microprofile-config.version>
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
@@ -158,9 +159,9 @@
         <lib.open-feign.version>13.12</lib.open-feign.version>
         <lib.open-vulnerability-clients.version>9.0.5</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
-        <lib.pebble.version>4.1.1</lib.pebble.version>
+        <lib.pebble.version>4.1.2</lib.pebble.version>
         <lib.postgresql.version>42.7.11</lib.postgresql.version>
-        <lib.prometheus.version>1.6.1</lib.prometheus.version>
+        <lib.prometheus.version>1.7.0</lib.prometheus.version>
         <lib.protobuf-java.version>4.35.0</lib.protobuf-java.version>
         <lib.resilience4j.version>2.4.0</lib.resilience4j.version>
         <lib.s3mock.version>5.0.0</lib.s3mock.version>
@@ -653,13 +654,13 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-report-plugin</artifactId>
-                    <version>3.5.5</version>
+                    <version>3.5.6</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.14</version>
+                    <version>0.8.15</version>
                 </plugin>
 
                 <plugin>
@@ -755,7 +756,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>13.4.2</version>
+                        <version>13.5.0</version>
                     </dependency>
                 </dependencies>
             </plugin>

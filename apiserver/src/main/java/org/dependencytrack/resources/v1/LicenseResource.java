@@ -45,6 +45,10 @@ import org.dependencytrack.model.License;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
+import org.dependencytrack.resources.v1.vo.ConciseLicenseResponse;
+import org.dependencytrack.resources.v1.vo.CreateLicenseRequest;
+import org.dependencytrack.resources.v1.vo.LicenseResponse;
+import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,14 +81,22 @@ public class LicenseResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all licenses with complete metadata for each license",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of licenses", schema = @Schema(format = "integeger")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = License.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = LicenseResponse.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getLicenses() {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getLicenses();
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            final List<LicenseResponse> responses =
+                    result.getList(License.class).stream()
+                            .map(LicenseResponse::of)
+                            .toList();
+
+            return Response
+                    .ok(responses)
+                    .header(TOTAL_COUNT_HEADER, result.getTotal())
+                    .build();
         }
     }
 
@@ -99,14 +111,16 @@ public class LicenseResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A concise listing of all licenses",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of licenses", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = License.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ConciseLicenseResponse.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response getLicenseListing() {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final List<License> result = qm.getAllLicensesConcise();
-            return Response.ok(result).build();
+            return Response
+                    .ok(result.stream().map(ConciseLicenseResponse::of).toList())
+                    .build();
         }
     }
 
@@ -120,7 +134,7 @@ public class LicenseResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "A specific license",
-                    content = @Content(schema = @Schema(implementation = License.class))
+                    content = @Content(schema = @Schema(implementation = LicenseResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The license could not be found")
@@ -128,12 +142,17 @@ public class LicenseResource extends AbstractApiResource {
     public Response getLicense(
             @Parameter(description = "The SPDX License ID of the license to retrieve", required = true)
             @PathParam("licenseId") String licenseId) {
-        try (QueryManager qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final License license = qm.getLicense(licenseId);
             if (license != null) {
-                return Response.ok(license).build();
+                return Response
+                        .ok(LicenseResponse.of(license))
+                        .build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The license could not be found.").build();
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity("The license could not be found.")
+                        .build();
             }
         }
     }
@@ -148,28 +167,39 @@ public class LicenseResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "201",
                     description = "The created license",
-                    content = @Content(schema = @Schema(implementation = License.class))
+                    content = @Content(schema = @Schema(implementation = LicenseResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "409", description = "A license with the specified ID already exists.")
     })
-    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_CREATE})
-    public Response createLicense(License jsonLicense) {
+    @PermissionRequired({
+            Permissions.Constants.SYSTEM_CONFIGURATION,
+            Permissions.Constants.SYSTEM_CONFIGURATION_CREATE
+    })
+    public Response createLicense(CreateLicenseRequest request) {
         final Validator validator = super.getValidator();
         failOnValidationError(
-                validator.validateProperty(jsonLicense, "name"),
-                validator.validateProperty(jsonLicense, "licenseId")
+                validator.validateProperty(request, "name"),
+                validator.validateProperty(request, "licenseId")
         );
-        try (QueryManager qm = new QueryManager()) {
+
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                License license = qm.getLicense(jsonLicense.getLicenseId());
-                if (license == null) {
-                    license = qm.createCustomLicense(jsonLicense, true);
-                    LOGGER.info("License {} created by {}", license.getName(), super.getPrincipal().getName());
-                    return Response.status(Response.Status.CREATED).entity(license).build();
-                } else {
-                    return Response.status(Response.Status.CONFLICT).entity("A license with the specified name already exists.").build();
+                final License existing = qm.getLicense(request.licenseId());
+                if (existing != null) {
+                    return Response
+                            .status(Response.Status.CONFLICT)
+                            .entity("A license with the specified licenseId already exists.")
+                            .build();
                 }
+
+                final License license = qm.createCustomLicense(convert(request), true);
+                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Created license {}", license.getName());
+
+                return Response
+                        .status(Response.Status.CREATED)
+                        .entity(LicenseResponse.of(license))
+                        .build();
             });
         }
     }
@@ -187,25 +217,60 @@ public class LicenseResource extends AbstractApiResource {
             @ApiResponse(responseCode = "404", description = "The license could not be found"),
             @ApiResponse(responseCode = "409", description = "Only custom licenses can be deleted.")
     })
-    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_DELETE})
+    @PermissionRequired({
+            Permissions.Constants.SYSTEM_CONFIGURATION,
+            Permissions.Constants.SYSTEM_CONFIGURATION_DELETE
+    })
     public Response deleteLicense(
             @Parameter(description = "The SPDX License ID of the license to delete", required = true)
             @PathParam("licenseId") String licenseId) {
-        try (QueryManager qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final License license = qm.getLicense(licenseId);
                 if (license != null) {
                     if (Boolean.TRUE.equals(license.isCustomLicense())) {
-                        LOGGER.info("License {} deletion request by {}", license, super.getPrincipal().getName());
+                        final String licenseName = license.getName();
                         qm.deleteLicense(license, true);
+                        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted license {}", licenseName);
                         return Response.status(Response.Status.NO_CONTENT).build();
                     } else {
-                        return Response.status(Response.Status.CONFLICT).entity("Only custom licenses can be deleted.").build();
+                        return Response
+                                .status(Response.Status.CONFLICT)
+                                .entity("Only custom licenses can be deleted.")
+                                .build();
                     }
                 } else {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The license could not be found.").build();
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The license could not be found.")
+                            .build();
                 }
             });
         }
     }
+
+    private static License convert(CreateLicenseRequest request) {
+        final License license = new License();
+        license.setName(request.name());
+        license.setLicenseId(request.licenseId());
+        license.setText(request.licenseText());
+        license.setHeader(request.standardLicenseHeader());
+        license.setTemplate(request.standardLicenseTemplate());
+        license.setComment(request.licenseComments());
+        if (request.seeAlso() != null) {
+            license.setSeeAlso(request.seeAlso().toArray(String[]::new));
+        }
+        if (request.isOsiApproved() != null) {
+            license.setOsiApproved(request.isOsiApproved());
+        }
+        if (request.isFsfLibre() != null) {
+            license.setFsfLibre(request.isFsfLibre());
+        }
+        if (request.isDeprecatedLicenseId() != null) {
+            license.setDeprecatedLicenseId(request.isDeprecatedLicenseId());
+        }
+
+        return license;
+    }
+
 }

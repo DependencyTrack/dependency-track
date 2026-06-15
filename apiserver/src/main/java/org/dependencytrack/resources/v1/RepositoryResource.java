@@ -46,7 +46,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Repository;
@@ -57,7 +56,12 @@ import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
+import org.dependencytrack.resources.v1.vo.CreateRepositoryRequest;
+import org.dependencytrack.resources.v1.vo.RepositoryResponse;
+import org.dependencytrack.resources.v1.vo.UpdateRepositoryRequest;
 import org.dependencytrack.secret.management.SecretManager;
+
+import java.util.List;
 
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
@@ -94,15 +98,26 @@ public class RepositoryResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all repositories",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of repositories", schema = @Schema(type = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Repository.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = RepositoryResponse.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
+    @PermissionRequired({
+            Permissions.Constants.SYSTEM_CONFIGURATION,
+            Permissions.Constants.SYSTEM_CONFIGURATION_READ
+    })
     public Response getRepositories() {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getRepositories();
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            final List<RepositoryResponse> responses =
+                    result.getList(Repository.class).stream()
+                            .map(RepositoryResponse::of)
+                            .toList();
+
+            return Response
+                    .ok(responses)
+                    .header(TOTAL_COUNT_HEADER, result.getTotal())
+                    .build();
         }
     }
 
@@ -119,17 +134,28 @@ public class RepositoryResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of repositories that support the provided type",
                     headers = @Header(description = "The total number of repositories", name = TOTAL_COUNT_HEADER, schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Repository.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = RepositoryResponse.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
+    @PermissionRequired({
+            Permissions.Constants.SYSTEM_CONFIGURATION,
+            Permissions.Constants.SYSTEM_CONFIGURATION_READ
+    })
     public Response getRepositoriesByType(
             @Parameter(description = "The type of repositories to retrieve", required = true)
             @PathParam("type") RepositoryType type) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getRepositories(type);
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            final List<RepositoryResponse> responses =
+                    result.getList(Repository.class).stream()
+                            .map(RepositoryResponse::of)
+                            .toList();
+
+            return Response
+                    .ok(responses)
+                    .header(TOTAL_COUNT_HEADER, result.getTotal())
+                    .build();
         }
     }
 
@@ -153,21 +179,31 @@ public class RepositoryResource extends AbstractApiResource {
     public Response getRepositoryMetaComponent(
             @Parameter(description = "The Package URL for the component to query", required = true)
             @QueryParam("purl") String purl) {
+        final PackageURL parsedPurl;
         try {
-            final PackageURL packageURL = new PackageURL(purl);
-            final RepositoryType type = RepositoryType.resolve(packageURL);
-            if (RepositoryType.UNSUPPORTED == type) {
-                return Response.noContent().build();
-            }
-            final PackageMetadata pm = withJdbiHandle(
-                    handle -> new PackageMetadataDao(handle).get(packageURL));
-            if (pm == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The repository metadata for the specified component cannot be found.").build();
-            }
-            return Response.ok(RepositoryMetaComponent.of(pm)).build();
+            parsedPurl = new PackageURL(purl);
         } catch (MalformedPackageURLException e) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .build();
         }
+
+        final RepositoryType type = RepositoryType.resolve(parsedPurl);
+        if (RepositoryType.UNSUPPORTED == type) {
+            return Response.noContent().build();
+        }
+
+        final PackageMetadata pm = withJdbiHandle(handle -> new PackageMetadataDao(handle).get(parsedPurl));
+        if (pm == null) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity("The repository metadata for the specified component cannot be found.")
+                    .build();
+        }
+
+        return Response
+                .ok(RepositoryMetaComponent.of(pm))
+                .build();
     }
 
     @PUT
@@ -181,53 +217,57 @@ public class RepositoryResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "201",
                     description = "The created repository",
-                    content = @Content(schema = @Schema(implementation = Repository.class))
+                    content = @Content(schema = @Schema(implementation = RepositoryResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "409", description = "A repository with the specified identifier already exists")
     })
-    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_CREATE})
-    public Response createRepository(Repository jsonRepository) {
+    @PermissionRequired({
+            Permissions.Constants.SYSTEM_CONFIGURATION,
+            Permissions.Constants.SYSTEM_CONFIGURATION_CREATE
+    })
+    public Response createRepository(CreateRepositoryRequest request) {
         final Validator validator = super.getValidator();
-        failOnValidationError(
-                validator.validateProperty(jsonRepository, "identifier"),
-                validator.validateProperty(jsonRepository, "url")
-        );
-        if (jsonRepository.isAuthenticationRequired() == null) {
-            jsonRepository.setAuthenticationRequired(false);
-        }
-        final String passwordSecretName = StringUtils.trimToNull(jsonRepository.getPassword());
-        if (Boolean.TRUE.equals(jsonRepository.isAuthenticationRequired())
-                && passwordSecretName == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
+        failOnValidationError(validator.validate(request));
+
+        if (request.authenticationRequired() && request.password() == null) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
                     .entity("A password secret name is required when authentication is enabled.")
                     .build();
         }
-        try (QueryManager qm = new QueryManager()) {
+
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final boolean exists = qm.repositoryExist(jsonRepository.getType(), StringUtils.trimToNull(jsonRepository.getIdentifier()));
+                final boolean exists = qm.repositoryExist(request.type(), request.identifier());
                 if (!exists) {
-                    if (passwordSecretName != null
-                            && secretManager.getSecretMetadata(passwordSecretName) == null) {
+                    if (request.password() != null
+                            && secretManager.getSecretMetadata(request.password()) == null) {
                         return Response
                                 .status(Response.Status.BAD_REQUEST)
-                                .entity("The secret with name \"%s\" could not be found.".formatted(passwordSecretName))
+                                .entity("The secret with name \"%s\" could not be found.".formatted(request.password()))
                                 .build();
                     }
 
                     final Repository repository = qm.createRepository(
-                            jsonRepository.getType(),
-                            StringUtils.trimToNull(jsonRepository.getIdentifier()),
-                            StringUtils.trimToNull(jsonRepository.getUrl()),
-                            jsonRepository.isEnabled(),
-                            jsonRepository.isInternal(),
-                            jsonRepository.isAuthenticationRequired(),
-                            jsonRepository.getUsername(),
-                            passwordSecretName);
+                            request.type(),
+                            request.identifier(),
+                            request.url(),
+                            request.enabled(),
+                            Boolean.TRUE.equals(request.internal()),
+                            request.authenticationRequired(),
+                            request.username(),
+                            request.password());
 
-                    return Response.status(Response.Status.CREATED).entity(repository).build();
+                    return Response
+                            .status(Response.Status.CREATED)
+                            .entity(RepositoryResponse.of(repository))
+                            .build();
                 } else {
-                    return Response.status(Response.Status.CONFLICT).entity("A repository with the specified identifier already exists.").build();
+                    return Response
+                            .status(Response.Status.CONFLICT)
+                            .entity("A repository with the specified identifier already exists.")
+                            .build();
                 }
             });
         }
@@ -244,49 +284,54 @@ public class RepositoryResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "The updated repository",
-                    content = @Content(schema = @Schema(implementation = Repository.class))
+                    content = @Content(schema = @Schema(implementation = RepositoryResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the repository could not be found")
     })
-    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE})
-    public Response updateRepository(Repository jsonRepository) {
+    @PermissionRequired({
+            Permissions.Constants.SYSTEM_CONFIGURATION,
+            Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE
+    })
+    public Response updateRepository(UpdateRepositoryRequest request) {
         final Validator validator = super.getValidator();
-        failOnValidationError(validator.validateProperty(jsonRepository, "identifier"),
-                validator.validateProperty(jsonRepository, "url")
-        );
-        if (jsonRepository.isAuthenticationRequired() == null) {
-            jsonRepository.setAuthenticationRequired(false);
-        }
-        final String passwordSecretName = StringUtils.trimToNull(jsonRepository.getPassword());
-        if (Boolean.TRUE.equals(jsonRepository.isAuthenticationRequired())
-                && passwordSecretName == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
+        failOnValidationError(validator.validate(request));
+
+        if (request.authenticationRequired() && request.password() == null) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
                     .entity("A password secret name is required when authentication is enabled.")
                     .build();
         }
-        try (QueryManager qm = new QueryManager()) {
+
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                Repository repository = qm.getObjectByUuid(Repository.class, jsonRepository.getUuid());
+                var repository = qm.getObjectByUuid(Repository.class, request.uuid());
                 if (repository != null) {
-                    if (passwordSecretName != null && secretManager.getSecretMetadata(passwordSecretName) == null) {
+                    if (request.password() != null && secretManager.getSecretMetadata(request.password()) == null) {
                         return Response.status(Response.Status.BAD_REQUEST)
-                                .entity("The secret with name \"%s\" could not be found.".formatted(passwordSecretName))
+                                .entity("The secret with name \"%s\" could not be found.".formatted(request.password()))
                                 .build();
                     }
 
                     repository = qm.updateRepository(
-                            jsonRepository.getUuid(),
+                            request.uuid(),
                             repository.getIdentifier(),
-                            StringUtils.trimToNull(jsonRepository.getUrl()),
-                            jsonRepository.isInternal(),
-                            jsonRepository.isAuthenticationRequired(),
-                            jsonRepository.getUsername(),
-                            passwordSecretName,
-                            jsonRepository.isEnabled());
-                    return Response.ok(repository).build();
+                            request.url(),
+                            Boolean.TRUE.equals(request.internal()),
+                            request.authenticationRequired(),
+                            request.username(),
+                            request.password(),
+                            request.enabled());
+
+                    return Response
+                            .ok(RepositoryResponse.of(repository))
+                            .build();
                 } else {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the repository could not be found.").build();
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The UUID of the repository could not be found.")
+                            .build();
                 }
             });
         }
@@ -305,20 +350,29 @@ public class RepositoryResource extends AbstractApiResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the repository could not be found")
     })
-    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_DELETE})
+    @PermissionRequired({
+            Permissions.Constants.SYSTEM_CONFIGURATION,
+            Permissions.Constants.SYSTEM_CONFIGURATION_DELETE
+    })
     public Response deleteRepository(
             @Parameter(description = "The UUID of the repository to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final Repository repository = qm.getObjectByUuid(Repository.class, uuid);
+                final var repository = qm.getObjectByUuid(Repository.class, uuid);
                 if (repository != null) {
                     qm.delete(repository);
-                    return Response.status(Response.Status.NO_CONTENT).build();
+                    return Response
+                            .status(Response.Status.NO_CONTENT)
+                            .build();
                 } else {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the repository could not be found.").build();
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The UUID of the repository could not be found.")
+                            .build();
                 }
             });
         }
     }
+
 }

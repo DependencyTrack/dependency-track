@@ -599,10 +599,11 @@ public final class TableRegistry {
      * seeded during {@code bootstrap} (see {@link PermissionCatalog}); transform here
      * just builds {@code permission_name_map} by inner-joining v4 NAME against the
      * already-seeded v5 PERMISSION table. v4 permission names that no longer exist in
-     * v5 (e.g. {@code VIEW_BADGES}) drop out of the map. Implication fan-out (v4
-     * {@code ACCESS_MANAGEMENT} -> v5 {@code PORTFOLIO_ACCESS_CONTROL_BYPASS}) is
-     * applied on the join-table {@code tgt_*} tables. See {@code TEAMS_PERMISSIONS} and
-     * the consolidated {@code USERS_PERMISSIONS} transforms.
+     * v5 (e.g. {@code VIEW_BADGES}) drop out of the map. Implication fan-outs (v4
+     * {@code ACCESS_MANAGEMENT} -> v5 {@code PORTFOLIO_ACCESS_CONTROL_BYPASS}, and v4
+     * {@code SYSTEM_CONFIGURATION} -> v5 {@code SECRET_MANAGEMENT}) are applied on the
+     * join-table {@code tgt_*} tables. See {@code TEAMS_PERMISSIONS} and the consolidated
+     * {@code USERS_PERMISSIONS} transforms.
      */
     private static final TableMigration PERMISSION = new TableMigration(
         "PERMISSION",
@@ -726,16 +727,32 @@ public final class TableRegistry {
           JOIN "%1$s".permission_name_map m ON m.orig_id = j."PERMISSION_ID"
         ON CONFLICT DO NOTHING;
 
-        -- Implication fan-out: v4 ACCESS_MANAGEMENT carried implicit portfolio-access-control
-        -- bypass. v5 split that into the explicit PORTFOLIO_ACCESS_CONTROL_BYPASS permission
-        -- (v5.6.0-31). Grant it to every user that holds ACCESS_MANAGEMENT in v4. The v5.6.0-31
-        -- changeset also matched ACCESS_MANAGEMENT_CREATE, but that permission did not exist
-        -- in v4, so the v4-to-v5 path filters on the umbrella only.
+        -- Implication fan-outs: v4 carried two v5-only permissions implicitly via their
+        -- v4-era equivalents. v5 split each into a dedicated permission, and the migrator
+        -- preserves v4 authorization semantics by granting the new permission to every v4
+        -- holder of the equivalent. The target permissions are seeded by PermissionCatalog
+        -- during bootstrap; the inner join against "PERMISSION" produces zero rows (rather
+        -- than a NULL PERMISSION_ID constraint violation) if a catalog row is missing.
+        --
+        --   ACCESS_MANAGEMENT    -> PORTFOLIO_ACCESS_CONTROL_BYPASS (v5.6.0-31). The v5.6.0-31
+        --                          changeset also matched ACCESS_MANAGEMENT_CREATE, but that
+        --                          permission did not exist in v4, so the v4-to-v5 path
+        --                          filters on the umbrella only.
+        --   SYSTEM_CONFIGURATION -> SECRET_MANAGEMENT. v4 had no separate secret-management
+        --                          permission; repository basic-auth passwords and analyzer /
+        --                          vulnerability-source API credentials were configurable by
+        --                          anyone with SYSTEM_CONFIGURATION. Only the umbrella is
+        --                          fanned out; the _CREATE / _UPDATE / _DELETE variants did
+        --                          not exist in v4.
         INSERT INTO "%1$s".tgt_users_permissions ("USER_ID", "PERMISSION_ID")
-        SELECT DISTINCT up."USER_ID", (SELECT "ID" FROM "PERMISSION" WHERE "NAME" = 'PORTFOLIO_ACCESS_CONTROL_BYPASS')
+        SELECT DISTINCT up."USER_ID", tgt."ID"
           FROM "%1$s".tgt_users_permissions up
-          JOIN "PERMISSION" p ON p."ID" = up."PERMISSION_ID"
-         WHERE p."NAME" = 'ACCESS_MANAGEMENT'
+          JOIN "PERMISSION" src ON src."ID" = up."PERMISSION_ID"
+          JOIN "PERMISSION" tgt ON tgt."NAME" = CASE src."NAME"
+              WHEN 'ACCESS_MANAGEMENT'    THEN 'PORTFOLIO_ACCESS_CONTROL_BYPASS'
+              WHEN 'SYSTEM_CONFIGURATION' THEN 'SECRET_MANAGEMENT'
+          END
+         WHERE src."NAME" IN ('ACCESS_MANAGEMENT', 'SYSTEM_CONFIGURATION')
         ON CONFLICT DO NOTHING
         """,
         """
@@ -1465,8 +1482,9 @@ public final class TableRegistry {
      * rewritten through {@code notificationpublisher_canonical_id_map}; rules whose publisher
      * cannot be mapped are dropped by the inner join. All rules are loaded with
      * {@code ENABLED=FALSE} (operators re-enable post-migration after reviewing the
-     * regenerated config). {@code TRIGGER_TYPE} hard-set to {@code 'EVENT'}; schedule columns
-     * and {@code FILTER_EXPRESSION} NULL on import (v4 has no equivalent).
+     * regenerated config). {@code TRIGGER_TYPE} and {@code SCHEDULE_*} columns are carried
+     * through from v4 unchanged. {@code FILTER_EXPRESSION} is NULL on import (v4 has no
+     * equivalent).
      */
     private static final TableMigration NOTIFICATIONRULE = new TableMigration(
         "NOTIFICATIONRULE",
@@ -1484,6 +1502,11 @@ public final class TableRegistry {
           , "PUBLISHER_CONFIG"            text
           , "SCOPE"                       varchar(255) NOT NULL
           , "UUID"                        varchar(36) NOT NULL
+          , "TRIGGER_TYPE"                varchar(255) NOT NULL
+          , "SCHEDULE_CRON"               varchar(255)
+          , "SCHEDULE_LAST_TRIGGERED_AT"  timestamptz
+          , "SCHEDULE_NEXT_TRIGGER_AT"    timestamptz
+          , "SCHEDULE_SKIP_UNCHANGED"     boolean
         )
         """,
         """
@@ -1499,12 +1522,18 @@ public final class TableRegistry {
              , "PUBLISHER_CONFIG"
              , "SCOPE"
              , "UUID"
+             , "TRIGGER_TYPE"
+             , "SCHEDULE_CRON"
+             , "SCHEDULE_LAST_TRIGGERED_AT"
+             , "SCHEDULE_NEXT_TRIGGER_AT"
+             , "SCHEDULE_SKIP_UNCHANGED"
           FROM "%s"."NOTIFICATIONRULE"
          ORDER BY "ID"
         """,
         List.of("ID", "ENABLED", "LOG_SUCCESSFUL_PUBLISH", "MESSAGE", "NAME",
             "NOTIFICATION_LEVEL", "NOTIFY_CHILDREN", "NOTIFY_ON", "PUBLISHER",
-            "PUBLISHER_CONFIG", "SCOPE", "UUID"),
+            "PUBLISHER_CONFIG", "SCOPE", "UUID", "TRIGGER_TYPE", "SCHEDULE_CRON",
+            "SCHEDULE_LAST_TRIGGERED_AT", "SCHEDULE_NEXT_TRIGGER_AT", "SCHEDULE_SKIP_UNCHANGED"),
         """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'NOTIFICATIONRULE', "ID", "UUID"
@@ -1560,11 +1589,11 @@ public final class TableRegistry {
              , CASE p."EXTENSION_NAME" WHEN 'console' THEN NULL::jsonb WHEN 'email' THEN CASE WHEN COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', '') = '' THEN jsonb_build_object('recipientAddresses', jsonb_build_array()) ELSE jsonb_build_object('recipientAddresses', jsonb_build_array("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination')) END WHEN 'jira' THEN jsonb_build_object( 'projectKey', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'EXAMPLE'), 'issueType',  COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'jiraTicketType', 'TASK')) WHEN 'mattermost' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'msteams' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'slack' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'webex' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'webhook' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) ELSE NULL::jsonb END
              , r."SCOPE"
              , r."UUID"::uuid
-             , 'EVENT'
-             , NULL
-             , NULL
-             , NULL
-             , NULL
+             , r."TRIGGER_TYPE"
+             , r."SCHEDULE_CRON"
+             , r."SCHEDULE_LAST_TRIGGERED_AT"
+             , r."SCHEDULE_NEXT_TRIGGER_AT"
+             , r."SCHEDULE_SKIP_UNCHANGED"
              , NULL
           FROM "%1$s".src_notificationrule r
           JOIN "%1$s".notificationpublisher_canonical_id_map m ON m.orig_id = r."PUBLISHER"
@@ -2968,15 +2997,18 @@ public final class TableRegistry {
           JOIN "%1$s".permission_name_map  pm ON pm.orig_id = j."PERMISSION_ID"
         ON CONFLICT DO NOTHING;
 
-        -- Implication fan-out: see the matching USERS_PERMISSIONS step. v4 ACCESS_MANAGEMENT
-        -- carried implicit portfolio-access-control bypass; v5 split that into
-        -- PORTFOLIO_ACCESS_CONTROL_BYPASS (v5.6.0-31). Grant it to every team that holds
-        -- ACCESS_MANAGEMENT in v4.
+        -- Implication fan-outs: see the matching USERS_PERMISSIONS step for the rationale.
+        --   ACCESS_MANAGEMENT    -> PORTFOLIO_ACCESS_CONTROL_BYPASS
+        --   SYSTEM_CONFIGURATION -> SECRET_MANAGEMENT
         INSERT INTO "%1$s".tgt_teams_permissions ("TEAM_ID", "PERMISSION_ID")
-        SELECT DISTINCT tp."TEAM_ID", (SELECT "ID" FROM "PERMISSION" WHERE "NAME" = 'PORTFOLIO_ACCESS_CONTROL_BYPASS')
+        SELECT DISTINCT tp."TEAM_ID", tgt."ID"
           FROM "%1$s".tgt_teams_permissions tp
-          JOIN "PERMISSION" p ON p."ID" = tp."PERMISSION_ID"
-         WHERE p."NAME" = 'ACCESS_MANAGEMENT'
+          JOIN "PERMISSION" src ON src."ID" = tp."PERMISSION_ID"
+          JOIN "PERMISSION" tgt ON tgt."NAME" = CASE src."NAME"
+              WHEN 'ACCESS_MANAGEMENT'    THEN 'PORTFOLIO_ACCESS_CONTROL_BYPASS'
+              WHEN 'SYSTEM_CONFIGURATION' THEN 'SECRET_MANAGEMENT'
+          END
+         WHERE src."NAME" IN ('ACCESS_MANAGEMENT', 'SYSTEM_CONFIGURATION')
         ON CONFLICT DO NOTHING
         """,
         """

@@ -189,6 +189,27 @@ class LegacyConfigPropertyValidatorTest {
     }
 
     @Test
+    void shouldNotFailWhenStandardNoProxyEnvVarIsSet() {
+        final Config config = new SmallRyeConfigBuilder()
+                .withSources(new EnvConfigSource(Map.of("NO_PROXY", "localhost,127.0.0.1"), 300))
+                .build();
+
+        assertThatCode(() -> LegacyConfigPropertyValidator.validate(config))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldStillFailOnUnprefixedNoProxyFromPropertiesFile() {
+        final Config config = new SmallRyeConfigBuilder()
+                .withDefaultValue("no.proxy", "localhost,127.0.0.1")
+                .build();
+
+        assertThatThrownBy(() -> LegacyConfigPropertyValidator.validate(config))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no.proxy -> dt.http.proxy.exclusions");
+    }
+
+    @Test
     void shouldKeepEveryRenameEntryPointingAtDtPrefixedOldName() {
         assertThat(LegacyConfigPropertyValidator.LEGACY_V5_RC1_PROPERTY_RENAMES)
                 .allSatisfy((oldName, newName) -> {

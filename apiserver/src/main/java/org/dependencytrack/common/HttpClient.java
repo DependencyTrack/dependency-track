@@ -95,9 +95,25 @@ public final class HttpClient extends java.net.http.HttpClient {
                 .followRedirects(java.net.http.HttpClient.Redirect.NORMAL);
 
         if (proxyConfig != null && proxyConfig.getUsername() != null && proxyConfig.getPassword() != null) {
+            // Basic auth is disabled by default for the JDK's HttpClient, with the following justification:
+            //
+            // > "Basic" results in effectively the cleartext transmission of
+            // > the user's password over the physical network.
+            // https://raw.githubusercontent.com/openjdk/jdk/master/src/java.base/share/conf/net.properties
+            //
+            // However, basic auth is how most proxies handle authentication.
+            // Having it disabled effectively prevents many users with corporate proxies from using DT.
+            //
+            // Note: setting the property here is just a fallback. The JDK evaluates the system property
+            // *once*, the first time it is read. If any other code path initializes a HttpClient before
+            // we do, it might cache the default "Basic" value. The only bullet-proof fix is to set this
+            // as JVM argument, i.e. in Dockerfile's `CMD` or via `JAVA_OPTIONS` env var.
+            System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
+
             final String username = proxyConfig.getDomain() != null
                     ? proxyConfig.getDomain() + "\\" + proxyConfig.getUsername()
                     : proxyConfig.getUsername();
+
             clientBuilder.authenticator(new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {

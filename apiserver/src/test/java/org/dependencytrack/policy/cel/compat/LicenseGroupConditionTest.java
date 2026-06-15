@@ -144,6 +144,118 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
     }
 
     @Test
+    void shouldMatchLicenseGroupByLicenseExpression() {
+        final var mit = new License();
+        mit.setName("MIT License");
+        mit.setLicenseId("MIT");
+        mit.setUuid(UUID.randomUUID());
+        qm.persist(mit);
+        LicenseGroup lg = qm.createLicenseGroup("Permissive");
+        lg.setLicenses(Collections.singletonList(mit));
+        lg = qm.persist(lg);
+
+        final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setName("acme-app");
+        component.setLicenseExpression("MIT");
+        component.setProject(project);
+        qm.persist(component);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+    }
+
+    @Test
+    void shouldMatchLicenseGroupByLicenseName() {
+        final var mit = new License();
+        mit.setName("MIT License");
+        mit.setLicenseId("MIT");
+        mit.setUuid(UUID.randomUUID());
+        qm.persist(mit);
+        LicenseGroup lg = qm.createLicenseGroup("Permissive");
+        lg.setLicenses(Collections.singletonList(mit));
+        lg = qm.persist(lg);
+
+        final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setName("acme-app");
+        component.setLicense("MIT");
+        component.setProject(project);
+        qm.persist(component);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+    }
+
+    @Test
+    void shouldNotViolateIsNotWhenOrExpressionPermitsGroupMember() {
+        final var mit = new License();
+        mit.setName("MIT License");
+        mit.setLicenseId("MIT");
+        mit.setUuid(UUID.randomUUID());
+        qm.persist(mit);
+        LicenseGroup lg = qm.createLicenseGroup("Permissive");
+        lg.setLicenses(Collections.singletonList(mit));
+        lg = qm.persist(lg);
+
+        final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS_NOT, lg.getUuid().toString());
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setName("acme-app");
+        component.setLicenseExpression("MIT OR Apache-2.0");
+        component.setProject(project);
+        qm.persist(component);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).isEmpty();
+    }
+
+    @Test
+    void shouldViolateIsWhenAndExpressionContainsGroupMember() {
+        final var gpl = new License();
+        gpl.setName("GNU General Public License v2.0");
+        gpl.setLicenseId("GPL-2.0");
+        gpl.setUuid(UUID.randomUUID());
+        qm.persist(gpl);
+        LicenseGroup lg = qm.createLicenseGroup("Copyleft");
+        lg.setLicenses(Collections.singletonList(gpl));
+        lg = qm.persist(lg);
+
+        final Policy policy = qm.createPolicy("Test Policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS, lg.getUuid().toString());
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setName("acme-app");
+        component.setLicenseExpression("MIT AND GPL-2.0");
+        component.setProject(project);
+        qm.persist(component);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
+    }
+
+    @Test
     public void licenseGroupDoesNotExist() {
         License license = new License();
         license.setName("Apache 2.0");

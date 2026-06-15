@@ -184,38 +184,43 @@ BEGIN
   , "POLICYVIOLATIONS_SECURITY_UNAUDITED"
   , "FIRST_OCCURRENCE"
   , "LAST_OCCURRENCE"
-  ) VALUES (
-    v_component."ID"
-  , v_component."PROJECT_ID"
-  , v_vulnerabilities
-  , v_critical
-  , v_high
-  , v_medium
-  , v_low
-  , v_unassigned
-  , v_risk_score
-  , v_findings_total
-  , v_findings_audited
-  , v_findings_unaudited
-  , v_findings_suppressed
-  , v_policy_violations_total
-  , v_policy_violations_fail
-  , v_policy_violations_warn
-  , v_policy_violations_info
-  , v_policy_violations_audited
-  , v_policy_violations_unaudited
-  , v_policy_violations_license_total
-  , v_policy_violations_license_audited
-  , v_policy_violations_license_unaudited
-  , v_policy_violations_operational_total
-  , v_policy_violations_operational_audited
-  , v_policy_violations_operational_unaudited
-  , v_policy_violations_security_total
-  , v_policy_violations_security_audited
-  , v_policy_violations_security_unaudited
-  , NOW()
-  , NOW()
-  );
+  )
+  SELECT v_component."ID"
+       , v_component."PROJECT_ID"
+       , v_vulnerabilities
+       , v_critical
+       , v_high
+       , v_medium
+       , v_low
+       , v_unassigned
+       , v_risk_score
+       , v_findings_total
+       , v_findings_audited
+       , v_findings_unaudited
+       , v_findings_suppressed
+       , v_policy_violations_total
+       , v_policy_violations_fail
+       , v_policy_violations_warn
+       , v_policy_violations_info
+       , v_policy_violations_audited
+       , v_policy_violations_unaudited
+       , v_policy_violations_license_total
+       , v_policy_violations_license_audited
+       , v_policy_violations_license_unaudited
+       , v_policy_violations_operational_total
+       , v_policy_violations_operational_audited
+       , v_policy_violations_operational_unaudited
+       , v_policy_violations_security_total
+       , v_policy_violations_security_audited
+       , v_policy_violations_security_unaudited
+       , NOW()
+       , NOW()
+   -- Skip insert if the component was deleted while metrics were being computed.
+   WHERE EXISTS (
+     SELECT 1
+       FROM "COMPONENT"
+      WHERE "ID" = v_component."ID"
+   );
 
   UPDATE "COMPONENT"
      SET "LAST_RISKSCORE" = v_risk_score

@@ -27,9 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
+import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Pipeline §6. Advisory post-load checks emitted as human-readable stdout.
@@ -62,6 +65,8 @@ public final class VerifyPhase {
         reportProbes();
         out.println();
         checkConstraintsSmoke();
+        out.println();
+        out.println("== verify complete ==");
     }
 
     private void checkFlywayHead() {
@@ -88,15 +93,71 @@ public final class VerifyPhase {
 
     private void reportRowCounts() {
         out.println("[Row counts]");
-        out.printf("  %-24s %12s %12s %12s%n", "Table", "Source", "Staging", "v5");
+        out.printf("  %-24s %12s %12s %12s  %s%n", "Table", "Source", "Staging", "v5", "Note");
+        final Set<String> probed = probedTables();
         for (final TableMigration t : TableRegistry.all()) {
             final Long src = t.hasExtract() ? countOptional(qualified("src_" + t.name())) : null;
             final Long tgt = t.hasTransform() ? countOptional(qualified("tgt_" + t.name())) : null;
             final Long v5 = t.hasLoad() ? countOptional("\"" + t.name() + "\"") : null;
-            out.printf("  %-24s %12s %12s %12s%n",
+            out.printf("  %-24s %12s %12s %12s  %s%n",
                 t.name(),
-                fmt(src), fmt(tgt), fmt(v5));
+                fmt(src), fmt(tgt), fmt(v5), note(t.name(), src, tgt, v5, probed));
         }
+    }
+
+    /**
+     * Explains a row-count reduction across the populated stages (source -> staging -> v5).
+     * Requires at least two non-null stages to compute a delta, so a freshly bootstrapped target
+     * (no staging schema, only seeded v5 rows) emits nothing.
+     *
+     * <p>Reductions are expected, not necessarily a sign of a problem: the load step copies the
+     * {@code tgt_*} staging tables verbatim, so reductions originate in the transform (deduplication,
+     * filtering, retention) and are intentional by design. (The sole exception is the derived
+     * {@code PROJECT_ACCESS_USERS} load, which uses {@code ON CONFLICT DO NOTHING} against an
+     * already-deduplicated staging table.) The note's job is to attribute each reduction so an
+     * operator can tell an accounted-for drop from an unexplained one: documented transforms render
+     * as {@code expected: <reason>}; drops already itemized by the {@code [Probes]} section render as
+     * {@code see [Probes]}; anything else renders as a neutral {@code reduction (-N), see migration
+     * guide} pointer. ASCII-only to stay automation-friendly.
+     */
+    static String note(final String table, final Long src, final Long tgt, final Long v5,
+                       final Set<String> probed) {
+        final Long first = src != null ? src : tgt;
+        final Long last = v5 != null ? v5 : tgt;
+        // Need a baseline and a distinct later stage to speak of a reduction.
+        final int populated = (src != null ? 1 : 0) + (tgt != null ? 1 : 0) + (v5 != null ? 1 : 0);
+        if (populated < 2 || first == null || last == null || last >= first) {
+            return "";
+        }
+        final long delta = first - last;
+        final Optional<String> reason = RowCountNotes.reasonFor(table);
+        if (reason.isPresent()) {
+            return "expected: " + reason.get() + " (-" + delta + ")";
+        }
+        if (probed.contains(table)) {
+            return "see [Probes] (-" + delta + ")";
+        }
+        return "reduction (-" + delta + "), see migration guide";
+    }
+
+    /**
+     * Set of table names that appear in any probe (invalid UUIDs, skipped users, case collisions),
+     * i.e. tables whose row-count drop is already explained in the {@code [Probes]} section. Empty
+     * when the staging schema is absent (e.g. verify run straight after bootstrap).
+     */
+    private Set<String> probedTables() {
+        if (!stagingSchemaExists()) {
+            return Set.of();
+        }
+        return target.withHandle(h -> new HashSet<>(h.createQuery("""
+                SELECT table_name FROM "%1$s".probe_invalid_uuids
+                UNION
+                SELECT table_name FROM "%1$s".probe_skipped_users
+                UNION
+                SELECT table_name FROM "%1$s".probe_case_collisions
+                """.formatted(options.stagingSchema))
+            .mapTo(String.class)
+            .list()));
     }
 
     private void reportProbes() {
@@ -199,9 +260,24 @@ public final class VerifyPhase {
                     .mapTo(Long.class)
                     .one());
         } catch (final RuntimeException e) {
-            LOGGER.debug("count(*) failed for {}: {}", qualifiedTable, e.toString());
+            // Some registry entries declare a transform that does not materialize a tgt_*
+            // table of the same name (e.g. PERMISSION builds permission_name_map against
+            // the v5 catalog seeded at bootstrap). Treat a missing relation as a normal
+            // "no row count to report" outcome and only log unexpected failures.
+            if (!isUndefinedTable(e)) {
+                LOGGER.debug("count(*) failed for {}: {}", qualifiedTable, e.toString());
+            }
             return null;
         }
+    }
+
+    private static boolean isUndefinedTable(final Throwable t) {
+        for (Throwable c = t; c != null; c = c.getCause()) {
+            if (c instanceof SQLException sql && "42P01".equals(sql.getSQLState())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String qualified(final String table) {

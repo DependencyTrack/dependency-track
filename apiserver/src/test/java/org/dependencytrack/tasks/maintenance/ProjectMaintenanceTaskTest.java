@@ -18,10 +18,12 @@
  */
 package org.dependencytrack.tasks.maintenance;
 
-import alpine.persistence.PaginatedResult;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
+import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
+import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
 import org.dependencytrack.util.DateUtil;
 import org.junit.jupiter.api.Test;
 
@@ -65,14 +67,13 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         // Delete projects older than default 30 days
         final var task = new ProjectMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.run());
+        assertThatNoException().isThrownBy(task::run);
 
-        final PaginatedResult projects = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, null, false, false, false));
+        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
+                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
 
-        assertThat(projects.getList(Project.class)).satisfiesExactly(
-                retainedProject -> assertThat(retainedProject.getName()).isEqualTo("acme-app-B")
-        );
+        assertThat(projectsPage.items()).satisfiesExactly(
+                retainedProject -> assertThat(retainedProject.name()).isEqualTo("acme-app-B"));
     }
 
     @Test
@@ -122,13 +123,13 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         // Retain all active and last 2 inactive versions of a project and delete rest
         final var task = new ProjectMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.run());
-        final PaginatedResult projects = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, null, false, false, false));
-        assertThat(projects.getList(Project.class)).satisfiesExactly(
-                retainedProject -> assertThat(retainedProject.getVersion()).isEqualTo("5.0.0"),
-                retainedProject -> assertThat(retainedProject.getVersion()).isEqualTo("4.0.0"),
-                retainedProject -> assertThat(retainedProject.getVersion()).isEqualTo("3.0.0")
+        assertThatNoException().isThrownBy(task::run);
+        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
+                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        assertThat(projectsPage.items()).satisfiesExactly(
+                retainedProject -> assertThat(retainedProject.version()).isEqualTo("3.0.0"),
+                retainedProject -> assertThat(retainedProject.version()).isEqualTo("4.0.0"),
+                retainedProject -> assertThat(retainedProject.version()).isEqualTo("5.0.0")
         );
     }
 
@@ -179,21 +180,21 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
 
         // Retain all active and last 2 inactive versions of all projects and delete rest
         final var task = new ProjectMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.run());
-        final PaginatedResult projects = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, null, false, false, false));
-        assertThat(projects.getList(Project.class)).satisfiesExactlyInAnyOrder(
+        assertThatNoException().isThrownBy(task::run);
+        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
+                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        assertThat(projectsPage.items()).satisfiesExactlyInAnyOrder(
                 retainedProject -> {
-                    assertThat(retainedProject.getName()).isEqualTo("acme-app-A");
-                    assertThat(retainedProject.getVersion()).isEqualTo("2.0.0");
+                    assertThat(retainedProject.name()).isEqualTo("acme-app-A");
+                    assertThat(retainedProject.version()).isEqualTo("2.0.0");
                 },
                 retainedProject -> {
-                    assertThat(retainedProject.getName()).isEqualTo("acme-app-B");
-                    assertThat(retainedProject.getVersion()).isEqualTo("2.0.0");
+                    assertThat(retainedProject.name()).isEqualTo("acme-app-B");
+                    assertThat(retainedProject.version()).isEqualTo("2.0.0");
                 },
                 retainedProject -> {
-                    assertThat(retainedProject.getName()).isEqualTo("acme-app-B");
-                    assertThat(retainedProject.getVersion()).isEqualTo("3.0.0");
+                    assertThat(retainedProject.name()).isEqualTo("acme-app-B");
+                    assertThat(retainedProject.version()).isEqualTo("3.0.0");
                 }
         );
     }
@@ -214,10 +215,10 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         qm.persist(project);
 
         final var task = new ProjectMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.run());
-        final PaginatedResult projects = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, null, false, false, false));
-        assertThat(projects).isNotNull();
+        assertThatNoException().isThrownBy(task::run);
+        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
+                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        assertThat(projectsPage.items()).isNotEmpty();
     }
 
     @Test
@@ -236,9 +237,10 @@ class ProjectMaintenanceTaskTest extends PersistenceCapableTest {
         qm.persist(project);
 
         final var task = new ProjectMaintenanceTask();
-        assertThatNoException().isThrownBy(() -> task.run());
-        final PaginatedResult projects = withJdbiHandle(handle ->
-                handle.attach(ProjectDao.class).getProjects(null, null, null, null, null, null, false, false, false));
-        assertThat(projects).isNotNull();
+        assertThatNoException().isThrownBy(task::run);
+        final Page<ListProjectsRow> projectsPage = withJdbiHandle(handle ->
+                handle.attach(ProjectDao.class).getProjects(new ListProjectsQuery()));
+        assertThat(projectsPage.items()).isNotEmpty();
     }
+
 }

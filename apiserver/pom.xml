@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>dependency-track-parent</artifactId>
-        <version>5.0.0-rc.5-SNAPSHOT</version>
+        <version>5.1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>apiserver</artifactId>
@@ -18,13 +18,13 @@
         <maven.install.skip>true</maven.install.skip>
 
         <!-- Dependency Versions -->
-        <lib.cloud-sql-postgres-socket-factory.version>1.28.3</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.28.4</lib.cloud-sql-postgres-socket-factory.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>12.1.0</lib.cyclonedx-java.version>
         <lib.micrometer-jvm-extras.version>0.3.0</lib.micrometer-jvm-extras.version>
-        <lib.swagger-parser.version>2.1.42</lib.swagger-parser.version>
+        <lib.swagger-parser.version>2.1.43</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
-        <lib.woodstox.version>7.2.0</lib.woodstox.version>
+        <lib.woodstox.version>7.2.1</lib.woodstox.version>
         <lib.javacron.version>1.4.0</lib.javacron.version>
 
         <!-- CycloneDX CLI -->
@@ -567,6 +567,7 @@
                         --add-opens java.base/java.util.concurrent=ALL-UNNAMED
                         -javaagent:${settings.localRepository}/org/mockito/mockito-core/${lib.mockito.version}/mockito-core-${lib.mockito.version}.jar
                         -Xshare:off
+                        -Djdk.http.auth.tunneling.disabledSchemes=
                     </argLine>
                     <systemPropertyVariables>
                         <unitTestLogLevel>${unitTestLogLevel}</unitTestLogLevel>

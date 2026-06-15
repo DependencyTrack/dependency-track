@@ -27,9 +27,6 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonView;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
@@ -61,7 +58,6 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Serialized;
 import javax.jdo.annotations.Unique;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
@@ -685,12 +681,4 @@ public class Project implements Serializable {
         return sb.toString();
     }
 
-    private final static class BooleanDefaultTrueSerializer extends JsonSerializer<Boolean> {
-
-        @Override
-        public void serialize(Boolean value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            gen.writeBoolean(value != null ? value : true);
-        }
-
-    }
 }

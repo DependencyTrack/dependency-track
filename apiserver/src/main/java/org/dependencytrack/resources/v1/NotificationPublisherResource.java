@@ -44,32 +44,41 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.common.MdcKeys;
+import org.dependencytrack.dex.engine.api.DexEngine;
+import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.validation.ValidUuid;
-import org.dependencytrack.notification.JdoNotificationEmitter;
+import org.dependencytrack.notification.PublishNotificationWorkflow;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
+import org.dependencytrack.notification.proto.v1.Group;
+import org.dependencytrack.notification.proto.v1.Level;
+import org.dependencytrack.notification.proto.v1.Notification;
+import org.dependencytrack.notification.proto.v1.Scope;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.runtime.NoSuchExtensionException;
 import org.dependencytrack.plugin.runtime.PluginManager;
+import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.vo.CreateNotificationPublisherRequest;
+import org.dependencytrack.resources.v1.vo.NotificationPublisherResponse;
 import org.dependencytrack.resources.v1.vo.UpdateNotificationPublisherRequest;
+import org.jspecify.annotations.Nullable;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Stream;
 
+import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_TRIGGERED_BY;
 import static org.dependencytrack.notification.NotificationModelConverter.convert;
 import static org.dependencytrack.notification.api.TestNotificationFactory.createTestNotification;
-import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
-import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
-import static org.dependencytrack.notification.proto.v1.Level.LEVEL_WARNING;
 
 /**
  * JAX-RS resources for processing notification publishers.
@@ -88,10 +97,12 @@ public class NotificationPublisherResource extends AbstractApiResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(NotificationPublisherResource.class);
 
     private final PluginManager pluginManager;
+    private final DexEngine dexEngine;
 
     @Inject
-    NotificationPublisherResource(PluginManager pluginManager) {
+    NotificationPublisherResource(PluginManager pluginManager, DexEngine dexEngine) {
         this.pluginManager = pluginManager;
+        this.dexEngine = dexEngine;
     }
 
     @GET
@@ -103,7 +114,7 @@ public class NotificationPublisherResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "A list of all notification publishers",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationPublisher.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationPublisherResponse.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
@@ -112,8 +123,11 @@ public class NotificationPublisherResource extends AbstractApiResource {
             Permissions.Constants.SYSTEM_CONFIGURATION_READ
     })
     public Response getAllNotificationPublishers() {
-        try (QueryManager qm = new QueryManager()) {
-            final List<NotificationPublisher> publishers = qm.getAllNotificationPublishers();
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+            final List<NotificationPublisherResponse> publishers =
+                    qm.getAllNotificationPublishers().stream()
+                            .map(NotificationPublisherResponse::of)
+                            .toList();
             return Response.ok(publishers).build();
         }
     }
@@ -129,7 +143,7 @@ public class NotificationPublisherResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "201",
                     description = "The created notification publisher",
-                    content = @Content(schema = @Schema(implementation = NotificationPublisher.class))
+                    content = @Content(schema = @Schema(implementation = NotificationPublisherResponse.class))
             ),
             @ApiResponse(responseCode = "400", description = "Invalid notification class or trying to modify a default publisher"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -163,9 +177,15 @@ public class NotificationPublisherResource extends AbstractApiResource {
             });
         }
 
-        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Created notification publisher '{}'", createdPublisher.getName());
+        LOGGER.info(
+                SecurityMarkers.SECURITY_AUDIT,
+                "Created notification publisher '{}'",
+                createdPublisher.getName());
 
-        return Response.status(Response.Status.CREATED).entity(createdPublisher).build();
+        return Response
+                .status(Response.Status.CREATED)
+                .entity(NotificationPublisherResponse.of(createdPublisher))
+                .build();
     }
 
     @POST
@@ -179,7 +199,7 @@ public class NotificationPublisherResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "The updated notification publisher",
-                    content = @Content(schema = @Schema(implementation = NotificationPublisher.class))
+                    content = @Content(schema = @Schema(implementation = NotificationPublisherResponse.class))
             ),
             @ApiResponse(responseCode = "400", description = "Invalid notification class or trying to modify a default publisher"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
@@ -228,9 +248,14 @@ public class NotificationPublisherResource extends AbstractApiResource {
             });
         }
 
-        LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Updated notification publisher '{}'", updatedPublisher.getName());
+        LOGGER.info(
+                SecurityMarkers.SECURITY_AUDIT,
+                "Updated notification publisher '{}'",
+                updatedPublisher.getName());
 
-        return Response.ok(updatedPublisher).build();
+        return Response
+                .ok(NotificationPublisherResponse.of(updatedPublisher))
+                .build();
     }
 
     @DELETE
@@ -253,19 +278,27 @@ public class NotificationPublisherResource extends AbstractApiResource {
     })
     public Response deleteNotificationPublisher(
             @Parameter(description = "The UUID of the notification publisher to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
-            @PathParam("notificationPublisherUuid") @ValidUuid String notificationPublisherUuid) {
+            @PathParam("notificationPublisherUuid") @ValidUuid String uuid) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final NotificationPublisher notificationPublisher = qm.getObjectByUuid(NotificationPublisher.class, notificationPublisherUuid);
-                if (notificationPublisher != null) {
-                    if (notificationPublisher.isDefaultPublisher()) {
-                        return Response.status(Response.Status.BAD_REQUEST).entity("Deleting a default notification publisher is forbidden.").build();
+                final var publisher = qm.getObjectByUuid(NotificationPublisher.class, uuid);
+                if (publisher != null) {
+                    if (publisher.isDefaultPublisher()) {
+                        return Response
+                                .status(Response.Status.BAD_REQUEST)
+                                .entity("Deleting a default notification publisher is forbidden.")
+                                .build();
                     } else {
-                        qm.delete(notificationPublisher);
-                        return Response.status(Response.Status.NO_CONTENT).build();
+                        qm.delete(publisher);
+                        return Response
+                                .status(Response.Status.NO_CONTENT)
+                                .build();
                     }
                 } else {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the notification rule could not be found.").build();
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The UUID of the notification rule could not be found.")
+                            .build();
                 }
             });
         }
@@ -334,42 +367,50 @@ public class NotificationPublisherResource extends AbstractApiResource {
             @Parameter(description = "The UUID of the rule to test", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String ruleUuid) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
-            return qm.callInTransaction(() -> {
-                NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
-                if (rule == null) {
-                    return Response.status(Response.Status.NOT_FOUND).build();
+            final var rule = qm.getObjectByUuid(NotificationRule.class, ruleUuid);
+            if (rule == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            final var createRunRequests = new ArrayList<CreateWorkflowRunRequest<?>>();
+            for (final var notificationGroup : rule.getNotifyOn()) {
+                final Group group = convert(notificationGroup);
+                final Notification notification = buildTestNotification(
+                        convert(rule.getScope()), group, convert(rule.getNotificationLevel()));
+                if (notification == null) {
+                    continue;
                 }
 
-                final List<org.dependencytrack.notification.proto.v1.Notification> notifications =
-                        rule.getNotifyOn().stream()
-                                // Notifications of the same group may have different contents,
-                                // depending on the level, or may only support a single level.
-                                // To increase utility of this test feature, ensure that we
-                                // generate notifications for all applicable levels.
-                                .flatMap(group -> switch (rule.getNotificationLevel()) {
-                                    case INFORMATIONAL -> Stream.of(
-                                            createTestNotification(convert(rule.getScope()), convert(group), LEVEL_INFORMATIONAL),
-                                            createTestNotification(convert(rule.getScope()), convert(group), LEVEL_WARNING),
-                                            createTestNotification(convert(rule.getScope()), convert(group), LEVEL_ERROR));
-                                    case WARNING -> Stream.of(
-                                            createTestNotification(convert(rule.getScope()), convert(group), LEVEL_WARNING),
-                                            createTestNotification(convert(rule.getScope()), convert(group), LEVEL_ERROR));
-                                    case ERROR -> Stream.of(
-                                            createTestNotification(convert(rule.getScope()), convert(group), LEVEL_ERROR));
-                                })
-                                .filter(Objects::nonNull)
-                                .peek(notification -> notification.toBuilder()
-                                        .setTitle("[TEST] " + notification.getTitle())
-                                        .build())
-                                .toList();
+                final var workflowArg = PublishNotificationWorkflowArg.newBuilder()
+                        .setNotificationId(notification.getId())
+                        .setNotification(notification)
+                        .addNotificationRuleNames(rule.getName())
+                        .build();
 
-                new JdoNotificationEmitter(qm).emitAll(notifications);
+                createRunRequests.add(
+                        new CreateWorkflowRunRequest<>(PublishNotificationWorkflow.class)
+                                .withWorkflowInstanceId(
+                                        "publish-test-notification:%s:%s".formatted(
+                                                rule.getUuid(), notificationGroup))
+                                .withLabels(Map.of(WF_LABEL_TRIGGERED_BY, getPrincipal().getName()))
+                                .withArgument(workflowArg));
+            }
 
-                return Response.ok().build();
-            });
+            if (!createRunRequests.isEmpty()) {
+                dexEngine.createRuns(createRunRequests);
+
+                try (var _ = MDC.putCloseable(MdcKeys.MDC_NOTIFICATION_RULE_NAME, rule.getName())) {
+                    LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Triggered test notification(s)");
+                }
+            }
+
+            return Response.ok().build();
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Exception occured while sending the notification.").build();
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Exception occurred while sending the notification.")
+                    .build();
         }
     }
 
@@ -384,6 +425,26 @@ public class NotificationPublisherResource extends AbstractApiResource {
                     .entity("No extension with name '%s' exists".formatted(extensionName))
                     .build());
         }
+    }
+
+    private @Nullable Notification buildTestNotification(Scope scope, Group group, Level ruleLevel) {
+        final List<Level> levelsToTry = switch (ruleLevel) {
+            case LEVEL_INFORMATIONAL -> List.of(Level.LEVEL_INFORMATIONAL, Level.LEVEL_WARNING, Level.LEVEL_ERROR);
+            case LEVEL_WARNING -> List.of(Level.LEVEL_WARNING, Level.LEVEL_ERROR);
+            case LEVEL_ERROR -> List.of(Level.LEVEL_ERROR);
+            default -> List.of();
+        };
+
+        for (final Level level : levelsToTry) {
+            final Notification notification = createTestNotification(scope, group, level);
+            if (notification != null) {
+                return notification.toBuilder()
+                        .setTitle("[TEST] " + notification.getTitle())
+                        .build();
+            }
+        }
+
+        return null;
     }
 
 }

@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 
@@ -43,9 +44,7 @@ public class DatabasePartitionMaintenanceInitTaskTest extends PersistenceCapable
                 new InitTaskContext(new SmallRyeConfigBuilder().build(), dataSource));
 
         useJdbiHandle(handle -> {
-            final LocalDate todayDate = handle.createQuery("SELECT CURRENT_DATE")
-                    .mapTo(LocalDate.class)
-                    .one();
+            final LocalDate todayDate = LocalDate.now(ZoneOffset.UTC);
             var today = todayDate.format(DateTimeFormatter.BASIC_ISO_DATE);
             var tomorrow = todayDate.plusDays(1).format(DateTimeFormatter.BASIC_ISO_DATE);
 

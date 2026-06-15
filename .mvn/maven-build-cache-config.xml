@@ -47,6 +47,18 @@
                         <execId>report-aggregate</execId>
                     </execIds>
                 </execution>
+                <!--
+                    Required for support/datanucleus-plugin. DataNucleus refuses to load
+                    plugins without MANIFEST.MF file, and that file is not restored from
+                    build cache. Only matters for running tests from IDE (e.g. IntelliJ),
+                    where the IDE uses a classpath assembled from target/classes directories,
+                    not from JARs (which is what Maven does).
+                -->
+                <execution artifactId="maven-bundle-plugin">
+                    <execIds>
+                        <execId>bundle-manifest</execId>
+                    </execIds>
+                </execution>
             </executions>
             <goalsLists>
                 <goalsList artifactId="maven-install-plugin">

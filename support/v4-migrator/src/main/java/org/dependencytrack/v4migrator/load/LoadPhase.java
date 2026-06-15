@@ -71,19 +71,23 @@ public final class LoadPhase {
         final StagingSchema staging = new StagingSchema(target, options.stagingSchema);
         staging.ensure();
 
+        final long start = System.nanoTime();
+        long totalRows = 0;
+        int tableCount = 0;
         preLoad();
-        try {
-            for (final TableMigration t : TableRegistry.loaded()) {
-                loadOne(t);
-            }
-        } finally {
-            postLoad();
+        for (final TableMigration t : TableRegistry.loaded()) {
+            totalRows += loadOne(t);
+            tableCount++;
         }
+        postLoad();
 
         if (dropStagingAfter) {
             LOGGER.info("Dropping staging schema (--drop-staging set).");
             staging.drop();
         }
+
+        final long ms = (System.nanoTime() - start) / 1_000_000;
+        LOGGER.info("Load phase completed: {} table(s), {} row(s) in {} ms", tableCount, totalRows, ms);
     }
 
     private void preLoad() {
@@ -106,6 +110,7 @@ public final class LoadPhase {
     }
 
     private void postLoad() {
+        LOGGER.info("Finalizing load: re-enabling triggers and resetting identity sequences");
         target.useHandle(h -> {
             h.execute("ALTER TABLE \"PROJECT\" ENABLE TRIGGER USER");
             h.execute("ALTER TABLE \"PROJECT_ACCESS_USERS\" ENABLE TRIGGER USER");
@@ -123,13 +128,24 @@ public final class LoadPhase {
             }
         });
         // ANALYZE every loaded table for fresh planner statistics.
+        final List<TableMigration> loaded = TableRegistry.loaded();
+        LOGGER.info("Analyzing {} loaded table(s)", loaded.size());
         target.useHandle(h -> {
-            for (final TableMigration t : TableRegistry.loaded()) {
+            for (final TableMigration t : loaded) {
                 h.execute("ANALYZE \"%s\"".formatted(t.name()));
             }
         });
         // Refresh PORTFOLIOMETRICS_GLOBAL after PROJECTMETRICS is in place.
-        target.useHandle(h -> h.execute("REFRESH MATERIALIZED VIEW \"PORTFOLIOMETRICS_GLOBAL\""));
+        // The view body uses CURRENT_DATE and implicit timestamptz coercion, so the
+        // refresh must run with session TZ pinned to UTC to match the v5 apiserver
+        // contract (MetricsDao#refreshGlobalPortfolioMetrics does the same via
+        // SET LOCAL inside its transaction).
+        LOGGER.info("Refreshing PORTFOLIOMETRICS_GLOBAL materialized view");
+        target.useTransaction(th -> {
+            th.execute("SET LOCAL TIME ZONE 'UTC'");
+            th.execute("REFRESH MATERIALIZED VIEW \"PORTFOLIOMETRICS_GLOBAL\"");
+        });
+        LOGGER.info("Applying v5.7.0 cleanup deletes");
         replayV570CleanupDeletes();
     }
 
@@ -169,9 +185,10 @@ public final class LoadPhase {
                 final List<LocalDate> slice = days.subList(i, Math.min(i + chunk, days.size()));
                 target.useTransaction(th -> {
                     // Pin session TZ to UTC so partition boundaries are deterministic.
-                    // The v5 apiserver creates partitions via session-TZ DATE literals
-                    // (MetricsDao.createMetricsPartitions); aligning here means partitions
-                    // attach without overlap when v5 also runs in UTC (the documented setup).
+                    // v5's MetricsDao.createMetricsPartitions anchors its bounds to UTC
+                    // explicitly (CAST(... AS timestamp) AT TIME ZONE 'UTC'), so aligning
+                    // here makes the migrator's pre-created partitions attach without
+                    // overlap regardless of the operator's TZ.
                     th.execute("SET LOCAL TIME ZONE 'UTC'");
                     for (final LocalDate d : slice) {
                         final String child = "%s_%s".formatted(parent,
@@ -275,7 +292,7 @@ public final class LoadPhase {
         });
     }
 
-    private void loadOne(final TableMigration t) {
+    private long loadOne(final TableMigration t) {
         LOGGER.info("Loading {} into v5", t.name());
         markState(t.name(), "IN_PROGRESS", 0);
         final long expected = expectedRows(t.name());
@@ -285,6 +302,7 @@ public final class LoadPhase {
                 final int inserted = target.inTransaction(h -> h.execute(t.loadSql().formatted(options.stagingSchema)));
                 markState(t.name(), "COMPLETED", inserted);
                 reporter.done(inserted);
+                return inserted;
             } catch (final RuntimeException e) {
                 reporter.fail();
                 markState(t.name(), "FAILED", 0);

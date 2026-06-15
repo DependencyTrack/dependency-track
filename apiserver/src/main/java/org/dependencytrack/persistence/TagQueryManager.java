@@ -18,14 +18,12 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.model.ApiKey;
-import alpine.model.User;
-import alpine.persistence.NotSortableException;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
 import alpine.resources.AlpineRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.exception.InvalidSortFieldException;
 import org.dependencytrack.exception.TagOperationFailedException;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Policy;
@@ -51,7 +49,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class TagQueryManager extends QueryManager implements IQueryManager {
+public class TagQueryManager extends QueryManager {
 
     private static final Comparator<Tag> TAG_COMPARATOR = Comparator.comparingInt(
             (Tag tag) -> tag.getProjects().size()).reversed();
@@ -142,7 +140,9 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("Tag", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of(
+                    "name", "projectCount", "collectionProjectCount",
+                    "policyCount", "notificationRuleCount", "vulnerabilityCount"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
@@ -247,35 +247,29 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
                 throw TagOperationFailedException.forDeletion(errorByTagName);
             }
 
-            boolean hasPortfolioManagementUpdatePermission = false;
-            boolean hasPolicyManagementUpdatePermission = false;
-            boolean hasvulnerabilityManagementUpdatePermission = false;
-            boolean hasSystemConfigurationUpdatePermission = false;
-            if (principal == null) {
+            final boolean hasPortfolioManagementUpdatePermission;
+            final boolean hasPolicyManagementUpdatePermission;
+            final boolean hasVulnerabilityManagementUpdatePermission;
+            final boolean hasSystemConfigurationUpdatePermission;
+            if (request == null) {
                 hasPortfolioManagementUpdatePermission = true;
                 hasPolicyManagementUpdatePermission = true;
-                hasvulnerabilityManagementUpdatePermission = true;
+                hasVulnerabilityManagementUpdatePermission = true;
                 hasSystemConfigurationUpdatePermission = true;
             } else {
-                if (principal instanceof final ApiKey apiKey) {
-                    hasPortfolioManagementUpdatePermission = hasPermission(apiKey, Permissions.Constants.PORTFOLIO_MANAGEMENT)
-                                                             || hasPermission(apiKey, Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE);
-                    hasPolicyManagementUpdatePermission = hasPermission(apiKey, Permissions.Constants.POLICY_MANAGEMENT)
-                                                          || hasPermission(apiKey, Permissions.Constants.POLICY_MANAGEMENT_UPDATE);
-                    hasSystemConfigurationUpdatePermission = hasPermission(apiKey, Permissions.Constants.SYSTEM_CONFIGURATION)
-                                                             || hasPermission(apiKey, Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE);
-                    hasvulnerabilityManagementUpdatePermission = hasPermission(apiKey, Permissions.Constants.VULNERABILITY_MANAGEMENT)
-                            || hasPermission(apiKey, Permissions.Constants.VULNERABILITY_MANAGEMENT_UPDATE);
-                } else if (principal instanceof final User user) {
-                    hasPortfolioManagementUpdatePermission = hasPermission(user, Permissions.Constants.PORTFOLIO_MANAGEMENT, /* includeTeams */ true)
-                                                             || hasPermission(user, Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE, /* includeTeams */ true);
-                    hasPolicyManagementUpdatePermission = hasPermission(user, Permissions.Constants.POLICY_MANAGEMENT, /* includeTeams */ true)
-                                                          || hasPermission(user, Permissions.Constants.POLICY_MANAGEMENT_UPDATE, /* includeTeams */ true);
-                    hasSystemConfigurationUpdatePermission = hasPermission(user, Permissions.Constants.SYSTEM_CONFIGURATION, /* includeTeams */ true)
-                                                             || hasPermission(user, Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE, /* includeTeams */ true);
-                    hasvulnerabilityManagementUpdatePermission = hasPermission(user, Permissions.Constants.VULNERABILITY_MANAGEMENT, /* includeTeams */ true)
-                            || hasPermission(user, Permissions.Constants.VULNERABILITY_MANAGEMENT_UPDATE, /* includeTeams */ true);
-                }
+                final Set<String> effectivePermissions = request.getEffectivePermissions();
+                hasPortfolioManagementUpdatePermission =
+                        effectivePermissions.contains(Permissions.Constants.PORTFOLIO_MANAGEMENT)
+                                || effectivePermissions.contains(Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE);
+                hasPolicyManagementUpdatePermission =
+                        effectivePermissions.contains(Permissions.Constants.POLICY_MANAGEMENT)
+                                || effectivePermissions.contains(Permissions.Constants.POLICY_MANAGEMENT_UPDATE);
+                hasSystemConfigurationUpdatePermission =
+                        effectivePermissions.contains(Permissions.Constants.SYSTEM_CONFIGURATION)
+                                || effectivePermissions.contains(Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE);
+                hasVulnerabilityManagementUpdatePermission =
+                        effectivePermissions.contains(Permissions.Constants.VULNERABILITY_MANAGEMENT)
+                                || effectivePermissions.contains(Permissions.Constants.VULNERABILITY_MANAGEMENT_UPDATE);
             }
 
             for (final TagDeletionCandidateRow row : candidateRows) {
@@ -315,7 +309,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
                             Permissions.SYSTEM_CONFIGURATION, Permissions.SYSTEM_CONFIGURATION_UPDATE));
                 }
 
-                if (row.vulnerabilityCount() > 0 && !hasvulnerabilityManagementUpdatePermission) {
+                if (row.vulnerabilityCount() > 0 && !hasVulnerabilityManagementUpdatePermission) {
                     errorByTagName.put(row.name(), """
                             The tag is assigned to %d vulnerabilities, but the authenticated principal \
                             is missing the %s or %s permission.""".formatted(row.vulnerabilityCount(),
@@ -378,7 +372,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("TaggedProject", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of("name", "version"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
@@ -480,7 +474,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("TaggedCollectionProject", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of("name", "version"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
@@ -528,7 +522,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("TaggedPolicy", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of("name"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
@@ -723,7 +717,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("TaggedNotificationRule", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of("name"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
@@ -814,7 +808,7 @@ public class TagQueryManager extends QueryManager implements IQueryManager {
             sqlQuery += " ORDER BY \"%s\" %s".formatted(orderBy,
                     orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new NotSortableException("TaggedVulnerability", orderBy, "Field does not exist or is not sortable");
+            throw new InvalidSortFieldException(orderBy, List.of("vulnId"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();

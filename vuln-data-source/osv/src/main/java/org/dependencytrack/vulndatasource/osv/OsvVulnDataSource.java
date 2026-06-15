@@ -52,6 +52,7 @@ import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.vulndatasource.osv.CycloneDxPropertyNames.OSV_ECOSYSTEM;
+import static org.dependencytrack.vulndatasource.osv.OsvEcosystems.encodeEcosystem;
 
 /**
  * @since 5.0.0
@@ -266,7 +267,7 @@ final class OsvVulnDataSource implements VulnDataSource {
         }
 
         final var request = HttpRequest.newBuilder()
-                .uri(URI.create("%s/%s/all.zip".formatted(dataUrl, ecosystem)))
+                .uri(URI.create("%s/%s/all.zip".formatted(dataUrl, encodeEcosystem(ecosystem))))
                 .GET()
                 .build();
 
@@ -314,7 +315,7 @@ final class OsvVulnDataSource implements VulnDataSource {
 
     private Set<String> getModifiedIds(String ecosystem, Instant watermark) {
         final var request = HttpRequest.newBuilder()
-                .uri(URI.create("%s/%s/modified_id.csv".formatted(dataUrl, ecosystem)))
+                .uri(URI.create("%s/%s/modified_id.csv".formatted(dataUrl, encodeEcosystem(ecosystem))))
                 .GET()
                 .build();
 

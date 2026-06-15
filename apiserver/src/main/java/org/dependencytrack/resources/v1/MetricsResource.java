@@ -56,6 +56,7 @@ import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.util.DateUtil;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
@@ -140,7 +141,8 @@ public class MetricsResource extends AbstractApiResource {
     @Operation(
             summary = "Returns historical metrics for the entire portfolio from a specific date",
             description = """
-                    <p>Date format must be <code>YYYYMMDD</code></p>
+                    <p>Date format must be <code>YYYYMMDD</code>. The number of days returned is computed against the current UTC date.
+                    </p>
                     <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>""")
     @ApiResponses(value = {
             @ApiResponse(
@@ -168,7 +170,7 @@ public class MetricsResource extends AbstractApiResource {
             // NB: Calculate days between the given date and *tomorrow*,
             // because LocalDate#until's end date is exclusive,
             // and we want to include data for *today*.
-            final var sincePeriod = since.until(LocalDate.now().plusDays(1));
+            final var sincePeriod = since.until(LocalDate.now(ZoneOffset.UTC).plusDays(1));
             final int sinceDays = sincePeriod.getDays();
 
             return handle.attach(MetricsDao.class).getPortfolioMetricsForDays(Math.min(retentionDays, sinceDays));
@@ -284,7 +286,7 @@ public class MetricsResource extends AbstractApiResource {
     @Operation(
             summary = "Returns historical metrics for a specific project from a specific date",
             description = """
-                    <p>Date format must be <code>YYYYMMDD</code></p>
+                    <p>Date format must be <code>YYYYMMDD</code>. The date is interpreted as UTC midnight.</p>
                     <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"""
     )
     @ApiResponses(value = {
@@ -304,7 +306,7 @@ public class MetricsResource extends AbstractApiResource {
     public Response getProjectMetricsSince(
             @Parameter(description = "The UUID of the project to retrieve metrics for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
-            @Parameter(description = "The start date to retrieve metrics for", required = true)
+            @Parameter(description = "The start date (UTC) to retrieve metrics for", required = true)
             @PathParam("date") String date) {
         final Date since = DateUtil.parseShortDate(date);
         return getProjectMetrics(UUID.fromString(uuid), since);
@@ -412,7 +414,7 @@ public class MetricsResource extends AbstractApiResource {
     @Operation(
             summary = "Returns historical metrics for a specific component from a specific date",
             description = """
-                    <p>Date format must be <code>YYYYMMDD</code></p>
+                    <p>Date format must be <code>YYYYMMDD</code>. The date is interpreted as UTC midnight.</p>
                     <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>"""
     )
     @ApiResponses(value = {
@@ -432,7 +434,7 @@ public class MetricsResource extends AbstractApiResource {
     public Response getComponentMetricsSince(
             @Parameter(description = "The UUID of the component to retrieve metrics for", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
-            @Parameter(description = "The start date to retrieve metrics for", required = true)
+            @Parameter(description = "The start date (UTC) to retrieve metrics for", required = true)
             @PathParam("date") String date) {
         final Date since = DateUtil.parseShortDate(date);
         if (since == null) {

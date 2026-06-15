@@ -29,13 +29,10 @@ import javax.jdo.metadata.MemberMetadata;
 import javax.jdo.metadata.TypeMetadata;
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
@@ -209,16 +206,8 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
             if (foundPersistentMember) {
                 query.setOrdering(orderBy + " " + orderDirection.name().toLowerCase());
             } else {
-                // Is it a non-persistent (transient) field?
-                final boolean foundNonPersistentMember = Arrays.stream(iq.getCandidateClass().getDeclaredFields())
-                        .anyMatch(field -> field.getName().equals(candidateField));
-                if (foundNonPersistentMember) {
-                    throw new NotSortableException(iq.getCandidateClass().getSimpleName(), candidateField,
-                            "The field is computed and can not be queried or sorted by");
-                }
-
-                throw new NotSortableException(iq.getCandidateClass().getSimpleName(), candidateField,
-                        "The field does not exist");
+                throw new IllegalArgumentException(
+                        "Sorting by field '%s' is not supported".formatted(candidateField));
             }
         }
         return query;
@@ -350,32 +339,6 @@ public abstract class AbstractAlpineQueryManager implements AutoCloseable {
     public <T> T detach(final T object) {
         try (var _ = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
             return pm.detachCopy(object);
-        }
-    }
-
-    /**
-     * Refreshes and detaches an objects.
-     * @param pcs the instances to detach
-     * @param <T> the type to return
-     * @return the detached instances
-     * @since 1.3.0
-     */
-    public <T> List<T> detach(List<T> pcs) {
-        try (var _ = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
-            return new ArrayList<>(pm.detachCopyAll(pcs));
-        }
-    }
-
-    /**
-     * Refreshes and detaches an objects.
-     * @param pcs the instances to detach
-     * @param <T> the type to return
-     * @return the detached instances
-     * @since 1.3.0
-     */
-    public <T> Set<T> detach(Set<T> pcs) {
-        try (var _ = new ScopedCustomization(pm).withDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS)) {
-            return new LinkedHashSet<>(pm.detachCopyAll(pcs));
         }
     }
 

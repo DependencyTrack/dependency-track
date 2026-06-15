@@ -24,6 +24,6 @@ module org.dependencytrack.dex.engine.migration {
     exports org.dependencytrack.dex.engine.migration;
 
     requires java.sql;
-    requires flyway.core;
+    requires org.dependencytrack.support.flyway;
     requires org.jspecify;
 }

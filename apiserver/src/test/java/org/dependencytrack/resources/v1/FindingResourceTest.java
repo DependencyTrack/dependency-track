@@ -24,8 +24,7 @@ import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
@@ -98,8 +97,7 @@ public class FindingResourceTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(FindingResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class)
+                    .register(AuthFeature.class)
                     .register(new AbstractBinder() {
                         @Override
                         protected void configure() {
@@ -225,6 +223,19 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(searchFindings.apply("%char")).containsExactly("FOO-100");
         assertThat(searchFindings.apply("char_x")).containsExactly("FOO-100");
         assertThat(searchFindings.apply("alph_")).isEmpty();
+        assertThat(searchFindings.apply(vulnBar.getUuid().toString()))
+                .containsExactly("BAR-200");
+        assertThat(searchFindings.apply(vulnBar.getUuid().toString().toUpperCase()))
+                .containsExactly("BAR-200");
+        assertThat(searchFindings.apply(componentBeta.getUuid().toString()))
+                .containsExactly("BAR-200");
+        assertThat(searchFindings.apply(
+                componentBeta.getUuid() + ":" + vulnBar.getUuid()))
+                .containsExactly("BAR-200");
+        assertThat(searchFindings.apply(
+                componentAlpha.getUuid() + ":" + vulnBar.getUuid()))
+                .isEmpty();
+        assertThat(searchFindings.apply(UUID.randomUUID().toString())).isEmpty();
     }
 
     @Test
@@ -384,6 +395,58 @@ public class FindingResourceTest extends ResourceTest {
                 .inPath("$[*].vulnerability.vulnId")
                 .isArray()
                 .containsExactly("Vuln-Low");
+    }
+
+    @Test
+    void shouldOrderFindingsByComponentIdAndVulnerabilityIdAscending() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final Project p2 = qm.createProject("Acme Example", null, "2.0", null, null, null, null, false);
+        final Project p3 = qm.createProject("Acme Example", null, "3.0", null, null, null, null, false);
+        final Component c1 = createComponent(p1, "Component A", "1.0");
+        final Component c2 = createComponent(p2, "Component B", "1.0");
+        final Component c3 = createComponent(p3, "Component C", "1.0");
+        final Vulnerability v1 = createVulnerability("Vuln-1", Severity.LOW);
+        final Vulnerability v2 = createVulnerability("Vuln-2", Severity.MEDIUM);
+        final Vulnerability v3 = createVulnerability("Vuln-3", Severity.HIGH);
+
+        qm.addVulnerability(v3, c3, "none");
+        qm.addVulnerability(v2, c2, "none");
+        qm.addVulnerability(v1, c1, "none");
+
+        Response response = jersey
+                .target(V1_FINDING)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].vulnerability.vulnId")
+                .isArray()
+                .containsExactly("Vuln-1", "Vuln-2", "Vuln-3");
+
+        final Project p4 = qm.createProject("Acme Example", null, "4.0", null, null, null, null, false);
+        final Component c4 = createComponent(p4, "Component D", "1.0");
+        final Component c5 = createComponent(p4, "Component E", "1.0");
+        final Component c6 = createComponent(p4, "Component F", "1.0");
+        final Vulnerability v4 = createVulnerability("Vuln-4", Severity.LOW);
+        final Vulnerability v5 = createVulnerability("Vuln-5", Severity.MEDIUM);
+        final Vulnerability v6 = createVulnerability("Vuln-6", Severity.HIGH);
+        qm.addVulnerability(v6, c6, "none");
+        qm.addVulnerability(v5, c5, "none");
+        qm.addVulnerability(v4, c4, "none");
+
+        response = jersey
+                .target(V1_FINDING + "/project/" + p4.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].vulnerability.vulnId")
+                .isArray()
+                .containsExactly("Vuln-4", "Vuln-5", "Vuln-6");
     }
 
     @Test

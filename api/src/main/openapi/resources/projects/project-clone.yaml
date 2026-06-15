@@ -17,7 +17,7 @@
 post:
   operationId: cloneProject
   summary: Clones a given project.
-  description: Requires permission `PORTFOLIO_MANAGEMENT`
+  description: Requires permission `PORTFOLIO_MANAGEMENT` or `PORTFOLIO_MANAGEMENT_CREATE`
   tags:
     - Projects
   parameters:

@@ -19,8 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import alpine.server.resources.GlobalExceptionHandler;
 import jakarta.ws.rs.core.Response;
 import net.javacrumbs.jsonunit.core.Option;
@@ -43,6 +42,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -52,7 +52,6 @@ import java.util.function.Supplier;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.hamcrest.Matchers.closeTo;
 import static org.mockito.Mockito.mock;
 
@@ -64,8 +63,7 @@ public class MetricsResourceTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(MetricsResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class)
+                    .register(AuthFeature.class)
                     .register(new AbstractBinder() {
                         @Override
                         protected void configure() {
@@ -417,17 +415,15 @@ public class MetricsResourceTest extends ResourceTest {
         inaccessibleProject.setName("acme-app-inaccessible");
         qm.persist(inaccessibleProject);
 
-        final LocalDate dbToday = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one());
-        final Instant dbNow = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one());
+        final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        final Instant now = Instant.now();
 
         useJdbiHandle(handle -> {
             var dao = handle.attach(MetricsTestDao.class);
 
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(1));
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(2));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(1));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(2));
 
             {
                 // Create metrics for "yesterday".
@@ -435,7 +431,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var accessibleProjectAMetrics = new ProjectMetrics();
                 accessibleProjectAMetrics.setProjectId(accessibleProjectA.getId());
                 accessibleProjectAMetrics.setComponents(2);
-                accessibleProjectAMetrics.setFirstOccurrence(Date.from(dbNow.minus(1, ChronoUnit.DAYS)));
+                accessibleProjectAMetrics.setFirstOccurrence(Date.from(now.minus(1, ChronoUnit.DAYS)));
                 accessibleProjectAMetrics.setLastOccurrence(accessibleProjectAMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectAMetrics);
             }
@@ -449,7 +445,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var accessibleProjectBMetrics = new ProjectMetrics();
                 accessibleProjectBMetrics.setProjectId(accessibleProjectB.getId());
                 accessibleProjectBMetrics.setComponents(1);
-                accessibleProjectBMetrics.setFirstOccurrence(Date.from(dbNow));
+                accessibleProjectBMetrics.setFirstOccurrence(Date.from(now));
                 accessibleProjectBMetrics.setLastOccurrence(accessibleProjectBMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectBMetrics);
 
@@ -457,7 +453,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var inactiveAccessibleProjectMetrics = new ProjectMetrics();
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
-                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
@@ -465,7 +461,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var inaccessibleProjectMetrics = new ProjectMetrics();
                 inaccessibleProjectMetrics.setProjectId(inaccessibleProject.getId());
                 inaccessibleProjectMetrics.setComponents(666);
-                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inaccessibleProjectMetrics.setLastOccurrence(inaccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inaccessibleProjectMetrics);
             }
@@ -512,17 +508,15 @@ public class MetricsResourceTest extends ResourceTest {
         inaccessibleProject.setName("acme-app-inaccessible");
         qm.persist(inaccessibleProject);
 
-        final LocalDate dbToday = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one());
-        final Instant dbNow = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one());
+        final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        final Instant now = Instant.now();
 
         useJdbiHandle(handle -> {
             var dao = handle.attach(MetricsTestDao.class);
 
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(1));
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(2));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(1));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(2));
 
             {
                 // Create metrics for "yesterday".
@@ -530,7 +524,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var accessibleProjectAMetrics = new ProjectMetrics();
                 accessibleProjectAMetrics.setProjectId(accessibleProjectA.getId());
                 accessibleProjectAMetrics.setComponents(2);
-                accessibleProjectAMetrics.setFirstOccurrence(Date.from(dbNow.minus(1, ChronoUnit.DAYS)));
+                accessibleProjectAMetrics.setFirstOccurrence(Date.from(now.minus(1, ChronoUnit.DAYS)));
                 accessibleProjectAMetrics.setLastOccurrence(accessibleProjectAMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectAMetrics);
             }
@@ -544,7 +538,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var accessibleProjectBMetrics = new ProjectMetrics();
                 accessibleProjectBMetrics.setProjectId(accessibleProjectB.getId());
                 accessibleProjectBMetrics.setComponents(1);
-                accessibleProjectBMetrics.setFirstOccurrence(Date.from(dbNow));
+                accessibleProjectBMetrics.setFirstOccurrence(Date.from(now));
                 accessibleProjectBMetrics.setLastOccurrence(accessibleProjectBMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectBMetrics);
 
@@ -552,7 +546,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var inactiveAccessibleProjectMetrics = new ProjectMetrics();
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
-                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
@@ -560,12 +554,12 @@ public class MetricsResourceTest extends ResourceTest {
                 var inaccessibleProjectMetrics = new ProjectMetrics();
                 inaccessibleProjectMetrics.setProjectId(inaccessibleProject.getId());
                 inaccessibleProjectMetrics.setComponents(666);
-                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inaccessibleProjectMetrics.setLastOccurrence(inaccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inaccessibleProjectMetrics);
             }
 
-            handle.attach(MetricsDao.class).refreshGlobalPortfolioMetrics();
+            handle.useTransaction(tx -> tx.attach(MetricsDao.class).refreshGlobalPortfolioMetrics());
         });
 
         final Response response = jersey
@@ -609,17 +603,15 @@ public class MetricsResourceTest extends ResourceTest {
         inaccessibleProject.setName("acme-app-inaccessible");
         qm.persist(inaccessibleProject);
 
-        final LocalDate dbToday = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one());
-        final Instant dbNow = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one());
+        final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        final Instant now = Instant.now();
 
         useJdbiHandle(handle -> {
             var dao = handle.attach(MetricsTestDao.class);
 
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(1));
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(2));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(1));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(2));
 
             {
                 // Create metrics for "yesterday".
@@ -654,7 +646,7 @@ public class MetricsResourceTest extends ResourceTest {
                 accessibleProjectAMetrics.setUnassigned(1);
                 accessibleProjectAMetrics.setVulnerabilities(1);
                 accessibleProjectAMetrics.setVulnerableComponents(1);
-                accessibleProjectAMetrics.setFirstOccurrence(Date.from(dbNow.minus(1, ChronoUnit.DAYS)));
+                accessibleProjectAMetrics.setFirstOccurrence(Date.from(now.minus(1, ChronoUnit.DAYS)));
                 accessibleProjectAMetrics.setLastOccurrence(accessibleProjectAMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectAMetrics);
             }
@@ -695,7 +687,7 @@ public class MetricsResourceTest extends ResourceTest {
                 accessibleProjectBMetrics.setUnassigned(2);
                 accessibleProjectBMetrics.setVulnerabilities(2);
                 accessibleProjectBMetrics.setVulnerableComponents(2);
-                accessibleProjectBMetrics.setFirstOccurrence(Date.from(dbNow));
+                accessibleProjectBMetrics.setFirstOccurrence(Date.from(now));
                 accessibleProjectBMetrics.setLastOccurrence(accessibleProjectBMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectBMetrics);
 
@@ -703,7 +695,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var inactiveAccessibleProjectMetrics = new ProjectMetrics();
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
-                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
@@ -711,7 +703,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var inaccessibleProjectMetrics = new ProjectMetrics();
                 inaccessibleProjectMetrics.setProjectId(inaccessibleProject.getId());
                 inaccessibleProjectMetrics.setVulnerabilities(666);
-                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inaccessibleProjectMetrics.setLastOccurrence(inaccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inaccessibleProjectMetrics);
             }
@@ -859,17 +851,15 @@ public class MetricsResourceTest extends ResourceTest {
         inaccessibleProject.setName("acme-app-inaccessible");
         qm.persist(inaccessibleProject);
 
-        final LocalDate dbToday = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one());
-        final Instant dbNow = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one());
+        final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        final Instant now = Instant.now();
 
         useJdbiHandle(handle -> {
             var dao = handle.attach(MetricsTestDao.class);
 
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(1));
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(2));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(1));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(2));
 
             {
                 // Create metrics for "yesterday".
@@ -904,7 +894,7 @@ public class MetricsResourceTest extends ResourceTest {
                 accessibleProjectAMetrics.setUnassigned(1);
                 accessibleProjectAMetrics.setVulnerabilities(1);
                 accessibleProjectAMetrics.setVulnerableComponents(1);
-                accessibleProjectAMetrics.setFirstOccurrence(Date.from(dbNow.minus(1, ChronoUnit.DAYS)));
+                accessibleProjectAMetrics.setFirstOccurrence(Date.from(now.minus(1, ChronoUnit.DAYS)));
                 accessibleProjectAMetrics.setLastOccurrence(accessibleProjectAMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectAMetrics);
             }
@@ -945,7 +935,7 @@ public class MetricsResourceTest extends ResourceTest {
                 accessibleProjectBMetrics.setUnassigned(2);
                 accessibleProjectBMetrics.setVulnerabilities(2);
                 accessibleProjectBMetrics.setVulnerableComponents(2);
-                accessibleProjectBMetrics.setFirstOccurrence(Date.from(dbNow));
+                accessibleProjectBMetrics.setFirstOccurrence(Date.from(now));
                 accessibleProjectBMetrics.setLastOccurrence(accessibleProjectBMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectBMetrics);
 
@@ -953,7 +943,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var inactiveAccessibleProjectMetrics = new ProjectMetrics();
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
-                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
@@ -961,12 +951,12 @@ public class MetricsResourceTest extends ResourceTest {
                 var inaccessibleProjectMetrics = new ProjectMetrics();
                 inaccessibleProjectMetrics.setProjectId(inaccessibleProject.getId());
                 inaccessibleProjectMetrics.setVulnerabilities(666);
-                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inaccessibleProjectMetrics.setLastOccurrence(inaccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inaccessibleProjectMetrics);
             }
 
-            handle.attach(MetricsDao.class).refreshGlobalPortfolioMetrics();
+            handle.useTransaction(tx -> tx.attach(MetricsDao.class).refreshGlobalPortfolioMetrics());
         });
 
         final Response response = jersey
@@ -1111,17 +1101,15 @@ public class MetricsResourceTest extends ResourceTest {
         inaccessibleProject.setName("acme-app-inaccessible");
         qm.persist(inaccessibleProject);
 
-        final LocalDate dbToday = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one());
-        final Instant dbNow = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one());
+        final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        final Instant now = Instant.now();
 
         useJdbiHandle(handle -> {
             var dao = handle.attach(MetricsTestDao.class);
 
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(1));
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(2));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(1));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(2));
 
             {
                 // Create metrics for "yesterday".
@@ -1156,7 +1144,7 @@ public class MetricsResourceTest extends ResourceTest {
                 accessibleProjectAMetrics.setUnassigned(1);
                 accessibleProjectAMetrics.setVulnerabilities(1);
                 accessibleProjectAMetrics.setVulnerableComponents(1);
-                accessibleProjectAMetrics.setFirstOccurrence(Date.from(dbNow.minus(1, ChronoUnit.DAYS)));
+                accessibleProjectAMetrics.setFirstOccurrence(Date.from(now.minus(1, ChronoUnit.DAYS)));
                 accessibleProjectAMetrics.setLastOccurrence(accessibleProjectAMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectAMetrics);
             }
@@ -1197,7 +1185,7 @@ public class MetricsResourceTest extends ResourceTest {
                 accessibleProjectBMetrics.setUnassigned(2);
                 accessibleProjectBMetrics.setVulnerabilities(2);
                 accessibleProjectBMetrics.setVulnerableComponents(2);
-                accessibleProjectBMetrics.setFirstOccurrence(Date.from(dbNow));
+                accessibleProjectBMetrics.setFirstOccurrence(Date.from(now));
                 accessibleProjectBMetrics.setLastOccurrence(accessibleProjectBMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectBMetrics);
 
@@ -1205,7 +1193,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var inactiveAccessibleProjectMetrics = new ProjectMetrics();
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
-                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
@@ -1213,14 +1201,14 @@ public class MetricsResourceTest extends ResourceTest {
                 var inaccessibleProjectMetrics = new ProjectMetrics();
                 inaccessibleProjectMetrics.setProjectId(inaccessibleProject.getId());
                 inaccessibleProjectMetrics.setVulnerabilities(666);
-                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inaccessibleProjectMetrics.setLastOccurrence(inaccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inaccessibleProjectMetrics);
             }
         });
 
         final Response response = jersey
-                .target(V1_METRICS + "/portfolio/since/" + dbToday.minusDays(2).format(DateTimeFormatter.ofPattern("yyyyMMdd")))
+                .target(V1_METRICS + "/portfolio/since/" + today.minusDays(2).format(DateTimeFormatter.ofPattern("yyyyMMdd")))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1361,17 +1349,15 @@ public class MetricsResourceTest extends ResourceTest {
         inaccessibleProject.setName("acme-app-inaccessible");
         qm.persist(inaccessibleProject);
 
-        final LocalDate dbToday = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one());
-        final Instant dbNow = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one());
+        final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        final Instant now = Instant.now();
 
         useJdbiHandle(handle -> {
             var dao = handle.attach(MetricsTestDao.class);
 
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(1));
-            dao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday.minusDays(2));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(1));
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", today.minusDays(2));
 
             {
                 // Create metrics for "yesterday".
@@ -1406,7 +1392,7 @@ public class MetricsResourceTest extends ResourceTest {
                 accessibleProjectAMetrics.setUnassigned(1);
                 accessibleProjectAMetrics.setVulnerabilities(1);
                 accessibleProjectAMetrics.setVulnerableComponents(1);
-                accessibleProjectAMetrics.setFirstOccurrence(Date.from(dbNow.minus(1, ChronoUnit.DAYS)));
+                accessibleProjectAMetrics.setFirstOccurrence(Date.from(now.minus(1, ChronoUnit.DAYS)));
                 accessibleProjectAMetrics.setLastOccurrence(accessibleProjectAMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectAMetrics);
             }
@@ -1447,7 +1433,7 @@ public class MetricsResourceTest extends ResourceTest {
                 accessibleProjectBMetrics.setUnassigned(2);
                 accessibleProjectBMetrics.setVulnerabilities(2);
                 accessibleProjectBMetrics.setVulnerableComponents(2);
-                accessibleProjectBMetrics.setFirstOccurrence(Date.from(dbNow));
+                accessibleProjectBMetrics.setFirstOccurrence(Date.from(now));
                 accessibleProjectBMetrics.setLastOccurrence(accessibleProjectBMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(accessibleProjectBMetrics);
 
@@ -1455,7 +1441,7 @@ public class MetricsResourceTest extends ResourceTest {
                 var inactiveAccessibleProjectMetrics = new ProjectMetrics();
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
-                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
@@ -1463,16 +1449,16 @@ public class MetricsResourceTest extends ResourceTest {
                 var inaccessibleProjectMetrics = new ProjectMetrics();
                 inaccessibleProjectMetrics.setProjectId(inaccessibleProject.getId());
                 inaccessibleProjectMetrics.setVulnerabilities(666);
-                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(dbNow));
+                inaccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
                 inaccessibleProjectMetrics.setLastOccurrence(inaccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inaccessibleProjectMetrics);
             }
 
-            handle.attach(MetricsDao.class).refreshGlobalPortfolioMetrics();
+            handle.useTransaction(tx -> tx.attach(MetricsDao.class).refreshGlobalPortfolioMetrics());
         });
 
         final Response response = jersey
-                .target(V1_METRICS + "/portfolio/since/" + dbToday.minusDays(2).format(DateTimeFormatter.ofPattern("yyyyMMdd")))
+                .target(V1_METRICS + "/portfolio/since/" + today.minusDays(2).format(DateTimeFormatter.ofPattern("yyyyMMdd")))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1634,9 +1620,9 @@ public class MetricsResourceTest extends ResourceTest {
 
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
-            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+            final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            final Instant now = Instant.now();
 
             final var metricsA = new ProjectMetrics();
             metricsA.setProjectId(childA.getId());
@@ -1646,8 +1632,8 @@ public class MetricsResourceTest extends ResourceTest {
             metricsA.setComponents(10);
             metricsA.setVulnerabilities(6);
             metricsA.setVulnerableComponents(4);
-            metricsA.setFirstOccurrence(Date.from(dbNow));
-            metricsA.setLastOccurrence(Date.from(dbNow));
+            metricsA.setFirstOccurrence(Date.from(now));
+            metricsA.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsA);
 
             final var metricsB = new ProjectMetrics();
@@ -1658,8 +1644,8 @@ public class MetricsResourceTest extends ResourceTest {
             metricsB.setComponents(5);
             metricsB.setVulnerabilities(6);
             metricsB.setVulnerableComponents(3);
-            metricsB.setFirstOccurrence(Date.from(dbNow));
-            metricsB.setLastOccurrence(Date.from(dbNow));
+            metricsB.setFirstOccurrence(Date.from(now));
+            metricsB.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsB);
         });
 
@@ -1709,24 +1695,24 @@ public class MetricsResourceTest extends ResourceTest {
 
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
-            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+            final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            final Instant now = Instant.now();
 
             final var metricsTagged = new ProjectMetrics();
             metricsTagged.setProjectId(childTagged.getId());
             metricsTagged.setCritical(5);
             metricsTagged.setComponents(10);
-            metricsTagged.setFirstOccurrence(Date.from(dbNow));
-            metricsTagged.setLastOccurrence(Date.from(dbNow));
+            metricsTagged.setFirstOccurrence(Date.from(now));
+            metricsTagged.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsTagged);
 
             final var metricsUntagged = new ProjectMetrics();
             metricsUntagged.setProjectId(childUntagged.getId());
             metricsUntagged.setCritical(99);
             metricsUntagged.setComponents(99);
-            metricsUntagged.setFirstOccurrence(Date.from(dbNow));
-            metricsUntagged.setLastOccurrence(Date.from(dbNow));
+            metricsUntagged.setFirstOccurrence(Date.from(now));
+            metricsUntagged.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsUntagged);
         });
 
@@ -1762,22 +1748,20 @@ public class MetricsResourceTest extends ResourceTest {
         child.setParent(parentProject);
         qm.persist(child);
 
-        final LocalDate dbToday = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one());
-        final LocalDate dbYesterday = dbToday.minusDays(1);
-        final Instant dbNow = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one());
+        final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        final LocalDate yesterday = today.minusDays(1);
+        final Instant now = Instant.now();
 
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbYesterday);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", yesterday);
 
             final var metricsToday = new ProjectMetrics();
             metricsToday.setProjectId(child.getId());
             metricsToday.setCritical(5);
             metricsToday.setComponents(10);
-            metricsToday.setFirstOccurrence(Date.from(dbNow));
+            metricsToday.setFirstOccurrence(Date.from(now));
             metricsToday.setLastOccurrence(metricsToday.getFirstOccurrence());
             testDao.createProjectMetrics(metricsToday);
 
@@ -1785,7 +1769,7 @@ public class MetricsResourceTest extends ResourceTest {
             metricsYesterday.setProjectId(child.getId());
             metricsYesterday.setCritical(3);
             metricsYesterday.setComponents(8);
-            metricsYesterday.setFirstOccurrence(Date.from(dbNow.minus(1, ChronoUnit.DAYS)));
+            metricsYesterday.setFirstOccurrence(Date.from(now.minus(1, ChronoUnit.DAYS)));
             metricsYesterday.setLastOccurrence(metricsYesterday.getFirstOccurrence());
             testDao.createProjectMetrics(metricsYesterday);
         });
@@ -1831,22 +1815,20 @@ public class MetricsResourceTest extends ResourceTest {
         child.setParent(parentProject);
         qm.persist(child);
 
-        final LocalDate dbToday = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one());
-        final LocalDate dbYesterday = dbToday.minusDays(1);
-        final Instant dbNow = withJdbiHandle(handle ->
-                handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one());
+        final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        final LocalDate yesterday = today.minusDays(1);
+        final Instant now = Instant.now();
 
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbYesterday);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", yesterday);
 
             final var metricsToday = new ProjectMetrics();
             metricsToday.setProjectId(child.getId());
             metricsToday.setCritical(4);
             metricsToday.setComponents(12);
-            metricsToday.setFirstOccurrence(Date.from(dbNow));
+            metricsToday.setFirstOccurrence(Date.from(now));
             metricsToday.setLastOccurrence(metricsToday.getFirstOccurrence());
             testDao.createProjectMetrics(metricsToday);
 
@@ -1854,13 +1836,13 @@ public class MetricsResourceTest extends ResourceTest {
             metricsYesterday.setProjectId(child.getId());
             metricsYesterday.setCritical(2);
             metricsYesterday.setComponents(6);
-            metricsYesterday.setFirstOccurrence(Date.from(dbNow.minus(1, ChronoUnit.DAYS)));
+            metricsYesterday.setFirstOccurrence(Date.from(now.minus(1, ChronoUnit.DAYS)));
             metricsYesterday.setLastOccurrence(metricsYesterday.getFirstOccurrence());
             testDao.createProjectMetrics(metricsYesterday);
         });
 
         // /since/{today} covers only today.
-        final String todayStr = dbToday.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        final String todayStr = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         final Response response = jersey
                 .target(V1_METRICS + "/project/" + parentProject.getUuid() + "/since/" + todayStr)
                 .request()
@@ -1881,7 +1863,7 @@ public class MetricsResourceTest extends ResourceTest {
                         """);
 
         // /since/{yesterday} covers yesterday + today.
-        final String yesterdayStr = dbYesterday.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        final String yesterdayStr = yesterday.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         final Response response2 = jersey
                 .target(V1_METRICS + "/project/" + parentProject.getUuid() + "/since/" + yesterdayStr)
                 .request()
@@ -1918,24 +1900,24 @@ public class MetricsResourceTest extends ResourceTest {
 
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
-            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+            final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            final Instant now = Instant.now();
 
             final var metricsLatest = new ProjectMetrics();
             metricsLatest.setProjectId(childLatest.getId());
             metricsLatest.setCritical(7);
             metricsLatest.setComponents(20);
-            metricsLatest.setFirstOccurrence(Date.from(dbNow));
-            metricsLatest.setLastOccurrence(Date.from(dbNow));
+            metricsLatest.setFirstOccurrence(Date.from(now));
+            metricsLatest.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsLatest);
 
             final var metricsOld = new ProjectMetrics();
             metricsOld.setProjectId(childNotLatest.getId());
             metricsOld.setCritical(99);
             metricsOld.setComponents(99);
-            metricsOld.setFirstOccurrence(Date.from(dbNow));
-            metricsOld.setLastOccurrence(Date.from(dbNow));
+            metricsOld.setFirstOccurrence(Date.from(now));
+            metricsOld.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsOld);
         });
 
@@ -1992,29 +1974,29 @@ public class MetricsResourceTest extends ResourceTest {
 
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
-            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
-            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+            final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
+            final Instant now = Instant.now();
 
             final var metricsChildRegular = new ProjectMetrics();
             metricsChildRegular.setProjectId(childRegular.getId());
             metricsChildRegular.setCritical(3);
-            metricsChildRegular.setFirstOccurrence(Date.from(dbNow));
-            metricsChildRegular.setLastOccurrence(Date.from(dbNow));
+            metricsChildRegular.setFirstOccurrence(Date.from(now));
+            metricsChildRegular.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsChildRegular);
 
             final var metricsGrandchildTagged = new ProjectMetrics();
             metricsGrandchildTagged.setProjectId(grandchildTagged.getId());
             metricsGrandchildTagged.setCritical(5);
-            metricsGrandchildTagged.setFirstOccurrence(Date.from(dbNow));
-            metricsGrandchildTagged.setLastOccurrence(Date.from(dbNow));
+            metricsGrandchildTagged.setFirstOccurrence(Date.from(now));
+            metricsGrandchildTagged.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsGrandchildTagged);
 
             final var metricsGrandchildUntagged = new ProjectMetrics();
             metricsGrandchildUntagged.setProjectId(grandchildUntagged.getId());
             metricsGrandchildUntagged.setCritical(99);
-            metricsGrandchildUntagged.setFirstOccurrence(Date.from(dbNow));
-            metricsGrandchildUntagged.setLastOccurrence(Date.from(dbNow));
+            metricsGrandchildUntagged.setFirstOccurrence(Date.from(now));
+            metricsGrandchildUntagged.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsGrandchildUntagged);
         });
 
@@ -2058,23 +2040,23 @@ public class MetricsResourceTest extends ResourceTest {
 
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
-            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
+            final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
 
-            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+            final Instant now = Instant.now();
 
             final var metricsA = new ProjectMetrics();
             metricsA.setProjectId(childA.getId());
             metricsA.setCritical(5);
-            metricsA.setFirstOccurrence(Date.from(dbNow));
-            metricsA.setLastOccurrence(Date.from(dbNow));
+            metricsA.setFirstOccurrence(Date.from(now));
+            metricsA.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsA);
 
             final var metricsB = new ProjectMetrics();
             metricsB.setProjectId(childB.getId());
             metricsB.setCritical(3);
-            metricsB.setFirstOccurrence(Date.from(dbNow));
-            metricsB.setLastOccurrence(Date.from(dbNow));
+            metricsB.setFirstOccurrence(Date.from(now));
+            metricsB.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsB);
         });
 
@@ -2124,23 +2106,23 @@ public class MetricsResourceTest extends ResourceTest {
 
         useJdbiHandle(handle -> {
             final var testDao = handle.attach(MetricsTestDao.class);
-            final LocalDate dbToday = handle.createQuery("SELECT CURRENT_DATE").mapTo(LocalDate.class).one();
-            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", dbToday);
+            final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+            testDao.createMetricsPartitionsForDate("PROJECTMETRICS", today);
 
-            final Instant dbNow = handle.createQuery("SELECT CURRENT_TIMESTAMP").mapTo(Instant.class).one();
+            final Instant now = Instant.now();
 
             final var metricsA = new ProjectMetrics();
             metricsA.setProjectId(grandchildA.getId());
             metricsA.setCritical(7);
-            metricsA.setFirstOccurrence(Date.from(dbNow));
-            metricsA.setLastOccurrence(Date.from(dbNow));
+            metricsA.setFirstOccurrence(Date.from(now));
+            metricsA.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsA);
 
             final var metricsB = new ProjectMetrics();
             metricsB.setProjectId(grandchildB.getId());
             metricsB.setCritical(3);
-            metricsB.setFirstOccurrence(Date.from(dbNow));
-            metricsB.setLastOccurrence(Date.from(dbNow));
+            metricsB.setFirstOccurrence(Date.from(now));
+            metricsB.setLastOccurrence(Date.from(now));
             testDao.createProjectMetrics(metricsB);
         });
 

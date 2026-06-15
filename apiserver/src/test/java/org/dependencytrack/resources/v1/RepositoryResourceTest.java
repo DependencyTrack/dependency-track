@@ -19,8 +19,7 @@
 package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
+import alpine.server.filters.AuthFeature;
 import com.github.packageurl.PackageURL;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
@@ -66,8 +65,7 @@ public class RepositoryResourceTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(RepositoryResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class)
+                    .register(AuthFeature.class)
                     .register(new AbstractBinder() {
                         @Override
                         protected void configure() {
@@ -87,46 +85,53 @@ public class RepositoryResourceTest extends ResourceTest {
     }
 
     @Test
-    public void getRepositoriesTest() {
+    public void shouldListAllSeededRepositories() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        Response response = jersey.target(V1_REPOSITORY).request()
+        final Response response = jersey.target(V1_REPOSITORY).request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assertions.assertEquals(200, response.getStatus(), 0);
-        Assertions.assertEquals(String.valueOf(17), response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals(17, json.size());
-        for (int i = 0; i < json.size(); i++) {
-            Assertions.assertNotNull(json.getJsonObject(i).getString("type"));
-            Assertions.assertNotNull(json.getJsonObject(i).getString("identifier"));
-            Assertions.assertNotNull(json.getJsonObject(i).getString("url"));
-            Assertions.assertTrue(json.getJsonObject(i).getInt("resolutionOrder") > 0);
-            Assertions.assertTrue(json.getJsonObject(i).getBoolean("enabled"));
-        }
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("17");
+        assertThatJson(getPlainTextBody(response))
+                .node("[0]")
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "type": "CARGO",
+                          "identifier": "crates.io",
+                          "url": "https://crates.io",
+                          "resolutionOrder": 1,
+                          "enabled": true,
+                          "internal": false,
+                          "authenticationRequired": false,
+                          "uuid": "${json-unit.any-string}"
+                        }
+                        """);
     }
 
     @Test
-    public void getRepositoriesByTypeTest() {
+    public void shouldListSeededRepositoriesFilteredByType() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        Response response = jersey.target(V1_REPOSITORY + "/MAVEN").request()
+        final Response response = jersey.target(V1_REPOSITORY + "/MAVEN").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assertions.assertEquals(200, response.getStatus(), 0);
-        Assertions.assertEquals(String.valueOf(5), response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals(5, json.size());
-        for (int i = 0; i < json.size(); i++) {
-            Assertions.assertEquals("MAVEN", json.getJsonObject(i).getString("type"));
-            Assertions.assertFalse(json.getJsonObject(i).getBoolean("authenticationRequired"));
-            Assertions.assertNotNull(json.getJsonObject(i).getString("identifier"));
-            Assertions.assertNotNull(json.getJsonObject(i).getString("url"));
-            Assertions.assertTrue(json.getJsonObject(i).getInt("resolutionOrder") > 0);
-            Assertions.assertTrue(json.getJsonObject(i).getBoolean("enabled"));
-        }
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
+        assertThatJson(getPlainTextBody(response))
+                .node("[0]")
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "type": "MAVEN",
+                          "identifier": "atlassian-public",
+                          "url": "https://packages.atlassian.com/content/repositories/atlassian-public/",
+                          "resolutionOrder": 2,
+                          "enabled": true,
+                          "internal": false,
+                          "authenticationRequired": false,
+                          "uuid": "${json-unit.any-string}"
+                        }
+                        """);
     }
 
     @Test

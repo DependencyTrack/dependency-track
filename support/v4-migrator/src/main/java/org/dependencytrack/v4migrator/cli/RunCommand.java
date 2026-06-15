@@ -26,12 +26,16 @@ import org.dependencytrack.v4migrator.extract.ExtractPhase;
 import org.dependencytrack.v4migrator.load.LoadPhase;
 import org.dependencytrack.v4migrator.transform.TransformPhase;
 import org.jdbi.v3.core.Jdbi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = "run", description = "extract + transform + load in one go.")
 public final class RunCommand extends AbstractMigratorCommand {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RunCommand.class);
 
     @Mixin
     SourceOptions sourceOpts = new SourceOptions();
@@ -58,6 +62,8 @@ public final class RunCommand extends AbstractMigratorCommand {
             metricsOpts.metricsRetentionDays).run();
         new TransformPhase(global, target).run();
         new LoadPhase(global, target, dropStaging).run();
+        LOGGER.info("Migration completed: extract + transform + load finished. "
+            + "Run 'verify' to review row counts and probes.");
         return ExitCode.OK;
     }
 

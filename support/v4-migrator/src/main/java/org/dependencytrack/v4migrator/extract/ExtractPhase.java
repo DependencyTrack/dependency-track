@@ -70,9 +70,15 @@ public final class ExtractPhase {
             }
         });
 
+        final long start = System.nanoTime();
+        long totalRows = 0;
+        int tableCount = 0;
         for (final TableMigration t : TableRegistry.extracted()) {
-            extractOne(t, extractor);
+            totalRows += extractOne(t, extractor);
+            tableCount++;
         }
+        final long ms = (System.nanoTime() - start) / 1_000_000;
+        LOGGER.info("Extract phase completed: {} table(s), {} row(s) in {} ms", tableCount, totalRows, ms);
     }
 
     /**
@@ -110,7 +116,7 @@ public final class ExtractPhase {
         }
     }
 
-    private void extractOne(final TableMigration t, final SourceExtractor extractor) throws Exception {
+    private long extractOne(final TableMigration t, final SourceExtractor extractor) throws Exception {
         LOGGER.info("Extracting {}", t.name());
         final long start = System.nanoTime();
         markState(t.name(), "IN_PROGRESS", 0);
@@ -119,6 +125,7 @@ public final class ExtractPhase {
             markState(t.name(), "COMPLETED", rows);
             final long ms = (System.nanoTime() - start) / 1_000_000;
             LOGGER.info("  -> {} rows in {} ms", rows, ms);
+            return rows;
         } catch (final Exception e) {
             markState(t.name(), "FAILED", 0);
             throw e;

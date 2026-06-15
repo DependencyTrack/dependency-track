@@ -44,6 +44,7 @@ properties:
     format: uri-reference
     description: Reference URI that identifies the specific occurrence of the problem
 required:
+- type
 - title
 - detail
 # Enable inheritance for schemas that extend this object via allOf.

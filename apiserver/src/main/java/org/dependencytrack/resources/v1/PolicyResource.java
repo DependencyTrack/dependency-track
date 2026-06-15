@@ -177,7 +177,7 @@ public class PolicyResource extends AbstractApiResource {
                 validator.validateProperty(jsonPolicy, "name")
         );
 
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 Policy policy = qm.getPolicy(StringUtils.trimToNull(jsonPolicy.getName()));
                 if (policy == null) {
@@ -262,7 +262,7 @@ public class PolicyResource extends AbstractApiResource {
     public Response deletePolicy(
             @Parameter(description = "The UUID of the policy to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final Policy policy = qm.getObjectByUuid(Policy.class, uuid);
                 if (policy != null) {
@@ -303,7 +303,7 @@ public class PolicyResource extends AbstractApiResource {
             @PathParam("policyUuid") @ValidUuid String policyUuid,
             @Parameter(description = "The UUID of the project to add to the rule", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("projectUuid") @ValidUuid String projectUuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Policy updatedPolicy = qm.callInTransaction(() -> {
                 final Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
                 if (policy == null) {
@@ -365,7 +365,7 @@ public class PolicyResource extends AbstractApiResource {
             @PathParam("policyUuid") @ValidUuid String policyUuid,
             @Parameter(description = "The UUID of the project to remove from the policy", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("projectUuid") @ValidUuid String projectUuid) {
-        try (QueryManager qm = new QueryManager()) {
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Policy updatedPolicy = qm.callInTransaction(() -> {
                 final Policy policy = qm.getObjectByUuid(Policy.class, policyUuid);
                 if (policy == null) {

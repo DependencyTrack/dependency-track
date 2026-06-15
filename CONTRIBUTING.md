@@ -108,7 +108,8 @@ An ADR is required when a change introduces, removes, or significantly alters an
 
 When in doubt, propose an ADR. It is cheaper to discuss the design before the implementation lands.
 
-Copy [`docs/adr/000-template.md`](./docs/adr/000-template.md) and number the new file sequentially.
+See [`docs/adr/README.md`](./docs/adr/README.md) for the format, status workflow, and writing style guide.
+
 The ADR should be raised first, either as its own pull request or as a draft pull request alongside an early
 implementation, and reach *Accepted* status before the implementation pull request is merged. For small changes
 where the design is uncontroversial, bundling the ADR and the implementation in a single pull request is fine.

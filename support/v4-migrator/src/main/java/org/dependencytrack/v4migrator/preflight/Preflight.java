@@ -84,7 +84,9 @@ public final class Preflight {
         final List<String> warnings = new ArrayList<>();
 
         checkTargetVersion(failures);
-        if (mode != Mode.PRE_BOOTSTRAP) {
+        if (mode == Mode.PRE_BOOTSTRAP) {
+            checkTargetNotV4(failures);
+        } else {
             checkTargetExtensions(failures);
             if (isV5SchemaApplied(failures)) {
                 checkFlywayHead(failures);
@@ -124,6 +126,38 @@ public final class Preflight {
             }
         } catch (final RuntimeException e) {
             failures.add("Could not query target PostgreSQL version: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Refuse to bootstrap on top of a v4 schema. {@code SCHEMAVERSION} (DataNucleus version
+     * table) and {@code EVENTSERVICELOG} are unique to v4 and never appear in v5 migrations;
+     * either being present is a strong signal that {@code --target} was pointed at the source
+     * database by mistake. Without this gate, Flyway would still fail later with a generic
+     * "non-empty schema without history table" error that obscures the user error.
+     */
+    private void checkTargetNotV4(final List<String> failures) {
+        final String[] v4Markers = {"\"SCHEMAVERSION\"", "\"EVENTSERVICELOG\""};
+        final List<String> found = new ArrayList<>();
+        for (final String table : v4Markers) {
+            try {
+                final boolean present = targetJdbi.withHandle(h ->
+                    h.createQuery("SELECT to_regclass(:t) IS NOT NULL")
+                        .bind("t", table)
+                        .mapTo(Boolean.class)
+                        .one());
+                if (present) {
+                    found.add(table);
+                }
+            } catch (final RuntimeException e) {
+                failures.add("Could not probe target for v4 schema markers: " + e.getMessage());
+                return;
+            }
+        }
+        if (!found.isEmpty()) {
+            failures.add("Target appears to be a v4 Dependency-Track database (found: "
+                + String.join(", ", found) + "). Bootstrap requires a fresh database; "
+                + "did you accidentally point --target at your v4 source?");
         }
     }
 

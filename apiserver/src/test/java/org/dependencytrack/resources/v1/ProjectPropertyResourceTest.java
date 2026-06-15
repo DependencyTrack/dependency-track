@@ -20,10 +20,7 @@ package org.dependencytrack.resources.v1;
 
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.server.filters.ApiFilter;
-import alpine.server.filters.AuthenticationFeature;
-import alpine.server.filters.AuthorizationFeature;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
+import alpine.server.filters.AuthFeature;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -55,8 +52,7 @@ public class ProjectPropertyResourceTest extends ResourceTest {
     static JerseyTestExtension jersey = new JerseyTestExtension(
             new ResourceConfig(ProjectPropertyResource.class)
                     .register(ApiFilter.class)
-                    .register(AuthenticationFeature.class)
-                    .register(AuthorizationFeature.class)
+                    .register(AuthFeature.class)
                     .register(new AbstractBinder() {
                         @Override
                         protected void configure() {
@@ -74,21 +70,26 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         Response response = jersey.target(V1_PROJECT + "/" + project.getUuid().toString() + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
-        Assertions.assertEquals(200, response.getStatus(), 0);
-        Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals(2, json.size());
-        Assertions.assertEquals("mygroup", json.getJsonObject(0).getString("groupName"));
-        Assertions.assertEquals("prop1", json.getJsonObject(0).getString("propertyName"));
-        Assertions.assertEquals("value1", json.getJsonObject(0).getString("propertyValue"));
-        Assertions.assertEquals("STRING", json.getJsonObject(0).getString("propertyType"));
-        Assertions.assertEquals("Test Property 1", json.getJsonObject(0).getString("description"));
-        Assertions.assertEquals("mygroup", json.getJsonObject(1).getString("groupName"));
-        Assertions.assertEquals("prop2", json.getJsonObject(1).getString("propertyName"));
-        Assertions.assertEquals("value2", json.getJsonObject(1).getString("propertyValue"));
-        Assertions.assertEquals("STRING", json.getJsonObject(1).getString("propertyType"));
-        Assertions.assertEquals("Test Property 2", json.getJsonObject(1).getString("description"));
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isNull();
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "groupName": "mygroup",
+                    "propertyName": "prop1",
+                    "propertyValue": "value1",
+                    "propertyType": "STRING",
+                    "description": "Test Property 1"
+                  },
+                  {
+                    "groupName": "mygroup",
+                    "propertyName": "prop2",
+                    "propertyValue": "value2",
+                    "propertyType": "STRING",
+                    "description": "Test Property 2"
+                  }
+                ]
+                """);
     }
 
     @Test
@@ -150,14 +151,16 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         Response response = jersey.target(V1_PROJECT + "/" + project.getUuid().toString() + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(property, MediaType.APPLICATION_JSON));
-        Assertions.assertEquals(201, response.getStatus(), 0);
-        JsonObject json = parseJsonObject(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals("mygroup", json.getString("groupName"));
-        Assertions.assertEquals("prop1", json.getString("propertyName"));
-        Assertions.assertEquals("value1", json.getString("propertyValue"));
-        Assertions.assertEquals("STRING", json.getString("propertyType"));
-        Assertions.assertEquals("Test Property 1", json.getString("description"));
+        assertThat(response.getStatus()).isEqualTo(201);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "groupName": "mygroup",
+                  "propertyName": "prop1",
+                  "propertyValue": "value1",
+                  "propertyType": "STRING",
+                  "description": "Test Property 1"
+                }
+                """);
     }
 
     @Test
@@ -256,13 +259,15 @@ public class ProjectPropertyResourceTest extends ResourceTest {
         Response response = jersey.target(V1_PROJECT + "/" + uuid + "/property").request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(property, MediaType.APPLICATION_JSON));
-        Assertions.assertEquals(200, response.getStatus(), 0);
-        JsonObject json = parseJsonObject(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals("mygroup", json.getString("groupName"));
-        Assertions.assertEquals("prop1", json.getString("propertyName"));
-        Assertions.assertEquals("updatedValue", json.getString("propertyValue"));
-        Assertions.assertEquals("STRING", json.getString("propertyType"));
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "groupName": "mygroup",
+                  "propertyName": "prop1",
+                  "propertyValue": "updatedValue",
+                  "propertyType": "STRING"
+                }
+                """);
     }
 
     @Test

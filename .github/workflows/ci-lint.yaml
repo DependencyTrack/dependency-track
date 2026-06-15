@@ -47,7 +47,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
           persist-credentials: false
       - name: Set up JDK
@@ -65,7 +65,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
           persist-credentials: false
       - name: Setup buf
@@ -84,7 +84,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
           persist-credentials: false
       - name: Setup buf
@@ -103,7 +103,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
           persist-credentials: false
       - name: Lint OpenAPI Spec
@@ -116,12 +116,23 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
           persist-credentials: false
-      - name: Detect Breaking Changes
-        uses: oasdiff/oasdiff-action/breaking@50e6a3413e5aa9c3ae4d8393c34745be44288b46 # tag=v0.0.48
+      - name: Checkout base ref
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
-          base: https://raw.githubusercontent.com/${{ github.repository }}/refs/heads/main/api/src/main/openapi/openapi.yaml
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+      - name: Detect Breaking Changes
+        uses: oasdiff/oasdiff-action/breaking@3530478ec30f84adedbfeb28f0d9527a290f50a9 # tag=v0.0.57
+        with:
+          base: base/api/src/main/openapi/openapi.yaml
           revision: api/src/main/openapi/openapi.yaml
           fail-on: ERR
+          # We accept the risk of external references (GHSA-fhj3-7267-7vv5) because:
+          #   * The GITHUB_TOKEN for all lint jobs has zero permissions.
+          #   * All actions/checkout steps set persist-credentials to false.
+          #   * Our multi-file setup requires resolving of external (file) references.
+          allow-external-refs: true

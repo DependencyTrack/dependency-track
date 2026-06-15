@@ -40,12 +40,12 @@ public class EpssCelPolicyScriptSourceBuilder implements CelPolicyScriptSourceBu
         }
 
         final String scriptSrcTemplate = switch (policyCondition.getOperator()) {
-            case NUMERIC_GREATER_THAN -> "vulns.exists(vuln, vuln.epss_score > %s)";
-            case NUMERIC_GREATER_THAN_OR_EQUAL -> "vulns.exists(vuln, vuln.epss_score >= %s)";
-            case NUMERIC_EQUAL -> "vulns.exists(vuln, vuln.epss_score == %s)";
-            case NUMERIC_NOT_EQUAL -> "vulns.exists(vuln, vuln.epss_score != %s)";
-            case NUMERIC_LESSER_THAN_OR_EQUAL -> "vulns.exists(vuln, vuln.epss_score <= %s)";
-            case NUMERIC_LESS_THAN -> "vulns.exists(vuln, vuln.epss_score < %s)";
+            case NUMERIC_GREATER_THAN -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score > %s)";
+            case NUMERIC_GREATER_THAN_OR_EQUAL -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score >= %s)";
+            case NUMERIC_EQUAL -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score == %s)";
+            case NUMERIC_NOT_EQUAL -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score != %s)";
+            case NUMERIC_LESSER_THAN_OR_EQUAL -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score <= %s)";
+            case NUMERIC_LESS_THAN -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score < %s)";
             default -> null;
         };
         if (scriptSrcTemplate == null) {

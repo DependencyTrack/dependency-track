@@ -49,6 +49,7 @@ import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.ViolationAnalysisRequest;
+import org.dependencytrack.resources.v1.vo.ViolationAnalysisResponse;
 
 /**
  * JAX-RS resources for processing violation analysis decisions.
@@ -74,7 +75,7 @@ public class ViolationAnalysisResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "A violation analysis trail",
-                    content = @Content(schema = @Schema(implementation = ViolationAnalysis.class))
+                    content = @Content(schema = @Schema(implementation = ViolationAnalysisResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(
@@ -92,18 +93,31 @@ public class ViolationAnalysisResource extends AbstractApiResource {
                 new ValidationTask(RegexSequence.Pattern.UUID, componentUuid, "Component is not a valid UUID"),
                 new ValidationTask(RegexSequence.Pattern.UUID, violationUuid, "Policy violation is not a valid UUID")
         );
-        try (QueryManager qm = new QueryManager()) {
-            final Component component = qm.getObjectByUuid(Component.class, componentUuid);
+
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+            final var component = qm.getObjectByUuid(Component.class, componentUuid);
             if (component == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity("The component could not be found.")
+                        .build();
             }
             requireAccess(qm, component.getProject());
-            final PolicyViolation policyViolation = qm.getObjectByUuid(PolicyViolation.class, violationUuid);
+
+            final var policyViolation = qm.getObjectByUuid(PolicyViolation.class, violationUuid);
             if (policyViolation == null) {
-                return Response.status(Response.Status.NOT_FOUND).entity("The policy violation could not be found.").build();
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity("The policy violation could not be found.")
+                        .build();
             }
+
             final ViolationAnalysis analysis = qm.getViolationAnalysis(component, policyViolation);
-            return Response.ok(analysis).build();
+            return Response
+                    .ok(analysis != null
+                            ? ViolationAnalysisResponse.of(analysis)
+                            : null)
+                    .build();
         }
     }
 
@@ -118,7 +132,7 @@ public class ViolationAnalysisResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "The created violation analysis",
-                    content = @Content(schema = @Schema(implementation = ViolationAnalysis.class))
+                    content = @Content(schema = @Schema(implementation = ViolationAnalysisResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(
@@ -136,19 +150,19 @@ public class ViolationAnalysisResource extends AbstractApiResource {
                 validator.validateProperty(request, "analysisState"),
                 validator.validateProperty(request, "comment")
         );
+
         try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final Component component = qm.getObjectByUuid(Component.class, request.getComponent());
+                final var component = qm.getObjectByUuid(Component.class, request.getComponent());
                 if (component == null) {
                     return Response
                             .status(Response.Status.NOT_FOUND)
                             .entity("The component could not be found.")
                             .build();
                 }
-
                 requireAccess(qm, component.getProject());
 
-                final PolicyViolation violation = qm.getObjectByUuid(PolicyViolation.class, request.getPolicyViolation());
+                final var violation = qm.getObjectByUuid(PolicyViolation.class, request.getPolicyViolation());
                 if (violation == null) {
                     return Response
                             .status(Response.Status.NOT_FOUND)
@@ -162,7 +176,9 @@ public class ViolationAnalysisResource extends AbstractApiResource {
                                 .withSuppress(request.isSuppressed())
                                 .withComment(request.getComment()));
 
-                return Response.ok(qm.getObjectById(ViolationAnalysis.class, analysisId)).build();
+                return Response
+                        .ok(ViolationAnalysisResponse.of(qm.getObjectById(ViolationAnalysis.class, analysisId)))
+                        .build();
             });
         }
     }

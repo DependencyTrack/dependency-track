@@ -66,6 +66,7 @@ import org.dependencytrack.model.ViolationAnalysis;
 import org.dependencytrack.model.ViolationAnalysisComment;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.resources.v1.vo.ComponentVulnerabilityView;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
@@ -3594,8 +3595,8 @@ class ProjectResourceTest extends ResourceTest {
                         assertThat(property.getPropertyType()).isEqualTo(PropertyType.STRING);
                     });
 
-                    assertThat(qm.getVulnerabilities(clonedComponent, false).getList(Vulnerability.class))
-                            .satisfiesExactly(v -> assertThat(v.getId()).isEqualTo(vuln.getId()));
+                    assertThat(qm.getVulnerabilities(clonedComponent, false).getList(ComponentVulnerabilityView.class))
+                            .satisfiesExactly(view -> assertThat(view.getVulnerability().getId()).isEqualTo(vuln.getId()));
 
                     assertThat(qm.getAnalysis(clonedComponent, vuln)).satisfies(clonedAnalysis -> {
                         assertThat(clonedAnalysis.getId()).isNotEqualTo(analysisId);

@@ -136,8 +136,15 @@ public final class LoadPhase {
             }
         });
         // Refresh PORTFOLIOMETRICS_GLOBAL after PROJECTMETRICS is in place.
+        // The view body uses CURRENT_DATE and implicit timestamptz coercion, so the
+        // refresh must run with session TZ pinned to UTC to match the v5 apiserver
+        // contract (MetricsDao#refreshGlobalPortfolioMetrics does the same via
+        // SET LOCAL inside its transaction).
         LOGGER.info("Refreshing PORTFOLIOMETRICS_GLOBAL materialized view");
-        target.useHandle(h -> h.execute("REFRESH MATERIALIZED VIEW \"PORTFOLIOMETRICS_GLOBAL\""));
+        target.useTransaction(th -> {
+            th.execute("SET LOCAL TIME ZONE 'UTC'");
+            th.execute("REFRESH MATERIALIZED VIEW \"PORTFOLIOMETRICS_GLOBAL\"");
+        });
         LOGGER.info("Applying v5.7.0 cleanup deletes");
         replayV570CleanupDeletes();
     }
@@ -178,9 +185,10 @@ public final class LoadPhase {
                 final List<LocalDate> slice = days.subList(i, Math.min(i + chunk, days.size()));
                 target.useTransaction(th -> {
                     // Pin session TZ to UTC so partition boundaries are deterministic.
-                    // The v5 apiserver creates partitions via session-TZ DATE literals
-                    // (MetricsDao.createMetricsPartitions); aligning here means partitions
-                    // attach without overlap when v5 also runs in UTC (the documented setup).
+                    // v5's MetricsDao.createMetricsPartitions anchors its bounds to UTC
+                    // explicitly (CAST(... AS timestamp) AT TIME ZONE 'UTC'), so aligning
+                    // here makes the migrator's pre-created partitions attach without
+                    // overlap regardless of the operator's TZ.
                     th.execute("SET LOCAL TIME ZONE 'UTC'");
                     for (final LocalDate d : slice) {
                         final String child = "%s_%s".formatted(parent,

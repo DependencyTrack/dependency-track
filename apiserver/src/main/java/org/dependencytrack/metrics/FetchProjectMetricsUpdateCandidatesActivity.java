@@ -50,8 +50,8 @@ public final class FetchProjectMetricsUpdateCandidatesActivity implements Activi
                                      SELECT 1
                                        FROM "PROJECTMETRICS"
                                       WHERE "PROJECT_ID" = "PROJECT"."ID"
-                                        AND "LAST_OCCURRENCE" >= CURRENT_DATE
-                                        AND "LAST_OCCURRENCE" < CURRENT_DATE + INTERVAL '1 day'
+                                        AND "LAST_OCCURRENCE" >= date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+                                        AND "LAST_OCCURRENCE" < (date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') + INTERVAL '1 day') AT TIME ZONE 'UTC'
                                    )
                                  ORDER BY "ID"
                                  LIMIT :batchSize

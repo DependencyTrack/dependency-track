@@ -42,7 +42,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.License;
 import org.dependencytrack.model.LicenseGroup;
@@ -50,6 +49,9 @@ import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
+import org.dependencytrack.resources.v1.vo.CreateLicenseGroupRequest;
+import org.dependencytrack.resources.v1.vo.LicenseGroupResponse;
+import org.dependencytrack.resources.v1.vo.UpdateLicenseGroupRequest;
 
 import java.util.List;
 
@@ -79,15 +81,26 @@ public class LicenseGroupResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all license groups",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of license groups", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = LicenseGroup.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = LicenseGroupResponse.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_READ})
+    @PermissionRequired({
+            Permissions.Constants.POLICY_MANAGEMENT,
+            Permissions.Constants.POLICY_MANAGEMENT_READ
+    })
     public Response getLicenseGroups() {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getLicenseGroups();
-            return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
+            final List<LicenseGroupResponse> responses =
+                    result.getList(LicenseGroup.class).stream()
+                            .map(LicenseGroupResponse::of)
+                            .toList();
+
+            return Response
+                    .ok(responses)
+                    .header(TOTAL_COUNT_HEADER, result.getTotal())
+                    .build();
         }
     }
 
@@ -102,21 +115,29 @@ public class LicenseGroupResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "A specific license group",
-                    content = @Content(schema = @Schema(implementation = LicenseGroup.class))
+                    content = @Content(schema = @Schema(implementation = LicenseGroupResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The license group could not be found")
     })
-    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_READ})
+    @PermissionRequired({
+            Permissions.Constants.POLICY_MANAGEMENT,
+            Permissions.Constants.POLICY_MANAGEMENT_READ
+    })
     public Response getLicenseGroup(
             @Parameter(description = "The UUID of the license group to retrieve", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             final LicenseGroup licenseGroup = qm.getObjectByUuid(LicenseGroup.class, uuid);
             if (licenseGroup != null) {
-                return Response.ok(licenseGroup).build();
+                return Response
+                        .ok(LicenseGroupResponse.of(licenseGroup))
+                        .build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The license group could not be found.").build();
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity("The license group could not be found.")
+                        .build();
             }
         }
     }
@@ -132,26 +153,33 @@ public class LicenseGroupResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "201",
                     description = "The created license group",
-                    content = @Content(schema = @Schema(implementation = LicenseGroup.class))
+                    content = @Content(schema = @Schema(implementation = LicenseGroupResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "409", description = "A license group with the specified name already exists")
     })
-    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_CREATE})
-    public Response createLicenseGroup(LicenseGroup jsonLicenseGroup) {
+    @PermissionRequired({
+            Permissions.Constants.POLICY_MANAGEMENT,
+            Permissions.Constants.POLICY_MANAGEMENT_CREATE
+    })
+    public Response createLicenseGroup(CreateLicenseGroupRequest request) {
         final Validator validator = super.getValidator();
-        failOnValidationError(
-                validator.validateProperty(jsonLicenseGroup, "name")
-        );
+        failOnValidationError(validator.validate(request));
 
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                LicenseGroup licenseGroup = qm.getLicenseGroup(StringUtils.trimToNull(jsonLicenseGroup.getName()));
+                LicenseGroup licenseGroup = qm.getLicenseGroup(request.name());
                 if (licenseGroup == null) {
-                    licenseGroup = qm.createLicenseGroup(StringUtils.trimToNull(jsonLicenseGroup.getName()));
-                    return Response.status(Response.Status.CREATED).entity(licenseGroup).build();
+                    licenseGroup = qm.createLicenseGroup(request.name());
+                    return Response
+                            .status(Response.Status.CREATED)
+                            .entity(LicenseGroupResponse.of(licenseGroup))
+                            .build();
                 } else {
-                    return Response.status(Response.Status.CONFLICT).entity("A license group with the specified name already exists.").build();
+                    return Response
+                            .status(Response.Status.CONFLICT)
+                            .entity("A license group with the specified name already exists.")
+                            .build();
                 }
             });
         }
@@ -168,26 +196,33 @@ public class LicenseGroupResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "The updated license group",
-                    content = @Content(schema = @Schema(implementation = LicenseGroup.class))
+                    content = @Content(schema = @Schema(implementation = LicenseGroupResponse.class))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The license group could not be found")
     })
-    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_UPDATE})
-    public Response updateLicenseGroup(LicenseGroup jsonLicenseGroup) {
+    @PermissionRequired({
+            Permissions.Constants.POLICY_MANAGEMENT,
+            Permissions.Constants.POLICY_MANAGEMENT_UPDATE
+    })
+    public Response updateLicenseGroup(UpdateLicenseGroupRequest request) {
         final Validator validator = super.getValidator();
-        failOnValidationError(
-                validator.validateProperty(jsonLicenseGroup, "name")
-        );
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        failOnValidationError(validator.validate(request));
+
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                LicenseGroup licenseGroup = qm.getObjectByUuid(LicenseGroup.class, jsonLicenseGroup.getUuid());
+                var licenseGroup = qm.getObjectByUuid(LicenseGroup.class, request.uuid());
                 if (licenseGroup != null) {
-                    licenseGroup.setName(jsonLicenseGroup.getName());
+                    licenseGroup.setName(request.name());
                     licenseGroup = qm.persist(licenseGroup);
-                    return Response.ok(licenseGroup).build();
+                    return Response
+                            .ok(LicenseGroupResponse.of(licenseGroup))
+                            .build();
                 } else {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The license group could not be found.").build();
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The license group could not be found.")
+                            .build();
                 }
             });
         }
@@ -206,18 +241,26 @@ public class LicenseGroupResource extends AbstractApiResource {
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The UUID of the license group could not be found")
     })
-    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_DELETE})
+    @PermissionRequired({
+            Permissions.Constants.POLICY_MANAGEMENT,
+            Permissions.Constants.POLICY_MANAGEMENT_DELETE
+    })
     public Response deleteLicenseGroup(
             @Parameter(description = "The UUID of the license group to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final LicenseGroup licenseGroup = qm.getObjectByUuid(LicenseGroup.class, uuid);
+                final var licenseGroup = qm.getObjectByUuid(LicenseGroup.class, uuid);
                 if (licenseGroup != null) {
                     qm.delete(licenseGroup);
-                    return Response.status(Response.Status.NO_CONTENT).build();
+                    return Response
+                            .status(Response.Status.NO_CONTENT)
+                            .build();
                 } else {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The UUID of the license group could not be found.").build();
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The UUID of the license group could not be found.")
+                            .build();
                 }
             });
         }
@@ -235,36 +278,52 @@ public class LicenseGroupResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "The updated license group",
-                    content = @Content(schema = @Schema(implementation = LicenseGroup.class))
+                    content = @Content(schema = @Schema(implementation = LicenseGroupResponse.class))
             ),
             @ApiResponse(responseCode = "304", description = "The license group already has the specified license assigned"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The license group or license could not be found")
     })
-    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_UPDATE})
+    @PermissionRequired({
+            Permissions.Constants.POLICY_MANAGEMENT,
+            Permissions.Constants.POLICY_MANAGEMENT_UPDATE
+    })
     public Response addLicenseToLicenseGroup(
             @Parameter(description = "A valid license group", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
             @Parameter(description = "A valid license", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("licenseUuid") @ValidUuid String licenseUuid) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                LicenseGroup licenseGroup = qm.getObjectByUuid(LicenseGroup.class, uuid);
+                final var licenseGroup = qm.getObjectByUuid(LicenseGroup.class, uuid);
                 if (licenseGroup == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The license group could not be found.").build();
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The license group could not be found.")
+                            .build();
                 }
-                final License license = qm.getObjectByUuid(License.class, licenseUuid);
+
+                final var license = qm.getObjectByUuid(License.class, licenseUuid);
                 if (license == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The license could not be found.").build();
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The license could not be found.")
+                            .build();
                 }
+
                 final List<License> licenses = licenseGroup.getLicenses();
                 if (licenses != null && !licenses.contains(license)) {
                     licenses.add(license);
                     licenseGroup.setLicenses(licenses);
                     qm.persist(licenseGroup);
-                    return Response.ok(licenseGroup).build();
+                    return Response
+                            .ok(LicenseGroupResponse.of(licenseGroup))
+                            .build();
                 }
-                return Response.status(Response.Status.NOT_MODIFIED).build();
+
+                return Response
+                        .status(Response.Status.NOT_MODIFIED)
+                        .build();
             });
         }
     }
@@ -281,37 +340,54 @@ public class LicenseGroupResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "The updated license group",
-                    content = @Content(schema = @Schema(implementation = LicenseGroup.class))
+                    content = @Content(schema = @Schema(implementation = LicenseGroupResponse.class))
             ),
             @ApiResponse(responseCode = "304", description = "The license is not a member with the license group"),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "The license group or license could not be found")
     })
-    @PermissionRequired({Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_UPDATE})
+    @PermissionRequired({
+            Permissions.Constants.POLICY_MANAGEMENT,
+            Permissions.Constants.POLICY_MANAGEMENT_UPDATE
+    })
     public Response removeLicenseFromLicenseGroup(
             @Parameter(description = "A valid license group", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid,
             @Parameter(description = "A valid license", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("licenseUuid") @ValidUuid String licenseUuid) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+        try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                LicenseGroup licenseGroup = qm.getObjectByUuid(LicenseGroup.class, uuid);
+                var licenseGroup = qm.getObjectByUuid(LicenseGroup.class, uuid);
                 if (licenseGroup == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The license group could not be found.").build();
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The license group could not be found.")
+                            .build();
                 }
-                final License license = qm.getObjectByUuid(License.class, licenseUuid);
+
+                final var license = qm.getObjectByUuid(License.class, licenseUuid);
                 if (license == null) {
-                    return Response.status(Response.Status.NOT_FOUND).entity("The license could not be found.").build();
+                    return Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity("The license could not be found.")
+                            .build();
                 }
+
                 final List<License> licenses = licenseGroup.getLicenses();
                 if (licenses != null && licenses.contains(license)) {
                     licenses.remove(license);
                     licenseGroup.setLicenses(licenses);
                     licenseGroup = qm.persist(licenseGroup);
-                    return Response.ok(licenseGroup).build();
+                    return Response
+                            .ok(LicenseGroupResponse.of(licenseGroup))
+                            .build();
                 }
-                return Response.status(Response.Status.NOT_MODIFIED).build();
+
+                return Response
+                        .status(Response.Status.NOT_MODIFIED)
+                        .build();
             });
         }
     }
+
 }

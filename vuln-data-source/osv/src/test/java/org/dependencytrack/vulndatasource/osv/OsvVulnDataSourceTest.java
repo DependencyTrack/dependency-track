@@ -529,4 +529,42 @@ class OsvVulnDataSourceTest {
         verify(0, getRequestedFor(urlPathMatching("/maven/OSV-.*\\.json")));
     }
 
+    @Test
+    void shouldPercentEncodeSpacesInEcosystemNameForIncrementalAdvisories(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        when(watermarkManagerMock.getWatermark("Red Hat")).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
+        String csvBody = """
+                2025-01-01T00:00:00Z,OSV-1
+                """;
+        stubFor(get(urlEqualTo("/Red%20Hat/modified_id.csv"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "text/csv")
+                        .withBody(csvBody)));
+        for (final String id : List.of("OSV-1")) {
+            stubFor(get(urlEqualTo("/Red%20Hat/" + id + ".json"))
+                    .willReturn(aResponse()
+                            .withStatus(200)
+                            .withHeader("Content-Type", "application/json")
+                            .withBody(/* language=JSON */ """
+                                    {"id":"%s","summary":"s","affected":[],"modified":"2025-01-01T00:00:00Z"}
+                                    """.formatted(id))));
+        }
+
+        try (var dataSource = new OsvVulnDataSource(
+                watermarkManagerMock,
+                objectMapper,
+                wmRuntimeInfo.getHttpBaseUrl(),
+                List.of("Red Hat"),
+                HttpClient.newHttpClient(),
+                false)) {
+            assertThat(dataSource.hasNext()).isTrue();
+            dataSource.next();
+            assertThat(dataSource.hasNext()).isFalse();
+        }
+
+        verify(1,getRequestedFor(urlEqualTo("/Red%20Hat/modified_id.csv")));
+        verify(0, getRequestedFor(urlPathMatching(".*/Red\\+Hat/.*")));
+
+        verify(1, getRequestedFor(urlPathMatching("/Red%20Hat/OSV-1\\.json")));
+    }
 }

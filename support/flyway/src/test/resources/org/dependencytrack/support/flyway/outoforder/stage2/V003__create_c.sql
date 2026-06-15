@@ -1,0 +1,1 @@
+CREATE TABLE c (id INT);

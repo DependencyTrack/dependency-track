@@ -47,6 +47,7 @@ import java.util.Map;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
@@ -440,4 +441,39 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
         }
     }
 
+    @Test
+    void shouldSendProtobufWhenConfigured() {
+        try (final var factory = new WebhookNotificationPublisherFactory()) {
+            final var configRegistry = new MockConfigRegistry(
+                    Map.of(), null, RuntimeConfigMapper.getInstance(), null);
+            factory.init(
+                    new MutableServiceRegistry()
+                            .register(ConfigRegistry.class, configRegistry)
+                            .register(HttpClient.class, HttpClient.newHttpClient()));
+
+            try (final var publisher = factory.create()) {
+                final RuntimeConfigSpec ruleConfigSpec = factory.ruleConfigSpec();
+                final var ruleConfig = (WebhookNotificationPublisherRuleConfigV1) ruleConfigSpec.defaultConfig();
+                ruleConfig.setDestinationUrl(URI.create(WIREMOCK.baseUrl()));
+                ruleConfig.setPublishProtobuf(true);
+
+                final var templateRendererFactory =
+                        new PebbleNotificationTemplateRendererFactory(
+                                Map.of("baseUrl", () -> "https://example.com"));
+                final NotificationTemplateRenderer templateRenderer =
+                        templateRendererFactory.createRenderer(factory.defaultTemplate());
+
+                final var ctx = new NotificationPublishContext(ruleConfig, templateRenderer);
+
+                final var notification = createBomConsumedTestNotification();
+                final var expectedProtobuf = notification.toByteArray();
+                assertThatNoException()
+                        .isThrownBy(() -> publisher.publish(ctx, notification));
+
+                WIREMOCK.verify(postRequestedFor(anyUrl())
+                        .withHeader("Content-Type", equalTo("application/protobuf"))
+                        .withRequestBody(binaryEqualTo(expectedProtobuf)));
+            }
+        }
+    }
 }

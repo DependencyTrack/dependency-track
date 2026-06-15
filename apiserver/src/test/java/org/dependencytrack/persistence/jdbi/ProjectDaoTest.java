@@ -231,10 +231,10 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         qm.getPersistenceManager().refresh(policy);
         assertThat(policy.getProjects()).isEmpty();
 
-        // Ensure that metrics have been deleted.
+        // Metrics are NOT deleted, see ADR 029.
         MetricsDao dao = jdbiHandle.attach(MetricsDao.class);
-        assertThat(dao.getProjectMetricsSince(project.getId(), DateUtil.parseShortDate("20250101").toInstant())).isEmpty();
-        assertThat(dao.getDependencyMetricsSince(component.getId(), DateUtil.parseShortDate("20250101").toInstant())).isEmpty();
+        assertThat(dao.getProjectMetricsSince(project.getId(), DateUtil.parseShortDate("20250101").toInstant())).isNotEmpty();
+        assertThat(dao.getDependencyMetricsSince(component.getId(), DateUtil.parseShortDate("20250101").toInstant())).isNotEmpty();
     }
 
     @Test

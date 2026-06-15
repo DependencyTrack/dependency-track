@@ -25,6 +25,11 @@
       "description": "Value of the authentication header (e.g. a bearer token).",
       "minLength": 1,
       "x-secret-ref": true
+    },
+    "publishProtobuf": {
+      "type": "boolean",
+      "title": "Publish Protobuf",
+      "description": "Whether to publish notifications in Protobuf format instead of applying a template."
     }
   },
   "required": [

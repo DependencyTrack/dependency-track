@@ -44,6 +44,7 @@ import org.dependencytrack.e2e.api.model.Project;
 import org.dependencytrack.e2e.api.model.Team;
 import org.dependencytrack.e2e.api.model.UpdateExtensionConfigRequest;
 import org.dependencytrack.e2e.api.model.UpdateNotificationRuleRequest;
+import org.dependencytrack.e2e.api.model.VexSubmitRequest;
 import org.dependencytrack.e2e.api.model.VulnPolicyBundleSyncStatus;
 import org.dependencytrack.e2e.api.model.VulnerabilityPolicy;
 
@@ -96,6 +97,12 @@ public interface ApiClient {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     EventTokenResponse uploadBom(BomUploadRequest request);
+
+    @PUT
+    @Path("/v1/vex")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    EventTokenResponse uploadVex(VexSubmitRequest request);
 
     @GET
     @Path("/v1/event/token/{token}")

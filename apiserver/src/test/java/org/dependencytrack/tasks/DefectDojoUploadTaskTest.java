@@ -932,7 +932,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testUploadWithGroupBy() {
+    void testUploadWithGroupBy(WireMockRuntimeInfo wmRuntimeInfo) {
         qm.createConfigProperty(
                 DEFECTDOJO_ENABLED.getGroupName(),
                 DEFECTDOJO_ENABLED.getPropertyName(),
@@ -950,7 +950,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 DEFECTDOJO_API_KEY.getGroupName(),
                 DEFECTDOJO_API_KEY.getPropertyName(),
-                "dojoApiKey",
+                "apiKeySecretName",
                 DEFECTDOJO_API_KEY.getPropertyType(),
                 null
         );
@@ -982,7 +982,10 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createProjectProperty(project, "integrations", "defectdojo.groupBy",
                 "component_name", IConfigProperty.PropertyType.STRING, null);
 
-        new DefectDojoUploadTask().inform(new DefectDojoUploadEventAbstract());
+        new DefectDojoUploadTask(
+                HttpClient.newHttpClient(),
+                new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
+                .run();
 
         verify(postRequestedFor(urlPathEqualTo("/api/v2/import-scan/"))
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Token dojoApiKey"))
@@ -995,7 +998,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testUploadWithReimportAndGroupBy() {
+    void testUploadWithReimportAndGroupBy(WireMockRuntimeInfo wmRuntimeInfo) {
         qm.createConfigProperty(
                 DEFECTDOJO_ENABLED.getGroupName(),
                 DEFECTDOJO_ENABLED.getPropertyName(),
@@ -1013,7 +1016,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createConfigProperty(
                 DEFECTDOJO_API_KEY.getGroupName(),
                 DEFECTDOJO_API_KEY.getPropertyName(),
-                "dojoApiKey",
+                "apiKeySecretName",
                 DEFECTDOJO_API_KEY.getPropertyType(),
                 null
         );
@@ -1092,7 +1095,10 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
         qm.createProjectProperty(project, "integrations", "defectdojo.groupBy",
                 "component_name+component_version", IConfigProperty.PropertyType.STRING, null);
 
-        new DefectDojoUploadTask().inform(new DefectDojoUploadEventAbstract());
+        new DefectDojoUploadTask(
+                HttpClient.newHttpClient(),
+                new TestSecretManager(Map.of("apiKeySecretName", "dojoApiKey")))
+                .run();
 
         verify(1, getRequestedFor(urlPathEqualTo("/api/v2/tests/")));
 

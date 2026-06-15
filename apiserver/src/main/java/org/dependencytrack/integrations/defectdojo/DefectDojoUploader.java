@@ -99,7 +99,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         return null;
     }
 
-    public String getGroupBy(final Project project) {
+    private @Nullable String getGroupBy(final Project project) {
         final ProjectProperty groupBy = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), GROUP_BY_PROPERTY);
         if (groupBy != null && groupBy.getPropertyValue() != null) {
             return groupBy.getPropertyValue();
@@ -159,7 +159,6 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                 LOGGER.warn("DefectDojo API key secret '%s' could not be resolved. Aborting".formatted(apiKeySecretName));
                 return;
             }
-            final String testTitle = getTestTitle(project);
             final DefectDojoClient client = new DefectDojoClient(httpClient, this, URI.create(defectDojoUrl.getPropertyValue()).toURL());
             if (isReimportConfigured(project) || globalReimportEnabled) {
                 final ArrayList<String> testsIds = client.getDojoTestIds(apiKeyValue, engagementId.getPropertyValue());

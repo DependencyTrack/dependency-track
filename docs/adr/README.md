@@ -26,23 +26,38 @@ Small ADRs that land together with their implementation can start as `Accepted` 
 
 ## Sections
 
-**Context.** Describe the technical and operational pressures that motivate the decision.
+### Context
+
+Describe the technical and operational pressures that motivate the decision.
 These pressures often pull in different directions, say so when they do. Keep the language
 factual, not opinionated. The recommendation belongs in `Decision`. When you compare real
 alternatives, add a `### Possible Solutions` subsection. Give each option a sub-heading and
 list its pros and cons. [ADR 001](./001-drop-kafka-dependency.md) is the canonical example.
 
-**Decision.** State the response in active voice ("We will ..."). Name the chosen option
+### Decision 
+
+State the response in active voice ("We will ..."). Name the chosen option
 when the Context listed alternatives. Say clearly what is in scope and what is not.
 
-**Consequences.** Describe what changes once the decision is in place. Cover the good, the
-bad, and the neutral effects honestly.
+### Consequences
 
-**Follow-up (optional).** When later work adds detail to an `Accepted` ADR without changing
-the decision, add a `## Follow-up (yyyy-mm-dd)` section to the same file.
-[ADR 028](./028-hash-verification-computed-not-materialized.md) is an example. Write a new
-ADR when the original decision is reversed, and link the two with `Superseded by` and
-`Supersedes`.
+Describe what changes once the decision is in place. Cover the good, the bad,
+and the neutral effects honestly.
+
+### Follow-up (optional)
+
+When later work adds detail to an `Accepted` ADR without changing the decision,
+add a `## Follow-up (yyyy-mm-dd)` section to the same file.
+
+[ADR 028](./028-hash-verification-computed-not-materialized.md) is an example.
+A follow-up is also the right place to revise a single aspect of a decision,
+for example narrowing the scope, adjusting a default, or replacing one of several listed alternatives,
+*as long as the core decision still holds*.
+
+Write a new ADR *only when the original decision as a whole no longer holds*, for example when
+the chosen option is replaced, the problem is reframed, or the trade-offs that justified the
+decision have changed. Link the two with `Superseded by` and `Supersedes`.
+A partial revision that leaves the headline decision intact belongs in a `Follow-up`, *not* in a new ADR.
 
 ## Writing style
 

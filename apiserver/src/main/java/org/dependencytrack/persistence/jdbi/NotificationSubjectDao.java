@@ -91,54 +91,54 @@ public interface NotificationSubjectDao extends SqlObject {
                  , v."DESCRIPTION" AS "vulnDescription"
                  , v."RECOMMENDATION" AS "vulnRecommendation"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
                      THEN a."CVSSV2SCORE"
                      ELSE v."CVSSV2BASESCORE"
                    END AS "vulnCvssV2BaseScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
                      THEN a."CVSSV3SCORE"
                      ELSE v."CVSSV3BASESCORE"
                    END AS "vulnCvssV3BaseScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
                      THEN a."CVSSV4SCORE"
                      ELSE v."CVSSV4SCORE"
                    END AS "vulnCvssV4Score"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
                      THEN a."CVSSV2VECTOR"
                      ELSE v."CVSSV2VECTOR"
                    END AS "vulnCvssV2Vector"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
                      THEN a."CVSSV3VECTOR"
                      ELSE v."CVSSV3VECTOR"
                    END AS "vulnCvssV3Vector"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
                      THEN a."CVSSV4VECTOR"
                      ELSE v."CVSSV4VECTOR"
                    END AS "vulnCvssV4Vector"
                   -- TODO: Analysis only has a single score, but OWASP RR defines multiple.
                   --  How to handle this?
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPSCORE"
                      ELSE v."OWASPRRBUSINESSIMPACTSCORE"
                    END AS "vulnOwaspRrBusinessImpactScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPSCORE"
                      ELSE v."OWASPRRLIKELIHOODSCORE"
                    END AS "vulnOwaspRrLikelihoodScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPSCORE"
                      ELSE v."OWASPRRTECHNICALIMPACTSCORE"
                    END AS "vulnOwaspRrTechnicalImpactScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPVECTOR"
                      ELSE v."OWASPRRVECTOR"
                    END AS "vulnOwaspRrVector"
@@ -207,52 +207,52 @@ public interface NotificationSubjectDao extends SqlObject {
                              , v."DESCRIPTION" AS "vulnDescription"
                              , v."RECOMMENDATION" AS "vulnRecommendation"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL
+                                 WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
                                  THEN a."CVSSV2SCORE"
                                  ELSE v."CVSSV2BASESCORE"
                                END AS "vulnCvssV2BaseScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL
+                                 WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
                                  THEN a."CVSSV3SCORE"
                                  ELSE v."CVSSV3BASESCORE"
                                END AS "vulnCvssV3BaseScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL
+                                 WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
                                  THEN a."CVSSV4SCORE"
                                  ELSE v."CVSSV4SCORE"
                                END AS "vulnCvssV4Score"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL
+                                 WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
                                  THEN a."CVSSV2VECTOR"
                                  ELSE v."CVSSV2VECTOR"
                                END AS "vulnCvssV2Vector"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL
+                                 WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
                                  THEN a."CVSSV3VECTOR"
                                  ELSE v."CVSSV3VECTOR"
                                END AS "vulnCvssV3Vector"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL
+                                 WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
                                  THEN a."CVSSV4VECTOR"
                                  ELSE v."CVSSV4VECTOR"
                                END AS "vulnCvssV4Vector"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                                  THEN a."OWASPSCORE"
                                  ELSE v."OWASPRRBUSINESSIMPACTSCORE"
                                END AS "vulnOwaspRrBusinessImpactScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                                  THEN a."OWASPSCORE"
                                  ELSE v."OWASPRRLIKELIHOODSCORE"
                                END AS "vulnOwaspRrLikelihoodScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                                  THEN a."OWASPSCORE"
                                  ELSE v."OWASPRRTECHNICALIMPACTSCORE"
                                END AS "vulnOwaspRrTechnicalImpactScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                                  THEN a."OWASPVECTOR"
                                  ELSE v."OWASPRRVECTOR"
                                END AS "vulnOwaspRrVector"
@@ -353,43 +353,53 @@ public interface NotificationSubjectDao extends SqlObject {
                              , v."DESCRIPTION" AS "vulnDescription"
                              , v."RECOMMENDATION" AS "vulnRecommendation"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV2SCORE"
+                                 WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
+                                 THEN a."CVSSV2SCORE"
                                  ELSE v."CVSSV2BASESCORE"
                                END AS "vulnCvssV2BaseScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV3SCORE"
+                                 WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
+                                 THEN a."CVSSV3SCORE"
                                  ELSE v."CVSSV3BASESCORE"
                                END AS "vulnCvssV3BaseScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV4SCORE"
+                                 WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
+                                 THEN a."CVSSV4SCORE"
                                  ELSE v."CVSSV4SCORE"
                                END AS "vulnCvssV4Score"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV2VECTOR"
+                                 WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
+                                 THEN a."CVSSV2VECTOR"
                                  ELSE v."CVSSV2VECTOR"
                                END AS "vulnCvssV2Vector"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV3VECTOR"
+                                 WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
+                                 THEN a."CVSSV3VECTOR"
                                  ELSE v."CVSSV3VECTOR"
                                END AS "vulnCvssV3Vector"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV4VECTOR"
+                                 WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
+                                 THEN a."CVSSV4VECTOR"
                                  ELSE v."CVSSV4VECTOR"
                                END AS "vulnCvssV4Vector"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPSCORE"
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
+                                 THEN a."OWASPSCORE"
                                  ELSE v."OWASPRRBUSINESSIMPACTSCORE"
                                END AS "vulnOwaspRrBusinessImpactScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPSCORE"
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
+                                 THEN a."OWASPSCORE"
                                  ELSE v."OWASPRRLIKELIHOODSCORE"
                                END AS "vulnOwaspRrLikelihoodScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPSCORE"
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
+                                 THEN a."OWASPSCORE"
                                  ELSE v."OWASPRRTECHNICALIMPACTSCORE"
                                END AS "vulnOwaspRrTechnicalImpactScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPVECTOR"
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
+                                 THEN a."OWASPVECTOR"
                                  ELSE v."OWASPRRVECTOR"
                                END AS "vulnOwaspRrVector"
                              , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"
@@ -533,43 +543,53 @@ public interface NotificationSubjectDao extends SqlObject {
                              , v."DESCRIPTION" AS "vulnDescription"
                              , v."RECOMMENDATION" AS "vulnRecommendation"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV2SCORE"
+                                 WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
+                                 THEN a."CVSSV2SCORE"
                                  ELSE v."CVSSV2BASESCORE"
                                END AS "vulnCvssV2BaseScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV3SCORE"
+                                 WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
+                                 THEN a."CVSSV3SCORE"
                                  ELSE v."CVSSV3BASESCORE"
                                END AS "vulnCvssV3BaseScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV4SCORE"
+                                 WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
+                                 THEN a."CVSSV4SCORE"
                                  ELSE v."CVSSV4SCORE"
                                END AS "vulnCvssV4Score"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV2VECTOR"
+                                 WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
+                                 THEN a."CVSSV2VECTOR"
                                  ELSE v."CVSSV2VECTOR"
                                END AS "vulnCvssV2Vector"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV3VECTOR"
+                                 WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
+                                 THEN a."CVSSV3VECTOR"
                                  ELSE v."CVSSV3VECTOR"
                                END AS "vulnCvssV3Vector"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."CVSSV4VECTOR"
+                                 WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
+                                 THEN a."CVSSV4VECTOR"
                                  ELSE v."CVSSV4VECTOR"
                                END AS "vulnCvssV4Vector"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPSCORE"
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
+                                 THEN a."OWASPSCORE"
                                  ELSE v."OWASPRRBUSINESSIMPACTSCORE"
                                END AS "vulnOwaspRrBusinessImpactScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPSCORE"
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
+                                 THEN a."OWASPSCORE"
                                  ELSE v."OWASPRRLIKELIHOODSCORE"
                                END AS "vulnOwaspRrLikelihoodScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPSCORE"
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
+                                 THEN a."OWASPSCORE"
                                  ELSE v."OWASPRRTECHNICALIMPACTSCORE"
                                END AS "vulnOwaspRrTechnicalImpactScore"
                              , CASE
-                                 WHEN a."SEVERITY" IS NOT NULL THEN a."OWASPVECTOR"
+                                 WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
+                                 THEN a."OWASPVECTOR"
                                  ELSE v."OWASPRRVECTOR"
                                END AS "vulnOwaspRrVector"
                              , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"

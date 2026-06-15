@@ -138,54 +138,54 @@ public interface FindingDao {
                  , v."REFERENCES" AS "vulnReferences"
                  , v."PUBLISHED" AS "vulnPublished"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
                      THEN a."CVSSV2SCORE"
                      ELSE v."CVSSV2BASESCORE"
                    END AS "cvssV2BaseScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
                      THEN a."CVSSV3SCORE"
                      ELSE v."CVSSV3BASESCORE"
                    END AS "cvssV3BaseScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
                      THEN a."CVSSV4SCORE"
                      ELSE v."CVSSV4SCORE"
                    END AS "cvssV4Score"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
                      THEN a."CVSSV2VECTOR"
                      ELSE v."CVSSV2VECTOR"
                    END AS "cvssV2Vector"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
                      THEN a."CVSSV3VECTOR"
                      ELSE v."CVSSV3VECTOR"
                    END AS "cvssV3Vector"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
                      THEN a."CVSSV4VECTOR"
                      ELSE v."CVSSV4VECTOR"
                    END AS "cvssV4Vector"
                  -- TODO: Analysis only has a single score, but OWASP RR defines multiple.
                  --  How to handle this?
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPSCORE"
                      ELSE v."OWASPRRBUSINESSIMPACTSCORE"
                    END AS "owaspRRBusinessImpactScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPSCORE"
                      ELSE v."OWASPRRLIKELIHOODSCORE"
                    END AS "owaspRRLikelihoodScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPSCORE"
                      ELSE v."OWASPRRTECHNICALIMPACTSCORE"
                    END AS "owaspRRTechnicalImpactScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPVECTOR"
                      ELSE v."OWASPRRVECTOR"
                    END AS "owaspRRVector"
@@ -356,54 +356,54 @@ public interface FindingDao {
                  , v."REFERENCES" AS "vulnReferences"
                  , v."PUBLISHED" AS "vulnPublished"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
                      THEN a."CVSSV2SCORE"
                      ELSE v."CVSSV2BASESCORE"
                    END AS "cvssV2BaseScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
                      THEN a."CVSSV3SCORE"
                      ELSE v."CVSSV3BASESCORE"
                    END AS "cvssV3BaseScore"
                  , CASE
-                    WHEN a."SEVERITY" IS NOT NULL
-                    THEN a."CVSSV4SCORE"
-                    ELSE v."CVSSV4SCORE"
+                     WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
+                     THEN a."CVSSV4SCORE"
+                     ELSE v."CVSSV4SCORE"
                    END AS "cvssV4Score"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
                      THEN a."CVSSV2VECTOR"
                      ELSE v."CVSSV2VECTOR"
                    END AS "cvssV2Vector"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
                      THEN a."CVSSV3VECTOR"
                      ELSE v."CVSSV3VECTOR"
                    END AS "cvssV3Vector"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
                      THEN a."CVSSV4VECTOR"
                      ELSE v."CVSSV4VECTOR"
                    END AS "cvssV4Vector"
                  -- TODO: Analysis only has a single score, but OWASP RR defines multiple.
                  --  How to handle this?
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPSCORE"
                      ELSE v."OWASPRRBUSINESSIMPACTSCORE"
                    END AS "owaspRRBusinessImpactScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPSCORE"
                      ELSE v."OWASPRRLIKELIHOODSCORE"
                    END AS "owaspRRLikelihoodScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPSCORE"
                      ELSE v."OWASPRRTECHNICALIMPACTSCORE"
                    END AS "owaspRRTechnicalImpactScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."OWASPSCORE" IS NOT NULL OR a."OWASPVECTOR" IS NOT NULL
                      THEN a."OWASPVECTOR"
                      ELSE v."OWASPRRVECTOR"
                    END AS "owaspRRVector"
@@ -540,17 +540,17 @@ public interface FindingDao {
                  , v."TITLE" AS "vulnTitle"
                  , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV2SCORE" IS NOT NULL OR a."CVSSV2VECTOR" IS NOT NULL
                      THEN a."CVSSV2SCORE"
                      ELSE v."CVSSV2BASESCORE"
                    END AS "cvssV2BaseScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV3SCORE" IS NOT NULL OR a."CVSSV3VECTOR" IS NOT NULL
                      THEN a."CVSSV3SCORE"
                      ELSE v."CVSSV3BASESCORE"
                    END AS "cvssV3BaseScore"
                  , CASE
-                     WHEN a."SEVERITY" IS NOT NULL
+                     WHEN a."CVSSV4SCORE" IS NOT NULL OR a."CVSSV4VECTOR" IS NOT NULL
                      THEN a."CVSSV4SCORE"
                      ELSE v."CVSSV4SCORE"
                    END AS "cvssV4Score"

@@ -31,6 +31,7 @@ import jakarta.json.JsonValue;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import net.javacrumbs.jsonunit.core.Option;
 import org.apache.commons.lang3.function.TriFunction;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
@@ -777,6 +778,8 @@ public class FindingResourceTest extends ResourceTest {
         Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
         v1.setCvssV2BaseScore(BigDecimal.valueOf(0.2));
         v1.setCvssV2Vector("v-cvssV2-vector");
+        v1.setCvssV3BaseScore(BigDecimal.valueOf(9.8));
+        v1.setCvssV3Vector("v-cvssV3-vector");
         qm.addVulnerability(v1, c1, "none");
 
         var analysis = new Analysis();
@@ -788,17 +791,62 @@ public class FindingResourceTest extends ResourceTest {
         analysis.setSeverity(Severity.HIGH);
         qm.persist(analysis);
 
-        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        final Response response = jersey
+                .target(V1_FINDING + "/project/" + p1.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
-                .get(Response.class);
-        assertEquals(200, response.getStatus(), 0);
-        assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        assertNotNull(json);
-        assertEquals(1, json.size());
-        assertEquals(0.4, json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("cvssV2BaseScore").doubleValue(), 0);
-        assertEquals(analysis.getCvssV2Vector(), json.getJsonObject(0).getJsonObject("vulnerability").getString("cvssV2Vector"));
-        assertEquals(analysis.getSeverity().name(), json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .withOptions(Option.IGNORING_EXTRA_FIELDS)
+                .inPath("$[0].vulnerability")
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "cvssV2BaseScore": 0.4,
+                          "cvssV2Vector": "a-cvssV2-vector",
+                          "severity": "HIGH",
+                          "cvssV3BaseScore": 9.8,
+                          "cvssV3Vector": "v-cvssV3-vector"
+                        }
+                        """);
+    }
+
+    @Test
+    public void getFindingsByProjectWithVectorOnlyRatingOverride() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final Component c1 = createComponent(p1, "Component A", "1.0");
+        c1.setPurl("pkg:/maven/org.acme/component-a@1.0.0");
+
+        final Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
+        v1.setCvssV3BaseScore(BigDecimal.valueOf(9.8));
+        v1.setCvssV3Vector("v-cvssV3-vector");
+        qm.addVulnerability(v1, c1, "none");
+
+        final var analysis = new Analysis();
+        analysis.setVulnerability(v1);
+        analysis.setComponent(c1);
+        analysis.setAnalysisState(AnalysisState.NOT_AFFECTED);
+        analysis.setCvssV3Vector("a-cvssV3-vector"); // Only vector, not score.
+        analysis.setSeverity(Severity.HIGH);
+        qm.persist(analysis);
+
+        final Response response = jersey
+                .target(V1_FINDING + "/project/" + p1.getUuid().toString())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final String body = getPlainTextBody(response);
+        assertThatJson(body)
+                .inPath("$[0].vulnerability.cvssV3Vector")
+                .isEqualTo("a-cvssV3-vector");
+        assertThatJson(body)
+                .inPath("$[0].vulnerability.cvssV3BaseScore")
+                .isAbsent();
     }
 
     @Test

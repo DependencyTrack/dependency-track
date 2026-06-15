@@ -31,6 +31,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.util.AnalysisCommentFormatter.AnalysisCommentField;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -39,6 +40,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.dependencytrack.notification.api.NotificationFactory.createVulnerabilityAnalysisDecisionChangeNotification;
+import static org.dependencytrack.util.AnalysisCommentFormatter.formatComment;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
 public class AnalysisQueryManager extends QueryManager {
@@ -123,6 +125,15 @@ public class AnalysisQueryManager extends QueryManager {
                 auditTrailComments.add(command.suppress() ? "Suppressed" : "Unsuppressed");
                 analysis.setSuppressed(command.suppress());
                 suppressionChanged = true;
+            }
+            if (command.owaspVector() != null && !command.owaspVector().equals(analysis.getOwaspVector())) {
+                auditTrailComments.add(formatComment(AnalysisCommentField.OWASP_VECTOR, analysis.getOwaspVector(), command.owaspVector()));
+                analysis.setOwaspVector(command.owaspVector());
+            }
+            if (command.owaspScore() != null
+                    && (analysis.getOwaspScore() == null || command.owaspScore().compareTo(analysis.getOwaspScore()) != 0)) {
+                auditTrailComments.add(formatComment(AnalysisCommentField.OWASP_SCORE, analysis.getOwaspScore(), command.owaspScore()));
+                analysis.setOwaspScore(command.owaspScore());
             }
 
             final List<String> comments =

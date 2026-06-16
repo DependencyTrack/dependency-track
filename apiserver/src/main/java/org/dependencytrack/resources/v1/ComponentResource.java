@@ -228,7 +228,10 @@ public class ComponentResource extends AbstractApiResource {
                                            @Parameter(description = "When true, only return components from active projects")
                                            @QueryParam("excludeInactiveProjects") boolean excludeInactiveProjects,
                                            @Parameter(description = "When true, only return components from projects flagged as the latest version")
-                                           @QueryParam("onlyLatestProjectVersions") boolean onlyLatestProjectVersions) {
+                                           @QueryParam("onlyLatestProjectVersions") boolean onlyLatestProjectVersions,
+@Parameter(description = "Only return components belonging to projects with the specified tag")
+@QueryParam("projectTag")
+String projectTag) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Project project = null;
             if (projectUuid != null) {
@@ -254,11 +257,12 @@ public class ComponentResource extends AbstractApiResource {
                 return Response.ok().header(TOTAL_COUNT_HEADER, 0).build();
             } else {
                 final PaginatedResult result = qm.getComponents(
-                        identity,
-                        project,
-                        /* includeMetrics */ true,
-                        excludeInactiveProjects,
-                        onlyLatestProjectVersions);
+        identity,
+        project,
+        /* includeMetrics */ true,
+        excludeInactiveProjects,
+        onlyLatestProjectVersions,
+        projectTag);
                 return Response.ok(result.getObjects()).header(TOTAL_COUNT_HEADER, result.getTotal()).build();
             }
         }

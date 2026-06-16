@@ -28,6 +28,7 @@ import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonValue;
 import org.apache.commons.lang3.tuple.Pair;
+import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
 import org.dependencytrack.model.ComponentOccurrence;
@@ -325,11 +326,12 @@ final class ComponentQueryManager extends QueryManager {
      * @return a list of components
      */
     public PaginatedResult getComponents(
-            ComponentIdentity identity,
-            Project project,
-            boolean includeMetrics,
-            boolean excludeInactiveProjects,
-            boolean onlyLatestProjectVersions) {
+        ComponentIdentity identity,
+        Project project,
+        boolean includeMetrics,
+        boolean excludeInactiveProjects,
+        boolean onlyLatestProjectVersions,
+        String projectTag)  {
         if (identity == null) {
             return null;
         }
@@ -347,6 +349,14 @@ final class ComponentQueryManager extends QueryManager {
         if (onlyLatestProjectVersions) {
             queryFilterElements.add(" project.isLatest == true ");
         }
+        if (projectTag != null && !projectTag.isBlank()) {
+    final Tag tag = getTagByName(projectTag.trim());
+
+    if (tag != null) {
+        queryFilterElements.add(" project.tags.contains(:tag) ");
+        queryParams.put("tag", tag);
+    }
+}
 
         final PaginatedResult result;
         if (identity.getGroup() != null || identity.getName() != null || identity.getVersion() != null) {

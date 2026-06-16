@@ -18,12 +18,14 @@
  */
 package org.dependencytrack.resources.v2;
 
+import alpine.model.About;
 import alpine.server.auth.AuthenticationNotRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import org.dependencytrack.resources.AbstractApiResource;
+import org.dependencytrack.resources.OpenApiSpecEnricher;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,7 +73,8 @@ public class OpenApiResource extends AbstractApiResource {
                      OpenApiResource.class.getResourceAsStream(
                              "/org/dependencytrack/api/v2/openapi.yaml")) {
             requireNonNull(inputStream, "inputStream must not be null");
-            return new String(inputStream.readAllBytes());
+            return OpenApiSpecEnricher.enrich(
+                    new String(inputStream.readAllBytes()), new About().getVersion());
         }
     }
 

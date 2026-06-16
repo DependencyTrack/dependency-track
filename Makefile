@@ -128,7 +128,6 @@ test:
 
 test-single:
 	$(MVND) $(MVN_FLAGS) test \
-		-Dmaven.build.cache.enabled=false \
 		-Dcheckstyle.skip \
 		-Dcyclonedx.skip \
 		-pl "$(MODULE)" \

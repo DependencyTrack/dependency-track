@@ -69,6 +69,15 @@ jobs:
           java-version: '25'
           cache: 'maven'
 
+      - name: Restore Maven build cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # tag=v5.0.5
+        with:
+          path: ~/.m2/build-cache
+          key: maven-build-cache-test-${{ hashFiles('.mvn/maven-build-cache-config.xml') }}-${{ github.run_id }}
+          restore-keys: |
+            maven-build-cache-test-${{ hashFiles('.mvn/maven-build-cache-config.xml') }}-
+            maven-build-cache-test-
+
       - name: Execute unit tests
         env:
           TESTCONTAINERS_REUSE_ENABLE: "true"

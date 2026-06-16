@@ -66,6 +66,36 @@
                         <goal>install</goal>
                     </goals>
                 </goalsList>
+
+                <!--
+                    Always run test goals to ensure that test coverage reporting in CI works:
+
+                      * The build cache doesn't include test classes and resources,
+                        so naively restoring from cache would cause surefire to find no tests to run.
+                      * We can't cache JaCoCo coverage reports because they'd go stale.
+                      * Running all tests is the only way to get accurate coverage reports
+                        across all modules.
+                -->
+                <goalsList artifactId="maven-resources-plugin">
+                    <goals>
+                        <goal>testResources</goal>
+                    </goals>
+                </goalsList>
+                <goalsList artifactId="maven-compiler-plugin">
+                    <goals>
+                        <goal>testCompile</goal>
+                    </goals>
+                </goalsList>
+                <goalsList artifactId="jacoco-maven-plugin">
+                    <goals>
+                        <goal>prepare-agent</goal>
+                    </goals>
+                </goalsList>
+                <goalsList artifactId="maven-surefire-plugin">
+                    <goals>
+                        <goal>test</goal>
+                    </goals>
+                </goalsList>
             </goalsLists>
         </runAlways>
     </executionControl>

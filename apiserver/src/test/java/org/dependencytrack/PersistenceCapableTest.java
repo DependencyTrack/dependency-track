@@ -66,17 +66,24 @@ public abstract class PersistenceCapableTest {
              final Statement statement = connection.createStatement()) {
             statement.execute("""
                     DO $$ DECLARE
-                        table_list TEXT;
+                      rec RECORD;
+                      has_rows BOOLEAN;
+                      table_list TEXT := '';
                     BEGIN
-                        SELECT STRING_AGG(QUOTE_IDENT(tablename), ', ')
-                          INTO table_list
+                      FOR rec IN
+                        SELECT tablename
                           FROM pg_tables
                          WHERE schemaname = CURRENT_SCHEMA()
-                           AND tablename != 'databasechangelog'
-                           AND tablename !~ '^.+schema_history$';
-                        IF table_list IS NOT NULL THEN
-                            EXECUTE 'TRUNCATE TABLE ' || table_list || ' CASCADE';
+                           AND tablename !~ '^.+schema_history$'
+                      LOOP
+                        EXECUTE 'SELECT EXISTS (SELECT 1 FROM ' || QUOTE_IDENT(rec.tablename) || ')' INTO has_rows;
+                        IF has_rows THEN
+                          table_list := table_list || QUOTE_IDENT(rec.tablename) || ', ';
                         END IF;
+                      END LOOP;
+                      IF LENGTH(table_list) > 0 THEN
+                        EXECUTE 'TRUNCATE TABLE ' || LEFT(table_list, -2) || ' CASCADE';
+                      END IF;
                     END $$;
                     """);
 

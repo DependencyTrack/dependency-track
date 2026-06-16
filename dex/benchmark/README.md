@@ -10,7 +10,7 @@ The activity itself is no-op. This allows the benchmark to focus entirely on eng
 
 1. Build the benchmark application:
     ```shell
-    mvn -Pquick clean package
+    mvn -Pbenchmark,quick clean package
     ```
 2. Start the benchmark setup:
     ```shell

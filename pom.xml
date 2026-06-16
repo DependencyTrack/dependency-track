@@ -34,6 +34,7 @@
         <module>support/smallrye-config-secret-handler-file</module>
         <module>support/smallrye-config-source-memory</module>
         <module>support/swagger-model-converters</module>
+        <module>support/test-database</module>
         <module>support/v4-migrator</module>
         <module>api</module>
         <module>alpine</module>

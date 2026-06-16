@@ -21,8 +21,12 @@ package org.dependencytrack.plugin.runtime;
 import org.dependencytrack.plugin.api.storage.CompareAndDeleteResult;
 import org.dependencytrack.plugin.api.storage.CompareAndPutResult;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
+import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
+import org.jdbi.v3.postgres.PostgresPlugin;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -33,8 +37,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
-class KeyValueStoreImplTest extends AbstractDatabaseTest {
+class KeyValueStoreImplTest {
 
+    @RegisterExtension
+    private static final TestDatabaseExtension database = new TestDatabaseExtension();
+
+    private final Jdbi jdbi = Jdbi
+            .create(database.jdbcUrl(), database.username(), database.password())
+            .installPlugin(new PostgresPlugin());
     private final KeyValueStore kvStore = new KeyValueStoreImpl(jdbi, "foo", "bar");
 
     @Test

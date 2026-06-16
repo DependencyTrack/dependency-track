@@ -21,14 +21,15 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.dependencytrack</groupId>
-        <artifactId>dex-parent</artifactId>
+        <artifactId>dependency-track-parent</artifactId>
         <version>5.1.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>dex-testing</artifactId>
+    <artifactId>test-database-support</artifactId>
     <packaging>jar</packaging>
 
-    <name>Durable Execution :: Testing Utilities</name>
+    <name>Support :: Test Database</name>
 
     <properties>
         <project.parentBaseDir>${project.basedir}/../..</project.parentBaseDir>
@@ -37,18 +38,8 @@
     <dependencies>
         <dependency>
             <groupId>org.dependencytrack</groupId>
-            <artifactId>dex-engine</artifactId>
+            <artifactId>migration</artifactId>
             <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.awaitility</groupId>
-            <artifactId>awaitility</artifactId>
         </dependency>
 
         <dependency>
@@ -59,6 +50,16 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-postgresql</artifactId>
         </dependency>
     </dependencies>
 

@@ -26,13 +26,20 @@ import org.dependencytrack.plugin.api.config.RuntimeConfigSchemaSource;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.config.RuntimeConfigMapper;
 import org.dependencytrack.plugin.config.RuntimeConfigSchemaValidationException;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.eclipse.microprofile.config.Config;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.postgres.PostgresPlugin;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-class ConfigRegistryImplTest extends AbstractDatabaseTest {
+class ConfigRegistryImplTest {
+
+    @RegisterExtension
+    private static final TestDatabaseExtension database = new TestDatabaseExtension();
 
     private static final String EXTENSION_POINT = "test-extension-point";
     private static final String EXTENSION = "test-extension";
@@ -73,6 +80,9 @@ class ConfigRegistryImplTest extends AbstractDatabaseTest {
 
     private static final Config CONFIG = new SmallRyeConfigBuilder().build();
 
+    private final Jdbi jdbi = Jdbi
+            .create(database.jdbcUrl(), database.username(), database.password())
+            .installPlugin(new PostgresPlugin());
     private final RuntimeConfigMapper runtimeConfigMapper = RuntimeConfigMapper.getInstance();
 
     record TestConfig(

@@ -19,31 +19,24 @@
 package org.dependencytrack;
 
 import alpine.server.auth.PasswordService;
-import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-
-import java.sql.Connection;
-import java.sql.Statement;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 public abstract class PersistenceCapableTest {
+
+    @RegisterExtension
+    protected static final TestDatabaseExtension database = new TestDatabaseExtension();
 
     protected QueryManager qm;
 
     protected static final String TEST_PASSWORD_HASH = new String(
             PasswordService.createHash("testuser".toCharArray()));
 
-    @BeforeAll
-    public static void init() {
-        TestDatabaseManager.initialize();
-    }
-
     @BeforeEach
     public void before() throws Exception {
-        truncateTables();
-
         qm = new QueryManager();
     }
 
@@ -59,53 +52,6 @@ public abstract class PersistenceCapableTest {
         }
 
         qm.close();
-    }
-
-    protected static void truncateTables() throws Exception {
-        try (final Connection connection = DataSourceRegistry.getInstance().getDefault().getConnection();
-             final Statement statement = connection.createStatement()) {
-            statement.execute("""
-                    DO $$ DECLARE
-                      rec RECORD;
-                      has_rows BOOLEAN;
-                      table_list TEXT := '';
-                    BEGIN
-                      FOR rec IN
-                        SELECT tablename
-                          FROM pg_tables
-                         WHERE schemaname = CURRENT_SCHEMA()
-                           AND tablename !~ '^.+schema_history$'
-                      LOOP
-                        EXECUTE 'SELECT EXISTS (SELECT 1 FROM ' || QUOTE_IDENT(rec.tablename) || ')' INTO has_rows;
-                        IF has_rows THEN
-                          table_list := table_list || QUOTE_IDENT(rec.tablename) || ', ';
-                        END IF;
-                      END LOOP;
-                      IF LENGTH(table_list) > 0 THEN
-                        EXECUTE 'TRUNCATE TABLE ' || LEFT(table_list, -2) || ' CASCADE';
-                      END IF;
-                    END $$;
-                    """);
-
-            statement.execute("""
-                    DO $$
-                    DECLARE
-                      partition_name TEXT;
-                      today_partition_pattern TEXT := FORMAT('^(PROJECT|DEPENDENCY)METRICS_%s', TO_CHAR(CURRENT_DATE, 'YYYYMMDD'));
-                      tomorrow_partition_pattern TEXT := FORMAT('^(PROJECT|DEPENDENCY)METRICS_%s', TO_CHAR(CURRENT_DATE + 1, 'YYYYMMDD'));
-                    BEGIN
-                      FOR partition_name IN
-                        SELECT tablename
-                          FROM pg_tables
-                         WHERE tablename ~ '^(PROJECT|DEPENDENCY)METRICS_[0-9]{8}$'
-                           AND tablename !~ today_partition_pattern
-                           AND tablename !~ tomorrow_partition_pattern
-                      LOOP
-                        EXECUTE FORMAT('DROP TABLE %I', partition_name);
-                      END LOOP;
-                    END $$;
-                    """);
-        }
     }
 
 }

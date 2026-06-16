@@ -16,10 +16,9 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack;
+package org.dependencytrack.testing.database;
 
-import alpine.server.persistence.PersistenceManagerFactory;
-import org.dependencytrack.support.config.source.memory.MemoryConfigSource;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -30,35 +29,51 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.ServiceLoader;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
+import static java.util.Objects.requireNonNull;
 
-/**
- * Manages a shared PostgreSQL testcontainer and per-JVM test database.
- * <p>
- * The container runs migrations on a template database. Each JVM gets its own
- * database created via {@code CREATE DATABASE ... TEMPLATE}, providing isolation
- * without repeating migrations. The PID of the JVM is used as the database name suffix
- * to guarantee uniqueness.
- */
-public final class TestDatabaseManager {
+/// Manages a shared PostgreSQL testcontainer and a per-JVM test database,
+/// reusable across modules.
+///
+/// The container runs migrations on a `dtrack` template database.
+/// Each JVM gets its own database created via `CREATE DATABASE ... TEMPLATE`,
+/// providing isolation without repeating migrations.
+/// The PID of the JVM is used as the database name suffix to guarantee uniqueness.
+///
+/// When Testcontainers reuse is enabled, the container (and its migrated template)
+/// is shared across all modules using this manager, so migrations run only once for
+/// the entire build.
+///
+/// @since 5.1.0
+final class TestDatabaseManager {
 
     private static final ReentrantLock LOCK = new ReentrantLock();
-    private static boolean initialized;
+    private static final List<TestDatabaseEventListener> EVENT_LISTENERS = ServiceLoader
+            .load(TestDatabaseEventListener.class).stream()
+            .map(ServiceLoader.Provider::get)
+            .toList();
+
+    private static @Nullable Connection connection;
+    private static @Nullable String jdbcUrl;
+    private static @Nullable String username;
+    private static @Nullable String password;
 
     private TestDatabaseManager() {
     }
 
-    public static void initialize() {
-        if (initialized) {
+    static void initialize() {
+        if (connection != null) {
             return;
         }
 
         LOCK.lock();
         try {
-            if (initialized) {
+            if (connection != null) {
                 return;
             }
 
@@ -72,7 +87,7 @@ public final class TestDatabaseManager {
 
             final Path lockFile = Path.of(
                     System.getProperty("java.io.tmpdir"),
-                    "apiserver-postgres-testcontainer.lock");
+                    "dependencytrack-postgres-testcontainer.lock");
             try (final var channel = FileChannel.open(lockFile, CREATE, WRITE);
                  var _ = channel.lock()) {
                 container.start();
@@ -94,17 +109,70 @@ public final class TestDatabaseManager {
                 throw new IllegalStateException("Failed to create test database " + dbName, e);
             }
 
-            MemoryConfigSource.setProperty(
-                    "dt.datasource.url",
-                    container.getJdbcUrl().replace("/dtrack?", "/%s?".formatted(dbName)));
-            MemoryConfigSource.setProperty("dt.datasource.username", container.getUsername());
-            MemoryConfigSource.setProperty("dt.datasource.password", container.getPassword());
+            jdbcUrl = container.getJdbcUrl().replace("/dtrack?", "/%s?".formatted(dbName));
+            username = container.getUsername();
+            password = container.getPassword();
 
-            new PersistenceManagerFactory().contextInitialized(null);
+            try {
+                connection = DriverManager.getConnection(jdbcUrl, username, password);
+            } catch (SQLException e) {
+                throw new IllegalStateException("Failed to open truncation connection", e);
+            }
 
-            initialized = true;
+            for (final TestDatabaseEventListener eventListener : EVENT_LISTENERS) {
+                eventListener.onDatabaseInitialized(jdbcUrl, username, password);
+            }
         } finally {
             LOCK.unlock();
+        }
+    }
+
+    static String getJdbcUrl() {
+        requireNonNull(jdbcUrl, "Test database not initialized");
+        return jdbcUrl;
+    }
+
+    static @Nullable String getUsername() {
+        return username;
+    }
+
+    static @Nullable String getPassword() {
+        return password;
+    }
+
+    static void truncateTables() {
+        requireNonNull(connection, "Test database not initialized");
+
+        try (final Statement statement = connection.createStatement()) {
+            statement.execute("""
+                    DO $$ DECLARE
+                      rec RECORD;
+                      has_rows BOOLEAN;
+                      table_list TEXT := '';
+                    BEGIN
+                      FOR rec IN
+                        SELECT tablename
+                          FROM pg_tables
+                         WHERE schemaname = CURRENT_SCHEMA()
+                           AND tablename != 'databasechangelog'
+                           AND tablename !~ '^.+schema_history$'
+                      LOOP
+                        EXECUTE 'SELECT EXISTS (SELECT 1 FROM ' || QUOTE_IDENT(rec.tablename) || ')' INTO has_rows;
+                        IF has_rows THEN
+                          table_list := table_list || QUOTE_IDENT(rec.tablename) || ', ';
+                        END IF;
+                      END LOOP;
+                      IF LENGTH(table_list) > 0 THEN
+                        EXECUTE 'TRUNCATE TABLE ' || LEFT(table_list, -2) || ' CASCADE';
+                      END IF;
+                    END $$;
+                    """);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to truncate tables", e);
+        }
+
+        for (final TestDatabaseEventListener listener : EVENT_LISTENERS) {
+            listener.onTablesTruncated();
         }
     }
 

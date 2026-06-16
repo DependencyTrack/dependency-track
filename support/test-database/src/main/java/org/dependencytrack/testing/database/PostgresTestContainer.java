@@ -16,18 +16,27 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack;
+package org.dependencytrack.testing.database;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import org.dependencytrack.migration.MigrationExecutor;
-import org.dependencytrack.persistence.jdbi.JdbiFactory;
-import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.util.Map;
 
+/// A PostgreSQL testcontainer carrying the full Dependency-Track schema.
+///
+/// The container is configured for reuse across JVMs and modules.
+/// Its configuration must remain identical for every consumer,
+/// otherwise Testcontainers computes a different reuse hash and starts a separate container,
+/// defeating the purpose. **Do not add module-specific labels or settings here**!
+///
+/// Migrations run once on the `dtrack` template database when the container is
+/// first started. When the container is reused, migration is skipped.
+///
+/// @since 5.1.0
 public final class PostgresTestContainer extends PostgreSQLContainer {
 
     @SuppressWarnings("resource")
@@ -37,13 +46,9 @@ public final class PostgresTestContainer extends PostgreSQLContainer {
         withUsername("dtrack");
         withPassword("dtrack");
         withDatabaseName("dtrack");
-        withLabel("owner", "apiserver");
         withUrlParam("reWriteBatchedInserts", "true");
         withTmpFs(Map.of("/var/lib/postgresql/data", "rw"));
-
-        // Uncomment this to see queries executed by Postgres:
-        //   withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(PostgresTestContainer.class)));
-        //   withCommand("-c log_statement=all");
+        withLabel("org.dependencytrack.test-database", "true");
 
         // NB: Container reuse won't be active unless either:
         //  - The environment variable TESTCONTAINERS_REUSE_ENABLE=true is set
@@ -52,7 +57,7 @@ public final class PostgresTestContainer extends PostgreSQLContainer {
     }
 
     @Override
-    protected void containerIsStarted(final InspectContainerResponse containerInfo, final boolean reused) {
+    protected void containerIsStarted(InspectContainerResponse containerInfo, boolean reused) {
         super.containerIsStarted(containerInfo, reused);
 
         if (reused) {
@@ -66,12 +71,6 @@ public final class PostgresTestContainer extends PostgreSQLContainer {
         dataSource.setPassword(getPassword());
 
         new MigrationExecutor(dataSource).execute();
-
-        // Mirror DatabasePartitionMaintenanceInitTask: production runs this on startup,
-        // and tests have no equivalent init chain. Without it, inserts dated to today
-        // hit "no partition" because the schema baseline carries no metric partitions.
-        final var jdbi = JdbiFactory.createLocalJdbi(dataSource);
-        jdbi.useTransaction(handle -> handle.attach(MetricsDao.class).createMetricsPartitions());
     }
 
 }

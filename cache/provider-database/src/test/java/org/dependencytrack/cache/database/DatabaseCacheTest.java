@@ -23,36 +23,28 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 import org.dependencytrack.cache.api.Cache;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
-import org.dependencytrack.migration.MigrationExecutor;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.eclipse.microprofile.config.Config;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.Statement;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Testcontainers
 class DatabaseCacheTest {
 
-    @Container
-    private static final PostgreSQLContainer postgresContainer =
-            new PostgreSQLContainer("postgres:14-alpine");
+    @RegisterExtension
+    static final TestDatabaseExtension database = new TestDatabaseExtension();
 
     private static Config config;
     private static DataSourceRegistry dataSourceRegistry;
-    private static DataSource dataSource;
 
     private CacheManager cacheManager;
 
@@ -60,16 +52,13 @@ class DatabaseCacheTest {
     static void beforeAll() throws Exception {
         config = new SmallRyeConfigBuilder()
                 .withDefaultValues(Map.ofEntries(
-                        Map.entry("dt.datasource.default.url", postgresContainer.getJdbcUrl()),
-                        Map.entry("dt.datasource.default.username", postgresContainer.getUsername()),
-                        Map.entry("dt.datasource.default.password", postgresContainer.getPassword()),
+                        Map.entry("dt.datasource.default.url", database.jdbcUrl()),
+                        Map.entry("dt.datasource.default.username", database.username()),
+                        Map.entry("dt.datasource.default.password", database.password()),
                         Map.entry("dt.cache.provider.database.datasource.name", "default")))
                 .build();
 
         dataSourceRegistry = new DataSourceRegistry(config);
-        dataSource = dataSourceRegistry.getDefault();
-
-        new MigrationExecutor(dataSource).execute();
     }
 
     @BeforeEach
@@ -84,11 +73,7 @@ class DatabaseCacheTest {
         if (cacheManager != null) {
             cacheManager.close();
         }
-
-        try (final Connection connection = dataSource.getConnection();
-             final Statement statement = connection.createStatement()) {
-            statement.execute("TRUNCATE TABLE \"CACHE_ENTRY\"");
-        }
+        // Table truncation is handled by TestDatabaseExtension before each test.
     }
 
     @AfterAll

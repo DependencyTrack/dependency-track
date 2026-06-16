@@ -47,12 +47,6 @@
         </dependency>
         <dependency>
             <groupId>org.dependencytrack</groupId>
-            <artifactId>migration</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.dependencytrack</groupId>
             <artifactId>plugin-api</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
@@ -61,6 +55,12 @@
             <groupId>org.dependencytrack</groupId>
             <artifactId>plugin-config</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
+            <artifactId>test-database-support</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

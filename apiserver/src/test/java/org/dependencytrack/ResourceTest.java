@@ -29,15 +29,14 @@ import jakarta.ws.rs.core.Response;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.dependencytrack.PersistenceCapableTest.truncateTables;
 
 
 public abstract class ResourceTest {
@@ -90,15 +89,11 @@ public abstract class ResourceTest {
     protected Team team;
     protected String apiKey;
 
-    @BeforeAll
-    public static void init() {
-        TestDatabaseManager.initialize();
-    }
+    @RegisterExtension
+    protected static final TestDatabaseExtension database = new TestDatabaseExtension();
 
     @BeforeEach
     public void before() throws Exception {
-        truncateTables();
-
         // Add a test user and team with API key. Optional if this is used, but its available to all tests.
         this.qm = new QueryManager();
         team = qm.createTeam("Test Users");
@@ -112,7 +107,7 @@ public abstract class ResourceTest {
         // code base can leave such a broken state behind if they run into unexpected
         // errors. See: https://github.com/DependencyTrack/dependency-track/issues/2677
         if (!qm.getPersistenceManager().isClosed()
-            && qm.getPersistenceManager().currentTransaction().isActive()) {
+                && qm.getPersistenceManager().currentTransaction().isActive()) {
             qm.getPersistenceManager().currentTransaction().rollback();
         }
 

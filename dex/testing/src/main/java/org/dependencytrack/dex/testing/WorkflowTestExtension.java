@@ -30,8 +30,6 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.postgresql.ds.PGSimpleDataSource;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -64,10 +62,6 @@ public final class WorkflowTestExtension implements BeforeEachCallback, AfterEac
 
     public WorkflowTestExtension(final DataSource dataSource) {
         this.dataSource = dataSource;
-    }
-
-    public WorkflowTestExtension(final PostgreSQLContainer postgresContainer) {
-        this(createDataSource(postgresContainer));
     }
 
     @Override
@@ -190,14 +184,6 @@ public final class WorkflowTestExtension implements BeforeEachCallback, AfterEac
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to truncate tables", e);
         }
-    }
-
-    private static DataSource createDataSource(final PostgreSQLContainer postgresContainer) {
-        final var dataSource = new PGSimpleDataSource();
-        dataSource.setUrl(postgresContainer.getJdbcUrl());
-        dataSource.setUser(postgresContainer.getUsername());
-        dataSource.setPassword(postgresContainer.getPassword());
-        return dataSource;
     }
 
 }

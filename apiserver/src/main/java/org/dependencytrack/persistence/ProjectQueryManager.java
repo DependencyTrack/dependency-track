@@ -188,6 +188,7 @@ final class ProjectQueryManager extends QueryManager {
         project.setParent(parent);
         project.setPurl(purl);
         project.setInactiveSince(inactiveSince);
+        project.setActive(inactiveSince == null);
         project.setIsLatest(isLatest);
         return createProject(project, tags, commitIndex);
     }

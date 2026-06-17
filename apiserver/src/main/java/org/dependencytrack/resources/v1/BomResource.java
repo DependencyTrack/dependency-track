@@ -97,9 +97,11 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -442,7 +444,7 @@ public class BomResource extends AbstractApiResource {
                             try {
                                 project = qm.createProject(trimmedProjectName, null,
                                         trimmedProjectVersion, request.getProjectTags(), parent,
-                                        null, null, request.isLatest(), true);
+                                        null, request.isActive() ? null : Date.from(Instant.now()), request.isLatest(), true);
                             } catch (RuntimeException e) {
                                 if (isUniqueConstraintViolation(e)) {
                                     throw new WebApplicationException(Response
@@ -553,6 +555,7 @@ public class BomResource extends AbstractApiResource {
             @FormDataParam("parentVersion") String parentVersion,
             @FormDataParam("parentUUID") String parentUUID,
             @DefaultValue("false") @FormDataParam("isLatest") boolean isLatest,
+            @DefaultValue("true") @FormDataParam("isActive") boolean isActive,
             @Parameter(schema = @Schema(type = "string")) @FormDataParam("bom") final List<FormDataBodyPart> artifactParts
     ) {
         if (artifactParts == null || artifactParts.isEmpty()) {
@@ -628,7 +631,7 @@ public class BomResource extends AbstractApiResource {
                                 }
                             }
                             try {
-                                project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, requestTags, parent, null, null, isLatest, true);
+                                project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, requestTags, parent, null, isActive ? null : Date.from(Instant.now()), isLatest, true);
                             } catch (RuntimeException e) {
                                 if (isUniqueConstraintViolation(e)) {
                                     throw new WebApplicationException(Response

@@ -233,13 +233,6 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
                                 .toString())
                         .build();
             }
-            if (json.has("projectCode") && json.getString("projectCode").trim().isEmpty()) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(new JSONObject()
-                                .put("error", "Project code cannot be empty when provided")
-                                .toString())
-                        .build();
-            }
             if (!json.has("template") || json.getString("template").trim().isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity(new JSONObject()
@@ -277,10 +270,10 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
             updateConfigProperty(qm, ConfigPropertyConstants.VULNERABILITY_ID_ORG_CODE,
                     json.getString("orgCode"));
 
-            // Update default project code
-            if (json.has("projectCode")) {
+            // Update default project code (optional — skip if empty)
+            if (json.has("projectCode") && !json.getString("projectCode").trim().isEmpty()) {
                 updateConfigProperty(qm, ConfigPropertyConstants.VULNERABILITY_ID_PROJECT_CODE,
-                        json.getString("projectCode"));
+                        json.getString("projectCode").trim());
             }
             
             // Update template

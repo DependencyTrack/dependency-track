@@ -774,9 +774,6 @@ public class ProjectResource extends AbstractApiResource {
                             .status(Response.Status.CONFLICT)
                             .entity(e.getMessage())
                             .build());
-                } catch (RuntimeException e) {
-                    LOGGER.error("Failed to update project %s".formatted(jsonProject.getUuid()), e);
-                    throw new ServerErrorException(Response.Status.INTERNAL_SERVER_ERROR);
                 }
             });
 
@@ -943,16 +940,6 @@ public class ProjectResource extends AbstractApiResource {
                             .status(Response.Status.CONFLICT)
                             .entity(e.getMessage())
                             .build());
-                } catch (RuntimeException e) {
-                    if (isUniqueConstraintViolation(e)) {
-                        throw new ClientErrorException(Response
-                                .status(Response.Status.CONFLICT)
-                                .entity("A project with the specified name and version already exists.")
-                                .build());
-                    }
-
-                    LOGGER.error("Failed to patch project %s".formatted(uuid), e);
-                    throw new ServerErrorException(Response.Status.INTERNAL_SERVER_ERROR);
                 }
             });
 
@@ -967,6 +954,14 @@ public class ProjectResource extends AbstractApiResource {
                 LOGGER.info("Project {} updated by {}", updatedProject, super.getPrincipal().getName());
             }
             return Response.ok(updatedProject).build();
+        } catch (RuntimeException e) {
+            if (isUniqueConstraintViolation(e)) {
+                throw new ClientErrorException(Response
+                        .status(Response.Status.CONFLICT)
+                        .entity("A project with the specified name and version already exists.")
+                        .build());
+            }
+            throw e;
         }
     }
 

@@ -2527,6 +2527,56 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldReturnConflictWhenUpdatingChildProjectToDuplicateSibling() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+
+        final Project parent = qm.createProject("A", null, "1.0", null, null, null, null, false);
+        final Project child = qm.createProject("a", null, "a", null, parent, null, null, false);
+        qm.createProject("a", null, "b", null, parent, null, null, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s",
+                          "name": "a",
+                          "version": "b",
+                          "parent": {
+                            "uuid": "%s"
+                          }
+                        }
+                        """.formatted(child.getUuid(), parent.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(409);
+        assertThat(getPlainTextBody(response))
+                .isEqualTo("A project with the specified name and version already exists.");
+    }
+
+    @Test
+    void shouldReturnConflictWhenPatchingChildProjectToDuplicateSibling() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+
+        final Project parent = qm.createProject("A", null, "1.0", null, null, null, null, false);
+        final Project child = qm.createProject("a", null, "a", null, parent, null, null, false);
+        qm.createProject("a", null, "b", null, parent, null, null, false);
+
+        final Response response = jersey
+                .target(V1_PROJECT + "/" + child.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(HttpUrlConnectorProvider.SET_METHOD_WORKAROUND, true)
+                .method("PATCH", Entity.json(/* language=JSON */ """
+                        {
+                          "version": "b"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(409);
+        assertThat(getPlainTextBody(response))
+                .isEqualTo("A project with the specified name and version already exists.");
+    }
+
+    @Test
     void updateProjectInaccessibleParentTest() {
         initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
         enablePortfolioAccessControl();

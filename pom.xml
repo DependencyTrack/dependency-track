@@ -154,7 +154,7 @@
         <lib.micrometer.version>1.17.0</lib.micrometer.version>
         <lib.microprofile-config.version>3.1.1</lib.microprofile-config.version>
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
-        <lib.minio.version>9.0.1</lib.minio.version>
+        <lib.minio.version>9.0.2</lib.minio.version>
         <lib.mockito.version>5.23.0</lib.mockito.version>
         <lib.okhttp.version>5.4.0</lib.okhttp.version>
         <lib.open-feign.version>13.12</lib.open-feign.version>

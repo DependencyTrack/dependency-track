@@ -1584,7 +1584,22 @@ public final class TableRegistry {
              , r."NAME"
              , r."NOTIFICATION_LEVEL"
              , r."NOTIFY_CHILDREN"
-             , CASE WHEN r."NOTIFY_ON" IS NULL THEN NULL ELSE string_to_array(r."NOTIFY_ON", ',') END
+             -- Drop obsolete notification groups (e.g. INDEXING_SERVICE) that were valid in v4
+             -- but no longer exist in v5; leaving them would break enum deserialization at runtime.
+             -- Keep the value list in sync with
+             -- apiserver/src/main/java/org/dependencytrack/notification/NotificationGroup.java.
+             , CASE WHEN r."NOTIFY_ON" IS NULL THEN NULL ELSE ARRAY(
+                   SELECT elem
+                     FROM unnest(string_to_array(r."NOTIFY_ON", ',')) AS elem
+                    WHERE elem IN (
+                        'CONFIGURATION', 'DATASOURCE_MIRRORING', 'REPOSITORY', 'INTEGRATION',
+                        'FILE_SYSTEM', 'ANALYZER', 'NEW_VULNERABILITY', 'NEW_VULNERABLE_DEPENDENCY',
+                        'VULNERABILITY_RETRACTED', 'PROJECT_AUDIT_CHANGE', 'BOM_CONSUMED', 'BOM_PROCESSED',
+                        'BOM_PROCESSING_FAILED', 'BOM_VALIDATION_FAILED', 'VEX_CONSUMED', 'VEX_PROCESSED',
+                        'POLICY_VIOLATION', 'PROJECT_CREATED', 'USER_CREATED', 'USER_DELETED',
+                        'NEW_VULNERABILITIES_SUMMARY', 'NEW_POLICY_VIOLATIONS_SUMMARY'
+                    )
+               ) END
              , m.canonical_id
              , CASE p."EXTENSION_NAME" WHEN 'console' THEN NULL::jsonb WHEN 'email' THEN CASE WHEN COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', '') = '' THEN jsonb_build_object('recipientAddresses', jsonb_build_array()) ELSE jsonb_build_object('recipientAddresses', jsonb_build_array("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination')) END WHEN 'jira' THEN jsonb_build_object( 'projectKey', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'EXAMPLE'), 'issueType',  COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'jiraTicketType', 'TASK')) WHEN 'mattermost' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'msteams' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'slack' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'webex' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) WHEN 'webhook' THEN jsonb_build_object( 'destinationUrl', COALESCE("%1$s".try_jsonb(r."PUBLISHER_CONFIG") ->> 'destination', 'https://example.com')) ELSE NULL::jsonb END
              , r."SCOPE"

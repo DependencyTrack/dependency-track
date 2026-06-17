@@ -95,7 +95,7 @@ class DefectDojoUploaderTest extends PersistenceCapableTest {
 
     @Test
     void testGetGroupByReturnsNullWhenNotConfigured() {
-        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, null, false);
         DefectDojoUploader extension = new DefectDojoUploader(httpClient, secretManager);
         extension.setQueryManager(qm);
         Assertions.assertNull(extension.getGroupBy(project));
@@ -103,7 +103,7 @@ class DefectDojoUploaderTest extends PersistenceCapableTest {
 
     @Test
     void testGetGroupByReturnsValueWhenConfigured() {
-        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, null, false);
         qm.createProjectProperty(
                 project,
                 DEFECTDOJO_ENABLED.getGroupName(),

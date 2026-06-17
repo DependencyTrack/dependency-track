@@ -99,7 +99,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
         return null;
     }
 
-    private @Nullable String getGroupBy(final Project project) {
+    @Nullable String getGroupBy(final Project project) {
         final ProjectProperty groupBy = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), GROUP_BY_PROPERTY);
         if (groupBy != null && groupBy.getPropertyValue() != null) {
             return groupBy.getPropertyValue();

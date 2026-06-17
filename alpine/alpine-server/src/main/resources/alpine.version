@@ -1,0 +1,4 @@
+name=Alpine
+version=${project.version}
+timestamp=${timestamp}
+uuid=${project.build.uuid}

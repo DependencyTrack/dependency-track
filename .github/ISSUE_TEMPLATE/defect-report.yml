@@ -14,7 +14,7 @@ body:
       **Please do not ask questions here!**
       If you're not sure whether what you're experiencing is in fact a defect,
       you can reach out to maintainers and the broader community via various channels.
-      Refer to our [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/master/CONTRIBUTING.md#asking-questions) to find out where and how to ask questions.
+      Refer to our [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/main/CONTRIBUTING.md#asking-questions) to find out where and how to ask questions.
 - type: textarea
   id: behavior-current
   attributes:
@@ -58,61 +58,12 @@ body:
   attributes:
     label: Dependency-Track Version
     description: >-
-      What version of Dependency-Track are you using?
+      What major version of Dependency-Track are you using? Please share the exact version under *Current Behavior* above.
     options:
-    - 4.7.x
-    - 4.8.x
-    - 4.9.x
-    - 4.10.x
-    - 4.11.x
-    - 4.12.x
-    - 4.13.0
-    - 4.13.1
-    - 4.13.2
-    - 4.13.3
-    - 4.13.4
-    - 4.13.5
-    - 4.13.6
-    - 4.14.0-SNAPSHOT
+    - 4.x
+    - 5.x
   validations:
     required: true
-- type: dropdown
-  id: environment-dtrack-distribution
-  attributes:
-    label: Dependency-Track Distribution
-    description: >-
-      Which [distribution](https://docs.dependencytrack.org/getting-started/distributions/) of Dependency-Track are you using?
-    options:
-    - Container Image
-    - Executable WAR
-    multiple: true
-  validations:
-    required: true
-- type: dropdown
-  id: environment-database-server
-  attributes:
-    label: Database Server
-    description: >-
-      What database server are you using?
-    options:
-    - PostgreSQL
-    - Microsoft SQL Server
-    - MySQL
-    - H2
-    - N/A
-  validations:
-    required: true
-- type: input
-  id: environment-database-version
-  attributes:
-    label: Database Server Version
-    description: |-
-      What version of the database server are you using?
-      
-      *If you selected H2 or N/A in the field above, you can leave this empty.*
-    placeholder: "13.5"
-  validations:
-    required: false
 - type: dropdown
   id: environment-browser
   attributes:
@@ -135,7 +86,7 @@ body:
   attributes:
     label: Checklist
     options:
-    - label: I have read and understand the [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/master/CONTRIBUTING.md#filing-issues)
+    - label: I have read and understand the [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/main/CONTRIBUTING.md#filing-issues)
       required: true
     - label: I have checked the [existing issues](https://github.com/DependencyTrack/dependency-track/issues) for whether this defect was already reported
       required: true

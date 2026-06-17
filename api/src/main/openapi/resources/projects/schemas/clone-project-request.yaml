@@ -1,0 +1,53 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+type: object
+properties:
+  version:
+    type: string
+    minLength: 1
+    description: Version of the cloned project.
+  version_is_latest:
+    type: boolean
+    default: false
+    description: >-
+      Whether to mark the cloned project version as latest.
+      If another version is already marked as latest,
+      it will be atomically un-unmarked as part of the cloning operation.
+  includes:
+    type: array
+    items:
+      $ref: "./clone-project-include.yaml"
+    uniqueItems: true
+    default: []
+    description: |-
+      List of items to include in the clone:
+      
+        * `ACL`: Include portfolio ACL definitions.
+        * `COMPONENTS`: Include components.
+        * `FINDINGS`: Include findings.
+            * Has no effect unless `COMPONENTS` is also included.
+        * `FINDINGS_AUDIT_HISTORY`: Include audit history of findings.
+            * Has no effect unless `FINDINGS` is also included.
+        * `POLICY_VIOLATIONS`: Include policy violations.
+            * Has no effect unless `COMPONENTS` is also included.
+        * `POLICY_VIOLATIONS_AUDIT_HISTORY`: Include audit history of policy violations.
+            * Has no effect unless `POLICY_VIOLATIONS` is also included.
+        * `PROPERTIES`: Include project properties.
+        * `SERVICES`: Include services.
+        * `TAGS`: Include project tags.
+required:
+- version

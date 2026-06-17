@@ -1,5 +1,8 @@
 changelog:
   categories:
+  - title: Breaking Changes 🚨
+    labels:
+    - breaking change
   - title: Enhancements 🚀
     labels:
     - enhancement
@@ -9,6 +12,9 @@ changelog:
   - title: Dependency Updates 🤖
     labels:
     - dependencies
+  - title: Documentation 📃
+    labels:
+    - documentation
   - title: Other Changes
     labels:
     - "*"

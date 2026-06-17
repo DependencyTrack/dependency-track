@@ -1,0 +1,18 @@
+{
+  "packages": {
+    "space/cowboy": {
+      "1.0.1": {
+        "name": "space/cowboy",
+        "version": "1.0.1",
+        "version_normalized": "1.0.1.0",
+        "type": "magento2-module"
+      },
+      "6.6.6": {
+        "name": "space/cowboy",
+        "version": "6.6.6",
+        "version_normalized": "6.6.6.0",
+        "type": "magento2-module"
+      }
+    }
+  }
+}

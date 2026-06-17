@@ -1,0 +1,101 @@
+{
+  "databaseId": 2660,
+  "description": "Versions of `dojo` prior to 1.2.0 are vulnerable to Cross-Site Scripting (XSS). The package fails to sanitize HTML code in user-controlled input, allowing attackers to execute arbitrary JavaScript in the victim's browser.\n\n\n## Recommendation\n\nUpgrade to version 1.2.0 or later.",
+  "ghsaId": "GHSA-p82g-2xpp-m5r3",
+  "id": "MDE2OlNlY3VyaXR5QWR2aXNvcnlHSFNBLXA4MmctMnhwcC1tNXIz",
+  "identifiers": [
+    {
+      "type": "GHSA",
+      "value": "GHSA-p82g-2xpp-m5r3"
+    },
+    {
+      "type": "CVE",
+      "value": "CVE-2015-5654"
+    }
+  ],
+  "notificationsPermalink": "https://github.com/advisories/GHSA-p82g-2xpp-m5r3/dependabot",
+  "origin": "UNSPECIFIED",
+  "permalink": "https://github.com/advisories/GHSA-p82g-2xpp-m5r3",
+  "publishedAt": "2020-09-11T21:18:05Z",
+  "references": [
+    {
+      "url": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-5654"
+    },
+    {
+      "url": "https://snyk.io/vuln/SNYK-JS-DOJO-174933"
+    },
+    {
+      "url": "https://www.npmjs.com/advisories/973"
+    },
+    {
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2015-5654"
+    },
+    {
+      "url": "http://jvn.jp/en/jp/JVN13456571/index.html"
+    },
+    {
+      "url": "http://jvndb.jvn.jp/jvndb/JVNDB-2015-000153"
+    },
+    {
+      "url": "http://www-01.ibm.com/support/docview.wss?uid=swg21975256"
+    },
+    {
+      "url": "http://www.securityfocus.com/bid/77026"
+    },
+    {
+      "url": "http://www.securitytracker.com/id/1034848"
+    },
+    {
+      "url": "https://github.com/advisories/GHSA-p82g-2xpp-m5r3"
+    }
+  ],
+  "severity": "MODERATE",
+  "summary": "Cross-Site Scripting in dojo",
+  "updatedAt": "2023-01-06T05:01:55Z",
+  "vulnerabilities": {
+    "edges": [
+      {
+        "node": {
+          "severity": "MODERATE",
+          "updatedAt": "2022-09-09T19:34:40Z",
+          "firstPatchedVersion": {
+            "identifier": "1.9.1"
+          },
+          "vulnerableVersionRange": "< 1.2.0",
+          "package": {
+            "ecosystem": "NPM",
+            "name": "dojo"
+          }
+        }
+      }
+    ],
+    "totalCount": 1,
+    "pageInfo": {
+      "hasNextPage": false,
+      "endCursor": "Y3Vyc29yOnYyOpK5MjAyMi0wOS0wOVQyMTozNDo0MCswMjowMM0R1Q=="
+    }
+  },
+  "cvssSeverities": {
+    "cvssV3": {
+      "score": 5.4,
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N"
+    }
+  },
+  "cwes": {
+    "edges": [
+      {
+        "node": {
+          "cweId": "CWE-79",
+          "name": "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+          "description": "The product does not neutralize or incorrectly neutralizes user-controllable input before it is placed in output that is used as a web page that is served to other users."
+        }
+      }
+    ],
+    "totalCount": 1,
+    "pageInfo": {
+      "hasNextPage": false,
+      "endCursor": "Y3Vyc29yOnYyOpFA"
+    }
+  },
+  "withdrawnAt": null
+}

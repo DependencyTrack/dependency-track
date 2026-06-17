@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schema/test",
+  "type": "object",
+  "title": "Test Runtime Config",
+  "javaInterfaces" : ["org.dependencytrack.plugin.api.config.RuntimeConfig"],
+  "properties": {
+    "requiredString": {
+      "type": "string",
+      "description": "A required string"
+    },
+    "emailString": {
+      "type": "string",
+      "format": "email",
+      "description": "A string with email format"
+    },
+    "secretString": {
+      "type": "string",
+      "x-secret-ref": true
+    },
+    "secretsArray": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "x-secret-ref": true
+      }
+    },
+    "nestedObject": {
+      "type": "object",
+      "properties": {
+        "nestedSecretString": {
+          "type": "string",
+          "x-secret-ref": true
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "requiredString"
+  ]
+}

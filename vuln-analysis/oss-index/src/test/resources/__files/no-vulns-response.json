@@ -1,0 +1,8 @@
+[
+  {
+    "coordinates": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1",
+    "description": "General data-binding functionality for Jackson: works on core streaming API",
+    "reference": "https://ossindex.sonatype.org/component/pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1?utm_source=mozilla&utm_medium=integration&utm_content=5.0",
+    "vulnerabilities": []
+  }
+]

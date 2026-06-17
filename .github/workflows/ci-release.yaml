@@ -1,78 +1,91 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
 name: Release CI
 
 on:
   workflow_dispatch:
     inputs:
-      version-overwrite:
+      release-version:
         required: false
         default: ''
-        description: 'Use this to overwrite the version number to release, otherwise uses the current SNAPSHOT version (expected format x.y.z)'
+        description: >-
+          Release version (e.g. 5.7.0 or 5.7.0-rc.1).
+          Leave empty to let Maven compute it from the current SNAPSHOT version.
         type: string
+      development-version:
+        required: false
+        default: ''
+        description: >-
+          Next development version (e.g. 5.8.0-SNAPSHOT).
+          Leave empty for automatic increment (e.g. 5.7.1-SNAPSHOT or 5.7.0-rc.2-SNAPSHOT).
+        type: string
+      dry-run:
+        required: false
+        default: false
+        description: >-
+          Perform a dry run without pushing changes or creating releases.
+        type: boolean
+
+permissions: { }
 
 permissions: { }
 
 jobs:
-  prepare-release:
+  release:
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.variables.outputs.version }}
-      next-version: ${{ steps.variables.outputs.next-version }}
-      release-branch: ${{ steps.variables.outputs.release-branch }}
+    timeout-minutes: 15
     steps:
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
         with:
-          persist-credentials: false
-
-      - name: Setup Environment
-        id: variables
-        env:
-          VERSION_OVERWRITE: ${{ github.event.inputs.version-overwrite }}
-        run: |-
-          VERSION="${VERSION_OVERWRITE}"
-          if [[ -z ${VERSION} ]]; then
-            CURRENT_SNAPSHOT=`yq -p=xml '.project.version' pom.xml`
-            VERSION=${CURRENT_SNAPSHOT%-SNAPSHOT}
-          fi
-          NEXT_VERSION="${VERSION%.*}.$((${VERSION##*.} + 1))-SNAPSHOT"
-
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "next-version=${NEXT_VERSION}" >> $GITHUB_OUTPUT
-          echo "release-branch=${VERSION%.*}.x" >> $GITHUB_OUTPUT
-
-  create-release:
-    runs-on: ubuntu-latest
-    needs:
-      - prepare-release
-
-    env:
-      VERSION: ${{ needs.prepare-release.outputs.version }}
-      BRANCH_NAME: ${{ needs.prepare-release.outputs.release-branch }}
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
-        with:
-          token: ${{ secrets.BOT_RELEASE_GITHUB_TOKEN }}
+          token: ${{ !inputs.dry-run && secrets.BOT_RELEASE_GITHUB_TOKEN || github.token }}
+          fetch-depth: 0
 
       - name: Set up JDK
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # tag=v5.2.0
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '25'
           cache: 'maven'
 
-      - name: Set Version and Commit
-        run: |-
+      - name: Configure Git
+        run: |
           git config user.name "dependencytrack-bot"
           git config user.email "106437498+dependencytrack-bot@users.noreply.github.com"
 
-          if [[ -z $(git ls-remote --quiet --heads origin "${BRANCH_NAME}") ]]; then
-            git checkout -b "${BRANCH_NAME}"
-          else
-            git fetch origin "${BRANCH_NAME}"
-            git checkout "${BRANCH_NAME}"
+      - name: Perform Maven Release
+        env:
+          INPUT_RELEASE_VERSION: ${{ inputs.release-version }}
+          INPUT_DEVELOPMENT_VERSION: ${{ inputs.development-version }}
+          INPUT_DRY_RUN: ${{ inputs.dry-run }}
+        run: |-
+          MAVEN_ARGS="-B"
+          if [[ -n "${INPUT_RELEASE_VERSION}" ]]; then
+            MAVEN_ARGS="${MAVEN_ARGS} -DreleaseVersion=${INPUT_RELEASE_VERSION}"
           fi
+          if [[ -n "${INPUT_DEVELOPMENT_VERSION}" ]]; then
+            MAVEN_ARGS="${MAVEN_ARGS} -DdevelopmentVersion=${INPUT_DEVELOPMENT_VERSION}"
+          fi
+          if [[ "${INPUT_DRY_RUN}" == "true" ]]; then
+            MAVEN_ARGS="${MAVEN_ARGS} -DdryRun=true"
+          fi
+          export MAVEN_ARGS
+
+          mvn release:prepare
 
           mvn -B --no-transfer-progress versions:set -DnewVersion=${VERSION}
 
@@ -84,49 +97,19 @@ jobs:
           git push origin "${VERSION}"
 
       - name: Create GitHub Release
+        if: ${{ !inputs.dry-run }}
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_RELEASE_GITHUB_TOKEN }}
-          RELEASE_VERSION: ${{ needs.prepare-release.outputs.version }}
-          RELEASE_BRANCH: ${{ needs.prepare-release.outputs.release-branch }}
-        run: |-
+        run: |
+          RELEASE_VERSION=$(git describe --tags --abbrev=0)
+          echo "Release version: ${RELEASE_VERSION}"
+
+          PRERELEASE_FLAG=""
+          if [[ "${RELEASE_VERSION}" == *-* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
           gh release create "${RELEASE_VERSION}" \
-            --target "${RELEASE_BRANCH}" \
-            --title "${RELEASE_VERSION}" \
+            --draft \
             --generate-notes \
-            --draft
-
-  post-release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write # Required to push pom.xml update
-    needs:
-      - prepare-release
-      - create-release
-
-    env:
-      NEXT_VERSION: ${{ needs.prepare-release.outputs.next-version }}
-      BRANCH_NAME: ${{ needs.prepare-release.outputs.release-branch }}
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
-        with:
-          ref: ${{ needs.prepare-release.outputs.release-branch }}
-
-      - name: Set up JDK
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # tag=v5.2.0
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-          cache: 'maven'
-
-      - name: Set SNAPSHOT Version after Release
-        run: |-
-          git config user.name "dependencytrack-bot"
-          git config user.email "106437498+dependencytrack-bot@users.noreply.github.com"
-
-          mvn -B --no-transfer-progress versions:set -DnewVersion=${NEXT_VERSION}
-
-          git add pom.xml
-          git commit -m "prepare-iteration: set version to ${NEXT_VERSION}"
-          git push origin "${BRANCH_NAME}"
+            ${PRERELEASE_FLAG}

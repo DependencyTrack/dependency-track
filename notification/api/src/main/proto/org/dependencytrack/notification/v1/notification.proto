@@ -1,0 +1,360 @@
+syntax = "proto3";
+
+package org.dependencytrack.notification.v1;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_package = "org.dependencytrack.notification.proto.v1";
+
+message Notification {
+  Level level = 1;
+  Scope scope = 2;
+  Group group = 3;
+  string title = 4;
+  string content = 5;
+  google.protobuf.Timestamp timestamp = 6;
+  google.protobuf.Any subject = 7;
+
+  // Unique identifier of the notification in UUIDv7 format.
+  string id = 8;
+}
+
+enum Level {
+  LEVEL_UNSPECIFIED = 0;
+  LEVEL_INFORMATIONAL = 1;
+  LEVEL_WARNING = 2;
+  LEVEL_ERROR = 3;
+}
+
+enum Scope {
+  SCOPE_UNSPECIFIED = 0;
+  SCOPE_PORTFOLIO = 1;
+  SCOPE_SYSTEM = 2;
+}
+
+enum Group {
+  GROUP_UNSPECIFIED = 0;
+  GROUP_CONFIGURATION = 1;
+  GROUP_DATASOURCE_MIRRORING = 2;
+  GROUP_REPOSITORY = 3;
+  GROUP_INTEGRATION = 4;
+  GROUP_FILE_SYSTEM = 6;
+  GROUP_ANALYZER = 7;
+  GROUP_NEW_VULNERABILITY = 8;
+  GROUP_NEW_VULNERABLE_DEPENDENCY = 9;
+  GROUP_PROJECT_AUDIT_CHANGE = 10;
+  GROUP_BOM_CONSUMED = 11;
+  GROUP_BOM_PROCESSED = 12;
+  GROUP_VEX_CONSUMED = 13;
+  GROUP_VEX_PROCESSED = 14;
+  GROUP_POLICY_VIOLATION = 15;
+  GROUP_PROJECT_CREATED = 16;
+  GROUP_BOM_PROCESSING_FAILED = 17;
+  GROUP_USER_CREATED = 19;
+  GROUP_USER_DELETED = 20;
+  GROUP_BOM_VALIDATION_FAILED = 21;
+
+  // A previously identified vulnerability is no longer applicable,
+  // e.g. due to upstream sources correcting their data.
+  GROUP_VULNERABILITY_RETRACTED = 22;
+
+  // Scheduled summary of new vulnerabilities across projects.
+  GROUP_NEW_VULNERABILITIES_SUMMARY = 23;
+
+  // Scheduled summary of new policy violations across projects.
+  GROUP_NEW_POLICY_VIOLATIONS_SUMMARY = 24;
+
+  // Indexing service has been removed as of
+  // https://github.com/DependencyTrack/hyades/issues/661
+  reserved 5;
+  reserved "GROUP_INDEXING_SERVICE";
+
+  // PROJECT_VULN_ANALYSIS_COMPLETE notification removed.
+  reserved 18;
+  reserved "GROUP_PROJECT_VULN_ANALYSIS_COMPLETE";
+}
+
+message BackReference {
+  // URI to the API endpoint from which additional information can be fetched.
+  optional string api_uri = 1;
+
+  // URI to the frontend where additional information can be seen.
+  optional string frontend_uri = 2;
+}
+
+message BomConsumedOrProcessedSubject {
+  Project project = 1;
+  Bom bom = 2;
+  string token = 3;
+}
+
+message BomProcessingFailedSubject {
+  Project project = 1;
+  Bom bom = 2;
+  string cause = 3;
+  string token = 4;
+}
+
+message BomValidationFailedSubject {
+  Project project = 1;
+  Bom bom = 2;
+  repeated string errors = 3;
+}
+
+message Bom {
+  string content = 1;
+  string format = 2;
+  string spec_version = 3;
+}
+
+message NewVulnerabilitySubject {
+  Component component = 1;
+  Project project = 2;
+  Vulnerability vulnerability = 3;
+  BackReference affected_projects_reference = 4;
+  optional string vulnerability_analysis_level = 5 [deprecated = true];
+  // List of projects affected by the vulnerability.
+  // DEPRECATED: This list only holds one item, and it is identical to the one in the project field.
+  // The field is kept for backward compatibility of JSON notifications, but consumers should not expect multiple projects here.
+  // Transmitting all affected projects in one notification is not feasible for large portfolios,
+  // see https://github.com/DependencyTrack/hyades/issues/467 for details.
+  repeated Project affected_projects = 6 [deprecated = true];
+
+  // The trigger of the analysis that identified the vulnerability.
+  AnalysisTrigger analysis_trigger = 7;
+}
+
+message NewVulnerableDependencySubject {
+  Component component = 1;
+  Project project = 2;
+  repeated Vulnerability vulnerabilities = 3;
+}
+
+message PolicyViolationSubject {
+  Component component = 1;
+  Project project = 2;
+  PolicyViolation policy_violation = 3;
+}
+
+message VexConsumedOrProcessedSubject {
+  Project project = 1;
+  bytes vex = 2;
+  string format = 3;
+  string spec_version = 4;
+}
+
+message VulnerabilityAnalysisDecisionChangeSubject {
+  Component component = 1;
+  Project project = 2;
+  Vulnerability vulnerability = 3;
+  VulnerabilityAnalysis analysis = 4;
+}
+
+message PolicyViolationAnalysisDecisionChangeSubject {
+  Component component = 1;
+  Project project = 2;
+  PolicyViolation policy_violation = 3;
+  PolicyViolationAnalysis analysis = 4;
+}
+
+message Component {
+  string uuid = 1;
+  optional string group = 2;
+  string name = 3;
+  string version = 4;
+  optional string purl = 5;
+  optional string md5 = 6;
+  optional string sha1 = 7;
+  optional string sha256 = 8;
+  optional string sha512 = 9;
+}
+
+message Project {
+  string uuid = 1;
+  string name = 2;
+  optional string version = 3;
+  optional string description = 4;
+  optional string purl = 5;
+  repeated string tags = 6;
+  optional bool is_active = 7;
+}
+
+message PolicyViolation {
+  string uuid = 1;
+  string type = 2;
+  google.protobuf.Timestamp timestamp = 3;
+  PolicyCondition condition = 4;
+}
+
+message PolicyCondition {
+  string uuid = 1;
+  string subject = 2;
+  string operator = 3;
+  string value = 4;
+  Policy policy = 5;
+}
+
+message Policy {
+  string uuid = 1;
+  string name = 2;
+  string violation_state = 3;
+}
+
+message Vulnerability {
+  string uuid = 1;
+  string vuln_id = 2;
+  string source = 3;
+  repeated Alias aliases = 4;
+  optional string title = 5;
+  optional string sub_title = 6 [json_name = "subtitle"];
+  optional string description = 7;
+  optional string recommendation = 8;
+  optional double cvss_v2 = 9 [json_name = "cvssv2"];
+  optional double cvss_v3 = 10 [json_name = "cvssv3"];
+  optional double owasp_rr_likelihood = 11 [json_name = "owaspRRLikelihood"];
+  optional double owasp_rr_technical_impact = 12 [json_name = "owaspRRTechnicalImpact"];
+  optional double owasp_rr_business_impact = 13 [json_name = "owaspRRBusinessImpact"];
+  optional string severity = 14;
+  repeated Cwe cwes = 15;
+  optional string cvss_v2_vector = 16 [json_name = "cvssV2Vector"];
+  optional string cvss_v3_vector = 17 [json_name = "cvssV3Vector"];
+  optional string owasp_rr_vector = 18 [json_name = "owaspRRVector"];
+  optional double cvss_v4 = 19 [json_name = "cvssv4"];
+  optional string cvss_v4_vector = 20 [json_name = "cvssV4Vector"];
+
+  message Alias {
+    string id = 1 [json_name = "vulnId"];
+    string source = 2;
+  }
+
+  message Cwe {
+    int32 cwe_id = 1;
+    string name = 2;
+  }
+}
+
+message UserSubject {
+  string username = 1;
+  optional string email = 2;
+}
+
+message VulnerabilityAnalysis {
+  Component component = 1;
+  Project project = 2;
+  Vulnerability vulnerability = 3;
+  optional string state = 4;
+  optional bool suppressed = 5;
+}
+
+message PolicyViolationAnalysis {
+  Component component = 1;
+  Project project = 2;
+  PolicyViolation policy_violation = 3;
+  optional string state = 4;
+  optional bool suppressed = 5;
+}
+
+enum AnalysisTrigger {
+  // No trigger specified.
+  ANALYSIS_TRIGGER_UNSPECIFIED = 0;
+
+  // The analysis was triggered by a BOM upload.
+  ANALYSIS_TRIGGER_BOM_UPLOAD = 1;
+
+  // The analysis was triggered by a schedule.
+  ANALYSIS_TRIGGER_SCHEDULE = 2;
+
+  // The analysis was triggered manually.
+  ANALYSIS_TRIGGER_MANUAL = 3;
+}
+
+message VulnerabilityRetractedSubject {
+  // The component for which the vulnerability was previously reported.
+  Component component = 1;
+
+  // The project for which the vulnerability was previously reported.
+  Project project = 2;
+
+  // The previously reported vulnerability.
+  Vulnerability vulnerability = 3;
+}
+
+// Subject for GROUP_NEW_VULNERABILITIES_SUMMARY notifications.
+message NewVulnerabilitiesSummarySubject {
+  Overview overview = 1;
+  repeated ProjectSummaryEntry project_summaries = 2;
+  repeated ProjectFindingsEntry findings_by_project = 3;
+  google.protobuf.Timestamp since = 4;
+
+  message Overview {
+    int32 affected_projects_count = 1;
+    int32 affected_components_count = 2;
+    int32 new_vulnerabilities_count = 3;
+    map<string, int32> new_vulnerabilities_count_by_severity = 4;
+    int32 suppressed_new_vulnerabilities_count = 5;
+    int32 total_new_vulnerabilities_count = 6;
+  }
+
+  message ProjectSummaryEntry {
+    Project project = 1;
+    map<string, int32> new_vulnerabilities_count_by_severity = 2;
+    map<string, int32> suppressed_new_vulnerabilities_count_by_severity = 3;
+    map<string, int32> total_new_vulnerabilities_count_by_severity = 4;
+  }
+
+  message ProjectFindingsEntry {
+    Project project = 1;
+    repeated Finding findings = 2;
+  }
+
+  message Finding {
+    Component component = 1;
+    Vulnerability vulnerability = 2;
+    optional string analyzer_identity = 3;
+    google.protobuf.Timestamp attributed_on = 4;
+    optional string reference_url = 5;
+    optional string analysis_state = 6;
+    bool suppressed = 7;
+  }
+}
+
+// Subject for GROUP_NEW_POLICY_VIOLATIONS_SUMMARY notifications.
+message NewPolicyViolationsSummarySubject {
+  Overview overview = 1;
+  repeated ProjectSummaryEntry project_summaries = 2;
+  repeated ProjectViolationsEntry violations_by_project = 3;
+  google.protobuf.Timestamp since = 4;
+
+  message Overview {
+    int32 affected_projects_count = 1;
+    int32 affected_components_count = 2;
+    int32 new_violations_count = 3;
+    map<string, int32> new_violations_count_by_type = 4;
+    int32 suppressed_new_violations_count = 5;
+    int32 total_new_violations_count = 6;
+  }
+
+  message ProjectSummaryEntry {
+    Project project = 1;
+    map<string, int32> new_violations_count_by_type = 2;
+    map<string, int32> suppressed_new_violations_count_by_type = 3;
+    map<string, int32> total_new_violations_count_by_type = 4;
+  }
+
+  message ProjectViolationsEntry {
+    Project project = 1;
+    repeated Violation violations = 2;
+  }
+
+  message Violation {
+    string uuid = 1;
+    Component component = 2;
+    PolicyCondition policy_condition = 3;
+    string type = 4;
+    google.protobuf.Timestamp timestamp = 5;
+    optional string analysis_state = 6;
+    bool suppressed = 7;
+  }
+}

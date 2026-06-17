@@ -1,0 +1,15 @@
+{
+  "packages": {
+    "inline/package": {
+      "1.0.0": {
+        "name": "inline/package",
+        "version": "1.0.0"
+      }
+    }
+  },
+  "includes": {
+    "include/all.json": {
+      "sha1": "abc123"
+    }
+  }
+}

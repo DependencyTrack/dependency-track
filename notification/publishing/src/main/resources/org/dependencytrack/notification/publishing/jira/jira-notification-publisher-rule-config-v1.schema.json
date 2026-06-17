@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/jira-notification-publisher-rule-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "projectKey": {
+      "type": "string",
+      "title": "Project Key",
+      "description": "Key of the Jira project to create issues in.",
+      "minLength": 1,
+      "examples": [
+        "EXAMPLE"
+      ]
+    },
+    "issueType": {
+      "type": "string",
+      "title": "Issue Type",
+      "description": "Type of issues to create.",
+      "minLength": 1,
+      "examples": [
+        "Bug"
+      ]
+    }
+  },
+  "required": [
+    "projectKey",
+    "issueType"
+  ]
+}

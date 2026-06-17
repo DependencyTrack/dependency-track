@@ -1,0 +1,21 @@
+{
+  "current_page": 2,
+  "total_entries": 101,
+  "results": [
+    {
+      "vulndb_id": 789012,
+      "title": "Second Vulnerability",
+      "disclosure_date": "2023-06-01T00:00:00.000Z",
+      "description": "Another vulnerability.",
+      "solution": null,
+      "vulndb_last_modified": "2023-06-15T00:00:00.000Z",
+      "manual_notes": null,
+      "t_description": null,
+      "authors": [],
+      "ext_references": [],
+      "cvss_metrics": [],
+      "cvss_version_three_metrics": [],
+      "nvd_additional_information": []
+    }
+  ]
+}

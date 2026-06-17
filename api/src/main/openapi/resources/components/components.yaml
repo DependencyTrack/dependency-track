@@ -1,0 +1,212 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+post:
+  operationId: createComponent
+  summary: Creates a new component for the project
+  description: Requires permission `PORTFOLIO_MANAGEMENT` or `PORTFOLIO_MANAGEMENT_UPDATE`
+  tags:
+    - Components
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/create-component-request.yaml"
+  responses:
+    "201":
+      description: Component Created
+      headers:
+        Location:
+          description: URL of the created component
+          schema:
+            type: string
+            format: uri
+    "400":
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            anyOf:
+              - $ref: "../../shared/schemas/invalid-request-problem-details.yaml"
+              - $ref: "../../shared/schemas/problem-details.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    "409":
+      $ref: "../../shared/responses/generic-conflict-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"
+
+get:
+  operationId: listComponents
+  summary: List all components
+  description: |-
+    Retrieves a list of all components matching the provided filter criteria.
+
+    Text filters are case-insensitive.
+
+    ### Sortable fields
+
+    Sorting is supported for the following fields:
+
+    * `name`
+    * `group`
+    * `last_inherited_risk_score`
+
+    ### Expandable fields
+
+    The following fields can be included via `expand`:
+
+    * `metrics`
+    * `package_metadata`
+    * `package_artifact_metadata`
+
+    Requires permission `VIEW_PORTFOLIO`
+  tags:
+    - Components
+  parameters:
+    - name: group_contains
+      in: query
+      description: Filter by group (substring match)
+      schema:
+        type: string
+    - name: name_contains
+      in: query
+      description: Filter by name (substring match)
+      schema:
+        type: string
+    - name: version_contains
+      in: query
+      description: Filter by version (substring match)
+      schema:
+        type: string
+    - name: purl_prefix
+      in: query
+      description: |-
+        Filter by PURL (prefix match).
+
+        Must be a valid PURL, with at least `pkg:<ecosystem>/<name>` populated.
+      schema:
+        type: string
+    - name: cpe
+      in: query
+      description: |-
+        Filter by CPE (exact match).
+
+        Must be a valid CPE.
+      schema:
+        type: string
+    - name: swid_tag_id_contains
+      in: query
+      description: Filter by SWID Tag ID (substring match)
+      schema:
+        type: string
+    - name: hash_type
+      in: query
+      description: The hash type to filter by
+      schema:
+        type: string
+        enum:
+          - MD5
+          - SHA1
+          - SHA_256
+          - SHA_384
+          - SHA_512
+          - SHA3_256
+          - SHA3_384
+          - SHA3_512
+          - BLAKE2B_256
+          - BLAKE2B_384
+          - BLAKE2B_512
+          - BLAKE3
+    - name: hash
+      in: query
+      description: |-
+        Filter by hash value (exact match).
+
+        Requires `hash_type` to be set.
+      schema:
+        type: string
+    - name: package_artifact_published_since
+      in: query
+      description: |-
+        Filter by package artifact publish date (inclusive lower bound).
+
+        Note that components without resolved package artifact metadata,
+        or whose upstream repository did not report a publication date,
+        are excluded whenever `package_artifact_published_since` or
+        `package_artifact_published_before` is set.
+      schema:
+        $ref: "../../shared/schemas/timestamp.yaml"
+    - name: package_artifact_published_before
+      in: query
+      description: Filter by package artifact publish date (exclusive upper bound).
+      schema:
+        $ref: "../../shared/schemas/timestamp.yaml"
+    - name: project_state
+      in: query
+      description: |-
+        Filter by the state of the project that the component belongs to.
+
+        Omit to include components from projects in any state.
+      schema:
+        $ref: "../../shared/schemas/project-state.yaml"
+    - name: project_latest_version
+      in: query
+      description: |-
+        Filter by whether the project the component belongs to is flagged as the latest version.
+
+        When `true`, only components from latest-version projects are returned.
+        When `false`, only components from non-latest projects are returned.
+        Omit to include components regardless of the flag.
+      schema:
+        type: boolean
+    - name: expand
+      in: query
+      description: Optional fields to include in each component response item. Unknown values are silently ignored.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+    - $ref: "../../shared/parameters/pagination-limit.yaml"
+    - $ref: "../../shared/parameters/page-token.yaml"
+    - $ref: "../../shared/parameters/sort-direction.yaml"
+    - $ref: "../../shared/parameters/sort-by.yaml"
+  responses:
+    "200":
+      description: A list of components matching the provided filters
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/list-components-response.yaml"
+    "400":
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            anyOf:
+              - $ref: "../../shared/schemas/invalid-sort-field-problem-details.yaml"
+              - $ref: "../../shared/schemas/problem-details.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"

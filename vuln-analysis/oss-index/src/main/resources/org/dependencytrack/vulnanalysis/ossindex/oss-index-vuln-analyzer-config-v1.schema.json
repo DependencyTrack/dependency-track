@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/oss-index-vuln-analyzer-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the OSS Index vulnerability analyzer should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "aliasSyncEnabled": {
+      "type": "boolean",
+      "title": "Alias Synchronization Enabled",
+      "description": "Whether to include alias information in vulnerability data.",
+      "existingJavaType": "boolean"
+    },
+    "apiUrl": {
+      "type": "string",
+      "title": "API URL",
+      "description": "URL of OSS Index' REST API.",
+      "format": "uri",
+      "minLength": 1
+    },
+    "username": {
+      "type": "string",
+      "title": "Username",
+      "description": "Username to authenticate with the OSS Index REST API. Optional when using Sonatype PATs.",
+      "minLength": 1
+    },
+    "apiToken": {
+      "type": "string",
+      "title": "API Token",
+      "description": "API token to authenticate with the OSS Index REST API.",
+      "minLength": 1,
+      "x-secret-ref": true
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

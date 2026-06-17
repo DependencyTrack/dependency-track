@@ -1,0 +1,2 @@
+alter table dex_workflow_run drop constraint dex_workflow_run_status_check;
+alter table dex_workflow_run add constraint dex_workflow_run_status_check check (status in ('CREATED', 'RUNNING', 'SUSPENDED', 'CANCELLED', 'COMPLETED', 'FAILED'));

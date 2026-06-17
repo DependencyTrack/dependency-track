@@ -1,0 +1,59 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+name: Mirror Container Image
+
+on:
+  registry_package:
+    types:
+    - published
+
+permissions: { }
+
+jobs:
+  mirror-to-dockerhub:
+    name: Mirror to Docker Hub
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # * Only mirror images to Docker Hub for the official repository.
+    # * Ensure only container packages are considered for this workflow.
+    # * Deal with multiplatform images where only the final manifest has a tag name.
+    #   amd64 and arm64 image variants are published without tag name.
+    if: |
+      github.repository_owner == 'DependencyTrack'
+        && github.event.registry_package.package_type == 'CONTAINER'
+        && github.event.registry_package.package_version.container_metadata.tag.name != ''
+    steps:
+    - name: Login to Docker Hub
+      uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # tag=v4.2.0
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+    - name: Setup Crane
+      uses: imjasonh/setup-crane@6da1ae018866400525525ce74ff892880c099987 # tag=v0.5
+    - name: Mirror image to Docker Hub
+      env:
+        PACKAGE_NAMESPACE: ${{ github.event.registry_package.namespace }}
+        PACKAGE_NAME: ${{ github.event.registry_package.name }}
+        PACKAGE_TAG: ${{ github.event.registry_package.package_version.container_metadata.tag.name }}
+      run: |
+        IMAGE_REPOSITORY="${PACKAGE_NAMESPACE}/${PACKAGE_NAME}"
+        IMAGE_TAG="${PACKAGE_TAG}"
+
+        SRC_IMAGE="ghcr.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+        DST_IMAGE="docker.io/${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+
+        crane copy "${SRC_IMAGE}" "${DST_IMAGE}"

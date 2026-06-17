@@ -15,11 +15,10 @@ target/
 # windows
 ~
 
+# macos
+.DS_Store
+
 # IntelliJ
 .idea/*
 !.idea/icon.svg
 !.idea/runConfigurations/
-
-# nix 
-.direnv
-.pre-commit-config.yaml

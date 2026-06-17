@@ -1,0 +1,209 @@
+{#- @pebvariable name="baseUrl" type="String" -#}
+{#- @pebvariable name="notification" type="org.dependencytrack.notification.proto.v1.Notification" -#}
+{#- @pebvariable name="timestamp" type="String" -#}
+{{ notification.title }}
+
+--------------------------------------------------------------------------------
+{% if notification.group == "GROUP_NEW_VULNERABILITY" %}
+Vulnerability ID:  {{ subject.vulnerability.vulnId }}
+Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ subject.vulnerability.source }}&vulnId={{ subject.vulnerability.vulnId }}
+Severity:          {{ subject.vulnerability.severity }}
+Source:            {{ subject.vulnerability.source }}
+Component:         {{ subject.component | summarize }}
+Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+--------------------------------------------------------------------------------
+
+Other affected projects: {{ baseUrl }}{{ subject.affectedProjectsReference.frontendUri }}
+{% elseif notification.group == "GROUP_NEW_VULNERABLE_DEPENDENCY" %}
+Project:           {{ subject.project | summarize }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+Component:         {{ subject.component | summarize }}
+Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
+
+Vulnerabilities
+{% for vulnerability in subject.vulnerabilitiesList %}
+Vulnerability ID:  {{ vulnerability.vulnId }}
+Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ vulnerability.source }}&vulnId={{ vulnerability.vulnId }}
+Severity:          {{ vulnerability.severity }}
+Source:            {{ vulnerability.source }}
+Description:
+{{ vulnerability.description }}
+
+{% endfor %}
+{% elseif notification.group == "GROUP_PROJECT_AUDIT_CHANGE" %}
+Analysis Type:  Project Analysis
+{% if subject.analysis is null %}{% for comment in subject.violationAnalysis.analysisComments %} {% if loop.last and comment.commenter is not null  %}
+Commenter:         {{ comment.commenter}}{% endif %}{% endfor %}
+Violation Analysis State:    {{ subject.violationAnalysis.state }}
+Suppressed:        {{ subject.violationAnalysis.suppressed }}
+Policy:            {{ subject.policyViolation.policyCondition.policy.name }}
+Policy Violation State: {{ subject.policyViolation.policyCondition.policy.violationState }}
+Policy Condition:  subject == {{ subject.policyViolation.policyCondition.subject }} && value {{ subject.policyViolation.policyCondition.operator }} {{ subject.policyViolation.policyCondition.value }}
+{% else %}{% for comment in subject.analysis.analysisComments %} {% if loop.last and comment.commenter is not null %}
+Commenter:         {{ comment.commenter}}{% endif %}{% endfor %}
+Analysis State:    {{ subject.analysis.state }}
+Suppressed:        {{ subject.analysis.suppressed }}
+Vulnerability ID:  {{ subject.vulnerability.vulnId }}
+Vulnerability URL: {{ baseUrl }}/vulnerability/?source={{ subject.vulnerability.source }}&vulnId={{ subject.vulnerability.vulnId }}
+Severity:          {{ subject.vulnerability.severity }}
+Source:            {{ subject.vulnerability.source }}
+{% endif %}
+Component:         {{ subject.component | summarize }}
+Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
+Project:           {{ subject.project | summarize }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "GROUP_BOM_CONSUMED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "GROUP_BOM_PROCESSED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "GROUP_BOM_PROCESSING_FAILED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+
+--------------------------------------------------------------------------------
+
+Cause:
+{{ subject.cause }}
+{% elseif notification.group == "GROUP_BOM_VALIDATION_FAILED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+
+--------------------------------------------------------------------------------
+
+Errors:
+{% for error in subject.errorsList %}
+{{ error }}
+{% endfor %}
+{% elseif notification.group == "GROUP_VEX_CONSUMED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "GROUP_VEX_PROCESSED" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% elseif notification.group == "GROUP_POLICY_VIOLATION" %}
+Project:           {{ subject.project.name }}
+Version:           {{ subject.project.version }}
+Description:       {{ subject.project.description }}
+Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+
+Component:         {{ subject.component.name }}
+Component Version: {{ subject.component.version }}
+Component URL:     {{ baseUrl }}/components/{{ subject.component.uuid }}
+
+Violated Policy:   {{ subject.policyViolation.policyCondition.policy.name }}
+{% elseif notification.group == "GROUP_NEW_VULNERABILITIES_SUMMARY" %}
+Overview:
+- New Vulnerabilities: {{ subject.overview.totalNewVulnerabilitiesCount }} (Suppressed: {{ subject.overview.suppressedNewVulnerabilitiesCount }})
+{% for entry in subject.overview.newVulnerabilitiesCountBySeverityMap %}
+  - Of Severity {{ entry.key }}: {{ entry.value }}
+{%- endfor %}
+- Affected Projects:   {{ subject.overview.affectedProjectsCount }}
+- Affected Components: {{ subject.overview.affectedComponentsCount }}
+- Since:               {{ subject.since | formatTimestamp }}
+{% if subject.projectSummariesList is not empty -%}
+
+--------------------------------------------------------------------------------
+
+Project Summaries:
+{% for entry in subject.projectSummariesList %}
+- Project: [{{ entry.project.name }} : {{ entry.project.version }}]
+  Project URL: {{ baseUrl }}/projects/{{ entry.project.uuid }}
+{% for severity in entry.totalNewVulnerabilitiesCountBySeverityMap %}
+  + New Vulnerabilities Of Severity {{ severity.key }}: {{ severity.value }} (Suppressed: {{ entry.suppressedNewVulnerabilitiesCountBySeverityMap[severity.key] | default(0) }})
+{%- endfor %}
+{% endfor %}
+{%- endif %}
+{% if subject.findingsByProjectList is not empty -%}
+
+--------------------------------------------------------------------------------
+
+Vulnerability Details:
+{% for projectEntry in subject.findingsByProjectList %}
+- Project: [{{ projectEntry.project.name }} : {{ projectEntry.project.version }}]
+  Project URL: {{ baseUrl }}/projects/{{ projectEntry.project.uuid }}
+{% for finding in projectEntry.findingsList %}
+  + Vulnerability ID:       {{ finding.vulnerability.vulnId }}
+    Vulnerability Source:   {{ finding.vulnerability.source }}
+    Vulnerability Severity: {{ finding.vulnerability.severity }}
+    Vulnerability URL:      {{ baseUrl }}/vulnerability/?source={{ finding.vulnerability.source }}&vulnId={{ finding.vulnerability.vulnId }}
+    Component:              {{ finding.component | summarize }}
+    Component URL:          {{ baseUrl }}/component/?uuid={{ finding.component.uuid }}
+    Timestamp:              {{ finding.attributedOn | formatTimestamp }}
+    Analysis State:         {{ finding.analysisState | default("-") }}
+    Suppressed:             {{ finding.suppressed }}
+{% endfor -%}
+{% endfor -%}
+{% endif %}
+{% elseif notification.group == "GROUP_NEW_POLICY_VIOLATIONS_SUMMARY" %}
+Overview:
+- New Violations:      {{ subject.overview.totalNewViolationsCount }} (Suppressed: {{ subject.overview.suppressedNewViolationsCount }})
+{%- for entry in subject.overview.newViolationsCountByTypeMap %}
+  - Of Type {{ entry.key }}: {{ entry.value }}
+{%- endfor %}
+- Affected Projects:   {{ subject.overview.affectedProjectsCount }}
+- Affected Components: {{ subject.overview.affectedComponentsCount }}
+- Since:               {{ subject.since | formatTimestamp }}
+{% if subject.projectSummariesList is not empty -%}
+
+--------------------------------------------------------------------------------
+
+Project Summaries:
+{% for entry in subject.projectSummariesList %}
+- Project: [{{ entry.project.name }} : {{ entry.project.version }}]
+  Project URL: {{ baseUrl }}/projects/{{ entry.project.uuid }}
+{% for typeEntry in entry.totalNewViolationsCountByTypeMap %}
+  + New Violations Of Type {{ typeEntry.key }}: {{ typeEntry.value }} (Suppressed: {{ entry.suppressedNewViolationsCountByTypeMap[typeEntry.key] | default(0) }})
+{%- endfor %}
+{% endfor %}
+{%- endif %}
+{% if subject.violationsByProjectList is not empty -%}
+
+--------------------------------------------------------------------------------
+
+Violation Details:
+{% for projectEntry in subject.violationsByProjectList %}
+- Project: [{{ projectEntry.project.name }} : {{ projectEntry.project.version }}]
+  Project URL: {{ baseUrl }}/projects/{{ projectEntry.project.uuid }}
+{% for violation in projectEntry.violationsList %}
+  + Policy:                {{ violation.policyCondition.policy.name }}
+    Policy Condition:      {{ violation.policyCondition.subject }} {{ violation.policyCondition.operator }} {{ violation.policyCondition.value | trim | abbreviate(64) }}
+    Policy Violation Type: {{ violation.type }}
+    Component:             {{ violation.component | summarize }}
+    Component URL:         {{ baseUrl }}/component/?uuid={{ violation.component.uuid }}
+    Timestamp:             {{ violation.timestamp | formatTimestamp }}
+    Analysis State:        {{ violation.analysisState | default("-") }}
+    Suppressed:            {{ violation.suppressed }}
+{% endfor -%}
+{% endfor -%}
+{% endif %}
+{% else %}
+Level:     {{ notification.level }}
+Scope:     {{ notification.scope }}
+Group:     {{ notification.group }}
+{% endif %}
+--------------------------------------------------------------------------------
+
+{{ notification.content }}
+
+--------------------------------------------------------------------------------
+
+{{ timestamp }}

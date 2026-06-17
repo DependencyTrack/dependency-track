@@ -1,0 +1,1 @@
+alter table dex_workflow_run add column continued_as_new_generation int not null default 0;

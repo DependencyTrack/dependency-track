@@ -1,0 +1,73 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
+ */
+syntax = "proto3";
+
+package org.dependencytrack.internal.workflow.v1;
+
+import "org/dependencytrack/filestorage/v1/filestorage.proto";
+import "org/dependencytrack/notification/v1/notification.proto";
+
+option java_multiple_files = true;
+option java_package = "org.dependencytrack.proto.internal.workflow.v1";
+
+// Argument of the publish-notification workflow.
+message PublishNotificationWorkflowArg {
+  // ID of the notification.
+  string notification_id = 1;
+
+  // The notification payload.
+  oneof payload {
+    // The notification itself. Used for small notifications.
+    org.dependencytrack.notification.v1.Notification notification = 2;
+
+    // File metadata of the notification. Used for large notifications.
+    org.dependencytrack.filestorage.v1.FileMetadata notification_file_metadata = 3;
+  }
+
+  // Names of notification rules for which the notification shall be published.
+  repeated string notification_rule_names = 4;
+}
+
+// Argument of the process-scheduled-notifications workflow.
+message ProcessScheduledNotificationsWorkflowArg {
+  repeated string rule_names = 1;
+}
+
+// Argument of the process-scheduled-notification-rule activity.
+message ProcessScheduledNotificationRuleArg {
+  string rule_name = 1;
+}
+
+// Argument of the publish-notification activity.
+message PublishNotificationActivityArg {
+  // ID of the notification.
+  string notification_id = 1;
+
+  // Name of the notification rule.
+  string notification_rule_name = 2;
+
+  // The notification payload.
+  oneof payload {
+    // The notification itself. Used for small notifications.
+    org.dependencytrack.notification.v1.Notification notification = 3;
+
+    // File metadata of the notification. Used for large notifications.
+    org.dependencytrack.filestorage.v1.FileMetadata notification_file_metadata = 4;
+  }
+}

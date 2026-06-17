@@ -1,0 +1,12 @@
+org.dependencytrack.persistence.jdbi.ComponentDao#getOccurrences uses @RegisterBeanMapper with model class org.dependencytrack.model.ComponentOccurrence
+org.dependencytrack.persistence.jdbi.ConfigPropertyDao#getOptional uses @RegisterBeanMapper with model class alpine.model.ConfigProperty
+org.dependencytrack.persistence.jdbi.MetricsDao#getCollectionProjectMetricsSince uses @RegisterBeanMapper with model class org.dependencytrack.model.ProjectMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao#getDependencyMetricsSince uses @RegisterBeanMapper with model class org.dependencytrack.model.DependencyMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao#getMostRecentCollectionProjectMetrics uses @RegisterBeanMapper with model class org.dependencytrack.model.ProjectMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao#getMostRecentDependencyMetrics uses @RegisterBeanMapper with model class org.dependencytrack.model.DependencyMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao#getMostRecentDependencyMetrics uses @RegisterBeanMapper with model class org.dependencytrack.model.DependencyMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao#getMostRecentProjectMetrics uses @RegisterBeanMapper with model class org.dependencytrack.model.ProjectMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao#getMostRecentProjectMetrics uses @RegisterBeanMapper with model class org.dependencytrack.model.ProjectMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao#getPortfolioMetricsForDays uses @RegisterBeanMapper with model class org.dependencytrack.model.PortfolioMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao#getProjectMetricsSince uses @RegisterBeanMapper with model class org.dependencytrack.model.ProjectMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao#getVulnerabilityMetrics uses @RegisterBeanMapper with model class org.dependencytrack.model.VulnerabilityMetrics

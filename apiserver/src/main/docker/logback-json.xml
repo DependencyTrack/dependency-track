@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+    <appender name="JSON_STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!--
+                Customize field names so they match the Quarkus logging layout better.
+                https://github.com/logfellow/logstash-logback-encoder#customizing-standard-field-names
+            -->
+            <fieldNames>
+                <levelValue>[ignore]</levelValue>
+                <logger>loggerName</logger>
+                <stackTrace>stackTrace</stackTrace>
+                <thread>threadName</thread>
+                <timestamp>timestamp</timestamp>
+                <version>[ignore]</version>
+            </fieldNames>
+        </encoder>
+    </appender>
+
+    <logger name="alpine" level="INFO" additivity="false">
+        <appender-ref ref="JSON_STDOUT" />
+    </logger>
+
+    <logger name="org.dependencytrack" level="INFO" additivity="false">
+        <appender-ref ref="JSON_STDOUT" />
+    </logger>
+
+    <logger name="org.eclipse.jetty" level="INFO" additivity="false">
+        <appender-ref ref="JSON_STDOUT" />
+    </logger>
+
+    <root level="WARN">
+        <appender-ref ref="JSON_STDOUT" />
+    </root>
+</configuration>

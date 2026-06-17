@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/webhook-notification-publisher-rule-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "destinationUrl": {
+      "type": "string",
+      "title": "Destination URL",
+      "description": "The URL to send the notification to.",
+      "format": "uri",
+      "minLength": 1
+    },
+    "authHeaderName": {
+      "type": "string",
+      "title": "Auth Header Name",
+      "description": "Name of the HTTP header to use for authentication (e.g. Authorization).",
+      "minLength": 1
+    },
+    "authHeaderValue": {
+      "type": "string",
+      "title": "Auth Header Value",
+      "description": "Value of the authentication header (e.g. a bearer token).",
+      "minLength": 1,
+      "x-secret-ref": true
+    }
+  },
+  "required": [
+    "destinationUrl"
+  ]
+}

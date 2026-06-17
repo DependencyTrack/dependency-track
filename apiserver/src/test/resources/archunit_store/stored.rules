@@ -1,0 +1,5 @@
+#
+#Tue Apr 14 11:35:31 CEST 2026
+classes\ that\ have\ simple\ name\ ending\ with\ 'Dao'\ and\ reside\ in\ a\ package\ 'org.dependencytrack.persistence.jdbi'\ should\ not\ use\ @RegisterBeanMapper\ with\ model\ classes=214fb774-c145-436c-bd1c-d442e8e4fe26
+classes\ that\ reside\ in\ a\ package\ 'org.dependencytrack.persistence.jdbi..'\ and\ implement\ org.jdbi.v3.core.mapper.RowMapper\ should\ not\ target\ model\ classes=f3b37c20-3a23-4355-a1a0-626adddec514
+methods\ that\ are\ declared\ in\ classes\ that\ have\ simple\ name\ ending\ with\ 'Dao'\ and\ are\ declared\ in\ classes\ that\ reside\ in\ a\ package\ 'org.dependencytrack.persistence.jdbi'\ and\ are\ not\ annotated\ with\ @SqlUpdate\ and\ are\ not\ annotated\ with\ @SqlBatch\ should\ not\ return\ model\ classes=abb951d9-b11c-45d0-a35c-0d8977fd78e3

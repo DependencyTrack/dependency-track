@@ -1,0 +1,20 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+  "version": 1,
+  "components": [
+    {
+      "type": "library",
+      "publisher": "Acme Inc",
+      "group": "com.acme",
+      "name": "tomcat-catalina",
+      "version": "9.0.14",
+      "licenses": [
+        {
+          "expression": "EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0"
+        }
+      ]
+    }
+  ]
+}

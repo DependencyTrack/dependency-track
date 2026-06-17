@@ -1,0 +1,611 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:d8e07202-6817-42c1-8cae-20254567672f",
+  "version": 1,
+  "services": [
+    {
+      "bom-ref": "service:gov.nist.nvd",
+      "provider": {
+        "name": "National Institute of Standards and Technology (NIST)",
+        "url": [
+          "https://nist.gov"
+        ],
+        "contact": [
+          {
+            "email": "nvd@nist.gov"
+          }
+        ]
+      },
+      "group": "gov.nist.nvd",
+      "name": "National Vulnerability Database (NVD)",
+      "description": "Used as a vulnerability data source. CVE feeds are mirrored to Dependency-Track.",
+      "endpoints": [
+        "https://nvd.nist.gov/feeds"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ],
+      "licenses": [
+        {
+          "license":
+          {
+            "name": "Public domain"
+          }
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.sonatype.ossindex",
+      "provider": {
+        "name": "Sonatype",
+        "url": [
+          "https://sonatype.com"
+        ],
+        "contact": [
+          {
+            "email": "ossindex@sonatype.org"
+          }
+        ]
+      },
+      "group": "org.sonatype.ossindex",
+      "name": "OSS Index",
+      "description": "Optional vulnerability analyzer. Queried by component package URL to retrieve known vulnerabilities.",
+      "endpoints": [
+        "https://ossindex.sonatype.org/api/v3/component-report",
+        "https://ossindex.sonatype.org/api/v3/version"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.cyberriskanalytics.vulndb",
+      "provider": {
+        "name": "Risk Based Security",
+        "url": [
+          "https://riskbasedsecurity.com/"
+        ],
+        "contact": [
+          {
+            "email": "support@riskbasedsecurity.com"
+          },
+          {
+            "phone": "1-855-RBS-RISK",
+            "email": "sales@riskbasedsecurity.com"
+          }
+        ]
+      },
+      "group": "com.cyberriskanalytics.vulndb",
+      "name": "VulnDB",
+      "description": "Optional commercial vulnerability analyzer. Queried for component vulnerabilities. Requires a paid subscription.",
+      "endpoints": [
+        "https://vulndb.flashpoint.io/api/v1/account_status",
+        "https://vulndb.flashpoint.io/api/v1/vendors/",
+        "https://vulndb.flashpoint.io/api/v1/products/",
+        "https://vulndb.flashpoint.io/api/v1/versions/by_product_id",
+        "https://vulndb.flashpoint.io/api/v1/vulnerabilities/",
+        "https://vulndb.flashpoint.io/api/v1/vulnerabilities/find_by_cpe"
+      ],
+      "authenticated": true,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.github.api",
+      "provider": {
+        "name": "GitHub",
+        "url": [
+          "https://github.com/"
+        ]
+      },
+      "group": "com.github.api",
+      "name": "GitHub Advisories",
+      "description": "Used as a vulnerability data source. GitHub Security Advisories are mirrored to Dependency-Track via GraphQL. Also queried for repository metadata of packages hosted on GitHub.",
+      "endpoints": [
+        "https://api.github.com/graphql",
+        "https://api.github.com/repos/"
+      ],
+      "authenticated": true,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:io.crates",
+      "provider": {
+        "name": "Crates.io",
+        "url": [
+          "https://crates.io"
+        ]
+      },
+      "group": "io.crates",
+      "name": "Crates.io",
+      "description": "Queried for package metadata and latest version information of Rust crates.",
+      "endpoints": [
+        "https://crates.io/api/v1/crates"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.packagist.repo",
+      "provider": {
+        "name": "Packagist",
+        "url": [
+          "https://packagist.org"
+        ]
+      },
+      "group": "org.packagist.repo",
+      "name": "Packagist",
+      "description": "Queried for latest version information of PHP Composer packages.",
+      "endpoints": [
+        "https://repo.packagist.org/p/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.rubygems",
+      "provider": {
+        "name": "RubyGems",
+        "url": [
+          "https://rubygems.org"
+        ]
+      },
+      "group": "org.rubygems",
+      "name": "RubyGems",
+      "description": "Queried for package metadata and latest version information of Ruby gems.",
+      "endpoints": [
+        "https://rubygems.org/api/v1/versions"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.golang.proxy",
+      "provider": {
+        "name": "Google",
+        "url": [
+          "https://go.dev/"
+        ]
+      },
+      "group": "org.golang.proxy",
+      "name": "Go Module Mirror, Index, and Checksum Database",
+      "description": "Queried for package metadata and latest version information of Go modules.",
+      "endpoints": [
+        "https://proxy.golang.org/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:pm.hex",
+      "provider": {
+        "name": "Six Colors AB.",
+        "url": [
+          "https://hex.pm"
+        ],
+        "contact": [
+          {
+            "name": "Eric Meadows-Jönsson",
+            "phone": "+46 070-893 94 01"
+          }
+        ]
+      },
+      "group": "pm.hex",
+      "name": "hex",
+      "description": "Queried for package metadata and latest version information of Erlang and Elixir packages.",
+      "endpoints": [
+        "https://hex.pm/api/packages"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.maven.repo1",
+      "provider": {
+        "name": "Sonatype",
+        "url": [
+          "https://sonatype.com"
+        ]
+      },
+      "group": "org.maven.repo1",
+      "name": "Maven Central",
+      "description": "Queried for package metadata and latest version information of Java artifacts.",
+      "endpoints": [
+        "https://repo1.maven.org/maven2"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.atlassian.maven",
+      "provider": {
+        "name": "Atlassian",
+        "url": [
+          "https://atlassian.com"
+        ]
+      },
+      "group": "com.atlassian.maven",
+      "name": "Atlassian Public",
+      "description": "Queried for latest version information of Atlassian-published Maven artifacts.",
+      "endpoints": [
+        "https://packages.atlassian.com/content/repositories/atlassian-public/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.jboss.repository",
+      "provider": {
+        "name": "RedHat",
+        "url": [
+          "https://redhat.com"
+        ]
+      },
+      "group": "org.jboss.repository",
+      "name": "JBoss Releases",
+      "description": "Queried for latest version information of JBoss-published Maven artifacts.",
+      "endpoints": [
+        "https://repository.jboss.org/nexus/content/repositories/releases/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.clojars.repo",
+      "provider": {
+        "name": "Clojars",
+        "url": [
+          "https://clojars.org/"
+        ]
+      },
+      "group": "org.clojars.repo",
+      "name": "Clojars",
+      "description": "Queried for latest version information of Clojure libraries.",
+      "endpoints": [
+        "https://repo.clojars.org/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.google.maven",
+      "provider": {
+        "name": "Google",
+        "url": [
+          "https://google.com"
+        ]
+      },
+      "group": "com.google.maven",
+      "name": "Google's Maven Repository",
+      "description": "Queried for latest version information of Google and Android Maven artifacts.",
+      "endpoints": [
+        "https://maven.google.com/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.npmjs.registry",
+      "provider": {
+        "name": "npm",
+        "url": [
+          "https://www.npmjs.com/"
+        ]
+      },
+      "group": "org.npmjs.registry",
+      "name": "NPM Registry",
+      "description": "Queried for package metadata and latest version information of npm packages.",
+      "endpoints": [
+        "https://registry.npmjs.org/-/package/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.nuget.api",
+      "provider": {
+        "name": "Microsoft",
+        "url": [
+          "https://www.microsoft.com/"
+        ],
+        "contact": [
+          {
+            "email": "support@nuget.org"
+          }
+        ]
+      },
+      "group": "org.nuget.api",
+      "name": "NuGet Registry",
+      "description": "Queried for package metadata and latest version information of NuGet packages.",
+      "endpoints": [
+        "https://api.nuget.org/v3-flatcontainer/",
+        "https://api.nuget.org/v3/registration3/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:dev.osv",
+      "provider": {
+        "name": "Google",
+        "url": [
+          "https://google.com"
+        ]
+      },
+      "group": "dev.osv",
+      "name": "OSV",
+      "description": "Used as a vulnerability data source. Per-ecosystem OSV feeds are mirrored to Dependency-Track.",
+      "endpoints": [
+        "https://osv-vulnerabilities.storage.googleapis.com"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.pypi",
+      "provider": {
+        "name": "Python Software Foundation",
+        "url": [
+          "https://www.python.org/psf/"
+        ],
+        "contact": [
+          {
+            "email": "psf@python.org"
+          }
+        ]
+      },
+      "group": "org.pypi",
+      "name": "PyPI",
+      "description": "Queried for package metadata and latest version information of Python packages.",
+      "endpoints": [
+        "https://pypi.org/pypi/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.dependencytrack.metrics",
+      "provider": {
+        "name": "OWASP",
+        "url": [
+          "https://owasp.org"
+        ]
+      },
+      "group": "org.dependencytrack.metrics",
+      "name": "Dependency-Track Telemetry",
+      "description": "Receives anonymous usage telemetry submitted by this Dependency-Track instance. Optional.",
+      "endpoints": [
+        "https://metrics.dependencytrack.org"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "outbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:io.snyk",
+      "provider": {
+        "name": "Snyk",
+        "url": [
+          "https://snyk.io"
+        ]
+      },
+      "group": "io.snyk",
+      "name": "Snyk",
+      "description": "Optional commercial vulnerability analyzer. Queried for component vulnerabilities. Requires a paid subscription.",
+      "endpoints": [
+        "https://api.snyk.io"
+      ],
+      "authenticated": true,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:com.empiricalsecurity.epss",
+      "provider": {
+        "name": "Empirical Security",
+        "url": [
+          "https://www.first.org/epss/"
+        ]
+      },
+      "group": "com.empiricalsecurity.epss",
+      "name": "EPSS",
+      "description": "Used as a source of EPSS exploit prediction scores for CVEs. Feeds are mirrored to Dependency-Track.",
+      "endpoints": [
+        "https://epss.empiricalsecurity.com/epss_scores-current.csv.gz"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.metacpan",
+      "provider": {
+        "name": "The Perl Foundation",
+        "url": [
+          "https://metacpan.org"
+        ]
+      },
+      "group": "org.metacpan",
+      "name": "MetaCPAN",
+      "description": "Queried for latest version information of Perl modules on CPAN.",
+      "endpoints": [
+        "https://fastapi.metacpan.org/v1/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.haskell.hackage",
+      "provider": {
+        "name": "Haskell.org",
+        "url": [
+          "https://www.haskell.org"
+        ]
+      },
+      "group": "org.haskell.hackage",
+      "name": "Hackage",
+      "description": "Queried for latest version information of Haskell packages.",
+      "endpoints": [
+        "https://hackage.haskell.org/"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service:org.nixos.channels",
+      "provider": {
+        "name": "NixOS Foundation",
+        "url": [
+          "https://nixos.org"
+        ]
+      },
+      "group": "org.nixos.channels",
+      "name": "Nixpkgs",
+      "description": "Queried for latest version information of Nixpkgs packages.",
+      "endpoints": [
+        "https://channels.nixos.org/nixpkgs-unstable/packages.json.br"
+      ],
+      "authenticated": false,
+      "x-trust-boundary": true,
+      "data": [
+        {
+          "classification": "public",
+          "flow": "inbound"
+        }
+      ]
+    }
+  ]
+}

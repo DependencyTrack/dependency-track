@@ -1,0 +1,10 @@
+{#- @pebvariable name="notification" type="org.dependencytrack.notification.proto.v1.Notification" -#}
+{#- @pebvariable name="timestamp" type="String" -#}
+--------------------------------------------------------------------------------
+Notification
+  -- timestamp: {{ timestamp }}
+  -- level:     {{ notification.level }}
+  -- scope:     {{ notification.scope }}
+  -- group:     {{ notification.group }}
+  -- title:     {{ notification.title }}
+  -- content:   {{ notification.content }}

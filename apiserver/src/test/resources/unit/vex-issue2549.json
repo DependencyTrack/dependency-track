@@ -1,0 +1,99 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "serialNumber": "urn:uuid:50f729f5-1e3c-4d10-b0da-d2f1c02ca257",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2023-03-01T00:00:00Z",
+    "tools": [
+      {
+        "vendor": "OWASP",
+        "name": "Dependency-Track",
+        "version": "latest"
+      }
+    ],
+    "component": {
+      "name": "Acme example",
+      "version": "1.0",
+      "type": "application",
+      "bom-ref": "7f2ee811-6b35-4c24-83ec-605d7939005c"
+    }
+  },
+  "vulnerabilities": [
+    {
+      "id": "CVE-2020-25649",
+      "source": {
+        "name": "National Vulnerability Database",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2020-25649"
+      },
+      "ratings": [
+        {
+          "source": {
+            "name": "NVD",
+            "url": "https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator?vector=AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N&version=3.1"
+          },
+          "score": 7.5,
+          "severity": "high",
+          "method": "CVSSv31",
+          "vector": "AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+        }
+      ],
+      "analysis": {
+        "state": "not_affected"
+      },
+      "affects": [
+        {
+          "ref": "7f2ee811-6b35-4c24-83ec-605d7939005c"
+        }
+      ]
+    },
+    {
+      "id": "CVE-2020-25650",
+      "source": {
+        "name": "OSSINDEX",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2020-25650"
+      },
+      "ratings": [
+        {
+          "source": {
+            "name": "OSSINDEX"
+          },
+          "score": 7.5,
+          "severity": "high",
+          "method": "CVSSv31",
+          "vector": "AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+        }
+      ],
+      "analysis": {
+        "state": "false_positive"
+      },
+      "affects": [
+        {
+          "ref": "7f2ee811-6b35-4c24-83ec-605d7939005c"
+        }
+      ]
+    },
+    {
+      "id": "CVE-2020-25651",
+      "ratings": [
+        {
+          "source": {
+            "name": "OSSINDEX"
+          },
+          "score": 7.6,
+          "severity": "high",
+          "method": "CVSSv31",
+          "vector": "AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+        }
+      ],
+      "analysis": {
+        "state": "false_positive"
+      },
+      "affects": [
+        {
+          "ref": "7f2ee811-6b35-4c24-83ec-605d7939005c"
+        }
+      ]
+    }
+  ]
+}

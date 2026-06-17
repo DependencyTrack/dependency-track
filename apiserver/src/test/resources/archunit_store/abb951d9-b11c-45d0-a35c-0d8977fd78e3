@@ -1,0 +1,25 @@
+org.dependencytrack.persistence.jdbi.ComponentDao.getOccurrences(java.util.UUID) returns model class org.dependencytrack.model.ComponentOccurrence
+org.dependencytrack.persistence.jdbi.ComponentDao.listComponents(org.dependencytrack.persistence.jdbi.query.ListComponentsQuery) returns model class org.dependencytrack.model.Component
+org.dependencytrack.persistence.jdbi.ComponentDao.listProjectComponents(org.dependencytrack.persistence.jdbi.query.ListProjectComponentsQuery) returns model class org.dependencytrack.model.Component
+org.dependencytrack.persistence.jdbi.ConfigPropertyDao.getOptional(java.lang.String, java.lang.String) returns model class alpine.model.ConfigProperty
+org.dependencytrack.persistence.jdbi.FindingDao.getFindings(long, boolean) returns model class org.dependencytrack.model.Finding
+org.dependencytrack.persistence.jdbi.MetricsDao.getCollectionProjectMetricsSince(long, java.time.Instant) returns model class org.dependencytrack.model.ProjectMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao.getDependencyMetricsSince(long, java.time.Instant) returns model class org.dependencytrack.model.DependencyMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao.getMostRecentCollectionProjectMetrics(java.util.Collection) returns model class org.dependencytrack.model.ProjectMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao.getMostRecentCollectionProjectMetrics(long) returns model class org.dependencytrack.model.ProjectMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao.getMostRecentDependencyMetrics(java.util.Collection) returns model class org.dependencytrack.model.DependencyMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao.getMostRecentDependencyMetrics(long) returns model class org.dependencytrack.model.DependencyMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao.getMostRecentPortfolioMetrics() returns model class org.dependencytrack.model.PortfolioMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao.getMostRecentProjectMetrics(java.util.Collection) returns model class org.dependencytrack.model.ProjectMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao.getMostRecentProjectMetrics(long) returns model class org.dependencytrack.model.ProjectMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao.getPortfolioMetricsForDays(int) returns model class org.dependencytrack.model.PortfolioMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao.getProjectMetricsSince(long, java.time.Instant) returns model class org.dependencytrack.model.ProjectMetrics
+org.dependencytrack.persistence.jdbi.MetricsDao.getVulnerabilityMetrics() returns model class org.dependencytrack.model.VulnerabilityMetrics
+org.dependencytrack.persistence.jdbi.ScheduledNotificationDao.getScheduledNotificationRuleByName(java.lang.String) returns model class org.dependencytrack.model.NotificationRule
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getByUuid(java.util.UUID) returns model class org.dependencytrack.model.Vulnerability
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getByUuidOrVulnIdAndSource(java.util.UUID, java.lang.String, java.lang.String) returns model class org.dependencytrack.model.Vulnerability
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getByVulnIdAndSource(java.lang.String, java.lang.String) returns model class org.dependencytrack.model.Vulnerability
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getVulnerabilitiesByComponent(java.lang.Long, boolean) returns model class org.dependencytrack.model.Vulnerability
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getVulnerabilitiesByProject(long, boolean) returns model class org.dependencytrack.model.Vulnerability
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getVulnerableComponents(long, java.util.List) returns model class org.dependencytrack.model.Component
+org.dependencytrack.persistence.jdbi.VulnerabilityDao.getVulnerableSoftwareByVulnId(long) returns model class org.dependencytrack.model.VulnerableSoftware

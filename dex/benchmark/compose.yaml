@@ -1,0 +1,133 @@
+---
+name: dex-benchmark
+
+services:
+  dex-init:
+    image: dependencytrack/dex-benchmark:local
+    command: init
+    build:
+      dockerfile: src/main/docker/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  dex-engine:
+    image: dependencytrack/dex-benchmark:local
+    command: start-engine
+    build:
+      dockerfile: src/main/docker/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dex-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  dex-create-runs:
+    image: dependencytrack/dex-benchmark:local
+    command: create-runs
+    build:
+      dockerfile: src/main/docker/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dex-init:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    environment:
+      RUNS_COUNT: "1000000"
+      BATCH_SIZE: "25000"
+    restart: no
+
+  postgres:
+    image: postgres:18-alpine
+    # Configuration is derived from PGTune (https://pgtune.leopard.in.ua/),
+    # using the following system parameters:
+    #
+    # - DB Version:     18
+    # - OS Type:        Linux
+    # - DB Type:        Online Transaction Processing System
+    # - Total Memory:   4GB
+    # - Number of CPUs: 4
+    # - Data Storage:   SSD
+    #
+    # This represents a fairly standard medium-sized database server.
+    # To better simulate large-scale deployments, increase the available
+    # resources as needed.
+    command: >-
+      -c shared_buffers=1GB
+      -c effective_cache_size=3GB
+      -c maintenance_work_mem=256MB
+      -c wal_buffers=16MB
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=3449kB
+      -c huge_pages=off
+      -c min_wal_size=2GB
+      -c max_wal_size=8GB
+      -c max_worker_processes=4
+      -c max_parallel_workers_per_gather=2
+      -c max_parallel_workers=4
+      -c max_parallel_maintenance_workers=2
+      -c wal_compression=lz4
+      -c default_toast_compression=lz4
+    environment:
+      POSTGRES_DB: "dex"
+      POSTGRES_USER: "dex"
+      POSTGRES_PASSWORD: "dex"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    ports:
+    - "127.0.0.1:5432:5432"
+    volumes:
+    - "postgres-data:/var/lib/postgresql"
+    restart: unless-stopped
+
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATA_SOURCE_URI: "postgres:5432/postgres?sslmode=disable"
+      DATA_SOURCE_USER: "dex"
+      DATA_SOURCE_PASS: "dex"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.7.3
+    ports:
+    - "127.0.0.1:9090:9090"
+    volumes:
+    - "./prometheus.yml:/etc/prometheus/prometheus.yml:ro,Z"
+    - "prometheus-data:/prometheus"
+    restart: unless-stopped
+
+  prometheus-pushgateway:
+    image: prom/pushgateway:v1.11.2
+    ports:
+    - "127.0.0.1:9091:9091"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:12.1.1
+    ports:
+    - "127.0.0.1:3000:3000"
+    volumes:
+    - "grafana-data:/var/lib/grafana"
+    - "./grafana-dashboard.json:/etc/dashboards/dex.json:ro,Z"
+    - "./grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro,Z"
+    - "./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro,Z"
+    restart: unless-stopped
+
+volumes:
+  grafana-data: {}
+  postgres-data: {}
+  prometheus-data: {}

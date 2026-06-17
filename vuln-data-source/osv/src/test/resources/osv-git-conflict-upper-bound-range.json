@@ -1,0 +1,30 @@
+{
+  "id": "GHSA-h4w9-6x78-8vrj",
+  "affected": [
+    {
+      "package": {
+        "name": "github.com/argoproj/argo-cd",
+        "ecosystem": "Go",
+        "purl": "pkg:golang/github.com/argoproj/argo-cd"
+      },
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "1.0.0"
+            },
+            {
+              "fixed": "2.1.16"
+            }
+          ]
+        }
+      ],
+      "database_specific": {
+        "last_known_affected_version_range": "<= 1.8.7",
+        "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2022/06/GHSA-h4w9-6x78-8vrj/GHSA-h4w9-6x78-8vrj.json"
+      }
+    }
+  ],
+  "schema_version": "1.4.0"
+}

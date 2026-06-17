@@ -1,0 +1,106 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
+ */
+package org.dependencytrack.tasks.maintenance;
+
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
+import org.dependencytrack.persistence.jdbi.ProjectDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_DAYS;
+import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_TYPE;
+import static org.dependencytrack.model.ConfigPropertyConstants.MAINTENANCE_PROJECTS_RETENTION_VERSIONS;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
+
+public final class ProjectMaintenanceTask extends AbstractBatchingMaintenanceTask {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProjectMaintenanceTask.class);
+    private static final int BATCH_SIZE = 25;
+    private static final int MAX_ITERATIONS = 1000;
+
+    public ProjectMaintenanceTask() {
+        super(MAX_ITERATIONS);
+    }
+
+    @Override
+    public void run() {
+        final Optional<String> retentionType = withJdbiHandle(
+                handle -> handle
+                        .attach(ConfigPropertyDao.class)
+                        .getOptionalValue(MAINTENANCE_PROJECTS_RETENTION_TYPE, String.class));
+
+        if (retentionType.isEmpty() || retentionType.get().isEmpty()) {
+            LOGGER.debug("Inactive project deletion is disabled; nothing to do");
+            return;
+        }
+
+        if ("AGE".equals(retentionType.get())) {
+            final int retentionDays = withJdbiHandle(
+                    handle -> handle
+                            .attach(ConfigPropertyDao.class)
+                            .getValue(MAINTENANCE_PROJECTS_RETENTION_DAYS, Integer.class));
+            final Instant retentionCutOff = Instant.now().minus(Duration.ofDays(retentionDays));
+            final int deleted = runBatched(BATCH_SIZE, handle -> {
+                final List<ProjectDao.DeletedProject> deletedProjects = handle
+                        .attach(ProjectDao.class)
+                        .deleteInactiveProjectsForRetentionDuration(retentionCutOff, BATCH_SIZE);
+                logDeletedProjects(deletedProjects);
+                return deletedProjects.size();
+            });
+
+            if (deleted > 0) {
+                LOGGER.info("Deleted {} inactive project(s) by age", deleted);
+            }
+
+            return;
+        }
+
+        final int versionCountThreshold = withJdbiHandle(
+                handle -> handle
+                        .attach(ConfigPropertyDao.class)
+                        .getValue(MAINTENANCE_PROJECTS_RETENTION_VERSIONS, Integer.class));
+
+        final int deleted = runBatched(BATCH_SIZE, handle -> {
+            final List<ProjectDao.DeletedProject> deletedProjects = handle
+                    .attach(ProjectDao.class)
+                    .deleteExcessProjectVersions(versionCountThreshold, BATCH_SIZE);
+            logDeletedProjects(deletedProjects);
+            return deletedProjects.size();
+        });
+
+        if (deleted > 0) {
+            LOGGER.info("Deleted {} excess project version(s)", deleted);
+        }
+    }
+
+    private static void logDeletedProjects(List<ProjectDao.DeletedProject> deletedProjects) {
+        deletedProjects.forEach(deletedProject -> LOGGER.info(
+                "Inactive project deleted: [name:{}, version:{}, inactive since:{}, uuid:{}]",
+                deletedProject.name(),
+                deletedProject.version(),
+                deletedProject.inactiveSince(),
+                deletedProject.uuid()));
+    }
+
+}

@@ -1,0 +1,44 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+name: Update Proto Documentation
+
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - notification/api/src/main/proto/org/dependencytrack/notification/**/*.proto
+    - proto/src/main/proto/org/dependencytrack/policy/**/*.proto
+
+permissions: { }
+
+jobs:
+  trigger-update:
+    name: Trigger Update
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: ${{ github.repository_owner == 'DependencyTrack' }}
+    steps:
+    - name: Dispatch Update Event
+      env:
+        # NB: The default GITHUB_TOKEN is scoped to the repository where
+        # the workflow is running, thus can't trigger workflows in other
+        # repos. Requires a PAT with `Actions: Read / Write` permission
+        # on the target instead.
+        GH_TOKEN: "${{ secrets.CONFIG_DOCS_UPDATE_GITHUB_TOKEN }}"
+      run: |-
+        gh workflow run update-proto-docs.yml -R DependencyTrack/docs

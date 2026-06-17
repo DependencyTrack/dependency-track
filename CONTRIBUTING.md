@@ -27,6 +27,8 @@ Optionally indicate your interest by reacting with *thumbs up* (👍). Issues wi
 
 If you cannot find an existing issue for your bug or feature request, create a new issue using the guidelines below.
 
+New issues must be filed using one of the provided issue templates. **Issues that do not use a template will be closed.**
+
 ### Requesting Enhancements
 
 File a single issue per enhancement request. Do not list multiple enhancement requests in the same issue.
@@ -88,6 +90,30 @@ Before raising pull requests, please [file a defect](#reporting-defects) or [enh
 
 [`DEVELOPING.md`](./DEVELOPING.md) provides a detailed guide on how to get started with working on Dependency-Track.
 
+### Architecture Decision Records
+
+Substantial changes must be accompanied by an [Architecture Decision Record (ADR)](./docs/adr/).
+The ADR documents the context, the decision, and its consequences, so reviewers and future contributors can understand
+the rationale without having to reconstruct it from code.
+
+An ADR is required when a change introduces, removes, or significantly alters any of the following:
+
+* a module, plugin extension point, or cross-module API
+* the database schema, persistence model, or data migration semantics
+* the REST API contract in a paradigm-shifting or breaking way. This includes a new authN or authZ model,
+  a new API version, or conventions that apply across many endpoints. Routine new endpoints that follow
+  the existing conventions do *not* require an ADR.
+* a runtime dependency, datastore, or external integration
+* concurrency, consistency, or scalability characteristics of an existing subsystem
+
+When in doubt, propose an ADR. It is cheaper to discuss the design before the implementation lands.
+
+See [`docs/adr/README.md`](./docs/adr/README.md) for the format, status workflow, and writing style guide.
+
+The ADR should be raised first, either as its own pull request or as a draft pull request alongside an early
+implementation, and reach *Accepted* status before the implementation pull request is merged. For small changes
+where the design is uncontroversial, bundling the ADR and the implementation in a single pull request is fine.
+
 ### Pull Requests
 
 * Pull requests that do not merge easily with the tip of the `master` branch will be declined.
@@ -98,6 +124,7 @@ Before raising pull requests, please [file a defect](#reporting-defects) or [enh
 * Avoid new dependencies if the functionality that is being used is trivial to implement directly or is available in standard libraries.
 * Avoid checking in unrelated whitespace changes with code changes.
 * Commits must be [signed off](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt--s) to indicate agreement with [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
+* Pull requests must use the provided PR template and fill out all applicable sections. **Pull requests that do not use the template will be closed.**
 * Optionally include visualizations like screenshots, videos or [diagrams](https://github.blog/2022-02-14-include-diagrams-markdown-files-mermaid/) in the pull request description.
 
 ### Commit Messages

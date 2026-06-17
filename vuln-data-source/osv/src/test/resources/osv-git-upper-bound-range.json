@@ -1,0 +1,30 @@
+{
+  "id": "GHSA-g42g-737j-qx6j",
+  "affected": [
+    {
+      "package": {
+        "name": "k8s.io/kubernetes",
+        "ecosystem": "Go",
+        "purl": "pkg:golang/k8s.io/kubernetes"
+      },
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "1.18.18"
+            }
+          ]
+        }
+      ],
+      "database_specific": {
+        "last_known_affected_version_range": "<= 1.18.17",
+        "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2021/05/GHSA-g42g-737j-qx6j/GHSA-g42g-737j-qx6j.json"
+      }
+    }
+  ],
+  "schema_version": "1.4.0"
+}

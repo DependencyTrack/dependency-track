@@ -1,34 +1,90 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
 name: Build CI
 
 on:
   push:
     branches:
-      - 'master'          # Default branch
-      - 'feature-**'      # Feature branches
+      - 'main'
+      - 'feature-**'
       - '[0-9]+.[0-9]+.x' # Release branches
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
   pull_request:
     branches:
-      - 'master'          # Default branch
-      - 'feature-**'      # Feature branches
+      - 'main'
+      - 'feature-**'
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
   workflow_dispatch:
+    inputs:
+      app-version:
+        type: string
+        required: false
+        default: ""
+        description: "Override the derived app-version (e.g. 5.0.0 or 5.0.0-rc.1). Leave empty to use the derived snapshot tag (e.g. 5-snapshot)."
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions: { }
 
 permissions: { }
 
 jobs:
+  read-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      major: ${{ steps.parse.outputs.major }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # tag=v5.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'maven'
+
+      - name: Parse Version from POM
+        id: parse
+        run: |-
+          VERSION=$(mvn -q -Dexec.skip=true help:evaluate -Dexpression=project.version -DforceStdout)
+          MAJOR="${VERSION%%.*}"
+          echo "major=${MAJOR}" >> "$GITHUB_OUTPUT"
+
   call-build:
+    name: Build
+    needs:
+      - read-version
     uses: ./.github/workflows/_meta-build.yaml
     with:
-      app-version: "snapshot"
-      publish-container: ${{ github.ref_name == 'master' || startsWith(github.ref_name, 'feature-') }}
+      app-version: ${{ inputs.app-version || format('{0}-snapshot', needs.read-version.outputs.major) }}
+      publish-container: ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'feature-') }}
       ref-name: ${{ github.ref_name }}
     permissions:
-      security-events: write # Required to upload trivy's SARIF output
+      packages: write # Required to push images to ghcr.io
     secrets:
-      registry-0-usr: ${{ secrets.HUB_USERNAME }}
-      registry-0-psw: ${{ secrets.HUB_ACCESSS_TOKEN }}
+      registry-0-usr: ${{ github.repository_owner }}
+      registry-0-psw: ${{ github.repository_owner == 'DependencyTrack' && secrets.BOT_IMAGE_PUSH_TOKEN || secrets.GITHUB_TOKEN }}

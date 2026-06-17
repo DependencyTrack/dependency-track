@@ -1,0 +1,79 @@
+{
+  "cve": {
+    "id": "CVE-2022-40489",
+    "sourceIdentifier": "cve@mitre.org",
+    "published": "2022-12-01T05:15:11.730",
+    "lastModified": "2022-12-02T17:17:02.303",
+    "vulnStatus": "Analyzed",
+    "descriptions": [
+      {
+        "lang": "en",
+        "value": "ThinkCMF version 6.0.7 is affected by a Cross Site Request Forgery (CSRF) vulnerability that allows a Super Administrator user to be injected into administrative users."
+      }
+    ],
+    "metrics": {
+      "cvssMetricV31": [
+        {
+          "source": "nvd@nist.gov",
+          "type": "Primary",
+          "cvssData": {
+            "version": "3.1",
+            "vectorString": "CVSS:3.1\/AV:N\/AC:L\/PR:N\/UI:R\/S:U\/C:H\/I:H\/A:H",
+            "attackVector": "NETWORK",
+            "attackComplexity": "LOW",
+            "privilegesRequired": "NONE",
+            "userInteraction": "REQUIRED",
+            "scope": "UNCHANGED",
+            "confidentialityImpact": "HIGH",
+            "integrityImpact": "HIGH",
+            "availabilityImpact": "HIGH",
+            "baseScore": 8.8,
+            "baseSeverity": "HIGH"
+          },
+          "exploitabilityScore": 2.8,
+          "impactScore": 5.9
+        }
+      ]
+    },
+    "weaknesses": [
+      {
+        "source": "nvd@nist.gov",
+        "type": "Primary",
+        "description": [
+          {
+            "lang": "en",
+            "value": "CWE-352"
+          }
+        ]
+      }
+    ],
+    "configurations": [
+      {
+        "nodes": [
+          {
+            "operator": "OR",
+            "negate": false,
+            "cpeMatch": [
+              {
+                "vulnerable": true,
+                "criteria": "cpe:2.3:a:thinkcmf:thinkcmf:6.0.7:*:*:*:*:*:*:*",
+                "matchCriteriaId": "3F02595D-FE6B-481C-87D7-E31A5C955FED"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "references": [
+      {
+        "url": "https:\/\/github.com\/thinkcmf\/thinkcmf\/issues\/736",
+        "source": "cve@mitre.org",
+        "tags": [
+          "Exploit",
+          "Issue Tracking",
+          "Third Party Advisory"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/trivy-vuln-analyzer-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the Trivy vulnerability analyzer should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "apiUrl": {
+      "type": "string",
+      "title": "API URL",
+      "description": "URL of the Trivy server.",
+      "format": "uri",
+      "minLength": 1
+    },
+    "apiToken": {
+      "type": "string",
+      "title": "API Token",
+      "description": "Token for authenticating with the Trivy server.",
+      "minLength": 1,
+      "x-secret-ref": true
+    },
+    "ignoreUnfixed": {
+      "type": "boolean",
+      "title": "Ignore Unfixed",
+      "description": "Whether to ignore vulnerabilities without a fix.",
+      "existingJavaType": "boolean"
+    },
+    "scanLibrary": {
+      "type": "boolean",
+      "title": "Scan Library",
+      "description": "Whether to scan library packages.",
+      "existingJavaType": "boolean"
+    },
+    "scanOs": {
+      "type": "boolean",
+      "title": "Scan OS",
+      "description": "Whether to scan OS packages.",
+      "existingJavaType": "boolean"
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

@@ -32,8 +32,15 @@
     just leave it empty for now. The maintainers are happy to assist you in figuring it out!
 -->
 
-- [ ] I have read and understand the [contributing guidelines](../CONTRIBUTING.md#pull-requests)
+- [ ] I have read and understand the [contributing guidelines]
 - [ ] This PR fixes a defect, and I have provided tests to verify that the fix is effective
 - [ ] This PR implements an enhancement, and I have provided tests to verify that it works as intended
-- [ ] This PR introduces changes to the database model, and I have added corresponding [update logic](https://github.com/DependencyTrack/dependency-track/tree/master/src/main/java/org/dependencytrack/upgrade)
-- [ ] This PR introduces new or alters existing behavior, and I have updated the [documentation](https://github.com/DependencyTrack/dependency-track/tree/master/docs/_docs) accordingly
+- [ ] This PR introduces changes to the database model, and I have updated the [migration changelog] accordingly
+- [ ] This PR introduces new or alters existing behavior, and I have updated the [documentation] accordingly
+- [ ] This PR is a substantial change (per the [ADR criteria]), and I have added an [ADR] under `docs/adr/`
+
+[ADR]: ../docs/adr/
+[ADR criteria]: ../CONTRIBUTING.md#architecture-decision-records
+[contributing guidelines]: ../CONTRIBUTING.md#pull-requests
+[documentation]: https://github.com/DependencyTrack/docs
+[migration changelog]: ../DEVELOPING.md#database-migrations

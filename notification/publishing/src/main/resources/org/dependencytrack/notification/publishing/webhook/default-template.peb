@@ -1,0 +1,15 @@
+{#- @pebvariable name="notification" type="org.dependencytrack.notification.proto.v1.Notification" -#}
+{#- @pebvariable name="subjectJson" type="String" -#}
+{#- @pebvariable name="timestamp" type="String" -#}
+{
+  "notification": {
+    "id": "{{ notification.id | escape(strategy="json") }}",
+    "level": "{{ notification.level | escape(strategy="json") }}",
+    "scope": "{{ notification.scope | escape(strategy="json") }}",
+    "group": "{{ notification.group | escape(strategy="json") }}",
+    "timestamp": "{{ timestamp }}",
+    "title": "{{ notification.title | escape(strategy="json") }}",
+    "content": "{{ notification.content | escape(strategy="json") }}",
+    "subject": {% if subjectJson != null %}{{ subjectJson | raw }}{% else %}null{% endif %}
+  }
+}

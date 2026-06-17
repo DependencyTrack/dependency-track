@@ -1,0 +1,6 @@
+{
+  "metadata-url": "/files/packages/8/p2/%package%.json",
+  "available-package-patterns": [
+    "drupal/*"
+  ]
+}

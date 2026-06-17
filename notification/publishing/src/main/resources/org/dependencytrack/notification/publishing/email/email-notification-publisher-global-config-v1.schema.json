@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/email-notification-publisher-global-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the publisher should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "host": {
+      "type": "string",
+      "title": "SMTP Host",
+      "description": "Hostname or IP address of the SMTP server.",
+      "minLength": 1,
+      "examples": [
+        "mail.example.com"
+      ]
+    },
+    "port": {
+      "type": "integer",
+      "title": "SMTP Port",
+      "description": "Port of the SMTP server.",
+      "minimum": 1,
+      "maximum": 65535,
+      "examples": [
+        25
+      ]
+    },
+    "username": {
+      "type": "string",
+      "title": "SMTP Username",
+      "description": "Username to authenticate against the SMTP server with.",
+      "examples": [
+        "user@example.com"
+      ]
+    },
+    "password": {
+      "type": "string",
+      "title": "SMTP Password",
+      "description": "Password to authenticate against the SMTP server with.",
+      "minLength": 1,
+      "x-secret-ref": true
+    },
+    "sslEnabled": {
+      "type": "boolean",
+      "title": "SSL / TLS Enabled",
+      "description": "Whether to use SSL / TLS when connecting to the SMTP server.",
+      "existingJavaType": "boolean"
+    },
+    "startTlsEnabled": {
+      "type": "boolean",
+      "title": "STARTTLS Enabled",
+      "description": "Whether to enable [`STARTTLS`](https://en.wikipedia.org/wiki/Opportunistic_TLS).",
+      "existingJavaType": "boolean"
+    },
+    "senderAddress": {
+      "type": "string",
+      "format": "email",
+      "title": "Sender Address",
+      "description": "Email address that will appear as sender.",
+      "minLength": 1,
+      "examples": [
+        "from@example.com"
+      ]
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

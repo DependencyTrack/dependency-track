@@ -1,0 +1,82 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
+ */
+syntax = "proto3";
+
+package org.dependencytrack.internal.workflow.v1;
+
+import "org/dependencytrack/filestorage/v1/filestorage.proto";
+
+option java_multiple_files = true;
+option java_package = "org.dependencytrack.proto.internal.workflow.v1";
+
+enum AnalysisTrigger {
+  ANALYSIS_TRIGGER_UNSPECIFIED = 0;
+  ANALYSIS_TRIGGER_BOM_UPLOAD = 1;
+  ANALYSIS_TRIGGER_SCHEDULE = 2;
+  ANALYSIS_TRIGGER_MANUAL = 3;
+}
+
+// Supplementary context for the vuln-analysis workflow.
+// This context is expected to hold data of potentially extensive
+// size, and should thus only be passed via file storage metadata.
+message VulnAnalysisWorkflowContext {
+  // IDs of components that were identified as new.
+  // May be used to determine for which components a NEW_VULNERABLE_DEPENDENCY
+  // notification shall be emitted.
+  repeated int64 new_component_ids = 1;
+}
+
+message VulnAnalysisWorkflowArg {
+  string project_uuid = 1;
+  AnalysisTrigger trigger = 2;
+  optional org.dependencytrack.filestorage.v1.FileMetadata context_file_metadata = 3;
+}
+
+message PrepareVulnAnalysisArg {
+  string project_uuid = 1;
+}
+
+message InvokeVulnAnalyzerArg {
+  string project_uuid = 1;
+  string analyzer_name = 2;
+  org.dependencytrack.filestorage.v1.FileMetadata bom_file_metadata = 3;
+}
+
+message AnalyzeProjectWorkflowArg {
+  string project_uuid = 1;
+  AnalysisTrigger trigger = 2;
+  optional org.dependencytrack.filestorage.v1.FileMetadata context_file_metadata = 3;
+}
+
+message EvalProjectPoliciesArg {
+  string project_uuid = 1;
+}
+
+message ReconcileVulnAnalysisResultsArg {
+  string project_uuid = 1;
+  AnalysisTrigger analysis_trigger = 2;
+  repeated AnalyzerResult analyzer_results = 3;
+  optional org.dependencytrack.filestorage.v1.FileMetadata context_file_metadata = 4;
+
+  message AnalyzerResult {
+    string analyzer_name = 1;
+    bool successful = 2;
+    optional org.dependencytrack.filestorage.v1.FileMetadata vdr_file_metadata = 3;
+  }
+}

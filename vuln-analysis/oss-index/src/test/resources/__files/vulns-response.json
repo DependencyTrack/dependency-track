@@ -1,0 +1,24 @@
+[
+  {
+    "coordinates": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1",
+    "description": "General data-binding functionality for Jackson: works on core streaming API",
+    "reference": "https://ossindex.sonatype.org/component/pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1?utm_source=mozilla&utm_medium=integration&utm_content=5.0",
+    "vulnerabilities": [
+      {
+        "id": "CVE-2020-36518",
+        "displayName": "CVE-2020-36518",
+        "title": "[CVE-2020-36518] CWE-787: Out-of-bounds Write",
+        "description": "jackson-databind before 2.13.0 allows a Java StackOverflow exception and denial of service via a large depth of nested objects.\n\nSonatype's research suggests that this CVE's details differ from those defined at NVD. See https://ossindex.sonatype.org/vulnerability/CVE-2020-36518 for details",
+        "cvssScore": 7.5,
+        "cvssVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+        "cwe": "CWE-787",
+        "cve": "CVE-2020-36518",
+        "reference": "https://ossindex.sonatype.org/vulnerability/CVE-2020-36518?component-type=maven&component-name=com.fasterxml.jackson.core%2Fjackson-databind&utm_source=mozilla&utm_medium=integration&utm_content=5.0",
+        "externalReferences": [
+          "http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2020-36518",
+          "https://github.com/FasterXML/jackson-databind/issues/2816"
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,38 @@
+{
+  "packages": {
+    "dummyspace/base": {
+      "1.1.0": {
+        "name": "dummyspace/base",
+        "version": "1.1.0",
+        "type": "magento2-module"
+      },
+      "1.0.1": {
+        "name": "dummyspace/base",
+        "version": "1.0.1",
+        "type": "magento2-module"
+      },
+      "1.18.0": {
+        "name": "dummyspace/base",
+        "version": "1.18.0",
+        "type": "magento2-module"
+      },
+      "master": {
+        "name": "dummyspace/base",
+        "version": "master",
+        "type": "magento2-module"
+      }
+    },
+    "dummyspace/fb": {
+      "1.0.0": {
+        "name": "dummyspace/fb",
+        "version": "1.0.0",
+        "type": "magento2-module"
+      },
+      "1.0.6": {
+        "name": "dummyspace/fb",
+        "version": "1.0.6",
+        "type": "magento2-module"
+      }
+    }
+  }
+}

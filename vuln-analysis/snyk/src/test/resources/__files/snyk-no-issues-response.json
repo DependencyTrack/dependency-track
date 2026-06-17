@@ -1,0 +1,9 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [],
+  "links": {
+    "self": "/orgs/test-org/packages/issues?version=2025-11-05"
+  }
+}

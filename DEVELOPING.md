@@ -1,224 +1,165 @@
-# Hacking on OWASP Dependency-Track
+# Developing
 
-Want to hack on Dependency-Track? Awesome, here's what you need to know to get started!
+> Please also read [`CONTRIBUTING.md`](./CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md).
 
-> Please be sure to read [`CONTRIBUTING.md`](./CONTRIBUTING.md) and 
-> [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) as well.
-
-## Repositories
-
-As of now, the Dependency-Track project consists of two separate repositories:
-
-* [DependencyTrack/dependency-track](https://github.com/DependencyTrack/dependency-track) - The main application, also referred to as API server, based on Java and [Alpine](https://github.com/stevespringett/Alpine).
-* [DependencyTrack/frontend](https://github.com/DependencyTrack/frontend) - The frontend, a single page application (SPA), based on JavaScript and [Vue](https://vuejs.org/).
-
-This document primarily covers the API server. Please refer to the frontend repository for frontend-specific instructions.
+> [!IMPORTANT]
+> Substantial changes must be accompanied by an [Architecture Decision Record](./docs/adr/).
+> See the [criteria in `CONTRIBUTING.md`](./CONTRIBUTING.md#architecture-decision-records) for when
+> an ADR is required, and [`docs/adr/README.md`](./docs/adr/README.md) for how to write one.
 
 ## Prerequisites
 
-There are a few things you'll need on your journey:
+* JDK 25+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
+* Maven 3.9+
+* Docker or Podman (required for [tests](#testing) and [dev mode](#dev-mode))
+* A Java IDE (IntelliJ recommended)
 
-* JDK 21+ ([Temurin](https://adoptium.net/temurin/releases) distribution recommended)
-* Maven (comes bundled with IntelliJ and Eclipse)
-* A Java IDE of your preference (we recommend IntelliJ, but any other IDE is fine as well)
-* Docker (optional)
+> [!TIP]
+> We recommend [sdkman](https://sdkman.io/) for managing JDK and Maven installations,
+> and [mvnd](https://github.com/apache/maven-mvnd) for faster builds.
+> The `Makefile` automatically uses `mvnd` when available, falling back to `mvn`.
 
-> We provide common [run configurations](https://www.jetbrains.com/help/idea/run-debug-configuration.html) for IntelliJ 
-> in the [`.idea/runConfigurations`](./.idea/runConfigurations) directory for convenience. IntelliJ will automatically pick those up when you open this repository.
+> [!NOTE]
+> This guide uses [`make`](https://www.gnu.org/software/make/) commands for brevity,
+> and we recommend that you use `make` if you prefer CLI-centric workflows.
+> If using `make` is not an option, you can inspect the full commands in [`Makefile`](Makefile)
+> and use them for your own custom workflows.
+> 
+> For IDE-centric workflows, we provide equivalent IntelliJ [run configurations](.idea/runConfigurations).
 
 ## Core Technologies
 
-Knowing about the core technologies used by the API server may help you with understanding its codebase.
+| Technology                                                                                  | Purpose                   |
+|:--------------------------------------------------------------------------------------------|:--------------------------|
+| [Jakarta REST (JAX-RS)](https://projects.eclipse.org/projects/ee4j.rest)                    | REST API specification    |
+| [Jersey](https://eclipse-ee4j.github.io/jersey/)                                            | JAX-RS implementation     |
+| [OpenAPI](https://www.openapis.org/)                                                        | API specification         |
+| [JDO](https://db.apache.org/jdo/)                                                           | Persistence specification |
+| [DataNucleus](https://www.datanucleus.org/products/accessplatform/jdo/getting_started.html) | JDO implementation        |
+| [JDBI](https://jdbi.org/)                                                                   | Database access           |
+| [Flyway](https://www.red-gate.com/products/flyway/)                                         | Database migrations       |
+| [MicroProfile Config](https://microprofile.io/specifications/microprofile-config/)          | Configuration             |
+| [Jetty](https://www.eclipse.org/jetty/)                                                     | Servlet container         |
+| [PostgreSQL](https://www.postgresql.org/)                                                   | Database                  |
+| [Testcontainers](https://testcontainers.com/)                                               | Integration testing       |
+| [Protocol Buffers](https://protobuf.dev/)                                                   | Serialization             |
 
-| Technology                                                                                      | Purpose                   |
-|:------------------------------------------------------------------------------------------------|:--------------------------|
-| [JAX-RS](https://projects.eclipse.org/projects/ee4j.rest)                                       | REST API specification    |
-| [Jersey](https://eclipse-ee4j.github.io/jersey/)                                                | JAX-RS implementation     |
-| [Java Data Objects (JDO)](https://db.apache.org/jdo/)                                           | Persistence specification |
-| [DataNucleus](https://www.datanucleus.org/products/accessplatform/jdo/getting_started.html)     | JDO implementation        |
-| [Jetty](https://www.eclipse.org/jetty/)                                                         | Servlet Container         |
-| [Alpine](https://github.com/stevespringett/Alpine)                                              | Framework / Scaffolding   |
+## Architecture Constraints
+
+The following constraints apply project-wide. They exist to keep the codebase coherent
+as it evolves and to avoid steering changes in directions we are actively moving away from.
+For substantial changes, see also the [Architecture Decision Record](./CONTRIBUTING.md#architecture-decision-records)
+process in `CONTRIBUTING.md`.
+
+### REST API v1 is in maintenance mode
+
+New endpoints must be added to API v2, which lives in the [`api`](./api) module and follows
+a spec-first OpenAPI workflow. API v1 (in [`apiserver/src/main/java/org/dependencytrack/resources/v1`](./apiserver/src/main/java/org/dependencytrack/resources/v1))
+is code-first and uses Swagger annotations on JAX-RS resources. Touch v1 only when extending
+or fixing existing endpoints.
+
+API v1 also reuses persistence models as REST DTOs. Do not propagate that pattern into v2.
+New endpoints must keep the API contract decoupled from the persistence layer.
+
+### Persistence: prefer JDBI and raw SQL
+
+JDO and DataNucleus are being phased out. New persistence code should use [JDBI](https://jdbi.org/)
+with raw SQL. Avoid touching JDO entities unless the change genuinely requires it, and do not
+build new features on top of the JDO layer.
+
+### Throughput over latency
+
+The system processes large volumes of components, vulnerabilities, and analyses. Optimize
+for throughput. Batch work, minimize network round trips, and avoid per-record hot paths
+that issue one query, request, or message at a time.
+
+### Strong consistency by default
+
+Default to strong consistency. Eventual consistency is acceptable only when the use case
+explicitly demands it (typically for scale or availability reasons) and the trade-off is
+documented.
+
+### Simple and pragmatic over speculative future-proofing
+
+Solve the problem in front of you. Avoid extra abstractions, configuration knobs, or
+extension points introduced for hypothetical future needs. It is cheaper to add an
+abstraction when a second concrete use case appears than to maintain one that has none.
+
+### Strong cohesion, loose coupling
+
+Modules should be small and focused, with narrow, intentional interfaces between them.
+Reach across module boundaries through well-defined APIs rather than by importing
+internals. The ongoing modularization effort moves the codebase in this direction.
 
 ## Building
 
-Build an executable JAR containing just the API server:
+Build the project:
 
 ```shell
-mvn clean package -P quick -P clean-exclude-wars -P enhance -P embedded-jetty -Dlogback.configuration.file=src/main/docker/logback.xml
+make build
 ```
 
-Build an executable JAR that contains both API server and frontend (aka "bundled" distribution):
+> [!TIP]
+> (Re-) building the entire project via `make build` is cheap due to [build caching](#build-cache).
+> You generally don't need to build modules selectively.
+
+The resulting JAR is placed in `./apiserver/target` as `dependency-track-apiserver.jar`.
+It ships with an embedded Jetty server, there's no need to deploy it in an application
+server like Tomcat or WildFly.
+
+Build a container image:
 
 ```shell
-mvn clean package -P quick -P clean-exclude-wars -P enhance -P embedded-jetty -P bundle-ui -Dlogback.configuration.file=src/main/docker/logback.xml
+make build-image
 ```
 
-> When using the `bundle-ui` profile, Maven will download a [`DependencyTrack/frontend`](https://github.com/DependencyTrack/frontend) 
-> release and include it in the JAR. The frontend version is specified via the `frontend.version` property in [`pom.xml`](./pom.xml).
-
-The resulting files are placed in `./target` as `dependency-track-apiserver.jar` or `dependency-track-bundled.jar` respectively.
-Both JARs ship with an [embedded Jetty server](https://github.com/stevespringett/Alpine/tree/master/alpine-executable-war), 
-there's no need to deploy them in an application server like Tomcat or WildFly.
-
-## Running
-
-To run a previously built executable JAR, just invoke it with `java -jar`, e.g.:
-
-```shell
-java -jar ./target/dependency-track-apiserver.jar
-```
-
-The API server will be available at `http://127.0.0.1:8080`.
-
-Additional configuration (e.g. database connection details) can be provided as usual via `application.properties`
-or environment variables. Refer to the [configuration documentation](https://docs.dependencytrack.org/getting-started/configuration/).
-
-## Debugging
-
-To build and run the API server in one go, invoke the Jetty Maven plugin as follows:
-
-```shell
-mvn jetty:run -P quick -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
-```
-
-> Note that the `bundle-ui` profile has no effect using this method. 
-> It works only for the API server, not the bundled distribution.
-
-The above command is also suitable for debugging. For IntelliJ, simply *Debug* the [Jetty](./.idea/runConfigurations/Jetty.run.xml) run configuration.
-
-### Inspecting the database
-
-Unless configured otherwise, Dependency-Track will use an [H2](https://www.h2database.com/html/main.html) database in 
-`embedded` mode. The database file is located at `~/.dependency-track/db.mv.db`.
-
-You can open and inspect the database file, for example with tools like [DBeaver](https://dbeaver.io/) or 
-[IntelliJ Ultimate's integrated one](https://www.jetbrains.com/help/idea/database-tool-window.html),
-using the following connection details:
-
-* JDBC URL: `jdbc:h2:~/.dependency-track/db`
-* Username: `sa`
-* Password: none
-
-These are the values defined via `alpine.database.*` properties in the
-[`application.properties`](src/main/resources/application.properties) file.
-
-> **Warning**  
-> Make sure that your database tool uses version **2** of the H2 database driver.
-> Connections using version 1 of the driver will fail!
-
-A limitation of the H2 database in `embedded` mode is that *only a single process at a time can access it*.
-If you want to inspect the database while Dependency-Track is running, you have two options:
-
-#### Enable the embedded H2 console
-
-When building Dependency-Track locally, you can opt in to enabling an embedded 
-[H2 console](http://www.h2database.com/html/quickstart.html#h2_console). 
-
-To enable it, simply pass the additional `h2-console` Maven profile to your build command.
-This also works with the Jetty Maven plugin:
-
-```shell
-mvn jetty:run -P quick -P enhance -P h2-console -Dlogback.configurationFile=src/main/docker/logback.xml
-```
-
-Once enabled, the console will be available at http://localhost:8080/h2-console.
-
-> **Note**  
-> Supporting the H2 console via a dedicated build profile instead of a runtime configuration 
-> was an [active decision](https://github.com/DependencyTrack/dependency-track/pull/2592). Exposing
-> the console is a security risk, and should only ever be done for local testing purposes. Enabling
-> the console is not possible in official builds distributed via GitHub releases and Docker Hub.
-
-#### Use an external database
-
-Simply set up any of the [supported external databases](https://docs.dependencytrack.org/getting-started/database-support/).
-Docker makes this very easy. Here's an example for how you can do it with PostgreSQL:
-
-```shell
-# Launch a Postgres container
-docker run -d --name postgres -p "127.0.0.1:5432:5432" \
-  -e "POSTGRES_DB=dtrack" -e "POSTGRES_USER=dtrack" -e "POSTGRES_PASSWORD=dtrack" \
-  postgres:15-alpine
-
-# Configure the database connection for Dependency-Track
-export ALPINE_DATABASE_MODE=external
-export ALPINE_DATABASE_URL=jdbc:postgresql://localhost:5432/dtrack
-export ALPINE_DATABASE_DRIVER=org.postgresql.Driver
-export ALPINE_DATABASE_USERNAME=dtrack
-export ALPINE_DATABASE_PASSWORD=dtrack
-
-# Launch Dependency-Track
-mvn jetty:run -P quick -P enhance -Dlogback.configurationFile=src/main/docker/logback.xml
-```
-
-You can now use tooling native to your chosen RDBMS, for example [pgAdmin](https://www.pgadmin.org/).
-
-### Skipping NVD mirroring
-
-For local debugging and testing, it is sometimes desirable to skip the NVD mirroring process
-that is executed a minute after Dependency-Track has started.
-
-This can be achieved by tricking Dependency-Track into thinking that it already
-mirrored the NVD data, so there's no need to re-download it again.
-
-Prior to starting Dependency-Track, execute the `data-nist-generate-dummy.sh` script:
-
-```shell
-./dev/scripts/data-nist-generate-dummy.sh
-```
-
-> **Note** 
-> The `modified` feed will still be downloaded. But that feed is so small that it
-> doesn't really have an impact.
-
-When testing containerized deployments, simply mount the local directory containing the prepared
-NVD data into the container:
-
-```shell
-./dev/scripts/data-nist-generate-dummy.sh
-docker run -d --name dtrack \
-  -v "$HOME/.dependency-track:/data/.dependency-track" \
-  -p '127.0.0.1:8080:8080' dependencytrack/apiserver:snapshot
-```
-
-## Debugging with Frontend
-
-Start the API server via the Jetty Maven plugin (see [Debugging](#debugging) above). The API server will listen on 
-`http://127.0.0.1:8080`.
-
-Clone the frontend repository, install its required dependencies and launch the Vue development server:
-
-```shell
-git clone https://github.com/DependencyTrack/frontend.git dependency-track-frontend
-cd ./dependency-track-frontend
-npm ci
-npm run serve
-```
-
-Per default, the Vue development server will listen on port `8080`. If that port is taken, it will choose a higher,
-unused port (typically `8081`). Due to this behavior, it is important to always start the API server first, unless
-you want to fiddle with default configurations of both API server and frontend.
-
-Now visit `http://127.0.0.1:8081` in your browser and use Dependency-Track as usual.
+This produces the image `ghcr.io/dependencytrack/apiserver:local`.
 
 ## Testing
 
-### Running unit tests
-
-To run all tests:
+Run all tests:
 
 ```shell
-mvn clean verify -P enhance
+make test
 ```
 
-To run a single test:
+Run a single test class:
 
 ```shell
-mvn -P enhance -Dtest=ComposerMetaAnalyzerTest verify
+make test-single MODULE=apiserver TEST=FooTest
 ```
 
-Depending on your machine, this will take roughly 10-30min. Unless you modified central parts of the application,
-starting single tests separately via IDE is a better choice. 
+Run multiple test classes:
+
+```shell
+make test-single MODULE=apiserver TEST="FooTest,BarTest"
+```
+
+Run a single test method:
+
+```shell
+make test-single MODULE=apiserver TEST="FooTest#testFoo"
+```
+
+Run e2e tests:
+
+```shell
+make test-e2e
+```
+
+## Dev Mode
+
+Dev mode launches the API server with auto-provisioned containers for PostgreSQL
+and the frontend. Containers are created on startup and disposed of on shutdown.
+
+```shell
+make apiserver-dev
+```
+
+The API server will be available at `http://localhost:8080`.
+Frontend and PostgreSQL ports are logged during startup.
+
+Dev mode specific configuration can be made in [`application-dev.properties`](apiserver/src/main/resources/application-dev.properties).
 
 ### Testing manually
 
@@ -274,111 +215,56 @@ To view the dashboard, visit http://localhost:3000 in your browser. The initial 
 
 ## DataNucleus Bytecode Enhancement
 
-Occasionally when running tests without Maven from within your IDE, you will run into failures due to exceptions
-similar to this one:
+Classes annotated with `@PersistenceCapable` must be
+[enhanced](https://www.datanucleus.org/products/accessplatform/jdo/enhancer.html)
+post-compilation. Maven handles this automatically, but IDEs run their own builds
+and may skip the enhancement step.
 
-```
-org.datanucleus.exceptions.NucleusUserException: Found Meta-Data for class org.dependencytrack.model.Component but this class is either not enhanced or you have multiple copies of the persistence API jar in your CLASSPATH!! Make sure all persistable classes are enhanced before running DataNucleus and/or the CLASSPATH is correct.
-```
-
-This happens because DataNucleus requires classes annotated with `@PersistenceCapable` to be [enhanced](https://www.datanucleus.org/products/accessplatform/jdo/enhancer.html).
-Enhancement is performed on compiled bytecode and thus has to be performed post-compilation 
-(`process-classes` [lifecycle phase](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#Lifecycle_Reference) in Maven). 
-During a Maven build, the [DataNucleus Maven plugin](https://www.datanucleus.org/products/accessplatform/jdo/enhancer.html#maven)
-takes care of this (that's also why `-P enhance` is required in all Maven commands).
-
-Because most IDEs run their own build when executing tests, effectively bypassing Maven, bytecode enhancement is not
-performed, and exceptions as that shown above are raised. If this happens, you can manually kick off the bytecode
-enhancement like this:
+If you see `NucleusUserException: Found Meta-Data for class ... but this class is either not enhanced`
+when running tests from your IDE, run:
 
 ```shell
-mvn process-classes -P quick -P enhance
+make datanucleus-enhance
 ```
 
-Now just execute the test again, and it should just work. 
+Then re-run the test. Ensure your IDE is not cleaning the `target` directory before execution.
 
-> If you're still running into issues, ensure that your IDE is not cleaning the workspace 
-> (removing the `target` directory) before executing the test. 
+## Database Migrations
 
-## Building Container Images
+Schema changes are managed with [Flyway](https://www.red-gate.com/products/flyway/).
+The API server owns the schema and applies pending migrations at startup.
 
-Ensure you've built either API server or the bundled distribution, or both.
+Migrations live in [`migration/src/main/resources/org/dependencytrack/migration`](migration/src/main/resources/org/dependencytrack/migration)
+and follow Flyway's naming convention:
 
-To build the API server image:
+* `V<timestamp>__<description>.sql` for versioned migrations, applied once in timestamp order.
+  `<timestamp>` is `YYYYMMDDHHMM` (UTC).
+* `R__<name>.sql` for repeatable migrations (stored procedures, functions, views).
+  Reapplied automatically when their content changes.
+
+### Adding a Migration
+
+Scaffold a new versioned migration:
 
 ```shell
-docker build --build-arg WAR_FILENAME=dependency-track-apiserver.jar -t dependencytrack/apiserver:local -f ./src/main/docker/Dockerfile .
+make new-migration NAME="add foo column to bar"
 ```
 
-To build the bundled image:
+This creates an empty `V<timestamp>__add_foo_column_to_bar.sql` file. Add your DDL/DML to it.
+
+For repeatable migrations, edit the relevant `R__*.sql` file directly, no new file needed.
+
+> [!IMPORTANT]
+> Do not modify versioned migrations already merged to `main`.
+> Flyway rejects checksum mismatches on existing deployments.
+> Add a new migration instead.
+
+## Build Cache
+
+We use Maven [build caching](https://maven.apache.org/extensions/maven-build-cache-extension/) to speed
+up builds. If you encounter stale or unexplainable build issues, try clearing the cache and see if it
+resolves your issues:
 
 ```shell
-docker build --build-arg WAR_FILENAME=dependency-track-bundled.jar -t dependencytrack/bundled:local -f ./src/main/docker/Dockerfile .
+make clean-build-cache
 ```
-
-## Documentation
-
-The documentation is built using [Jekyll](https://jekyllrb.com/) and published to 
-[docs.dependencytrack.org](https://docs.dependencytrack.org). Sources are located in the [`docs`](./docs) directory.
-
-There is a lot going on in `docs`, but most of the time you'll want to spend your time in these directories:
-
-* [`docs/_docs`](./docs/_docs): The *actual* documentation
-* [`docs/_posts`](./docs/_posts): The changelogs
-
-To build the docs, run:
-
-```shell
-./dev/scripts/docs-build.sh
-```
-
-This installs all required dependencies (among them Jekyll) to `docs/vendor/bundle`, generates the documentation
-website and stores it in `docs/_site`.
-
-For local development, you may want to run this instead: 
-```shell
-./dev/scripts/docs-dev.sh
-```
-
-This will start a local webserver that listens on `127.0.0.1:4000` and rebuilds the site whenever you make changes.
-
-> To be able to build the docs with Jekyll, you'll need [Ruby 2](https://www.ruby-lang.org/en/),
-> [RubyGems](https://rubygems.org/pages/download) and [Bundler](https://bundler.io/) installed.
-> If you can't be bothered to install all of this, you can use the 
-> [Jekyll container image](https://hub.docker.com/r/jekyll/jekyll) instead, e.g.:
-> ```
-> docker run --rm -it --name jekyll -p "127.0.0.1:4000:4000" -v "$(pwd)/docs:/srv/jekyll:Z" jekyll/jekyll:3.8 jekyll serve
-> ```
-
-## Feature Branches
-
-When working on larger changes, it can happen that pull requests remain open for a prolonged period of time.
-As the `master` branch evolves, more and more merge conflicts occur, which the PR author needs to address.
-
-Sometimes it's desired to get user feedback on a new feature before it's being merged to `master`.
-Expecting users to clone the repository and build the project on their own however is not realistic.
-Instead, it would be beneficial to offer a container image including the new feature.
-
-When a feature is built in collaboration by multiple individuals, teams have to jump through annoying hoops
-to make it work with the GitHub workflow. Usually this requires one individual to raise a PR from their fork,
-and giving the rest of the team write permissions to their repository.
-
-To address the use cases above, contributors to the Dependency-Track project can request a *feature branch*
-from a maintainer. Feature branches follow the `feature-*` naming pattern, and are subject to branch protection rules.
-Just like for the `master` branch, changes pushed to a `feature` branch trigger a container image build.
-Images built from `feature` branches are tagged with the name of the branch, for example for a branch named `feature-foobar`:
-
-```
-docker.io/dependencytrack/apiserver:feature-foobar
-```
-
-This imagine can be shared with colleagues and community members for testing. Images built this way will be deleted
-shortly after the respective feature has been merged into the `master` branch.
-
-Instead of raising PRs into `master`, contributors would now raise PRs into `feature-foobar`. 
-
-> [!NOTE]
-> PRs into `feature` branches must still be approved by maintainers, to avoid malicious code being introduced.
-> However, this is only a surface-level review, unless explicitly requested otherwise by the contributor(s).
-
-Once the feature is considered ready, a PR can be raised from `feature-foobar` into `master`.

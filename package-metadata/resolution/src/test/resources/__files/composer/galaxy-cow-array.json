@@ -1,0 +1,20 @@
+{
+  "packages": {
+    "galaxy/cow": [
+      {
+        "name": "galaxy/cow",
+        "version": "9.9.9",
+        "version_normalized": "9.9.9.0",
+        "time": "2025-01-01T00:00:00Z",
+        "type": "library"
+      },
+      {
+        "name": "galaxy/cow",
+        "version": "9.8.8",
+        "version_normalized": "9.8.8.0",
+        "time": "2024-12-01T12:00:00Z",
+        "type": "library"
+      }
+    ]
+  }
+}

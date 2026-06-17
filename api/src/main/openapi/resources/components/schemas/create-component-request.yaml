@@ -1,0 +1,81 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+type: object
+properties:
+  project_uuid:
+    type: string
+    format: uuid
+  name:
+    type: string
+    maxLength: 255
+  description:
+    type: string
+    maxLength: 255
+  group:
+    type: string
+    maxLength: 255
+  version:
+    type: string
+    maxLength: 255
+  classifier:
+    $ref: "../../../shared/schemas/classifier.yaml"
+  filename:
+    type: string
+    maxLength: 255
+  extension:
+    type: string
+    maxLength: 255
+  hashes:
+    $ref: "../../../shared/schemas/hashes.yaml"
+  cpe:
+    type: string
+    maxLength: 255
+  publisher:
+    type: string
+    maxLength: 255
+  supplier:
+    $ref: "../../../shared/schemas/organizational-entity.yaml"
+  authors:
+    type: array
+    items:
+      $ref: "../../../shared/schemas/organizational-contact.yaml"
+  purl:
+    type: string
+    maxLength: 1024
+  swid_tag_id:
+    type: string
+    maxLength: 255
+  internal:
+    type: boolean
+  copyright:
+    type: string
+    maxLength: 255
+  license:
+    type: string
+    maxLength: 255
+  license_expression:
+    type: string
+    maxLength: 255
+  license_url:
+    type: string
+    maxLength: 255
+  notes:
+    type: string
+    maxLength: 255
+required:
+- project_uuid
+- name

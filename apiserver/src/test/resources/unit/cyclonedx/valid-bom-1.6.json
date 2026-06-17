@@ -1,0 +1,201 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2020-04-13T20:20:39+00:00",
+    "tools": [
+      {
+        "vendor": "Awesome Vendor",
+        "name": "Awesome Tool",
+        "version": "9.1.2",
+        "hashes": [
+          {
+            "alg": "SHA-1",
+            "content": "25ed8e31b995bb927966616df2a42b979a2717f0"
+          },
+          {
+            "alg": "SHA-256",
+            "content": "a74f733635a19aefb1f73e5947cef59cd7440c6952ef0f03d09d974274cbd6df"
+          }
+        ]
+      }
+    ],
+    "authors": [
+      {
+        "name": "Samantha Wright",
+        "email": "samantha.wright@example.com",
+        "phone": "800-555-1212"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "author": "Acme Super Heros",
+      "name": "Acme Application",
+      "version": "9.1.1",
+      "swid": {
+        "tagId": "swidgen-242eb18a-503e-ca37-393b-cf156ef09691_9.1.1",
+        "name": "Acme Application",
+        "version": "9.1.1",
+        "text": {
+          "contentType": "text/xml",
+          "encoding": "base64",
+          "content": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiID8+CjxTb2Z0d2FyZUlkZW50aXR5IHhtbDpsYW5nPSJFTiIgbmFtZT0iQWNtZSBBcHBsaWNhdGlvbiIgdmVyc2lvbj0iOS4xLjEiIAogdmVyc2lvblNjaGVtZT0ibXVsdGlwYXJ0bnVtZXJpYyIgCiB0YWdJZD0ic3dpZGdlbi1iNTk1MWFjOS00MmMwLWYzODItM2YxZS1iYzdhMmE0NDk3Y2JfOS4xLjEiIAogeG1sbnM9Imh0dHA6Ly9zdGFuZGFyZHMuaXNvLm9yZy9pc28vMTk3NzAvLTIvMjAxNS9zY2hlbWEueHNkIj4gCiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiAKIHhzaTpzY2hlbWFMb2NhdGlvbj0iaHR0cDovL3N0YW5kYXJkcy5pc28ub3JnL2lzby8xOTc3MC8tMi8yMDE1LWN1cnJlbnQvc2NoZW1hLnhzZCBzY2hlbWEueHNkIiA+CiAgPE1ldGEgZ2VuZXJhdG9yPSJTV0lEIFRhZyBPbmxpbmUgR2VuZXJhdG9yIHYwLjEiIC8+IAogIDxFbnRpdHkgbmFtZT0iQWNtZSwgSW5jLiIgcmVnaWQ9ImV4YW1wbGUuY29tIiByb2xlPSJ0YWdDcmVhdG9yIiAvPiAKPC9Tb2Z0d2FyZUlkZW50aXR5Pg=="
+        }
+      }
+    },
+    "manufacturer": {
+      "name": "Acme, Inc.",
+      "url": [
+        "https://example.com"
+      ],
+      "contact": [
+        {
+          "name": "Acme Professional Services",
+          "email": "professional.services@example.com"
+        }
+      ]
+    },
+    "supplier": {
+      "name": "Acme, Inc.",
+      "url": [
+        "https://example.com"
+      ],
+      "contact": [
+        {
+          "name": "Acme Distribution",
+          "email": "distribution@example.com"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:npm/acme/component@1.0.0",
+      "type": "library",
+      "author": "Joane Doe et al.",
+      "publisher": "Acme Inc",
+      "group": "com.acme",
+      "name": "tomcat-catalina",
+      "version": "9.0.14",
+      "hashes": [
+        {
+          "alg": "MD5",
+          "content": "3942447fac867ae5cdb3229b658f4d48"
+        },
+        {
+          "alg": "SHA-1",
+          "content": "e6b1000b94e835ffd37f4c6dcbdad43f4b48a02a"
+        },
+        {
+          "alg": "SHA-256",
+          "content": "f498a8ff2dd007e29c2074f5e4b01a9a01775c3ff3aeaf6906ea503bc5791b7b"
+        },
+        {
+          "alg": "SHA-512",
+          "content": "e8f33e424f3f4ed6db76a482fde1a5298970e442c531729119e37991884bdffab4f9426b7ee11fccd074eeda0634d71697d6f88a460dce0ac8d627a29f7d1282"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0",
+            "text": {
+              "contentType": "text/plain",
+              "encoding": "base64",
+              "content": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiID8+CjxTb2Z0d2FyZUlkZW50aXR5IHhtbDpsYW5nPSJFTiIgbmFtZT0iQWNtZSBBcHBsaWNhdGlvbiIgdmVyc2lvbj0iOS4xLjEiIAogdmVyc2lvblNjaGVtZT0ibXVsdGlwYXJ0bnVtZXJpYyIgCiB0YWdJZD0ic3dpZGdlbi1iNTk1MWFjOS00MmMwLWYzODItM2YxZS1iYzdhMmE0NDk3Y2JfOS4xLjEiIAogeG1sbnM9Imh0dHA6Ly9zdGFuZGFyZHMuaXNvLm9yZy9pc28vMTk3NzAvLTIvMjAxNS9zY2hlbWEueHNkIj4gCiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiAKIHhzaTpzY2hlbWFMb2NhdGlvbj0iaHR0cDovL3N0YW5kYXJkcy5pc28ub3JnL2lzby8xOTc3MC8tMi8yMDE1LWN1cnJlbnQvc2NoZW1hLnhzZCBzY2hlbWEueHNkIiA+CiAgPE1ldGEgZ2VuZXJhdG9yPSJTV0lEIFRhZyBPbmxpbmUgR2VuZXJhdG9yIHYwLjEiIC8+IAogIDxFbnRpdHkgbmFtZT0iQWNtZSwgSW5jLiIgcmVnaWQ9ImV4YW1wbGUuY29tIiByb2xlPSJ0YWdDcmVhdG9yIiAvPiAKPC9Tb2Z0d2FyZUlkZW50aXR5Pg=="
+            },
+            "url": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        }
+      ],
+      "purl": "pkg:npm/acme/component@1.0.0",
+      "pedigree": {
+        "ancestors": [
+          {
+            "type": "library",
+            "publisher": "Acme Inc",
+            "group": "com.acme",
+            "name": "tomcat-catalina",
+            "version": "9.0.14"
+          },
+          {
+            "type": "library",
+            "publisher": "Acme Inc",
+            "group": "com.acme",
+            "name": "tomcat-catalina",
+            "version": "9.0.14"
+          }
+        ],
+        "commits": [
+          {
+            "uid": "7638417db6d59f3c431d3e1f261cc637155684cd",
+            "url": "https://location/to/7638417db6d59f3c431d3e1f261cc637155684cd",
+            "author": {
+              "timestamp": "2018-11-13T20:20:39+00:00",
+              "name": "me",
+              "email": "me@acme.org"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Example, Inc.",
+        "url": [
+          "https://example.com",
+          "https://example.net"
+        ],
+        "contact": [
+          {
+            "name": "Example Support AMER Distribution",
+            "email": "support@example.com",
+            "phone": "800-555-1212"
+          },
+          {
+            "name": "Example Support APAC",
+            "email": "support@apac.example.com"
+          }
+        ]
+      },
+      "manufacturer": {
+        "name": "Example-2, Inc.",
+        "url": [
+          "https://example.org"
+        ],
+        "contact": [
+          {
+            "email": "support@example.org"
+          }
+        ]
+      },
+      "authors": [
+        {
+          "name": "Anthony Edward Stark",
+          "phone": "555-212-970-4133",
+          "email": "ironman@example.org"
+        },
+        {
+          "name": "Peter Benjamin Parker",
+          "email": "spiderman@example.org"
+        }
+      ],
+      "group": "org.example",
+      "name": "mylibrary",
+      "version": "1.0.0",
+      "scope": "required"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:npm/acme/component@1.0.0",
+      "dependsOn": [
+        "pkg:npm/acme/component@1.0.0"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [
+    {
+      "id": "SNYK-JAVA-COMFASTERXMLWOODSTOX-3091135",
+      "type": "issue",
+      "attributes": {
+        "title": "Denial of Service (DoS)",
+        "type": "package_vulnerability",
+        "created_at": "2022-10-31T11:25:51.137662Z",
+        "updated_at": "2022-11-26T01:10:27.643959Z",
+        "description": "Affected versions of this package are vulnerable to Denial of Service (DoS).",
+        "problems": [
+          {
+            "id": "CVE-2022-40152",
+            "source": "CVE"
+          },
+          {
+            "id": "CWE-400",
+            "source": "CWE"
+          },
+          {
+            "id": "GHSA-3f7h-mf4q-vrm4",
+            "source": "GHSA"
+          }
+        ],
+        "coordinates": [
+          {
+            "remedies": [
+              {
+                "type": "indeterminate",
+                "description": "Upgrade the package version to 5.0.4,6.0.4 to fix this vulnerability"
+              }
+            ],
+            "representations": [
+              {
+                "resource_path": "[,5.0.4)"
+              },
+              {
+                "package": {
+                  "name": "woodstox-core",
+                  "version": "5.0.0",
+                  "type": "maven",
+                  "url": "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0"
+                }
+              }
+            ]
+          }
+        ],
+        "severities": [
+          {
+            "source": "Snyk",
+            "level": "medium",
+            "score": 5.3,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+          },
+          {
+            "source": "NVD",
+            "level": "high",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        ],
+        "slots": {
+          "publication_time": "2022-10-31T16:11:28.305760Z",
+          "references": [
+            {
+              "url": "https://github.com/FasterXML/woodstox/issues/157",
+              "title": "GitHub Issue"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SNYK-JAVA-COMFASTERXMLWOODSTOX-2928754",
+      "type": "issue",
+      "attributes": {
+        "title": "XML External Entity (XXE) Injection",
+        "type": "package_vulnerability",
+        "created_at": "2022-06-16T13:55:07.780271Z",
+        "updated_at": "2022-06-16T14:00:24.320943Z",
+        "description": "Affected versions of this package are vulnerable to XXE Injection.",
+        "problems": [
+          {
+            "id": "CWE-611",
+            "source": "CWE"
+          }
+        ],
+        "coordinates": [
+          {
+            "remedies": [
+              {
+                "type": "indeterminate",
+                "description": "Upgrade the package version to 5.3.0 to fix this vulnerability"
+              }
+            ],
+            "representations": [
+              {
+                "resource_path": "[,5.3.0)"
+              },
+              {
+                "package": {
+                  "name": "woodstox-core",
+                  "version": "5.0.0",
+                  "type": "maven",
+                  "url": "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0"
+                }
+              }
+            ]
+          }
+        ],
+        "severities": [
+          {
+            "source": "Snyk",
+            "level": "critical",
+            "score": 9.4,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:L"
+          }
+        ],
+        "slots": {
+          "publication_time": "2022-06-16T14:00:24.315507Z",
+          "references": [
+            {
+              "url": "https://github.com/FasterXML/woodstox/commit/7937f97c638ef8afd385ebf4a675a9b096ccdd57",
+              "title": "GitHub Commit"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "links": {
+    "self": "/orgs/test-org/packages/issues?version=2025-11-05"
+  }
+}

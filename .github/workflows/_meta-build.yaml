@@ -1,10 +1,25 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
 on:
   workflow_call:
     inputs:
       app-version:
         type: string
-        required: false
-        default: "snapshot"
+        required: true
         description: "the version that should be set/used as tag for the container image"
       publish-container:
         type: boolean
@@ -25,7 +40,9 @@ permissions: { }
 
 jobs:
   build-java:
+    name: Build Java
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
@@ -36,8 +53,17 @@ jobs:
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # tag=v5.2.0
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '25'
           cache: 'maven'
+
+      - name: Restore Maven build cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # tag=v5.0.5
+        with:
+          path: ~/.m2/build-cache
+          key: maven-build-cache-build-${{ hashFiles('.mvn/maven-build-cache-config.xml') }}-${{ github.run_id }}
+          restore-keys: |
+            maven-build-cache-build-${{ hashFiles('.mvn/maven-build-cache-config.xml') }}-
+            maven-build-cache-build-
 
       - name: Setup CycloneDX CLI
         run: |
@@ -49,60 +75,90 @@ jobs:
 
       - name: Build with Maven
         run: |-
-          mvn -B package -P quick -P enhance -P embedded-jetty -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
-          mvn -B clean -P clean-exclude-wars
-          mvn -B package -P quick -P enhance -P embedded-jetty -P bundle-ui -Dservices.bom.merge.skip=false -Dlogback.configuration.file=src/main/docker/logback.xml
-          mvn -B clean -P clean-exclude-wars
-          mvn -B cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
+          mvn -B -Pquick,dist -Dservices.bom.merge.skip=false package
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # tag=v7.0.0
+      - name: Upload Distribution Archive
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
         with:
-          name: assembled-wars
+          name: assembled-dist
           path: |-
-            target/*.jar
-            target/bom.json
+            apiserver/target/dependency-track-apiserver-dist.tar.gz
+
+      - name: Upload BOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        with:
+          name: bom
+          path: |-
+            apiserver/target/bom.json
+
+      - name: Upload v4-migrator JAR
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        with:
+          name: v4-migrator-jar
+          path: |-
+            support/v4-migrator/target/v4-migrator.jar
+
+      - name: Extract OpenAPI Specs
+        run: |-
+          mkdir -p openapi-spec/v1 openapi-spec/v2
+          unzip -p api/target/api-*.jar org/dependencytrack/api/v2/openapi.yaml > openapi-spec/v2/openapi.yaml
+          unzip -p apiserver/target/dependency-track-apiserver.jar org/dependencytrack/api/v1/openapi.yaml > openapi-spec/v1/openapi.yaml
+
+      - name: Upload OpenAPI Spec
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        with:
+          name: openapi-spec
+          path: openapi-spec/
 
   build-container:
+    name: Build Container (${{ matrix.name }})
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
-      security-events: write # Required to upload trivy's SARIF output
+      packages: write # Required to push images to ghcr.io
     needs:
       - build-java
-
     strategy:
-      matrix:
-        distribution:
-          - apiserver
-          - bundled
       fail-fast: false
-
+      matrix:
+        include:
+          - name: apiserver
+            context: apiserver
+            artifact: assembled-dist
+            prepare-cmd: tar xzf apiserver/target/dependency-track-apiserver-dist.tar.gz -C apiserver/target
+          - name: v4-migrator
+            context: support/v4-migrator
+            artifact: v4-migrator-jar
+            prepare-cmd: ":" # no-op
     steps:
       - name: Checkout Repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
         with:
           persist-credentials: false
 
-      - name: Download Artifacts
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # tag=v8.0.0
+      - name: Download build artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # tag=v8.0.1
         with:
-          name: assembled-wars
-          path: target
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.context }}/target
+
+      - name: Prepare image context
+        run: ${{ matrix.prepare-cmd }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # tag=v3.7.0
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # tag=v4.0.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # tag=v4.0.0
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # tag=v4.1.0
         id: buildx
         with:
           install: true
 
-      - name: Login to Docker.io
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # tag=v4.0.0
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # tag=v4.2.0
         if: ${{ inputs.publish-container }}
         with:
-          registry: docker.io
+          registry: ghcr.io
           username: ${{ secrets.registry-0-usr }}
           password: ${{ secrets.registry-0-psw }}
 
@@ -111,48 +167,40 @@ jobs:
         env:
           REF_NAME: ${{ inputs.ref-name }}
           APP_VERSION: ${{ inputs.app-version }}
-          DISTRIBUTION: ${{ matrix.distribution }}
+          IMAGE: ${{ matrix.name }}
         run: |-
-          IMAGE_NAME="docker.io/dependencytrack/${DISTRIBUTION}"
-          TAGS=""
-          TAGS_ALPINE=""
+          shopt -s nocasematch
+          if [[ ! "$APP_VERSION" =~ ^([0-9]+-snapshot|[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?(\+[A-Za-z0-9.]+)?)$ ]]; then
+            echo "::error::app-version must be '<major>-snapshot' or a semver version, got: '${APP_VERSION}'"
+            exit 1
+          fi
+          if [[ ! "$REF_NAME" =~ ^[a-zA-Z0-9_][a-zA-Z0-9._/-]{0,127}$ ]]; then
+            echo "::error::ref-name is not a valid git ref: '${REF_NAME}'"
+            exit 1
+          fi
 
-          if [[ $REF_NAME == feature-* ]]; then
-            TAGS="${IMAGE_NAME}:${REF_NAME,,}"
-            TAGS_ALPINE="${IMAGE_NAME}:${REF_NAME,,}-alpine"
+          IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${IMAGE}"
+          TAGS=""
+
+          if [[ "$REF_NAME" == feature-* ]]; then
+            # OCI tags disallow '/', but git refs allow it (e.g. feature-foo/bar).
+            # Lowercase and substitute '/' for '-' to produce a valid tag.
+            REF_TAG="${REF_NAME,,}"
+            REF_TAG="${REF_TAG//\//-}"
+            TAGS="${IMAGE_NAME}:${REF_TAG}"
           else
             TAGS="${IMAGE_NAME}:${APP_VERSION}"
-            TAGS_ALPINE="${IMAGE_NAME}:${APP_VERSION}-alpine"
-            if [[ "${APP_VERSION}" != "snapshot" ]]; then
-              TAGS="${TAGS},${IMAGE_NAME}:latest"
-              TAGS_ALPINE="${TAGS_ALPINE},${IMAGE_NAME}:latest-alpine"
-            fi
           fi
-          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
-          echo "tags-alpine=${TAGS_ALPINE}" >> $GITHUB_OUTPUT
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
 
       - name: Build multi-arch Container Image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # tag=v6.19.2
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # tag=v7.2.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |-
             APP_VERSION=${{ inputs.app-version }}
             COMMIT_SHA=${{ github.sha }}
-            WAR_FILENAME=dependency-track-${{ matrix.distribution }}.jar
           platforms: linux/amd64,linux/arm64
           push: ${{ inputs.publish-container }}
-          context: .
-          file: src/main/docker/Dockerfile
-
-      - name: Build Alpine multi-arch Container Image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # tag=v6.19.2
-        with:
-          tags: ${{ steps.tags.outputs.tags-alpine }}
-          build-args: |-
-            APP_VERSION=${{ inputs.app-version }}
-            COMMIT_SHA=${{ github.sha }}
-            WAR_FILENAME=dependency-track-${{ matrix.distribution }}.jar
-          platforms: linux/amd64,linux/arm64
-          push: ${{ inputs.publish-container }}
-          context: .
-          file: src/main/docker/Dockerfile.alpine
+          context: ./${{ matrix.context }}
+          file: ./${{ matrix.context }}/src/main/docker/Dockerfile

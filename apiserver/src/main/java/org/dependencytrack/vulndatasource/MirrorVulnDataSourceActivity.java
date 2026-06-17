@@ -1,0 +1,266 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
+ */
+package org.dependencytrack.vulndatasource;
+
+import org.cyclonedx.proto.v1_7.Bom;
+import org.dependencytrack.common.MdcScope;
+import org.dependencytrack.dex.api.Activity;
+import org.dependencytrack.dex.api.ActivityContext;
+import org.dependencytrack.dex.api.ActivitySpec;
+import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
+import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityKey;
+import org.dependencytrack.model.VulnerableSoftware;
+import org.dependencytrack.parser.dependencytrack.BovModelConverter;
+import org.dependencytrack.persistence.QueryManager;
+import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
+import org.dependencytrack.plugin.runtime.NoSuchExtensionException;
+import org.dependencytrack.plugin.runtime.PluginManager;
+import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
+import org.dependencytrack.util.VulnerabilityUtil;
+import org.dependencytrack.vulnanalysis.VulnerabilityUpdatePolicy;
+import org.dependencytrack.vulndatasource.api.VulnDataSource;
+import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.jdo.Query;
+import java.io.Closeable;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.datanucleus.PropertyNames.PROPERTY_MANAGE_RELATIONSHIPS;
+import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
+import static org.dependencytrack.common.MdcKeys.MDC_VULN_DATA_SOURCE_NAME;
+import static org.dependencytrack.common.MdcKeys.MDC_VULN_ID;
+import static org.dependencytrack.common.MdcKeys.MDC_VULN_SOURCE;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+
+/**
+ * @since 5.0.0
+ */
+@ActivitySpec(name = "mirror-vuln-data-source")
+public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDataSourceArg, Void> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MirrorVulnDataSourceActivity.class);
+    private static final Duration HEARTBEAT_LOG_INTERVAL = Duration.ofSeconds(30);
+
+    private final PluginManager pluginManager;
+
+    public MirrorVulnDataSourceActivity(PluginManager pluginManager) {
+        this.pluginManager = pluginManager;
+    }
+
+    @Override
+    public @Nullable Void execute(
+            ActivityContext ctx,
+            @Nullable MirrorVulnDataSourceArg arg) throws Exception {
+        if (arg == null || arg.getDataSourceName().isEmpty()) {
+            throw new TerminalApplicationFailureException("No argument or data source name provided");
+        }
+
+        final var source = Vulnerability.Source.ofName(arg.getSourceName());
+        if (source == null) {
+            throw new TerminalApplicationFailureException(
+                    "Invalid source name: %s".formatted(arg.getSourceName()));
+        }
+
+        final VulnDataSourceFactory dataSourceFactory;
+        try {
+            dataSourceFactory = pluginManager.getFactory(VulnDataSource.class, arg.getDataSourceName());
+        } catch (NoSuchExtensionException e) {
+            throw new TerminalApplicationFailureException(
+                    "No extension found for data source: %s".formatted(arg.getDataSourceName()), e);
+        }
+
+        if (!dataSourceFactory.isDataSourceEnabled()) {
+            throw new TerminalApplicationFailureException(
+                    "Data source %s is not enabled".formatted(arg.getDataSourceName()));
+        }
+
+        final var updatePolicy = new VulnerabilityUpdatePolicy(pluginManager);
+
+        try (var _ = new MdcScope(Map.of(MDC_VULN_DATA_SOURCE_NAME, arg.getDataSourceName()))) {
+            LOGGER.info("Starting mirror");
+            final long startTimeNs = System.nanoTime();
+            long lastHeartbeatNs = startTimeNs;
+            int vulnsProcessed = 0;
+
+            final VulnDataSource dataSource = dataSourceFactory.create();
+
+            // NB: Give the data source the chance to persist its pending state
+            // when the activity got interrupted. That requires temporarily popping
+            // the interrupt flag from the thread before invoking close() on it.
+            try (var _ = (Closeable) () -> closeUninterruptibly(dataSource)) {
+                final var bovBatch = new ArrayList<Bom>(25);
+                while (dataSource.hasNext()) {
+                    if (Thread.interrupted()) {
+                        throw new InterruptedException("Interrupted before all vulnerabilities could be consumed");
+                    }
+                    ctx.maybeHeartbeat();
+
+                    final Bom bov = dataSource.next();
+                    bovBatch.add(bov);
+                    if (bovBatch.size() == 25) {
+                        processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
+                        vulnsProcessed += bovBatch.size();
+                        bovBatch.clear();
+                        if (System.nanoTime() - lastHeartbeatNs >= HEARTBEAT_LOG_INTERVAL.toNanos()) {
+                            LOGGER.info("Processed {} vulnerabilities so far", vulnsProcessed);
+                            lastHeartbeatNs = System.nanoTime();
+                        }
+                    }
+                }
+
+                if (!bovBatch.isEmpty()) {
+                    ctx.maybeHeartbeat();
+                    processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
+                    vulnsProcessed += bovBatch.size();
+                    bovBatch.clear();
+                }
+            }
+
+            LOGGER.info(
+                    "Completed mirror; processed {} vulnerabilities in {}",
+                    vulnsProcessed,
+                    Duration.ofNanos(System.nanoTime() - startTimeNs));
+        }
+
+        return null;
+    }
+
+    private static void processBatch(
+            VulnDataSource dataSource,
+            Collection<Bom> bovs,
+            Vulnerability.Source source,
+            String dataSourceName,
+            VulnerabilityUpdatePolicy updatePolicy) {
+        LOGGER.debug("Processing batch of {} vulnerabilities", bovs.size());
+
+        final var vulns = new ArrayList<Vulnerability>(bovs.size());
+        final var vsListByVulnId = new HashMap<String, List<VulnerableSoftware>>(bovs.size());
+        final var aliasesByVuln = new LinkedHashMap<VulnerabilityKey, Set<VulnerabilityKey>>(bovs.size());
+
+        for (final Bom bov : bovs) {
+            if (bov.getVulnerabilitiesCount() == 0) {
+                LOGGER.warn("Encountered record with no vulnerabilities; Skipping");
+                continue;
+            }
+
+            if (bov.getVulnerabilitiesCount() > 1) {
+                LOGGER.warn("Encountered record with more than one vulnerability; Skipping");
+                continue;
+            }
+
+            final Vulnerability vuln;
+            final List<VulnerableSoftware> vsList;
+            try (var _ = new MdcScope(Map.ofEntries(
+                    Map.entry(MDC_VULN_ID, bov.getVulnerabilities(0).getId()),
+                    Map.entry(MDC_VULN_SOURCE, bov.getVulnerabilities(0).getSource().getName())))) {
+                vuln = BovModelConverter.convert(bov, bov.getVulnerabilities(0), true);
+                vsList = BovModelConverter.extractVulnerableSoftware(bov);
+            }
+
+            vulns.add(vuln);
+            vsListByVulnId.put(vuln.getVulnId(), vsList);
+
+            final var vulnKey = new VulnerabilityKey(vuln.getVulnId(), vuln.getSource());
+            final Set<VulnerabilityKey> aliasKeys = VulnerabilityUtil.extractAliasKeys(vuln.getAliases(), vulnKey);
+            aliasesByVuln.put(vulnKey, aliasKeys);
+        }
+
+        try (final var qm = new QueryManager()) {
+            // Disable managed relationships to avoid excessive N+1 queries during VulnerableSoftware synchronization.
+            //
+            //   "For an M-N bidirectional relation, at persist you MUST set one side and the other side will
+            //   be populated at commit/flush to make them consistent."
+            //   https://www.datanucleus.org/products/accessplatform_6_0/jdo/persistence.html#managed_relationships
+            //
+            // The "consistent" is referring to in-memory state, NOT database records.
+            // We don't need a fully consistent object graph here, in fact it's actively detrimental.
+            qm.getPersistenceManager().setProperty(PROPERTY_MANAGE_RELATIONSHIPS, "false");
+            qm.getPersistenceManager().setProperty(PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT, "false");
+
+            qm.runInTransaction(() -> {
+                for (final Vulnerability vuln : vulns) {
+                    final Vulnerability existingVuln = getExistingVuln(qm, vuln.getSource(), vuln.getVulnId());
+                    if (!updatePolicy.isUpdatableByDataSource(
+                            vuln.getSource(), dataSourceName, existingVuln != null)) {
+                        LOGGER.debug(
+                                "Skipping vulnerability {} from source {}: authoritative source is enabled",
+                                vuln.getVulnId(), vuln.getSource());
+                        continue;
+                    }
+
+                    LOGGER.debug("Synchronizing vulnerability {}", vuln.getVulnId());
+                    final Vulnerability persistentVuln = existingVuln == null
+                            ? qm.createVulnerability(vuln)
+                            : qm.updateVulnerability(existingVuln, vuln);
+
+                    final List<VulnerableSoftware> vsList = vsListByVulnId.get(persistentVuln.getVulnId());
+                    qm.synchronizeVulnerableSoftware(persistentVuln, vsList, source);
+                }
+            });
+
+            if (!aliasesByVuln.isEmpty()) {
+                useJdbiTransaction(handle -> new VulnerabilityAliasDao(handle)
+                        .syncAssertions("vuln-data-source:" + dataSourceName, aliasesByVuln));
+            }
+        }
+
+        for (final Bom bov : bovs) {
+            dataSource.markProcessed(bov);
+        }
+    }
+
+    private static @Nullable Vulnerability getExistingVuln(
+            QueryManager qm,
+            String source,
+            String vulnId) {
+        final Query<Vulnerability> query = qm.getPersistenceManager().newQuery(
+                Vulnerability.class, "source == :source && vulnId == :vulnId");
+        query.getFetchPlan().addGroup(Vulnerability.FetchGroup.VULNERABLE_SOFTWARE.name());
+        query.setParameters(source, vulnId);
+        query.setRange(0, 1);
+        try {
+            return query.executeUnique();
+        } finally {
+            query.closeAll();
+        }
+    }
+
+    private static void closeUninterruptibly(VulnDataSource dataSource) {
+        final boolean interrupted = Thread.interrupted();
+        try {
+            dataSource.close();
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+}

@@ -1,0 +1,4 @@
+org.dependencytrack.dex.DexEngineDatabaseMigrationInitTask
+org.dependencytrack.persistence.DatabaseMigrationInitTask
+org.dependencytrack.persistence.DatabasePartitionMaintenanceInitTask
+org.dependencytrack.persistence.DatabaseSeedingInitTask

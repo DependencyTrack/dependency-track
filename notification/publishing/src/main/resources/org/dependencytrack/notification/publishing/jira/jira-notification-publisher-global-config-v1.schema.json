@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/jira-notification-publisher-global-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the publisher should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "apiUrl": {
+      "type": "string",
+      "format": "uri",
+      "title": "API URL",
+      "description": "URL of the Jira REST API",
+      "minLength": 1,
+      "examples": [
+        "https://jira.example.com"
+      ]
+    },
+    "username": {
+      "type": "string",
+      "title": "Username",
+      "description": "Username to authenticate with. Leave empty to authenticate via access token.",
+      "minLength": 1
+    },
+    "passwordOrToken": {
+      "type": "string",
+      "title": "Password or Token",
+      "description": "Password or access token to authenticate with.",
+      "minLength": 1,
+      "x-secret-ref": true
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

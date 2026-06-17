@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/snyk-vuln-analyzer-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the Snyk vulnerability analyzer should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "aliasSyncEnabled": {
+      "type": "boolean",
+      "title": "Alias Synchronization Enabled",
+      "description": "Whether to include alias information in vulnerability data.",
+      "existingJavaType": "boolean"
+    },
+    "apiBaseUrl": {
+      "type": "string",
+      "title": "API Base URL",
+      "description": "Base URL of Snyk's REST API.",
+      "format": "uri",
+      "minLength": 1
+    },
+    "orgId": {
+      "type": "string",
+      "title": "Organization ID",
+      "description": "Organization ID to authenticate with the Snyk REST API.",
+      "minLength": 1
+    },
+    "apiToken": {
+      "type": "string",
+      "title": "API Token",
+      "description": "API token to authenticate with the Snyk REST API.",
+      "minLength": 1,
+      "x-secret-ref": true
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

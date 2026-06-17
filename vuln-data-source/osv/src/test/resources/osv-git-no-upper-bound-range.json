@@ -1,0 +1,46 @@
+{
+  "id": "GO-2022-0470",
+  "affected": [
+    {
+      "package": {
+        "name": "github.com/blevesearch/bleve",
+        "ecosystem": "Go",
+        "purl": "pkg:golang/github.com/blevesearch/bleve"
+      },
+      "ranges": [
+        {
+          "type": "SEMVER",
+          "events": [
+            {
+              "introduced": "0"
+            }
+          ]
+        }
+      ],
+      "ecosystem_specific": {
+        "imports": [
+          {
+            "path": "github.com/blevesearch/bleve/http",
+            "symbols": [
+              "AliasHandler.ServeHTTP",
+              "CreateIndexHandler.ServeHTTP",
+              "DebugDocumentHandler.ServeHTTP",
+              "DeleteIndexHandler.ServeHTTP",
+              "DocCountHandler.ServeHTTP",
+              "DocDeleteHandler.ServeHTTP",
+              "DocGetHandler.ServeHTTP",
+              "DocIndexHandler.ServeHTTP",
+              "GetIndexHandler.ServeHTTP",
+              "ListFieldsHandler.ServeHTTP",
+              "SearchHandler.ServeHTTP"
+            ]
+          }
+        ]
+      },
+      "database_specific": {
+        "source": "https://vuln.go.dev/ID/GO-2022-0470.json"
+      }
+    }
+  ],
+  "schema_version": "1.4.0"
+}

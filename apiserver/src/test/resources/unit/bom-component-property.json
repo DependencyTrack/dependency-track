@@ -1,0 +1,18 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.4.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "version": 1,
+  "components": [
+    {
+      "type": "library",
+      "name": "acme-lib",
+      "properties": [
+        {
+          "name": "foo",
+          "value": "baz"
+        }
+      ]
+    }
+  ]
+}

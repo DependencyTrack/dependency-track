@@ -1,0 +1,85 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [
+    {
+      "id": "SNYK-JAVA-COMFASTERXMLJACKSONCORE-3038426",
+      "type": "issue",
+      "attributes": {
+        "title": "Denial of Service (DoS)",
+        "type": "package_vulnerability",
+        "created_at": "2022-10-02T09:41:44.046865Z",
+        "updated_at": "2022-11-28T01:11:01.289734Z",
+        "description": "Affected versions of this package are vulnerable to Denial of Service (DoS).",
+        "problems": [
+          {
+            "id": "CVE-2022-42003",
+            "source": "CVE"
+          },
+          {
+            "id": "CWE-400",
+            "source": "CWE"
+          },
+          {
+            "id": "GHSA-jjjh-jjxp-wpff",
+            "source": "GHSA"
+          }
+        ],
+        "coordinates": [
+          {
+            "remedies": [
+              {
+                "type": "indeterminate",
+                "description": "Upgrade the package version to 2.12.7.1,2.13.4.2 to fix this vulnerability"
+              }
+            ],
+            "representations": [
+              {
+                "resource_path": "[,2.12.7.1),[2.13.0,2.13.4.2)"
+              },
+              {
+                "package": {
+                  "name": "jackson-databind",
+                  "version": "2.13.4",
+                  "type": "maven",
+                  "url": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4"
+                }
+              }
+            ]
+          }
+        ],
+        "severities": [
+          {
+            "source": "Snyk",
+            "level": "medium",
+            "score": 5.9,
+            "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H/E:P"
+          },
+          {
+            "source": "NVD",
+            "level": "high",
+            "score": 7.5,
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        ],
+        "slots": {
+          "publication_time": "2022-10-02T09:54:05Z",
+          "references": [
+            {
+              "url": "https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=51020",
+              "title": "Chromium Bugs"
+            },
+            {
+              "url": "https://github.com/FasterXML/jackson-databind/issues/3590",
+              "title": "GitHub Issue"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "links": {
+    "self": "/orgs/test-org/packages/issues?version=2025-11-05"
+  }
+}

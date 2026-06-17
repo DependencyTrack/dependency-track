@@ -1,0 +1,106 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+get:
+  operationId: listVulnPolicies
+  summary: List vulnerability policies
+  description: |-
+    Returns a paginated list of vulnerability policies, sorted by priority
+    (ascending) and name (ascending).
+
+    Reports `EXACT` total counts for up to 500 items, and `AT_LEAST` past that.
+
+    Requires permission `POLICY_MANAGEMENT` or `POLICY_MANAGEMENT_READ`.
+  tags:
+    - Vuln Policies
+  parameters:
+    - $ref: "../../shared/parameters/pagination-limit.yaml"
+    - $ref: "../../shared/parameters/page-token.yaml"
+    - name: name
+      in: query
+      description: Filter by name (partial match, case-insensitive)
+      schema:
+        type: string
+  responses:
+    "200":
+      description: Paginated list of vulnerability policies
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/list-vuln-policies-response.yaml"
+    "400":
+      $ref: "../../shared/responses/invalid-request-error.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"
+
+post:
+  operationId: createVulnPolicy
+  summary: Create a vulnerability policy
+  description: |-
+    Creates a user-managed vulnerability policy.
+
+    CEL conditions are compiled server-side. On compilation failure,
+    a 400 response with structured error details is returned.
+
+    Requires permission `POLICY_MANAGEMENT` or `POLICY_MANAGEMENT_CREATE`.
+  tags:
+    - Vuln Policies
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "./schemas/create-vuln-policy-request.yaml"
+  responses:
+    "201":
+      description: Policy created
+      headers:
+        Location:
+          description: URL of the created policy
+          schema:
+            type: string
+            format: uri
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              uuid:
+                type: string
+                format: uuid
+            required:
+              - uuid
+    "400":
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            anyOf:
+              - $ref: "./schemas/invalid-vuln-policy-condition-problem-details.yaml"
+              - $ref: "../../shared/schemas/invalid-request-problem-details.yaml"
+              - $ref: "../../shared/schemas/problem-details.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    "409":
+      $ref: "../../shared/responses/generic-conflict-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"

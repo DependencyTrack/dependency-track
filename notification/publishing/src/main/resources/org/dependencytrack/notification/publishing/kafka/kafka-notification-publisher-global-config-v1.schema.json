@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/kafka-notification-publisher-global-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the publisher should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "bootstrapServers": {
+      "type": "array",
+      "title": "Kafka Bootstrap Servers",
+      "description": "Addresses of servers that may be used to establish the initial connection to the Kafka cluster.",
+      "items": {
+        "type": "string",
+        "title": "Kafka Server Address",
+        "description": "Address of a Kafka server in `host:port` format.",
+        "minLength": 1,
+        "examples": [
+          "kafka.example.com:9092"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "tls": {
+      "type": "object",
+      "title": "TLS Configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Enabled",
+          "description": "Whether to use transport encryption via TLS.",
+          "existingJavaType": "boolean"
+        },
+        "caCert": {
+          "type": "string",
+          "title": "CA Certificate",
+          "description": "CA certificate chain in PEM format.",
+          "x-ui-hint": {
+            "inputType": "textarea"
+          }
+        }
+      }
+    },
+    "mTls": {
+      "type": "object",
+      "title": "mTLS Configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Enabled",
+          "description": "Whether to use mutual TLS for authentication.  \nRequires TLS to be configured.",
+          "existingJavaType": "boolean"
+        },
+        "clientCert": {
+          "type": "string",
+          "title": "Client Certificate",
+          "description": "Client certificate chain in PEM format.",
+          "x-ui-hint": {
+            "inputType": "textarea"
+          }
+        },
+        "clientKey": {
+          "type": "string",
+          "title": "Client Key",
+          "description": "Client certificate key in PEM-encoded [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format.  \nMust **not** be password-protected.",
+          "x-secret-ref": true
+        }
+      }
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

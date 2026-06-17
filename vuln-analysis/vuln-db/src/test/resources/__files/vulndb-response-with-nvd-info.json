@@ -1,0 +1,51 @@
+{
+  "current_page": 1,
+  "total_entries": 1,
+  "results": [
+    {
+      "vulndb_id": 789012,
+      "title": "SQL Injection in Database Module",
+      "disclosure_date": "2023-06-01T00:00:00.000Z",
+      "description": "SQL injection allows remote attackers to execute arbitrary SQL commands.",
+      "solution": null,
+      "vulndb_last_modified": "2023-06-15T00:00:00.000Z",
+      "manual_notes": "Vendor confirmed the issue.",
+      "t_description": null,
+      "authors": [],
+      "ext_references": [
+        {
+          "type": "Advisory",
+          "value": "https://example.com/advisory/789"
+        },
+        {
+          "type": "Other",
+          "value": "https://example.com/blog/sql-injection"
+        }
+      ],
+      "cvss_metrics": [],
+      "cvss_version_three_metrics": [
+        {
+          "attack_vector": "Network",
+          "attack_complexity": "Low",
+          "privileges_required": "Low",
+          "user_interaction": "None",
+          "scope": "Changed",
+          "confidentiality_impact": "High",
+          "integrity_impact": "High",
+          "availability_impact": "High",
+          "calculated_cvss_base_score": 9.9,
+          "cve_id": "CVE-2023-67890",
+          "source": "NVD",
+          "generated_on": "2023-06-10"
+        }
+      ],
+      "nvd_additional_information": [
+        {
+          "summary": "SQL injection vulnerability",
+          "cwe_id": "CWE-89",
+          "cve_id": "CVE-2023-67890"
+        }
+      ]
+    }
+  ]
+}

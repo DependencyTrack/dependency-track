@@ -1,18 +1,34 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
 name: Tests CI
 
 on:
   push:
     branches:
-      - 'master'          # Default branch
-      - 'feature-**'      # Feature branches
+      - 'main'            # Main branch
+      - 'feature-**'      # Feature branch
       - '[0-9]+.[0-9]+.x' # Release branches
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
   pull_request:
     branches:
-      - 'master'          # Default branch
-      - 'feature-**'      # Feature branches
+      - 'main'            # Main branch
+      - 'feature-**'      # Feature branch
       - '[0-9]+.[0-9]+.x' # Release branches
     paths-ignore:
       - '**/*.md'
@@ -30,24 +46,45 @@ permissions: { }
 
 jobs:
   test:
+    name: Test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
         with:
+          # For PRs, ensure that the actual HEAD commit is checked out,
+          # rather than an artificial merge commit. We need the actual
+          # commit in order for coverage reports to be matched properly.
+          # https://github.com/actions/checkout/issues/426
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+          # Do not store the GitHub token in .git/config.
+          # Required because we upload the workspace as workflow artifact.
           persist-credentials: false
 
       - name: Set up JDK
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # tag=v5.2.0
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '25'
           cache: 'maven'
 
       - name: Execute unit tests
-        run: |-
-          mvn -B --no-transfer-progress clean
-          mvn -B --no-transfer-progress test -P enhance
+        env:
+          TESTCONTAINERS_REUSE_ENABLE: "true"
+        run: make test
+
+      - name: Generate test report
+        if: ${{ always() }}
+        run: mvn -B surefire-report:report-only -Daggregate=true -DlinkXRef=false
+
+      - name: Upload test report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        with:
+          name: test-report
+          path: target/reports/
+          if-no-files-found: warn
 
       # Publishing coverage to Codacy is only possible for builds of push events.
       # PRs from forks do not get access to repository secrets.
@@ -58,20 +95,19 @@ jobs:
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           language: Java
-          coverage-reports: target/jacoco-ut/jacoco.xml
+          coverage-reports: coverage-report/target/site/jacoco-aggregate/jacoco.xml
 
-      - name: Save PR details
+      - name: Upload PR workspace
         if: ${{ github.event_name == 'pull_request' }}
-        run: |-
-          echo ${{ github.sha }} > pr-commit.txt
-          echo ${{ github.event.number }} > pr-number.txt
-
-      - name: Upload PR test coverage report
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # tag=v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
         with:
-          name: pr-test-coverage-report
+          name: pr-workspace
+          include-hidden-files: true
           path: |-
-            pr-commit.txt
-            pr-number.txt
-            target/jacoco-ut/jacoco.xml
+            ./**/*
+            !./**/target/classes/**/*
+            !./**/*.jar
+            !./**/*.war
+            !./**/bom.json
+            !./apiserver/target/dependency-track-apiserver/**/*
+            !./apiserver/target/war/**/*

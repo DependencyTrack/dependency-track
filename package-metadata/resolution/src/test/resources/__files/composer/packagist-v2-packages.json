@@ -1,0 +1,10 @@
+{
+  "packages": [],
+  "metadata-url": "/p2/%package%.json",
+  "providers-url": "/p/%package%$%hash%.json",
+  "provider-includes": {
+    "p/provider-2024$%hash%.json": {
+      "sha256": "abc123"
+    }
+  }
+}

@@ -1,0 +1,128 @@
+openAPI:
+  info:
+    version: "1.0.0"
+    title: OWASP Dependency-Track
+    description: |-
+      REST API of OWASP Dependency-Track
+
+      > **Note:** This API version is in maintenance mode and will be
+      > superseded by v2, available under `/api/v2`, which follows a
+      > spec-first approach. New operations will be added there.
+      >
+      > This specification is generated and may not always accurately
+      > reflect the actual response content of every operation. When
+      > in doubt, treat observed runtime behavior as authoritative.
+
+      ## Authentication
+
+      Two credential types are accepted:
+
+      - **API key** via the `X-Api-Key` request header. API keys are
+        long-lived and intended for machine-to-machine integrations.
+      - **Bearer token** via the `Authorization: Bearer <token>` request
+        header. Bearer tokens are short-lived, user-bound, and opaque
+        server-issued session tokens.
+
+      Bearer tokens are obtained from one of the following endpoints:
+
+      - `POST /api/v1/user/login`
+      - `POST /api/v1/user/oidc/login`
+
+      Tokens are valid for 8 hours by default and **cannot be refreshed**.
+      Clients must re-authenticate once a token expires.
+
+      Requests with missing or invalid credentials are rejected with
+      `401 Unauthorized`.
+
+      ## Authorization
+
+      Access is gated by named permissions. Operations document
+      the permission(s) they require; operations without a documented
+      permission requirement only require authentication.
+
+      When the *Portfolio Access Control* feature is enabled
+      (disabled by default), project-scoped operations additionally enforce
+      per-project access via team membership. The `PORTFOLIO_ACCESS_CONTROL_BYPASS`
+      permission grants access to all projects regardless of team mappings.
+      When the feature is disabled, all authenticated callers holding the required
+      permission can access all projects.
+
+      Authenticated requests that lack the required permission, or that
+      target a project the caller cannot access, are rejected with
+      `403 Forbidden`.
+
+      ## Pagination
+
+      Collection endpoints support page-based pagination via the
+      following query parameters:
+
+      | Parameter    | Description                              | Default |
+      |--------------|------------------------------------------|---------|
+      | `pageNumber` | The page to retrieve (1-based).          | `1`     |
+      | `pageSize`   | The maximum number of items per page.    | `100`   |
+
+      The total number of items in the collection across all pages is
+      returned in the `X-Total-Count` response header.
+
+      ## HTTP Methods
+
+      | Method   | Semantics                                |
+      |----------|------------------------------------------|
+      | `GET`    | Retrieve a resource.                     |
+      | `PUT`    | **Create** a new resource.               |
+      | `POST`   | **Update** an existing resource.         |
+      | `DELETE` | Delete a resource.                       |
+
+      Note that the use of `PUT` for create and `POST` for update is
+      the inverse of the convention followed by most other REST APIs,
+      including API v2.
+
+      ## Response Conventions
+
+      Create (`PUT`) and update (`POST`) operations typically return
+      the full resource representation in the response body, with
+      status `201 Created` and `200 OK` respectively.
+
+      Delete (`DELETE`) operations typically return `204 No Content`.
+
+      ## Deprecations
+
+      Operations may be removed or replaced over time. When a response
+      carries the `X-API-Deprecated: true` header, the operation that
+      produced it is deprecated and may be removed in a future release.
+      Clients should check for this header on every response and surface
+      it (e.g. via a log warning) so that operators are aware of
+      upcoming breakages. The respective operation's description points
+      out which alternative operation(s) to use.
+    contact:
+      name: The Dependency-Track Authors
+      url: https://github.com/DependencyTrack/dependency-track
+    license:
+      name: Apache-2.0
+      url: https://www.apache.org/licenses/LICENSE-2.0.html
+    externalDocs:
+      description: Project Documentation
+      url: https://docs.dependencytrack.org/
+  servers:
+  - url: /api
+  components:
+    securitySchemes:
+      ApiKeyAuth:
+        description: Authentication via API key.
+        name: X-Api-Key
+        type: apiKey
+        in: header
+      BearerAuth:
+        description: |-
+          Authentication via opaque server-issued session token.
+          Tokens are obtained from `POST /api/v1/user/login` or
+          `POST /api/v1/user/oidc/login`.
+        type: http
+        scheme: bearer
+        bearerFormat: Opaque
+prettyPrint: true
+resourcePackages:
+- alpine.server.resources
+- org.dependencytrack.resources.v1
+modelConverterClasses:
+- org.dependencytrack.support.swagger.EpochMillisModelConverter

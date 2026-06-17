@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/email-notification-publisher-rule-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "subjectPrefix": {
+      "type": "string",
+      "title": "Subject Prefix",
+      "description": "Optional prefix for the email subject."
+    },
+    "recipientAddresses": {
+      "type": "array",
+      "title": "Recipient Addresses",
+      "description": "Email addresses that should receive notifications.",
+      "items": {
+        "type": "string",
+        "title": "Recipient Address",
+        "format": "email",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  }
+}

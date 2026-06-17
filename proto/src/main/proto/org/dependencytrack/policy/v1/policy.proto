@@ -1,0 +1,202 @@
+syntax = "proto3";
+
+package org.dependencytrack.policy.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_package = "org.dependencytrack.proto.policy.v1";
+
+message Component {
+  // UUID of the component.
+  string uuid = 1;
+
+  // Group / namespace of the component.
+  optional string group = 2;
+
+  // Name of the component.
+  string name = 3;
+
+  // Version of the component.
+  string version = 4;
+
+  // Classifier / type of the component.
+  // May be any of:
+  // - APPLICATION
+  // - CONTAINER
+  // - DEVICE
+  // - FILE
+  // - FIRMWARE
+  // - FRAMEWORK
+  // - LIBRARY
+  // - OPERATING_SYSTEM
+  optional string classifier = 5;
+
+  // CPE of the component.
+  // https://csrc.nist.gov/projects/security-content-automation-protocol/specifications/cpe
+  optional string cpe = 6;
+
+  // Package URL of the component.
+  // https://github.com/package-url/purl-spec
+  optional string purl = 7;
+
+  // SWID tag ID of the component.
+  // https://csrc.nist.gov/projects/Software-Identification-SWID
+  optional string swid_tag_id = 8;
+
+  // Whether the component is internal to the organization.
+  optional bool is_internal = 9;
+
+  // Properties of the component.
+  repeated Property properties = 10;
+
+  optional string md5 = 20;
+  optional string sha1 = 21;
+  optional string sha256 = 22;
+  optional string sha384 = 23;
+  optional string sha512 = 24;
+  optional string sha3_256 = 25;
+  optional string sha3_384 = 26;
+  optional string sha3_512 = 27;
+  optional string blake2b_256 = 28;
+  optional string blake2b_384 = 29;
+  optional string blake2b_512 = 30;
+  optional string blake3 = 31;
+
+  optional string license_name = 50;
+  optional string license_expression = 51;
+  optional License resolved_license = 52;
+
+  // When the current version was published.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional google.protobuf.Timestamp published_at = 53;
+
+  // Latest available version.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional string latest_version = 54;
+
+  // MD5 hash of the corresponding package artifact as reported by its upstream repository.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional string package_artifact_md5 = 55;
+
+  // SHA-1 hash of the corresponding package artifact as reported by its upstream repository.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional string package_artifact_sha1 = 56;
+
+  // SHA-256 hash of the corresponding package artifact as reported by its upstream repository.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional string package_artifact_sha256 = 57;
+
+  // SHA-512 hash of the corresponding package artifact as reported by its upstream repository.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional string package_artifact_sha512 = 58;
+
+  // When the latest version was published.
+  // NOTE: The platform resolves this information asynchronously, so it is not guaranteed to be
+  // available immediately. Policies should explicitly check presence using the has() macro.
+  optional google.protobuf.Timestamp latest_version_published_at = 59;
+
+  message Property {
+    string group = 1;
+    string name = 2;
+    optional string value = 3;
+    string type = 4;
+  }
+}
+
+message License {
+  string uuid = 1;
+  string id = 2;
+  string name = 3;
+  repeated Group groups = 4;
+  bool is_osi_approved = 5;
+  bool is_fsf_libre = 6;
+  bool is_deprecated_id = 7;
+  bool is_custom = 8;
+
+  message Group {
+    string uuid = 1;
+    string name = 2;
+  }
+}
+
+message Project {
+  string uuid = 1;
+  optional string group = 2;
+  string name = 3;
+  optional string version = 4;
+  optional string classifier = 5;
+  bool is_active = 6;
+  repeated string tags = 7;
+  repeated Property properties = 8;
+  optional string cpe = 9;
+  optional string purl = 10;
+  optional string swid_tag_id = 11;
+  optional google.protobuf.Timestamp last_bom_import = 12;
+  optional Metadata metadata = 13;
+
+  message Metadata {
+    optional Tools tools = 1;
+    optional google.protobuf.Timestamp bom_generated = 2;
+  }
+
+  message Property {
+    string group = 1;
+    string name = 2;
+    optional string value = 3;
+    string type = 4;
+  }
+}
+
+message Tools {
+  // Components used as tools.
+  repeated Component components = 1;
+
+  // TODO: Add services.
+}
+
+message Vulnerability {
+  string uuid = 1;
+  string id = 2;
+  string source = 3;
+  repeated Alias aliases = 4;
+  repeated int32 cwes = 5;
+  optional google.protobuf.Timestamp created = 6;
+  optional google.protobuf.Timestamp published = 7;
+  optional google.protobuf.Timestamp updated = 8;
+  string severity = 20;
+  optional double cvssv2_base_score = 21;
+  optional double cvssv2_impact_subscore = 22;
+  optional double cvssv2_exploitability_subscore = 23;
+  optional string cvssv2_vector = 24;
+  optional double cvssv3_base_score = 25;
+  optional double cvssv3_impact_subscore = 26;
+  optional double cvssv3_exploitability_subscore = 27;
+  optional string cvssv3_vector = 28;
+  optional double owasp_rr_likelihood_score = 29;
+  optional double owasp_rr_technical_impact_score = 30;
+  optional double owasp_rr_business_impact_score = 31;
+  optional string owasp_rr_vector = 32;
+  optional double epss_score = 33;
+  optional double epss_percentile = 34;
+  optional string cvssv4_vector = 35;
+  optional double cvssv4_score = 36;
+
+  message Alias {
+    string id = 1;
+    string source = 2;
+  }
+}
+
+message VersionDistance {
+  optional string epoch = 1;
+  optional string major = 2;
+  optional string minor = 3;
+  optional string patch = 4;
+}

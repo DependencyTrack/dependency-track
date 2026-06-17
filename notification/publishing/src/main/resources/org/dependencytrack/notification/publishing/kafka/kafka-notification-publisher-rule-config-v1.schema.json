@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/kafka-notification-publisher-rule-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "topicName": {
+      "type": "string",
+      "title": "Kafka Topic Name",
+      "description": "Name of the Kafka topic to publish to.",
+      "minLength": 1
+    },
+    "publishProtobuf": {
+      "type": "boolean",
+      "title": "Publish Protobuf",
+      "description": "Whether to publish notifications in Protobuf format instead of applying a template."
+    }
+  },
+  "required": [
+    "topicName"
+  ]
+}

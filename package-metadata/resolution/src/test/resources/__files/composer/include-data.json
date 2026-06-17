@@ -1,0 +1,43 @@
+{
+  "packages": {
+    "space/cowboy": {
+      "1.0.1": {
+        "name": "space/cowboy",
+        "version": "1.0.1",
+        "version_normalized": "1.0.1.0",
+        "time": "2016-03-09T09:06:41+00:00",
+        "type": "magento2-module"
+      },
+      "2.3.7": {
+        "name": "space/cowboy",
+        "version": "2.3.7",
+        "version_normalized": "2.3.7.0",
+        "time": "2024-12-10T12:14:27+00:00",
+        "type": "magento2-module"
+      },
+      "2.3.8": {
+        "name": "space/cowboy",
+        "version": "2.3.8",
+        "version_normalized": "2.3.8.0",
+        "time": "2024-12-20T06:16:51+00:00",
+        "type": "magento2-module"
+      }
+    },
+    "space/toy": {
+      "1.1.0": {
+        "name": "space/toy",
+        "version": "1.1.0",
+        "version_normalized": "1.1.0.0",
+        "time": "2018-04-05T09:56:42+00:00",
+        "type": "magento2-module"
+      },
+      "1.1.1": {
+        "name": "space/toy",
+        "version": "1.1.1",
+        "version_normalized": "1.1.1.0",
+        "time": "2020-05-15T10:50:32+00:00",
+        "type": "magento2-module"
+      }
+    }
+  }
+}

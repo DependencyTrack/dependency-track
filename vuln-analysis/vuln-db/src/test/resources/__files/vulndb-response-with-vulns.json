@@ -1,0 +1,65 @@
+{
+  "current_page": 1,
+  "total_entries": 1,
+  "results": [
+    {
+      "vulndb_id": 123456,
+      "title": "Test Vulnerability in Example Library",
+      "disclosure_date": "2023-01-15T00:00:00.000Z",
+      "description": "A vulnerability was found in Example Library.",
+      "solution": "Upgrade to version 2.0 or later.",
+      "vulndb_last_modified": "2023-02-01T00:00:00.000Z",
+      "manual_notes": null,
+      "t_description": "Buffer overflow in parsing module.",
+      "authors": [
+        {
+          "name": "John Doe",
+          "company": "Security Corp"
+        }
+      ],
+      "ext_references": [
+        {
+          "type": "Advisory",
+          "value": "https://example.com/advisory/123"
+        }
+      ],
+      "cvss_metrics": [
+        {
+          "access_vector": "Network",
+          "access_complexity": "Low",
+          "authentication": "None",
+          "confidentiality_impact": "Partial",
+          "integrity_impact": "None",
+          "availability_impact": "None",
+          "calculated_cvss_base_score": 5.0,
+          "cve_id": "CVE-2023-12345",
+          "source": "NVD",
+          "generated_on": "2023-01-20"
+        }
+      ],
+      "cvss_version_three_metrics": [
+        {
+          "attack_vector": "Network",
+          "attack_complexity": "Low",
+          "privileges_required": "None",
+          "user_interaction": "None",
+          "scope": "Unchanged",
+          "confidentiality_impact": "High",
+          "integrity_impact": "None",
+          "availability_impact": "None",
+          "calculated_cvss_base_score": 7.5,
+          "cve_id": "CVE-2023-12345",
+          "source": "NVD",
+          "generated_on": "2023-01-20"
+        }
+      ],
+      "nvd_additional_information": [
+        {
+          "summary": "Buffer overflow vulnerability",
+          "cwe_id": "CWE-120",
+          "cve_id": "CVE-2023-12345"
+        }
+      ]
+    }
+  ]
+}

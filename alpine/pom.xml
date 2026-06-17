@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ This file is part of Alpine.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  ~ SPDX-License-Identifier: Apache-2.0
+  ~ Copyright (c) Steve Springett. All Rights Reserved.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.dependencytrack</groupId>
+        <artifactId>dependency-track-parent</artifactId>
+        <version>5.0.1</version>
+    </parent>
+
+    <artifactId>alpine-parent</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>alpine-common</module>
+        <module>alpine-model</module>
+        <module>alpine-infra</module>
+        <module>alpine-server</module>
+    </modules>
+
+    <name>Alpine :: Parent</name>
+    <description>
+        An opinionated scaffolding library that jumpstarts Java projects with an API-first design,
+        secure defaults, and minimal dependencies.
+    </description>
+    <url>https://github.com/stevespringett/Alpine</url>
+    <inceptionYear>2016</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Steve Springett</name>
+            <organizationUrl>http://stevespringett.com/</organizationUrl>
+            <roles>
+                <role>Architect</role>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <properties>
+        <!-- Maven Build Properties -->
+        <timestamp>${maven.build.timestamp}</timestamp>
+        <checkstyle.skip>true</checkstyle.skip>
+
+        <!-- Maven Plugin Versions -->
+        <maven.dependency.plugin.version>3.8.1</maven.dependency.plugin.version>
+        <maven.shade.plugin.version>3.6.1</maven.shade.plugin.version>
+        <maven.uuidgenerator.plugin.version>1.0.1</maven.uuidgenerator.plugin.version>
+
+        <!-- Dependency Versions -->
+        <lib.bcrypt.version>0.4</lib.bcrypt.version>
+        <lib.h2.version>2.4.240</lib.h2.version>
+        <lib.logstash-logback-encoder.version>8.1</lib.logstash-logback-encoder.version>
+        <lib.nimbus-oauth2-oidc-sdk.version>11.37.2</lib.nimbus-oauth2-oidc-sdk.version>
+        <lib.owasp.security-logging.version>1.1.7</lib.owasp.security-logging.version>
+        <lib.parsson.version>1.1.7</lib.parsson.version>
+        <!-- Unit test libraries -->
+        <lib.junit-pioneer.version>2.3.0</lib.junit-pioneer.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- JSON API specification and default implementation -->
+            <dependency>
+                <groupId>org.eclipse.parsson</groupId>
+                <artifactId>jakarta.json</artifactId>
+                <version>${lib.parsson.version}</version>
+            </dependency>
+            <!-- Persistence -->
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${lib.h2.version}</version>
+            </dependency>
+            <!-- Authentication and Authorization -->
+            <dependency>
+                <groupId>org.mindrot</groupId>
+                <artifactId>jbcrypt</artifactId>
+                <version>${lib.bcrypt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>oauth2-oidc-sdk</artifactId>
+                <version>${lib.nimbus-oauth2-oidc-sdk.version}</version>
+            </dependency>
+            <!-- Logging -->
+            <!-- Overriding OWASP Security Logging dependencies with newer versions -->
+            <dependency>
+                <groupId>org.owasp</groupId>
+                <artifactId>security-logging-common</artifactId>
+                <version>${lib.owasp.security-logging.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.owasp</groupId>
+                <artifactId>security-logging-logback</artifactId>
+                <version>${lib.owasp.security-logging.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.logstash.logback</groupId>
+                <artifactId>logstash-logback-encoder</artifactId>
+                <version>${lib.logstash-logback-encoder.version}</version>
+            </dependency>
+            <!-- Unit Tests -->
+            <dependency>
+                <groupId>org.junit-pioneer</groupId>
+                <artifactId>junit-pioneer</artifactId>
+                <version>${lib.junit-pioneer.version}</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-engine</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-launcher</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>
+                        @{argLine}
+                        -Xmx256m
+                        -XX:-TieredCompilation
+                        -XX:TieredStopAtLevel=1
+                        -javaagent:${settings.localRepository}/org/mockito/mockito-core/${lib.mockito.version}/mockito-core-${lib.mockito.version}.jar
+                        -Xshare:off
+                        --add-opens java.base/java.util=ALL-UNNAMED
+                        --add-opens java.base/java.lang=ALL-UNNAMED
+                    </argLine>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>us.springett</groupId>
+                <artifactId>maven-uuid-generator</artifactId>
+                <version>${maven.uuidgenerator.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-uuid</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>alpine.version</include>
+                    <include>application.properties</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
+
+</project>

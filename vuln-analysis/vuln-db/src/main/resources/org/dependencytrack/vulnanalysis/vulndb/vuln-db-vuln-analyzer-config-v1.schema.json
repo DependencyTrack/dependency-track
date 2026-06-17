@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/vuln-db-vuln-analyzer-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the VulnDB vulnerability analyzer should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "aliasSyncEnabled": {
+      "type": "boolean",
+      "title": "Alias Synchronization Enabled",
+      "description": "Whether to include alias information in vulnerability data.",
+      "existingJavaType": "boolean"
+    },
+    "apiUrl": {
+      "type": "string",
+      "title": "API URL",
+      "description": "URL of VulnDB's REST API.",
+      "format": "uri",
+      "minLength": 1
+    },
+    "oauth2ClientId": {
+      "type": "string",
+      "title": "OAuth2 Client ID",
+      "description": "OAuth 2.0 client ID for authentication with the VulnDB REST API.",
+      "minLength": 1
+    },
+    "oauth2ClientSecret": {
+      "type": "string",
+      "title": "OAuth2 Client Secret",
+      "description": "OAuth 2.0 client secret for authentication with the VulnDB REST API.",
+      "minLength": 1,
+      "x-secret-ref": true
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

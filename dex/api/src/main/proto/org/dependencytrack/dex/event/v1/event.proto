@@ -1,0 +1,280 @@
+/*
+ * This file is part of Dependency-Track.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) OWASP Foundation. All Rights Reserved.
+ */
+syntax = "proto3";
+
+package org.dependencytrack.dex.event.v1;
+
+import "google/protobuf/timestamp.proto";
+import "org/dependencytrack/dex/common/v1/common.proto";
+import "org/dependencytrack/dex/failure/v1/failure.proto";
+import "org/dependencytrack/dex/payload/v1/payload.proto";
+
+option java_multiple_files = true;
+option java_package = "org.dependencytrack.dex.proto.event.v1";
+
+// WorkflowEvent describes an event that occurred during the execution of
+// a workflow run. When an execution completes, events are recorded in the
+// run's history. Consecutive executions will replay events from history to
+// rehydrate state.
+message WorkflowEvent {
+  // ID of the event.
+  // Miscellaneous / informational events may use the ID -1.
+  int32 id = 1;
+
+  // When the event occurred.
+  google.protobuf.Timestamp timestamp = 2;
+
+  // Subject of the event.
+  oneof subject {
+    WorkflowTaskStarted workflow_task_started = 25;
+    WorkflowTaskCompleted workflow_task_completed = 26;
+
+    RunCreated run_created = 50;
+    RunStarted run_started = 51;
+    RunCanceled run_canceled = 52;
+    RunSuspended run_suspended = 53;
+    RunResumed run_resumed = 54;
+    RunCompleted run_completed = 55;
+
+    ActivityTaskCreated activity_task_created = 75;
+    ActivityTaskCompleted activity_task_completed = 76;
+    ActivityTaskFailed activity_task_failed = 77;
+
+    ChildRunCreated child_run_created = 100;
+    ChildRunCompleted child_run_completed = 101;
+    ChildRunFailed child_run_failed = 102;
+
+    TimerCreated timer_created = 125;
+    TimerElapsed timer_elapsed = 126;
+
+    SideEffectExecuted side_effect_executed = 150;
+
+    ExternalEventReceived external_event_received = 151;
+  }
+}
+
+// WorkflowTaskStarted informs about a workflow task having started.
+message WorkflowTaskStarted {
+}
+
+// WorkflowTaskCompleted informs about a workflow task having completed.
+message WorkflowTaskCompleted {
+}
+
+// RunCreated records information about the workflow run having been created.
+message RunCreated {
+  // Name of the workflow.
+  string workflow_name = 1;
+
+  // Version of the workflow.
+  int32 workflow_version = 2;
+
+  // ID of the workflow instance.
+  optional string workflow_instance_id = 3;
+
+  // Argument of the workflow run.
+  optional org.dependencytrack.dex.payload.v1.Payload argument = 4;
+
+  // Concurrency key of the workflow run.
+  optional string concurrency_key = 5;
+
+  // Name of the queue to schedule tasks on.
+  string task_queue_name = 6;
+
+  // Priority of the workflow run.
+  int32 priority = 7;
+
+  // Labels of the workflow run.
+  map<string, string> labels = 8;
+
+  // Information about the workflow run that created this run.
+  optional ParentRun parent_run = 9;
+
+  message ParentRun {
+    // ID of the corresponding ChildRunCreated event in the parent run.
+    int32 child_run_created_event_id = 1;
+
+    // ID of the parent run.
+    string id = 2;
+
+    // Workflow name of the parent run.
+    string workflow_name = 3;
+
+    // Workflow version of the parent run.
+    int32 workflow_version = 4;
+
+    // Workflow instance ID of the parent run.
+    optional string workflow_instance_id = 5;
+  }
+}
+
+// RunStarted informs about a workflow run having started.
+// Emitted during the first execution of a run.
+message RunStarted {
+}
+
+// RunCanceled informs about a workflow run having been canceled.
+message RunCanceled {
+  // Reason for the cancellation.
+  string reason = 1;
+}
+
+// RunSuspended informs about a workflow run having been suspended.
+message RunSuspended {
+}
+
+// RunResumed informs about a workflow run having been resumed.
+message RunResumed {
+}
+
+// RunCompleted informs about the completion of a workflow run.
+message RunCompleted {
+  // Final status of the run. Can be any of CANCELED, COMPLETED, or FAILED.
+  org.dependencytrack.dex.common.v1.WorkflowRunStatus status = 1;
+
+  // Optional custom status of the run.
+  optional string custom_status = 2;
+
+  // Result of the run. Only populated when status is COMPLETED.
+  optional org.dependencytrack.dex.payload.v1.Payload result = 3;
+
+  // Failure of the run. Only populated when status is CANCELED or FAILED.
+  optional org.dependencytrack.dex.failure.v1.Failure failure = 4;
+}
+
+// ActivityTaskCreated informs about the creation of an activity task.
+message ActivityTaskCreated {
+  // Name of the activity.
+  string name = 1;
+
+  // Name of the queue the task is scheduled on.
+  string queue_name = 2;
+
+  // Priority of the task.
+  int32 priority = 3;
+
+  // Argument of the task.
+  optional org.dependencytrack.dex.payload.v1.Payload argument = 4;
+
+  // Retry policy to apply.
+  org.dependencytrack.dex.common.v1.RetryPolicy retry_policy = 5;
+}
+
+// ActivityTaskCompleted informs about the successful completion of an activity task.
+message ActivityTaskCompleted {
+  // ID of the event in the workflow run's history that created the task.
+  int32 activity_task_created_event_id = 1;
+
+  // Result of the task.
+  optional org.dependencytrack.dex.payload.v1.Payload result = 2;
+}
+
+// ActivityTaskFailed informs about the failure of an activity task.
+message ActivityTaskFailed {
+  // ID of the event in the workflow run's history that created the task.
+  int32 activity_task_created_event_id = 1;
+
+  // How many attempts have been performed.
+  int32 attempts = 2;
+
+  // Failure of the task.
+  org.dependencytrack.dex.failure.v1.Failure failure = 3;
+}
+
+// ChildRunCreated informs about the creation of a child workflow run.
+// A child run is created when a workflow invokes another workflow.
+message ChildRunCreated {
+  // ID of the child run.
+  string id = 1;
+
+  // Name of the workflow.
+  string workflow_name = 2;
+
+  // Version of the workflow.
+  int32 workflow_version = 3;
+
+  // Workflow instance ID of the child run.
+  optional string workflow_instance_id = 4;
+
+  // Name of the queue to schedule tasks on.
+  string task_queue_name = 5;
+
+  // Concurrency key of the child run.
+  optional string concurrency_key = 6;
+
+  // Priority of the child run.
+  int32 priority = 7;
+
+  // Labels of the child run.
+  map<string, string> labels = 8;
+
+  // Argument of the child run.
+  optional org.dependencytrack.dex.payload.v1.Payload argument = 9;
+}
+
+// ChildRunCompleted informs about the successful completion of a child workflow run.
+message ChildRunCompleted {
+  // ID of the event in the parent run's history that created the child run.
+  int32 child_run_created_event_id = 1;
+
+  // Result of the child run.
+  optional org.dependencytrack.dex.payload.v1.Payload result = 2;
+}
+
+// ChildRunFailed informs about the failure of a child workflow run.
+message ChildRunFailed {
+  // ID of the event in the parent run's history that created the child run.
+  int32 child_run_created_event_id = 1;
+
+  // Failure of the child run.
+  org.dependencytrack.dex.failure.v1.Failure failure = 2;
+}
+
+// TimerCreated informs about the creation of a durable timer.
+message TimerCreated {
+  // Name of the timer.
+  string name = 1;
+
+  // Timestamp of when the timer elapses.
+  google.protobuf.Timestamp elapse_at = 2;
+}
+
+// TimerElapsed informs about a durable timer having elapsed.
+message TimerElapsed {
+  // ID of the event in the run's history that created the timer.
+  int32 timer_created_event_id = 1;
+}
+
+// SideEffectExecuted informs about the execution of a side effect.
+message SideEffectExecuted {
+  // Name of the side effect.
+  string name = 1;
+
+  // Result of the side effect.
+  optional org.dependencytrack.dex.payload.v1.Payload result = 2;
+}
+
+// ExternalEventReceived informs about the reception of an external event.
+message ExternalEventReceived {
+  // ID of the external event.
+  string id = 1;
+
+  // Payload of the external event.
+  optional org.dependencytrack.dex.payload.v1.Payload payload = 2;
+}

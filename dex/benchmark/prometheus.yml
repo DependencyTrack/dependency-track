@@ -1,0 +1,12 @@
+---
+scrape_configs:
+- job_name: postgres
+  scrape_interval: 15s
+  static_configs:
+  - targets: ["postgres-exporter:9187"]
+- job_name: dex-engine
+  scrape_interval: 15s
+  dns_sd_configs:
+  - names: [ "dex-engine" ]
+    type: A
+    port: 8080

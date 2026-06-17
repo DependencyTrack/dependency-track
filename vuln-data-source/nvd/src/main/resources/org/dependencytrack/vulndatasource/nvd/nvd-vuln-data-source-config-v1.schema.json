@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/nvd-vuln-data-source-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the NVD data source should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "cveFeedsUrl": {
+      "type": "string",
+      "title": "CVE Feeds URL",
+      "description": "The URL to download CVE feeds from.  \n**Must** serve [JSON 2.0 feed files](https://nvd.nist.gov/vuln/data-feeds#divJson20Feeds).",
+      "format": "uri",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

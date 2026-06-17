@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/osv-vuln-data-source-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the OSV data source should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "aliasSyncEnabled": {
+      "type": "boolean",
+      "title": "Alias Synchronization Enabled",
+      "description": "Whether to include alias information in vulnerability data."
+    },
+    "incrementalMirroringEnabled": {
+      "type": "boolean",
+      "title": "Incremental Mirroring Enabled",
+      "description": "Whether incremental mirroring is enabled. When enabled (default), watermark logic will be used to only mirror new or updated vulnerabilities. When disabled, full mirroring will be performed on each run.",
+      "default": true,
+      "existingJavaType": "boolean"
+    },
+    "dataUrl": {
+      "type": "string",
+      "title": "Data URL",
+      "description": "The URL to download OSV data from.  \n**Must** be compatible with [OSV's data dumps](https://google.github.io/osv.dev/data/#data-dumps).",
+      "minLength": 1,
+      "format": "uri"
+    },
+    "ecosystems": {
+      "type": "array",
+      "title": "Ecosystems",
+      "description": "The ecosystems to mirror vulnerability data for.  \nA list of available ecosystems can be found in the [OSV documentation](https://ossf.github.io/osv-schema/#defined-ecosystems).",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "title": "Ecosystem",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

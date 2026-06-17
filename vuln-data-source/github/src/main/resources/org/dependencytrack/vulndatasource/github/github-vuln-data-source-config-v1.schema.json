@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/github-vuln-data-source-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the GitHub Advisories data source should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "aliasSyncEnabled": {
+      "type": "boolean",
+      "title": "Alias Synchronization Enabled",
+      "description": "Whether to include alias information in vulnerability data."
+    },
+    "apiUrl": {
+      "type": "string",
+      "title": "GraphQL API URL",
+      "description": "URL of GitHub's GraphQL API.",
+      "format": "uri",
+      "minLength": 1
+    },
+    "apiToken": {
+      "type": "string",
+      "title": "API Token",
+      "description": "Access token to authenticate with the GitHub API.  \n**The token is only required for authentication and does not require any permissions**.  \nBoth [fine-grained](https://github.com/settings/personal-access-tokens/new) and [classic](https://github.com/settings/tokens/new) access tokens work.",
+      "minLength": 1,
+      "x-secret-ref": true
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

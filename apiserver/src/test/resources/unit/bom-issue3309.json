@@ -1,0 +1,12 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "metadata": {
+    "authors": [
+      {
+        "name": "Author Name",
+        "email": "author@example.com"
+      }
+    ]
+  }
+}

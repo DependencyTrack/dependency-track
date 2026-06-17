@@ -32,58 +32,123 @@ ifdef AGENT
 endif
 
 build:
-	$(MVND) $(MVN_FLAGS) -q \
-		-Penhance,embedded-jetty,quick \
-		-Dlogback.configuration.file=src/main/docker/logback.xml \
-		package
+	$(MVND) $(MVN_FLAGS) -Pquick package
 .PHONY: build
 
-build-bundled:
-	$(MVND) $(MVN_FLAGS) -q \
-		-Penhance,embedded-jetty,bundle-ui,quick \
-		-Dlogback.configuration.file=src/main/docker/logback.xml \
-		package
-.PHONY: build-bundled
+build-dist:
+	$(MVND) $(MVN_FLAGS) -Pdist,quick package
+.PHONY: build-dist
 
 build-image: build
 	docker build \
-		-t dependencytrack/apiserver:local \
-		-f src/main/docker/Dockerfile \
-		--build-arg WAR_FILENAME=dependency-track-apiserver.jar \
-		.
+		-t ghcr.io/dependencytrack/apiserver:local \
+		-f apiserver/src/main/docker/Dockerfile \
+		apiserver
 .PHONY: build-image
 
-build-bundled-image: build-bundled
+build-v4-migrator-image: build
 	docker build \
-		-t dependencytrack/bundled:local \
-		-f src/main/docker/Dockerfile \
-		--build-arg WAR_FILENAME=dependency-track-bundled.jar \
-		.
-.PHONY: build-bundled-image
+		-t ghcr.io/dependencytrack/v4-migrator:local \
+		-f support/v4-migrator/src/main/docker/Dockerfile \
+		support/v4-migrator
+.PHONY: build-v4-migrator-image
 
 datanucleus-enhance:
-	$(MVND) $(MVN_FLAGS) -Penhance,quick process-classes
+	$(MVND) $(MVN_FLAGS) \
+		-Pquick \
+		-Dresolve.skip \
+		-pl alpine/alpine-model,apiserver \
+		process-classes
 .PHONY: datanucleus-enhance
 
+install:
+	$(MVND) $(MVN_FLAGS) -Pquick install
+.PHONY: install
+
 lint-java:
-	$(MVND) $(MVN_FLAGS) -q validate
+	$(MVND) $(MVN_FLAGS) -Dmaven.build.cache.enabled=false validate
 .PHONY: lint-java
 
-lint: lint-java
+lint-openapi:
+	@dups=$$(find api/src/main/openapi -path '*/schemas/*.yaml' -exec basename {} \; \
+		| sort | uniq -d); \
+	if [ -n "$$dups" ]; then \
+		echo "Duplicate schema basenames (must be globally unique):"; \
+		echo "$$dups"; \
+		exit 1; \
+	fi
+	docker run --rm -i -w /work \
+		--platform linux/amd64 \
+		-v "$(CURDIR)/api:/work" \
+		stoplight/spectral lint \
+		--ruleset src/main/spectral/ruleset.yaml \
+		src/main/openapi/openapi.yaml
+.PHONY: lint-openapi
+
+lint-proto:
+	buf lint
+.PHONY: lint-proto
+
+lint: lint-java lint-openapi lint-proto
 .PHONY: lint
 
 test:
-	$(MVND) $(MVN_FLAGS) -Penhance -Dcheckstyle.skip -Dcyclonedx.skip verify
+	$(MVND) $(MVN_FLAGS) -Dcheckstyle.skip -Dcyclonedx.skip verify
 .PHONY: test
 
 test-single:
 	$(MVND) $(MVN_FLAGS) test \
-		-Penhance \
+		-Dmaven.build.cache.enabled=false \
 		-Dcheckstyle.skip \
 		-Dcyclonedx.skip \
+		-pl "$(MODULE)" \
+		-am \
 		-Dtest="$(TEST)"
 .PHONY: test-single
 
+new-migration:
+	@if [ -z "$(NAME)" ]; then \
+		echo "Usage: make new-migration NAME=\"short description\""; \
+		exit 1; \
+	fi; \
+	slug=$$(printf '%s' "$(NAME)" | tr '[:upper:]' '[:lower:]' \
+		| sed -e 's/[^a-z0-9]\{1,\}/_/g' -e 's/^_//' -e 's/_$$//'); \
+	if [ -z "$$slug" ]; then \
+		echo "NAME must contain at least one alphanumeric character"; \
+		exit 1; \
+	fi; \
+	ts=$$(date -u +%Y%m%d%H%M); \
+	dir="migration/src/main/resources/org/dependencytrack/migration"; \
+	if ls "$$dir"/V$${ts}__*.sql >/dev/null 2>&1; then \
+		echo "A migration with version $$ts already exists; wait a minute and retry"; \
+		exit 1; \
+	fi; \
+	path="$$dir/V$${ts}__$${slug}.sql"; \
+	: > "$$path"; \
+	echo "$$path"
+.PHONY: new-migration
+
+apiserver-dev:
+	$(MVN) $(MVN_FLAGS) -q -Pquick,dev-services -pl apiserver -am verify
+.PHONY: apiserver-dev
+
+test-e2e: build-image
+	$(MVND) $(MVN_FLAGS) -pl e2e -DskipE2E=false verify
+.PHONY: test-e2e
+
 clean:
-	$(MVND) $(MVN_FLAGS) -q clean
+	$(MVND) $(MVN_FLAGS) -q -Dmaven.build.cache.enabled=false clean
 .PHONY: clean
+
+clean-build-cache:
+	rm -r "$${HOME}/.m2/build-cache/v1.1/org.dependencytrack/"
+.PHONY: clean-build-cache
+
+update-distro-info:
+	curl -fsSL -o support/os-distro-metadata/src/main/resources/org/dependencytrack/support/distrometadata/debian.csv \
+		https://debian.pages.debian.net/distro-info-data/debian.csv
+	curl -fsSL -o support/os-distro-metadata/src/main/resources/org/dependencytrack/support/distrometadata/ubuntu.csv \
+		https://debian.pages.debian.net/distro-info-data/ubuntu.csv
+	curl -fsSL -o support/os-distro-metadata/src/main/resources/org/dependencytrack/support/distrometadata/LICENSE \
+		https://salsa.debian.org/debian/distro-info-data/-/raw/main/debian/copyright
+.PHONY: update-distro-info

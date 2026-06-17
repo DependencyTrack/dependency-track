@@ -195,11 +195,17 @@ public final class DatabaseSeedingInitTask implements InitTask {
     }
 
     public static void seedDefaultUsers(final Handle jdbiHandle) {
+        // Only seed the default 'admin' user when no users exist at all.
+        // Checking solely for an existing 'admin' username is not sufficient:
+        // an upgraded v4 instance whose admin user was renamed (e.g. to avoid
+        // collisions with OIDC users) would otherwise get a fresh 'admin' user
+        // with the default password, despite already having users. See #6392.
         final Optional<Long> adminUserId = jdbiHandle.createUpdate("""
                         INSERT INTO "USER" (
                           "TYPE", "USERNAME", "EMAIL", "PASSWORD", "LAST_PASSWORD_CHANGE"
                         , "FORCE_PASSWORD_CHANGE", "NON_EXPIRY_PASSWORD", "SUSPENDED")
-                        VALUES ('MANAGED', 'admin', 'admin@localhost', :password, NOW(), TRUE, TRUE, FALSE)
+                        SELECT 'MANAGED', 'admin', 'admin@localhost', :password, NOW(), TRUE, TRUE, FALSE
+                        WHERE NOT EXISTS (SELECT 1 FROM "USER")
                         ON CONFLICT ("USERNAME") DO NOTHING
                         RETURNING "ID"
                         """)
@@ -209,7 +215,7 @@ public final class DatabaseSeedingInitTask implements InitTask {
                 .findOne();
 
         if (adminUserId.isEmpty()) {
-            LOGGER.debug("Default 'admin' user already exists; skipping team/permission seeding");
+            LOGGER.debug("Users already exist; skipping default 'admin' user seeding");
             return;
         }
 

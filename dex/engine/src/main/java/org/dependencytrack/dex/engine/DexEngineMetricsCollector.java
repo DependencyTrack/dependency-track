@@ -150,7 +150,7 @@ final class DexEngineMetricsCollector implements Closeable {
                                  group by workflow_name
                                         , status
                                 """)
-                        .map((rs, ctx) -> MultiGauge.Row.of(
+                        .map((rs, _) -> MultiGauge.Row.of(
                                 Tags.of(
                                         Tag.of("workflowName", rs.getString(1)),
                                         Tag.of("status", rs.getString(2).toLowerCase())),
@@ -167,7 +167,7 @@ final class DexEngineMetricsCollector implements Closeable {
                                      , capacity
                                   from dex_workflow_task_queue
                                 """)
-                        .map((rs, ctx) -> MultiGauge.Row.of(
+                        .map((rs, _) -> MultiGauge.Row.of(
                                 Tags.of(Tag.of("queueName", rs.getString(1))),
                                 rs.getLong(2)))
                         .list());
@@ -181,7 +181,7 @@ final class DexEngineMetricsCollector implements Closeable {
                                   from dex_workflow_task
                                  group by queue_name
                                 """)
-                        .map((rs, ctx) -> MultiGauge.Row.of(
+                        .map((rs, _) -> MultiGauge.Row.of(
                                 Tags.of(Tag.of("queueName", rs.getString(1))),
                                 rs.getLong(2)))
                         .list());
@@ -196,7 +196,7 @@ final class DexEngineMetricsCollector implements Closeable {
                                      , capacity
                                   from dex_activity_task_queue
                                 """)
-                        .map((rs, ctx) -> MultiGauge.Row.of(
+                        .map((rs, _) -> MultiGauge.Row.of(
                                 Tags.of(Tag.of("queueName", rs.getString(1))),
                                 rs.getLong(2)))
                         .list());
@@ -208,9 +208,10 @@ final class DexEngineMetricsCollector implements Closeable {
                                 select queue_name
                                      , count(*)
                                   from dex_activity_task
+                                 where status = 'QUEUED'
                                  group by queue_name
                                 """)
-                        .map((rs, ctx) -> MultiGauge.Row.of(
+                        .map((rs, _) -> MultiGauge.Row.of(
                                 Tags.of(Tag.of("queueName", rs.getString(1))),
                                 rs.getLong(2)))
                         .list());

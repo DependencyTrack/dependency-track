@@ -47,7 +47,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
           persist-credentials: false
       - name: Set up JDK
@@ -65,7 +65,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
           persist-credentials: false
       - name: Setup buf
@@ -84,7 +84,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
           persist-credentials: false
       - name: Setup buf
@@ -103,11 +103,29 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
           persist-credentials: false
       - name: Lint OpenAPI Spec
         run: make lint-openapi
+
+  lint-migrations:
+    name: Lint Migrations
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fetch base ref
+        run: git fetch --no-tags origin "${{ github.base_ref }}"
+      - name: Lint changed migrations
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+        run: make lint-migrations
 
   openapi-breaking-changes:
     name: OpenAPI Breaking Changes
@@ -116,17 +134,17 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
           persist-credentials: false
       - name: Checkout base ref
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # tag=v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # tag=v6.0.3
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: base
           persist-credentials: false
       - name: Detect Breaking Changes
-        uses: oasdiff/oasdiff-action/breaking@f30668f65075c93440bd59ce2de73ce9e78751f4 # tag=v0.0.51
+        uses: oasdiff/oasdiff-action/breaking@3530478ec30f84adedbfeb28f0d9527a290f50a9 # tag=v0.0.57
         with:
           base: base/api/src/main/openapi/openapi.yaml
           revision: api/src/main/openapi/openapi.yaml

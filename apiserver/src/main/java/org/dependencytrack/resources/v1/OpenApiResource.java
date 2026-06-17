@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1;
 
+import alpine.model.About;
 import alpine.server.auth.AuthenticationNotRequired;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +30,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.dependencytrack.resources.OpenApiSpecEnricher;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -109,7 +111,8 @@ public class OpenApiResource {
         try (final InputStream inputStream = OpenApiResource.class
                 .getResourceAsStream("/org/dependencytrack/api/v1/openapi.yaml")) {
             requireNonNull(inputStream, "OpenAPI spec not found on classpath");
-            return new String(inputStream.readAllBytes());
+            return OpenApiSpecEnricher.enrich(
+                    new String(inputStream.readAllBytes()), new About().getVersion());
         }
     }
 

@@ -24,7 +24,7 @@
         <lib.micrometer-jvm-extras.version>0.3.0</lib.micrometer-jvm-extras.version>
         <lib.swagger-parser.version>2.1.43</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
-        <lib.woodstox.version>7.2.0</lib.woodstox.version>
+        <lib.woodstox.version>7.2.1</lib.woodstox.version>
         <lib.javacron.version>1.4.0</lib.javacron.version>
 
         <!-- CycloneDX CLI -->
@@ -121,6 +121,12 @@
             <groupId>org.dependencytrack</groupId>
             <artifactId>secret-management</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
+            <artifactId>test-database-support</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.dependencytrack</groupId>

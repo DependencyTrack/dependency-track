@@ -262,9 +262,15 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                             "uuid": "${json-unit.matches:vulnUuid}",
                             "vulnId": "CVE-100",
                             "source": "NVD",
+                            "cvssv2": 1.1,
                             "cvssv3": 10.0,
+                            "owaspRRBusinessImpact": 3.1,
+                            "owaspRRLikelihood": 3.2,
+                            "owaspRRTechnicalImpact": 3.3,
                             "severity": "CRITICAL",
-                            "cvssV3Vector": "cvssV3VectorOverwrite"
+                            "cvssV2Vector": "",
+                            "cvssV3Vector": "cvssV3VectorOverwrite",
+                            "owaspRRVector": "owaspRrVector"
                           },
                           "affectedProjects": [
                             {
@@ -475,9 +481,15 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                               "uuid": "${json-unit.matches:vulnUuid}",
                               "vulnId": "CVE-100",
                               "source": "NVD",
+                              "cvssv2": 1.1,
                               "cvssv3": 10.0,
+                              "owaspRRBusinessImpact": 3.1,
+                              "owaspRRLikelihood": 3.2,
+                              "owaspRRTechnicalImpact": 3.3,
                               "severity": "CRITICAL",
-                              "cvssV3Vector": "cvssV3VectorOverwrite"
+                              "cvssV2Vector": "",
+                              "cvssV3Vector": "cvssV3VectorOverwrite",
+                              "owaspRRVector": "owaspRrVector"
                             }
                           ]
                         }

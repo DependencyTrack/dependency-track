@@ -48,7 +48,7 @@
         </dependency>
         <dependency>
             <groupId>org.dependencytrack</groupId>
-            <artifactId>migration</artifactId>
+            <artifactId>test-database-support</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

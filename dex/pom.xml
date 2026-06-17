@@ -36,10 +36,18 @@
         <module>engine-migration</module>
         <module>engine</module>
         <module>testing</module>
-        <module>benchmark</module>
     </modules>
 
     <properties>
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>benchmark</id>
+            <modules>
+                <module>benchmark</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>

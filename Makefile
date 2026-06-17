@@ -15,6 +15,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 
+BASE_REF ?= origin/main
+MIGRATION_DIR := migration/src/main/resources/org/dependencytrack/migration
+SQUAWK_IMAGE := ghcr.io/sbdchd/squawk:2.58.0
+
 MVN := $(shell command -v mvn 2>/dev/null)
 MVND := $(shell command -v mvnd 2>/dev/null)
 ifeq ($(MVND),)
@@ -69,6 +73,32 @@ lint-java:
 	$(MVND) $(MVN_FLAGS) -Dmaven.build.cache.enabled=false validate
 .PHONY: lint-java
 
+lint-migrations:
+	@if ! git rev-parse --verify --quiet "$(BASE_REF)" >/dev/null; then \
+		echo "BASE_REF '$(BASE_REF)' does not resolve to a git ref."; \
+		echo "Override on the command line, e.g.: make lint-migrations BASE_REF=upstream/main"; \
+		exit 1; \
+	fi; \
+	changed=$$( \
+		{ \
+			git diff --name-only --diff-filter=AM "$(BASE_REF)...HEAD" -- '$(MIGRATION_DIR)/*.sql'; \
+			git diff --name-only --diff-filter=AM -- '$(MIGRATION_DIR)/*.sql'; \
+			git ls-files --others --exclude-standard -- '$(MIGRATION_DIR)/*.sql'; \
+		} | sort -u); \
+	if [ -z "$$changed" ]; then \
+		echo "No migration changes to lint (BASE_REF=$(BASE_REF))."; \
+		exit 0; \
+	fi; \
+	echo "Linting migrations:"; \
+	echo "$$changed" | sed 's/^/  /'; \
+	docker run --rm -i \
+		--platform linux/amd64 \
+		-v "$(CURDIR):/work" \
+		-w /work \
+		$(SQUAWK_IMAGE) \
+		lint $$changed
+.PHONY: lint-migrations
+
 lint-openapi:
 	@dups=$$(find api/src/main/openapi -path '*/schemas/*.yaml' -exec basename {} \; \
 		| sort | uniq -d); \
@@ -89,7 +119,7 @@ lint-proto:
 	buf lint
 .PHONY: lint-proto
 
-lint: lint-java lint-openapi lint-proto
+lint: lint-java lint-migrations lint-openapi lint-proto
 .PHONY: lint
 
 test:

@@ -34,6 +34,7 @@
         <module>support/smallrye-config-secret-handler-file</module>
         <module>support/smallrye-config-source-memory</module>
         <module>support/swagger-model-converters</module>
+        <module>support/test-database</module>
         <module>support/v4-migrator</module>
         <module>api</module>
         <module>alpine</module>
@@ -135,7 +136,7 @@
         <lib.flyway.version>12.7.0</lib.flyway.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.greenmail.version>2.1.8</lib.greenmail.version>
-        <lib.hikaricp.version>7.0.2</lib.hikaricp.version>
+        <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
         <lib.httpclient5.version>5.6.1</lib.httpclient5.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
@@ -150,12 +151,12 @@
         <lib.kafka-clients.version>4.3.0</lib.kafka-clients.version>
         <lib.kotlin.version>2.4.0</lib.kotlin.version>
         <lib.logback.version>1.5.34</lib.logback.version>
-        <lib.micrometer.version>1.16.5</lib.micrometer.version>
+        <lib.micrometer.version>1.17.0</lib.micrometer.version>
         <lib.microprofile-config.version>3.1.1</lib.microprofile-config.version>
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
         <lib.minio.version>9.0.1</lib.minio.version>
         <lib.mockito.version>5.23.0</lib.mockito.version>
-        <lib.okhttp.version>5.3.2</lib.okhttp.version>
+        <lib.okhttp.version>5.4.0</lib.okhttp.version>
         <lib.open-feign.version>13.12</lib.open-feign.version>
         <lib.open-vulnerability-clients.version>9.0.5</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
@@ -660,7 +661,7 @@
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.14</version>
+                    <version>0.8.15</version>
                 </plugin>
 
                 <plugin>

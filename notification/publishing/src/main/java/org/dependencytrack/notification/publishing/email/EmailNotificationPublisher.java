@@ -23,9 +23,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
-import jakarta.mail.internet.MimeMultipart;
 import org.dependencytrack.notification.api.publishing.NotificationPublishContext;
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationRuleContact;
@@ -37,6 +35,7 @@ import org.eclipse.angus.mail.util.MailConnectException;
 
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
@@ -87,14 +86,8 @@ final class EmailNotificationPublisher implements NotificationPublisher {
             final var message = new MimeMessage(session);
             message.setFrom(new InternetAddress(senderAddress));
             message.setRecipients(Message.RecipientType.TO, recipients);
-            message.setSubject(messageSubject);
-
-            final var bodyPart = new MimeBodyPart();
-            bodyPart.setText(renderedTemplate.content());
-
-            final var multipart = new MimeMultipart();
-            multipart.addBodyPart(bodyPart);
-            message.setContent(multipart, renderedTemplate.mimeType());
+            message.setSubject(messageSubject, StandardCharsets.UTF_8.name());
+            message.setContent(renderedTemplate.content(), renderedTemplate.mimeType());
 
             Transport.send(message);
         } catch (MessagingException e) {

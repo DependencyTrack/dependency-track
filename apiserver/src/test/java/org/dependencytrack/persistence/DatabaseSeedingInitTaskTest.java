@@ -145,6 +145,19 @@ public class DatabaseSeedingInitTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void testDoesNotSeedAdminWhenUsersAlreadyExist() throws Exception {
+        // Simulate an upgraded instance whose original 'admin' user was renamed
+        // (e.g. to "disabled__admin"), leaving the USER table populated but
+        // without a user named 'admin'. See #6392.
+        final var existingUser = qm.createManagedUser("disabled__admin", "hashed-password");
+
+        new DatabaseSeedingInitTask().execute(new InitTaskContext(ConfigProvider.getConfig(), dataSource));
+
+        final List<ManagedUser> users = qm.getManagedUsers();
+        assertThat(users).extracting(ManagedUser::getUsername).containsExactly(existingUser.getUsername());
+    }
+
+    @Test
     public void testLoadDefaultLicensesUpdatesExistingLicenses() throws Exception {
         final var license = new License();
         license.setLicenseId("LGPL-2.1+");

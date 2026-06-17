@@ -209,11 +209,11 @@ class DexEngineMetricsCollectorTest {
                     """);
 
             handle.execute("""
-                    insert into dex_activity_task(queue_name, workflow_run_id, created_event_id, activity_name, priority, retry_policy, created_at)
-                    values ('act-queue-a', 'a0000000-0000-0000-0000-000000000001', 1, 'act-a', 0, ''::bytea, now())
-                         , ('act-queue-a', 'a0000000-0000-0000-0000-000000000001', 2, 'act-a', 0, ''::bytea, now())
-                         , ('act-queue-a', 'a0000000-0000-0000-0000-000000000002', 1, 'act-a', 0, ''::bytea, now())
-                         , ('act-queue-b', 'a0000000-0000-0000-0000-000000000002', 2, 'act-b', 0, ''::bytea, now())
+                    insert into dex_activity_task(queue_name, workflow_run_id, created_event_id, activity_name, priority, retry_policy, status, created_at)
+                    values ('act-queue-a', 'a0000000-0000-0000-0000-000000000001', 1, 'act-a', 0, ''::bytea, 'QUEUED', now())
+                         , ('act-queue-a', 'a0000000-0000-0000-0000-000000000001', 2, 'act-a', 0, ''::bytea, 'QUEUED', now())
+                         , ('act-queue-a', 'a0000000-0000-0000-0000-000000000002', 1, 'act-a', 0, ''::bytea, 'CREATED', now())
+                         , ('act-queue-b', 'a0000000-0000-0000-0000-000000000002', 2, 'act-b', 0, ''::bytea, 'QUEUED', now())
                     """);
         });
 
@@ -234,7 +234,7 @@ class DexEngineMetricsCollectorTest {
 
                         assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.depth")
                                 .tag("queueName", "act-queue-a")
-                                .gauge().value()).isEqualTo(3.0);
+                                .gauge().value()).isEqualTo(2.0);
                         assertThat(meterRegistry.get("dt.dex.engine.activity.task.queue.depth")
                                 .tag("queueName", "act-queue-b")
                                 .gauge().value()).isEqualTo(1.0);

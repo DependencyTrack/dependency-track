@@ -58,63 +58,72 @@ public class v440Updater extends AbstractUpgradeItem {
         ps.executeUpdate();
 
         final long viewVulnPermissionId = getPermissionId(connection, Permissions.VIEW_VULNERABILITY);
-        final long vulnAnalysisPermissionId = getPermissionId(connection, Permissions.VULNERABILITY_ANALYSIS);
+        final Long vulnAnalysisPermissionId = findPermissionId(connection, Permissions.VULNERABILITY_ANALYSIS);
 
-        LOGGER.info("Granting VIEW_VULNERABILITY permission to managed users with VULNERABILITY_ANALYSIS permission");
-        try (final Statement stmt = connection.createStatement()) {
-            final ResultSet rs = stmt.executeQuery(String.format(STMT_3, vulnAnalysisPermissionId));
-            while (rs.next()) {
-                ps = connection.prepareStatement(STMT_4);
-                ps.setLong(1, rs.getLong(1));
-                ps.setLong(2, viewVulnPermissionId);
-                ps.executeUpdate();
+        if (vulnAnalysisPermissionId == null) {
+            LOGGER.warn("Permission VULNERABILITY_ANALYSIS not found in database; skipping VIEW_VULNERABILITY grant");
+        } else {
+            LOGGER.info("Granting VIEW_VULNERABILITY permission to managed users with VULNERABILITY_ANALYSIS permission");
+            try (final Statement stmt = connection.createStatement()) {
+                final ResultSet rs = stmt.executeQuery(String.format(STMT_3, vulnAnalysisPermissionId));
+                while (rs.next()) {
+                    ps = connection.prepareStatement(STMT_4);
+                    ps.setLong(1, rs.getLong(1));
+                    ps.setLong(2, viewVulnPermissionId);
+                    ps.executeUpdate();
+                }
             }
-        }
 
-        LOGGER.info("Granting VIEW_VULNERABILITY permission to LDAP users with VULNERABILITY_ANALYSIS permission");
-        try (final Statement stmt = connection.createStatement()) {
-            final ResultSet rs = stmt.executeQuery(String.format(STMT_5, vulnAnalysisPermissionId));
-            while (rs.next()) {
-                ps = connection.prepareStatement(STMT_6);
-                ps.setLong(1, rs.getLong(1));
-                ps.setLong(2, viewVulnPermissionId);
-                ps.executeUpdate();
+            LOGGER.info("Granting VIEW_VULNERABILITY permission to LDAP users with VULNERABILITY_ANALYSIS permission");
+            try (final Statement stmt = connection.createStatement()) {
+                final ResultSet rs = stmt.executeQuery(String.format(STMT_5, vulnAnalysisPermissionId));
+                while (rs.next()) {
+                    ps = connection.prepareStatement(STMT_6);
+                    ps.setLong(1, rs.getLong(1));
+                    ps.setLong(2, viewVulnPermissionId);
+                    ps.executeUpdate();
+                }
             }
-        }
 
-        LOGGER.info("Granting VIEW_VULNERABILITY permission to OIDC users with VULNERABILITY_ANALYSIS permission");
-        try (final Statement stmt = connection.createStatement()) {
-            final ResultSet rs = stmt.executeQuery(String.format(STMT_7, vulnAnalysisPermissionId));
-            while (rs.next()) {
-                ps = connection.prepareStatement(STMT_8);
-                ps.setLong(1, rs.getLong(1));
-                ps.setLong(2, viewVulnPermissionId);
-                ps.executeUpdate();
+            LOGGER.info("Granting VIEW_VULNERABILITY permission to OIDC users with VULNERABILITY_ANALYSIS permission");
+            try (final Statement stmt = connection.createStatement()) {
+                final ResultSet rs = stmt.executeQuery(String.format(STMT_7, vulnAnalysisPermissionId));
+                while (rs.next()) {
+                    ps = connection.prepareStatement(STMT_8);
+                    ps.setLong(1, rs.getLong(1));
+                    ps.setLong(2, viewVulnPermissionId);
+                    ps.executeUpdate();
+                }
             }
-        }
 
-        LOGGER.info("Granting VIEW_VULNERABILITY permission to teams with VULNERABILITY_ANALYSIS permission");
-        try (final Statement stmt = connection.createStatement()) {
-            final ResultSet rs = stmt.executeQuery(String.format(STMT_9, vulnAnalysisPermissionId));
-            while (rs.next()) {
-                ps = connection.prepareStatement(STMT_10);
-                ps.setLong(1, rs.getLong(1));
-                ps.setLong(2, viewVulnPermissionId);
-                ps.executeUpdate();
+            LOGGER.info("Granting VIEW_VULNERABILITY permission to teams with VULNERABILITY_ANALYSIS permission");
+            try (final Statement stmt = connection.createStatement()) {
+                final ResultSet rs = stmt.executeQuery(String.format(STMT_9, vulnAnalysisPermissionId));
+                while (rs.next()) {
+                    ps = connection.prepareStatement(STMT_10);
+                    ps.setLong(1, rs.getLong(1));
+                    ps.setLong(2, viewVulnPermissionId);
+                    ps.executeUpdate();
+                }
             }
         }
     }
 
     private long getPermissionId(final Connection connection, final Permissions permission) throws SQLException, UpgradeException {
-        final PreparedStatement ps = connection.prepareStatement(STMT_2);
-        ps.setString(1, permission.name());
-
-        final ResultSet rs = ps.executeQuery();
-        if (!rs.next()) {
+        final Long id = findPermissionId(connection, permission);
+        if (id == null) {
             throw new UpgradeException("Unable to determine ID of permission " + permission.name());
         }
+        return id;
+    }
 
-        return rs.getLong(1);
+    private Long findPermissionId(final Connection connection, final Permissions permission) throws SQLException {
+        try (final PreparedStatement ps = connection.prepareStatement(STMT_2)) {
+            ps.setString(1, permission.name());
+            try (final ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : null;
+            }
+        }
     }
 
 }

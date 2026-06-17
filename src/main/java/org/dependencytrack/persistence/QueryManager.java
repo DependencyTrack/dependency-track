@@ -567,6 +567,11 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().getComponents(identity, project, includeMetrics);
     }
 
+    public PaginatedResult getComponents(ComponentIdentity identity, Project project, boolean includeMetrics,
+                                         boolean excludeInactiveProjects, boolean onlyLatestProjectVersions) {
+        return getComponentQueryManager().getComponents(identity, project, includeMetrics, excludeInactiveProjects, onlyLatestProjectVersions);
+    }
+
     public Component createComponent(Component component, boolean commitIndex) {
         return getComponentQueryManager().createComponent(component, commitIndex);
     }

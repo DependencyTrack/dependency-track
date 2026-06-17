@@ -1,0 +1,98 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+name: PR Template Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_AUTHOR_TYPE: ${{ github.event.pull_request.user.type }}
+          PR_AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$PR_AUTHOR_TYPE" == "Bot" || "$PR_AUTHOR_LOGIN" == "dependabot[bot]" ]]; then
+            echo "::notice::Skipping template check for bot author '${PR_AUTHOR_LOGIN}'."
+            exit 0
+          fi
+
+          if [[ -z "$(printf '%s' "$PR_BODY" | tr -d '[:space:]')" ]]; then
+            echo "::error::PR body is empty. Please use the pull request template."
+            exit 1
+          fi
+
+          fail=0
+
+          require_heading() {
+            local heading="$1"
+            if ! grep -qiE "^### +${heading}[[:space:]]*$" <<< "$PR_BODY"; then
+              echo "::error::Missing required section: '### ${heading}'."
+              fail=1
+            fi
+          }
+
+          require_heading "Description"
+          require_heading "Addressed Issue"
+          require_heading "Checklist"
+
+          # Extract section bodies (between this H3 and the next H3 or EOF).
+          section() {
+            awk -v h="### $1" '
+              $0 ~ "^"h"[[:space:]]*$" {flag=1; next}
+              flag && /^### / {flag=0}
+              flag {print}
+            ' <<< "$PR_BODY"
+          }
+
+          strip_comments_and_ws() {
+            # Drop HTML comments, then collapse whitespace.
+            perl -0777 -pe 's/<!--.*?-->//gs' | tr -d '[:space:]'
+          }
+
+          desc=$(section "Description" | strip_comments_and_ws || true)
+          if [[ -z "${desc}" ]]; then
+            echo "::error::'### Description' section is empty (template placeholder doesn't count)."
+            fail=1
+          fi
+
+          issue_raw=$(section "Addressed Issue" | perl -0777 -pe 's/<!--.*?-->//gs')
+          issue=$(printf '%s' "$issue_raw" | tr -d '[:space:]')
+          if [[ -z "${issue}" ]]; then
+            echo "::error::'### Addressed Issue' section is empty."
+            fail=1
+          elif grep -qiE '^[[:space:]]*n/?a[[:space:]]*$' <<< "$issue_raw"; then
+            echo "::notice::Accepted 'N/A' for Addressed Issue."
+          elif ! grep -qiE '(#[0-9]+|(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]:]+#?[0-9]+|github\.com/[^/]+/[^/]+/issues/[0-9]+)' <<< "$issue_raw"; then
+            echo "::error::'### Addressed Issue' must reference an issue (e.g. '#1234', 'fixes #1234', or full issue URL). Use 'N/A' explicitly if none applies."
+            fail=1
+          fi
+
+          if [[ $fail -ne 0 ]]; then
+            echo ""
+            echo "PR body does not follow the template at .github/PULL_REQUEST_TEMPLATE.md."
+            echo "Please restore the template structure and fill in the required sections."
+            exit 1
+          fi

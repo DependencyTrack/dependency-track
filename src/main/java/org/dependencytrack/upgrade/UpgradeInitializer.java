@@ -59,10 +59,16 @@ public class UpgradeInitializer implements ServletContextListener {
     public void contextInitialized(final ServletContextEvent event) {
         LOGGER.info("Initializing upgrade framework");
         final var preUpgradeHooks = new ArrayList<PreUpgradeHook>();
+        final boolean isFreshInstall;
         try (final UpgradeMetaProcessor ump = new UpgradeMetaProcessor()) {
             final VersionComparator currentVersion = ump.getSchemaVersion();
             if (currentVersion != null && currentVersion.isOlderThan(new VersionComparator("4.0.0"))) {
                 throw new IllegalStateException("Unable to upgrade Dependency-Track versions prior to v4.0.0. Please refer to documentation for migration details. Halting.");
+            }
+
+            isFreshInstall = (currentVersion == null);
+            if (isFreshInstall) {
+                LOGGER.info("Fresh database detected; skipping upgrade scripts - DataNucleus will create the schema");
             }
 
             final var ordersSeen = new HashSet<Integer>();
@@ -81,11 +87,13 @@ public class UpgradeInitializer implements ServletContextListener {
             throw new IllegalStateException("An error occurred determining database schema version. Unable to continue.", e);
         }
 
-        try {
-            executePreUpgradeHooks(preUpgradeHooks);
-        } catch (RuntimeException e) {
-            LOGGER.error("Failed to execute pre-upgrade hooks", e);
-            throw new IllegalStateException("Failed to execute pre-upgrade hooks", e);
+        if (!isFreshInstall) {
+            try {
+                executePreUpgradeHooks(preUpgradeHooks);
+            } catch (RuntimeException e) {
+                LOGGER.error("Failed to execute pre-upgrade hooks", e);
+                throw new IllegalStateException("Failed to execute pre-upgrade hooks", e);
+            }
         }
 
         try (final JDOPersistenceManagerFactory pmf = createPersistenceManagerFactory()) {
@@ -96,13 +104,15 @@ public class UpgradeInitializer implements ServletContextListener {
             classNames.add(SchemaVersion.class.getCanonicalName());
             ((SchemaAwareStoreManager) ctx.getStoreManager()).createSchemaForClasses(classNames, new Properties());
 
-            try (final PersistenceManager pm = pmf.getPersistenceManager();
-                 final QueryManager qm = new QueryManager(pm)) {
-                final UpgradeExecutor executor = new UpgradeExecutor(qm);
-                try {
-                    executor.executeUpgrades(UpgradeItems.getUpgradeItems());
-                } catch (UpgradeException | RuntimeException e) {
-                    throw new IllegalStateException("An error occurred performing upgrade processing", e);
+            if (!isFreshInstall) {
+                try (final PersistenceManager pm = pmf.getPersistenceManager();
+                     final QueryManager qm = new QueryManager(pm)) {
+                    final UpgradeExecutor executor = new UpgradeExecutor(qm);
+                    try {
+                        executor.executeUpgrades(UpgradeItems.getUpgradeItems());
+                    } catch (UpgradeException | RuntimeException e) {
+                        throw new IllegalStateException("An error occurred performing upgrade processing", e);
+                    }
                 }
             }
         }

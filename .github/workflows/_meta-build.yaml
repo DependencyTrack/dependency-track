@@ -56,7 +56,7 @@ jobs:
           mvn -B cyclonedx:makeBom -Dservices.bom.merge.skip=false org.codehaus.mojo:exec-maven-plugin:exec@merge-services-bom
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # tag=v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
         with:
           name: assembled-wars
           path: |-
@@ -99,7 +99,7 @@ jobs:
           install: true
 
       - name: Login to Docker.io
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # tag=v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # tag=v4.1.0
         if: ${{ inputs.publish-container }}
         with:
           registry: docker.io
@@ -132,7 +132,7 @@ jobs:
           echo "tags-alpine=${TAGS_ALPINE}" >> $GITHUB_OUTPUT
 
       - name: Build multi-arch Container Image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # tag=v7.0.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # tag=v7.1.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
           build-args: |-
@@ -145,7 +145,7 @@ jobs:
           file: src/main/docker/Dockerfile
 
       - name: Build Alpine multi-arch Container Image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # tag=v7.0.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # tag=v7.1.0
         with:
           tags: ${{ steps.tags.outputs.tags-alpine }}
           build-args: |-

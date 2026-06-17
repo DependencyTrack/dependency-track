@@ -546,7 +546,6 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
             return "Invalid input: 'values' must be an array";
         }
 
-        final Set<String> seenKeys = new HashSet<>();
         final Set<String> seenLabels = new HashSet<>();
 
         for (int i = 0; i < values.length(); i++) {
@@ -555,18 +554,11 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
                 return "Invalid input: each vulnerability source must be an object";
             }
 
-            final String key = entry.optString("key", "").trim();
             final String label = entry.optString("label", "").trim();
-            if (key.isBlank()) {
-                return "Invalid input: source key cannot be empty";
-            }
             if (label.isBlank()) {
                 return "Invalid input: source name cannot be empty";
             }
 
-            if (!seenKeys.add(key.toLowerCase(Locale.ROOT))) {
-                return "A source with this key already exists. Please use a unique key.";
-            }
             if (!seenLabels.add(label.toLowerCase(Locale.ROOT))) {
                 return "A source with this name already exists. Please use a unique name.";
             }

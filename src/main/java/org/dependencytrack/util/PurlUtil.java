@@ -24,10 +24,13 @@ import jakarta.json.Json;
 import org.jspecify.annotations.Nullable;
 
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
 
 public class PurlUtil {
+
+    private static final Pattern EPOCH_PREFIX_PATTERN = Pattern.compile("^\\d+:");
 
     private PurlUtil() { }
 
@@ -100,6 +103,45 @@ public class PurlUtil {
         }
 
         return null;
+    }
+
+    /**
+     * Returns the PURL's version with any type-specific transformations applied to make it
+     * suitable for ecosystem-aware comparison. Returns the raw version when no transformation
+     * applies, or {@code null} if no version is set.
+     * <p>
+     * Applied transformations:
+     * <ul>
+     *   <li>{@code deb}/{@code rpm}: fold the {@code epoch} qualifier into the version as
+     *       {@code <epoch>:<version>} when not already encoded inline.</li>
+     * </ul>
+     */
+    public static @Nullable String getEffectiveVersion(@Nullable PackageURL purl) {
+        if (purl == null || purl.getVersion() == null) {
+            return null;
+        }
+
+        final String version = purl.getVersion();
+        final String type = purl.getType();
+        if (!PackageURL.StandardTypes.DEBIAN.equals(type)
+                && !PackageURL.StandardTypes.RPM.equals(type)) {
+            return version;
+        }
+
+        if (EPOCH_PREFIX_PATTERN.matcher(version).find()) {
+            return version;
+        }
+
+        if (purl.getQualifiers() == null) {
+            return version;
+        }
+
+        final String epoch = purl.getQualifiers().get("epoch");
+        if (epoch == null || epoch.isBlank()) {
+            return version;
+        }
+
+        return epoch + ":" + version;
     }
 
     public static @Nullable String getDistroQualifier(@Nullable String purl) {

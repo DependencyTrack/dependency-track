@@ -519,6 +519,118 @@ class ComponentResourceTest extends ResourceTest {
     }
 
     @Test
+    void getComponentByIdentityExcludeInactiveProjectsTest() {
+        final Project activeProject = qm.createProject("activeProject", null, "1.0", null, null, null, true, false);
+        var activeComponent = new Component();
+        activeComponent.setProject(activeProject);
+        activeComponent.setGroup("acme");
+        activeComponent.setName("library");
+        activeComponent.setVersion("1.0");
+        activeComponent.setPurl("pkg:maven/acme/library@1.0");
+        activeComponent = qm.createComponent(activeComponent, false);
+
+        final Project inactiveProject = qm.createProject("inactiveProject", null, "1.0", null, null, null, false, false);
+        var inactiveComponent = new Component();
+        inactiveComponent.setProject(inactiveProject);
+        inactiveComponent.setGroup("acme");
+        inactiveComponent.setName("library");
+        inactiveComponent.setVersion("1.0");
+        inactiveComponent.setPurl("pkg:maven/acme/library@1.0");
+        qm.createComponent(inactiveComponent, false);
+
+        final Response response = jersey.target(V1_COMPONENT + "/identity")
+                .queryParam("name", "library")
+                .queryParam("excludeInactiveProjects", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(1);
+        assertThat(json.getJsonObject(0).getString("uuid")).isEqualTo(activeComponent.getUuid().toString());
+    }
+
+    @Test
+    void getComponentByIdentityOnlyLatestProjectVersionTest() {
+        final Project latestProject = qm.createProject("latestProject", null, "2.0", null, null, null, true, true, false);
+        var latestComponent = new Component();
+        latestComponent.setProject(latestProject);
+        latestComponent.setGroup("acme");
+        latestComponent.setName("library");
+        latestComponent.setVersion("1.0");
+        latestComponent.setPurl("pkg:maven/acme/library@1.0");
+        latestComponent = qm.createComponent(latestComponent, false);
+
+        final Project olderProject = qm.createProject("olderProject", null, "1.0", null, null, null, true, false);
+        var olderComponent = new Component();
+        olderComponent.setProject(olderProject);
+        olderComponent.setGroup("acme");
+        olderComponent.setName("library");
+        olderComponent.setVersion("1.0");
+        olderComponent.setPurl("pkg:maven/acme/library@1.0");
+        qm.createComponent(olderComponent, false);
+
+        final Response response = jersey.target(V1_COMPONENT + "/identity")
+                .queryParam("name", "library")
+                .queryParam("onlyLatestProjectVersions", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(1);
+        assertThat(json.getJsonObject(0).getString("uuid")).isEqualTo(latestComponent.getUuid().toString());
+    }
+
+    @Test
+    void getComponentByIdentityExcludeInactiveAndOnlyLatestProjectVersionTest() {
+        final Project activeLatest = qm.createProject("activeLatest", null, "2.0", null, null, null, true, true, false);
+        var activeLatestComponent = new Component();
+        activeLatestComponent.setProject(activeLatest);
+        activeLatestComponent.setGroup("acme");
+        activeLatestComponent.setName("library");
+        activeLatestComponent.setVersion("1.0");
+        activeLatestComponent.setPurl("pkg:maven/acme/library@1.0");
+        activeLatestComponent = qm.createComponent(activeLatestComponent, false);
+
+        final Project activeOlder = qm.createProject("activeOlder", null, "1.0", null, null, null, true, false);
+        var activeOlderComponent = new Component();
+        activeOlderComponent.setProject(activeOlder);
+        activeOlderComponent.setGroup("acme");
+        activeOlderComponent.setName("library");
+        activeOlderComponent.setVersion("1.0");
+        activeOlderComponent.setPurl("pkg:maven/acme/library@1.0");
+        qm.createComponent(activeOlderComponent, false);
+
+        final Project inactiveLatest = qm.createProject("inactiveLatest", null, "2.0", null, null, null, false, true, false);
+        var inactiveLatestComponent = new Component();
+        inactiveLatestComponent.setProject(inactiveLatest);
+        inactiveLatestComponent.setGroup("acme");
+        inactiveLatestComponent.setName("library");
+        inactiveLatestComponent.setVersion("1.0");
+        inactiveLatestComponent.setPurl("pkg:maven/acme/library@1.0");
+        qm.createComponent(inactiveLatestComponent, false);
+
+        final Response response = jersey.target(V1_COMPONENT + "/identity")
+                .queryParam("name", "library")
+                .queryParam("excludeInactiveProjects", "true")
+                .queryParam("onlyLatestProjectVersions", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json).hasSize(1);
+        assertThat(json.getJsonObject(0).getString("uuid")).isEqualTo(activeLatestComponent.getUuid().toString());
+    }
+
+    @Test
     void getComponentByHashTest() {
         Project project = qm.createProject("Acme Application", null, null, null, null, null, true, false);
         Component component = new Component();

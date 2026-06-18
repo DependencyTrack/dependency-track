@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static org.dependencytrack.common.ConfigKeys.DEV_SERVICES_CONTAINER_REUSE_ENABLED;
 import static org.dependencytrack.common.ConfigKeys.DEV_SERVICES_ENABLED;
 import static org.dependencytrack.common.ConfigKeys.DEV_SERVICES_FRONTEND_IMAGE;
 import static org.dependencytrack.common.ConfigKeys.DEV_SERVICES_FRONTEND_PORT;
@@ -42,14 +43,19 @@ public class DevServices implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DevServices.class);
 
+    private static final String DEV_SERVICES_LABEL = "org.dependencytrack.dev-services";
+
     private final Config config = ConfigProvider.getConfig();
     private AutoCloseable postgresContainer;
     private AutoCloseable frontendContainer;
+    private boolean isContainerReuseActive;
 
     public void start() {
         if (!config.getValue(DEV_SERVICES_ENABLED, boolean.class)) {
             return;
         }
+
+        final boolean shouldReuseContainers = config.getValue(DEV_SERVICES_CONTAINER_REUSE_ENABLED, boolean.class);
 
         try {
             // Testcontainers will not be available outside the test scope,
@@ -80,6 +86,14 @@ public class DevServices implements AutoCloseable {
 
             final Method addFixedExposedPortMethod = genericContainerClass.getDeclaredMethod("addFixedExposedPort", int.class, int.class);
             addFixedExposedPortMethod.setAccessible(true);
+            final Method withReuseMethod = genericContainerClass.getMethod("withReuse", boolean.class);
+            final Method withLabelMethod = genericContainerClass.getMethod("withLabel", String.class, String.class);
+
+            // Reuse only takes effect when it has been opted into globally.
+            final Class<?> testcontainersConfigClass = Class.forName("org.testcontainers.utility.TestcontainersConfiguration");
+            final Object testcontainersConfig = testcontainersConfigClass.getMethod("getInstance").invoke(null);
+            final var envSupportsReuse = (boolean) testcontainersConfigClass.getMethod("environmentSupportsReuse").invoke(testcontainersConfig);
+            isContainerReuseActive = shouldReuseContainers && envSupportsReuse;
 
             final Class<?> postgresContainerClass = Class.forName("org.testcontainers.postgresql.PostgreSQLContainer");
             final Constructor<?> postgresContainerConstructor = postgresContainerClass.getDeclaredConstructor(String.class);
@@ -88,14 +102,19 @@ public class DevServices implements AutoCloseable {
             postgresContainerClass.getMethod("withPassword", String.class).invoke(postgresContainer, postgresPassword);
             postgresContainerClass.getMethod("withDatabaseName", String.class).invoke(postgresContainer, postgresDatabase);
             postgresContainerClass.getMethod("withUrlParam", String.class, String.class).invoke(postgresContainer, "reWriteBatchedInserts", "true");
+            withReuseMethod.invoke(postgresContainer, shouldReuseContainers);
+            withLabelMethod.invoke(postgresContainer, DEV_SERVICES_LABEL, "true");
             addFixedExposedPortMethod.invoke(postgresContainer, /* hostPort */ postgresPort, /* containerPort */  5432);
 
+            final String frontendImage = config.getValue(DEV_SERVICES_FRONTEND_IMAGE, String.class);
             final Constructor<?> genericContainerConstructor = genericContainerClass.getDeclaredConstructor(String.class);
-            frontendContainer = (AutoCloseable) genericContainerConstructor.newInstance(config.getValue(DEV_SERVICES_FRONTEND_IMAGE, String.class));
+            frontendContainer = (AutoCloseable) genericContainerConstructor.newInstance(frontendImage);
             genericContainerClass.getMethod("withEnv", String.class, String.class).invoke(frontendContainer, "API_BASE_URL", "http://localhost:8080");
             genericContainerClass.getMethod("withExposedPorts", Integer[].class).invoke(frontendContainer, (Object) new Integer[]{8080});
+            withReuseMethod.invoke(frontendContainer, shouldReuseContainers);
+            withLabelMethod.invoke(frontendContainer, DEV_SERVICES_LABEL, "true");
             addFixedExposedPortMethod.invoke(frontendContainer, /* hostPort */ frontendPort, /* containerPort */ 8080);
-            if (config.getValue(DEV_SERVICES_FRONTEND_IMAGE, String.class).endsWith(":snapshot")) {
+            if (frontendImage.matches(".*:\\d*-?snapshot")) {
                 genericContainerClass.getMethod("withImagePullPolicy", imagePullPolicyClass).invoke(frontendContainer, alwaysPullPolicy);
             }
 
@@ -106,12 +125,17 @@ public class DevServices implements AutoCloseable {
             throw new RuntimeException("Failed to launch containers", e);
         }
 
-        LOGGER.info("PostgreSQL is listening at localhost:%d".formatted(postgresPort));
-        LOGGER.info("Frontend is listening at http://localhost:%d".formatted(frontendPort));
+        LOGGER.info("PostgreSQL is listening at localhost:{}", postgresPort);
+        LOGGER.info("Frontend is listening at http://localhost:{}", frontendPort);
     }
 
     @Override
     public void close() {
+        if (isContainerReuseActive) {
+            LOGGER.info("Testcontainers reuse is active; leaving containers running");
+            return;
+        }
+
         if (postgresContainer != null) {
             LOGGER.info("Stopping postgres container");
             try {

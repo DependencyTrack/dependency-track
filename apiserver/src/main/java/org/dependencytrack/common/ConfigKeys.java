@@ -24,6 +24,7 @@ package org.dependencytrack.common;
 public final class ConfigKeys {
 
     public static final String DEV_SERVICES_ENABLED = "dt.dev-services.enabled";
+    public static final String DEV_SERVICES_CONTAINER_REUSE_ENABLED = "dt.dev-services.container-reuse.enabled";
     public static final String DEV_SERVICES_FRONTEND_IMAGE = "dt.dev-services.frontend-image";
     public static final String DEV_SERVICES_POSTGRES_IMAGE = "dt.dev-services.postgres-image";
     public static final String DEV_SERVICES_FRONTEND_PORT = "dt.dev-services.frontend-port";

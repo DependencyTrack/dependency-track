@@ -162,6 +162,15 @@ apiserver-dev:
 	$(MVN) $(MVN_FLAGS) -q -Pquick,dev-services -pl apiserver -am verify
 .PHONY: apiserver-dev
 
+apiserver-dev-remove-containers:
+	@ids=$$(docker ps -aq --filter label=org.dependencytrack.dev-services); \
+	if [ -n "$$ids" ]; then \
+		docker rm -f $$ids; \
+	else \
+		echo "No dev services containers to remove"; \
+	fi
+.PHONY: apiserver-dev-remove-containers
+
 test-e2e: build-image
 	$(MVND) $(MVN_FLAGS) -pl e2e -DskipE2E=false verify
 .PHONY: test-e2e

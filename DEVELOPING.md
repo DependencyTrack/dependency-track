@@ -155,7 +155,8 @@ make test-e2e
 ## Dev Mode
 
 Dev mode launches the API server with auto-provisioned containers for PostgreSQL
-and the frontend. Containers are created on startup and disposed of on shutdown.
+and the frontend. Containers are created on startup and, unless reuse is enabled
+(see [Container Reuse](#container-reuse)), disposed of on shutdown.
 
 ```shell
 make apiserver-dev
@@ -165,6 +166,21 @@ The API server will be available at `http://localhost:8080`.
 Frontend and PostgreSQL ports are logged during startup.
 
 Dev mode specific configuration can be made in [`application-dev.properties`](apiserver/src/main/resources/application-dev.properties).
+
+### Container Reuse
+
+Dev mode is configured to reuse its containers across restarts, so PostgreSQL
+state (schema and data) is preserved and startup is faster. Reuse only takes
+effect once it has been opted into globally, by setting either `testcontainers.reuse.enable=true`
+in `~/.testcontainers.properties`, or the `TESTCONTAINERS_REUSE_ENABLE=true` environment variable.
+Without it, containers are disposed on shutdown as usual.
+See the [Testcontainers reuse docs](https://java.testcontainers.org/features/reuse/#how-to-use-it).
+
+To remove reused (or otherwise stale) dev services containers, e.g. to start from a clean slate, run:
+
+```shell
+make apiserver-dev-remove-containers
+```
 
 ## DataNucleus Bytecode Enhancement
 

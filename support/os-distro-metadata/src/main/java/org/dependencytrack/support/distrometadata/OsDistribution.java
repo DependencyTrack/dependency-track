@@ -26,7 +26,11 @@ import java.util.Map;
 /**
  * @since 4.14.0
  */
-public sealed interface OsDistribution permits AlpineDistribution, DebianDistribution, UbuntuDistribution {
+public sealed interface OsDistribution permits
+        AlpineDistribution,
+        DebianDistribution,
+        RedHatDistribution,
+        UbuntuDistribution {
 
     String purlQualifierValue();
 
@@ -38,26 +42,30 @@ public sealed interface OsDistribution permits AlpineDistribution, DebianDistrib
         }
 
         final Map<String, String> qualifiers = purl.getQualifiers();
-        if (qualifiers == null) {
+        final String distroQualifier = qualifiers != null
+                ? qualifiers.get("distro")
+                : null;
+
+        if (distroQualifier != null && !distroQualifier.isEmpty()) {
+            if ("apk".equals(purl.getType())) {
+                return AlpineDistribution.of(distroQualifier);
+            }
+            if ("deb".equals(purl.getType())) {
+                if ("debian".equalsIgnoreCase(purl.getNamespace())) {
+                    return DebianDistribution.of(distroQualifier);
+                }
+                if ("ubuntu".equalsIgnoreCase(purl.getNamespace())) {
+                    return UbuntuDistribution.of(distroQualifier);
+                }
+            }
+            if ("rpm".equals(purl.getType()) && "redhat".equalsIgnoreCase(purl.getNamespace())) {
+                return RedHatDistribution.of(distroQualifier);
+            }
             return null;
         }
 
-        final String distroQualifier = qualifiers.get("distro");
-        if (distroQualifier == null || distroQualifier.isEmpty()) {
-            return null;
-        }
-
-        if ("apk".equals(purl.getType())) {
-            return AlpineDistribution.of(distroQualifier);
-        }
-
-        if ("deb".equals(purl.getType())) {
-            if ("debian".equalsIgnoreCase(purl.getNamespace())) {
-                return DebianDistribution.of(distroQualifier);
-            }
-            if ("ubuntu".equalsIgnoreCase(purl.getNamespace())) {
-                return UbuntuDistribution.of(distroQualifier);
-            }
+        if ("rpm".equals(purl.getType()) && "redhat".equalsIgnoreCase(purl.getNamespace())) {
+            return RedHatDistribution.ofRpmRelease(purl.getVersion());
         }
 
         return null;

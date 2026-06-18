@@ -23,6 +23,7 @@ import org.jspecify.annotations.NullMarked;
 module org.dependencytrack.support.distrometadata {
     exports org.dependencytrack.support.distrometadata;
 
-    requires transitive packageurl.java;
+    requires cpe.parser;
     requires transitive org.jspecify;
+    requires transitive packageurl.java;
 }

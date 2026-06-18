@@ -608,12 +608,59 @@ class InternalVulnAnalyzerTest {
                     // Scenario: Distro matches but version out of range
                     Arguments.of("pkg:deb/debian/sudo?distro=debian-11", Range.withRange().havingEndExcluding("1.0.0"), DOES_NOT_MATCH, "pkg:deb/debian/sudo@1.9.5?distro=debian-11"),
                     // ---
-                    // Unsupported PURL type with distro qualifiers
+                    // Red Hat
+                    // ---
+                    // Scenario: Same RHEL major version
+                    Arguments.of("pkg:rpm/redhat/sudo?distro=rhel-9", RANGE, MATCHES, "pkg:rpm/redhat/sudo@1.9.5?distro=rhel-9"),
+                    // Scenario: rhel- (Syft) vs redhat- (Trivy) prefix on same major version
+                    Arguments.of("pkg:rpm/redhat/sudo?distro=rhel-9", RANGE, MATCHES, "pkg:rpm/redhat/sudo@1.9.5?distro=redhat-9.7"),
+                    // Scenario: Point release vs major version
+                    Arguments.of("pkg:rpm/redhat/sudo?distro=rhel-8.6", RANGE, MATCHES, "pkg:rpm/redhat/sudo@1.9.5?distro=rhel-8"),
+                    // Scenario: Different RHEL major versions
+                    Arguments.of("pkg:rpm/redhat/sudo?distro=rhel-8", RANGE, DOES_NOT_MATCH, "pkg:rpm/redhat/sudo@1.9.5?distro=rhel-9"),
+                    // Scenario: VS has Red Hat distro, component does not
+                    Arguments.of("pkg:rpm/redhat/sudo?distro=rhel-9", RANGE, MATCHES, "pkg:rpm/redhat/sudo@1.9.5"),
+                    // Scenario: Distro matches but version out of range
+                    Arguments.of("pkg:rpm/redhat/sudo?distro=rhel-9", Range.withRange().havingEndExcluding("1.0.0"), DOES_NOT_MATCH, "pkg:rpm/redhat/sudo@1.9.5?distro=rhel-9"),
+                    // Scenario: Unparseable VS qualifier is not overridden by the `el` marker heuristics
+                    Arguments.of("pkg:rpm/redhat/libsolv?distro=garbage", Range.withRange().havingEndExcluding("0.7.30-2.el9"), MATCHES, "pkg:rpm/redhat/libsolv@0.7.24-3.el8"),
+                    // Scenario: Both sides have a distro qualifier, only the VS one parses
+                    Arguments.of("pkg:rpm/redhat/libsolv?distro=rhel-8", RANGE, DOES_NOT_MATCH, "pkg:rpm/redhat/libsolv@0.7.24-3.el8?distro=garbage"),
+                    // ---
+                    // Red Hat: `el` marker heuristics (no explicit `distro=` qualifier)
+                    // ---
+                    // Scenario: VS `el` marker on the fixed bound, component on its own version, same major
+                    Arguments.of("pkg:rpm/redhat/libsolv", Range.withRange().havingEndExcluding("0.7.30-2.el8"), MATCHES, "pkg:rpm/redhat/libsolv@0.7.24-3.el8"),
+                    // Issue:    https://github.com/DependencyTrack/dependency-track/issues/6156
+                    // Scenario: Satellite el8sat fixed bound vs el9 component
+                    Arguments.of("pkg:rpm/redhat/libsolv", Range.withRange().havingEndExcluding("1:0.7.20-6.el8sat"), DOES_NOT_MATCH, "pkg:rpm/redhat/libsolv@0.7.24-3.el9"),
+                    // Scenario: Component has explicit distro=rhel-8.6, VS only the fixed bound's el8
+                    Arguments.of("pkg:rpm/redhat/libsolv", Range.withRange().havingEndExcluding("0.7.30-2.el8"), MATCHES, "pkg:rpm/redhat/libsolv@0.7.24-3.el8?distro=rhel-8.6"),
+                    // Scenario: VS has explicit distro=rhel-9, component only an el8
+                    Arguments.of("pkg:rpm/redhat/libsolv?distro=rhel-9", RANGE, DOES_NOT_MATCH, "pkg:rpm/redhat/libsolv@0.7.24-3.el8"),
+                    // Scenario: Modular `el` marker on both sides, same major
+                    Arguments.of("pkg:rpm/redhat/php", Range.withRange().havingEndExcluding("8.0.30-3.module+el8.8.0+19602+1de75c93"), MATCHES, "pkg:rpm/redhat/php@8.0.30-2.module+el8.8.0+19602+1de75c93"),
+                    // Scenario: VS has modular el8 vs el9 modular component
+                    Arguments.of("pkg:rpm/redhat/php", Range.withRange().havingEndExcluding("8.0.30-3.module+el8.8.0+19602+1de75c93"), DOES_NOT_MATCH, "pkg:rpm/redhat/php@8.0.30-2.module+el9.2.0+12345+abcdef1"),
+                    // Scenario: Modular build minor differs but RHEL major matches (el8.7 vs el8.8); range decides
+                    Arguments.of("pkg:rpm/redhat/php", Range.withRange().havingEndExcluding("8.0.30-3.module+el8.8.0+19602+1de75c93"), MATCHES, "pkg:rpm/redhat/php@8.0.30-2.module+el8.7.0+12345+abcdef1"),
+                    // Scenario: Neither side carries any `el` marker; permissive "missing distro = match" default
+                    Arguments.of("pkg:rpm/redhat/libsolv", RANGE, MATCHES, "pkg:rpm/redhat/libsolv@1.0.0"),
+                    // Scenario: VS `el` marker carried by the inclusive upper bound, same major
+                    Arguments.of("pkg:rpm/redhat/libsolv", Range.withRange().havingEndIncluding("0.7.30-2.el8"), MATCHES, "pkg:rpm/redhat/libsolv@0.7.24-3.el8"),
+                    // Scenario: Inclusive upper bound el8 vs el9 component, version in range; distro rejects
+                    Arguments.of("pkg:rpm/redhat/libsolv", Range.withRange().havingEndIncluding("0.7.30-2.el8"), DOES_NOT_MATCH, "pkg:rpm/redhat/libsolv@0.7.24-3.el9"),
+                    // Scenario: VS `el` marker carried by the inclusive lower bound only
+                    Arguments.of("pkg:rpm/redhat/libsolv", Range.withRange().havingStartIncluding("0.7.20-1.el8"), MATCHES, "pkg:rpm/redhat/libsolv@0.7.24-3.el8"),
+                    // Scenario: VS `el` marker carried by the exclusive lower bound only
+                    Arguments.of("pkg:rpm/redhat/libsolv", Range.withRange().havingStartExcluding("0.7.20-1.el8"), MATCHES, "pkg:rpm/redhat/libsolv@0.7.24-3.el8"),
+                    // ---
+                    // Unsupported RPM namespace falls back to raw string comparison
                     // ---
                     // Scenario: Both have distro, neither parseable, same string
-                    Arguments.of("pkg:rpm/redhat/sudo?distro=el-9", RANGE, MATCHES, "pkg:rpm/redhat/sudo@1.9.5?distro=el-9"),
-                    // Scenario: Both have distro, neither parseable, different strings (mismatch)
-                    Arguments.of("pkg:rpm/redhat/sudo?distro=rhel-9", RANGE, DOES_NOT_MATCH, "pkg:rpm/redhat/sudo@1.9.5?distro=el-9"));
+                    Arguments.of("pkg:rpm/centos/sudo?distro=centos-9", RANGE, MATCHES, "pkg:rpm/centos/sudo@1.9.5?distro=centos-9"),
+                    // Scenario: Both have distro, neither parseable, different strings
+                    Arguments.of("pkg:rpm/centos/sudo?distro=centos-8", RANGE, DOES_NOT_MATCH, "pkg:rpm/centos/sudo@1.9.5?distro=centos-9"));
         }
 
         @ParameterizedTest(name = "[{index}] expect={2} src={0} target={3}")

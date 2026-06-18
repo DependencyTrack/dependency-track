@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>vuln-analysis-parent</artifactId>
-        <version>5.0.2-SNAPSHOT</version>
+        <version>5.0.2</version>
     </parent>
 
     <artifactId>vuln-analysis-api</artifactId>

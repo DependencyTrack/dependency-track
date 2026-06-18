@@ -22,7 +22,7 @@
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track-parent</artifactId>
     <packaging>pom</packaging>
-    <version>5.0.2-SNAPSHOT</version>
+    <version>5.0.2</version>
 
     <modules>
         <module>common</module>
@@ -98,7 +98,7 @@
         <connection>${scm.connection}</connection>
         <developerConnection>${scm.developer.connection}</developerConnection>
         <url>${scm.url}</url>
-        <tag>5.0.0</tag>
+        <tag>5.0.2</tag>
     </scm>
 
     <issueManagement>

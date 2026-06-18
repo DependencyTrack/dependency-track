@@ -39,6 +39,12 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
 > It adds optional `cvssV2Vector`, `cvssV3Vector`, `cvssV4Vector`, and `owaspRRVector` fields to `vulnerability` objects,
 > which are included when the corresponding scores or ratings are available and may be omitted otherwise.
 
+> Finding Package Format 1.4 is not yet available in any release of DependencyTrack.
+> It adds fields `analysis.state`, `analysis.isSuppressed` and `analysis.detail` to vulnerability objects.
+> `analysis.state` is the recorded state of the vulnerability.
+> `analysis.isSupressed` is boolean field that indicates whether the vulnerability has been supressed manually.
+> `analysis.detail` may be details provided by a imported vulnerability scan report.
+
 #### Example
 
 ```json

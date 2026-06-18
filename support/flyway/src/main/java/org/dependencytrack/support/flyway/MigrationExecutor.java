@@ -23,6 +23,7 @@ import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
+import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
@@ -57,6 +58,14 @@ public class MigrationExecutor {
                 .cleanDisabled(true)
                 .placeholderReplacement(false)
                 .outOfOrder(outOfOrder)
+                // Acquire the migration lock via a session-level advisory lock instead of a
+                // transactional lock. Required for CREATE INDEX CONCURRENTLY to work.
+                // https://documentation.red-gate.com/fd/flyway-postgresql-transactional-lock-setting-277579114.html
+                //
+                // Note that our init task executors also use session-level locks for exactly
+                // this reason, and the user-facing contract clearly states that a direct DB
+                // connection is required for it (i.e., no PgBouncer in transaction mode).
+                .configuration(Map.of("flyway.postgresql.transactional.lock", "false"))
                 .loggers("slf4j");
         if (schemaHistoryTable != null) {
             config.table(schemaHistoryTable);

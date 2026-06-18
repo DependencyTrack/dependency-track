@@ -24,10 +24,10 @@ import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
-import org.dependencytrack.migration.MigrationExecutor;
 import org.dependencytrack.plugin.api.MutableServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -37,12 +37,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 
@@ -53,12 +51,10 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.vulnanalysis.internal.InternalVulnAnalyzerTest.Range.withRange;
 
-@Testcontainers
 class InternalVulnAnalyzerTest {
 
-    @Container
-    private static final PostgreSQLContainer POSTGRES_CONTAINER =
-            new PostgreSQLContainer("postgres:14-alpine");
+    @RegisterExtension
+    static final TestDatabaseExtension database = new TestDatabaseExtension();
 
     private static final boolean MATCHES = true;
     private static final boolean DOES_NOT_MATCH = false;
@@ -74,12 +70,10 @@ class InternalVulnAnalyzerTest {
     static void beforeAll() {
         dataSourceRegistry = new DataSourceRegistry(
                 new SmallRyeConfigBuilder()
-                        .withDefaultValue("dt.datasource.default.url", POSTGRES_CONTAINER.getJdbcUrl())
-                        .withDefaultValue("dt.datasource.default.username", POSTGRES_CONTAINER.getUsername())
-                        .withDefaultValue("dt.datasource.default.password", POSTGRES_CONTAINER.getPassword())
+                        .withDefaultValue("dt.datasource.default.url", database.jdbcUrl())
+                        .withDefaultValue("dt.datasource.default.username", database.username())
+                        .withDefaultValue("dt.datasource.default.password", database.password())
                         .build());
-
-        new MigrationExecutor(dataSourceRegistry.getDefault()).execute();
     }
 
     @BeforeEach
@@ -102,13 +96,6 @@ class InternalVulnAnalyzerTest {
         }
         if (analyzerFactory != null) {
             analyzerFactory.close();
-        }
-        if (jdbi != null) {
-            jdbi.useTransaction(handle -> {
-                handle.execute("TRUNCATE TABLE \"VULNERABLESOFTWARE_VULNERABILITIES\" CASCADE");
-                handle.execute("TRUNCATE TABLE \"VULNERABILITY\" CASCADE");
-                handle.execute("TRUNCATE TABLE \"VULNERABLESOFTWARE\" CASCADE");
-            });
         }
     }
 

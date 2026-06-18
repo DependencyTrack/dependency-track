@@ -27,26 +27,23 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.SimplePageTokenEncoder;
-import org.dependencytrack.migration.MigrationExecutor;
 import org.dependencytrack.secret.management.ListSecretsRequest;
 import org.dependencytrack.secret.management.SecretAlreadyExistsException;
 import org.dependencytrack.secret.management.SecretManager;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.eclipse.microprofile.config.Config;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
-import org.postgresql.ds.PGSimpleDataSource;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -60,12 +57,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
-@Testcontainers
 class DatabaseSecretManagerTest {
 
-    @Container
-    private static final PostgreSQLContainer postgresContainer =
-            new PostgreSQLContainer(DockerImageName.parse("postgres:14-alpine"));
+    @RegisterExtension
+    static final TestDatabaseExtension database = new TestDatabaseExtension().withoutTruncation();
 
     @TempDir
     private static Path tempDir;
@@ -75,21 +70,16 @@ class DatabaseSecretManagerTest {
     private static SecretManager secretManager;
 
     @BeforeAll
-    static void beforeAll() throws Exception {
-        final var dataSource = new PGSimpleDataSource();
-        dataSource.setUrl(postgresContainer.getJdbcUrl());
-        dataSource.setUser(postgresContainer.getUsername());
-        dataSource.setPassword(postgresContainer.getPassword());
-
-        new MigrationExecutor(dataSource).execute();
+    static void beforeAll() {
+        database.truncateTables();
 
         kekKeysetPath = tempDir.resolve("kek-keyset.json");
 
         final Config config = new SmallRyeConfigBuilder()
                 .withDefaultValues(Map.ofEntries(
-                        Map.entry("dt.datasource.secrets.url", postgresContainer.getJdbcUrl()),
-                        Map.entry("dt.datasource.secrets.username", postgresContainer.getUsername()),
-                        Map.entry("dt.datasource.secrets.password", postgresContainer.getPassword()),
+                        Map.entry("dt.datasource.secrets.url", database.jdbcUrl()),
+                        Map.entry("dt.datasource.secrets.username", database.username()),
+                        Map.entry("dt.datasource.secrets.password", database.password()),
                         Map.entry("dt.secret-management.database.datasource.name", "secrets"),
                         Map.entry("dt.secret-management.database.kek-keyset.path", kekKeysetPath.toString()),
                         Map.entry("dt.secret-management.database.kek-keyset.create-if-missing", "true")))
@@ -103,7 +93,8 @@ class DatabaseSecretManagerTest {
 
     @AfterEach
     void afterEach() throws Exception {
-        try (final Connection connection = postgresContainer.createConnection("");
+        try (final Connection connection = DriverManager.getConnection(
+                database.jdbcUrl(), database.username(), database.password());
              final Statement statement = connection.createStatement()) {
             statement.execute("TRUNCATE TABLE \"SECRET\"");
         }
@@ -422,9 +413,9 @@ class DatabaseSecretManagerTest {
             // Construct a new secret manager that uses the new KEK keyset.
             final Config config = new SmallRyeConfigBuilder()
                     .withDefaultValues(Map.ofEntries(
-                            Map.entry("dt.datasource.secrets.url", postgresContainer.getJdbcUrl()),
-                            Map.entry("dt.datasource.secrets.username", postgresContainer.getUsername()),
-                            Map.entry("dt.datasource.secrets.password", postgresContainer.getPassword()),
+                            Map.entry("dt.datasource.secrets.url", database.jdbcUrl()),
+                            Map.entry("dt.datasource.secrets.username", database.username()),
+                            Map.entry("dt.datasource.secrets.password", database.password()),
                             Map.entry("dt.secret-management.database.datasource.name", "secrets"),
                             Map.entry("dt.secret-management.database.kek-keyset.path", newKekKeysetFilePath.toString()),
                             Map.entry("dt.secret-management.database.kek-keyset.create-if-missing", "false")))
@@ -460,7 +451,7 @@ class DatabaseSecretManagerTest {
     private List<SecretRecord> getAllSecrets() throws Exception {
         final var records = new ArrayList<SecretRecord>();
 
-        try (final Connection connection = postgresContainer.createConnection("");
+        try (final Connection connection = DriverManager.getConnection(database.jdbcUrl(), database.username(), database.password());
              final PreparedStatement ps = connection.prepareStatement("""
                      SELECT *
                        FROM "SECRET"

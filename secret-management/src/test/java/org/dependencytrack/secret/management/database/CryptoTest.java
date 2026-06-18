@@ -25,16 +25,12 @@ import com.google.crypto.tink.TinkJsonProtoKeysetFormat;
 import com.google.crypto.tink.aead.AeadKeyTemplates;
 import com.google.crypto.tink.aead.PredefinedAeadParameters;
 import io.smallrye.config.SmallRyeConfigBuilder;
-import org.dependencytrack.migration.MigrationExecutor;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 import org.postgresql.ds.PGSimpleDataSource;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,12 +44,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
-@Testcontainers
 class CryptoTest {
 
-    @Container
-    private static final PostgreSQLContainer postgresContainer =
-            new PostgreSQLContainer(DockerImageName.parse("postgres:14-alpine"));
+    @RegisterExtension
+    static final TestDatabaseExtension database = new TestDatabaseExtension();
 
     @TempDir
     private Path tempDir;
@@ -63,21 +57,9 @@ class CryptoTest {
     @BeforeAll
     static void beforeAll() throws Exception {
         dataSource = new PGSimpleDataSource();
-        dataSource.setUrl(postgresContainer.getJdbcUrl());
-        dataSource.setUser(postgresContainer.getUsername());
-        dataSource.setPassword(postgresContainer.getPassword());
-
-        new MigrationExecutor(dataSource).execute();
-    }
-
-    @BeforeEach
-    void beforeEach() throws Exception {
-        try (final Connection connection = dataSource.getConnection();
-             final Statement statement = connection.createStatement()) {
-            statement.execute("""
-                    TRUNCATE TABLE "CONFIGPROPERTY"
-                    """);
-        }
+        dataSource.setUrl(database.jdbcUrl());
+        dataSource.setUser(database.username());
+        dataSource.setPassword(database.password());
     }
 
     @Test
@@ -196,9 +178,9 @@ class CryptoTest {
         return new DatabaseSecretManagerConfig(
                 new SmallRyeConfigBuilder()
                         .withDefaultValues(Map.ofEntries(
-                                Map.entry("dt.datasource.secrets.url", postgresContainer.getJdbcUrl()),
-                                Map.entry("dt.datasource.secrets.username", postgresContainer.getUsername()),
-                                Map.entry("dt.datasource.secrets.password", postgresContainer.getPassword()),
+                                Map.entry("dt.datasource.secrets.url", database.jdbcUrl()),
+                                Map.entry("dt.datasource.secrets.username", database.username()),
+                                Map.entry("dt.datasource.secrets.password", database.password()),
                                 Map.entry("dt.secret-management.database.datasource.name", "secrets"),
                                 Map.entry("dt.secret-management.database.kek", encodedKek)))
                         .build());
@@ -208,9 +190,9 @@ class CryptoTest {
         return new DatabaseSecretManagerConfig(
                 new SmallRyeConfigBuilder()
                         .withDefaultValues(Map.ofEntries(
-                                Map.entry("dt.datasource.secrets.url", postgresContainer.getJdbcUrl()),
-                                Map.entry("dt.datasource.secrets.username", postgresContainer.getUsername()),
-                                Map.entry("dt.datasource.secrets.password", postgresContainer.getPassword()),
+                                Map.entry("dt.datasource.secrets.url", database.jdbcUrl()),
+                                Map.entry("dt.datasource.secrets.username", database.username()),
+                                Map.entry("dt.datasource.secrets.password", database.password()),
                                 Map.entry("dt.secret-management.database.datasource.name", "secrets"),
                                 Map.entry("dt.secret-management.database.kek-keyset.path", kekPath.toString()),
                                 Map.entry("dt.secret-management.database.kek-keyset.create-if-missing",

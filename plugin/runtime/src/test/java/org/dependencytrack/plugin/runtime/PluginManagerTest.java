@@ -23,10 +23,14 @@ import org.dependencytrack.plugin.api.ExtensionFactory;
 import org.dependencytrack.plugin.api.ExtensionPoint;
 import org.dependencytrack.plugin.api.Plugin;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.postgres.PostgresPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.net.http.HttpClient;
 import java.util.List;
@@ -35,11 +39,17 @@ import java.util.SequencedCollection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-class PluginManagerTest extends AbstractDatabaseTest {
+class PluginManagerTest {
+
+    @RegisterExtension
+    private static final TestDatabaseExtension database = new TestDatabaseExtension();
 
     interface UnknownExtensionPoint extends ExtensionPoint {
     }
 
+    private final Jdbi jdbi = Jdbi
+            .create(database.jdbcUrl(), database.username(), database.password())
+            .installPlugin(new PostgresPlugin());
     private PluginManager pluginManager;
 
     @BeforeEach
@@ -47,7 +57,7 @@ class PluginManagerTest extends AbstractDatabaseTest {
         pluginManager = new PluginManager(
                 ConfigProvider.getConfig(),
                 new NoopCacheManager(),
-                secretName -> null,
+                _ -> null,
                 jdbi,
                 HttpClient.newHttpClient(),
                 List.of(TestExtensionPoint.class));

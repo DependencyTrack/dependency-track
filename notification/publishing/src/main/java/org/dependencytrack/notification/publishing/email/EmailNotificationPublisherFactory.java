@@ -174,7 +174,7 @@ public final class EmailNotificationPublisherFactory implements NotificationPubl
 
     @Override
     public NotificationTemplate defaultTemplate() {
-        return new NotificationTemplate(loadDefaultTemplate(extensionClass()), "text/plain");
+        return new NotificationTemplate(loadDefaultTemplate(extensionClass()), "text/plain; charset=utf-8");
     }
 
     private Session createSession(EmailNotificationPublisherGlobalConfigV1 config) {

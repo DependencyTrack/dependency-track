@@ -31,6 +31,7 @@ import jakarta.json.JsonValue;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import net.javacrumbs.jsonunit.core.Option;
 import org.apache.commons.lang3.function.TriFunction;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
@@ -60,6 +61,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
@@ -758,10 +760,10 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray jsonArray = parseJsonArray(response);
         assertNotNull(jsonArray);
         assertEquals(2, jsonArray.size());
-        JsonObject json  = jsonArray.getJsonObject(0);
+        JsonObject json = jsonArray.getJsonObject(0);
         assertEquals("Component A", json.getJsonObject("component").getString("name"));
         assertEquals(false, json.getJsonObject("component").getBoolean("hasOccurrences"));
-        json  = jsonArray.getJsonObject(1);
+        json = jsonArray.getJsonObject(1);
         assertEquals("Component B", json.getJsonObject("component").getString("name"));
         assertEquals(true, json.getJsonObject("component").getBoolean("hasOccurrences"));
     }
@@ -777,6 +779,8 @@ public class FindingResourceTest extends ResourceTest {
         Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
         v1.setCvssV2BaseScore(BigDecimal.valueOf(0.2));
         v1.setCvssV2Vector("v-cvssV2-vector");
+        v1.setCvssV3BaseScore(BigDecimal.valueOf(9.8));
+        v1.setCvssV3Vector("v-cvssV3-vector");
         qm.addVulnerability(v1, c1, "none");
 
         var analysis = new Analysis();
@@ -788,17 +792,62 @@ public class FindingResourceTest extends ResourceTest {
         analysis.setSeverity(Severity.HIGH);
         qm.persist(analysis);
 
-        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        final Response response = jersey
+                .target(V1_FINDING + "/project/" + p1.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
-                .get(Response.class);
-        assertEquals(200, response.getStatus(), 0);
-        assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        assertNotNull(json);
-        assertEquals(1, json.size());
-        assertEquals(0.4, json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("cvssV2BaseScore").doubleValue(), 0);
-        assertEquals(analysis.getCvssV2Vector(), json.getJsonObject(0).getJsonObject("vulnerability").getString("cvssV2Vector"));
-        assertEquals(analysis.getSeverity().name(), json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .withOptions(Option.IGNORING_EXTRA_FIELDS)
+                .inPath("$[0].vulnerability")
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "cvssV2BaseScore": 0.4,
+                          "cvssV2Vector": "a-cvssV2-vector",
+                          "severity": "HIGH",
+                          "cvssV3BaseScore": 9.8,
+                          "cvssV3Vector": "v-cvssV3-vector"
+                        }
+                        """);
+    }
+
+    @Test
+    public void getFindingsByProjectWithVectorOnlyRatingOverride() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final Component c1 = createComponent(p1, "Component A", "1.0");
+        c1.setPurl("pkg:/maven/org.acme/component-a@1.0.0");
+
+        final Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
+        v1.setCvssV3BaseScore(BigDecimal.valueOf(9.8));
+        v1.setCvssV3Vector("v-cvssV3-vector");
+        qm.addVulnerability(v1, c1, "none");
+
+        final var analysis = new Analysis();
+        analysis.setVulnerability(v1);
+        analysis.setComponent(c1);
+        analysis.setAnalysisState(AnalysisState.NOT_AFFECTED);
+        analysis.setCvssV3Vector("a-cvssV3-vector"); // Only vector, not score.
+        analysis.setSeverity(Severity.HIGH);
+        qm.persist(analysis);
+
+        final Response response = jersey
+                .target(V1_FINDING + "/project/" + p1.getUuid().toString())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        final String body = getPlainTextBody(response);
+        assertThatJson(body)
+                .inPath("$[0].vulnerability.cvssV3Vector")
+                .isEqualTo("a-cvssV3-vector");
+        assertThatJson(body)
+                .inPath("$[0].vulnerability.cvssV3BaseScore")
+                .isAbsent();
     }
 
     @Test
@@ -878,24 +927,24 @@ public class FindingResourceTest extends ResourceTest {
         assertNotNull(json);
         assertEquals(5, json.size());
         assertEquals(date.getTime(), json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName() ,json.getJsonObject(0).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion() ,json.getJsonObject(0).getJsonObject("component").getString("projectVersion"));
+        assertEquals(p1.getName(), json.getJsonObject(0).getJsonObject("component").getString("projectName"));
+        assertEquals(p1.getVersion(), json.getJsonObject(0).getJsonObject("component").getString("projectVersion"));
         assertEquals(p1.getUuid().toString(), json.getJsonObject(0).getJsonObject("component").getString("project"));
         assertEquals(date.getTime(), json.getJsonObject(1).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName() ,json.getJsonObject(1).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion() ,json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
+        assertEquals(p1.getName(), json.getJsonObject(1).getJsonObject("component").getString("projectName"));
+        assertEquals(p1.getVersion(), json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
         assertEquals(p1.getUuid().toString(), json.getJsonObject(1).getJsonObject("component").getString("project"));
         assertEquals(date.getTime(), json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName() ,json.getJsonObject(2).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion() ,json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
+        assertEquals(p1.getName(), json.getJsonObject(2).getJsonObject("component").getString("projectName"));
+        assertEquals(p1.getVersion(), json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
         assertEquals(p1.getUuid().toString(), json.getJsonObject(2).getJsonObject("component").getString("project"));
         assertEquals(date.getTime(), json.getJsonObject(3).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1_child.getName() ,json.getJsonObject(3).getJsonObject("component").getString("projectName"));
-        assertEquals(p1_child.getVersion() ,json.getJsonObject(3).getJsonObject("component").getString("projectVersion"));
+        assertEquals(p1_child.getName(), json.getJsonObject(3).getJsonObject("component").getString("projectName"));
+        assertEquals(p1_child.getVersion(), json.getJsonObject(3).getJsonObject("component").getString("projectVersion"));
         assertEquals(p1_child.getUuid().toString(), json.getJsonObject(3).getJsonObject("component").getString("project"));
         assertEquals(date.getTime(), json.getJsonObject(4).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p2.getName() ,json.getJsonObject(4).getJsonObject("component").getString("projectName"));
-        assertEquals(p2.getVersion() ,json.getJsonObject(4).getJsonObject("component").getString("projectVersion"));
+        assertEquals(p2.getName(), json.getJsonObject(4).getJsonObject("component").getString("projectName"));
+        assertEquals(p2.getVersion(), json.getJsonObject(4).getJsonObject("component").getString("projectVersion"));
         assertEquals(p2.getUuid().toString(), json.getJsonObject(4).getJsonObject("component").getString("project"));
     }
 
@@ -1019,16 +1068,16 @@ public class FindingResourceTest extends ResourceTest {
         assertNotNull(json);
         assertEquals(4, json.size());
         assertEquals(date.getTime(), json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName() ,json.getJsonObject(0).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion() ,json.getJsonObject(0).getJsonObject("component").getString("projectVersion"));
+        assertEquals(p1.getName(), json.getJsonObject(0).getJsonObject("component").getString("projectName"));
+        assertEquals(p1.getVersion(), json.getJsonObject(0).getJsonObject("component").getString("projectVersion"));
         assertEquals(p1.getUuid().toString(), json.getJsonObject(0).getJsonObject("component").getString("project"));
         assertEquals(date.getTime(), json.getJsonObject(1).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName() ,json.getJsonObject(1).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion() ,json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
+        assertEquals(p1.getName(), json.getJsonObject(1).getJsonObject("component").getString("projectName"));
+        assertEquals(p1.getVersion(), json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
         assertEquals(p1.getUuid().toString(), json.getJsonObject(1).getJsonObject("component").getString("project"));
         assertEquals(date.getTime(), json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName() ,json.getJsonObject(2).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion() ,json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
+        assertEquals(p1.getName(), json.getJsonObject(2).getJsonObject("component").getString("projectName"));
+        assertEquals(p1.getVersion(), json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
         assertEquals(p1.getUuid().toString(), json.getJsonObject(2).getJsonObject("component").getString("project"));
 
         // Findings of p1_child are returned because team was given access to its parent project p1.
@@ -1067,10 +1116,10 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray jsonArray = parseJsonArray(response);
         assertNotNull(jsonArray);
         assertEquals(2, jsonArray.size());
-        JsonObject json  = jsonArray.getJsonObject(0);
+        JsonObject json = jsonArray.getJsonObject(0);
         assertEquals("Component A", json.getJsonObject("component").getString("name"));
         assertEquals(false, json.getJsonObject("component").getBoolean("hasOccurrences"));
-        json  = jsonArray.getJsonObject(1);
+        json = jsonArray.getJsonObject(1);
         assertEquals("Component B", json.getJsonObject("component").getString("name"));
         assertEquals(true, json.getJsonObject("component").getBoolean("hasOccurrences"));
     }
@@ -1405,6 +1454,167 @@ public class FindingResourceTest extends ResourceTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {
+            "component.name",
+            "component.version",
+            "vulnerability.cvssV2BaseScore",
+            "vulnerability.cvssV3BaseScore",
+            "vulnerability.cvssV4Score",
+            "vulnerability.epssPercentile",
+            "vulnerability.epssScore",
+            "vulnerability.published",
+            "vulnerability.severity",
+            "vulnerability.title",
+            "vulnerability.vulnId"
+    })
+    void shouldOrderAllFindingsByEachSortableColumn(String sortName) {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        createOrderedFindings();
+
+        Response response = jersey
+                .target(V1_FINDING)
+                .queryParam("sortName", sortName)
+                .queryParam("sortOrder", "desc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].vulnerability.vulnId")
+                .isArray()
+                .containsExactly("Vuln-2", "Vuln-1");
+
+        response = jersey
+                .target(V1_FINDING)
+                .queryParam("sortName", sortName)
+                .queryParam("sortOrder", "asc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].vulnerability.vulnId")
+                .isArray()
+                .containsExactly("Vuln-1", "Vuln-2");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "vulnerability.cvssV2BaseScore",
+            "vulnerability.cvssV3BaseScore",
+            "vulnerability.cvssV4Score",
+            "vulnerability.published",
+            "vulnerability.severity",
+            "vulnerability.title",
+            "vulnerability.vulnId",
+    })
+    void shouldOrderGroupedFindingsByEachSortableColumn(String sortName) {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        createOrderedFindings();
+
+        Response response = jersey
+                .target(V1_FINDING + "/grouped")
+                .queryParam("sortName", sortName)
+                .queryParam("sortOrder", "desc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].vulnerability.vulnId")
+                .isArray()
+                .containsExactly("Vuln-2", "Vuln-1");
+
+        response = jersey
+                .target(V1_FINDING + "/grouped")
+                .queryParam("sortName", sortName)
+                .queryParam("sortOrder", "asc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].vulnerability.vulnId")
+                .isArray()
+                .containsExactly("Vuln-1", "Vuln-2");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "analysis.isSuppressed",
+            "analysis.state",
+            "attribution.analyzerIdentity",
+            "attribution.attributedOn",
+            "component.projectName"
+    })
+    void shouldAcceptAdditionalSortableColumnForAllFindings(String sortName) {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        createOrderedFindings();
+
+        final Response response = jersey
+                .target(V1_FINDING)
+                .queryParam("sortName", sortName)
+                .queryParam("sortOrder", "desc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].vulnerability.vulnId")
+                .isArray()
+                .containsExactlyInAnyOrder("Vuln-1", "Vuln-2");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "attribution.analyzerIdentity",
+            "vulnerability.affectedProjectCount"
+    })
+    void shouldAcceptAdditionalSortableColumnForGroupedFindings(String sortName) {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        createOrderedFindings();
+
+        final Response response = jersey
+                .target(V1_FINDING + "/grouped")
+                .queryParam("sortName", sortName)
+                .queryParam("sortOrder", "desc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].vulnerability.vulnId")
+                .isArray()
+                .containsExactlyInAnyOrder("Vuln-1", "Vuln-2");
+    }
+
+    @Test
+    void shouldGetAllFindingsOrderedByEpssScoreWithEpssScoreFilter() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        createOrderedFindings();
+
+        final Response response = jersey
+                .target(V1_FINDING)
+                .queryParam("sortName", "vulnerability.epssScore")
+                .queryParam("sortOrder", "desc")
+                .queryParam("epssFrom", "0.5")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$[*].vulnerability.vulnId")
+                .isArray()
+                .containsExactly("Vuln-2");
+    }
+
+    @ParameterizedTest
     @MethodSource("getSARIFFindingsByProjectTestParameters")
     public void getSARIFFindingsByProjectTest(String query, String expectedResponsePath) throws Exception {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
@@ -1456,12 +1666,12 @@ public class FindingResourceTest extends ResourceTest {
         Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
 
         for (int i = 0; i < 5; i++) {
-            Component component = createComponent(p1, "Component "+i, "1.0."+i);
-            Vulnerability vulnerability = createVulnerability("Vuln-"+i, Severity.LOW);
+            Component component = createComponent(p1, "Component " + i, "1.0." + i);
+            Vulnerability vulnerability = createVulnerability("Vuln-" + i, Severity.LOW);
             qm.addVulnerability(vulnerability, component, "none");
         }
 
-        Response response = jersey.target(V1_FINDING  + "/project/" + p1.getUuid())
+        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid())
                 .queryParam("pageNumber", "1")
                 .queryParam("pageSize", "3")
                 .request()
@@ -1497,8 +1707,8 @@ public class FindingResourceTest extends ResourceTest {
         Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
 
         for (int i = 0; i < 5; i++) {
-            Component component = createComponent(p1, "Component "+i, "1.0."+i);
-            Vulnerability vulnerability = createVulnerability("Vuln-"+i, Severity.LOW);
+            Component component = createComponent(p1, "Component " + i, "1.0." + i);
+            Vulnerability vulnerability = createVulnerability("Vuln-" + i, Severity.LOW);
             qm.addVulnerability(vulnerability, component, "none");
         }
 
@@ -1538,8 +1748,8 @@ public class FindingResourceTest extends ResourceTest {
         Project p1 = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
 
         for (int i = 0; i < 5; i++) {
-            Component component = createComponent(p1, "Component "+i, "1.0."+i);
-            Vulnerability vulnerability = createVulnerability("Vuln-"+i, Severity.LOW);
+            Component component = createComponent(p1, "Component " + i, "1.0." + i);
+            Vulnerability vulnerability = createVulnerability("Vuln-" + i, Severity.LOW);
             qm.addVulnerability(vulnerability, component, "none");
         }
 
@@ -1634,6 +1844,44 @@ public class FindingResourceTest extends ResourceTest {
                 .createOrUpdateAll(List.of(new Epss(vulnId, null, epssPercentile))));
 
         return vulnerability;
+    }
+
+    /// Creates two findings on distinct components for `Vuln-1` and `Vuln-2` respectively,
+    /// such that `Vuln-2` holds the higher value for every orderable column.
+    /// To be used by ordering tests to assert the exact sequence for both sort directions.
+    private void createOrderedFindings() {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final Component low = createComponent(project, "Component A", "1.0");
+        final Component high = createComponent(project, "Component B", "2.0");
+
+        final var vulnLow = new Vulnerability();
+        vulnLow.setVulnId("Vuln-1");
+        vulnLow.setSource(Vulnerability.Source.NVD);
+        vulnLow.setSeverity(Severity.LOW);
+        vulnLow.setTitle("Title A");
+        vulnLow.setCwes(List.of(80, 666));
+        vulnLow.setCvssV2BaseScore(new BigDecimal("1.1"));
+        vulnLow.setCvssV3BaseScore(new BigDecimal("1.2"));
+        vulnLow.setCvssV4Score(new BigDecimal("1.3"));
+        vulnLow.setPublished(Date.from(Instant.parse("2020-01-01T00:00:00Z")));
+
+        final var vulnHigh = new Vulnerability();
+        vulnHigh.setVulnId("Vuln-2");
+        vulnHigh.setSource(Vulnerability.Source.NVD);
+        vulnHigh.setSeverity(Severity.CRITICAL);
+        vulnHigh.setTitle("Title B");
+        vulnHigh.setCwes(List.of(80, 666));
+        vulnHigh.setCvssV2BaseScore(new BigDecimal("9.1"));
+        vulnHigh.setCvssV3BaseScore(new BigDecimal("9.2"));
+        vulnHigh.setCvssV4Score(new BigDecimal("9.3"));
+        vulnHigh.setPublished(Date.from(Instant.parse("2024-01-01T00:00:00Z")));
+
+        qm.addVulnerability(qm.createVulnerability(vulnLow), low, "none");
+        qm.addVulnerability(qm.createVulnerability(vulnHigh), high, "none");
+
+        useJdbiHandle(handle -> handle.attach(EpssDao.class).createOrUpdateAll(List.of(
+                new Epss("Vuln-1", new BigDecimal("0.10"), new BigDecimal("0.11")),
+                new Epss("Vuln-2", new BigDecimal("0.90"), new BigDecimal("0.91")))));
     }
 
 }

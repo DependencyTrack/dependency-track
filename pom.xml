@@ -34,6 +34,7 @@
         <module>support/smallrye-config-secret-handler-file</module>
         <module>support/smallrye-config-source-memory</module>
         <module>support/swagger-model-converters</module>
+        <module>support/test-database</module>
         <module>support/v4-migrator</module>
         <module>api</module>
         <module>alpine</module>
@@ -150,19 +151,19 @@
         <lib.kafka-clients.version>4.3.0</lib.kafka-clients.version>
         <lib.kotlin.version>2.4.0</lib.kotlin.version>
         <lib.logback.version>1.5.34</lib.logback.version>
-        <lib.micrometer.version>1.16.5</lib.micrometer.version>
+        <lib.micrometer.version>1.17.0</lib.micrometer.version>
         <lib.microprofile-config.version>3.1.1</lib.microprofile-config.version>
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
-        <lib.minio.version>9.0.1</lib.minio.version>
+        <lib.minio.version>9.0.2</lib.minio.version>
         <lib.mockito.version>5.23.0</lib.mockito.version>
-        <lib.okhttp.version>5.3.2</lib.okhttp.version>
+        <lib.okhttp.version>5.4.0</lib.okhttp.version>
         <lib.open-feign.version>13.12</lib.open-feign.version>
         <lib.open-vulnerability-clients.version>9.0.5</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>4.1.2</lib.pebble.version>
         <lib.postgresql.version>42.7.11</lib.postgresql.version>
         <lib.prometheus.version>1.7.0</lib.prometheus.version>
-        <lib.protobuf-java.version>4.35.0</lib.protobuf-java.version>
+        <lib.protobuf-java.version>4.35.1</lib.protobuf-java.version>
         <lib.resilience4j.version>2.4.0</lib.resilience4j.version>
         <lib.s3mock.version>5.0.0</lib.s3mock.version>
         <lib.slf4j.version>2.0.18</lib.slf4j.version>

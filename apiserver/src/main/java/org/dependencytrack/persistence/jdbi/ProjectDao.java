@@ -35,7 +35,6 @@ import org.dependencytrack.persistence.jdbi.query.ListProjectsConciseQuery;
 import org.dependencytrack.persistence.jdbi.query.ListProjectsQuery;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.statement.Query;
-import org.jdbi.v3.core.statement.SqlStatements;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jdbi.v3.json.Json;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -60,7 +59,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import static org.dependencytrack.util.PersistenceUtil.escapeLikePattern;
 
@@ -870,16 +868,5 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
              WHERE "UUID" = :uuid
             """)
     void updateLastVulnAnalysis(@Bind UUID uuid);
-
-    default <T> T withJitDisabled(Supplier<T> supplier) {
-        return getHandle().inTransaction(trx -> {
-            trx.createUpdate("SET LOCAL jit = OFF")
-                    // The handle may carry bindings from ApiRequestStatementCustomizer
-                    // (e.g. pagination offset / limit) that this statement doesn't consume.
-                    .configure(SqlStatements.class, cfg -> cfg.setUnusedBindingAllowed(true))
-                    .execute();
-            return supplier.get();
-        });
-    }
 
 }

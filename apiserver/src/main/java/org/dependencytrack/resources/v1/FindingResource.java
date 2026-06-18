@@ -169,16 +169,19 @@ public class FindingResource extends AbstractApiResource {
                         (rawFilter != null && !rawFilter.isBlank())
                                 ? PersistenceUtil.escapeLikePattern(rawFilter)
                                 : null;
-                List<FindingDao.FindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle ->
-                        handle.attach(FindingDao.class).getFindingsByProject(
-                                project.getId(),
-                                /* includeInactive */ false,
-                                suppressed,
-                                searchText,
-                                hasAnalysis,
-                                source != null ? source.name() : null,
-                                epssFrom,
-                                epssTo));
+                List<FindingDao.FindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle -> {
+                    final var dao = handle.attach(FindingDao.class);
+                    return dao.withJitDisabled(
+                            () -> dao.getFindingsByProject(
+                                    project.getId(),
+                                    /* includeInactive */ false,
+                                    suppressed,
+                                    searchText,
+                                    hasAnalysis,
+                                    source != null ? source.name() : null,
+                                    epssFrom,
+                                    epssTo));
+                });
                 final long totalCount = findingRows.isEmpty() ? 0 : findingRows.getFirst().totalCount();
                 List<Finding> findings = findingRows.stream().map(Finding::new).toList();
                 findings = mapComponentLatestVersion(findings);
@@ -368,7 +371,7 @@ public class FindingResource extends AbstractApiResource {
         filters.put("epssPercentileFrom", epssPercentileFrom);
         filters.put("epssPercentileTo", epssPercentileTo);
         List<FindingDao.FindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle -> handle.attach(FindingDao.class)
-                .getAllFindings(filters, showSuppressed, showInactive));
+                .getAllFindings(filters, showSuppressed, showInactive, getAlpineRequest().getOrderBy()));
         final long totalCount = findingRows.isEmpty() ? 0 : findingRows.getFirst().totalCount();
         List<Finding> findings = findingRows.stream().map(Finding::new).toList();
         findings = mapComponentLatestVersion(findings);
@@ -484,7 +487,7 @@ public class FindingResource extends AbstractApiResource {
         }
     }
 
-    public static List<Finding> mapComponentLatestVersion(List<Finding> findingList){
+    public static List<Finding> mapComponentLatestVersion(List<Finding> findingList) {
         final Map<String, List<Finding>> findingsByPurlPackage = findingList.stream()
                 .filter(finding -> finding.getComponent().get("purl") != null)
                 .map(finding -> {

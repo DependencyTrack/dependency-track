@@ -87,7 +87,7 @@ class NotificationRuleStubIT {
                 )
                 VALUES (10, TRUE, TRUE, 'Hello', 'Good Rule',
                         'INFORMATIONAL', TRUE,
-                        'BOM_PROCESSED,NEW_VULNERABILITY', 1,
+                        'BOM_PROCESSED,INDEXING_SERVICE,NEW_VULNERABILITY', 1,
                         '{"destination": "https://hooks.slack.com/abc"}',
                         'PORTFOLIO',
                         'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
@@ -125,6 +125,20 @@ class NotificationRuleStubIT {
                         TIMESTAMP WITH TIME ZONE '2026-06-05 06:00:00+00',
                         TRUE)
                 """);
+            // Rule whose NOTIFY_ON contains only an obsolete group — must end up as an empty array.
+            h.execute("""
+                INSERT INTO "NOTIFICATIONRULE" (
+                    "ID", "ENABLED", "LOG_SUCCESSFUL_PUBLISH", "MESSAGE", "NAME",
+                    "NOTIFICATION_LEVEL", "NOTIFY_CHILDREN", "NOTIFY_ON", "PUBLISHER",
+                    "PUBLISHER_CONFIG", "SCOPE", "UUID"
+                )
+                VALUES (13, TRUE, TRUE, 'Obsolete', 'Obsolete Rule',
+                        'INFORMATIONAL', TRUE,
+                        'INDEXING_SERVICE', 1,
+                        '{"destination": "https://hooks.slack.com/obsolete"}',
+                        'PORTFOLIO',
+                        'dddddddd-dddd-dddd-dddd-dddddddddddd')
+                """);
         });
 
         runPipeline();
@@ -144,7 +158,7 @@ class NotificationRuleStubIT {
                      ORDER BY "ID"
                     """).mapToMap().list());
 
-        assertThat(rows).hasSize(3);
+        assertThat(rows).hasSize(4);
 
         final Map<String, Object> good = rows.get(0);
         assertThat(good).containsEntry("id", 10L)
@@ -187,6 +201,12 @@ class NotificationRuleStubIT {
             .isEqualTo(Instant.parse("2026-06-05T06:00:00Z"));
         assertThat((String[]) ((java.sql.Array) scheduled.get("notify_on")).getArray())
             .containsExactly("NEW_VULNERABILITIES_SUMMARY");
+
+        final Map<String, Object> obsolete = rows.get(3);
+        assertThat(obsolete).containsEntry("id", 13L)
+            .containsEntry("name", "Obsolete Rule");
+        assertThat((String[]) ((java.sql.Array) obsolete.get("notify_on")).getArray())
+            .isEmpty();
     }
 
     private void runPipeline() throws Exception {

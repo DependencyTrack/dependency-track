@@ -55,7 +55,7 @@ public class DefectDojoClient {
         this.baseURL = baseURL;
     }
 
-    public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final Boolean verifyFindings, final String testTitle) {
+    public void uploadDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final Boolean verifyFindings, final String testTitle, final String groupBy) {
         LOGGER.debug("Uploading Dependency-Track findings to DefectDojo");
         HttpPost request = new HttpPost(baseURL + "/api/v2/import-scan/");
         InputStreamBody inputStreamBody = new InputStreamBody(findingsJson, ContentType.APPLICATION_OCTET_STREAM, "findings.json");
@@ -72,8 +72,11 @@ public class DefectDojoClient {
                 .addPart("close_old_findings", new StringBody("true", ContentType.MULTIPART_FORM_DATA))
                 .addPart("push_to_jira", new StringBody("false", ContentType.MULTIPART_FORM_DATA))
                 .addPart("scan_date", new StringBody(DATE_FORMAT.format(new Date()), ContentType.MULTIPART_FORM_DATA));
-        if(testTitle != null) {
+        if (testTitle != null) {
             builder.addPart("test_title", new StringBody(testTitle, ContentType.MULTIPART_FORM_DATA));
+        }
+        if (groupBy != null) {
+            builder.addPart("group_by", new StringBody(groupBy, ContentType.MULTIPART_FORM_DATA));
         }
         request.setEntity(builder.build());
         try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
@@ -164,7 +167,7 @@ public class DefectDojoClient {
      * A Reimport will reuse (overwrite) the existing test, instead of create a new test.
      * The Successfully reimport will also  increase the reimport counter by 1.
      */
-    public void reimportDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final String testId, final Boolean doNotReactivate, final Boolean verifyFindings, final String testTitle) {
+    public void reimportDependencyTrackFindings(final String token, final String engagementId, final InputStream findingsJson, final String testId, final Boolean doNotReactivate, final Boolean verifyFindings, final String testTitle, final String groupBy) {
         LOGGER.debug("Re-reimport Dependency-Track findings to DefectDojo per Engagement");
         HttpPost request = new HttpPost(baseURL + "/api/v2/reimport-scan/");
         request.addHeader("accept", "application/json");
@@ -182,10 +185,12 @@ public class DefectDojoClient {
                 .addPart("push_to_jira", new StringBody("false", ContentType.MULTIPART_FORM_DATA))
                 .addPart("do_not_reactivate", new StringBody(doNotReactivate.toString(), ContentType.MULTIPART_FORM_DATA))
                 .addPart("test", new StringBody(testId, ContentType.MULTIPART_FORM_DATA))
-                .addPart("scan_date", new StringBody(DATE_FORMAT.format(new Date()), ContentType.MULTIPART_FORM_DATA))
-                .build();
-        if(testTitle != null) {
+                .addPart("scan_date", new StringBody(DATE_FORMAT.format(new Date()), ContentType.MULTIPART_FORM_DATA));
+        if (testTitle != null) {
             builder.addPart("test_title", new StringBody(testTitle, ContentType.MULTIPART_FORM_DATA));
+        }
+        if (groupBy != null) {
+            builder.addPart("group_by", new StringBody(groupBy, ContentType.MULTIPART_FORM_DATA));
         }
         request.setEntity(builder.build());
         try (CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {

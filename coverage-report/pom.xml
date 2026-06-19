@@ -192,6 +192,19 @@
 
         <dependency>
             <groupId>org.dependencytrack</groupId>
+            <artifactId>kev-data-source-api</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
+            <artifactId>kev-data-source-builtin</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
             <artifactId>notification-api</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>

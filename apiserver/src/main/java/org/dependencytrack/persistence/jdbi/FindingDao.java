@@ -80,6 +80,7 @@ public interface FindingDao extends PaginationSupport {
             @Json List<VulnerabilityAlias> vulnAliasesJson,
             BigDecimal epssScore,
             BigDecimal epssPercentile,
+            boolean kev,
             String analyzerIdentity,
             Instant attributed_on,
             String alt_id,
@@ -101,6 +102,7 @@ public interface FindingDao extends PaginationSupport {
             BigDecimal cvssV4Score,
             BigDecimal epssScore,
             BigDecimal epssPercentile,
+            boolean kev,
             Instant vulnPublished,
             List<Integer> cwes,
             String analyzerIdentity,
@@ -114,6 +116,7 @@ public interface FindingDao extends PaginationSupport {
             <#-- @ftlvariable name="apiOffsetLimitClause" type="String" -->
             <#-- @ftlvariable name="epssFrom" type="boolean" -->
             <#-- @ftlvariable name="epssTo" type="boolean" -->
+            <#-- @ftlvariable name="isKev" type="boolean" -->
             <#-- @ftlvariable name="includeInactive" type="boolean" -->
             <#-- @ftlvariable name="includeSuppressed" type="boolean" -->
             <#-- @ftlvariable name="source" type="boolean" -->
@@ -195,6 +198,7 @@ public interface FindingDao extends PaginationSupport {
                  , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
                  , e."SCORE" AS "epssScore"
                  , e."PERCENTILE" AS "epssPercentile"
+                 , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
                  , fa."ANALYZERIDENTITY"
                  , fa."ATTRIBUTED_ON"
                  , fa."ALT_ID"
@@ -270,6 +274,9 @@ public interface FindingDao extends PaginationSupport {
             <#if epssTo>
                AND e."SCORE" <= :epssTo
             </#if>
+            <#if isKev>
+               AND <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> = :isKev
+            </#if>
             <#if searchText>
                AND (
                  LOWER(c."NAME") LIKE ('%' || LOWER(:searchText) || '%') ESCAPE '!'
@@ -313,7 +320,8 @@ public interface FindingDao extends PaginationSupport {
             @Bind Boolean hasAnalysis,
             @Bind String source,
             @Bind BigDecimal epssFrom,
-            @Bind BigDecimal epssTo);
+            @Bind BigDecimal epssTo,
+            @Bind Boolean isKev);
 
     default List<Finding> getFindings(long projectId, boolean includeSuppressed) {
         // NB: JIT is disabled explicitly because it tends to take >=50% of query planning and
@@ -327,7 +335,8 @@ public interface FindingDao extends PaginationSupport {
                         /* hasAnalysis */ null,
                         /* source */ null,
                         /* epssFrom */ null,
-                        /* epssTo */ null));
+                        /* epssTo */ null,
+                        /* isKev */ null));
         List<Finding> findings = findingRows.stream().map(Finding::new).toList();
         return mapComponentLatestVersion(findings);
     }
@@ -359,6 +368,7 @@ public interface FindingDao extends PaginationSupport {
             <#-- @ftlvariable name="epssInPage" type="boolean" -->
             <#-- @ftlvariable name="epssScoreFrom" type="boolean" -->
             <#-- @ftlvariable name="epssScoreTo" type="boolean" -->
+            <#-- @ftlvariable name="isKev" type="boolean" -->
             <#macro epssCandidates vulnSource vulnId>
                 SELECT ee."CVE"
                      , ee."SCORE"
@@ -492,6 +502,9 @@ public interface FindingDao extends PaginationSupport {
             <#if queryFilter??>
                  ${queryFilter}
             </#if>
+            <#if isKev>
+                 AND <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> = :isKev
+            </#if>
             <#if apiOrderByClause??>
                ${apiOrderByClause}
             <#else>
@@ -581,6 +594,7 @@ public interface FindingDao extends PaginationSupport {
                  , ep."SCORE" AS "epssScore"
                  , ep."PERCENTILE" AS "epssPercentile"
             </#if>
+                 , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
                  , fa."ANALYZERIDENTITY"
                  , fa."ATTRIBUTED_ON"
                  , fa."ALT_ID"
@@ -653,6 +667,7 @@ public interface FindingDao extends PaginationSupport {
             @Define boolean epssInPage,
             @Bind BigDecimal epssScoreFrom,
             @Bind BigDecimal epssScoreTo,
+            @Nullable @Bind Boolean isKev,
             @BindMap Map<String, Object> params);
 
     /**
@@ -681,6 +696,7 @@ public interface FindingDao extends PaginationSupport {
 
         final BigDecimal epssScoreFrom = maybeParseDecimal(filters.get("epssFrom"));
         final BigDecimal epssScoreTo = maybeParseDecimal(filters.get("epssTo"));
+        final Boolean isKev = maybeParseBoolean(filters.get("isKev"));
 
         // NB: JIT is disabled explicitly because it tends to take >=50% of query planning and
         // execution time. JIT is almost always detrimental to query performance here.
@@ -693,6 +709,7 @@ public interface FindingDao extends PaginationSupport {
                         isEpssInPage,
                         epssScoreFrom,
                         epssScoreTo,
+                        isKev,
                         params));
     }
 
@@ -708,6 +725,7 @@ public interface FindingDao extends PaginationSupport {
             <#-- @ftlvariable name="activeFilter" type="Boolean" -->
             <#-- @ftlvariable name="includeInactiveFindings" type="Boolean" -->
             <#-- @ftlvariable name="apiOffsetLimitClause" type="String" -->
+            <#-- @ftlvariable name="isKev" type="boolean" -->
             WITH epss_dedup AS (
               SELECT dv."ID" AS "vulnerabilityId"
                    , ep."SCORE"
@@ -774,6 +792,7 @@ public interface FindingDao extends PaginationSupport {
                    END AS "cvssV4Score"
                  , ed."SCORE" AS "epssScore"
                  , ed."PERCENTILE" AS "epssPercentile"
+                 , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
                  , v."PUBLISHED" AS "vulnPublished"
                  , CAST(STRING_TO_ARRAY(v."CWES", ',') AS INT[]) AS "CWES"
                  , fa."ANALYZERIDENTITY"
@@ -810,6 +829,9 @@ public interface FindingDao extends PaginationSupport {
             </#if>
             <#if queryFilter??>
                 ${queryFilter}
+            </#if>
+            <#if isKev>
+                AND <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> = :isKev
             </#if>
             GROUP BY v."ID"
                   , v."SOURCE"
@@ -852,6 +874,7 @@ public interface FindingDao extends PaginationSupport {
             @Define boolean activeFilter,
             @Define boolean includeInactiveFindings,
             @Define String aggregateFilter,
+            @Nullable @Bind Boolean isKev,
             @BindMap Map<String, Object> params);
 
     /**
@@ -868,6 +891,7 @@ public interface FindingDao extends PaginationSupport {
         processFilters(filters, queryFilter, params, /* epssScoreViaExists */ false);
         final StringBuilder aggregateFilter = new StringBuilder();
         processAggregateFilters(filters, aggregateFilter, params);
+        final Boolean isKev = maybeParseBoolean(filters.get("isKev"));
 
         // NB: JIT is disabled explicitly because it tends to take >=50% of query planning and
         // execution time. JIT is almost always detrimental to query performance here.
@@ -877,6 +901,7 @@ public interface FindingDao extends PaginationSupport {
                         showInactive,
                         /* includeInactiveFindings */ false,
                         String.valueOf(aggregateFilter),
+                        isKev,
                         params));
     }
 
@@ -929,6 +954,8 @@ public interface FindingDao extends PaginationSupport {
                         processRangeFilter(queryFilter, params, filter, filters.get(filter), "ed.\"PERCENTILE\"", true, false, false);
                 case "epssPercentileTo" ->
                         processRangeFilter(queryFilter, params, filter, filters.get(filter), "ed.\"PERCENTILE\"", false, false, false);
+                // NB: isKev is applied directly in the query templates via the shared
+                // <@sql.isKev/> macro, not as a queryFilter fragment.
             }
         }
     }
@@ -1038,6 +1065,10 @@ public interface FindingDao extends PaginationSupport {
 
     private static @Nullable BigDecimal maybeParseDecimal(@Nullable String value) {
         return value == null || value.isEmpty() ? null : new BigDecimal(value);
+    }
+
+    private static @Nullable Boolean maybeParseBoolean(@Nullable String value) {
+        return value == null || value.isEmpty() ? null : Boolean.parseBoolean(value);
     }
 
 }

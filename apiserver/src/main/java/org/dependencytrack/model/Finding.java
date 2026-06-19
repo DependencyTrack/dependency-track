@@ -89,6 +89,7 @@ public final class Finding implements Serializable {
         optValue(vulnerability, "owaspRRVector", findingRow.owaspRRVector());
         optValue(vulnerability, "epssScore", findingRow.epssScore());
         optValue(vulnerability, "epssPercentile", findingRow.epssPercentile());
+        optValue(vulnerability, "isKev", findingRow.kev());
         optValue(vulnerability, "cwes", getCwes(findingRow.cwes()));
         addVulnerabilityAliases(findingRow.vulnAliasesJson());
 

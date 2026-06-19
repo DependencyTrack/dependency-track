@@ -38,6 +38,9 @@ import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
+import org.dependencytrack.kevdatasource.MirrorKevDataSourceWorkflow;
+import org.dependencytrack.kevdatasource.api.KevDataSource;
+import org.dependencytrack.kevdatasource.api.KevDataSourceFactory;
 import org.dependencytrack.metrics.UpdatePortfolioMetricsWorkflow;
 import org.dependencytrack.metrics.VulnerabilityMetricsUpdateTask;
 import org.dependencytrack.notification.ProcessScheduledNotificationsWorkflow;
@@ -46,6 +49,7 @@ import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.policy.vulnerability.SyncVulnPolicyBundleWorkflow;
+import org.dependencytrack.proto.internal.workflow.v1.MirrorKevDataSourceArg;
 import org.dependencytrack.proto.internal.workflow.v1.ProcessScheduledNotificationsWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.secret.management.SecretManager;
@@ -64,6 +68,7 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -190,6 +195,26 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                         "EPSS Mirror",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_EPSS_MIRROR_CRON),
                         new EpssMirrorTask(HttpClient.INSTANCE)),
+                recurringTaskTriggeredOnFirstRun(
+                        "KEV Mirror",
+                        getCronScheduleFromConfig(config, ConfigKeys.TASK_KEV_MIRROR_CRON),
+                        () -> {
+                            final Collection<KevDataSourceFactory> factories =
+                                    pluginManager.getFactories(KevDataSource.class);
+                            for (final KevDataSourceFactory factory : factories) {
+                                final String name = factory.extensionName();
+                                if (!factory.isEnabled()) {
+                                    continue;
+                                }
+
+                                dexEngine.createRun(
+                                        new CreateWorkflowRunRequest<>(MirrorKevDataSourceWorkflow.class)
+                                                .withWorkflowInstanceId("mirror-kev-data-source:" + name)
+                                                .withArgument(MirrorKevDataSourceArg.newBuilder()
+                                                        .setDataSourceName(name)
+                                                        .build()));
+                            }
+                        }),
                 recurringTask(
                         "Fortify SSC Upload",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_FORTIFY_SSC_UPLOAD_CRON),

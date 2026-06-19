@@ -60,6 +60,7 @@ class TaskSchedulerInitializerTest {
                 "Fortify SSC Upload",
                 "GitHub Advisories Mirror",
                 "Kenna Security Upload",
+                "KEV Mirror",
                 "Metrics Maintenance",
                 "NVD Mirror",
                 "OSV Mirror",

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/cisa-kev-data-source-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the CISA KEV data source should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "feedUrl": {
+      "type": "string",
+      "title": "Feed URL",
+      "description": "URL of the CISA Known Exploited Vulnerabilities JSON feed.",
+      "minLength": 1,
+      "format": "uri"
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

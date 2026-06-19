@@ -327,7 +327,8 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 /* hasAnalysis */ null,
                                 /* source */ null,
                                 /* epssFrom */ null,
-                                /* epssTo */ null));
+                                /* epssTo */ null,
+                                /* isKev */ null));
 
         List<FindingRow> findings = findingsSupplier.get();
         assertThat(findings).hasSize(1);
@@ -1205,7 +1206,8 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 /* hasAnalysis */ null,
                                 /* source */ null,
                                 /* epssFrom */ null,
-                                /* epssTo */ null));
+                                /* epssTo */ null,
+                                /* isKev */ null));
         assertThat(findings).hasSize(1);
 
         assertThat(getAllAliasGroups()).satisfiesExactly(group ->

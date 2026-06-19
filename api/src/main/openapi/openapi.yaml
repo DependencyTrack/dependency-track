@@ -199,6 +199,8 @@ tags:
   description: Endpoints related to vulnerability data sources
 - name: Vuln Policies
   description: Endpoints related to vulnerability policies
+- name: Vulns
+  description: Endpoints related to vulnerabilities
 - name: Workflows
   description: Endpoints related to workflows
 
@@ -239,6 +241,8 @@ paths:
     $ref: "./resources/vuln-data-sources/vuln-data-source-mirror-runs.yaml"
   /vuln-data-sources/{name}/mirror-runs/latest:
     $ref: "./resources/vuln-data-sources/vuln-data-source-mirror-run-latest.yaml"
+  /vulns/{source}/{vuln_id}/kev-assertions:
+    $ref: "./resources/vulns/vuln-kev-assertions.yaml"
   /internal/system-capabilities:
     $ref: "./resources/internal/system-capabilities/system-capabilities.yaml"
   /internal/task-queues/{type}:

@@ -22,6 +22,7 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.common.HttpClient;
+import org.dependencytrack.kevdatasource.api.KevDataSource;
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadataResolver;
@@ -72,6 +73,7 @@ public class PluginInitializer implements ServletContextListener {
         requireNonNull(secretManager, "secretManager has not been initialized");
 
         final var extensionPoints = List.of(
+                KevDataSource.class,
                 NotificationPublisher.class,
                 PackageMetadataResolver.class,
                 VulnAnalyzer.class,

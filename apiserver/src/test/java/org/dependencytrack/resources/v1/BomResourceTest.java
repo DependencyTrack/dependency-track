@@ -2529,4 +2529,68 @@ class BomResourceTest extends ResourceTest {
                 """);
     }
 
+    @Test
+    void uploadBomIsActiveTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        var project = new Project();
+        project.setName("uploadBomIsActive");
+        project.setVersion("1.0.0");
+        project.setActive(true);
+        qm.persist(project);
+
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append("{");
+        jsonBuilder.append("\"projectName\": \"uploadBomIsActive\",");
+        jsonBuilder.append("\"projectVersion\": \"1.0.1\",");
+        jsonBuilder.append("\"autoCreate\": true,");
+        jsonBuilder.append("\"bom\": \"").append(bomString).append("\"");
+        jsonBuilder.append(",\"isActive\": false");
+        jsonBuilder.append("}");
+        String jsonRequest = jsonBuilder.toString();
+
+        Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(jsonRequest, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
+        project = qm.getProject("uploadBomIsActive", "1.0.1");
+        Assertions.assertNotNull(project);
+        Assertions.assertFalse(project.isActive());
+    }
+
+    @Test
+    void uploadBomIsActiveWithTagsMultipartTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        final var multiPart = new FormDataMultiPart()
+                .field("bom", resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8), MediaType.APPLICATION_XML_TYPE)
+                .field("projectName", "Acme Example")
+                .field("projectVersion", "1.0")
+                .field("autoCreate", "true")
+                .field("isActive", "false");
+
+        // NB: The GrizzlyConnectorProvider doesn't work with MultiPart requests.
+        // https://github.com/eclipse-ee4j/jersey/issues/5094
+        final var client = ClientBuilder.newClient(new ClientConfig()
+                .register(MultiPartFeature.class)
+                .connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response = client.target(jersey.target(V1_BOM).getUri()).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "token": "${json-unit.any-string}",
+                  "projectUuid": "${json-unit.any-string}"
+                }
+                """);
+
+        final Project project = qm.getProject("Acme Example", "1.0");
+        assertThat(project).isNotNull();
+        assertThat(project.isActive()).isFalse();
+    }
 }

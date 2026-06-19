@@ -68,4 +68,28 @@ class DefectDojoUploaderTest extends PersistenceCapableTest {
         Assertions.assertFalse(extension.isProjectConfigured(project));
     }
 
+    @Test
+    void testGetGroupByReturnsNullWhenNotConfigured() {
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertNull(extension.getGroupBy(project));
+    }
+
+    @Test
+    void testGetGroupByReturnsValueWhenConfigured() {
+        Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, true, false);
+        qm.createProjectProperty(
+                project,
+                DEFECTDOJO_ENABLED.getGroupName(),
+                "defectdojo.groupBy",
+                "component_name",
+                IConfigProperty.PropertyType.STRING,
+                null
+        );
+        DefectDojoUploader extension = new DefectDojoUploader();
+        extension.setQueryManager(qm);
+        Assertions.assertEquals("component_name", extension.getGroupBy(project));
+    }
+
 }

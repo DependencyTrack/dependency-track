@@ -145,7 +145,7 @@ class BomResourceTest extends ResourceTest {
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         Assertions.assertTrue(body.startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
-        Assertions.assertTrue(body.contains("version=\"1\" xmlns=\"http://cyclonedx.org/schema/bom/" + cdxExportVersionParameter + "\">"));
+        Assertions.assertTrue(body.contains("version=\"1\" xmlns=\"http://cyclonedx.org/schema/bom/" + cdxExportVersionParameter + "\""));
 
 
     }

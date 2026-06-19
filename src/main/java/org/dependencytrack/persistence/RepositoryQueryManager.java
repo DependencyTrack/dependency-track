@@ -307,7 +307,7 @@ public class RepositoryQueryManager extends QueryManager implements IQueryManage
     /**
      * Object used to search for a RepositoryMetaComponent by type, namespace, and name.
      *
-     * @author Nathan Mittelette <mittelette.nathan@gmail.com>
+     * @author Nathan Mittelette &lt;mittelette.nathan&#64;gmail.com&gt;
      * @since 4.9.0
      */
     public record RepositoryMetaComponentSearch(RepositoryType type, String namespace,

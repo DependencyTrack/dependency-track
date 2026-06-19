@@ -93,6 +93,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -2530,7 +2531,41 @@ class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    void uploadBomIsActiveAutoCreateTest() throws Exception {
+    void uploadBomIsActiveNullTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        var project = new Project();
+        project.setName("uploadBomIsActive");
+        project.setVersion("1.0.0");
+        project.setActive(false);
+        project.setInactiveSince(new Date());
+        qm.persist(project);
+
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append("{");
+        jsonBuilder.append("\"projectName\": \"uploadBomIsActive\",");
+        jsonBuilder.append("\"projectVersion\": \"1.0.0\",");
+        jsonBuilder.append("\"bom\": \"").append(bomString).append("\"");
+        jsonBuilder.append("}");
+        String jsonRequest = jsonBuilder.toString();
+
+        Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(jsonRequest, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
+        qm.getPersistenceManager().evictAll();
+        project = qm.getProject("uploadBomIsActive", "1.0.0");
+        Assertions.assertNotNull(project);
+        Assertions.assertFalse(project.isActive());
+        Assertions.assertNotNull(project.getInactiveSince());
+    }
+
+    @Test
+    void uploadBomIsActiveToFalseWithAutoCreateTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         var project = new Project();
         project.setName("uploadBomIsActive");
@@ -2564,7 +2599,7 @@ class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    void uploadBomIsActiveTest() throws Exception {
+    void uploadBomIsActiveToFalseTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         var project = new Project();
         project.setName("uploadBomIsActive");
@@ -2598,7 +2633,42 @@ class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    void uploadBomIsActiveWithAutoCreateMultipartTest() throws Exception {
+    void uploadBomIsActiveToTrueTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        var project = new Project();
+        project.setName("uploadBomIsActive");
+        project.setVersion("1.0.0");
+        project.setActive(false);
+        project.setInactiveSince(new Date());
+        qm.persist(project);
+
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append("{");
+        jsonBuilder.append("\"projectName\": \"uploadBomIsActive\",");
+        jsonBuilder.append("\"projectVersion\": \"1.0.0\",");
+        jsonBuilder.append("\"isActive\": true,");
+        jsonBuilder.append("\"bom\": \"").append(bomString).append("\"");
+        jsonBuilder.append("}");
+        String jsonRequest = jsonBuilder.toString();
+
+        Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(jsonRequest, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
+        qm.getPersistenceManager().evictAll();
+        project = qm.getProject("uploadBomIsActive", "1.0.0");
+        Assertions.assertNotNull(project);
+        Assertions.assertTrue(project.isActive());
+        Assertions.assertNull(project.getInactiveSince());
+    }
+
+    @Test
+    void uploadBomIsActiveToFalseMultipartTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         final var multiPart = new FormDataMultiPart()
                 .field("bom", resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8), MediaType.APPLICATION_XML_TYPE)

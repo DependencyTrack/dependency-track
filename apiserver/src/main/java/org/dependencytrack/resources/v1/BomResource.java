@@ -389,6 +389,7 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, request.getProjectTags());
+                    maybeSetProjectActive(qm, project, request.isActive());
                     return ProjectInfo.of(project);
                 });
             }
@@ -443,8 +444,9 @@ public class BomResource extends AbstractApiResource {
                             }
                             try {
                                 project = qm.createProject(trimmedProjectName, null,
-                                        trimmedProjectVersion, request.getProjectTags(), parent,
-                                        null, request.isActive() ? null : Date.from(Instant.now()), request.isLatest(), true);
+                                        trimmedProjectVersion, request.getProjectTags(), parent, null,
+                                        Boolean.FALSE.equals(request.isActive()) ? Date.from(Instant.now()) : null,
+                                        request.isLatest(), true);
                             } catch (RuntimeException e) {
                                 if (isUniqueConstraintViolation(e)) {
                                     throw new WebApplicationException(Response
@@ -481,6 +483,7 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, request.getProjectTags());
+                    maybeSetProjectActive(qm, project, request.isActive());
                     return ProjectInfo.of(project);
                 });
             }
@@ -497,6 +500,15 @@ public class BomResource extends AbstractApiResource {
         }
 
         return processUpload(projectInfo, bomBytes);
+    }
+
+    private void maybeSetProjectActive(QueryManager qm, Project project, Boolean isActive) {
+        if (isActive == null) {
+            return;
+        }
+
+        project.setActive(isActive);
+        qm.persist(project);
     }
 
     @POST
@@ -555,7 +567,7 @@ public class BomResource extends AbstractApiResource {
             @FormDataParam("parentVersion") String parentVersion,
             @FormDataParam("parentUUID") String parentUUID,
             @DefaultValue("false") @FormDataParam("isLatest") boolean isLatest,
-            @DefaultValue("true") @FormDataParam("isActive") boolean isActive,
+            @FormDataParam("isActive") Boolean isActive,
             @Parameter(schema = @Schema(type = "string")) @FormDataParam("bom") final List<FormDataBodyPart> artifactParts
     ) {
         if (artifactParts == null || artifactParts.isEmpty()) {
@@ -588,6 +600,7 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, requestTags);
+                    maybeSetProjectActive(qm, project, isActive);
                     return ProjectInfo.of(project);
                 });
             }
@@ -631,7 +644,8 @@ public class BomResource extends AbstractApiResource {
                                 }
                             }
                             try {
-                                project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, requestTags, parent, null, isActive ? null : Date.from(Instant.now()), isLatest, true);
+                                project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, requestTags, parent,
+                                        null, Boolean.FALSE.equals(isActive) ? Date.from(Instant.now()) : null, isLatest, true);
                             } catch (RuntimeException e) {
                                 if (isUniqueConstraintViolation(e)) {
                                     throw new WebApplicationException(Response
@@ -668,6 +682,7 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, requestTags);
+                    maybeSetProjectActive(qm, project, isActive);
                     return ProjectInfo.of(project);
                 });
             }

@@ -2530,7 +2530,7 @@ class BomResourceTest extends ResourceTest {
     }
 
     @Test
-    void uploadBomIsActiveTest() throws Exception {
+    void uploadBomIsActiveAutoCreateTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         var project = new Project();
         project.setName("uploadBomIsActive");
@@ -2545,8 +2545,8 @@ class BomResourceTest extends ResourceTest {
         jsonBuilder.append("\"projectName\": \"uploadBomIsActive\",");
         jsonBuilder.append("\"projectVersion\": \"1.0.1\",");
         jsonBuilder.append("\"autoCreate\": true,");
+        jsonBuilder.append("\"isActive\": false,");
         jsonBuilder.append("\"bom\": \"").append(bomString).append("\"");
-        jsonBuilder.append(",\"isActive\": false");
         jsonBuilder.append("}");
         String jsonRequest = jsonBuilder.toString();
 
@@ -2560,10 +2560,45 @@ class BomResourceTest extends ResourceTest {
         project = qm.getProject("uploadBomIsActive", "1.0.1");
         Assertions.assertNotNull(project);
         Assertions.assertFalse(project.isActive());
+        Assertions.assertNotNull(project.getInactiveSince());
     }
 
     @Test
-    void uploadBomIsActiveWithTagsMultipartTest() throws Exception {
+    void uploadBomIsActiveTest() throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
+        var project = new Project();
+        project.setName("uploadBomIsActive");
+        project.setVersion("1.0.0");
+        project.setActive(true);
+        qm.persist(project);
+
+        String bomString = Base64.getEncoder().encodeToString(resourceToByteArray("/unit/bom-1.xml"));
+
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append("{");
+        jsonBuilder.append("\"projectName\": \"uploadBomIsActive\",");
+        jsonBuilder.append("\"projectVersion\": \"1.0.0\",");
+        jsonBuilder.append("\"isActive\": false,");
+        jsonBuilder.append("\"bom\": \"").append(bomString).append("\"");
+        jsonBuilder.append("}");
+        String jsonRequest = jsonBuilder.toString();
+
+        Response response = jersey.target(V1_BOM).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity(jsonRequest, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonObject json = parseJsonObject(response);
+        Assertions.assertNotNull(json);
+        Assertions.assertNotNull(json.getString("token"));
+        qm.getPersistenceManager().evictAll();
+        project = qm.getProject("uploadBomIsActive", "1.0.0");
+        Assertions.assertNotNull(project);
+        Assertions.assertFalse(project.isActive());
+        Assertions.assertNotNull(project.getInactiveSince());
+    }
+
+    @Test
+    void uploadBomIsActiveWithAutoCreateMultipartTest() throws Exception {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
         final var multiPart = new FormDataMultiPart()
                 .field("bom", resourceToString("/unit/bom-1.xml", StandardCharsets.UTF_8), MediaType.APPLICATION_XML_TYPE)
@@ -2592,5 +2627,6 @@ class BomResourceTest extends ResourceTest {
         final Project project = qm.getProject("Acme Example", "1.0");
         assertThat(project).isNotNull();
         assertThat(project.isActive()).isFalse();
+        assertThat(project.getInactiveSince()).isNotNull();
     }
 }

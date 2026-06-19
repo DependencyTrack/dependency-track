@@ -79,7 +79,7 @@ public final class BomSubmitRequest {
 
     private final boolean isLatest;
 
-    private final boolean isActive;
+    private final Boolean isActive;
 
     public BomSubmitRequest(String project,
                             String projectName,
@@ -102,7 +102,7 @@ public final class BomSubmitRequest {
                             @JsonProperty(value = "parentName") String parentName,
                             @JsonProperty(value = "parentVersion") String parentVersion,
                             @JsonProperty(value = "isLatest", defaultValue = "false") @JsonAlias("isLatestProjectVersion") boolean isLatest,
-                            @JsonProperty(value = "isActive", defaultValue = "true") boolean isActive,
+                            @JsonProperty(value = "isActive") Boolean isActive,
                             @JsonProperty(value = "bom", required = true) String bom) {
         this.project = project;
         this.projectName = projectName;
@@ -160,7 +160,7 @@ public final class BomSubmitRequest {
     public boolean isLatest() { return isLatest; }
 
     @JsonProperty("isActive")
-    public boolean isActive() { return isActive; }
+    public Boolean isActive() { return isActive; }
 
     @Schema(
             description = "Base64 encoded BOM",

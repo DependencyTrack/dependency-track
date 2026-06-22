@@ -66,6 +66,7 @@ import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
+import org.dependencytrack.resources.v1.vo.FindingResponse;
 import org.dependencytrack.util.PersistenceUtil;
 import org.dependencytrack.util.PurlUtil;
 import org.slf4j.Logger;
@@ -125,7 +126,7 @@ public class FindingResource extends AbstractApiResource {
                     description = "A list of all findings for a specific project, or a SARIF file",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of findings", schema = @Schema(format = "integer")),
                     content = {
-                            @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)), mediaType = MediaType.APPLICATION_JSON),
+                            @Content(array = @ArraySchema(schema = @Schema(implementation = FindingResponse.class)), mediaType = MediaType.APPLICATION_JSON),
                             @Content(schema = @Schema(type = "string"), mediaType = MEDIA_TYPE_SARIF_JSON)
                     }
             ),
@@ -305,7 +306,7 @@ public class FindingResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all findings",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of findings", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = FindingResponse.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
     })

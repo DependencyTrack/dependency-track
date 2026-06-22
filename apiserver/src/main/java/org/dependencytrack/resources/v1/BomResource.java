@@ -334,6 +334,17 @@ public class BomResource extends AbstractApiResource {
                       the response's content type will be <code>application/problem+json</code>.
                     </p>
                     <p>
+                      The upload can target an existing project directly with <code>project</code>, or use
+                      <code>projectName</code> and <code>projectVersion</code> to look up the project and,
+                      with <code>autoCreate</code>, create it when it does not already exist. When creating
+                      projects, <code>parentUUID</code> or <code>parentName</code> and
+                      <code>parentVersion</code> can place the new project under a parent,
+                      <code>projectTags</code> can apply tags, and <code>isLatest</code> can mark it as
+                      the latest version. The <code>isActive</code> parameter sets the project's active
+                      state whenever it is provided, including when the target project already exists, so
+                      clients should send it only when they intend to change that state.
+                    </p>
+                    <p>
                       The maximum allowed length of the <code>bom</code> value is 20'000'000 characters.
                       When uploading large BOMs, the <code>POST</code> endpoint is preferred,
                       as it does not have this limit.
@@ -389,7 +400,9 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, request.getProjectTags());
-                    maybeSetProjectActive(qm, project, request.isActive());
+                    if (request.isActive() != null) {
+                        project.setActive(request.isActive());
+                    }
                     return ProjectInfo.of(project);
                 });
             }
@@ -483,7 +496,9 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, request.getProjectTags());
-                    maybeSetProjectActive(qm, project, request.isActive());
+                    if (request.isActive() != null) {
+                        project.setActive(request.isActive());
+                    }
                     return ProjectInfo.of(project);
                 });
             }
@@ -500,15 +515,6 @@ public class BomResource extends AbstractApiResource {
         }
 
         return processUpload(projectInfo, bomBytes);
-    }
-
-    private void maybeSetProjectActive(QueryManager qm, Project project, Boolean isActive) {
-        if (isActive == null) {
-            return;
-        }
-
-        project.setActive(isActive);
-        qm.persist(project);
     }
 
     @POST
@@ -530,6 +536,17 @@ public class BomResource extends AbstractApiResource {
                       The BOM will be validated against the CycloneDX schema. If schema validation fails,
                       a response with problem details in RFC 9457 format will be returned. In this case,
                       the response's content type will be <code>application/problem+json</code>.
+                    </p>
+                    <p>
+                      The upload can target an existing project directly with <code>project</code>, or use
+                      <code>projectName</code> and <code>projectVersion</code> to look up the project and,
+                      with <code>autoCreate</code>, create it when it does not already exist. When creating
+                      projects, <code>parentUUID</code> or <code>parentName</code> and
+                      <code>parentVersion</code> can place the new project under a parent,
+                      <code>projectTags</code> can apply tags, and <code>isLatest</code> can mark it as
+                      the latest version. The <code>isActive</code> parameter sets the project's active
+                      state whenever it is provided, including when the target project already exists, so
+                      clients should send it only when they intend to change that state.
                     </p>
                     <p>Requires permission <strong>BOM_UPLOAD</strong></p>""",
             operationId = "UploadBom"
@@ -600,7 +617,9 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, requestTags);
-                    maybeSetProjectActive(qm, project, isActive);
+                    if (isActive != null) {
+                        project.setActive(isActive);
+                    }
                     return ProjectInfo.of(project);
                 });
             }
@@ -682,7 +701,9 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, requestTags);
-                    maybeSetProjectActive(qm, project, isActive);
+                    if (isActive != null) {
+                        project.setActive(isActive);
+                    }
                     return ProjectInfo.of(project);
                 });
             }

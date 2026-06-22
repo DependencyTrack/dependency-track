@@ -39,8 +39,7 @@ The **VIEW_VULNERABILITY** permission is required to use the findings API.
 > It adds optional `cvssV2Vector`, `cvssV3Vector`, `cvssV4Vector`, and `owaspRRVector` fields to `vulnerability` objects,
 > which are included when the corresponding scores or ratings are available and may be omitted otherwise.
 
-> Finding Packaging Format v1.4 is not yet available in a stable release of Dependency-Track.
-> It adds an optional `detail` field to `analysis` objects, which contains any analyst notes recorded against the finding.
+> Finding Packaging Format v1.4 adds an optional `detail` field to `analysis` objects, which contains any analyst notes recorded against the finding.
 
 #### Example
 

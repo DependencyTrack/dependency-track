@@ -144,7 +144,7 @@ jobs:
           path: base
           persist-credentials: false
       - name: Detect Breaking Changes
-        uses: oasdiff/oasdiff-action/breaking@3530478ec30f84adedbfeb28f0d9527a290f50a9 # tag=v0.0.57
+        uses: oasdiff/oasdiff-action/breaking@5fbe96ede8d0c53aeadef122d7a0abb79152d493 # tag=v0.1.1
         with:
           base: base/api/src/main/openapi/openapi.yaml
           revision: api/src/main/openapi/openapi.yaml

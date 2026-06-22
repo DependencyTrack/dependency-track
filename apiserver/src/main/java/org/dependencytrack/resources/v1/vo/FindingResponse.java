@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1.vo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.dependencytrack.model.AnalysisState;
+import org.dependencytrack.model.Finding;
 import org.dependencytrack.model.Scope;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability.Source;
@@ -28,7 +29,9 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -44,6 +47,107 @@ public record FindingResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Attribution attribution,
         @Schema(description = "Composite project, component, and vulnerability identifier", requiredMode = Schema.RequiredMode.REQUIRED)
         String matrix) {
+
+    public static FindingResponse of(final Finding finding) {
+        final Map<String, Object> component = finding.getComponent();
+        final Map<String, Object> vulnerability = finding.getVulnerability();
+        final Map<String, Object> analysis = finding.getAnalysis();
+        final Map<String, Object> attribution = finding.getAttribution();
+
+        return new FindingResponse(
+                new Component(
+                        value(component, "uuid", UUID.class),
+                        value(component, "name", String.class),
+                        value(component, "group", String.class),
+                        value(component, "version", String.class),
+                        value(component, "purl", String.class),
+                        value(component, "cpe", String.class),
+                        value(component, "project", UUID.class),
+                        Boolean.TRUE.equals(component.get("hasOccurrences")),
+                        enumValue(component, "scope", Scope.class),
+                        value(component, "projectName", String.class),
+                        value(component, "projectVersion", String.class)),
+                new VulnerabilityDetails(
+                        value(vulnerability, "uuid", UUID.class),
+                        enumValue(vulnerability, "source", Source.class),
+                        value(vulnerability, "vulnId", String.class),
+                        value(vulnerability, "title", String.class),
+                        value(vulnerability, "subtitle", String.class),
+                        value(vulnerability, "description", String.class),
+                        value(vulnerability, "recommendation", String.class),
+                        value(vulnerability, "references", String.class),
+                        enumValue(vulnerability, "severity", Severity.class),
+                        value(vulnerability, "severityRank", Integer.class),
+                        value(vulnerability, "cvssV2BaseScore", BigDecimal.class),
+                        value(vulnerability, "cvssV3BaseScore", BigDecimal.class),
+                        value(vulnerability, "cvssV4Score", BigDecimal.class),
+                        value(vulnerability, "cvssV2Vector", String.class),
+                        value(vulnerability, "cvssV3Vector", String.class),
+                        value(vulnerability, "cvssV4Vector", String.class),
+                        value(vulnerability, "owaspLikelihoodScore", BigDecimal.class),
+                        value(vulnerability, "owaspTechnicalImpactScore", BigDecimal.class),
+                        value(vulnerability, "owaspBusinessImpactScore", BigDecimal.class),
+                        value(vulnerability, "owaspRRVector", String.class),
+                        value(vulnerability, "epssScore", BigDecimal.class),
+                        value(vulnerability, "epssPercentile", BigDecimal.class),
+                        cwes(vulnerability.get("cwes")),
+                        aliases(vulnerability.get("aliases")),
+                        timestamp(vulnerability.get("published"))),
+                new Analysis(
+                        enumValue(analysis, "state", AnalysisState.class),
+                        Boolean.TRUE.equals(analysis.get("isSuppressed"))),
+                new Attribution(
+                        value(attribution, "analyzerIdentity", String.class),
+                        timestamp(attribution.get("attributedOn")),
+                        value(attribution, "alternateIdentifier", String.class),
+                        value(attribution, "referenceUrl", String.class)),
+                finding.getMatrix());
+    }
+
+    private static <T> @Nullable T value(final Map<String, Object> values, final String key, final Class<T> type) {
+        return type.cast(values.get(key));
+    }
+
+    private static <E extends Enum<E>> @Nullable E enumValue(
+            final Map<String, Object> values,
+            final String key,
+            final Class<E> type) {
+        final Object value = values.get(key);
+        if (value == null) {
+            return null;
+        }
+        return value instanceof String stringValue ? Enum.valueOf(type, stringValue) : type.cast(value);
+    }
+
+    private static @Nullable Long timestamp(final @Nullable Object value) {
+        return value instanceof Date date ? date.getTime() : null;
+    }
+
+    private static @Nullable List<Cwe> cwes(final @Nullable Object value) {
+        if (!(value instanceof List<?> cwes)) {
+            return null;
+        }
+        return cwes.stream()
+                .map(org.dependencytrack.model.Cwe.class::cast)
+                .map(cwe -> new Cwe(cwe.getCweId(), cwe.getName()))
+                .toList();
+    }
+
+    private static Set<Alias> aliases(final @Nullable Object value) {
+        if (!(value instanceof Set<?> aliases)) {
+            return Set.of();
+        }
+        return aliases.stream()
+                .map(Map.class::cast)
+                .map(alias -> new Alias(
+                        (String) alias.get("cveId"),
+                        (String) alias.get("ghsaId"),
+                        (String) alias.get("sonatypeId"),
+                        (String) alias.get("osvId"),
+                        (String) alias.get("snykId"),
+                        (String) alias.get("vulnDbId")))
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
 
     @Schema(name = "FindingComponent")
     public record Component(

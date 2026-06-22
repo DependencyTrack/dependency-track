@@ -199,7 +199,9 @@ public class FindingResource extends AbstractApiResource {
                         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An error occurred while generating SARIF file").build();
                     }
                 }
-                return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();
+                return Response.ok(findings.stream().map(FindingResponse::of).toList())
+                        .header(TOTAL_COUNT_HEADER, totalCount)
+                        .build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
@@ -384,7 +386,9 @@ public class FindingResource extends AbstractApiResource {
         final long totalCount = findingRows.isEmpty() ? 0 : findingRows.getFirst().totalCount();
         List<Finding> findings = findingRows.stream().map(Finding::new).toList();
         findings = mapComponentLatestVersion(findings);
-        return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();
+        return Response.ok(findings.stream().map(FindingResponse::of).toList())
+                .header(TOTAL_COUNT_HEADER, totalCount)
+                .build();
     }
 
     @GET

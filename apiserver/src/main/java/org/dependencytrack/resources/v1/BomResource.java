@@ -334,10 +334,7 @@ public class BomResource extends AbstractApiResource {
                       the response's content type will be <code>application/problem+json</code>.
                     </p>
                     <p>
-                      The upload can target an existing project directly with <code>project</code>, or use
-                      <code>projectName</code> and <code>projectVersion</code> to look up the project and,
-                      with <code>autoCreate</code>, create it when it does not already exist. When creating
-                      projects, <code>parentUUID</code> or <code>parentName</code> and
+                      When creating projects, <code>parentUUID</code> or <code>parentName</code> and
                       <code>parentVersion</code> can place the new project under a parent,
                       <code>projectTags</code> can apply tags, and <code>isLatest</code> can mark it as
                       the latest version. The <code>isActive</code> parameter sets the project's active
@@ -538,10 +535,7 @@ public class BomResource extends AbstractApiResource {
                       the response's content type will be <code>application/problem+json</code>.
                     </p>
                     <p>
-                      The upload can target an existing project directly with <code>project</code>, or use
-                      <code>projectName</code> and <code>projectVersion</code> to look up the project and,
-                      with <code>autoCreate</code>, create it when it does not already exist. When creating
-                      projects, <code>parentUUID</code> or <code>parentName</code> and
+                      When creating projects, <code>parentUUID</code> or <code>parentName</code> and
                       <code>parentVersion</code> can place the new project under a parent,
                       <code>projectTags</code> can apply tags, and <code>isLatest</code> can mark it as
                       the latest version. The <code>isActive</code> parameter sets the project's active

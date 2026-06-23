@@ -86,6 +86,7 @@ public interface FindingDao extends PaginationSupport {
             String reference_url,
             AnalysisState analysisState,
             boolean suppressed,
+            @Nullable String analysisDetail,
             long totalCount
     ) {
     }
@@ -200,6 +201,7 @@ public interface FindingDao extends PaginationSupport {
                  , fa."REFERENCE_URL"
                  , a."STATE" AS "analysisState"
                  , a."SUPPRESSED"
+                 , a."DETAILS" AS "analysisDetail"
                  , COUNT(*) OVER() AS "totalCount"
               FROM "COMPONENT" AS c
              INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
@@ -585,6 +587,7 @@ public interface FindingDao extends PaginationSupport {
                  , fa."REFERENCE_URL"
                  , a."STATE" AS "analysisState"
                  , a."SUPPRESSED"
+                 , a."DETAILS" AS "analysisDetail"
                  , page."totalCount"
               FROM page
              INNER JOIN "COMPONENT" AS c

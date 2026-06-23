@@ -93,12 +93,15 @@ public final class Finding implements Serializable {
         addVulnerabilityAliases(findingRow.vulnAliasesJson());
 
         optValue(attribution, "analyzerIdentity", findingRow.analyzerIdentity());
-        optValue(attribution, "attributedOn", Date.from(findingRow.attributed_on()));
+        if (findingRow.attributed_on() != null) {
+            optValue(attribution, "attributedOn", Date.from(findingRow.attributed_on()));
+        }
         optValue(attribution, "alternateIdentifier", findingRow.alt_id());
         optValue(attribution, "referenceUrl", findingRow.reference_url());
 
         optValue(analysis, "state", findingRow.analysisState());
         optValue(analysis, "isSuppressed", findingRow.suppressed(), false);
+        optValue(analysis, "detail", findingRow.analysisDetail());
         if (findingRow.vulnPublished() != null) {
             optValue(vulnerability, "published", Date.from(findingRow.vulnPublished()));
         }

@@ -119,7 +119,7 @@
         <project.parentBaseDir>.</project.parentBaseDir>
 
         <!-- Dependency versions -->
-        <lib.ae-security.version>0.155.0</lib.ae-security.version>
+        <lib.ae-security.version>0.156.1</lib.ae-security.version>
         <lib.archunit.version>1.4.2</lib.archunit.version>
         <lib.assertj.version>3.27.7</lib.assertj.version>
         <lib.awaitility.version>4.3.0</lib.awaitility.version>

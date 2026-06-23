@@ -97,9 +97,11 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -332,6 +334,14 @@ public class BomResource extends AbstractApiResource {
                       the response's content type will be <code>application/problem+json</code>.
                     </p>
                     <p>
+                      When creating projects, <code>parentUUID</code> or <code>parentName</code> and
+                      <code>parentVersion</code> can place the new project under a parent,
+                      <code>projectTags</code> can apply tags, and <code>isLatest</code> can mark it as
+                      the latest version. The <code>isActive</code> parameter sets the project's active
+                      state whenever it is provided, including when the target project already exists, so
+                      clients should send it only when they intend to change that state.
+                    </p>
+                    <p>
                       The maximum allowed length of the <code>bom</code> value is 20'000'000 characters.
                       When uploading large BOMs, the <code>POST</code> endpoint is preferred,
                       as it does not have this limit.
@@ -387,6 +397,9 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, request.getProjectTags());
+                    if (request.isActive() != null) {
+                        project.setActive(request.isActive());
+                    }
                     return ProjectInfo.of(project);
                 });
             }
@@ -441,8 +454,9 @@ public class BomResource extends AbstractApiResource {
                             }
                             try {
                                 project = qm.createProject(trimmedProjectName, null,
-                                        trimmedProjectVersion, request.getProjectTags(), parent,
-                                        null, null, request.isLatest(), true);
+                                        trimmedProjectVersion, request.getProjectTags(), parent, null,
+                                        Boolean.FALSE.equals(request.isActive()) ? Date.from(Instant.now()) : null,
+                                        request.isLatest(), true);
                             } catch (RuntimeException e) {
                                 if (isUniqueConstraintViolation(e)) {
                                     throw new WebApplicationException(Response
@@ -479,6 +493,9 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, request.getProjectTags());
+                    if (request.isActive() != null) {
+                        project.setActive(request.isActive());
+                    }
                     return ProjectInfo.of(project);
                 });
             }
@@ -517,6 +534,14 @@ public class BomResource extends AbstractApiResource {
                       a response with problem details in RFC 9457 format will be returned. In this case,
                       the response's content type will be <code>application/problem+json</code>.
                     </p>
+                    <p>
+                      When creating projects, <code>parentUUID</code> or <code>parentName</code> and
+                      <code>parentVersion</code> can place the new project under a parent,
+                      <code>projectTags</code> can apply tags, and <code>isLatest</code> can mark it as
+                      the latest version. The <code>isActive</code> parameter sets the project's active
+                      state whenever it is provided, including when the target project already exists, so
+                      clients should send it only when they intend to change that state.
+                    </p>
                     <p>Requires permission <strong>BOM_UPLOAD</strong></p>""",
             operationId = "UploadBom"
     )
@@ -553,6 +578,7 @@ public class BomResource extends AbstractApiResource {
             @FormDataParam("parentVersion") String parentVersion,
             @FormDataParam("parentUUID") String parentUUID,
             @DefaultValue("false") @FormDataParam("isLatest") boolean isLatest,
+            @FormDataParam("isActive") Boolean isActive,
             @Parameter(schema = @Schema(type = "string")) @FormDataParam("bom") final List<FormDataBodyPart> artifactParts
     ) {
         if (artifactParts == null || artifactParts.isEmpty()) {
@@ -585,6 +611,9 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, requestTags);
+                    if (isActive != null) {
+                        project.setActive(isActive);
+                    }
                     return ProjectInfo.of(project);
                 });
             }
@@ -628,7 +657,8 @@ public class BomResource extends AbstractApiResource {
                                 }
                             }
                             try {
-                                project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, requestTags, parent, null, null, isLatest, true);
+                                project = qm.createProject(trimmedProjectName, null, trimmedProjectVersion, requestTags, parent,
+                                        null, Boolean.FALSE.equals(isActive) ? Date.from(Instant.now()) : null, isLatest, true);
                             } catch (RuntimeException e) {
                                 if (isUniqueConstraintViolation(e)) {
                                     throw new WebApplicationException(Response
@@ -665,6 +695,9 @@ public class BomResource extends AbstractApiResource {
                                 .build());
                     }
                     maybeBindTags(qm, project, requestTags);
+                    if (isActive != null) {
+                        project.setActive(isActive);
+                    }
                     return ProjectInfo.of(project);
                 });
             }

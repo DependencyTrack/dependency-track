@@ -60,7 +60,7 @@ class FindingPackagingFormatTest extends PersistenceCapableTest {
         Assertions.assertEquals(project.getDescription(), pjson.getString("description"));
         Assertions.assertEquals(project.getVersion(), pjson.getString("version"));
 
-        Assertions.assertEquals("1.3", root.getString("version"));
+        Assertions.assertEquals("1.4", root.getString("version"));
     }
 
     @Test
@@ -92,7 +92,8 @@ class FindingPackagingFormatTest extends PersistenceCapableTest {
                 null, // 32
                 null, // 33
                 AnalysisState.NOT_AFFECTED, // 34
-                true // 35
+                true, // 35
+                null // 36
         );
 
         Finding findingWithAlias = new Finding(project.getUuid(), "component-uuid-2", "component-name-2", "component-group",
@@ -119,7 +120,8 @@ class FindingPackagingFormatTest extends PersistenceCapableTest {
                 null, // 32
                 null, // 33
                 AnalysisState.NOT_AFFECTED, // 34
-                true // 35
+                true, // 35
+                null // 36
         );
 
         var alias = new VulnerabilityAlias();

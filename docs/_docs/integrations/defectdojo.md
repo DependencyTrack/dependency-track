@@ -14,6 +14,16 @@ Dependency-Track accomplishes this in the following ways:
 * Dependency-Track pushes findings to DefectDojo on a periodic basis (configurable)
 * DefectDojo parses Dependency-Track findings
 
+### Forwarded analysis data
+
+Each finding pushed to DefectDojo includes audit data from Dependency-Track. The following fields influence how DefectDojo represents the finding:
+
+| Field                  | Description |
+| ---------------------- | ----------- |
+| `analysis.state`       | A state of `FALSE_POSITIVE` marks the finding as a false positive in DefectDojo. Other states are included in the payload but are not acted on by the DefectDojo parser. |
+| `analysis.isSuppressed`| Whether the finding is suppressed in Dependency-Track. |
+| `analysis.detail`      | Free-text analyst notes entered in Dependency-Track. Appended to the finding description in DefectDojo. Requires Dependency-Track v4.14.0 or higher and a compatible version of the DefectDojo Dependency Track parser. |
+
 Requirements:
 * Dependency-Track v4.1.0 or higher
 * DefectDojo 1.13.1 or higher

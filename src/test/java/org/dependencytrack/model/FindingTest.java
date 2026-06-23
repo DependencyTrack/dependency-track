@@ -58,7 +58,8 @@ class FindingTest extends PersistenceCapableTest {
             null, // 32
             null, // 33
             AnalysisState.NOT_AFFECTED, // 34
-            true // 35
+            true, // 35
+            "analysis-detail" // 36
     );
 
     @Test
@@ -102,6 +103,7 @@ class FindingTest extends PersistenceCapableTest {
         Map<String, Object> map = finding.getAnalysis();
         Assertions.assertEquals(AnalysisState.NOT_AFFECTED, map.get("state"));
         Assertions.assertEquals(true, map.get("isSuppressed"));
+        Assertions.assertEquals("analysis-detail", map.get("detail"));
     }
 
     @Test

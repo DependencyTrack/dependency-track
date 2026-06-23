@@ -96,6 +96,7 @@ public class Finding implements Serializable {
                  , "FINDINGATTRIBUTION"."REFERENCE_URL"
                  , "ANALYSIS"."STATE"
                  , "ANALYSIS"."SUPPRESSED"
+                 , "ANALYSIS"."DETAILS"
               FROM "COMPONENT"
              INNER JOIN "COMPONENTS_VULNERABILITIES"
                 ON "COMPONENT"."ID" = "COMPONENTS_VULNERABILITIES"."COMPONENT_ID"
@@ -151,6 +152,7 @@ public class Finding implements Serializable {
                  , "FINDINGATTRIBUTION"."REFERENCE_URL"
                  , "ANALYSIS"."STATE"
                  , "ANALYSIS"."SUPPRESSED"
+                 , "ANALYSIS"."DETAILS"
                  , "PROJECT"."UUID"
                  , "PROJECT"."NAME"
                  , "PROJECT"."VERSION"
@@ -245,10 +247,15 @@ public class Finding implements Serializable {
 
         optValue(analysis, "state", o[34]);
         optValue(analysis, "isSuppressed", o[35], false);
+        if (o[36] instanceof final Clob clob) {
+            optValue(analysis, "detail", toString(clob));
+        } else {
+            optValue(analysis, "detail", o[36]);
+        }
 
-        if (o.length > 36) {
-            optValue(component, "projectName", o[37]);
-            optValue(component, "projectVersion", o[38]);
+        if (o.length > 37) {
+            optValue(component, "projectName", o[38]);
+            optValue(component, "projectVersion", o[39]);
         }
     }
 

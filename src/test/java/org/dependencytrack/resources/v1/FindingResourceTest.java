@@ -31,6 +31,7 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
+import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
@@ -193,7 +194,7 @@ class FindingResourceTest extends ResourceTest {
         Assertions.assertEquals("Acme Example", json.getJsonObject("project").getString("name"));
         Assertions.assertEquals("1.0", json.getJsonObject("project").getString("version"));
         Assertions.assertEquals(p1.getUuid().toString(), json.getJsonObject("project").getString("uuid"));
-        Assertions.assertEquals("1.3", json.getString("version")); // FPF version
+        Assertions.assertEquals("1.4", json.getString("version")); // FPF version
         JsonArray findings = json.getJsonArray("findings");
         Assertions.assertEquals(3, findings.size());
         Assertions.assertEquals("Component A", findings.getJsonObject(0).getJsonObject("component").getString("name"));
@@ -417,6 +418,24 @@ class FindingResourceTest extends ResourceTest {
         Assertions.assertEquals(p2.getName() ,json.getJsonObject(4).getJsonObject("component").getString("projectName"));
         Assertions.assertEquals(p2.getVersion() ,json.getJsonObject(4).getJsonObject("component").getString("projectVersion"));
         Assertions.assertEquals(p2.getUuid().toString(), json.getJsonObject(4).getJsonObject("component").getString("project"));
+    }
+
+    @Test
+    void getAllFindingsIncludesAnalysisDetail() {
+        Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+        Component component = createComponent(project, "Component A", "1.0");
+        Vulnerability vuln = createVulnerability("Vuln-1", Severity.HIGH);
+        qm.addVulnerability(vuln, component, AnalyzerIdentity.NONE);
+        qm.makeAnalysis(component, vuln, AnalysisState.NOT_AFFECTED, null, null, "audit detail text", false);
+
+        Response response = jersey.target(V1_FINDING).request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+
+        Assertions.assertEquals(200, response.getStatus());
+        JsonArray json = parseJsonArray(response);
+        Assertions.assertEquals(1, json.size());
+        Assertions.assertEquals("audit detail text", json.getJsonObject(0).getJsonObject("analysis").getString("detail"));
     }
 
     @Test

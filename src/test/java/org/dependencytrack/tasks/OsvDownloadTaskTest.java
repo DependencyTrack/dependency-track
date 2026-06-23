@@ -47,8 +47,11 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -885,6 +888,38 @@ class OsvDownloadTaskTest extends PersistenceCapableTest {
         Vulnerability vulnerability = qm.getVulnerabilityByVulnId("GITHUB", "GHSA-77rv-6vfw-x4gc", false);
         Assertions.assertNotNull(vulnerability);
         Assertions.assertEquals(Severity.CRITICAL, vulnerability.getSeverity());
+    }
+
+    @Test
+    void testUpdateDatasourceDoesNotChurnAttributionsWhenPurlVersionChanges() throws IOException {
+        final String advisoryJson = Files.readString(
+                Paths.get("src/test/resources/unit/osv.jsons/osv-UBUNTU-CVE-2025-6297.json"), StandardCharsets.UTF_8);
+
+        final var task = new OsvDownloadTask();
+        task.updateDatasource(parser.parse(new JSONObject(advisoryJson)));
+
+        qm.getPersistenceManager().evictAll();
+        final Map<Long, Date> firstSeenByVsId = firstSeenByVulnerableSoftwareId("UBUNTU-CVE-2025-6297");
+        assertThat(firstSeenByVsId).hasSize(8);
+
+        // Ubuntu bumps the source package version embedded in the advisory's PURL whenever the
+        // advisory is updated, even though the version range derived from it stays the same.
+        // The affected version attributions must survive that, instead of being deleted and re-created.
+        task.updateDatasource(parser.parse(new JSONObject(advisoryJson
+                .replace("dpkg@1.21.1ubuntu2.3", "dpkg@1.21.1ubuntu2.4")
+                .replace("It was discovered", "It was later discovered"))));
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(firstSeenByVulnerableSoftwareId("UBUNTU-CVE-2025-6297")).isEqualTo(firstSeenByVsId);
+    }
+
+    private Map<Long, Date> firstSeenByVulnerableSoftwareId(final String vulnId) {
+        final Vulnerability vuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.OSV, vulnId, false);
+        assertThat(vuln).isNotNull();
+        return qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware()).stream()
+                .collect(Collectors.toMap(
+                        attribution -> attribution.getVulnerableSoftware().getId(),
+                        AffectedVersionAttribution::getFirstSeen));
     }
 
     private void prepareJsonObject(String filePath) throws IOException {

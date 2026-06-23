@@ -24,6 +24,7 @@ import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.dex.api.ActivityContext;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
+import org.dependencytrack.model.AffectedVersionAttribution;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
@@ -1495,6 +1496,109 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         assertThat(vuln.getVulnerableVersions()).isNull();
         assertThat(vuln.getPatchedVersions()).isNull();
         assertThat(vuln.getVulnerableSoftware()).isEmpty();
+    }
+
+    @Test
+    void shouldNotChurnAffectedVersionAttributionWhenReMirroringIdenticalData() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:maven/com.acme/product@1.0.0"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:maven/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        final Bom bov = generateBomFromJson(bovJson);
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false).when(dataSourceMock).hasNext();
+        doReturn(bov).when(dataSourceMock).next();
+
+        final var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+
+        Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
+        assertThat(attributions).hasSize(1);
+        final long attributionId = attributions.getFirst().getId();
+
+        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+
+        vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        attributions = qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
+        assertThat(attributions).satisfiesExactly(
+                attribution -> assertThat(attribution.getId()).isEqualTo(attributionId));
+    }
+
+    @Test
+    void shouldNotChurnAffectedVersionAttributionWhenPurlVersionIsDropped() throws Exception {
+        final var bovJson = /* language=JSON */ """
+                {
+                  "components": [
+                    {
+                      "bomRef": "component",
+                      "purl": "pkg:deb/ubuntu/product@1.0.0?distro=jammy"
+                    }
+                  ],
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2024-0001",
+                      "source": { "name": "NVD" },
+                      "affects": [
+                        {
+                          "ref": "component",
+                          "versions": [
+                            { "range": "vers:deb/>=0" }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+
+        final var dataSourceMock = mock(VulnDataSource.class);
+        doReturn(true, false).when(dataSourceMock).hasNext();
+        doReturn(generateBomFromJson(bovJson)).when(dataSourceMock).next();
+
+        var activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMock));
+        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+
+        Vulnerability vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        List<AffectedVersionAttribution> attributions =
+                qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
+        assertThat(attributions).hasSize(1);
+        final long attributionId = attributions.getFirst().getId();
+
+        final var bovJsonVersionLess = bovJson.replace("product@1.0.0", "product");
+        pluginManager.close();
+        final var dataSourceMockVersionLess = mock(VulnDataSource.class);
+        doReturn(true, false).when(dataSourceMockVersionLess).hasNext();
+        doReturn(generateBomFromJson(bovJsonVersionLess)).when(dataSourceMockVersionLess).next();
+
+        activity = new MirrorVulnDataSourceActivity(createPluginManager("nvd", dataSourceMockVersionLess));
+        activity.execute(mock(ActivityContext.class), MirrorVulnDataSourceArg.newBuilder().setDataSourceName("nvd").setSourceName("NVD").build());
+
+        vuln = qm.getVulnerabilityByVulnId("NVD", "CVE-2024-0001");
+        attributions = qm.getAffectedVersionAttributions(vuln, vuln.getVulnerableSoftware());
+        assertThat(attributions).hasSize(1);
+        assertThat(attributions.getFirst().getId()).isEqualTo(attributionId);
     }
 
     private static class TestVulnDataSourceFactory implements VulnDataSourceFactory {

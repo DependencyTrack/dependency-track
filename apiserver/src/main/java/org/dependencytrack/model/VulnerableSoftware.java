@@ -419,11 +419,10 @@ public class VulnerableSoftware implements ICpe, Serializable {
      * @since 4.10.0
      */
     public boolean equalsIgnoringDatastoreIdentity(final VulnerableSoftware otherVs) {
-        return Objects.equals(otherVs.getPurl(), this.getPurl())
-               && Objects.equals(otherVs.getPurlType(), this.getPurlType())
+        // NB: The full purl string and purlVersion are intentionally excluded.
+        return Objects.equals(otherVs.getPurlType(), this.getPurlType())
                && Objects.equals(otherVs.getPurlNamespace(), this.getPurlNamespace())
                && Objects.equals(otherVs.getPurlName(), this.getPurlName())
-               && Objects.equals(otherVs.getPurlVersion(), this.getPurlVersion())
                && Objects.equals(otherVs.getPurlQualifiers(), this.getPurlQualifiers())
                && Objects.equals(otherVs.getPurlSubpath(), this.getPurlSubpath())
                && Objects.equals(otherVs.getCpe22(), this.getCpe22())
@@ -454,12 +453,11 @@ public class VulnerableSoftware implements ICpe, Serializable {
      * @since 4.10.0
      */
     public int hashCodeWithoutDatastoreIdentity() {
+        // NB: The full purl string and purlVersion are intentionally excluded.
         return Objects.hash(
-                this.getPurl(),
                 this.getPurlType(),
                 this.getPurlNamespace(),
                 this.getPurlName(),
-                this.getPurlVersion(),
                 this.getPurlQualifiers(),
                 this.getPurlSubpath(),
                 this.getCpe22(),

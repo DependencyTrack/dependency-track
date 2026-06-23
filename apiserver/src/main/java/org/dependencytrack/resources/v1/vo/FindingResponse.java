@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.dependencytrack.model.AnalysisState;
@@ -39,6 +40,7 @@ import java.util.UUID;
 ///
 /// @since 5.1.0
 @NullMarked
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(name = "Finding", description = "A vulnerability finding for a project component")
 public record FindingResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Component component,
@@ -66,7 +68,8 @@ public record FindingResponse(
                         Boolean.TRUE.equals(component.get("hasOccurrences")),
                         enumValue(component, "scope", Scope.class),
                         value(component, "projectName", String.class),
-                        value(component, "projectVersion", String.class)),
+                        value(component, "projectVersion", String.class),
+                        value(component, "latestVersion", String.class)),
                 new VulnerabilityDetails(
                         value(vulnerability, "uuid", UUID.class),
                         enumValue(vulnerability, "source", Source.class),
@@ -150,6 +153,7 @@ public record FindingResponse(
     }
 
     @Schema(name = "FindingComponent")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Component(
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID uuid,
             @Nullable String name,
@@ -162,10 +166,12 @@ public record FindingResponse(
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean hasOccurrences,
             @Nullable Scope scope,
             @Nullable String projectName,
-            @Nullable String projectVersion) {
+            @Nullable String projectVersion,
+            @Nullable String latestVersion) {
     }
 
     @Schema(name = "FindingVulnerability")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record VulnerabilityDetails(
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID uuid,
             @Nullable Source source,
@@ -196,12 +202,14 @@ public record FindingResponse(
     }
 
     @Schema(name = "FindingCwe")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Cwe(
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int cweId,
             @Nullable String name) {
     }
 
     @Schema(name = "FindingVulnerabilityAlias")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Alias(
             @Nullable String cveId,
             @Nullable String ghsaId,
@@ -212,6 +220,7 @@ public record FindingResponse(
     }
 
     @Schema(name = "FindingAnalysis")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Analysis(
             @Nullable AnalysisState state,
             @JsonProperty("isSuppressed")
@@ -219,6 +228,7 @@ public record FindingResponse(
     }
 
     @Schema(name = "FindingAttribution")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Attribution(
             @Nullable String analyzerIdentity,
             @Schema(type = "integer", format = "int64", description = "Attribution timestamp in milliseconds since the Unix epoch")

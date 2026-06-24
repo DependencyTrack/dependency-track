@@ -16,6 +16,10 @@ do not work anymore.
 
 ## Filing Issues
 
+> [!IMPORTANT]
+> New issues **must** be filed using one of the provided [issue templates](https://github.com/DependencyTrack/dependency-track/issues/new/choose).
+> **Issues that do not use a template will be closed automatically.**
+
 ### Looking for existing Issues
 
 Before you create a new issue, please do a search in [open issues](https://github.com/DependencyTrack/dependency-track/issues?q=is%3Aissue+is%3Aopen+) 
@@ -26,8 +30,6 @@ If you find your issue already exists, add relevant comments to the existing iss
 Optionally indicate your interest by reacting with *thumbs up* (👍). Issues with higher community attention are more likely to be addressed sooner.
 
 If you cannot find an existing issue for your bug or feature request, create a new issue using the guidelines below.
-
-New issues must be filed using one of the provided issue templates. **Issues that do not use a template will be closed.**
 
 ### Requesting Enhancements
 

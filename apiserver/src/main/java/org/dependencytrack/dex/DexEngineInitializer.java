@@ -267,7 +267,9 @@ public final class DexEngineInitializer implements ServletContextListener {
                 new MirrorVulnDataSourceActivity(pluginManager),
                 protoConverter(MirrorVulnDataSourceArg.class),
                 voidConverter(),
-                Duration.ofMinutes(5));
+                // NB: Account for slow downloads, mainly of sources relying on data dumps.
+                // Activities can't heartbeat while blocked on I/O.
+                Duration.ofMinutes(15));
         engine.registerActivity(
                 new PrepareVulnAnalysisActivity(fileStorage, pluginManager),
                 protoConverter(PrepareVulnAnalysisArg.class),

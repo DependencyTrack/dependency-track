@@ -29,7 +29,7 @@ sealed interface NvdDataFeed {
 
         @Override
         public String name() {
-            return "modified";
+            return "recent";
         }
     }
 

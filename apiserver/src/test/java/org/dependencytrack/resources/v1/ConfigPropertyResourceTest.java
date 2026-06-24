@@ -27,6 +27,7 @@ import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.ConfigPropertyVisibility;
 import org.dependencytrack.secret.management.SecretManager;
 import org.dependencytrack.secret.management.SecretMetadata;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -750,7 +751,10 @@ class ConfigPropertyResourceTest extends ResourceTest {
                     .header(X_API_KEY, apiKey)
                     .get();
 
-            final int expectedStatus = configProperty.getIsPublic() ? 200 : 403;
+            final int expectedStatus =
+                    configProperty.getVisibility() == ConfigPropertyVisibility.PUBLIC
+                            ? 200
+                            : 403;
             assertThat(response.getStatus()).isEqualTo(expectedStatus);
         }
     }
@@ -782,6 +786,152 @@ class ConfigPropertyResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(getPlainTextBody(response)).isEqualTo("The config property could not be found.");
+    }
+
+    @Test
+    void shouldReturnFullJsonForInternalConfigProperty() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
+
+        qm.createConfigProperty(
+                ConfigPropertyConstants.BANNER_CONFIG.getGroupName(),
+                ConfigPropertyConstants.BANNER_CONFIG.getPropertyName(),
+                ConfigPropertyConstants.BANNER_CONFIG.getDefaultPropertyValue(),
+                ConfigPropertyConstants.BANNER_CONFIG.getPropertyType(),
+                ConfigPropertyConstants.BANNER_CONFIG.getDescription());
+
+        final Response response = jersey
+                .target(V1_CONFIG_PROPERTY
+                        + "/internal/" + ConfigPropertyConstants.BANNER_CONFIG.getGroupName()
+                        + "/" + ConfigPropertyConstants.BANNER_CONFIG.getPropertyName())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "groupName": "banner",
+                  "propertyName": "config",
+                  "propertyValue": "{}",
+                  "propertyType": "STRING",
+                  "description": "${json-unit.any-string}"
+                }
+                """);
+    }
+
+    @Test
+    void shouldReturn403ForRestrictedConfigPropertyViaInternalEndpoint() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
+
+        for (final var configProperty : ConfigPropertyConstants.values()) {
+            qm.createConfigProperty(
+                    configProperty.getGroupName(),
+                    configProperty.getPropertyName(),
+                    configProperty.getDefaultPropertyValue(),
+                    configProperty.getPropertyType(),
+                    configProperty.getDescription());
+
+            final Response response = jersey
+                    .target(V1_CONFIG_PROPERTY
+                            + "/internal/" + configProperty.getGroupName()
+                            + "/" + configProperty.getPropertyName())
+                    .request()
+                    .header(X_API_KEY, apiKey)
+                    .get();
+
+            final int expectedStatus =
+                    configProperty.getVisibility() == ConfigPropertyVisibility.RESTRICTED
+                            ? 403
+                            : 200;
+            assertThat(response.getStatus()).isEqualTo(expectedStatus);
+        }
+    }
+
+    @Test
+    void shouldReadPublicConfigPropertyWithoutAuthentication() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+
+        final Response response = jersey
+                .target(V1_CONFIG_PROPERTY
+                        + "/public/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName()
+                        + "/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName())
+                .request()
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void shouldRequireAuthenticationForInternalConfigProperty() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.BANNER_CONFIG.getGroupName(),
+                ConfigPropertyConstants.BANNER_CONFIG.getPropertyName(),
+                ConfigPropertyConstants.BANNER_CONFIG.getDefaultPropertyValue(),
+                ConfigPropertyConstants.BANNER_CONFIG.getPropertyType(),
+                ConfigPropertyConstants.BANNER_CONFIG.getDescription());
+
+        final Response response = jersey
+                .target(V1_CONFIG_PROPERTY
+                        + "/internal/" + ConfigPropertyConstants.BANNER_CONFIG.getGroupName()
+                        + "/" + ConfigPropertyConstants.BANNER_CONFIG.getPropertyName())
+                .request()
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(401);
+    }
+
+    @Test
+    void shouldReadInternalConfigPropertyWithoutPermission() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.BANNER_CONFIG.getGroupName(),
+                ConfigPropertyConstants.BANNER_CONFIG.getPropertyName(),
+                ConfigPropertyConstants.BANNER_CONFIG.getDefaultPropertyValue(),
+                ConfigPropertyConstants.BANNER_CONFIG.getPropertyType(),
+                ConfigPropertyConstants.BANNER_CONFIG.getDescription());
+
+        final Response response = jersey
+                .target(V1_CONFIG_PROPERTY
+                        + "/internal/" + ConfigPropertyConstants.BANNER_CONFIG.getGroupName()
+                        + "/" + ConfigPropertyConstants.BANNER_CONFIG.getPropertyName())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void shouldReturnPublicConfigPropertyViaInternalEndpoint() {
+        qm.createConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                "true",
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+
+        final Response response = jersey
+                .target(V1_CONFIG_PROPERTY
+                        + "/internal/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName()
+                        + "/" + ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "groupName": "access-management",
+                  "propertyName": "acl.enabled",
+                  "propertyValue": "true",
+                  "propertyType": "BOOLEAN",
+                  "description": "${json-unit.any-string}"
+                }
+                """);
     }
 
     private void createRiskScoreProperties() {

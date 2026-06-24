@@ -41,6 +41,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -54,6 +55,8 @@ import static java.util.Objects.requireNonNull;
 final class NvdVulnDataSource implements VulnDataSource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NvdVulnDataSource.class);
+    private static final Duration FEED_REQUEST_TIMEOUT = Duration.ofMinutes(10);
+    private static final Duration META_REQUEST_TIMEOUT = Duration.ofSeconds(30);
 
     private final WatermarkManager watermarkManager;
     private final String feedsUrl;
@@ -308,6 +311,7 @@ final class NvdVulnDataSource implements VulnDataSource {
 
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(feedMetadataUri)
+                .timeout(META_REQUEST_TIMEOUT)
                 .GET()
                 .build();
 
@@ -338,6 +342,7 @@ final class NvdVulnDataSource implements VulnDataSource {
 
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(feedFileUri)
+                .timeout(FEED_REQUEST_TIMEOUT)
                 .GET()
                 .build();
 
@@ -350,25 +355,37 @@ final class NvdVulnDataSource implements VulnDataSource {
 
         LOGGER.info("Downloading feed {} from {}", feed, feedFileUri);
         LOGGER.debug("Download destination: {}", tempFile);
-        final HttpResponse<Path> response;
         try {
-            response = httpClient.send(
+            final HttpResponse<Path> response = httpClient.send(
                     request, HttpResponse.BodyHandlers.ofFile(tempFile));
+
+            if (response.statusCode() != 200) {
+                throw new IllegalStateException(
+                        "Unexpected response code: " + response.statusCode());
+            }
+
+            return response.body();
         } catch (IOException e) {
+            tryDelete(tempFile);
             throw new IllegalStateException(
                     "Failed to download feed file from " + feedFileUri, e);
         } catch (InterruptedException e) {
+            tryDelete(tempFile);
             Thread.currentThread().interrupt();
             throw new IllegalStateException(
                     "Interrupted while downloading feed file from " + feedFileUri, e);
+        } catch (RuntimeException e) {
+            tryDelete(tempFile);
+            throw e;
         }
+    }
 
-        if (response.statusCode() != 200) {
-            throw new IllegalStateException(
-                    "Unexpected response code: " + response.statusCode());
+    private static void tryDelete(Path filePath) {
+        try {
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to delete temp file {}", filePath, e);
         }
-
-        return response.body();
     }
 
 }

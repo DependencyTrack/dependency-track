@@ -51,15 +51,9 @@ jobs:
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: issue.number,
-              body: [
-                'This issue was opened without using an issue template, which is only possible when',
-                'creating issues via the GitHub API. As stated in our',
-                '[contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/main/CONTRIBUTING.md#filing-issues),',
-                'issues that do not use a template will be closed.',
-                '',
-                'Please recreate this issue via the',
-                '[issue chooser](https://github.com/DependencyTrack/dependency-track/issues/new/choose).',
-              ].join('\n'),
+              body: `This issue was opened without using an issue template, which is only possible when creating issues via the GitHub API. As stated in our [contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/main/CONTRIBUTING.md#filing-issues), issues that do not use a template will be closed.
+
+            Please recreate this issue via the [issue chooser](https://github.com/DependencyTrack/dependency-track/issues/new/choose).`,
             });
 
             await github.rest.issues.update({

@@ -29,6 +29,14 @@ sealed interface NvdDataFeed {
 
         @Override
         public String name() {
+            return "modified";
+        }
+    }
+
+    record RecentDataFeed() implements NvdDataFeed {
+
+        @Override
+        public String name() {
             return "recent";
         }
     }

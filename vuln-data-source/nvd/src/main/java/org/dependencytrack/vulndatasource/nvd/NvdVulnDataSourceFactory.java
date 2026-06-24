@@ -132,12 +132,43 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
                 .sorted(Comparator.reverseOrder())
                 .map(NvdDataFeed.YearDataFeed::new)
                 .collect(Collectors.toList());
-        feeds.add(new NvdDataFeed.ModifiedDataFeed());
+        feeds.add(resolveIncrementalFeed(config.getCveFeedsUrl().toString()));
 
         final List<String> feedNames = feeds.stream().map(NvdDataFeed::name).toList();
         final var watermarkManager = new WatermarkManager(kvStore, feedNames);
 
         return new NvdVulnDataSource(watermarkManager, objectMapper, httpClient, config.getCveFeedsUrl().toString(), feeds);
+    }
+
+    private NvdDataFeed resolveIncrementalFeed(final String feedsUrl) {
+        requireNonNull(httpClient, "httpClient must not be null");
+
+        final var modifiedMetaUri = URI.create(
+                "%s/json/cve/2.0/nvdcve-2.0-modified.meta".formatted(feedsUrl));
+
+        final HttpRequest request = HttpRequest.newBuilder()
+                .uri(modifiedMetaUri)
+                .timeout(Duration.ofSeconds(10))
+                .GET()
+                .build();
+
+        try {
+            final HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
+            if (response.statusCode() == 200 && !response.body().isBlank()) {
+                LOGGER.debug("NVD modified feed is available (HTTP {}), using ModifiedDataFeed", response.statusCode());
+                return new NvdDataFeed.ModifiedDataFeed();
+            }
+            LOGGER.warn(
+                    "NVD modified feed probe returned HTTP {} — falling back to RecentDataFeed",
+                    response.statusCode());
+        } catch (IOException e) {
+            LOGGER.warn("NVD modified feed probe failed ({}), falling back to RecentDataFeed", e.getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.warn("NVD modified feed probe interrupted, falling back to RecentDataFeed");
+        }
+
+        return new NvdDataFeed.RecentDataFeed();
     }
 
     @Override

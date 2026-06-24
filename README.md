@@ -6,6 +6,7 @@ capabilities of Software Bill of Materials (SBOM).
 
 [![Build Status](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-build.yaml/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-build.yaml)
 [![Test Status](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-test.yaml/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-test.yaml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/b2ecd06dab57438a9a55bc4a71c5a8ce)](https://app.codacy.com/gh/DependencyTrack/dependency-track/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 [![E2E Test Status](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-test-e2e.yaml/badge.svg)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-test-e2e.yaml)
 [![Documentation](https://img.shields.io/badge/read-docs-blue.svg)](https://dependencytrack.github.io/docs/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE.txt)

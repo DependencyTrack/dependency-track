@@ -1,0 +1,70 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+name: Issue Template Check
+
+on:
+  issues:
+    types: [ opened ]
+
+permissions: { }
+
+jobs:
+  validate:
+    name: Validate Issue Template
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close issues that bypass templates
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const issue = context.payload.issue;
+
+            if (issue.user.type === 'Bot') {
+              core.notice(`Skipping bot author '${issue.user.login}'.`);
+              return;
+            }
+
+            const templateLabels = ['defect', 'in triage', 'enhancement'];
+            if (issue.labels.some(label => templateLabels.includes(label.name))) {
+              core.notice('Issue carries template labels; nothing to do.');
+              return;
+            }
+
+            core.notice(`Closing issue #${issue.number}: opened without an issue template.`);
+
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: issue.number,
+              body: [
+                'This issue was opened without using an issue template, which is only possible when',
+                'creating issues via the GitHub API. As stated in our',
+                '[contributing guidelines](https://github.com/DependencyTrack/dependency-track/blob/main/CONTRIBUTING.md#filing-issues),',
+                'issues that do not use a template will be closed.',
+                '',
+                'Please recreate this issue via the',
+                '[issue chooser](https://github.com/DependencyTrack/dependency-track/issues/new/choose).',
+              ].join('\n'),
+            });
+
+            await github.rest.issues.update({
+              ...context.repo,
+              issue_number: issue.number,
+              state: 'closed',
+              state_reason: 'not_planned',
+            });

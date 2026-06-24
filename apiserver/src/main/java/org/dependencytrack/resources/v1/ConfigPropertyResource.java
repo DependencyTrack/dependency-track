@@ -43,13 +43,16 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.ConfigPropertyConstants;
+import org.dependencytrack.model.ConfigPropertyVisibility;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.v1.vo.ConfigPropertyResponse;
 import org.dependencytrack.resources.v1.vo.UpdateConfigPropertyRequest;
 import org.dependencytrack.secret.management.SecretManager;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * JAX-RS resources for processing ConfigProperties
@@ -194,12 +197,55 @@ public class ConfigPropertyResource extends AbstractConfigPropertyResource {
             @PathParam("groupName") String groupName,
             @Parameter(description = "The property name of the value to retrieve", required = true)
             @PathParam("propertyName") String propertyName) {
+        return getClassifiedConfigProperty(
+                groupName,
+                propertyName,
+                EnumSet.of(ConfigPropertyVisibility.PUBLIC));
+    }
+
+    @GET
+    @Path("/internal/{groupName}/{propertyName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Returns an internal ConfigProperty",
+            description = """
+                    <p>
+                      Requires authentication, but no permission.
+                      Returns both internal and public properties
+                    </p>"""
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The internal config property",
+                    content = @Content(schema = @Schema(implementation = ConfigPropertyResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "403", description = "Not an internal- or public-readable config property"),
+            @ApiResponse(responseCode = "404", description = "The config property could not be found")
+    })
+    public Response getInternalConfigProperty(
+            @Parameter(description = "The group name of the value to retrieve", required = true)
+            @PathParam("groupName") String groupName,
+            @Parameter(description = "The property name of the value to retrieve", required = true)
+            @PathParam("propertyName") String propertyName) {
+        return getClassifiedConfigProperty(
+                groupName,
+                propertyName,
+                EnumSet.of(
+                        ConfigPropertyVisibility.PUBLIC,
+                        ConfigPropertyVisibility.INTERNAL));
+    }
+
+    private Response getClassifiedConfigProperty(
+            String groupName,
+            String propertyName,
+            Set<ConfigPropertyVisibility> allowedVisibilities) {
         final var lookup = new ConfigProperty();
         lookup.setGroupName(groupName);
         lookup.setPropertyName(propertyName);
 
         final var wellKnownProperty = ConfigPropertyConstants.ofProperty(lookup);
-        if (wellKnownProperty == null || !wellKnownProperty.getIsPublic()) {
+        if (wellKnownProperty == null || !allowedVisibilities.contains(wellKnownProperty.getVisibility())) {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 

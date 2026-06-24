@@ -26,17 +26,23 @@ import java.util.Locale;
 /**
  * @since 5.0.0
  */
-record NvdDataFeedMetadata(Instant lastModifiedAt, @Nullable String sha256) {
+record NvdDataFeedMetadata(Instant lastModifiedAt, @Nullable String sha256, long gzSize) {
 
     static NvdDataFeedMetadata of(final String metadataString) {
         Instant lastModifiedAt = null;
         String sha256 = null;
+        long gzSize = -1;
 
         for (final String line : metadataString.lines().toList()) {
             if (line.startsWith("lastModifiedDate:")) {
                 lastModifiedAt = Instant.parse(line.substring("lastModifiedDate:".length()));
             } else if (line.startsWith("sha256:")) {
                 sha256 = line.substring("sha256:".length()).strip().toLowerCase(Locale.ROOT);
+            } else if (line.startsWith("gzSize:")) {
+                try {
+                    gzSize = Long.parseLong(line.substring("gzSize:".length()).strip());
+                } catch (NumberFormatException ignored) {
+                }
             }
         }
 
@@ -44,7 +50,7 @@ record NvdDataFeedMetadata(Instant lastModifiedAt, @Nullable String sha256) {
             throw new IllegalArgumentException("Missing lastModifiedDate in metadata");
         }
 
-        return new NvdDataFeedMetadata(lastModifiedAt, sha256);
+        return new NvdDataFeedMetadata(lastModifiedAt, sha256, gzSize);
     }
 
 }

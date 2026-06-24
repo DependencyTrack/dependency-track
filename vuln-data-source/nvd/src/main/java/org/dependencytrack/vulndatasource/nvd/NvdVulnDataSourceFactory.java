@@ -140,6 +140,10 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         return new NvdVulnDataSource(watermarkManager, objectMapper, httpClient, config.getCveFeedsUrl().toString(), feeds);
     }
 
+    // 50MB threshold — modified should be a small incremental feed; if it exceeds this
+    // NVD has likely broken it (e.g. serving a full dump). recent (~0.6MB) is used instead.
+    private static final long MODIFIED_FEED_MAX_GZ_BYTES = 50L * 1024 * 1024;
+
     private NvdDataFeed resolveIncrementalFeed(final String feedsUrl) {
         requireNonNull(httpClient, "httpClient must not be null");
 
@@ -154,13 +158,24 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
 
         try {
             final HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
-            if (response.statusCode() == 200 && !response.body().isBlank()) {
-                LOGGER.debug("NVD modified feed is available (HTTP {}), using ModifiedDataFeed", response.statusCode());
-                return new NvdDataFeed.ModifiedDataFeed();
+            if (response.statusCode() != 200 || response.body().isBlank()) {
+                LOGGER.warn("NVD modified feed probe returned HTTP {} — falling back to RecentDataFeed",
+                        response.statusCode());
+                return new NvdDataFeed.RecentDataFeed();
             }
-            LOGGER.warn(
-                    "NVD modified feed probe returned HTTP {} — falling back to RecentDataFeed",
-                    response.statusCode());
+
+            final var metadata = NvdDataFeedMetadata.of(response.body());
+            if (metadata.gzSize() > MODIFIED_FEED_MAX_GZ_BYTES) {
+                LOGGER.warn(
+                        "NVD modified feed gzSize ({} bytes) exceeds threshold ({} bytes) — "
+                                + "feed appears to be a full dump rather than incremental; falling back to RecentDataFeed",
+                        metadata.gzSize(), MODIFIED_FEED_MAX_GZ_BYTES);
+                return new NvdDataFeed.RecentDataFeed();
+            }
+
+            LOGGER.debug("NVD modified feed gzSize {} bytes is within threshold, using ModifiedDataFeed",
+                    metadata.gzSize());
+            return new NvdDataFeed.ModifiedDataFeed();
         } catch (IOException e) {
             LOGGER.warn("NVD modified feed probe failed ({}), falling back to RecentDataFeed", e.getMessage());
         } catch (InterruptedException e) {

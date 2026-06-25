@@ -733,17 +733,17 @@
 
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.6.0</version>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>3.7.0</version>
                 <configuration>
-                    <configLocation>${project.parentBaseDir}/support/checkstyle/config.xml</configLocation>
-                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                    <includeResources>false</includeResources>
-                    <includeTestResources>false</includeTestResources>
-                    <propertyExpansion>
-                        parentBaseDir=${project.parentBaseDir}
-                    </propertyExpansion>
+                    <java>
+                        <licenseHeader>
+                            <file>${project.parentBaseDir}/.mvn/spotless/license-header.txt</file>
+                        </licenseHeader>
+                        <removeUnusedImports/>
+                        <forbidWildcardImports/>
+                    </java>
                 </configuration>
                 <executions>
                     <execution>
@@ -753,13 +753,6 @@
                         </goals>
                     </execution>
                 </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.puppycrawl.tools</groupId>
-                        <artifactId>checkstyle</artifactId>
-                        <version>13.6.0</version>
-                    </dependency>
-                </dependencies>
             </plugin>
 
             <plugin>
@@ -786,7 +779,7 @@
                 </property>
             </activation>
             <properties>
-                <checkstyle.skip>true</checkstyle.skip>
+                <spotless.check.skip>true</spotless.check.skip>
                 <jacoco.skip>true</jacoco.skip>
                 <maven.test.skip>true</maven.test.skip>
             </properties>

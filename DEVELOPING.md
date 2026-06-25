@@ -120,6 +120,22 @@ make build-image
 
 This produces the image `ghcr.io/dependencytrack/apiserver:local`.
 
+## Code Style
+
+Java sources are checked with [Spotless](https://github.com/diffplug/spotless), which enforces the
+license header, removal of unused imports, and rejection of wildcard imports. The check runs as part
+of the build and in CI. Run it locally with:
+
+```shell
+make lint-java
+```
+
+Most findings can be fixed automatically using:
+
+```shell
+make format-java
+```
+
 ## Testing
 
 Run all tests:

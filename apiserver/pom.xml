@@ -768,7 +768,7 @@
         <profile>
             <id>dev-services</id>
             <properties>
-                <checkstyle.skip>true</checkstyle.skip>
+                <spotless.check.skip>true</spotless.check.skip>
                 <cyclonedx.skip>true</cyclonedx.skip>
                 <jacoco.skip>true</jacoco.skip>
                 <maven.test.skip>true</maven.test.skip>

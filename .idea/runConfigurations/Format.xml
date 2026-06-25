@@ -1,8 +1,24 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Test" type="MavenRunConfiguration" factoryName="Maven">
+  <configuration default="false" name="Format" type="MavenRunConfiguration" factoryName="Maven">
     <MavenSettings>
       <option name="myGeneralSettings" />
-      <option name="myRunnerSettings" />
+      <option name="myRunnerSettings">
+        <MavenRunnerSettings>
+          <option name="delegateBuildToMaven" value="false" />
+          <option name="environmentProperties">
+            <map />
+          </option>
+          <option name="jreName" value="#USE_PROJECT_JDK" />
+          <option name="mavenProperties">
+            <map>
+              <entry key="maven.build.cache.enabled" value="false" />
+            </map>
+          </option>
+          <option name="passParentEnv" value="true" />
+          <option name="skipTests" value="false" />
+          <option name="vmOptions" value="" />
+        </MavenRunnerSettings>
+      </option>
       <option name="myRunnerParameters">
         <MavenRunnerParameters>
           <option name="cmdOptions" />
@@ -11,10 +27,7 @@
           </option>
           <option name="goals">
             <list>
-              <option value="clean" />
-              <option value="verify" />
-              <option value="-Dspotless.check.skip" />
-              <option value="-Dcyclonedx.skip" />
+              <option value="spotless:apply" />
             </list>
           </option>
           <option name="multimoduleDir" />

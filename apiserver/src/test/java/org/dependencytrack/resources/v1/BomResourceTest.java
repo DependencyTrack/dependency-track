@@ -1248,9 +1248,9 @@ class BomResourceTest extends ResourceTest {
                           "title": "The uploaded BOM is invalid",
                           "detail": "Schema validation failed",
                           "errors": [
-                            "$: required property 'version' not found",
-                            "$.components[0]: required property 'type' not found",
-                            "$.components[0]: required property 'name' not found"
+                            "required property 'version' not found",
+                            "/components/0: required property 'type' not found",
+                            "/components/0: required property 'name' not found"
                           ]
                         }
                         """);
@@ -1578,7 +1578,7 @@ class BomResourceTest extends ResourceTest {
                   "title": "The uploaded BOM is invalid",
                   "detail": "Schema validation failed",
                   "errors": [
-                    "$.components[0].type: does not have a value in the enumeration [\\"application\\", \\"framework\\", \\"library\\", \\"container\\", \\"operating-system\\", \\"device\\", \\"firmware\\", \\"file\\"]"
+                    "/components/0/type: does not have a value in the enumeration [\\"application\\", \\"framework\\", \\"library\\", \\"container\\", \\"operating-system\\", \\"device\\", \\"firmware\\", \\"file\\"]"
                   ]
                 }
                 """);
@@ -1596,7 +1596,7 @@ class BomResourceTest extends ResourceTest {
             assertThat(subject.getBom().getSpecVersion()).isEmpty();
             assertThat(subject.getBom().getContent()).isEqualTo("(Omitted)");
             assertThat(subject.getErrorsList()).containsOnly("""
-                    $.components[0].type: does not have a value in the enumeration \
+                    /components/0/type: does not have a value in the enumeration \
                     ["application", "framework", "library", "container", "operating-system", \
                     "device", "firmware", "file"]""");
         });

@@ -331,11 +331,11 @@ class ExtensionsResourceTest extends ResourceTest {
                   "detail": "The provided configuration failed JSON schema validation.",
                   "errors": [
                     {
-                      "evaluation_path": "$.properties.requiredString.type",
+                      "evaluation_path": "/properties/requiredString/type",
                       "schema_location": "https://example.com/schema/test#/properties/requiredString/type",
-                      "instance_location": "$.requiredString",
+                      "instance_location": "/requiredString",
                       "keyword": "type",
-                      "message": "$.requiredString: null found, string expected"
+                      "message": "null found, string expected"
                     }
                   ]
                 }
@@ -541,10 +541,10 @@ class ExtensionsResourceTest extends ResourceTest {
                   "detail": "The provided configuration failed JSON schema validation.",
                   "errors": [
                     {
-                      "evaluation_path": "$.properties.outcome.enum",
-                      "instance_location": "$.outcome",
+                      "evaluation_path": "/properties/outcome/enum",
+                      "instance_location": "/outcome",
                       "keyword": "enum",
-                      "message": "$.outcome: does not have a value in the enumeration [\\"PASSED\\", \\"FAILED\\"]",
+                      "message": "does not have a value in the enumeration [\\"PASSED\\", \\"FAILED\\"]",
                       "schema_location": "https://example.com/schema/test#/properties/outcome/enum"
                     }
                   ]

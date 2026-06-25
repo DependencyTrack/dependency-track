@@ -128,6 +128,7 @@
         <lib.cel-extensions.version>0.4.1</lib.cel-extensions.version>
         <lib.commons-lang3.version>3.20.0</lib.commons-lang3.version>
         <lib.cpe-parser.version>3.0.1</lib.cpe-parser.version>
+        <lib.cyclonedx-java.version>12.2.0</lib.cyclonedx-java.version>
         <lib.datanucleus-api-jdo.version>6.0.5</lib.datanucleus-api-jdo.version>
         <lib.datanucleus-core.version>6.0.11</lib.datanucleus-core.version>
         <lib.datanucleus-javax-jdo.version>3.2.1</lib.datanucleus-javax-jdo.version>
@@ -144,7 +145,7 @@
         <lib.jdbi.version>3.53.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
         <lib.jetty.version>12.1.10</lib.jetty.version>
-        <lib.json-schema-validator.version>1.5.9</lib.json-schema-validator.version>
+        <lib.json-schema-validator.version>2.0.3</lib.json-schema-validator.version>
         <lib.json-unit.version>5.1.2</lib.json-unit.version>
         <lib.jspecify.version>1.0.0</lib.jspecify.version>
         <lib.junit-jupiter.version>6.1.0</lib.junit-jupiter.version>
@@ -217,6 +218,12 @@
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>
                 <version>${lib.caffeine.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-core-java</artifactId>
+                <version>${lib.cyclonedx-java.version}</version>
             </dependency>
 
             <dependency>

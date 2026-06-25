@@ -151,7 +151,7 @@ public class CycloneDxValidatorTest {
                 .withMessage("Schema validation failed")
                 .extracting(InvalidBomException::getValidationErrors).asInstanceOf(list(String.class))
                 .containsExactly("""
-                        $.components[0].type: does not have a value in the enumeration \
+                        /components/0/type: does not have a value in the enumeration \
                         ["application", "framework", "library", "container", "operating-system", "device", "firmware", "file"]\
                         """);
     }

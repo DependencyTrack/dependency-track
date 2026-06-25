@@ -65,7 +65,8 @@
     <properties>
         <!-- Maven Build Properties -->
         <timestamp>${maven.build.timestamp}</timestamp>
-        <checkstyle.skip>true</checkstyle.skip>
+        <spotless.check.skip>true</spotless.check.skip>
+        <spotless.apply.skip>true</spotless.apply.skip>
 
         <!-- Maven Plugin Versions -->
         <maven.dependency.plugin.version>3.8.1</maven.dependency.plugin.version>

@@ -70,8 +70,12 @@ install:
 .PHONY: install
 
 lint-java:
-	$(MVND) $(MVN_FLAGS) -Dmaven.build.cache.enabled=false validate
+	$(MVND) $(MVN_FLAGS) -q -Dmaven.build.cache.enabled=false validate
 .PHONY: lint-java
+
+format-java:
+	$(MVND) $(MVN_FLAGS) -q -Dmaven.build.cache.enabled=false spotless:apply
+.PHONY: format-java
 
 lint-migrations:
 	@if ! git rev-parse --verify --quiet "$(BASE_REF)" >/dev/null; then \
@@ -123,13 +127,13 @@ lint: lint-java lint-migrations lint-openapi lint-proto
 .PHONY: lint
 
 test:
-	$(MVND) $(MVN_FLAGS) -Dcheckstyle.skip -Dcyclonedx.skip verify
+	$(MVND) $(MVN_FLAGS) -Dspotless.check.skip -Dcyclonedx.skip verify
 .PHONY: test
 
 test-single:
 	$(MVND) $(MVN_FLAGS) test \
 		-Dmaven.build.cache.enabled=false \
-		-Dcheckstyle.skip \
+		-Dspotless.check.skip \
 		-Dcyclonedx.skip \
 		-pl "$(MODULE)" \
 		-am \

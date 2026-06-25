@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.plugin.config;
 
-import com.networknt.schema.JsonSchema;
+import com.networknt.schema.Schema;
 
 import java.util.Set;
 
@@ -26,6 +26,6 @@ import java.util.Set;
  * @since 5.0.0
  */
 record RuntimeConfigSchema(
-        JsonSchema jsonSchema,
+        Schema jsonSchema,
         Set<String> secretRefPaths) {
 }

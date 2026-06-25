@@ -118,16 +118,9 @@ final class ProjectQueryManager extends QueryManager {
         }
 
         preprocessACLs(query, queryFilter, params);
+        query.setNamedParameters(params);
         query.setRange(0, 1);
-        final Project project = singleResult(query.executeWithMap(params));
-        if (project != null) {
-            // set Metrics to prevent extra round trip
-            project.setMetrics(withJdbiHandle(handle ->
-                    handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
-            // set ProjectVersions to prevent extra round trip
-            project.setVersions(getProjectVersions(project));
-        }
-        return project;
+        return executeAndCloseUnique(query);
     }
 
     /**
@@ -145,17 +138,10 @@ final class ProjectQueryManager extends QueryManager {
         final String queryFilter = "(name == :name) && (isLatest == true)";
 
         preprocessACLs(query, queryFilter, params);
+        query.setNamedParameters(params);
         query.setRange(0, 1);
 
-        final Project project = singleResult(query.executeWithMap(params));
-        if (project != null) {
-            // set Metrics to prevent extra round trip
-            project.setMetrics(withJdbiHandle(handle ->
-                    handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId())));
-            // set ProjectVersions to prevent extra round trip
-            project.setVersions(getProjectVersions(project));
-        }
-        return project;
+        return executeAndCloseUnique(query);
     }
 
     @Override
@@ -645,7 +631,7 @@ final class ProjectQueryManager extends QueryManager {
         }
     }
 
-    private List<ProjectVersion> getProjectVersions(Project project) {
+    public List<ProjectVersion> getProjectVersions(Project project) {
         final Query<Project> query = pm.newQuery(Project.class);
         query.setResult("uuid, version, isLatest, inactiveSince");
         query.setOrdering("id asc"); // Ensure consistent ordering

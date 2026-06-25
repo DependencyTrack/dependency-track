@@ -349,6 +349,11 @@ public class ProjectResource extends AbstractApiResource {
             final Project project = ProjectAccess.unrestricted(() -> qm.getLatestProjectVersion(name));
             if (project != null) {
                 requireAccess(qm, project);
+                project.setMetrics(
+                        withJdbiHandle(handle -> handle
+                                .attach(MetricsDao.class)
+                                .getMostRecentProjectMetrics(project.getId())));
+                project.setVersions(qm.getProjectVersions(project));
                 return Response.ok(project).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
@@ -387,6 +392,11 @@ public class ProjectResource extends AbstractApiResource {
             final Project project = ProjectAccess.unrestricted(() -> qm.getProject(name, version));
             if (project != null) {
                 requireAccess(qm, project);
+                project.setMetrics(
+                        withJdbiHandle(handle -> handle
+                                .attach(MetricsDao.class)
+                                .getMostRecentProjectMetrics(project.getId())));
+                project.setVersions(qm.getProjectVersions(project));
                 return Response.ok(project).build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();

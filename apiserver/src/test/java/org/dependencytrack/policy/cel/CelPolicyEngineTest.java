@@ -21,6 +21,7 @@ package org.dependencytrack.policy.cel;
 import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
@@ -45,6 +46,7 @@ import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.EpssDao;
+import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
@@ -249,17 +251,31 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        useJdbiTransaction(handle -> new VulnerabilityAliasDao(handle)
-                .syncAssertions(
-                        "TEST",
-                        new VulnerabilityKey("CVE-001", Vulnerability.Source.NVD),
-                        Set.of(
-                                new VulnerabilityKey("GHSA-001", Vulnerability.Source.GITHUB),
-                                new VulnerabilityKey("INT-001", Vulnerability.Source.INTERNAL),
-                                new VulnerabilityKey("OSV-001", Vulnerability.Source.OSV),
-                                new VulnerabilityKey("SNYK-001", Vulnerability.Source.SNYK),
-                                new VulnerabilityKey("SONATYPE-001", Vulnerability.Source.OSSINDEX),
-                                new VulnerabilityKey("VULNDB-001", Vulnerability.Source.VULNDB))));
+        useJdbiTransaction(handle -> {
+            new VulnerabilityAliasDao(handle)
+                    .syncAssertions(
+                            "TEST",
+                            new VulnerabilityKey("CVE-001", Vulnerability.Source.NVD),
+                            Set.of(
+                                    new VulnerabilityKey("GHSA-001", Vulnerability.Source.GITHUB),
+                                    new VulnerabilityKey("INT-001", Vulnerability.Source.INTERNAL),
+                                    new VulnerabilityKey("OSV-001", Vulnerability.Source.OSV),
+                                    new VulnerabilityKey("SNYK-001", Vulnerability.Source.SNYK),
+                                    new VulnerabilityKey("SONATYPE-001", Vulnerability.Source.OSSINDEX),
+                                    new VulnerabilityKey("VULNDB-001", Vulnerability.Source.VULNDB)));
+            handle
+                    .attach(KevDao.class)
+                    .upsertBatch("cisa", List.of(
+                            new KevAssertion(
+                                    "NVD",
+                                    "CVE-001",
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null
+                            )));
+        });
 
         useJdbiHandle(handle -> handle.attach(EpssDao.class)
                 .createOrUpdateAll(List.of(new Epss(
@@ -392,6 +408,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                          && vuln.owasp_rr_vector == "(SL:5/M:5/O:2/S:9/ED:4/EE:2/A:7/ID:2/LC:2/LI:2/LAV:7/LAC:9/FD:3/RD:5/NC:0/PV:7)"
                          && vuln.epss_score == 0.6
                          && vuln.epss_percentile == 0.2
+                         && vuln.is_kev
                      )
                 """
                 .replace("__COMPONENT_UUID__", component.getUuid().toString())

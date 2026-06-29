@@ -25,6 +25,9 @@ import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.model.ProjectCollectionLogic;
+import org.dependencytrack.model.ProjectMetrics;
+import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,10 +38,15 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BADGE_ENABLED;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class BadgeResourceTest extends ResourceTest {
 
@@ -187,6 +195,136 @@ public class BadgeResourceTest extends ResourceTest {
                 .request()
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(403);
+    }
+
+    @Test
+    public void shouldReturnVulnBadgeWithAggregatedMetricsForCollectionProjectByUuid() {
+        final Project collection = createCollectionProjectWithChildMetrics();
+
+        final Response response = jersey
+                .target(V1_BADGE + "/vulns/project/" + collection.getUuid())
+                .request()
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("image/svg+xml");
+        assertThatBodyContainsAggregatedVulnMetrics(getPlainTextBody(response));
+    }
+
+    @Test
+    public void shouldReturnVulnBadgeWithAggregatedMetricsForCollectionProjectByNameAndVersion() {
+        final Project collection = createCollectionProjectWithChildMetrics();
+
+        final Response response = jersey
+                .target(V1_BADGE
+                        + "/vulns/project/"
+                        + collection.getName()
+                        + "/"
+                        + collection.getVersion())
+                .request()
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("image/svg+xml");
+        assertThatBodyContainsAggregatedVulnMetrics(getPlainTextBody(response));
+    }
+
+    @Test
+    public void shouldReturnViolationsBadgeWithAggregatedMetricsForCollectionProjectByUuid() {
+        final Project collection = createCollectionProjectWithChildMetrics();
+
+        final Response response = jersey
+                .target(V1_BADGE + "/violations/project/" + collection.getUuid())
+                .request()
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("image/svg+xml");
+        assertThatBodyContainsAggregatedViolationMetrics(getPlainTextBody(response));
+    }
+
+    @Test
+    public void shouldReturnViolationsBadgeWithAggregatedMetricsForCollectionProjectByNameAndVersion() {
+        final Project collection = createCollectionProjectWithChildMetrics();
+
+        final Response response = jersey
+                .target(V1_BADGE
+                        + "/violations/project/"
+                        + collection.getName()
+                        + "/"
+                        + collection.getVersion())
+                .request()
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("image/svg+xml");
+        assertThatBodyContainsAggregatedViolationMetrics(getPlainTextBody(response));
+    }
+
+    private Project createCollectionProjectWithChildMetrics() {
+        final var parent = new Project();
+        parent.setName("acme-collection");
+        parent.setVersion("1.0.0");
+        parent.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.persist(parent);
+
+        final var childA = new Project();
+        childA.setName("acme-child-a");
+        childA.setParent(parent);
+        qm.persist(childA);
+
+        final var childB = new Project();
+        childB.setName("acme-child-b");
+        childB.setParent(parent);
+        qm.persist(childB);
+
+        useJdbiHandle(handle -> {
+            final var dao = handle.attach(MetricsTestDao.class);
+            dao.createMetricsPartitionsForDate("PROJECTMETRICS", LocalDate.now(ZoneOffset.UTC));
+            final Date now = Date.from(Instant.now());
+
+            final var metricsA = new ProjectMetrics();
+            metricsA.setProjectId(childA.getId());
+            metricsA.setCritical(2);
+            metricsA.setHigh(3);
+            metricsA.setMedium(1);
+            metricsA.setVulnerabilities(6);
+            metricsA.setPolicyViolationsTotal(6);
+            metricsA.setPolicyViolationsFail(2);
+            metricsA.setPolicyViolationsWarn(3);
+            metricsA.setPolicyViolationsInfo(1);
+            metricsA.setFirstOccurrence(now);
+            metricsA.setLastOccurrence(now);
+            dao.createProjectMetrics(metricsA);
+
+            final var metricsB = new ProjectMetrics();
+            metricsB.setProjectId(childB.getId());
+            metricsB.setCritical(1);
+            metricsB.setHigh(4);
+            metricsB.setMedium(5);
+            metricsB.setVulnerabilities(10);
+            metricsB.setPolicyViolationsTotal(4);
+            metricsB.setPolicyViolationsFail(1);
+            metricsB.setPolicyViolationsWarn(1);
+            metricsB.setPolicyViolationsInfo(2);
+            metricsB.setFirstOccurrence(now);
+            metricsB.setLastOccurrence(now);
+            dao.createProjectMetrics(metricsB);
+        });
+
+        return parent;
+    }
+
+    private void assertThatBodyContainsAggregatedVulnMetrics(String body) {
+        assertThat(isLikelySvg(body)).isTrue();
+        assertThat(body)
+                .contains(">3</text>")
+                .contains(">7</text>")
+                .contains(">6</text>");
+    }
+
+    private void assertThatBodyContainsAggregatedViolationMetrics(String body) {
+        assertThat(isLikelySvg(body)).isTrue();
+        assertThat(body)
+                .contains(">3</text>")
+                .contains(">4</text>")
+                .contains(">3</text>");
     }
 
     private boolean isLikelySvg(String body) {

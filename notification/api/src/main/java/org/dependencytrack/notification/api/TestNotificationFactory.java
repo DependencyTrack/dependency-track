@@ -446,6 +446,7 @@ public final class TestNotificationFactory {
                 .addCwes(Vulnerability.Cwe.newBuilder()
                         .setCweId(777)
                         .setName("Regular Expression without Anchors"))
+                .setIsKev(false)
                 .build();
     }
 

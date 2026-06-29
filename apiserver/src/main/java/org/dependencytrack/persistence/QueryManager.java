@@ -809,6 +809,10 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilityAliases(vulnerability);
     }
 
+    public Set<VulnerabilityKey> getKev(Collection<VulnerabilityKey> keys) {
+        return getVulnerabilityQueryManager().getKev(keys);
+    }
+
     public Analysis getAnalysis(Component component, Vulnerability vulnerability) {
         return getAnalysisQueryManager().getAnalysis(component, vulnerability);
     }

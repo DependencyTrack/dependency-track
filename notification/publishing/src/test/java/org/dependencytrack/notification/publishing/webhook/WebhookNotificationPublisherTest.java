@@ -271,7 +271,8 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
                                     "cweId": 777,
                                     "name": "Regular Expression without Anchors"
                                   }
-                                ]
+                                ],
+                                "isKev": false
                               },
                               "affectedProjectsReference": {
                                 "apiUri": "/api/v1/vulnerability/source/INTERNAL/vuln/INT-001/projects",
@@ -361,7 +362,8 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
                                       "cweId": 777,
                                       "name": "Regular Expression without Anchors"
                                     }
-                                  ]
+                                  ],
+                                  "isKev": false
                                 }
                               ]
                             }

@@ -28,6 +28,7 @@ import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
@@ -148,6 +149,12 @@ public class AnalysisQueryManager extends QueryManager {
 
             if (!command.options().contains(MakeAnalysisCommand.Option.OMIT_NOTIFICATION)
                     && (stateChanged || suppressionChanged)) {
+                // NB: KEV is a transient field and must be computed ad-hoc.
+                final boolean isKev = !super.getKev(
+                        List.of(VulnerabilityKey.of(
+                                analysis.getVulnerability()))).isEmpty();
+                analysis.getVulnerability().setKev(isKev);
+
                 new JdoNotificationEmitter(this).emit(
                         createVulnerabilityAnalysisDecisionChangeNotification(
                                 NotificationModelConverter.convert(analysis.getProject()),

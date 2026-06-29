@@ -239,7 +239,8 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
                                 "source": "INTERNAL",
                                 "cvssv3" : "${json-unit.any-number}",
                                 "severity": "CRITICAL",
-                                "cvssV3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H"
+                                "cvssV3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
+                                "isKev": false
                               },
                               "affectedProjectsReference": {
                                 "apiUri": "/api/v1/vulnerability/source/INTERNAL/vuln/INT-123/projects",

@@ -119,7 +119,8 @@ public final class CelPolicyFieldMappingRegistry {
             new FieldMapping("last_bom_import", "p.\"LAST_BOM_IMPORTED\""),
             new FieldMapping("metadata_tools", "pm.\"TOOLS\""),
             new FieldMapping("bom_generated", "b.\"GENERATED\""),
-            new FieldMapping("inactive_since", "p.\"INACTIVE_SINCE\""));
+            new FieldMapping("inactive_since", "p.\"INACTIVE_SINCE\""),
+            new FieldMapping("is_kev", "is_kev"));
 
     static final List<FieldMapping> PROJECT_PROPERTY_FIELDS = List.of(
             new FieldMapping("group", "pp.\"GROUPNAME\""),

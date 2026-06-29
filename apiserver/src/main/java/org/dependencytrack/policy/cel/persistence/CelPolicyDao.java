@@ -204,7 +204,7 @@ public final class CelPolicyDao {
                 .bind("projectId", projectId)
                 .reduceResultSet(
                         new HashMap<>(),
-                        (accumulator, rs, ctx) -> {
+                        (accumulator, rs, _) -> {
                             final long componentId = rs.getLong("component_id");
                             final long vulnerabilityId = rs.getLong("vulnerability_id");
                             accumulator
@@ -299,7 +299,7 @@ public final class CelPolicyDao {
     }
 
     public Map<Long, Vulnerability> fetchAllVulnerabilities(
-            long projectId,
+            Collection<Long> vulnDbIds,
             Collection<String> protoFieldNames) {
         final List<String> fetchColumns = new ArrayList<>();
         fetchColumns.add("v.\"ID\" AS db_id");
@@ -308,18 +308,19 @@ public final class CelPolicyDao {
         final boolean shouldFetchEpss =
                 protoFieldNames.contains("epss_score")
                         || protoFieldNames.contains("epss_percentile");
+        final boolean shouldFetchIsKev = protoFieldNames.contains("is_kev");
 
         final var vulnRowMapper = new CelPolicyVulnerabilityRowMapper();
         return jdbiHandle
                 .createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
                         <#-- @ftlvariable name="shouldFetchEpss" type="boolean" -->
-                        SELECT DISTINCT ${fetchColumns?join(", ")}
+                        <#-- @ftlvariable name="shouldFetchIsKev" type="boolean" -->
+                        SELECT ${fetchColumns?join(", ")}
+                        <#if shouldFetchIsKev>
+                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS is_kev
+                        </#if>
                           FROM "VULNERABILITY" AS v
-                         INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
-                            ON cv."VULNERABILITY_ID" = v."ID"
-                         INNER JOIN "COMPONENT" AS c
-                            ON c."ID" = cv."COMPONENT_ID"
                         <#if shouldFetchEpss!false>
                           LEFT JOIN LATERAL (
                             SELECT "CVE"
@@ -352,18 +353,12 @@ public final class CelPolicyDao {
                              LIMIT 1
                           ) AS ep ON TRUE
                         </#if>
-                         WHERE c."PROJECT_ID" = :projectId
-                           AND EXISTS (
-                             SELECT 1
-                               FROM "FINDINGATTRIBUTION" AS fa
-                              WHERE fa."COMPONENT_ID" = c."ID"
-                                AND fa."VULNERABILITY_ID" = v."ID"
-                                AND fa."DELETED_AT" IS NULL
-                           )
+                         WHERE v."ID" = ANY(:vulnDbIds)
                         """)
                 .define("fetchColumns", fetchColumns)
                 .define("shouldFetchEpss", shouldFetchEpss)
-                .bind("projectId", projectId)
+                .define("shouldFetchIsKev", shouldFetchIsKev)
+                .bindArray("vulnDbIds", Long.class, vulnDbIds)
                 .reduceResultSet(
                         new HashMap<>(),
                         (accumulator, rs, ctx) -> {
@@ -736,17 +731,23 @@ public final class CelPolicyDao {
 
         final List<String> fetchColumns = new ArrayList<>(selectColumns(VULNERABILITY_FIELDS, vulnRequirements));
 
-        final boolean needsEpss = vulnRequirements.contains("epss_score")
-                || vulnRequirements.contains("epss_percentile");
+        final boolean needsEpss =
+                vulnRequirements.contains("epss_score")
+                        || vulnRequirements.contains("epss_percentile");
+        final boolean shouldFetchIsKev = vulnRequirements.contains("is_kev");
 
         final var vulnRowMapper = new CelPolicyVulnerabilityRowMapper();
 
         return jdbiHandle.createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
                         <#-- @ftlvariable name="needsEpss" type="boolean" -->
+                        <#-- @ftlvariable name="shouldFetchIsKev" type="boolean" -->
                         SELECT v."ID" AS db_id
                         <#if fetchColumns?size gt 0>
                              , ${fetchColumns?join(", ")}
+                        </#if>
+                        <#if shouldFetchIsKev>
+                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS is_kev
                         </#if>
                           FROM "VULNERABILITY" AS v
                         <#if needsEpss!false>
@@ -785,6 +786,7 @@ public final class CelPolicyDao {
                         """)
                 .define("fetchColumns", fetchColumns)
                 .define("needsEpss", needsEpss)
+                .define("shouldFetchIsKev", shouldFetchIsKev)
                 .bindArray("ids", Long.class, vulnIds)
                 .reduceResultSet(
                         new HashMap<>(),

@@ -188,6 +188,9 @@ message Vulnerability {
   optional string cvssv4_vector = 35;
   optional double cvssv4_score = 36;
 
+  // Whether the vulnerability is known to be exploited.
+  bool is_kev = 37;
+
   message Alias {
     string id = 1;
     string source = 2;

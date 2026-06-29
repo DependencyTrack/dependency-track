@@ -25,6 +25,7 @@ import alpine.model.ConfigProperty;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
@@ -38,6 +39,7 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
+import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
@@ -50,6 +52,7 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.EpssDao;
+import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -80,6 +83,7 @@ import static java.util.Objects.requireNonNullElse;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.resources.v1.FindingResource.MEDIA_TYPE_SARIF_JSON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -484,7 +488,7 @@ public class FindingResourceTest extends ResourceTest {
         assertEquals("Acme Example", json.getJsonObject("project").getString("name"));
         assertEquals("1.0", json.getJsonObject("project").getString("version"));
         assertEquals(p1.getUuid().toString(), json.getJsonObject("project").getString("uuid"));
-        assertEquals("1.4", json.getString("version")); // FPF version
+        assertEquals("1.5", json.getString("version")); // FPF version
         JsonArray findings = json.getJsonArray("findings");
         assertThat(findings).satisfiesExactlyInAnyOrder(
                 jsonValue -> {
@@ -1021,6 +1025,98 @@ public class FindingResourceTest extends ResourceTest {
         json = parseJsonArray(response);
         assertNotNull(json);
         assertEquals(2, json.size());
+    }
+
+    @Test
+    void getAllFindingsShouldFilterByKev() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final Component component = createComponent(project, "Component A", "1.0");
+        final Vulnerability kevVuln = createVulnerability("Vuln-KEV", Severity.CRITICAL);
+        final Vulnerability nonKevVuln = createVulnerability("Vuln-NON-KEV", Severity.HIGH);
+        qm.addVulnerability(kevVuln, component, "none");
+        qm.addVulnerability(nonKevVuln, component, "none");
+        useJdbiTransaction(handle -> handle
+                .attach(KevDao.class)
+                .upsertBatch("cisa", List.of(
+                        new KevAssertion(
+                                "INTERNAL",
+                                "Vuln-KEV",
+                                null,
+                                null,
+                                null,
+                                null,
+                                JsonNodeFactory.instance.objectNode()))));
+
+        Response response = jersey
+                .target(V1_FINDING)
+                .queryParam("isKev", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String kevBody = getPlainTextBody(response);
+        assertThatJson(kevBody).isArray().hasSize(1);
+        assertThatJson(kevBody).node("[0].vulnerability.vulnId").isEqualTo("Vuln-KEV");
+        assertThatJson(kevBody).node("[0].vulnerability.isKev").isEqualTo(true);
+
+        response = jersey
+                .target(V1_FINDING)
+                .queryParam("isKev", "false")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String nonKevBody = getPlainTextBody(response);
+        assertThatJson(nonKevBody).isArray().hasSize(1);
+        assertThatJson(nonKevBody).node("[0].vulnerability.vulnId").isEqualTo("Vuln-NON-KEV");
+        assertThatJson(nonKevBody).node("[0].vulnerability.isKev").isEqualTo(false);
+    }
+
+    @Test
+    void getAllFindingsGroupedShouldFilterByKev() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final Component component = createComponent(project, "Component A", "1.0");
+        final Vulnerability kevVuln = createVulnerability("Vuln-KEV", Severity.CRITICAL);
+        final Vulnerability nonKevVuln = createVulnerability("Vuln-NON-KEV", Severity.HIGH);
+        qm.addVulnerability(kevVuln, component, "none");
+        qm.addVulnerability(nonKevVuln, component, "none");
+        useJdbiTransaction(handle -> handle
+                .attach(KevDao.class)
+                .upsertBatch("cisa", List.of(
+                        new KevAssertion(
+                                "INTERNAL",
+                                "Vuln-KEV",
+                                null,
+                                null,
+                                null,
+                                null,
+                                JsonNodeFactory.instance.objectNode()))));
+
+        Response response = jersey
+                .target(V1_FINDING + "/grouped")
+                .queryParam("isKev", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String kevBody = getPlainTextBody(response);
+        assertThatJson(kevBody).isArray().hasSize(1);
+        assertThatJson(kevBody).node("[0].vulnerability.vulnId").isEqualTo("Vuln-KEV");
+
+        response = jersey
+                .target(V1_FINDING + "/grouped")
+                .queryParam("isKev", "false")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String nonKevBody = getPlainTextBody(response);
+        assertThatJson(nonKevBody).isArray().hasSize(1);
+        assertThatJson(nonKevBody).node("[0].vulnerability.vulnId").isEqualTo("Vuln-NON-KEV");
     }
 
     @Test

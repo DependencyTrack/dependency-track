@@ -32,6 +32,7 @@ public final class MdcKeys {
     public static final String MDC_EVENT_TOKEN = "eventToken";
     public static final String MDC_EXTENSION_NAME = "extensionName";
     public static final String MDC_EXTENSION_POINT_NAME = "extensionPointName";
+    public static final String MDC_KEV_DATA_SOURCE_NAME = "kevDataSourceName";
     public static final String MDC_NOTIFICATION_GROUP = "notificationGroup";
     public static final String MDC_NOTIFICATION_ID = "notificationId";
     public static final String MDC_NOTIFICATION_LEVEL = "notificationLevel";

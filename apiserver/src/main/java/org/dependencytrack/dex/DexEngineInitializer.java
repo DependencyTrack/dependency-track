@@ -39,6 +39,8 @@ import org.dependencytrack.dex.engine.api.TaskWorkerOptions;
 import org.dependencytrack.dex.engine.api.request.CreateTaskQueueRequest;
 import org.dependencytrack.dex.listener.DelayedBomProcessedNotificationEmitter;
 import org.dependencytrack.filestorage.api.FileStorage;
+import org.dependencytrack.kevdatasource.MirrorKevDataSourceActivity;
+import org.dependencytrack.kevdatasource.MirrorKevDataSourceWorkflow;
 import org.dependencytrack.metrics.FetchProjectMetricsUpdateCandidatesActivity;
 import org.dependencytrack.metrics.RefreshGlobalPortfolioMetricsActivity;
 import org.dependencytrack.metrics.RefreshVulnerabilityMetricsActivity;
@@ -68,6 +70,7 @@ import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
 import org.dependencytrack.proto.internal.workflow.v1.ImportVexArg;
 import org.dependencytrack.proto.internal.workflow.v1.InvokeVulnAnalyzerArg;
 import org.dependencytrack.proto.internal.workflow.v1.InvokeVulnAnalyzerRes;
+import org.dependencytrack.proto.internal.workflow.v1.MirrorKevDataSourceArg;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
 import org.dependencytrack.proto.internal.workflow.v1.PrepareVulnAnalysisArg;
 import org.dependencytrack.proto.internal.workflow.v1.PrepareVulnAnalysisRes;
@@ -190,6 +193,11 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter(),
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
+                new MirrorKevDataSourceWorkflow(),
+                protoConverter(MirrorKevDataSourceArg.class),
+                voidConverter(),
+                Duration.ofMinutes(1));
+        engine.registerWorkflow(
                 new ProcessScheduledNotificationsWorkflow(),
                 protoConverter(ProcessScheduledNotificationsWorkflowArg.class),
                 voidConverter(),
@@ -270,6 +278,11 @@ public final class DexEngineInitializer implements ServletContextListener {
                 // NB: Account for slow downloads, mainly of sources relying on data dumps.
                 // Activities can't heartbeat while blocked on I/O.
                 Duration.ofMinutes(15));
+        engine.registerActivity(
+                new MirrorKevDataSourceActivity(pluginManager),
+                protoConverter(MirrorKevDataSourceArg.class),
+                voidConverter(),
+                Duration.ofMinutes(5));
         engine.registerActivity(
                 new PrepareVulnAnalysisActivity(fileStorage, pluginManager),
                 protoConverter(PrepareVulnAnalysisArg.class),

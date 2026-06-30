@@ -41,6 +41,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.parser.cyclonedx.CycloneDxBomAssertions;
 import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
@@ -185,6 +186,8 @@ public class VexResourceTest extends ResourceTest {
                 .withMatcher("vulnAUuid", equalTo(vulnA.getUuid().toString()))
                 .withMatcher("vulnBUuid", equalTo(vulnB.getUuid().toString()))
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .withMatcher("componentWithVulnUuid", equalTo(componentWithVuln.getUuid().toString()))
+                .withMatcher("componentWithVulnAndAnalysisUuid", equalTo(componentWithVulnAndAnalysis.getUuid().toString()))
                 .isEqualTo("""
                         {
                           "bomFormat": "CycloneDX",
@@ -207,6 +210,20 @@ public class VexResourceTest extends ResourceTest {
                               }
                             ]
                           },
+                          "components": [
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentWithVulnUuid}",
+                              "name": "acme-lib-b",
+                              "version": "1.0.0"
+                            },
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}",
+                              "name": "acme-lib-c",
+                              "version": "1.0.0"
+                            }
+                          ],
                           "vulnerabilities": [
                             {
                               "bom-ref": "${json-unit.matches:vulnAUuid}",
@@ -225,7 +242,7 @@ public class VexResourceTest extends ResourceTest {
                               ],
                               "affects": [
                                 {
-                                  "ref": "${json-unit.matches:projectUuid}"
+                                  "ref": "${json-unit.matches:componentWithVulnUuid}"
                                 }
                               ]
                             },
@@ -252,13 +269,14 @@ public class VexResourceTest extends ResourceTest {
                               },
                               "affects": [
                                 {
-                                  "ref": "${json-unit.matches:projectUuid}"
+                                  "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
                                 }
                               ]
                             }
                           ]
                         }
                         """);
+        CycloneDxBomAssertions.assertBomRefsUnique(jsonResponse);
     }
 
     @Test
@@ -569,6 +587,8 @@ public class VexResourceTest extends ResourceTest {
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
                 .withMatcher("vulnUuid", equalTo(vuln.getUuid().toString()))
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .withMatcher("componentAUuid", equalTo(componentAWithVuln.getUuid().toString()))
+                .withMatcher("componentBUuid", equalTo(componentBWithVuln.getUuid().toString()))
                 .isEqualTo("""
                         {
                           "bomFormat": "CycloneDX",
@@ -591,6 +611,20 @@ public class VexResourceTest extends ResourceTest {
                               }
                             ]
                           },
+                          "components": [
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentAUuid}",
+                              "name": "acme-lib-a",
+                              "version": "1.0.0"
+                            },
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentBUuid}",
+                              "name": "acme-lib-b",
+                              "version": "1.0.0"
+                            }
+                          ],
                           "vulnerabilities": [
                             {
                               "bom-ref": "${json-unit.matches:vulnUuid}",
@@ -615,13 +649,17 @@ public class VexResourceTest extends ResourceTest {
                               },
                               "affects": [
                                 {
-                                  "ref": "${json-unit.matches:projectUuid}"
+                                  "ref": "${json-unit.matches:componentAUuid}"
+                                },
+                                {
+                                  "ref": "${json-unit.matches:componentBUuid}"
                                 }
                               ]
                             }
                           ]
                         }
                         """);
+        CycloneDxBomAssertions.assertBomRefsUnique(jsonResponse);
     }
 
     @Test
@@ -676,8 +714,14 @@ public class VexResourceTest extends ResourceTest {
         assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
         assertThatJson(jsonResponse)
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
-                .withMatcher("vulnUuid", equalTo(vuln.getUuid().toString()))
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .withMatcher("componentAUuid", equalTo(componentAWithVuln.getUuid().toString()))
+                .withMatcher("componentBUuid", equalTo(componentBWithVuln.getUuid().toString()))
+                // One CVE split across two distinct analysis fingerprints produces two entries; their
+                // bom-refs are disambiguated with a deterministic suffix in fingerprint-sort order
+                // ("EXPLOITABLE" < "IN_TRIAGE"), so the exploitable group is /0 and in_triage is /1.
+                .withMatcher("vulnUuidSuffix0", equalTo(vuln.getUuid().toString() + "/0"))
+                .withMatcher("vulnUuidSuffix1", equalTo(vuln.getUuid().toString() + "/1"))
                 .isEqualTo("""
                         {
                           "bomFormat": "CycloneDX",
@@ -700,9 +744,23 @@ public class VexResourceTest extends ResourceTest {
                               }
                             ]
                           },
+                          "components": [
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentAUuid}",
+                              "name": "acme-lib-a",
+                              "version": "1.0.0"
+                            },
+                            {
+                              "type": "library",
+                              "bom-ref": "${json-unit.matches:componentBUuid}",
+                              "name": "acme-lib-b",
+                              "version": "1.0.0"
+                            }
+                          ],
                           "vulnerabilities": [
                             {
-                              "bom-ref": "${json-unit.matches:vulnUuid}",
+                              "bom-ref": "${json-unit.matches:vulnUuidSuffix1}",
                               "id": "INT-001",
                               "source": {
                                 "name": "INTERNAL"
@@ -724,12 +782,12 @@ public class VexResourceTest extends ResourceTest {
                               },
                               "affects": [
                                 {
-                                  "ref": "${json-unit.matches:projectUuid}"
+                                  "ref": "${json-unit.matches:componentAUuid}"
                                 }
                               ]
                             },
                             {
-                              "bom-ref": "${json-unit.matches:vulnUuid}",
+                              "bom-ref": "${json-unit.matches:vulnUuidSuffix0}",
                               "id": "INT-001",
                               "source": {
                                 "name": "INTERNAL"
@@ -751,13 +809,14 @@ public class VexResourceTest extends ResourceTest {
                               },
                               "affects": [
                                 {
-                                  "ref": "${json-unit.matches:projectUuid}"
+                                  "ref": "${json-unit.matches:componentBUuid}"
                                 }
                               ]
                             }
                           ]
                         }
                         """);
+        CycloneDxBomAssertions.assertBomRefsUnique(jsonResponse);
     }
 
     @Test

@@ -62,6 +62,7 @@ import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.proto.v1.BomValidationFailedSubject;
+import org.dependencytrack.parser.cyclonedx.CycloneDxBomAssertions;
 import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
@@ -758,25 +759,7 @@ class BomResourceTest extends ResourceTest {
                                     "affects": [
                                         {
                                             "ref": "${json-unit.matches:componentWithVulnUuid}"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "bom-ref": "${json-unit.matches:vulnUuid}",
-                                    "id": "INT-001",
-                                    "source": {
-                                        "name": "INTERNAL"
-                                    },
-                                    "ratings": [
-                                        {
-                                            "source": {
-                                                "name": "INTERNAL"
-                                            },
-                                            "severity": "high",
-                                            "method": "other"
-                                        }
-                                    ],
-                                    "affects": [
+                                        },
                                         {
                                             "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
                                         }
@@ -785,6 +768,7 @@ class BomResourceTest extends ResourceTest {
                             ]
                         }
                         """));
+        CycloneDxBomAssertions.assertBomRefsUnique(jsonResponse);
 
         // Ensure the dependency graph did not get deleted during export.
         // https://github.com/DependencyTrack/dependency-track/issues/2494
@@ -892,6 +876,11 @@ class BomResourceTest extends ResourceTest {
                 .withMatcher("componentWithoutVulnUuid", equalTo(componentWithoutVuln.getUuid().toString()))
                 .withMatcher("componentWithVulnUuid", equalTo(componentWithVuln.getUuid().toString()))
                 .withMatcher("componentWithVulnAndAnalysisUuid", equalTo(componentWithVulnAndAnalysis.getUuid().toString()))
+                // One CVE affects two components with distinct analysis fingerprints (no analysis vs
+                // RESOLVED), so VDR emits two entries with deterministic suffixed bom-refs. The empty
+                // fingerprint sorts before "RESOLVED", so the un-analysed component is /0.
+                .withMatcher("vulnUuidSuffix0", equalTo(vulnerability.getUuid().toString() + "/0"))
+                .withMatcher("vulnUuidSuffix1", equalTo(vulnerability.getUuid().toString() + "/1"))
                 .isEqualTo(json("""
                         {
                             "bomFormat": "CycloneDX",
@@ -946,7 +935,7 @@ class BomResourceTest extends ResourceTest {
                             ],
                             "vulnerabilities": [
                                 {
-                                    "bom-ref": "${json-unit.matches:vulnUuid}",
+                                    "bom-ref": "${json-unit.matches:vulnUuidSuffix0}",
                                     "id": "INT-001",
                                     "source": {
                                         "name": "INTERNAL"
@@ -967,7 +956,7 @@ class BomResourceTest extends ResourceTest {
                                     ]
                                 },
                                 {
-                                    "bom-ref": "${json-unit.matches:vulnUuid}",
+                                    "bom-ref": "${json-unit.matches:vulnUuidSuffix1}",
                                     "id": "INT-001",
                                     "source": {
                                         "name": "INTERNAL"
@@ -996,6 +985,7 @@ class BomResourceTest extends ResourceTest {
                             ]
                         }
                         """));
+        CycloneDxBomAssertions.assertBomRefsUnique(jsonResponse);
 
         // Ensure the dependency graph did not get deleted during export.
         // https://github.com/DependencyTrack/dependency-track/issues/2494

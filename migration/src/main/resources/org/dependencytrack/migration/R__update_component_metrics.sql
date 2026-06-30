@@ -46,6 +46,7 @@ BEGIN
          , v_latest."MEDIUM"
          , v_latest."LOW"
          , v_latest."UNASSIGNED_SEVERITY"
+         , v_latest."KEV"
          , v_latest."RISKSCORE"
          , v_latest."FINDINGS_TOTAL"
          , v_latest."FINDINGS_AUDITED"
@@ -73,6 +74,7 @@ BEGIN
          , v_metrics.medium
          , v_metrics.low
          , v_metrics.unassigned
+         , v_metrics.kev
          , v_metrics.risk_score
          , v_metrics.findings_total
          , v_metrics.findings_audited
@@ -106,6 +108,7 @@ BEGIN
   , "MEDIUM"
   , "LOW"
   , "UNASSIGNED_SEVERITY"
+  , "KEV"
   , "RISKSCORE"
   , "FINDINGS_TOTAL"
   , "FINDINGS_AUDITED"
@@ -137,6 +140,7 @@ BEGIN
        , v_metrics.medium
        , v_metrics.low
        , v_metrics.unassigned
+       , v_metrics.kev
        , v_metrics.risk_score
        , v_metrics.findings_total
        , v_metrics.findings_audited

@@ -40,6 +40,7 @@ public interface MetricsTestDao extends SqlObject {
             , "FINDINGS_UNAUDITED"
             , "FIRST_OCCURRENCE"
             , "HIGH"
+            , "KEV"
             , "LAST_OCCURRENCE"
             , "LOW"
             , "MEDIUM"
@@ -72,6 +73,7 @@ public interface MetricsTestDao extends SqlObject {
             , :findingsUnaudited
             , :firstOccurrence
             , :high
+            , :kev
             , :lastOccurrence
             , :low
             , :medium
@@ -113,6 +115,7 @@ public interface MetricsTestDao extends SqlObject {
             , "FINDINGS_TOTAL"
             , "FINDINGS_UNAUDITED"
             , "HIGH"
+            , "KEV"
             , "LOW"
             , "MEDIUM"
             , "POLICYVIOLATIONS_AUDITED"
@@ -144,6 +147,7 @@ public interface MetricsTestDao extends SqlObject {
             , :findingsTotal
             , :findingsUnaudited
             , :high
+            , :kev
             , :low
             , :medium
             , :policyViolationsAudited

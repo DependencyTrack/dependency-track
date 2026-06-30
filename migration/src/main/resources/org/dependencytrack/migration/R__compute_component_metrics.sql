@@ -69,11 +69,16 @@ $$
   ),
   kev_alias_group AS MATERIALIZED (
     SELECT DISTINCT va."GROUP_ID" AS group_id
-      FROM "KEV_ASSERTION" AS ka
+      FROM "VULNERABILITY" AS v
      INNER JOIN "VULNERABILITY_ALIAS" AS va
-        ON va."SOURCE" = ka."VULN_SOURCE"
-       AND va."VULN_ID" = ka."VULN_ID"
-     WHERE va."GROUP_ID" IS NOT NULL
+        ON va."SOURCE" = v."SOURCE"
+       AND va."VULN_ID" = v."VULNID"
+     INNER JOIN "VULNERABILITY_ALIAS" AS va2
+        ON va2."GROUP_ID" = va."GROUP_ID"
+     INNER JOIN "KEV_ASSERTION" AS ka
+        ON ka."VULN_SOURCE" = va2."SOURCE"
+       AND ka."VULN_ID" = va2."VULN_ID"
+     WHERE v."ID" IN (SELECT vulnerability_id FROM components_vulns)
   ),
   -- Resolve alias groups once per vulnerability rather than once per
   -- component-vulnerability pair, which could lead to a nested loop

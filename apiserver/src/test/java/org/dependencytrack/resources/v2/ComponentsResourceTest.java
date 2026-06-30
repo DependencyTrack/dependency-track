@@ -854,6 +854,7 @@ public class ComponentsResourceTest extends ResourceTest {
             metrics.setHigh(2);
             metrics.setMedium(3);
             metrics.setLow(4);
+            metrics.setKev(6);
             metrics.setVulnerabilities(10);
             metrics.setInheritedRiskScore(5.0);
             dao.createDependencyMetrics(metrics);
@@ -876,9 +877,9 @@ public class ComponentsResourceTest extends ResourceTest {
                           "medium": 3,
                           "low": 4,
                           "unassigned": 0,
+                          "kev": 6,
                           "vulnerabilities": 10,
                           "suppressed": 0,
-                          "kev": 0,
                           "inherited_risk_score": 5.0,
                           "findings_total": 0,
                           "findings_audited": 0,

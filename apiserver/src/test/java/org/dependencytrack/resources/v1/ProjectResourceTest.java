@@ -1367,6 +1367,7 @@ class ProjectResourceTest extends ResourceTest {
             projectMetricsLatest.setInheritedRiskScore(13.13);
             projectMetricsLatest.setUnassigned(14);
             projectMetricsLatest.setVulnerabilities(15);
+            projectMetricsLatest.setKev(16);
             projectMetricsLatest.setFirstOccurrence(Date.from(projectMetricsLatestOccurrence));
             projectMetricsLatest.setLastOccurrence(Date.from(projectMetricsLatestOccurrence));
             dao.createProjectMetrics(projectMetricsLatest);
@@ -1411,6 +1412,7 @@ class ProjectResourceTest extends ResourceTest {
                       "components": 1,
                       "critical": 2,
                       "high": 3,
+                      "kev": 16,
                       "low": 4,
                       "medium": 5,
                       "policyViolationsFail": 6,
@@ -1915,6 +1917,7 @@ class ProjectResourceTest extends ResourceTest {
             projectMetricsLatest.setInheritedRiskScore(13.13);
             projectMetricsLatest.setUnassigned(14);
             projectMetricsLatest.setVulnerabilities(15);
+            projectMetricsLatest.setKev(16);
             projectMetricsLatest.setFirstOccurrence(Date.from(projectMetricsLatestOccurrence));
             projectMetricsLatest.setLastOccurrence(Date.from(projectMetricsLatestOccurrence));
             dao.createProjectMetrics(projectMetricsLatest);
@@ -1959,6 +1962,7 @@ class ProjectResourceTest extends ResourceTest {
                       "components": 1,
                       "critical": 2,
                       "high": 3,
+                      "kev": 16,
                       "low": 4,
                       "medium": 5,
                       "policyViolationsFail": 6,

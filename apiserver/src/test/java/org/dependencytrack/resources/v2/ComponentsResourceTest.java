@@ -28,16 +28,21 @@ import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentIdentity;
+import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PackageArtifactMetadata;
 import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Scope;
+import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -824,6 +829,77 @@ public class ComponentsResourceTest extends ResourceTest {
                 .inPath("$.items[*].name")
                 .isArray()
                 .containsExactly("c1");
+    }
+
+    @Test
+    public void listComponentsWithMetricsTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("test", null, "1.0", null, null, null, null, false);
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("comp");
+        qm.createComponent(component, false);
+
+        useJdbiHandle(handle -> {
+            final var dao = handle.attach(MetricsTestDao.class);
+            dao.createMetricsPartitionsForDate("DEPENDENCYMETRICS", LocalDate.now(ZoneOffset.UTC));
+
+            final var metrics = new DependencyMetrics();
+            metrics.setProjectId(project.getId());
+            metrics.setComponentId(component.getId());
+            metrics.setFirstOccurrence(Date.from(Instant.now()));
+            metrics.setLastOccurrence(Date.from(Instant.now()));
+            metrics.setCritical(1);
+            metrics.setHigh(2);
+            metrics.setMedium(3);
+            metrics.setLow(4);
+            metrics.setVulnerabilities(10);
+            metrics.setInheritedRiskScore(5.0);
+            dao.createDependencyMetrics(metrics);
+        });
+
+        final Response response = jersey
+                .target("/components")
+                .queryParam("expand", "metrics")
+                .queryParam("limit", 10)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.items[0].metrics")
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "critical": 1,
+                          "high": 2,
+                          "medium": 3,
+                          "low": 4,
+                          "unassigned": 0,
+                          "vulnerabilities": 10,
+                          "suppressed": 0,
+                          "kev": 0,
+                          "inherited_risk_score": 5.0,
+                          "findings_total": 0,
+                          "findings_audited": 0,
+                          "findings_unaudited": 0,
+                          "policy_violations_fail": 0,
+                          "policy_violations_warn": 0,
+                          "policy_violations_info": 0,
+                          "policy_violations_total": 0,
+                          "policy_violations_audited": 0,
+                          "policy_violations_unaudited": 0,
+                          "policy_violations_security_total": 0,
+                          "policy_violations_security_audited": 0,
+                          "policy_violations_security_unaudited": 0,
+                          "policy_violations_license_total": 0,
+                          "policy_violations_license_audited": 0,
+                          "policy_violations_license_unaudited": 0,
+                          "policy_violations_operational_total": 0,
+                          "policy_violations_operational_audited": 0,
+                          "policy_violations_operational_unaudited": 0
+                        }
+                        """);
     }
 
     private Component createComponentWithPublishedAt(final Project project, final String name, final Instant publishedAt) throws Exception {

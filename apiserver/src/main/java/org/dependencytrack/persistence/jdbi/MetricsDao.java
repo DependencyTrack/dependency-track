@@ -116,6 +116,7 @@ public interface MetricsDao extends SqlObject {
                    , SUM("FINDINGS_TOTAL") AS findings_total
                    , SUM("FINDINGS_UNAUDITED") AS findings_unaudited
                    , SUM("HIGH") AS high
+                   , SUM("KEV") AS kev
                    , SUM("RISKSCORE") as inherited_risk_score
                    , SUM("LOW") AS low
                    , SUM("MEDIUM") AS medium
@@ -149,6 +150,7 @@ public interface MetricsDao extends SqlObject {
                  , COALESCE(dm.findings_unaudited, 0) AS findings_unaudited
                  , date_range.metrics_date AS first_occurrence
                  , COALESCE(dm.high, 0) AS high
+                 , COALESCE(dm.kev, 0) AS kev
                  , COALESCE(dm.inherited_risk_score, 0) AS inherited_risk_score
                  , date_range.metrics_date AS last_occurrence
                  , COALESCE(dm.low, 0) AS low
@@ -361,6 +363,7 @@ public interface MetricsDao extends SqlObject {
                    , SUM("FINDINGS_TOTAL") AS findings_total
                    , SUM("FINDINGS_UNAUDITED") AS findings_unaudited
                    , SUM("HIGH") AS high
+                   , SUM("KEV") AS kev
                    , SUM("LOW") AS low
                    , SUM("MEDIUM") AS medium
                    , SUM("POLICYVIOLATIONS_AUDITED") AS policy_violations_audited
@@ -393,6 +396,7 @@ public interface MetricsDao extends SqlObject {
                  , COALESCE(dm.findings_unaudited, 0) AS "findingsUnaudited"
                  , date_range.metrics_date AS "firstOccurrence"
                  , COALESCE(dm.high, 0) AS high
+                 , COALESCE(dm.kev, 0) AS kev
                  , COALESCE(dm.inherited_risk_score, 0) AS "inheritedRiskScore"
                  , date_range.metrics_date AS "lastOccurrence"
                  , COALESCE(dm.low, 0) AS low
@@ -493,6 +497,7 @@ public interface MetricsDao extends SqlObject {
                  , COALESCE(SUM(pm."COMPONENTS"), 0) AS components
                  , COALESCE(SUM(pm."CRITICAL"), 0) AS critical
                  , COALESCE(SUM(pm."HIGH"), 0) AS high
+                 , COALESCE(SUM(pm."KEV"), 0) AS kev
                  , COALESCE(SUM(pm."LOW"), 0) AS low
                  , COALESCE(SUM(pm."MEDIUM"), 0) AS medium
                  , COALESCE(SUM(pm."UNASSIGNED_SEVERITY"), 0) AS unassigned

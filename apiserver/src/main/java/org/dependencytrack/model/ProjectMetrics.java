@@ -45,6 +45,7 @@ public class ProjectMetrics implements Serializable {
     private int medium;
     private int low;
     private int unassigned;
+    private int kev;
     private int vulnerabilities;
     private int vulnerableComponents;
     private int components;
@@ -123,6 +124,14 @@ public class ProjectMetrics implements Serializable {
 
     public void setUnassigned(int unassigned) {
         this.unassigned = unassigned;
+    }
+
+    public int getKev() {
+        return kev;
+    }
+
+    public void setKev(int kev) {
+        this.kev = kev;
     }
 
     public int getVulnerabilities() {

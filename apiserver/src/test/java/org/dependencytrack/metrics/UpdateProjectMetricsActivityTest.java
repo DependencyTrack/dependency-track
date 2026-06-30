@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.metrics;
 
+import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
@@ -30,6 +31,7 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
@@ -66,6 +68,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         assertThat(metrics.getMedium()).isZero();
         assertThat(metrics.getLow()).isZero();
         assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getKev()).isZero();
         assertThat(metrics.getVulnerabilities()).isZero();
         assertThat(metrics.getSuppressed()).isZero();
         assertThat(metrics.getFindingsTotal()).isZero();
@@ -130,6 +133,18 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         vuln.setSource(Vulnerability.Source.INTERNAL);
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln);
+
+        useJdbiHandle(handle -> handle
+                .attach(KevDao.class)
+                .upsertBatch("cisa", List.of(
+                        new KevAssertion(
+                                "INTERNAL",
+                                "INTERNAL-001",
+                                null,
+                                null,
+                                null,
+                                null,
+                                null))));
 
         // Create a component with an unaudited vulnerability.
         var componentUnaudited = new Component();
@@ -200,6 +215,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         assertThat(metrics.getMedium()).isZero();
         assertThat(metrics.getLow()).isZero();
         assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getKev()).isEqualTo(2); // One is suppressed
         assertThat(metrics.getVulnerabilities()).isEqualTo(2); // One is suppressed
         assertThat(metrics.getSuppressed()).isEqualTo(1);
         assertThat(metrics.getFindingsTotal()).isEqualTo(2); // One is suppressed
@@ -307,6 +323,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         assertThat(metrics.getMedium()).isZero();
         assertThat(metrics.getLow()).isZero();
         assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getKev()).isZero();
         assertThat(metrics.getVulnerabilities()).isZero();
         assertThat(metrics.getSuppressed()).isZero();
         assertThat(metrics.getFindingsTotal()).isZero();

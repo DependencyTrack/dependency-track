@@ -27,6 +27,7 @@ import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
 import org.dependencytrack.dex.engine.api.request.CreateTaskQueueRequest;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.testing.WorkflowTestExtension;
+import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Policy;
@@ -40,6 +41,7 @@ import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.dependencytrack.proto.internal.workflow.v1.FetchProjectMetricsUpdateCandidatesRes;
@@ -165,6 +167,18 @@ class UpdatePortfolioMetricsWorkflowTest extends AbstractMetricsUpdateTaskTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln);
 
+        useJdbiTransaction(handle -> handle
+                .attach(KevDao.class)
+                .upsertBatch("cisa", List.of(
+                        new KevAssertion(
+                                "INTERNAL",
+                                "INTERNAL-001",
+                                null,
+                                null,
+                                null,
+                                null,
+                                null))));
+
         // Create a project with an unaudited vulnerability.
         var projectUnaudited = new Project();
         projectUnaudited.setName("acme-app-a");
@@ -218,6 +232,7 @@ class UpdatePortfolioMetricsWorkflowTest extends AbstractMetricsUpdateTaskTest {
         assertThat(metrics.getMedium()).isZero();
         assertThat(metrics.getLow()).isZero();
         assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getKev()).isEqualTo(2); // One is suppressed
         assertThat(metrics.getVulnerabilities()).isEqualTo(2); // One is suppressed
         assertThat(metrics.getSuppressed()).isEqualTo(1);
         assertThat(metrics.getFindingsTotal()).isEqualTo(2); // One is suppressed

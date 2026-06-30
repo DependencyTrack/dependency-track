@@ -22,19 +22,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.Date;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 
 class AppliedPolicyAnnotationSerializationTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .findAndRegisterModules();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void serializesAppliedAtAsIso8601String() throws Exception {
         final var annotation = new AppliedPolicyAnnotation(
                 "gem-policy-a",
-                Instant.parse("2026-06-04T12:00:00Z"),
+                Date.from(Instant.parse("2026-06-04T12:00:00Z")),
                 "admin@localhost");
 
         final String json = objectMapper.writeValueAsString(annotation);

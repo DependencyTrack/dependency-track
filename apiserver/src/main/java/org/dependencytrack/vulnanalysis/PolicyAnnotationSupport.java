@@ -25,7 +25,7 @@ import org.dependencytrack.util.AnalysisCommentFormatter;
 import org.dependencytrack.util.AnalysisCommentFormatter.AnalysisCommentField;
 import org.jspecify.annotations.Nullable;
 
-import java.time.Instant;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -151,7 +151,7 @@ public final class PolicyAnnotationSupport {
     private static AppliedPolicyAnnotation desiredAnnotationForPolicy(final VulnerabilityPolicy policy) {
         return new AppliedPolicyAnnotation(
                 policy.getName(),
-                Instant.now(),
+                new Date(),
                 policy.getAuthor());
     }
 

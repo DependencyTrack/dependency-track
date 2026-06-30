@@ -24,8 +24,8 @@ import org.dependencytrack.parser.common.resolver.CweResolver;
 import org.dependencytrack.persistence.jdbi.FindingDao;
 
 import java.io.Serializable;
-import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -100,7 +100,10 @@ public final class Finding implements Serializable {
 
         optValue(analysis, "state", findingRow.analysisState());
         optValue(analysis, "isSuppressed", findingRow.suppressed(), false);
-        optValue(analysis, "policyAnnotations", toPolicyAnnotationsApi(findingRow.policyAnnotationsJson()));
+        final var policyAnnotations = toPolicyAnnotationsApi(findingRow.policyAnnotationsJson());
+        if (!policyAnnotations.isEmpty()) {
+            optValue(analysis, "policyAnnotations", policyAnnotations);
+        }
         if (findingRow.vulnPublished() != null) {
             optValue(vulnerability, "published", Date.from(findingRow.vulnPublished()));
         }
@@ -141,7 +144,7 @@ public final class Finding implements Serializable {
     private static List<Map<String, Object>> toPolicyAnnotationsApi(
             final List<AppliedPolicyAnnotation> annotations) {
         if (annotations == null || annotations.isEmpty()) {
-            return null;
+            return List.of();
         }
 
         final var apiAnnotations = new ArrayList<Map<String, Object>>(annotations.size());
@@ -155,14 +158,13 @@ public final class Finding implements Serializable {
             if (annotation.annotator() != null) {
                 apiAnnotation.put("annotator", annotation.annotator());
             }
-            final Instant appliedAt = annotation.appliedAt();
-            if (appliedAt != null) {
-                apiAnnotation.put("appliedAt", java.util.Date.from(appliedAt));
+            if (annotation.appliedAt() != null) {
+                apiAnnotation.put("appliedAt", annotation.appliedAt());
             }
             apiAnnotations.add(apiAnnotation);
         }
 
-        return apiAnnotations.isEmpty() ? null : apiAnnotations;
+        return List.copyOf(apiAnnotations);
     }
 
     static List<Cwe> getCwes(final List<Integer> cweIds) {

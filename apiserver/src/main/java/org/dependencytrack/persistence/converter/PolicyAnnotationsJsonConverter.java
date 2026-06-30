@@ -23,13 +23,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.dependencytrack.model.AppliedPolicyAnnotation;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -40,7 +39,6 @@ public class PolicyAnnotationsJsonConverter extends AbstractJsonConverter<List<A
 
     private static final JsonMapper JSON_MAPPER = JsonMapper.builder()
             .disable(MapperFeature.DEFAULT_VIEW_INCLUSION)
-            .addModule(new JavaTimeModule())
             .build();
 
     public PolicyAnnotationsJsonConverter() {
@@ -70,17 +68,21 @@ public class PolicyAnnotationsJsonConverter extends AbstractJsonConverter<List<A
                 return JSON_MAPPER.readValue(json, TYPE_REF);
             }
 
-            final var annotations = new ArrayList<AppliedPolicyAnnotation>();
-            for (final JsonNode node : root) {
-                final AppliedPolicyAnnotation annotation = parseAnnotationNode(node);
-                if (annotation != null) {
-                    annotations.add(annotation);
-                }
-            }
-            return annotations.isEmpty() ? null : List.copyOf(annotations);
+            return parseAnnotationArray(root);
         } catch (IOException e) {
             throw new IllegalArgumentException("Failed to deserialize policy annotations", e);
         }
+    }
+
+    private static List<AppliedPolicyAnnotation> parseAnnotationArray(final JsonNode root) {
+        final var annotations = new ArrayList<AppliedPolicyAnnotation>();
+        for (final JsonNode node : root) {
+            final AppliedPolicyAnnotation annotation = parseAnnotationNode(node);
+            if (annotation != null) {
+                annotations.add(annotation);
+            }
+        }
+        return List.copyOf(annotations);
     }
 
     private static @Nullable AppliedPolicyAnnotation parseAnnotationNode(final JsonNode node) {
@@ -92,10 +94,10 @@ public class PolicyAnnotationsJsonConverter extends AbstractJsonConverter<List<A
             return null;
         }
 
-        Instant appliedAt = null;
+        Date appliedAt = null;
         if (node.hasNonNull("appliedAt")) {
             try {
-                appliedAt = JSON_MAPPER.treeToValue(node.get("appliedAt"), Instant.class);
+                appliedAt = JSON_MAPPER.treeToValue(node.get("appliedAt"), Date.class);
             } catch (JacksonException ignored) {
                 // Fall through with null appliedAt.
             }

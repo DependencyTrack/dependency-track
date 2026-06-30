@@ -21,7 +21,6 @@ package org.dependencytrack.common;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * @since 5.0.0
@@ -40,8 +39,7 @@ public final class Mappers {
     private static ObjectMapper createJsonMapper() {
         return new ObjectMapper()
                 .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
-                .registerModule(new Jdk8Module())
-                .registerModule(new JavaTimeModule());
+                .registerModule(new Jdk8Module());
     }
 
 }

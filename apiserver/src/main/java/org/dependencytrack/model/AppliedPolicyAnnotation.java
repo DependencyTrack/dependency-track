@@ -20,11 +20,11 @@ package org.dependencytrack.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.dependencytrack.resources.v1.serializers.Iso8601InstantSerializer;
+import org.dependencytrack.resources.v1.serializers.Iso8601DateSerializer;
 import org.jspecify.annotations.Nullable;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.util.Date;
 
 /**
  * Policy-driven annotation materialized on an {@link Analysis} record.
@@ -34,7 +34,7 @@ import java.time.Instant;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AppliedPolicyAnnotation(
         String policyName,
-        @JsonSerialize(using = Iso8601InstantSerializer.class)
-        Instant appliedAt,
+        @JsonSerialize(using = Iso8601DateSerializer.class)
+        Date appliedAt,
         @Nullable String annotator) implements Serializable {
 }

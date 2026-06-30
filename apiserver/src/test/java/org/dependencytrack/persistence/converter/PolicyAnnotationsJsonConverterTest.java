@@ -22,6 +22,7 @@ import org.dependencytrack.model.AppliedPolicyAnnotation;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +30,7 @@ import static org.assertj.core.api.Assertions.tuple;
 
 class PolicyAnnotationsJsonConverterTest {
 
-    private static final Instant APPLIED_AT = Instant.parse("2026-01-15T10:30:00Z");
+    private static final Date APPLIED_AT = Date.from(Instant.parse("2026-01-15T10:30:00Z"));
 
     @Test
     void roundTripTest() {

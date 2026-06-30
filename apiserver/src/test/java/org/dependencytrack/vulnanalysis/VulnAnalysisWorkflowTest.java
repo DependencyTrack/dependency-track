@@ -86,6 +86,7 @@ import java.net.http.HttpClient;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -1191,7 +1192,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         analysisA.setCvssV4Score(BigDecimal.valueOf(4.4));
         analysisA.setSuppressed(true);
         analysisA.setPolicyAnnotations(List.of(
-                new AppliedPolicyAnnotation("Foo", Instant.parse("2020-01-01T00:00:00Z"), "author")));
+                new AppliedPolicyAnnotation("Foo", Date.from(Instant.parse("2020-01-01T00:00:00Z")), "author")));
         qm.persist(analysisA);
         useJdbiHandle(jdbiHandle -> jdbiHandle.createUpdate("""
                         UPDATE

@@ -50,8 +50,9 @@ public class NotificationSubjectProjectAuditChangeRowMapper implements RowMapper
         maybeSet(rs, "vulnAnalysisState", ResultSet::getString, vulnAnalysisBuilder::setState);
         maybeSet(rs, "isVulnAnalysisSuppressed", ResultSet::getBoolean, vulnAnalysisBuilder::setSuppressed);
         maybeSet(rs, "policyAnnotationsJson", ResultSet::getString, json -> {
-            final List<AppliedPolicyAnnotation> annotations = PolicyAnnotationsJsonConverter.fromJson(json);
-            if (annotations == null) {
+            final List<AppliedPolicyAnnotation> annotations =
+                    PolicyAnnotationsJsonConverter.fromJson(json);
+            if (annotations == null || annotations.isEmpty()) {
                 return;
             }
             for (final AppliedPolicyAnnotation annotation : annotations) {
@@ -59,7 +60,7 @@ public class NotificationSubjectProjectAuditChangeRowMapper implements RowMapper
                         org.dependencytrack.notification.proto.v1.AppliedPolicyAnnotation.newBuilder()
                                 .setPolicyName(annotation.policyName());
                 if (annotation.appliedAt() != null) {
-                    annotationBuilder.setAppliedAt(Timestamps.fromMillis(annotation.appliedAt().toEpochMilli()));
+                    annotationBuilder.setAppliedAt(Timestamps.fromMillis(annotation.appliedAt().getTime()));
                 }
                 if (annotation.annotator() != null) {
                     annotationBuilder.setAnnotator(annotation.annotator());

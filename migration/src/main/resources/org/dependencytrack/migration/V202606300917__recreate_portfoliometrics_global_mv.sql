@@ -13,7 +13,7 @@ CREATE MATERIALIZED VIEW "PORTFOLIOMETRICS_GLOBAL" AS
     ) AS days
   ),
   date_range AS (
-    SELECT date_trunc('day', (CURRENT_DATE - ('1 day'::INTERVAL * (day.day)::DOUBLE PRECISION))) AS metrics_date
+    SELECT date_trunc('day', (CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS date) - ('1 day'::INTERVAL * (day.day)::DOUBLE PRECISION))) AS metrics_date
       FROM generate_series(0, GREATEST(((SELECT retention.days FROM retention) - 1), 0)) AS day(day)
   ),
   latest_daily_project_metrics AS (
@@ -90,8 +90,8 @@ CREATE MATERIALIZED VIEW "PORTFOLIOMETRICS_GLOBAL" AS
             ON pm."PROJECT_ID" = p."ID"
            AND p."INACTIVE_SINCE" IS NULL
            AND p."COLLECTION_LOGIC" IS NULL
-         WHERE pm."LAST_OCCURRENCE" < (date_range.metrics_date + '1 day'::INTERVAL)
-           AND pm."LAST_OCCURRENCE" >= (date_range.metrics_date - '1 day'::INTERVAL)
+         WHERE pm."LAST_OCCURRENCE" < (date_range.metrics_date + '1 day'::INTERVAL) AT TIME ZONE 'UTC'
+           AND pm."LAST_OCCURRENCE" >= (date_range.metrics_date - '1 day'::INTERVAL) AT TIME ZONE 'UTC'
          ORDER BY pm."PROJECT_ID"
                 , pm."LAST_OCCURRENCE" DESC
       ) latest_metrics ON (true)

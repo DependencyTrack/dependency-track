@@ -186,18 +186,6 @@ public interface MetricsDao extends SqlObject {
     List<PortfolioMetrics> getPortfolioMetricsForDays(@Bind int days);
 
     default void refreshGlobalPortfolioMetrics() {
-        if (!getHandle().isInTransaction()) {
-            // Required so SET LOCAL doesn't silently no-op.
-            throw new IllegalStateException(
-                    "refreshGlobalPortfolioMetrics must run inside a transaction");
-        }
-
-        // NB: All other metrics operations explicitly cast timestamps to UTC
-        // and do not require this workaround. Setting the local timezone here
-        // was done to avoid having to drop and re-create the materialized view
-        // via schema migration. If the view ever needs updating for unrelated
-        // reasons, this workaround could be removed.
-        getHandle().execute("SET LOCAL TIME ZONE 'UTC'");
         getHandle().execute("REFRESH MATERIALIZED VIEW CONCURRENTLY \"PORTFOLIOMETRICS_GLOBAL\"");
     }
 

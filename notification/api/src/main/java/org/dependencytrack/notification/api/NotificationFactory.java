@@ -507,6 +507,19 @@ public final class NotificationFactory {
             VulnerabilityAnalysis analysis,
             boolean analysisStateChanged,
             boolean suppressionChanged) {
+        return createVulnerabilityAnalysisDecisionChangeNotification(
+                project, component, vulnerability, analysis,
+                analysisStateChanged, suppressionChanged, false);
+    }
+
+    public static Notification createVulnerabilityAnalysisDecisionChangeNotification(
+            Project project,
+            Component component,
+            Vulnerability vulnerability,
+            VulnerabilityAnalysis analysis,
+            boolean analysisStateChanged,
+            boolean suppressionChanged,
+            boolean policyAnnotationsChanged) {
         requireNonNull(project, "project must not be null");
         requireNonNull(component, "component must not be null");
         requireNonNull(vulnerability, "vulnerability must not be null");
@@ -518,9 +531,11 @@ public final class NotificationFactory {
         } else if (suppressionChanged) {
             title = "Analysis Decision: Violation "
                     + (analysis.getSuppressed() ? "Suppressed" : "Unsuppressed");
+        } else if (policyAnnotationsChanged) {
+            title = "Policy annotations updated";
         } else {
             throw new IllegalArgumentException("""
-                    Neither analysis state nor suppression have changed. \
+                    Neither analysis state, suppression, nor policy annotations have changed. \
                     The notification appears to have been created by mistake.""");
         }
 

@@ -82,6 +82,7 @@ public class FindingTest extends PersistenceCapableTest {
         Assertions.assertEquals(AnalysisState.NOT_AFFECTED, map.get("state"));
         Assertions.assertEquals(true, map.get("isSuppressed"));
         assertThat(map).doesNotContainKey("detail");
+        assertThat(map.get("policyAnnotations")).asList().isEmpty();
     }
 
     @Test
@@ -129,6 +130,6 @@ public class FindingTest extends PersistenceCapableTest {
                 "vuln-recommendation", "vuln-references", Instant.now(), Severity.HIGH, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
                 "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
                 "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
-                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, true, analysisDetail, 1);
+                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, true, analysisDetail, null, 1);
     }
 }

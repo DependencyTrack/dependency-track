@@ -142,7 +142,8 @@
         <lib.httpclient5.version>5.6.1</lib.httpclient5.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
-        <lib.jackson.version>2.22.0</lib.jackson.version>
+        <lib.jackson2.version>2.22.0</lib.jackson2.version>
+        <lib.jackson3.version>3.2.0</lib.jackson3.version>
         <lib.jdbi.version>3.53.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
         <lib.jetty.version>12.1.10</lib.jetty.version>
@@ -328,7 +329,14 @@
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>${lib.jackson.version}</version>
+                <version>${lib.jackson2.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>tools.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${lib.jackson3.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>

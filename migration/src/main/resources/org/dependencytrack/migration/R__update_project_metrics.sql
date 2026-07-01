@@ -15,6 +15,7 @@ DECLARE
   "v_medium"                                  INT; -- Number of vulnerabilities with medium severity
   "v_low"                                     INT; -- Number of vulnerabilities with low severity
   "v_unassigned"                              INT; -- Number of vulnerabilities with unassigned severity
+  "v_kev"                                     INT; -- Number of vulnerabilities that are known exploited (KEV)
   "v_risk_score"                              NUMERIC; -- Inherited risk score
   "v_findings_total"                          INT; -- Total number of findings
   "v_findings_audited"                        INT; -- Number of audited findings
@@ -60,6 +61,7 @@ BEGIN
     COALESCE(SUM("MEDIUM")::INT, 0),
     COALESCE(SUM("LOW")::INT, 0),
     COALESCE(SUM("UNASSIGNED_SEVERITY")::INT, 0),
+    COALESCE(SUM("KEV")::INT, 0),
     COALESCE(SUM("FINDINGS_TOTAL")::INT, 0),
     COALESCE(SUM("FINDINGS_AUDITED")::INT, 0),
     COALESCE(SUM("FINDINGS_UNAUDITED")::INT, 0),
@@ -100,6 +102,7 @@ BEGIN
     "v_medium",
     "v_low",
     "v_unassigned",
+    "v_kev",
     "v_findings_total",
     "v_findings_audited",
     "v_findings_unaudited",
@@ -131,6 +134,7 @@ BEGIN
                                   "MEDIUM",
                                   "LOW",
                                   "UNASSIGNED_SEVERITY",
+                                  "KEV",
                                   "RISKSCORE",
                                   "FINDINGS_TOTAL",
                                   "FINDINGS_AUDITED",
@@ -162,6 +166,7 @@ BEGIN
            "v_medium",
            "v_low",
            "v_unassigned",
+           "v_kev",
            "v_risk_score",
            "v_findings_total",
            "v_findings_audited",

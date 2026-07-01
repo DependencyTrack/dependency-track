@@ -12,6 +12,7 @@ DECLARE
   v_medium                                  INT     := 0; -- Number of vulnerabilities with medium severity
   v_low                                     INT     := 0; -- Number of vulnerabilities with low severity
   v_unassigned                              INT     := 0; -- Number of vulnerabilities with unassigned severity
+  v_kev                                     INT     := 0; -- Number of vulnerabilities that are known exploited (KEV)
   v_risk_score                              NUMERIC := 0; -- Inherited risk score
   v_findings_total                          INT     := 0; -- Total number of findings
   v_findings_audited                        INT     := 0; -- Number of audited findings
@@ -45,6 +46,17 @@ BEGIN
   WITH deduped AS (
     SELECT DISTINCT ON (va."GROUP_ID", CASE WHEN va."GROUP_ID" IS NULL THEN v."ID" END)
            COALESCE(a."SEVERITY", v."SEVERITY") AS effective_severity
+         , EXISTS (
+             SELECT 1
+               FROM "KEV_ASSERTION" AS ka
+              WHERE (ka."VULN_SOURCE", ka."VULN_ID") IN (
+                SELECT v."SOURCE", v."VULNID"
+                 UNION
+                SELECT alias_sibling."SOURCE", alias_sibling."VULN_ID"
+                  FROM "VULNERABILITY_ALIAS" AS alias_sibling
+                 WHERE alias_sibling."GROUP_ID" = va."GROUP_ID"
+              )
+           ) AS is_kev
       FROM "VULNERABILITY" AS v
      INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
         ON cv."COMPONENT_ID" = v_component."ID"
@@ -72,13 +84,15 @@ BEGIN
        , COUNT(*) FILTER (WHERE effective_severity = 'MEDIUM')::INT
        , COUNT(*) FILTER (WHERE effective_severity = 'LOW')::INT
        , COUNT(*) FILTER (WHERE effective_severity NOT IN ('CRITICAL','HIGH','MEDIUM','LOW'))::INT
+       , COUNT(*) FILTER (WHERE is_kev)::INT
     FROM deduped
     INTO v_vulnerabilities
        , v_critical
        , v_high
        , v_medium
        , v_low
-       , v_unassigned;
+       , v_unassigned
+       , v_kev;
 
   v_risk_score = COALESCE("CALC_RISK_SCORE"(v_critical, v_high, v_medium, v_low, v_unassigned), 0);
 
@@ -162,6 +176,7 @@ BEGIN
   , "MEDIUM"
   , "LOW"
   , "UNASSIGNED_SEVERITY"
+  , "KEV"
   , "RISKSCORE"
   , "FINDINGS_TOTAL"
   , "FINDINGS_AUDITED"
@@ -193,6 +208,7 @@ BEGIN
        , v_medium
        , v_low
        , v_unassigned
+       , v_kev
        , v_risk_score
        , v_findings_total
        , v_findings_audited

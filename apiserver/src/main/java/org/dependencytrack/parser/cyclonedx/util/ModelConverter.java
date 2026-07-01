@@ -76,11 +76,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -96,6 +99,14 @@ import static org.dependencytrack.util.PurlUtil.silentPurlCoordinatesOnly;
 public class ModelConverter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelConverter.class);
+
+    /**
+     * U+001F (Unit Separator) field delimiter for composite keys. A reserved control character
+     * with no legitimate occurrence in vulnerability UUIDs or analysis-detail prose, so it cannot
+     * collide with payload data when used to glue group-key fields together. Package-private so
+     * tests pin against the production constant rather than re-declaring the literal byte.
+     */
+    static final char FIELD_SEPARATOR = '\u001F';
 
     /**
      * Private Constructor.
@@ -927,14 +938,105 @@ public class ModelConverter {
         return cycloneService;
     }
 
-    public static org.cyclonedx.model.vulnerability.Vulnerability convert(final QueryManager qm, final CycloneDXExporter.Variant variant,
-                                                                          final Finding finding) {
-        final Component component = qm.getObjectByUuid(Component.class, finding.getComponent().get("uuid").toString());
-        final Project project = component.getProject();
-        final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, finding.getVulnerability().get("uuid").toString());
+    /**
+     * Stable serialisation of the analysis fields used to distinguish per-component analyses that
+     * share a vulnerability. Null fields serialise to the empty string; non-null enums use
+     * {@link Enum#name()} so the contract does not depend on {@link String#valueOf(Object)}
+     * returning the literal {@code "null"} for absent values.
+     */
+    static String analysisFingerprint(final Analysis analysis) {
+        if (analysis == null) {
+            return "";
+        }
+        return enumName(analysis.getAnalysisState()) + FIELD_SEPARATOR
+                + enumName(analysis.getAnalysisJustification()) + FIELD_SEPARATOR
+                + enumName(analysis.getAnalysisResponse()) + FIELD_SEPARATOR
+                + Objects.toString(trimToNull(analysis.getAnalysisDetails()), "");
+    }
+
+    private static String enumName(final Enum<?> value) {
+        return value == null ? "" : value.name();
+    }
+
+    private static String componentUuid(final Finding finding) {
+        return Objects.requireNonNull(finding.getComponent().get("uuid"), "componentUuid").toString();
+    }
+
+    private static String vulnerabilityUuid(final Finding finding) {
+        return Objects.requireNonNull(finding.getVulnerability().get("uuid"), "vulnerabilityUuid").toString();
+    }
+
+    private static String analysisCacheKey(final Finding finding) {
+        return componentUuid(finding) + FIELD_SEPARATOR + vulnerabilityUuid(finding);
+    }
+
+    private static Analysis resolveAnalysis(final QueryManager qm, final Finding finding) {
+        final Component component = qm.getObjectByUuid(Component.class, componentUuid(finding));
+        final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, vulnerabilityUuid(finding));
+        return qm.getAnalysis(component, vulnerability);
+    }
+
+    /**
+     * Build a stable grouping key for a finding. The key is the vulnerability identifier alone for
+     * variants that do not emit analysis (so every component affected by a vulnerability collapses
+     * into one group), widened with the analysis fingerprint when the variant emits analysis.
+     */
+    private static String buildGroupKey(final CycloneDXExporter.Variant variant, final Finding finding,
+                                        final Map<String, Analysis> analysisCache) {
+        final String vulnUuid = vulnerabilityUuid(finding);
+        if (!variant.includesAnalysis()) {
+            return vulnUuid;
+        }
+        return vulnUuid + FIELD_SEPARATOR + analysisFingerprint(analysisCache.get(analysisCacheKey(finding)));
+    }
+
+    /**
+     * Convert one group of findings (sharing a vulnerability and, when analysis is emitted, an
+     * analysis fingerprint) into a single CycloneDX vulnerability entry whose {@code affects[]}
+     * carries the sorted union of affected component bom-refs.
+     */
+    private static org.cyclonedx.model.vulnerability.Vulnerability convertGroup(
+            final QueryManager qm, final CycloneDXExporter.Variant variant,
+            final List<Finding> groupFindings, final Map<String, Analysis> analysisCache) {
+        final Finding first = groupFindings.get(0);
+        final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, vulnerabilityUuid(first));
 
         final org.cyclonedx.model.vulnerability.Vulnerability cdxVulnerability = new org.cyclonedx.model.vulnerability.Vulnerability();
-        cdxVulnerability.setBomRef(vulnerability.getUuid().toString());
+        populateScalarFields(cdxVulnerability, vulnerability);
+        cdxVulnerability.setAffects(buildAffects(groupFindings));
+
+        if (variant.includesAnalysis()) {
+            final Analysis analysis = analysisCache.get(analysisCacheKey(first));
+            if (analysis != null) {
+                cdxVulnerability.setAnalysis(buildCdxAnalysis(analysis));
+            }
+        }
+        return cdxVulnerability;
+    }
+
+    /**
+     * The sorted, de-duplicated union of the affected component bom-refs in a group. Sorting keeps
+     * the output deterministic regardless of finding order.
+     */
+    private static List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> buildAffects(
+            final List<Finding> groupFindings) {
+        final List<String> componentUuids = groupFindings.stream()
+                .map(ModelConverter::componentUuid)
+                .distinct()
+                .sorted()
+                .toList();
+        final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>(componentUuids.size());
+        for (final String uuid : componentUuids) {
+            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
+            affect.setRef(uuid);
+            affects.add(affect);
+        }
+        return affects;
+    }
+
+    private static void populateScalarFields(
+            final org.cyclonedx.model.vulnerability.Vulnerability cdxVulnerability,
+            final Vulnerability vulnerability) {
         cdxVulnerability.setId(vulnerability.getVulnId());
         // Add the vulnerability source
         org.cyclonedx.model.vulnerability.Vulnerability.Source cdxSource = new org.cyclonedx.model.vulnerability.Vulnerability.Source();
@@ -1021,48 +1123,26 @@ public class ModelConverter {
         cdxVulnerability.setCreated(vulnerability.getCreated());
         cdxVulnerability.setPublished(vulnerability.getPublished());
         cdxVulnerability.setUpdated(vulnerability.getUpdated());
+    }
 
-        if (CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES == variant || CycloneDXExporter.Variant.VDR == variant) {
-            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
-            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
-            affect.setRef(component.getUuid().toString());
-            affects.add(affect);
-            cdxVulnerability.setAffects(affects);
-        } else if (CycloneDXExporter.Variant.VEX == variant && project != null) {
-            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
-            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
-            affect.setRef(project.getUuid().toString());
-            affects.add(affect);
-            cdxVulnerability.setAffects(affects);
-        }
-
-        if (CycloneDXExporter.Variant.VEX == variant || CycloneDXExporter.Variant.VDR == variant) {
-            final Analysis analysis = qm.getAnalysis(
-                    qm.getObjectByUuid(Component.class, component.getUuid()),
-                    qm.getObjectByUuid(Vulnerability.class, vulnerability.getUuid())
-            );
-            if (analysis != null) {
-                final org.cyclonedx.model.vulnerability.Vulnerability.Analysis cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
-                if (analysis.getAnalysisResponse() != null) {
-                    final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response response = convertDtVulnAnalysisResponseToCdxAnalysisResponse(analysis.getAnalysisResponse());
-                    if (response != null) {
-                        List<org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response> responses = new ArrayList<>();
-                        responses.add(response);
-                        cdxAnalysis.setResponses(responses);
-                    }
-                }
-                if (analysis.getAnalysisState() != null) {
-                    cdxAnalysis.setState(convertDtVulnAnalysisStateToCdxAnalysisState(analysis.getAnalysisState()));
-                }
-                if (analysis.getAnalysisJustification() != null) {
-                    cdxAnalysis.setJustification(convertDtVulnAnalysisJustificationToCdxAnalysisJustification(analysis.getAnalysisJustification()));
-                }
-                cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
-                cdxVulnerability.setAnalysis(cdxAnalysis);
+    private static org.cyclonedx.model.vulnerability.Vulnerability.Analysis buildCdxAnalysis(final Analysis analysis) {
+        final org.cyclonedx.model.vulnerability.Vulnerability.Analysis cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
+        if (analysis.getAnalysisResponse() != null) {
+            final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response response = convertDtVulnAnalysisResponseToCdxAnalysisResponse(analysis.getAnalysisResponse());
+            if (response != null) {
+                List<org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response> responses = new ArrayList<>();
+                responses.add(response);
+                cdxAnalysis.setResponses(responses);
             }
         }
-
-        return cdxVulnerability;
+        if (analysis.getAnalysisState() != null) {
+            cdxAnalysis.setState(convertDtVulnAnalysisStateToCdxAnalysisState(analysis.getAnalysisState()));
+        }
+        if (analysis.getAnalysisJustification() != null) {
+            cdxAnalysis.setJustification(convertDtVulnAnalysisJustificationToCdxAnalysisJustification(analysis.getAnalysisJustification()));
+        }
+        cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
+        return cdxAnalysis;
     }
 
     /**
@@ -1280,6 +1360,25 @@ public class ModelConverter {
         }
     }
 
+    /**
+     * Group findings by {@code (vulnerability, analysis fingerprint)} and emit one
+     * {@link org.cyclonedx.model.vulnerability.Vulnerability} entry per group with {@code affects[]}
+     * carrying the union of affected component bom-refs — the pattern documented as CycloneDX VEX
+     * Use-Case 13.
+     *
+     * <p>For variants that do not emit analysis (INVENTORY_WITH_VULNERABILITIES) every finding for a
+     * given vulnerability collapses into one group. For variants that do (VDR, VEX) findings sharing
+     * the same per-component analysis for a given vulnerability are grouped together.
+     *
+     * <p>Each emitted entry carries a {@code bom-ref}. Where one vulnerability produces a single
+     * group (the common case) the {@code bom-ref} is the bare Dependency-Track vulnerability UUID —
+     * matching the Hyades reference exports. Where one vulnerability produces multiple groups (the
+     * Use-Case 13 analysis split) entries carry a numeric suffix ({@code <uuid>/0}, {@code <uuid>/1},
+     * …) so the spec rule that every {@code bom-ref} is unique within the BOM still holds.
+     *
+     * <p>Per-finding {@link Analysis} lookups are memoised so the group-key pass and the
+     * group-conversion pass share a single query per {@code (component, vulnerability)} pair.
+     */
     public static List<org.cyclonedx.model.vulnerability.Vulnerability> generateVulnerabilities(
             final QueryManager qm,
             final CycloneDXExporter.Variant variant,
@@ -1288,11 +1387,46 @@ public class ModelConverter {
         if (findings == null) {
             return Collections.emptyList();
         }
-        final var vulnerabilitiesSeen = new HashSet<org.cyclonedx.model.vulnerability.Vulnerability>();
-        return findings.stream()
-                .map(finding -> convert(qm, variant, finding))
-                .filter(vulnerabilitiesSeen::add)
-                .toList();
+        // Only populated for variants that emit analysis; otherwise it stays empty and the
+        // includesAnalysis() guards short-circuit the reads.
+        final Map<String, Analysis> analysisCache = new HashMap<>(
+                variant.includesAnalysis() ? findings.size() : 0);
+        // TreeMap keeps the emitted entries (and their bom-ref suffixes) in deterministic key order.
+        final Map<String, List<Finding>> groups = new TreeMap<>();
+        for (final Finding finding : findings) {
+            if (variant.includesAnalysis()) {
+                analysisCache.computeIfAbsent(analysisCacheKey(finding), k -> resolveAnalysis(qm, finding));
+            }
+            groups.computeIfAbsent(buildGroupKey(variant, finding, analysisCache), k -> new ArrayList<>())
+                    .add(finding);
+        }
+        // Pre-pass: a vulnerability that produced more than one group (the Use-Case 13 analysis
+        // split) needs a disambiguating suffix on each bom-ref; singletons keep the bare UUID.
+        final Map<String, Integer> vulnUuidGroupCount = new HashMap<>();
+        for (final List<Finding> group : groups.values()) {
+            vulnUuidGroupCount.merge(vulnerabilityUuid(group.get(0)), 1, Integer::sum);
+        }
+        final Map<String, Integer> vulnUuidNextIndex = new HashMap<>();
+        final List<org.cyclonedx.model.vulnerability.Vulnerability> result = new ArrayList<>(groups.size());
+        for (final List<Finding> group : groups.values()) {
+            final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln = convertGroup(qm, variant, group, analysisCache);
+            cdxVuln.setBomRef(buildVulnBomRef(group, vulnUuidGroupCount, vulnUuidNextIndex));
+            result.add(cdxVuln);
+        }
+        return result;
+    }
+
+    private static String buildVulnBomRef(final List<Finding> group,
+                                          final Map<String, Integer> vulnUuidGroupCount,
+                                          final Map<String, Integer> vulnUuidNextIndex) {
+        final String vulnUuid = vulnerabilityUuid(group.get(0));
+        if (vulnUuidGroupCount.getOrDefault(vulnUuid, 0) <= 1) {
+            return vulnUuid;
+        }
+        // The slash isolates the suffix from the UUID alphabet, so a singleton's bare UUID can never
+        // be a prefix collision with a multi-group entry. Indices follow TreeMap key order.
+        final int idx = vulnUuidNextIndex.merge(vulnUuid, 0, (old, ignored) -> old + 1);
+        return vulnUuid + "/" + idx;
     }
 
     public static org.cyclonedx.model.Component.Scope mapCdxScope(Scope scope) {

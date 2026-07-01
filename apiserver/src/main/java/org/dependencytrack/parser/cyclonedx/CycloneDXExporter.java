@@ -48,10 +48,53 @@ public class CycloneDXExporter {
     }
 
     public enum Variant {
-        INVENTORY,
-        INVENTORY_WITH_VULNERABILITIES,
-        VDR,
-        VEX
+        INVENTORY                      (false, false, false, true,  true),
+        INVENTORY_WITH_VULNERABILITIES (false, false, true,  true,  true),
+        VDR                            (true,  true,  true,  true,  true),
+        VEX                            (true,  true,  true,  false, false);
+
+        private final boolean filtersToVulnerableComponents;
+        private final boolean includesAnalysis;
+        private final boolean emitsFindings;
+        private final boolean includesDependencyGraph;
+        private final boolean includesServices;
+
+        Variant(final boolean filtersToVulnerableComponents,
+                final boolean includesAnalysis,
+                final boolean emitsFindings,
+                final boolean includesDependencyGraph,
+                final boolean includesServices) {
+            this.filtersToVulnerableComponents = filtersToVulnerableComponents;
+            this.includesAnalysis = includesAnalysis;
+            this.emitsFindings = emitsFindings;
+            this.includesDependencyGraph = includesDependencyGraph;
+            this.includesServices = includesServices;
+        }
+
+        /** Whether {@code components[]} is restricted to components that have findings. */
+        public boolean filtersToVulnerableComponents() {
+            return filtersToVulnerableComponents;
+        }
+
+        /** Whether per-component VEX analysis is emitted on vulnerability entries. */
+        public boolean includesAnalysis() {
+            return includesAnalysis;
+        }
+
+        /** Whether findings are loaded and emitted as {@code vulnerabilities[]}. */
+        public boolean emitsFindings() {
+            return emitsFindings;
+        }
+
+        /** Whether the dependency graph is emitted. */
+        public boolean includesDependencyGraph() {
+            return includesDependencyGraph;
+        }
+
+        /** Whether services are emitted. */
+        public boolean includesServices() {
+            return includesServices;
+        }
     }
 
     private final QueryManager qm;
@@ -70,11 +113,9 @@ public class CycloneDXExporter {
             components = qm.getAllComponents(project);
             services = qm.getAllServiceComponents(project);
         }
-        final List<Finding> findings = switch (variant) {
-            case INVENTORY_WITH_VULNERABILITIES, VDR, VEX -> withJdbiHandle(handle ->
-                    handle.attach(FindingDao.class).getFindings(project.getId(), true));
-            default -> null;
-        };
+        final List<Finding> findings = variant.emitsFindings()
+                ? withJdbiHandle(handle -> handle.attach(FindingDao.class).getFindings(project.getId(), true))
+                : null;
         return create(components, services, findings, project);
     }
 
@@ -84,8 +125,8 @@ public class CycloneDXExporter {
         return create(components, null, null, null);
     }
 
-    private Bom create(List<Component>components, final List<ServiceComponent> services, final List<Finding> findings, final Project project) {
-        if (Variant.VDR == variant) {
+    private Bom create(List<Component> components, final List<ServiceComponent> services, final List<Finding> findings, final Project project) {
+        if (variant.filtersToVulnerableComponents()) {
             final Set<UUID> vulnerableComponentUuids = findings.stream()
                     .map(finding -> (UUID) finding.getComponent().get("uuid"))
                     .collect(Collectors.toSet());
@@ -93,8 +134,8 @@ public class CycloneDXExporter {
                     .filter(component -> vulnerableComponentUuids.contains(component.getUuid()))
                     .toList();
         }
-        final List<org.cyclonedx.model.Component> cycloneComponents = (Variant.VEX != variant && components != null) ? components.stream().map(component -> ModelConverter.convert(component)).collect(Collectors.toList()) : null;
-        final List<org.cyclonedx.model.Service> cycloneServices = (Variant.VEX != variant && services != null) ? services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList()) : null;
+        final List<org.cyclonedx.model.Component> cycloneComponents = components != null ? components.stream().map(component -> ModelConverter.convert(component)).collect(Collectors.toList()) : null;
+        final List<org.cyclonedx.model.Service> cycloneServices = (variant.includesServices() && services != null) ? services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList()) : null;
         final Bom bom = new Bom();
         bom.setSerialNumber("urn:uuid:" + UUID.randomUUID());
         bom.setVersion(1);
@@ -102,7 +143,7 @@ public class CycloneDXExporter {
         bom.setComponents(cycloneComponents);
         bom.setServices(cycloneServices);
         bom.setVulnerabilities(ModelConverter.generateVulnerabilities(qm, variant, findings));
-        if (cycloneComponents != null) {
+        if (variant.includesDependencyGraph() && cycloneComponents != null) {
             bom.setDependencies(ModelConverter.generateDependencies(project, components));
         }
         return bom;

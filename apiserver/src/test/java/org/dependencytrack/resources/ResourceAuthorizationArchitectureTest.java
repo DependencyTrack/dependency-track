@@ -52,6 +52,7 @@ class ResourceAuthorizationArchitectureTest {
     private static final Set<String> PERMISSION_ANNOTATION_ALLOWLIST = Set.of(
             "CalculatorResource.getCvssScores",
             "CalculatorResource.getOwaspRRScores",
+            "ConfigPropertyResource.getInternalConfigProperty",
             "CweResource.getCwe",
             "CweResource.getCwes",
             "EventResource.isTokenBeingProcessed",

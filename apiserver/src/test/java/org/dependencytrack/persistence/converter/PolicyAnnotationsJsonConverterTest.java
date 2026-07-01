@@ -71,6 +71,7 @@ class PolicyAnnotationsJsonConverterTest {
     void emptyAndNullJson() {
         assertThat(PolicyAnnotationsJsonConverter.fromJson(null)).isNull();
         assertThat(PolicyAnnotationsJsonConverter.fromJson("")).isNull();
+        assertThat(PolicyAnnotationsJsonConverter.fromJson("[]")).isEmpty();
         assertThat(PolicyAnnotationsJsonConverter.toJson(null)).isNull();
         assertThat(PolicyAnnotationsJsonConverter.toJson(List.of())).isNull();
     }

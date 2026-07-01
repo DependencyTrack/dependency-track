@@ -328,7 +328,7 @@ public class Analysis implements Serializable {
     }
 
     public List<AppliedPolicyAnnotation> getPolicyAnnotations() {
-        return policyAnnotations;
+        return policyAnnotations != null ? policyAnnotations : List.of();
     }
 
     public void setPolicyAnnotations(final List<AppliedPolicyAnnotation> policyAnnotations) {

@@ -32,7 +32,8 @@
 
     <properties>
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
-        <checkstyle.skip>true</checkstyle.skip>
+        <spotless.check.skip>true</spotless.check.skip>
+        <spotless.apply.skip>true</spotless.apply.skip>
     </properties>
 
     <dependencies>
@@ -69,7 +70,7 @@
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>7.22.0</version>
+                <version>7.23.0</version>
                 <executions>
                     <execution>
                         <id>generate-api-v2</id>

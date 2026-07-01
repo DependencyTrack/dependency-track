@@ -65,7 +65,8 @@
     <properties>
         <!-- Maven Build Properties -->
         <timestamp>${maven.build.timestamp}</timestamp>
-        <checkstyle.skip>true</checkstyle.skip>
+        <spotless.check.skip>true</spotless.check.skip>
+        <spotless.apply.skip>true</spotless.apply.skip>
 
         <!-- Maven Plugin Versions -->
         <maven.dependency.plugin.version>3.8.1</maven.dependency.plugin.version>
@@ -78,7 +79,7 @@
         <lib.logstash-logback-encoder.version>8.1</lib.logstash-logback-encoder.version>
         <lib.nimbus-oauth2-oidc-sdk.version>11.37.2</lib.nimbus-oauth2-oidc-sdk.version>
         <lib.owasp.security-logging.version>1.1.7</lib.owasp.security-logging.version>
-        <lib.parsson.version>1.1.7</lib.parsson.version>
+        <lib.parsson.version>1.1.9</lib.parsson.version>
         <!-- Unit test libraries -->
         <lib.junit-pioneer.version>2.3.0</lib.junit-pioneer.version>
     </properties>

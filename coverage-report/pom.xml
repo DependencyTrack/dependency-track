@@ -14,7 +14,8 @@
 
     <properties>
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
-        <checkstyle.skip>true</checkstyle.skip>
+        <spotless.check.skip>true</spotless.check.skip>
+        <spotless.apply.skip>true</spotless.apply.skip>
         <maven.install.skip>true</maven.install.skip>
     </properties>
 
@@ -185,6 +186,19 @@
         <dependency>
             <groupId>org.dependencytrack</groupId>
             <artifactId>jdbi-support</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
+            <artifactId>kev-data-source-api</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
+            <artifactId>kev-data-source-builtin</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>

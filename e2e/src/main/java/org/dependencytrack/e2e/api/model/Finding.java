@@ -31,7 +31,15 @@ public record Finding(Component component, UUID project, Vulnerability vulnerabi
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Vulnerability(UUID uuid, String vulnId, String source) {
+    public record Vulnerability(
+            UUID uuid,
+            String vulnId,
+            String source,
+            String severity,
+            Double owaspBusinessImpactScore,
+            Double owaspLikelihoodScore,
+            Double owaspTechnicalImpactScore,
+            String owaspRRVector) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

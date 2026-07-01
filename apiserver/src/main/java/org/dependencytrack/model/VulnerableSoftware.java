@@ -28,7 +28,6 @@ import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
 import javax.jdo.annotations.ForeignKeyAction;
 import javax.jdo.annotations.IdGeneratorStrategy;
-import javax.jdo.annotations.Index;
 import javax.jdo.annotations.Join;
 import javax.jdo.annotations.Order;
 import javax.jdo.annotations.PersistenceCapable;
@@ -51,8 +50,6 @@ import java.util.UUID;
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Index(name = "VULNERABLESOFTWARE_CPE23_VERSION_RANGE_IDX", members = {"cpe23", "versionEndExcluding", "versionEndIncluding", "versionStartExcluding", "versionStartIncluding"})
-@Index(name = "VULNERABLESOFTWARE_PART_VENDOR_PRODUCT_IDX", members = {"part", "vendor", "product"})
 public class VulnerableSoftware implements ICpe, Serializable {
 
     private static final long serialVersionUID = -3987946408457131098L;
@@ -422,11 +419,10 @@ public class VulnerableSoftware implements ICpe, Serializable {
      * @since 4.10.0
      */
     public boolean equalsIgnoringDatastoreIdentity(final VulnerableSoftware otherVs) {
-        return Objects.equals(otherVs.getPurl(), this.getPurl())
-               && Objects.equals(otherVs.getPurlType(), this.getPurlType())
+        // NB: The full purl string and purlVersion are intentionally excluded.
+        return Objects.equals(otherVs.getPurlType(), this.getPurlType())
                && Objects.equals(otherVs.getPurlNamespace(), this.getPurlNamespace())
                && Objects.equals(otherVs.getPurlName(), this.getPurlName())
-               && Objects.equals(otherVs.getPurlVersion(), this.getPurlVersion())
                && Objects.equals(otherVs.getPurlQualifiers(), this.getPurlQualifiers())
                && Objects.equals(otherVs.getPurlSubpath(), this.getPurlSubpath())
                && Objects.equals(otherVs.getCpe22(), this.getCpe22())
@@ -457,12 +453,11 @@ public class VulnerableSoftware implements ICpe, Serializable {
      * @since 4.10.0
      */
     public int hashCodeWithoutDatastoreIdentity() {
+        // NB: The full purl string and purlVersion are intentionally excluded.
         return Objects.hash(
-                this.getPurl(),
                 this.getPurlType(),
                 this.getPurlNamespace(),
                 this.getPurlName(),
-                this.getPurlVersion(),
                 this.getPurlQualifiers(),
                 this.getPurlSubpath(),
                 this.getCpe22(),

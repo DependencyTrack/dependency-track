@@ -19,14 +19,13 @@
 package org.dependencytrack.resources.v2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.schema.Error;
 import com.networknt.schema.InputFormat;
-import com.networknt.schema.JsonMetaSchema;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.NonValidationKeyword;
-import com.networknt.schema.SpecVersion;
-import com.networknt.schema.ValidationMessage;
-import com.networknt.schema.oas.OpenApi30;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.dialect.Dialect;
+import com.networknt.schema.dialect.Dialects;
+import com.networknt.schema.keyword.NonValidationKeyword;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -43,7 +42,7 @@ import org.junit.jupiter.api.Assertions;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
+import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,16 +54,13 @@ public class OpenApiValidationClientResponseFilter implements ClientResponseFilt
 
     public static final String DISABLE_OPENAPI_VALIDATION = "disable-openapi-validation";
 
-    private static final JsonSchemaFactory SCHEMA_FACTORY =
-            JsonSchemaFactory.getInstance(
-                    SpecVersion.VersionFlag.V4,
-                    builder -> builder
-                            .metaSchema(JsonMetaSchema.builder(OpenApi30.getInstance())
-                                    .keyword(new NonValidationKeyword("exampleSetFlag"))
-                                    .keyword(new NonValidationKeyword("extensions"))
-                                    .keyword(new NonValidationKeyword("types"))
-                                    .build())
-                            .defaultMetaSchemaIri(OpenApi30.getInstance().getIri()));
+    private static final SchemaRegistry SCHEMA_REGISTRY =
+            SchemaRegistry.withDialect(
+                    Dialect.builder(Dialects.getOpenApi30())
+                            .keyword(new NonValidationKeyword("exampleSetFlag"))
+                            .keyword(new NonValidationKeyword("extensions"))
+                            .keyword(new NonValidationKeyword("types"))
+                            .build());
 
     private final OpenAPI openApiSpec;
     private final ObjectMapper objectMapper;
@@ -139,10 +135,10 @@ public class OpenApiValidationClientResponseFilter implements ClientResponseFilt
         // Serialize the response schema to JSON so it can be used for validation.
         // NB: The schema already has all $refs resolved so can be handled "standalone".
         final String schemaJson = objectMapper.writeValueAsString(mediaType.getSchema());
-        final JsonSchema schema = SCHEMA_FACTORY.getSchema(schemaJson);
+        final Schema schema = SCHEMA_REGISTRY.getSchema(schemaJson);
 
-        final Set<ValidationMessage> messages = schema.validate(responseText, InputFormat.JSON);
-        assertThat(messages)
+        final List<Error> errors = schema.validate(responseText, InputFormat.JSON);
+        assertThat(errors)
                 .as("""
                                 Got response content that failed to validate against the \
                                 OpenAPI spec of %s %s -> %s (%s): %s""",

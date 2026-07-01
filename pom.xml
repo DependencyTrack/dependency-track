@@ -34,6 +34,7 @@
         <module>support/smallrye-config-secret-handler-file</module>
         <module>support/smallrye-config-source-memory</module>
         <module>support/swagger-model-converters</module>
+        <module>support/test-database</module>
         <module>support/v4-migrator</module>
         <module>api</module>
         <module>alpine</module>
@@ -43,6 +44,7 @@
         <module>notification</module>
         <module>cache</module>
         <module>file-storage</module>
+        <module>kev-data-source</module>
         <module>migration</module>
         <module>package-metadata</module>
         <module>secret-management</module>
@@ -118,23 +120,24 @@
         <project.parentBaseDir>.</project.parentBaseDir>
 
         <!-- Dependency versions -->
-        <lib.ae-security.version>0.155.0</lib.ae-security.version>
+        <lib.ae-security.version>0.156.2</lib.ae-security.version>
         <lib.archunit.version>1.4.2</lib.archunit.version>
         <lib.assertj.version>3.27.7</lib.assertj.version>
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
         <lib.caffeine.version>3.2.4</lib.caffeine.version>
-        <lib.cel-java.version>0.13.0</lib.cel-java.version>
+        <lib.cel-java.version>0.13.1</lib.cel-java.version>
         <lib.cel-extensions.version>0.4.1</lib.cel-extensions.version>
         <lib.commons-lang3.version>3.20.0</lib.commons-lang3.version>
         <lib.cpe-parser.version>3.0.1</lib.cpe-parser.version>
+        <lib.cyclonedx-java.version>12.2.0</lib.cyclonedx-java.version>
         <lib.datanucleus-api-jdo.version>6.0.5</lib.datanucleus-api-jdo.version>
         <lib.datanucleus-core.version>6.0.11</lib.datanucleus-core.version>
         <lib.datanucleus-javax-jdo.version>3.2.1</lib.datanucleus-javax-jdo.version>
         <lib.datanucleus-rdbms.version>6.0.11</lib.datanucleus-rdbms.version>
         <lib.db-scheduler.version>16.12.0</lib.db-scheduler.version>
-        <lib.flyway.version>12.7.0</lib.flyway.version>
+        <lib.flyway.version>12.9.0</lib.flyway.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
-        <lib.greenmail.version>2.1.8</lib.greenmail.version>
+        <lib.greenmail.version>2.1.9</lib.greenmail.version>
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
         <lib.httpclient5.version>5.6.1</lib.httpclient5.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
@@ -143,37 +146,37 @@
         <lib.jdbi.version>3.53.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
         <lib.jetty.version>12.1.10</lib.jetty.version>
-        <lib.json-schema-validator.version>1.5.9</lib.json-schema-validator.version>
+        <lib.json-schema-validator.version>2.0.3</lib.json-schema-validator.version>
         <lib.json-unit.version>5.1.2</lib.json-unit.version>
         <lib.jspecify.version>1.0.0</lib.jspecify.version>
         <lib.junit-jupiter.version>6.1.0</lib.junit-jupiter.version>
-        <lib.kafka-clients.version>4.3.0</lib.kafka-clients.version>
+        <lib.kafka-clients.version>4.3.1</lib.kafka-clients.version>
         <lib.kotlin.version>2.4.0</lib.kotlin.version>
         <lib.logback.version>1.5.34</lib.logback.version>
-        <lib.micrometer.version>1.16.5</lib.micrometer.version>
+        <lib.micrometer.version>1.17.0</lib.micrometer.version>
         <lib.microprofile-config.version>3.1.1</lib.microprofile-config.version>
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
-        <lib.minio.version>9.0.1</lib.minio.version>
+        <lib.minio.version>9.0.3</lib.minio.version>
         <lib.mockito.version>5.23.0</lib.mockito.version>
-        <lib.okhttp.version>5.3.2</lib.okhttp.version>
-        <lib.open-feign.version>13.12</lib.open-feign.version>
+        <lib.okhttp.version>5.4.0</lib.okhttp.version>
+        <lib.open-feign.version>13.13</lib.open-feign.version>
         <lib.open-vulnerability-clients.version>9.0.5</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>4.1.2</lib.pebble.version>
         <lib.postgresql.version>42.7.11</lib.postgresql.version>
-        <lib.prometheus.version>1.7.0</lib.prometheus.version>
-        <lib.protobuf-java.version>4.35.0</lib.protobuf-java.version>
+        <lib.prometheus.version>1.8.0</lib.prometheus.version>
+        <lib.protobuf-java.version>4.35.1</lib.protobuf-java.version>
         <lib.resilience4j.version>2.4.0</lib.resilience4j.version>
-        <lib.s3mock.version>5.0.0</lib.s3mock.version>
+        <lib.s3mock.version>5.1.0</lib.s3mock.version>
         <lib.slf4j.version>2.0.18</lib.slf4j.version>
         <lib.smallrye-config.version>3.17.2</lib.smallrye-config.version>
-        <lib.swagger.version>2.2.50</lib.swagger.version>
+        <lib.swagger.version>2.2.52</lib.swagger.version>
         <lib.system-stubs.version>2.1.8</lib.system-stubs.version>
         <lib.testcontainers.version>2.0.5</lib.testcontainers.version>
-        <lib.tink.version>1.21.0</lib.tink.version>
-        <lib.versatile.version>0.18.3</lib.versatile.version>
+        <lib.tink.version>1.22.0</lib.tink.version>
+        <lib.versatile.version>0.19.0</lib.versatile.version>
         <lib.wiremock.version>3.13.2</lib.wiremock.version>
-        <lib.zstd-jni.version>1.5.7-9</lib.zstd-jni.version>
+        <lib.zstd-jni.version>1.5.7-11</lib.zstd-jni.version>
         <!-- Number of JVM processes to use for unit test parallelization -->
         <unitTestForkCount>1</unitTestForkCount>
 
@@ -216,6 +219,12 @@
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>
                 <version>${lib.caffeine.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-core-java</artifactId>
+                <version>${lib.cyclonedx-java.version}</version>
             </dependency>
 
             <dependency>
@@ -711,7 +720,7 @@
                 <plugin>
                     <groupId>io.github.ascopes</groupId>
                     <artifactId>protobuf-maven-plugin</artifactId>
-                    <version>5.1.4</version>
+                    <version>5.1.6</version>
                     <configuration>
                         <protoc>${lib.protobuf-java.version}</protoc>
                         <sourceDirectories>
@@ -732,17 +741,17 @@
 
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.6.0</version>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>3.7.0</version>
                 <configuration>
-                    <configLocation>${project.parentBaseDir}/support/checkstyle/config.xml</configLocation>
-                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                    <includeResources>false</includeResources>
-                    <includeTestResources>false</includeTestResources>
-                    <propertyExpansion>
-                        parentBaseDir=${project.parentBaseDir}
-                    </propertyExpansion>
+                    <java>
+                        <licenseHeader>
+                            <file>${project.parentBaseDir}/.mvn/spotless/license-header.txt</file>
+                        </licenseHeader>
+                        <removeUnusedImports/>
+                        <forbidWildcardImports/>
+                    </java>
                 </configuration>
                 <executions>
                     <execution>
@@ -752,13 +761,6 @@
                         </goals>
                     </execution>
                 </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.puppycrawl.tools</groupId>
-                        <artifactId>checkstyle</artifactId>
-                        <version>13.5.0</version>
-                    </dependency>
-                </dependencies>
             </plugin>
 
             <plugin>
@@ -785,7 +787,7 @@
                 </property>
             </activation>
             <properties>
-                <checkstyle.skip>true</checkstyle.skip>
+                <spotless.check.skip>true</spotless.check.skip>
                 <jacoco.skip>true</jacoco.skip>
                 <maven.test.skip>true</maven.test.skip>
             </properties>

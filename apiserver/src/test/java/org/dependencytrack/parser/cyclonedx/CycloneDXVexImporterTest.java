@@ -35,6 +35,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.junit.jupiter.api.Test;
 
 import javax.jdo.Query;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -201,6 +202,171 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         Assertions.assertThat(analysis.getAnalysisComments())
                 .extracting(AnalysisComment::getComment)
                 .containsExactly("Vendor Response: NOT_SET → UPDATE");
+    }
+
+    private static final String OWASP_VECTOR =
+            "OWASP/SL:1/M:1/O:0/S:2/ED:1/EE:1/A:1/ID:1/LC:2/LI:1/LAV:1/LAC:1/FD:1/RD:1/NC:2/PV:3";
+
+    @Test
+    public void shouldApplyOwaspRatingFromVex() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(component));
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, component, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": { "type": "application", "bom-ref": "project", "name": "Acme Example", "version": "1.0" }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0001",
+                      "source": { "name": "NVD" },
+                      "analysis": { "state": "exploitable" },
+                      "ratings": [
+                        { "method": "OWASP", "vector": "%s", "score": 7.5 }
+                      ],
+                      "affects": [{ "ref": "project" }]
+                    }
+                  ]
+                }
+                """.formatted(OWASP_VECTOR).getBytes(StandardCharsets.UTF_8);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+
+        vexImporter.applyVex(qm, vex, project);
+
+        final Analysis analysis = qm.getAnalysis(component, vuln);
+        Assertions.assertThat(analysis.getOwaspVector()).isEqualTo(OWASP_VECTOR);
+        Assertions.assertThat(analysis.getOwaspScore()).isEqualByComparingTo(new BigDecimal("7.5"));
+        // An OWASP rating import must not override the finding severity; it falls back to the vulnerability.
+        Assertions.assertThat(analysis.getSeverity()).isNull();
+        Assertions.assertThat(analysis.getAnalysisComments())
+                .extracting(AnalysisComment::getComment)
+                .contains(
+                        "OWASP Vector: (None) → " + OWASP_VECTOR,
+                        "OWASP Score: (None) → 7.5");
+    }
+
+    @Test
+    public void shouldApplyOwaspRatingWithoutAnalysisBlock() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0002");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(component));
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, component, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": { "type": "application", "bom-ref": "project", "name": "Acme Example", "version": "1.0" }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0002",
+                      "source": { "name": "NVD" },
+                      "ratings": [
+                        { "method": "OWASP", "vector": "%s", "score": 4.2 }
+                      ],
+                      "affects": [{ "ref": "project" }]
+                    }
+                  ]
+                }
+                """.formatted(OWASP_VECTOR).getBytes(StandardCharsets.UTF_8);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+
+        vexImporter.applyVex(qm, vex, project);
+
+        final Analysis analysis = qm.getAnalysis(component, vuln);
+        Assertions.assertThat(analysis).isNotNull();
+        Assertions.assertThat(analysis.getOwaspVector()).isEqualTo(OWASP_VECTOR);
+        Assertions.assertThat(analysis.getOwaspScore()).isEqualByComparingTo(new BigDecimal("4.2"));
+        Assertions.assertThat(analysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_SET);
+        Assertions.assertThat(analysis.isSuppressed()).isFalse();
+    }
+
+    @Test
+    public void shouldIgnoreNonOwaspRatings() throws ParseException {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("Acme Component");
+        component.setVersion("1.0");
+        qm.persist(component);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-2099-0003");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(component));
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, component, "none");
+
+        final byte[] vexBytes = /* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "metadata": {
+                    "component": { "type": "application", "bom-ref": "project", "name": "Acme Example", "version": "1.0" }
+                  },
+                  "vulnerabilities": [
+                    {
+                      "id": "CVE-2099-0003",
+                      "source": { "name": "NVD" },
+                      "analysis": { "state": "exploitable" },
+                      "ratings": [
+                        { "method": "CVSSv3", "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", "score": 9.8 }
+                      ],
+                      "affects": [{ "ref": "project" }]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+        final var vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+
+        vexImporter.applyVex(qm, vex, project);
+
+        final Analysis analysis = qm.getAnalysis(component, vuln);
+        Assertions.assertThat(analysis.getOwaspVector()).isNull();
+        Assertions.assertThat(analysis.getOwaspScore()).isNull();
     }
 
 }

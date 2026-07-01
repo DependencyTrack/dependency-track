@@ -81,8 +81,12 @@ public class BadgeResource extends AbstractApiResource {
             }
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                final ProjectMetrics metrics = withJdbiHandle(handle ->
-                        handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
+                final ProjectMetrics metrics = withJdbiHandle(handle -> {
+                    final var dao = handle.attach(MetricsDao.class);
+                    return project.getCollectionLogic() == null
+                            ? dao.getMostRecentProjectMetrics(project.getId())
+                            : dao.getMostRecentCollectionProjectMetrics(project.getId());
+                });
                 final var badger = new Badger();
 
                 String linkToProjectVuln = null;
@@ -124,8 +128,12 @@ public class BadgeResource extends AbstractApiResource {
             }
             final Project project = qm.getProject(name, version);
             if (project != null) {
-                final ProjectMetrics metrics = withJdbiHandle(handle ->
-                        handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
+                final ProjectMetrics metrics = withJdbiHandle(handle -> {
+                    final var dao = handle.attach(MetricsDao.class);
+                    return project.getCollectionLogic() == null
+                            ? dao.getMostRecentProjectMetrics(project.getId())
+                            : dao.getMostRecentCollectionProjectMetrics(project.getId());
+                });
                 final var badger = new Badger();
 
                 String linkToProjectVuln = null;
@@ -165,8 +173,12 @@ public class BadgeResource extends AbstractApiResource {
             }
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
-                final ProjectMetrics metrics = withJdbiHandle(handle ->
-                        handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
+                final ProjectMetrics metrics = withJdbiHandle(handle -> {
+                    final var dao = handle.attach(MetricsDao.class);
+                    return project.getCollectionLogic() == null
+                            ? dao.getMostRecentProjectMetrics(project.getId())
+                            : dao.getMostRecentCollectionProjectMetrics(project.getId());
+                });
                 final var badger = new Badger();
 
                 String linkToProjectViolations = null;
@@ -208,8 +220,12 @@ public class BadgeResource extends AbstractApiResource {
             }
             final Project project = qm.getProject(name, version);
             if (project != null) {
-                final ProjectMetrics metrics = withJdbiHandle(handle ->
-                        handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
+                final ProjectMetrics metrics = withJdbiHandle(handle -> {
+                    final var dao = handle.attach(MetricsDao.class);
+                    return project.getCollectionLogic() == null
+                            ? dao.getMostRecentProjectMetrics(project.getId())
+                            : dao.getMostRecentCollectionProjectMetrics(project.getId());
+                });
                 final var badger = new Badger();
 
                 String linkToProjectViolations = null;

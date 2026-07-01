@@ -69,6 +69,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.collections4.MultiMapUtils.emptyMultiValuedMap;
 import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationNotification;
@@ -225,18 +226,24 @@ public final class CelPolicyEngine {
         final Map<Long, Vulnerability> protoVulnById;
         final Map<Long, Set<Long>> vulnIdsByComponentId;
         if (requirements.containsKey(TYPE_VULNERABILITY)) {
-            protoVulnById = withJdbiHandle(handle ->
-                    new CelPolicyDao(handle)
-                            .fetchAllVulnerabilities(
-                                    projectId,
-                                    requirements.get(TYPE_VULNERABILITY)));
-
             vulnIdsByComponentId = withJdbiHandle(handle ->
                     new CelPolicyDao(handle)
                             .fetchAllComponentsVulnerabilities(projectId));
+
+            if (!vulnIdsByComponentId.isEmpty()) {
+                protoVulnById = withJdbiHandle(handle ->
+                        new CelPolicyDao(handle)
+                                .fetchAllVulnerabilities(
+                                        vulnIdsByComponentId.values().stream()
+                                                .flatMap(Set::stream)
+                                                .collect(Collectors.toSet()),
+                                        requirements.get(TYPE_VULNERABILITY)));
+            } else {
+                protoVulnById = Map.of();
+            }
         } else {
-            protoVulnById = Collections.emptyMap();
-            vulnIdsByComponentId = Collections.emptyMap();
+            protoVulnById = Map.of();
+            vulnIdsByComponentId = Map.of();
         }
 
         final var violationsByComponentId = new ArrayListValuedHashMap<Long, PolicyViolation>();

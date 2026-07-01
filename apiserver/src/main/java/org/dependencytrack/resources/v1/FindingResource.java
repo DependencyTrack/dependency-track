@@ -159,7 +159,9 @@ public class FindingResource extends AbstractApiResource {
                                          @Parameter(description = "Filter EPSS score from this value (inclusive)")
                                          @QueryParam("epssFrom") final BigDecimal epssFrom,
                                          @Parameter(description = "Filter EPSS score to this value (inclusive)")
-                                         @QueryParam("epssTo") final BigDecimal epssTo) {
+                                         @QueryParam("epssTo") final BigDecimal epssTo,
+                                         @Parameter(description = "Filter by known exploited vulnerability (KEV) status: omit for any, true for KEVs only, false to exclude KEVs")
+                                         @QueryParam("isKev") final Boolean isKev) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
@@ -169,16 +171,20 @@ public class FindingResource extends AbstractApiResource {
                         (rawFilter != null && !rawFilter.isBlank())
                                 ? PersistenceUtil.escapeLikePattern(rawFilter)
                                 : null;
-                List<FindingDao.FindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle ->
-                        handle.attach(FindingDao.class).getFindingsByProject(
-                                project.getId(),
-                                /* includeInactive */ false,
-                                suppressed,
-                                searchText,
-                                hasAnalysis,
-                                source != null ? source.name() : null,
-                                epssFrom,
-                                epssTo));
+                List<FindingDao.FindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle -> {
+                    final var dao = handle.attach(FindingDao.class);
+                    return dao.withJitDisabled(
+                            () -> dao.getFindingsByProject(
+                                    project.getId(),
+                                    /* includeInactive */ false,
+                                    suppressed,
+                                    searchText,
+                                    hasAnalysis,
+                                    source != null ? source.name() : null,
+                                    epssFrom,
+                                    epssTo,
+                                    isKev));
+                });
                 final long totalCount = findingRows.isEmpty() ? 0 : findingRows.getFirst().totalCount();
                 List<Finding> findings = findingRows.stream().map(Finding::new).toList();
                 findings = mapComponentLatestVersion(findings);
@@ -346,7 +352,9 @@ public class FindingResource extends AbstractApiResource {
                                    @Parameter(description = "Filter EPSS Percentile from this value")
                                    @QueryParam("epssPercentileFrom") String epssPercentileFrom,
                                    @Parameter(description = "Filter EPSS Percentile to this value")
-                                   @QueryParam("epssPercentileTo") String epssPercentileTo) {
+                                   @QueryParam("epssPercentileTo") String epssPercentileTo,
+                                   @Parameter(description = "Filter by known exploited vulnerability (KEV) status: omit for any, true for KEVs only, false to exclude KEVs")
+                                   @QueryParam("isKev") Boolean isKev) {
         final Map<String, String> filters = new HashMap<>();
         filters.put("severity", severity);
         filters.put("analysisStatus", analysisStatus);
@@ -367,8 +375,11 @@ public class FindingResource extends AbstractApiResource {
         filters.put("epssTo", epssTo);
         filters.put("epssPercentileFrom", epssPercentileFrom);
         filters.put("epssPercentileTo", epssPercentileTo);
+        if (isKev != null) {
+            filters.put("isKev", String.valueOf(isKev));
+        }
         List<FindingDao.FindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle -> handle.attach(FindingDao.class)
-                .getAllFindings(filters, showSuppressed, showInactive));
+                .getAllFindings(filters, showSuppressed, showInactive, getAlpineRequest().getOrderBy()));
         final long totalCount = findingRows.isEmpty() ? 0 : findingRows.getFirst().totalCount();
         List<Finding> findings = findingRows.stream().map(Finding::new).toList();
         findings = mapComponentLatestVersion(findings);
@@ -428,7 +439,9 @@ public class FindingResource extends AbstractApiResource {
                                    @Parameter(description = "Filter occurrences in projects from this value")
                                    @QueryParam("occurrencesFrom") String occurrencesFrom,
                                    @Parameter(description = "Filter occurrences in projects to this value")
-                                   @QueryParam("occurrencesTo") String occurrencesTo) {
+                                   @QueryParam("occurrencesTo") String occurrencesTo,
+                                   @Parameter(description = "Filter by known exploited vulnerability (KEV) status: omit for any, true for KEVs only, false to exclude KEVs")
+                                   @QueryParam("isKev") Boolean isKev) {
         final Map<String, String> filters = new HashMap<>();
         filters.put("severity", severity);
         filters.put("publishDateFrom", publishDateFrom);
@@ -447,6 +460,9 @@ public class FindingResource extends AbstractApiResource {
         filters.put("epssPercentileTo", epssPercentileTo);
         filters.put("occurrencesFrom", occurrencesFrom);
         filters.put("occurrencesTo", occurrencesTo);
+        if (isKev != null) {
+            filters.put("isKev", String.valueOf(isKev));
+        }
         List<FindingDao.GroupedFindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle -> handle.attach(FindingDao.class)
                 .getGroupedFindings(filters, showInactive));
         final long totalCount = findingRows.isEmpty() ? 0 : findingRows.getFirst().totalCount();
@@ -484,7 +500,7 @@ public class FindingResource extends AbstractApiResource {
         }
     }
 
-    public static List<Finding> mapComponentLatestVersion(List<Finding> findingList){
+    public static List<Finding> mapComponentLatestVersion(List<Finding> findingList) {
         final Map<String, List<Finding>> findingsByPurlPackage = findingList.stream()
                 .filter(finding -> finding.getComponent().get("purl") != null)
                 .map(finding -> {

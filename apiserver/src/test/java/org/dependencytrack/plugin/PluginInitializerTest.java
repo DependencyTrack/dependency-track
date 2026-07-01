@@ -23,6 +23,7 @@ import jakarta.servlet.ServletContextEvent;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.api.NoopCacheManager;
+import org.dependencytrack.kevdatasource.BuiltinKevDataSourcePlugin;
 import org.dependencytrack.notification.publishing.DefaultNotificationPublishersPlugin;
 import org.dependencytrack.pkgmetadata.resolution.DefaultPackageMetadataResolutionPlugin;
 import org.dependencytrack.plugin.runtime.ExtensionPointMetadata;
@@ -91,11 +92,13 @@ class PluginInitializerTest extends PersistenceCapableTest {
         assertThat(pluginManager.getExtensionPoints())
                 .extracting(ExtensionPointMetadata::name)
                 .containsExactlyInAnyOrder(
+                        "kev-data-source",
                         "notification-publisher",
                         "package-metadata-resolver",
                         "vuln-analyzer",
                         "vuln-data-source");
         assertThat(pluginManager.getLoadedPlugins()).satisfiesExactlyInAnyOrder(
+                plugin -> assertThat(plugin).isInstanceOf(BuiltinKevDataSourcePlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(DefaultNotificationPublishersPlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(DefaultPackageMetadataResolutionPlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(GitHubVulnDataSourcePlugin.class),

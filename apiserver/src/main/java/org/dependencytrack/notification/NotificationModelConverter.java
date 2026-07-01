@@ -250,7 +250,8 @@ public final class NotificationModelConverter {
         final Vulnerability.Builder builder = Vulnerability.newBuilder()
                 .setUuid(vuln.getUuid().toString())
                 .setVulnId(vuln.getVulnId())
-                .setSource(vuln.getSource());
+                .setSource(vuln.getSource())
+                .setIsKev(vuln.isKev());
 
         if (vuln.getAliases() != null) {
             getUniqueAliases(vuln).stream()

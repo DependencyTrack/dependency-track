@@ -58,7 +58,7 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
-                          "version": "1.3",
+                          "version": "1.5",
                           "meta": {
                             "application": "${json-unit.matches:appName}",
                             "version": "${json-unit.matches:appVersion}",
@@ -85,8 +85,8 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 UUID.randomUUID(), Vulnerability.Source.GITHUB, "vuln-vulnId-1", "vuln-title", "vuln-subtitle", "vuln-description",
                 "vuln-recommendation", "vuln-references", Instant.now(), Severity.CRITICAL, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
                 "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9),
-                "oss-index", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, true, null, 1);
+                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
+                "oss-index", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, true, null, null, 1);
         final Finding findingWithoutAlias = new Finding(findingRow1);
 
         var alias = new VulnerabilityAlias();
@@ -114,8 +114,8 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 UUID.randomUUID(), Vulnerability.Source.NVD, "vuln-vulnId-2", "vuln-title", "vuln-subtitle", "vuln-description",
                 "vuln-recommendation", "vuln-references", Instant.now(), Severity.HIGH, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
                 "cvssV2-vector", "cvssV3-vector", "cvssV4vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
-                "owasp-vector", List.of(alias, other), BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9),
-                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, true, null, 1);
+                "owasp-vector", List.of(alias, other), BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
+                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, true, null, null, 1);
         final Finding findingWithAlias = new Finding(findingRow2);
 
         final var fpf = new FindingPackagingFormat(
@@ -129,7 +129,7 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
-                          "version": "1.3",
+                          "version": "1.5",
                           "meta": {
                             "application": "${json-unit.any-string}",
                             "version": "${json-unit.any-string}",
@@ -176,12 +176,14 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                                 "owaspRRVector": "owasp-vector",
                                 "epssScore": 0.5,
                                 "epssPercentile": 0.9,
+                                "isKev": false,
                                 "aliases": [],
                                 "published": "${json-unit.any-string}"
                               },
                               "analysis": {
                                 "state": "NOT_AFFECTED",
-                                "isSuppressed": true
+                                "isSuppressed": true,
+                                "policyAnnotations": []
                               },
                               "attribution": {
                                 "analyzerIdentity": "oss-index",
@@ -223,6 +225,7 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                                 "owaspRRVector": "owasp-vector",
                                 "epssScore": 0.5,
                                 "epssPercentile": 0.9,
+                                "isKev": false,
                                 "aliases": [
                                   {
                                     "cveId": "someCveId",
@@ -244,7 +247,8 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                               },
                               "analysis": {
                                 "state": "NOT_AFFECTED",
-                                "isSuppressed": true
+                                "isSuppressed": true,
+                                "policyAnnotations": []
                               },
                               "attribution": {
                                 "analyzerIdentity": "internal",

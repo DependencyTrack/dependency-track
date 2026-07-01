@@ -23,6 +23,8 @@ import io.smallrye.config.SmallRyeConfigBuilder;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.eclipse.microprofile.config.Config;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
@@ -139,56 +141,54 @@ class S3FileStorageTest {
     @Nested
     class WhenHostIsUnavailable {
 
-        @Container
-        private final S3MockContainer ephemeralContainer =
-                new S3MockContainer("5.0.0")
-                        .withInitialBuckets("test");
+        private static S3MockContainer ephemeralContainer;
+        private static FileStorage storage;
+        private static FileMetadata storedFileMetadata;
 
-        @Test
-        void storeShouldThrowWhenHostIsUnavailable() throws Exception {
-            try (final FileStorage storage = createEphemeralStorage()) {
-                ephemeralContainer.stop();
+        @BeforeAll
+        static void beforeAll() throws Exception {
+            ephemeralContainer = new S3MockContainer("5.0.0").withInitialBuckets("test");
+            ephemeralContainer.start();
 
-                assertThatExceptionOfType(IOException.class)
-                        .isThrownBy(() -> storage.store("foo", new ByteArrayInputStream("bar".getBytes())));
-            }
-        }
-
-        @Test
-        void getShouldThrowWhenHostIsUnavailable() throws Exception {
-            try (final FileStorage storage = createEphemeralStorage()) {
-                final FileMetadata fileMetadata = storage.store("foo", new ByteArrayInputStream("bar".getBytes()));
-
-                ephemeralContainer.stop();
-
-                assertThatExceptionOfType(IOException.class)
-                        .isThrownBy(() -> storage.get(fileMetadata))
-                        .withRootCauseInstanceOf(ConnectException.class);
-            }
-        }
-
-        @Test
-        void deleteShouldThrowWhenHostIsUnavailable() throws Exception {
-            try (final FileStorage storage = createEphemeralStorage()) {
-                final FileMetadata fileMetadata = storage.store("foo", new ByteArrayInputStream("bar".getBytes()));
-
-                ephemeralContainer.stop();
-
-                assertThatExceptionOfType(IOException.class)
-                        .isThrownBy(() -> storage.delete(fileMetadata))
-                        .withRootCauseInstanceOf(ConnectException.class);
-            }
-        }
-
-        private FileStorage createEphemeralStorage() {
-            return createStorage(Map.ofEntries(
+            storage = createStorage(Map.ofEntries(
                     Map.entry("dt.file-storage.s3.endpoint", ephemeralContainer.getHttpEndpoint()),
                     Map.entry("dt.file-storage.s3.access-key", "foo"),
                     Map.entry("dt.file-storage.s3.secret-key", "bar"),
-                    Map.entry("dt.file-storage.s3.bucket", "test"),
-                    Map.entry("dt.file-storage.s3.connect-timeout-ms", "5000"),
-                    Map.entry("dt.file-storage.s3.read-timeout-ms", "5000"),
-                    Map.entry("dt.file-storage.s3.write-timeout-ms", "5000")));
+                    Map.entry("dt.file-storage.s3.bucket", "test")));
+
+            storedFileMetadata = storage.store("foo", new ByteArrayInputStream("bar".getBytes()));
+
+            ephemeralContainer.stop();
+        }
+
+        @AfterAll
+        static void afterAll() throws Exception {
+            if (storage != null) {
+                storage.close();
+            }
+            if (ephemeralContainer != null) {
+                ephemeralContainer.close();
+            }
+        }
+
+        @Test
+        void storeShouldThrowWhenHostIsUnavailable() {
+            assertThatExceptionOfType(IOException.class)
+                    .isThrownBy(() -> storage.store("foo", new ByteArrayInputStream("bar".getBytes())));
+        }
+
+        @Test
+        void getShouldThrowWhenHostIsUnavailable() {
+            assertThatExceptionOfType(IOException.class)
+                    .isThrownBy(() -> storage.get(storedFileMetadata))
+                    .withRootCauseInstanceOf(ConnectException.class);
+        }
+
+        @Test
+        void deleteShouldThrowWhenHostIsUnavailable() {
+            assertThatExceptionOfType(IOException.class)
+                    .isThrownBy(() -> storage.delete(storedFileMetadata))
+                    .withRootCauseInstanceOf(ConnectException.class);
         }
 
     }

@@ -24,6 +24,7 @@ package org.dependencytrack.common;
 public final class ConfigKeys {
 
     public static final String DEV_SERVICES_ENABLED = "dt.dev-services.enabled";
+    public static final String DEV_SERVICES_CONTAINER_REUSE_ENABLED = "dt.dev-services.container-reuse.enabled";
     public static final String DEV_SERVICES_FRONTEND_IMAGE = "dt.dev-services.frontend-image";
     public static final String DEV_SERVICES_POSTGRES_IMAGE = "dt.dev-services.postgres-image";
     public static final String DEV_SERVICES_FRONTEND_PORT = "dt.dev-services.frontend-port";
@@ -49,6 +50,7 @@ public final class ConfigKeys {
     public static final String TASK_PACKAGE_METADATA_RESOLUTION_CRON = "dt.task.package-metadata-resolution.cron";
     public static final String TASK_DEFECT_DOJO_UPLOAD_CRON = "dt.task.defect-dojo-upload.cron";
     public static final String TASK_EPSS_MIRROR_CRON = "dt.task.epss-mirror.cron";
+    public static final String TASK_KEV_MIRROR_CRON = "dt.task.kev-mirror.cron";
     public static final String TASK_FORTIFY_SSC_UPLOAD_CRON = "dt.task.fortify-ssc-upload.cron";
     public static final String TASK_GITHUB_ADVISORY_VULN_DATA_SOURCE_MIRROR_CRON = "dt.task.github-advisory-vuln-data-source-mirror.cron";
     public static final String TASK_KENNA_SECURITY_UPLOAD_CRON = "dt.task.kenna-security-upload.cron";

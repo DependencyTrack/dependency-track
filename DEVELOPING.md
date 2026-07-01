@@ -120,6 +120,22 @@ make build-image
 
 This produces the image `ghcr.io/dependencytrack/apiserver:local`.
 
+## Code Style
+
+Java sources are checked with [Spotless](https://github.com/diffplug/spotless), which enforces the
+license header, removal of unused imports, and rejection of wildcard imports. The check runs as part
+of the build and in CI. Run it locally with:
+
+```shell
+make lint-java
+```
+
+Most findings can be fixed automatically using:
+
+```shell
+make format-java
+```
+
 ## Testing
 
 Run all tests:
@@ -155,7 +171,8 @@ make test-e2e
 ## Dev Mode
 
 Dev mode launches the API server with auto-provisioned containers for PostgreSQL
-and the frontend. Containers are created on startup and disposed of on shutdown.
+and the frontend. Containers are created on startup and, unless reuse is enabled
+(see [Container Reuse](#container-reuse)), disposed of on shutdown.
 
 ```shell
 make apiserver-dev
@@ -165,6 +182,21 @@ The API server will be available at `http://localhost:8080`.
 Frontend and PostgreSQL ports are logged during startup.
 
 Dev mode specific configuration can be made in [`application-dev.properties`](apiserver/src/main/resources/application-dev.properties).
+
+### Container Reuse
+
+Dev mode is configured to reuse its containers across restarts, so PostgreSQL
+state (schema and data) is preserved and startup is faster. Reuse only takes
+effect once it has been opted into globally, by setting either `testcontainers.reuse.enable=true`
+in `~/.testcontainers.properties`, or the `TESTCONTAINERS_REUSE_ENABLE=true` environment variable.
+Without it, containers are disposed on shutdown as usual.
+See the [Testcontainers reuse docs](https://java.testcontainers.org/features/reuse/#how-to-use-it).
+
+To remove reused (or otherwise stale) dev services containers, e.g. to start from a clean slate, run:
+
+```shell
+make apiserver-dev-remove-containers
+```
 
 ## DataNucleus Bytecode Enhancement
 
@@ -215,6 +247,77 @@ For repeatable migrations, edit the relevant `R__*.sql` file directly, no new fi
 > [!NOTE]
 > Migrations run with `outOfOrder=true` so they can be backported to patch branches
 > without blocking the next minor upgrade. See [`RELEASING.md`](./RELEASING.md#4-flyway-migrations).
+
+### Linting Migrations
+
+New and modified migrations are linted with [squawk](https://squawkhq.com) to catch operationally
+unsafe DDL (missing `CONCURRENTLY` on indexes, blocking locks, `NOT NULL` columns without defaults, etc.)
+before they hit production deployments.
+
+Run the linter locally:
+
+```shell
+make lint-migrations
+```
+
+The target only lints migrations changed relative to `BASE_REF` (default `origin/main`).
+For fork-based setups, point it at the upstream main branch:
+
+```shell
+make lint-migrations BASE_REF=upstream/main
+```
+
+The same check runs in CI on every pull request via the `Lint Migrations` job in
+[`ci-lint.yaml`](./.github/workflows/ci-lint.yaml). PRs that introduce squawk findings
+will fail this job.
+
+Suppress an individual finding only when justified, by annotating the SQL statement
+(see [Disabling rules via comments](https://squawkhq.com/docs/cli#disabling-rules-via-comments)):
+
+```sql
+-- squawk-ignore <rule-name>
+ALTER TABLE ...;
+```
+
+### Migrations and Transactions
+
+Flyway wraps each migration script in a single transaction by default.
+A few Postgres DDL statements *cannot run inside a transaction*, most notably:
+
+* `CREATE INDEX CONCURRENTLY`
+* `DROP INDEX CONCURRENTLY`
+* `REINDEX CONCURRENTLY`
+* `ALTER TYPE ... ADD VALUE`
+
+Running them in the default transactional mode will fail.
+Squawk may push you towards using these constructs, but it doesn't know about Flyway executing
+migrations in transactions implicitly.
+
+Disable the transaction wrapper for that specific migration by adding a sidecar configuration
+file with the same name as the migration plus a `.conf` suffix, for example:
+
+```text
+V202606151200__add_foo_bar_idx.sql
+V202606151200__add_foo_bar_idx.sql.conf
+```
+
+```properties
+# V202606151200__add_foo_bar_idx.sql.conf
+executeInTransaction=false
+```
+
+```sql
+-- V202606151200__add_foo_bar_idx.sql
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "FOO_BAR_IDX" ON "FOO" ("BAR");
+```
+
+See Flyway's [script configuration docs](https://documentation.red-gate.com/fd/script-configuration-277578847.html)
+for the full list of per-script overrides.
+
+> [!WARNING]
+> When `executeInTransaction=false`, the migration is no longer atomic.
+> Keep these files small and idempotent (e.g. `IF NOT EXISTS`) so a partial
+> failure can be safely re-run.
 
 ## Build Cache
 

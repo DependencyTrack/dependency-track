@@ -20,6 +20,7 @@ package org.dependencytrack.persistence.jdbi;
 
 import com.google.protobuf.util.JsonFormat;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
@@ -103,9 +104,24 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         vulnB.setSource(Vulnerability.Source.NVD);
         qm.persist(vulnB);
 
-        useJdbiTransaction(handle -> new VulnerabilityAliasDao(handle)
-                .syncAssertions("TEST", new VulnerabilityKey("CVE-100", Vulnerability.Source.NVD),
-                        Set.of(new VulnerabilityKey("GHSA-100", Vulnerability.Source.GITHUB))));
+        useJdbiTransaction(handle -> {
+            new VulnerabilityAliasDao(handle)
+                    .syncAssertions(
+                            "TEST",
+                            new VulnerabilityKey("CVE-100", Vulnerability.Source.NVD),
+                            Set.of(new VulnerabilityKey("GHSA-100", Vulnerability.Source.GITHUB)));
+            handle
+                    .attach(KevDao.class)
+                    .upsertBatch("cisa", List.of(
+                            new KevAssertion(
+                                    "NVD",
+                                    "CVE-100",
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null)));
+        });
 
         qm.addVulnerability(vulnA, component, "internal");
         qm.addVulnerability(vulnB, component, "internal");
@@ -125,7 +141,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                         .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                         .withMatcher("componentUuid", equalTo(component.getUuid().toString()))
                         .withMatcher("vulnUuid", equalTo(vulnA.getUuid().toString()))
-                        .isEqualTo("""
+                        .isEqualTo(/* language=JSON */ """
                                 {
                                   "affectedProjects": [
                                     {
@@ -193,7 +209,8 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                     "vulnId": "CVE-100",
                                     "cvssV2Vector": "(AV:N/AC:M/Au:S/C:P/I:P/A:P)",
                                     "cvssV3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
-                                    "owaspRRVector": "(SL:5/M:5/O:2/S:9/ED:4/EE:2/A:7/ID:2/LC:2/LI:2/LAV:7/LAC:9/FD:3/RD:5/NC:0/PV:7)"
+                                    "owaspRRVector": "(SL:5/M:5/O:2/S:9/ED:4/EE:2/A:7/ID:2/LC:2/LI:2/LAV:7/LAC:9/FD:3/RD:5/NC:0/PV:7)",
+                                    "isKev": true
                                   }
                                 }
                                 """));
@@ -247,7 +264,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .withMatcher("componentUuid", equalTo(component.getUuid().toString()))
                 .withMatcher("vulnUuid", equalTo(vuln.getUuid().toString()))
-                .isEqualTo("""
+                .isEqualTo(/* language=JSON */ """
                         {
                           "component": {
                             "uuid": "${json-unit.matches:componentUuid}",
@@ -262,9 +279,16 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                             "uuid": "${json-unit.matches:vulnUuid}",
                             "vulnId": "CVE-100",
                             "source": "NVD",
+                            "cvssv2": 1.1,
                             "cvssv3": 10.0,
+                            "owaspRRBusinessImpact": 3.1,
+                            "owaspRRLikelihood": 3.2,
+                            "owaspRRTechnicalImpact": 3.3,
                             "severity": "CRITICAL",
-                            "cvssV3Vector": "cvssV3VectorOverwrite"
+                            "cvssV2Vector": "",
+                            "cvssV3Vector": "cvssV3VectorOverwrite",
+                            "owaspRRVector": "owaspRrVector",
+                            "isKev": false
                           },
                           "affectedProjects": [
                             {
@@ -326,11 +350,25 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         vulnB.setSource(Vulnerability.Source.NVD);
         qm.persist(vulnB);
 
-        useJdbiTransaction(handle -> new VulnerabilityAliasDao(handle)
-                .syncAssertions(
-                        "TEST",
-                        new VulnerabilityKey("CVE-100", Vulnerability.Source.NVD),
-                        Set.of(new VulnerabilityKey("GHSA-100", Vulnerability.Source.GITHUB))));
+        useJdbiTransaction(handle -> {
+            new VulnerabilityAliasDao(handle)
+                    .syncAssertions(
+                            "TEST",
+                            new VulnerabilityKey("CVE-100", Vulnerability.Source.NVD),
+                            Set.of(new VulnerabilityKey("GHSA-100", Vulnerability.Source.GITHUB)));
+
+            handle
+                    .attach(KevDao.class)
+                    .upsertBatch("cisa", List.of(
+                            new KevAssertion(
+                                    "NVD",
+                                    "CVE-100",
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null)));
+        });
 
         qm.addVulnerability(vulnA, component, "internal");
         qm.addVulnerability(vulnB, component, "internal");
@@ -349,7 +387,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .withMatcher("componentUuid", equalTo(component.getUuid().toString()))
                 .withMatcher("vulnUuid", equalTo(vulnA.getUuid().toString()))
-                .isEqualTo("""
+                .isEqualTo(/* language=JSON */ """
                         {
                           "component": {
                             "uuid": "${json-unit.matches:componentUuid}",
@@ -404,7 +442,8 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                               "owaspRRVector": "(SL:5/M:5/O:2/S:9/ED:4/EE:2/A:7/ID:2/LC:2/LI:2/LAV:7/LAC:9/FD:3/RD:5/NC:0/PV:7)",
                               "aliases": [
                                 {"vulnId": "GHSA-100", "source": "GITHUB"}
-                              ]
+                              ],
+                              "isKev": true
                             }
                           ]
                         }
@@ -459,7 +498,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .withMatcher("componentUuid", equalTo(component.getUuid().toString()))
                 .withMatcher("vulnUuid", equalTo(vuln.getUuid().toString()))
-                .isEqualTo("""
+                .isEqualTo(/* language=JSON */ """
                         {
                           "component": {
                             "uuid": "${json-unit.matches:componentUuid}",
@@ -475,9 +514,16 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                               "uuid": "${json-unit.matches:vulnUuid}",
                               "vulnId": "CVE-100",
                               "source": "NVD",
+                              "cvssv2": 1.1,
                               "cvssv3": 10.0,
+                              "owaspRRBusinessImpact": 3.1,
+                              "owaspRRLikelihood": 3.2,
+                              "owaspRRTechnicalImpact": 3.3,
                               "severity": "CRITICAL",
-                              "cvssV3Vector": "cvssV3VectorOverwrite"
+                              "cvssV2Vector": "",
+                              "cvssV3Vector": "cvssV3VectorOverwrite",
+                              "owaspRRVector": "owaspRrVector",
+                              "isKev": false
                             }
                           ]
                         }
@@ -528,9 +574,25 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         vulnA.setCwes(List.of(666, 777));
         qm.persist(vulnA);
 
-        useJdbiTransaction(handle -> new VulnerabilityAliasDao(handle)
-                .syncAssertions("TEST", new VulnerabilityKey("CVE-100", Vulnerability.Source.NVD),
-                        Set.of(new VulnerabilityKey("GHSA-100", Vulnerability.Source.GITHUB))));
+        useJdbiTransaction(handle -> {
+            new VulnerabilityAliasDao(handle)
+                    .syncAssertions(
+                            "TEST",
+                            new VulnerabilityKey("CVE-100", Vulnerability.Source.NVD),
+                            Set.of(new VulnerabilityKey("GHSA-100", Vulnerability.Source.GITHUB)));
+
+            handle
+                    .attach(KevDao.class)
+                    .upsertBatch("cisa", List.of(
+                            new KevAssertion(
+                                    "NVD",
+                                    "CVE-100",
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    null)));
+        });
 
         qm.addVulnerability(vulnA, component, "internal");
 
@@ -553,7 +615,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                         .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                         .withMatcher("componentUuid", equalTo(component.getUuid().toString()))
                         .withMatcher("vulnUuid", equalTo(vulnA.getUuid().toString()))
-                        .isEqualTo("""
+                        .isEqualTo(/* language=JSON */ """
                                 {
                                      "component": {
                                          "uuid": "${json-unit.matches:componentUuid}",
@@ -610,7 +672,8 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                          ],
                                          "cvssV2Vector": "(AV:N/AC:M/Au:S/C:P/I:P/A:P)",
                                          "cvssV3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
-                                         "owaspRRVector": "(SL:5/M:5/O:2/S:9/ED:4/EE:2/A:7/ID:2/LC:2/LI:2/LAV:7/LAC:9/FD:3/RD:5/NC:0/PV:7)"
+                                         "owaspRRVector": "(SL:5/M:5/O:2/S:9/ED:4/EE:2/A:7/ID:2/LC:2/LI:2/LAV:7/LAC:9/FD:3/RD:5/NC:0/PV:7)",
+                                         "isKev": true
                                      },
                                      "analysis": {
                                          "component": {
@@ -668,7 +731,8 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                              ],
                                          "cvssV2Vector": "(AV:N/AC:M/Au:S/C:P/I:P/A:P)",
                                          "cvssV3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
-                                         "owaspRRVector": "(SL:5/M:5/O:2/S:9/ED:4/EE:2/A:7/ID:2/LC:2/LI:2/LAV:7/LAC:9/FD:3/RD:5/NC:0/PV:7)"
+                                         "owaspRRVector": "(SL:5/M:5/O:2/S:9/ED:4/EE:2/A:7/ID:2/LC:2/LI:2/LAV:7/LAC:9/FD:3/RD:5/NC:0/PV:7)",
+                                         "isKev": true
                                          },
                                          "state": "NOT_AFFECTED",
                                          "suppressed": false

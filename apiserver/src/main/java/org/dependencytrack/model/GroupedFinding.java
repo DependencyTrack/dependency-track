@@ -49,6 +49,7 @@ public class GroupedFinding implements Serializable {
         optValue(vulnerability, "cvssV2BaseScore", row.cvssV2BaseScore());
         optValue(vulnerability, "cvssV3BaseScore", row.cvssV3BaseScore());
         optValue(vulnerability, "cvssV4Score", row.cvssV4Score());
+        optValue(vulnerability, "isKev", row.kev());
         optValue(attribution, "analyzerIdentity", row.analyzerIdentity());
         if (row.vulnPublished() != null) {
             optValue(vulnerability, "published", Date.from(row.vulnPublished()));

@@ -46,7 +46,7 @@ public class FindingPackagingFormat {
     /**
      * FPF is versioned. If the format changes, the version needs to be bumped.
      */
-    private static final String FPF_VERSION = "1.3";
+    private static final String FPF_VERSION = "1.5";
     private static final String FIELD_APPLICATION = "application";
     private static final String FIELD_VERSION = "version";
     private static final String FIELD_TIMESTAMP = "timestamp";

@@ -189,6 +189,10 @@ public final class Buffer<T> implements Closeable {
         LOGGER.debug("{}: Closing", name);
         setStatus(Status.STOPPING);
 
+        // Wake up the flush thread so it sees stop being requested
+        // immediately instead of waiting for its interval to elapse.
+        boolean _ = flushRequestQueue.offer(true);
+
         if (flushThread.isAlive()) {
             LOGGER.debug("{}: Waiting for flush thread to stop", name);
             try {

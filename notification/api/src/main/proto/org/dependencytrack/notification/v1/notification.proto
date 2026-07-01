@@ -224,6 +224,9 @@ message Vulnerability {
   optional double cvss_v4 = 19 [json_name = "cvssv4"];
   optional string cvss_v4_vector = 20 [json_name = "cvssV4Vector"];
 
+  // Whether the vulnerability is known to be exploited.
+  optional bool is_kev = 21 [json_name = "isKev"];
+
   message Alias {
     string id = 1 [json_name = "vulnId"];
     string source = 2;

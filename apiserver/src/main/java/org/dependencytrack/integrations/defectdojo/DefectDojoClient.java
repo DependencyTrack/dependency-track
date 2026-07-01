@@ -60,7 +60,8 @@ public class DefectDojoClient {
             final String engagementId,
             final InputStream findingsJson,
             final Boolean verifyFindings,
-            final @Nullable String testTitle) {
+            final @Nullable String testTitle,
+            final @Nullable String groupBy) {
         LOGGER.debug("Uploading Dependency-Track findings to DefectDojo");
 
         final var multipart = new MultipartBodyPublisher()
@@ -75,6 +76,9 @@ public class DefectDojoClient {
                 .addFormField("scan_date", DATE_FORMAT.format(new Date()));
         if (testTitle != null) {
             multipart.addFormField("test_title", testTitle);
+        }
+        if (groupBy != null) {
+            multipart.addFormField("group_by", groupBy);
         }
 
         final var request = HttpRequest.newBuilder()
@@ -187,7 +191,8 @@ public class DefectDojoClient {
             final String testId,
             final Boolean doNotReactivate,
             final Boolean verifyFindings,
-            final @Nullable String testTitle) {
+            final @Nullable String testTitle,
+            final @Nullable String groupBy) {
         LOGGER.debug("Re-reimport Dependency-Track findings to DefectDojo per Engagement");
 
         final var multipart = new MultipartBodyPublisher()
@@ -204,6 +209,9 @@ public class DefectDojoClient {
                 .addFormField("scan_date", DATE_FORMAT.format(new Date()));
         if (testTitle != null) {
             multipart.addFormField("test_title", testTitle);
+        }
+        if (groupBy != null) {
+            multipart.addFormField("group_by", groupBy);
         }
 
         final var request = HttpRequest.newBuilder()

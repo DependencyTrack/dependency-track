@@ -55,6 +55,7 @@ import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectProperty;
+import org.dependencytrack.model.ProjectVersion;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.model.ServiceComponent;
@@ -411,6 +412,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public Project getLatestProjectVersion(final String name) {
         return getProjectQueryManager().getLatestProjectVersion(name);
+    }
+
+    public List<ProjectVersion> getProjectVersions(final Project project) {
+        return getProjectQueryManager().getProjectVersions(project);
     }
 
     public boolean hasAccess(final Principal principal, final Project project) {
@@ -802,6 +807,10 @@ public class QueryManager extends AlpineQueryManager {
 
     public List<VulnerabilityAlias> getVulnerabilityAliases(Vulnerability vulnerability) {
         return getVulnerabilityQueryManager().getVulnerabilityAliases(vulnerability);
+    }
+
+    public Set<VulnerabilityKey> getKev(Collection<VulnerabilityKey> keys) {
+        return getVulnerabilityQueryManager().getKev(keys);
     }
 
     public Analysis getAnalysis(Component component, Vulnerability vulnerability) {

@@ -38,6 +38,7 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleCallback;
 import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.freemarker.FreemarkerConfig;
 import org.jdbi.v3.freemarker.FreemarkerEngine;
 import org.jdbi.v3.jackson2.Jackson2Config;
 import org.jdbi.v3.jackson2.Jackson2Plugin;
@@ -159,6 +160,10 @@ public class JdbiFactory {
                 .getConfig(PaginationConfig.class)
                 .setPageTokenEncoder(new SimplePageTokenEncoder());
         preparedJdbi.getConfig(Jackson2Config.class).setMapper(createJsonMapper());
+        preparedJdbi
+                .getConfig(FreemarkerConfig.class)
+                .getFreemarkerConfiguration()
+                .addAutoImport("sql", "ftl/sql-macros.ftl");
         return preparedJdbi;
     }
 

@@ -22,13 +22,16 @@ import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetup;
 import jakarta.mail.Address;
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
-import jakarta.mail.internet.MimeMultipart;
+import org.dependencytrack.notification.api.publishing.NotificationPublishContext;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
+import org.dependencytrack.notification.api.templating.NotificationTemplate;
+import org.dependencytrack.notification.api.templating.NotificationTemplateRenderer;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherTest;
+import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.IOException;
@@ -40,6 +43,7 @@ import java.util.Set;
 
 import static com.icegreen.greenmail.configuration.GreenMailConfiguration.aConfig;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.notification.api.TestNotificationFactory.createBomConsumedTestNotification;
 
 class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
@@ -108,7 +112,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 
                 --------------------------------------------------------------------------------
                 
-                2006-06-06T06:06:06.666Z
+                2006-06-06T06:06:06.666Z\
                 """);
     }
 
@@ -137,7 +141,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 
                 --------------------------------------------------------------------------------
                 
-                2006-06-06T06:06:06.666Z
+                2006-06-06T06:06:06.666Z\
                 """);
     }
 
@@ -170,7 +174,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 
                 --------------------------------------------------------------------------------
                 
-                2006-06-06T06:06:06.666Z
+                2006-06-06T06:06:06.666Z\
                 """);
     }
 
@@ -203,7 +207,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 
                 --------------------------------------------------------------------------------
                 
-                2006-06-06T06:06:06.666Z
+                2006-06-06T06:06:06.666Z\
                 """);
     }
 
@@ -238,7 +242,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 
                 --------------------------------------------------------------------------------
                 
-                2006-06-06T06:06:06.666Z
+                2006-06-06T06:06:06.666Z\
                 """);
     }
 
@@ -289,7 +293,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 
                 --------------------------------------------------------------------------------
                 
-                2006-06-06T06:06:06.666Z
+                2006-06-06T06:06:06.666Z\
                 """);
     }
 
@@ -340,7 +344,35 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 
                 --------------------------------------------------------------------------------
                 
-                2006-06-06T06:06:06.666Z
+                2006-06-06T06:06:06.666Z\
+                """);
+    }
+
+    @Test
+    void shouldSendHtmlBodyWhenTemplateMimeTypeIsHtml() throws Exception {
+        final var htmlTemplate = new NotificationTemplate(/* language=HTML */ """
+                <html><body><p>{{ notification.title }}</p></body></html>\
+                """,
+                "text/html; charset=utf-8");
+        final NotificationTemplateRenderer htmlRenderer =
+                new PebbleNotificationTemplateRendererFactory(
+                        Map.of("baseUrl", () -> "https://example.com"))
+                        .createRenderer(htmlTemplate);
+        final var publishCtx =
+                new NotificationPublishContext(
+                        publishContext.ruleConfig(),
+                        htmlRenderer);
+
+        publisher.publish(publishCtx, createBomConsumedTestNotification());
+
+        final MimeMessage[] messages = GREEN_MAIL.getReceivedMessages();
+        assertThat(messages).hasSize(1);
+
+        final MimeMessage message = messages[0];
+        assertThat(message.getContentType()).isEqualToIgnoringCase("text/html; charset=utf-8");
+        assertThat(message.isMimeType("text/html")).isTrue();
+        assertThat((String) message.getContent()).isEqualTo(/* language=HTML */ """
+                <html><body><p>Bill of Materials Consumed</p></body></html>\
                 """);
     }
 
@@ -353,11 +385,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
         try {
             final MimeMessage message = messages[0];
-            assertThat(message.getContent()).isInstanceOf(MimeMultipart.class);
-
-            final MimeMultipart content = (MimeMultipart) message.getContent();
-            assertThat(content.getCount()).isEqualTo(1);
-            assertThat(content.getBodyPart(0)).isInstanceOf(MimeBodyPart.class);
+            assertThat(message.isMimeType("text/plain")).isTrue();
 
             final Address[] from = message.getFrom();
             return new ReceivedMessage(
@@ -365,7 +393,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                             ? Arrays.stream(from).map(Address::toString).toList()
                             : List.of(),
                     message.getSubject(),
-                    (String) content.getBodyPart(0).getContent());
+                    (String) message.getContent());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (MessagingException e) {

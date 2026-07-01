@@ -25,13 +25,13 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.networknt.schema.JsonMetaSchema;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.NonValidationKeyword;
-import com.networknt.schema.SpecVersion;
-import com.networknt.schema.ValidationMessage;
-import com.networknt.schema.serialization.DefaultJsonNodeReader;
+import com.networknt.schema.Error;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.dialect.Dialect;
+import com.networknt.schema.dialect.Dialects;
+import com.networknt.schema.keyword.NonValidationKeyword;
+import com.networknt.schema.serialization.DefaultNodeReader;
 import org.dependencytrack.plugin.api.config.RuntimeConfig;
 import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.jspecify.annotations.Nullable;
@@ -75,15 +75,13 @@ public final class RuntimeConfigMapper {
     private static final RuntimeConfigMapper INSTANCE = new RuntimeConfigMapper();
 
     private final ObjectMapper jsonMapper;
-    private final JsonSchemaFactory schemaFactory;
+    private final SchemaRegistry schemaRegistry;
     private final Map<RuntimeConfigSpec, RuntimeConfigSchema> schemaCache;
 
     RuntimeConfigMapper() {
         this.jsonMapper = new ObjectMapper()
                 .setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
-        final JsonMetaSchema jsonMetaSchema = JsonMetaSchema.builder(
-                        JsonMetaSchema.getV202012().getIri(),
-                        JsonMetaSchema.getV202012())
+        final Dialect schemaDialect = Dialect.builder(Dialects.getDraft202012())
                 // Don't emit warnings when encountering jsonschema2pojo extensions.
                 // https://github.com/joelittlejohn/jsonschema2pojo/wiki/Reference#extensions
                 .keywords(List.of(
@@ -100,15 +98,13 @@ public final class RuntimeConfigMapper {
                         new NonValidationKeyword(CustomAnnotations.SECRET_REF),
                         new NonValidationKeyword(CustomAnnotations.UI_HINT)))
                 .build();
-        this.schemaFactory = JsonSchemaFactory
-                .builder(JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012))
-                .jsonNodeReader(
-                        DefaultJsonNodeReader.builder()
-                                .jsonMapper(this.jsonMapper)
-                                .build())
-                .defaultMetaSchemaIri(jsonMetaSchema.getIri())
-                .metaSchema(jsonMetaSchema)
-                .build();
+        this.schemaRegistry = SchemaRegistry
+                .withDialect(
+                        schemaDialect,
+                        builder -> builder
+                                .nodeReader(DefaultNodeReader.builder()
+                                        .jsonMapper(this.jsonMapper)
+                                        .build()));
         this.schemaCache = new ConcurrentHashMap<>();
     }
 
@@ -146,8 +142,8 @@ public final class RuntimeConfigMapper {
      *
      * @param config            The config to validate.
      * @param runtimeConfigSpec The applicable config spec.
-     * @throws NullPointerException             When either {@code config} or {@code configSchemaJson} are {@code null}.
-     * @throws UncheckedIOException             When parsing the config JSON failed.
+     * @throws NullPointerException                   When either {@code config} or {@code configSchemaJson} are {@code null}.
+     * @throws UncheckedIOException                   When parsing the config JSON failed.
      * @throws RuntimeConfigSchemaValidationException When the config failed validation.
      */
     public <T extends RuntimeConfig> JsonNode validate(T config, RuntimeConfigSpec runtimeConfigSpec) {
@@ -157,9 +153,9 @@ public final class RuntimeConfigMapper {
         final RuntimeConfigSchema schema = getSchema(runtimeConfigSpec);
         final JsonNode configNode = jsonMapper.convertValue(config, JsonNode.class);
 
-        final Set<ValidationMessage> validationMessages = schema.jsonSchema().validate(configNode);
-        if (!validationMessages.isEmpty()) {
-            throw new RuntimeConfigSchemaValidationException(validationMessages);
+        final List<Error> validationErrors = schema.jsonSchema().validate(configNode);
+        if (!validationErrors.isEmpty()) {
+            throw new RuntimeConfigSchemaValidationException(validationErrors);
         }
 
         if (runtimeConfigSpec.validator() != null) {
@@ -174,8 +170,8 @@ public final class RuntimeConfigMapper {
      *
      * @param configJson        The config to validate in JSON format.
      * @param runtimeConfigSpec The applicable config spec.
-     * @throws NullPointerException             When either {@code configJson} or {@code configSchemaJson} are {@code null}.
-     * @throws UncheckedIOException             When parsing the config JSON failed.
+     * @throws NullPointerException                   When either {@code configJson} or {@code configSchemaJson} are {@code null}.
+     * @throws UncheckedIOException                   When parsing the config JSON failed.
      * @throws RuntimeConfigSchemaValidationException When the config failed validation.
      */
     public JsonNode validateJson(String configJson, RuntimeConfigSpec runtimeConfigSpec) {
@@ -191,9 +187,9 @@ public final class RuntimeConfigMapper {
             throw new UncheckedIOException(e);
         }
 
-        final Set<ValidationMessage> validationMessages = schema.jsonSchema().validate(configNode);
-        if (!validationMessages.isEmpty()) {
-            throw new RuntimeConfigSchemaValidationException(validationMessages);
+        final List<Error> validationErrors = schema.jsonSchema().validate(configNode);
+        if (!validationErrors.isEmpty()) {
+            throw new RuntimeConfigSchemaValidationException(validationErrors);
         }
 
         return configNode;
@@ -228,7 +224,7 @@ public final class RuntimeConfigMapper {
     private RuntimeConfigSchema getSchema(RuntimeConfigSpec runtimeConfigSpec) {
         return schemaCache.computeIfAbsent(
                 runtimeConfigSpec,
-                clazz -> {
+                _ -> {
                     final JsonNode schemaNode;
                     try {
                         schemaNode = jsonMapper.readValue(runtimeConfigSpec.schema(), JsonNode.class);
@@ -236,7 +232,7 @@ public final class RuntimeConfigMapper {
                         throw new UncheckedIOException(e);
                     }
 
-                    final JsonSchema jsonSchema = schemaFactory.getSchema(schemaNode);
+                    final Schema jsonSchema = schemaRegistry.getSchema(schemaNode);
                     if (jsonSchema.getId() == null || jsonSchema.getId().isBlank()) {
                         throw new IllegalStateException("Schema does not define an ID");
                     }

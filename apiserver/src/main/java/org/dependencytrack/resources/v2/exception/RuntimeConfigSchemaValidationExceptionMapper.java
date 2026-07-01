@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.resources.v2.exception;
 
-import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.Error;
 import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.model.JsonSchemaValidationError;
 import org.dependencytrack.api.v2.model.JsonSchemaValidationProblemDetails;
@@ -35,23 +35,24 @@ public final class RuntimeConfigSchemaValidationExceptionMapper
 
     @Override
     public JsonSchemaValidationProblemDetails map(final RuntimeConfigSchemaValidationException exception) {
-        final var errors = new ArrayList<JsonSchemaValidationError>(exception.getValidationMessages().size());
+        final var errors = new ArrayList<JsonSchemaValidationError>(exception.getValidationErrors().size());
 
-        for (final ValidationMessage validationMessage : exception.getValidationMessages()) {
-            final var errorBuilder = JsonSchemaValidationError.builder()
-                    .message(validationMessage.getMessage());
+        for (final Error validationError : exception.getValidationErrors()) {
+            final var errorBuilder =
+                    JsonSchemaValidationError.builder()
+                            .message(validationError.getMessage());
 
-            if (validationMessage.getInstanceLocation() != null) {
-                errorBuilder.instanceLocation(validationMessage.getInstanceLocation().toString());
+            if (validationError.getInstanceLocation() != null) {
+                errorBuilder.instanceLocation(validationError.getInstanceLocation().toString());
             }
-            if (validationMessage.getEvaluationPath() != null) {
-                errorBuilder.evaluationPath(validationMessage.getEvaluationPath().toString());
+            if (validationError.getEvaluationPath() != null) {
+                errorBuilder.evaluationPath(validationError.getEvaluationPath().toString());
             }
-            if (validationMessage.getSchemaLocation() != null) {
-                errorBuilder.schemaLocation(validationMessage.getSchemaLocation().toString());
+            if (validationError.getSchemaLocation() != null) {
+                errorBuilder.schemaLocation(validationError.getSchemaLocation().toString());
             }
-            if (validationMessage.getType() != null) {
-                errorBuilder.keyword(validationMessage.getType());
+            if (validationError.getKeyword() != null) {
+                errorBuilder.keyword(validationError.getKeyword());
             }
 
             errors.add(errorBuilder.build());

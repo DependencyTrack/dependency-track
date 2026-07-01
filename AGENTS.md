@@ -16,8 +16,10 @@ If Maven needs to be invoked directly, only do so from the repository root.
 * Clean build cache: `make clean-build-cache`
 * Run e2e tests: `make test-e2e`
 * Lint (Java): `make lint-java`
+* Format (Java): `make format-java`
 * Lint (OpenAPI): `make lint-openapi`
 * Lint (Protobuf): `make lint-proto`
+* Lint (Flyway migrations): `make lint-migrations`
 
 > [!NOTE]
 > When running Maven via `make … AGENT=1`, Maven is invoked in quiet mode (`-q`), so successful test runs may produce little or no output.

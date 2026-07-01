@@ -21,6 +21,7 @@ package org.dependencytrack.vulndatasource.osv;
 import org.dependencytrack.support.distrometadata.AlpineDistribution;
 import org.dependencytrack.support.distrometadata.DebianDistribution;
 import org.dependencytrack.support.distrometadata.OsDistribution;
+import org.dependencytrack.support.distrometadata.RedHatDistribution;
 import org.dependencytrack.support.distrometadata.UbuntuDistribution;
 import org.jspecify.annotations.Nullable;
 
@@ -54,6 +55,10 @@ final class OsvEcosystems {
                 final String versionOrSeries = suffix.replaceAll(":(LTS|Pro)", "");
                 yield UbuntuDistribution.of(versionOrSeries);
             }
+            // The Red Hat suffix is a CPE 2.2 URI fragment scoping the RPM to a
+            // specific Red Hat product stream, e.g. `rhel_aus:8.4::appstream`.
+            // https://ossf.github.io/osv-schema/#defined-ecosystems
+            case "red hat" -> RedHatDistribution.ofCpe(suffix);
             default -> null;
         };
     }

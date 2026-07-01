@@ -13,7 +13,7 @@
             <list>
               <option value="clean" />
               <option value="verify" />
-              <option value="-Dcheckstyle.skip" />
+              <option value="-Dspotless.check.skip" />
               <option value="-Dcyclonedx.skip" />
             </list>
           </option>

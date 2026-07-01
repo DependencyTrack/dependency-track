@@ -32,10 +32,12 @@ import org.cyclonedx.proto.v1_7.Source;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.support.distrometadata.OsDistribution;
+import org.dependencytrack.support.distrometadata.RedHatDistribution;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.dependencytrack.vulnanalysis.internal.Coordinate.CpeCoordinate;
 import org.dependencytrack.vulnanalysis.internal.Coordinate.PurlCoordinate;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.Query;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +54,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Gatherers;
@@ -162,120 +165,173 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
     }
 
     private Map<Coordinate, List<MatchingCriteria>> queryCpeMatchingCriteria(List<CpeCoordinate> coordinates) {
-        final var parts = new String[coordinates.size()];
-        final var vendors = new String[coordinates.size()];
-        final var products = new String[coordinates.size()];
-        final var indexes = new int[coordinates.size()];
+        // Assemble multiple queries and join their results using UNION.
+        // This ensures that the database is able to leverage indexes properly,
+        // which use of OR can prevent from happening: https://dba.stackexchange.com/a/293838
+        //
+        // i.e., what usually would've been:
+        //   SELECT ... WHERE ("PART" = '*' OR "PART" = 'foo') ...
+        // now becomes:
+        //   SELECT ... WHERE "PART" = '*' ...
+        //   UNION
+        //   SELECT ... WHERE "PART" = 'foo' ...
+        final var queryBranches = new ArrayList<String>();
+        final var queryParams = new HashMap<String, Object>();
+        int queryConditionIdx = 0;
 
-        for (int i = 0; i < coordinates.size(); i++) {
-            final CpeCoordinate coordinate = coordinates.get(i);
-            parts[i] = coordinate.part();
-            vendors[i] = coordinate.vendor();
-            products[i] = coordinate.product();
-            indexes[i] = i;
+        for (int coordinateIdx = 0; coordinateIdx < coordinates.size(); coordinateIdx++) {
+            final CpeCoordinate coordinate = coordinates.get(coordinateIdx);
+            for (final var partCondition : CpeFilterCondition.of(CpeAttribute.PART, coordinate.part())) {
+                for (final var vendorCondition : CpeFilterCondition.of(CpeAttribute.VENDOR, coordinate.vendor())) {
+                    for (final var productCondition : CpeFilterCondition.of(CpeAttribute.PRODUCT, coordinate.product())) {
+                        final int idx = queryConditionIdx++;
+                        final var partParam = "part" + idx;
+                        final var vendorParam = "vendor" + idx;
+                        final var productParam = "product" + idx;
+
+                        queryBranches.add(/* language=SQL */ """
+                                SELECT "ID" AS vs_id
+                                     , %d AS coordinate_index
+                                  FROM "VULNERABLESOFTWARE"
+                                 WHERE %s
+                                   AND %s
+                                   AND %s\
+                                """.formatted(
+                                coordinateIdx,
+                                partCondition.toSql(partParam),
+                                vendorCondition.toSql(vendorParam),
+                                productCondition.toSql(productParam)));
+                        if (partCondition.value() != null) {
+                            queryParams.put(partParam, partCondition.value());
+                        }
+                        if (vendorCondition.value() != null) {
+                            queryParams.put(vendorParam, vendorCondition.value());
+                        }
+                        if (productCondition.value() != null) {
+                            queryParams.put(productParam, productCondition.value());
+                        }
+                    }
+                }
+            }
         }
 
-        // The query composition below represents a partial implementation of the CPE
-        // matching logic. It makes references to table 6-2 of the CPE name matching
-        // specification: https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf
-        //
-        // In CPE matching terms, the parameters of this method represent the target,
-        // and the VULNERABLESOFTWARE records in the database represent the source.
-        //
-        // While the source *can* contain wildcards ("*", "?"), there is currently (Oct. 2023)
-        // no occurrence of part, vendor, or product with wildcards in the NVD database.
-        // Evaluating wildcards in the source can only be done in-memory. If we wanted to do that,
-        // we'd have to fetch *all* records, which is not practical.
-
-        return jdbi.withHandle(handle -> handle
-                .createQuery(/* language=SQL */ """
-                        SELECT vs.*
-                             , v."ID" AS vuln_db_id
-                             , v."VULNID" AS vuln_id
-                             , v."SOURCE" AS vuln_source
-                             , t.idx AS coordinate_index
-                          FROM UNNEST(:parts, :vendors, :products, :indexes)
-                            AS t(part, vendor, product, idx)
-                         INNER JOIN "VULNERABLESOFTWARE" AS vs
-                            ON (
-                                -- | No. | Source A-V     | Target A-V | Relation |
-                                -- | :-- | :------------- | :--------- | :------- |
-                                -- | 1   | ANY            | ANY        | EQUAL    |
-                                -- | 5   | NA             | ANY        | SUBSET   |
-                                -- | 13  | i              | ANY        | SUBSET   |
-                                -- | 15  | m + wild cards | ANY        | SUBSET   |
-                                (t.part = '*' AND vs."PART" IS NOT NULL)
-                                -- | No. | Source A-V      | Target A-V | Relation             |
-                                -- | :-- | :-------------- | :--------- | :------------------- |
-                                -- | 2   | ANY             | NA         | SUPERSET             |
-                                -- | 6   | NA              | NA         | EQUAL                |
-                                -- | 12  | i               | NA         | DISJOINT             |
-                                -- | 16  | m + wild cards  | NA         | DISJOINT             |
-                                -- | 3   | ANY             | i          | SUPERSET             |
-                                -- | 7   | NA              | i          | DISJOINT             |
-                                -- | 9   | i               | i          | EQUAL                |
-                                -- | 10  | i               | k          | DISJOINT             |
-                                -- | 14  | m1 + wild cards | m2         | SUPERSET or DISJOINT |
-                                OR vs."PART" IN ('*', t.part)
-                               )
-                           -- VENDOR and PRODUCT follow the same matching logic as PART above.
-                           AND ((t.vendor  = '*' AND vs."VENDOR" IS NOT NULL) OR vs."VENDOR" IN ('*', t.vendor))
-                           AND ((t.product = '*' AND vs."PRODUCT" IS NOT NULL) OR vs."PRODUCT" IN ('*', t.product))
-                         INNER JOIN "VULNERABLESOFTWARE_VULNERABILITIES" AS vsv
-                            ON vsv."VULNERABLESOFTWARE_ID" = vs."ID"
-                         INNER JOIN "VULNERABILITY" AS v
-                            ON v."ID" = vsv."VULNERABILITY_ID"
-                           AND v."REJECTED" IS NULL
-                        """)
-                .bind("parts", parts)
-                .bind("vendors", vendors)
-                .bind("products", products)
-                .bind("indexes", indexes)
-                .mapTo(MatchingCriteria.class)
-                .collect(Collectors.groupingBy(
-                        criteria -> coordinates.get(criteria.coordinateIndex()))));
+        return queryMatchingCriteria(
+                String.join("\nUNION ALL\n", queryBranches),
+                query -> query.bindMap(queryParams),
+                coordinates);
     }
 
     private Map<Coordinate, List<MatchingCriteria>> queryPurlMatchingCriteria(List<PurlCoordinate> coordinates) {
-        final var types = new String[coordinates.size()];
-        final var namespaces = new String[coordinates.size()];
-        final var names = new String[coordinates.size()];
-        final var indexes = new int[coordinates.size()];
+        // PURL namespace is nullable, and the naive `"PURL_NAMESPACE" IS NOT DISTINCT FROM ?`
+        // can't use BTree indexes. Postgres 18 shipped with Skip Scans which still leads to
+        // an index to be leveraged, but still in a suboptimal way.
+        //
+        // To combat this, we use a UNION query that branches on whether the coordinates
+        // have a `null` namespace. This allows explicit usage of `IS NULL` and `=`,
+        // which the query planner can use reliably for index scans.
+        //
+        // On contrast to the more complex CPE queries, the query branches here
+        // are still batched.
+
+        final var nsTypes = new ArrayList<String>();
+        final var namespaces = new ArrayList<String>();
+        final var nsNames = new ArrayList<String>();
+        final var nsIndexes = new ArrayList<Integer>();
+
+        final var nullNsTypes = new ArrayList<String>();
+        final var nullNsNames = new ArrayList<String>();
+        final var nullNsIndexes = new ArrayList<Integer>();
 
         for (int i = 0; i < coordinates.size(); i++) {
             final PurlCoordinate coordinate = coordinates.get(i);
-            types[i] = coordinate.type();
-            namespaces[i] = coordinate.namespace();
-            names[i] = coordinate.name();
-            indexes[i] = i;
+            if (coordinate.namespace() != null) {
+                nsTypes.add(coordinate.type());
+                namespaces.add(coordinate.namespace());
+                nsNames.add(coordinate.name());
+                nsIndexes.add(i);
+            } else {
+                nullNsTypes.add(coordinate.type());
+                nullNsNames.add(coordinate.name());
+                nullNsIndexes.add(i);
+            }
         }
 
-        return jdbi.withHandle(handle -> handle
-                .createQuery(/* language=SQL */ """
-                        SELECT vs.*
-                             , v."ID" AS vuln_db_id
-                             , v."VULNID" AS vuln_id
-                             , v."SOURCE" AS vuln_source
-                             , t.idx AS coordinate_index
-                          FROM UNNEST(:types, :namespaces, :names, :indexes)
-                            AS t(purl_type, purl_namespace, purl_name, idx)
-                         INNER JOIN "VULNERABLESOFTWARE" AS vs
-                            ON vs."PURL_TYPE" = t.purl_type
-                           AND vs."PURL_NAMESPACE" IS NOT DISTINCT FROM t.purl_namespace
-                           AND vs."PURL_NAME" = t.purl_name
-                         INNER JOIN "VULNERABLESOFTWARE_VULNERABILITIES" AS vsv
-                            ON vsv."VULNERABLESOFTWARE_ID" = vs."ID"
-                         INNER JOIN "VULNERABILITY" AS v
-                            ON v."ID" = vsv."VULNERABILITY_ID"
-                           AND v."REJECTED" IS NULL
-                        """)
-                .bind("types", types)
-                .bind("namespaces", namespaces)
-                .bind("names", names)
-                .bind("indexes", indexes)
-                .mapTo(MatchingCriteria.class)
-                .collect(Collectors.groupingBy(
-                        criteria -> coordinates.get(criteria.coordinateIndex()))));
+        final var queryBranches = new ArrayList<String>(2);
+
+        if (!nullNsIndexes.isEmpty()) {
+            queryBranches.add(/* language=SQL */ """
+                    SELECT vs."ID" AS vs_id
+                         , t.idx AS coordinate_index
+                      FROM UNNEST(:nullNsTypes, :nullNsNames, :nullNsIndexes)
+                        AS t(purl_type, purl_name, idx)
+                     INNER JOIN "VULNERABLESOFTWARE" AS vs
+                        ON vs."PURL_TYPE" = t.purl_type
+                       AND vs."PURL_NAMESPACE" IS NULL
+                       AND vs."PURL_NAME" = t.purl_name\
+                    """);
+        }
+
+        if (!nsIndexes.isEmpty()) {
+            queryBranches.add(/* language=SQL */ """
+                    SELECT vs."ID" AS vs_id
+                         , t.idx AS coordinate_index
+                      FROM UNNEST(:nsTypes, :nsNamespaces, :nsNames, :nsIndexes)
+                        AS t(purl_type, purl_namespace, purl_name, idx)
+                     INNER JOIN "VULNERABLESOFTWARE" AS vs
+                        ON vs."PURL_TYPE" = t.purl_type
+                       AND vs."PURL_NAMESPACE" = t.purl_namespace
+                       AND vs."PURL_NAME" = t.purl_name\
+                    """);
+        }
+
+        return queryMatchingCriteria(
+                String.join("\nUNION ALL\n", queryBranches),
+                query -> {
+                    if (!nullNsIndexes.isEmpty()) {
+                        query
+                                .bind("nullNsTypes", nullNsTypes.toArray(String[]::new))
+                                .bind("nullNsNames", nullNsNames.toArray(String[]::new))
+                                .bind("nullNsIndexes", nullNsIndexes.stream().mapToInt(Integer::intValue).toArray());
+                    }
+                    if (!nsIndexes.isEmpty()) {
+                        query
+                                .bind("nsTypes", nsTypes.toArray(String[]::new))
+                                .bind("nsNamespaces", namespaces.toArray(String[]::new))
+                                .bind("nsNames", nsNames.toArray(String[]::new))
+                                .bind("nsIndexes", nsIndexes.stream().mapToInt(Integer::intValue).toArray());
+                    }
+                },
+                coordinates);
+    }
+
+    private Map<Coordinate, List<MatchingCriteria>> queryMatchingCriteria(
+            String innerSql,
+            Consumer<Query> binder,
+            List<? extends Coordinate> coordinates) {
+        final String sql = /* language=SQL */ """
+                SELECT vs.*
+                     , v."ID" AS vuln_db_id
+                     , v."VULNID" AS vuln_id
+                     , v."SOURCE" AS vuln_source
+                     , m.coordinate_index
+                  FROM (%s) AS m
+                 INNER JOIN "VULNERABLESOFTWARE" AS vs
+                    ON vs."ID" = m.vs_id
+                 INNER JOIN "VULNERABLESOFTWARE_VULNERABILITIES" AS vsv
+                    ON vsv."VULNERABLESOFTWARE_ID" = vs."ID"
+                 INNER JOIN "VULNERABILITY" AS v
+                    ON v."ID" = vsv."VULNERABILITY_ID"
+                   AND v."REJECTED" IS NULL
+                """.formatted(innerSql);
+
+        return jdbi.withHandle(handle -> {
+            final Query query = handle.createQuery(sql);
+            binder.accept(query);
+            return query
+                    .mapTo(MatchingCriteria.class)
+                    .collect(Collectors.groupingBy(
+                            criteria -> coordinates.get(criteria.coordinateIndex())));
+        });
     }
 
     private void processCriteria(
@@ -553,39 +609,84 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
     }
 
     private static boolean matchesDistro(PackageURL componentPurl, MatchingCriteria criteria) {
+        final PackageURL criteriaPurl = criteria.purl();
         final String componentDistroQualifier = distroQualifierOf(componentPurl);
-        final String vsDistroQualifier = distroQualifierOf(criteria.purl());
+        final String criteriaDistroQualifier = distroQualifierOf(criteriaPurl);
 
-        // When both the component and the vulnerable software record have a distro
-        // qualifier, they must match *before* we perform the actual version comparison.
-        if (componentDistroQualifier != null && vsDistroQualifier != null) {
-            // Simplest case: the qualifiers just match without special interpretation.
-            if (!componentDistroQualifier.equals(vsDistroQualifier)) {
-                // Could still match, but depends on distro semantics.
-                // e.g. "debian-13" should match "trixie".
-                final OsDistribution componentDistro = OsDistribution.of(componentPurl);
-                final OsDistribution vsDistro = OsDistribution.of(criteria.purl());
+        if (componentDistroQualifier != null
+                && componentDistroQualifier.equals(criteriaDistroQualifier)) {
+            return true;
+        }
 
-                if (componentDistro != null && vsDistro != null) {
-                    if (!componentDistro.matches(vsDistro)) {
-                        // Actual mismatch, e.g. "debian-13" != "sid".
-                        return false;
-                    }
-                } else if (componentDistro != null || vsDistro != null) {
-                    // One side was parsed, the other wasn't. The raw qualifier
-                    // strings already differ, so this is a mismatch.
-                    return false;
-                } else {
-                    // Neither side could be parsed. The raw qualifier strings
-                    // already differ, so treat as mismatch to avoid false positives.
-                    LOGGER.debug("Neither distro qualifier could be parsed for comparison: {} vs {}",
-                            componentDistroQualifier, vsDistroQualifier);
-                    return false;
+        final OsDistribution componentDistro = resolveOsDistro(componentPurl);
+        final OsDistribution criteriaDistro = resolveOsDistro(criteriaPurl, criteria);
+
+        if (componentDistro != null && criteriaDistro != null) {
+            return componentDistro.matches(criteriaDistro);
+        }
+
+        // Both sides carry explicit qualifiers, but they're not equal and at least
+        // one couldn't be parsed. Treat as a mismatch to avoid false positives.
+        if (componentDistroQualifier != null && criteriaDistroQualifier != null) {
+            LOGGER.debug(
+                    "Could not reconcile distro qualifiers: {} vs. {}",
+                    componentDistroQualifier,
+                    criteriaDistroQualifier);
+            return false;
+        }
+
+        // At least one side has no distro qualifier at all.
+        // Treat as match to avoid false negatives, since `distro` qualifiers
+        // are still not widely used across BOM generators and vuln DBs.
+        return true;
+    }
+
+    private static @Nullable OsDistribution resolveOsDistro(
+            @Nullable PackageURL purl,
+            @Nullable MatchingCriteria matchingCriteria) {
+        if (purl == null) {
+            return null;
+        }
+
+        final var fromPurl = OsDistribution.of(purl);
+        if (fromPurl != null) {
+            return fromPurl;
+        }
+
+        // If the producer gave an explicit qualifier we couldn't read,
+        // don't override their intent with the criteria range heuristic below.
+        if (distroQualifierOf(purl) != null) {
+            return null;
+        }
+
+        // Red Hat versions are often verbose enough to be able to infer
+        // the distro version. This captures vuln DB records that do not
+        // explicitly declare distros.
+        if (matchingCriteria != null
+                && "rpm".equals(purl.getType())
+                && "redhat".equalsIgnoreCase(purl.getNamespace())) {
+            for (final String versionRangeBound : new @Nullable String[]{
+                    matchingCriteria.versionEndExcluding(),
+                    matchingCriteria.versionEndIncluding(),
+                    matchingCriteria.version(),
+                    matchingCriteria.versionStartExcluding(),
+                    matchingCriteria.versionStartIncluding()}) {
+                if (versionRangeBound == null) {
+                    continue;
+                }
+
+                final var fromVersionRangeBound = RedHatDistribution.ofRpmRelease(versionRangeBound);
+                if (fromVersionRangeBound != null) {
+                    return fromVersionRangeBound;
                 }
             }
         }
 
-        return true;
+        return null;
+    }
+
+    private static @Nullable OsDistribution resolveOsDistro(@Nullable PackageURL purl) {
+        return resolveOsDistro(purl, null);
     }
 
     private static @Nullable String distroQualifierOf(@Nullable PackageURL purl) {
@@ -597,17 +698,14 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         return qualifiers != null ? qualifiers.get("distro") : null;
     }
 
-    /**
-     * Returns the PURL's version with any type-specific transformations applied to make it
-     * suitable for ecosystem-aware comparison. Returns the raw version when no transformation
-     * applies, or {@code null} if no version is set.
-     * <p>
-     * Applied transformations:
-     * <ul>
-     *   <li>{@code deb}/{@code rpm}: fold the {@code epoch} qualifier into the version as
-     *       {@code <epoch>:<version>} when not already encoded inline.</li>
-     * </ul>
-     */
+    /// Returns the PURL's version with any type-specific transformations applied to make it
+    /// suitable for ecosystem-aware comparison. Returns the raw version when no transformation
+    /// applies, or `null` if no version is set.
+    ///
+    /// Applied transformations:
+    ///
+    /// * `deb`/`rpm`: fold the `epoch` qualifier into the version as `<epoch>:<version>`
+    ///   when not already encoded inline.
     private static String effectiveVersionOf(PackageURL purl) {
         requireNonNull(purl, "purl must not be null");
         requireNonNull(purl.getVersion(), "purl version must not be null");

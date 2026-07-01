@@ -25,7 +25,6 @@ import org.dependencytrack.persistence.jdbi.FindingDao;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -90,20 +89,21 @@ public final class Finding implements Serializable {
         optValue(vulnerability, "owaspRRVector", findingRow.owaspRRVector());
         optValue(vulnerability, "epssScore", findingRow.epssScore());
         optValue(vulnerability, "epssPercentile", findingRow.epssPercentile());
+        optValue(vulnerability, "isKev", findingRow.kev());
         optValue(vulnerability, "cwes", getCwes(findingRow.cwes()));
         addVulnerabilityAliases(findingRow.vulnAliasesJson());
 
         optValue(attribution, "analyzerIdentity", findingRow.analyzerIdentity());
-        optValue(attribution, "attributedOn", Date.from(findingRow.attributed_on()));
+        if (findingRow.attributed_on() != null) {
+            optValue(attribution, "attributedOn", Date.from(findingRow.attributed_on()));
+        }
         optValue(attribution, "alternateIdentifier", findingRow.alt_id());
         optValue(attribution, "referenceUrl", findingRow.reference_url());
 
         optValue(analysis, "state", findingRow.analysisState());
         optValue(analysis, "isSuppressed", findingRow.suppressed(), false);
-        final var policyAnnotations = toPolicyAnnotationsApi(findingRow.policyAnnotationsJson());
-        if (!policyAnnotations.isEmpty()) {
-            optValue(analysis, "policyAnnotations", policyAnnotations);
-        }
+        analysis.put("policyAnnotations", toPolicyAnnotationsApi(findingRow.policyAnnotationsJson()));
+        optValue(analysis, "detail", findingRow.analysisDetail());
         if (findingRow.vulnPublished() != null) {
             optValue(vulnerability, "published", Date.from(findingRow.vulnPublished()));
         }

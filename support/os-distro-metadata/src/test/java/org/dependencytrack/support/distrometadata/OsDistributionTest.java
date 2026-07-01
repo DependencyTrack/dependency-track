@@ -55,6 +55,28 @@ class OsDistributionTest {
     }
 
     @Test
+    void shouldReturnNullForRpmPurlWithUnknownNamespace() throws Exception {
+        final var purl = new PackageURL("pkg:rpm/centos/sudo@1.9.5?distro=centos-9");
+        assertThat(OsDistribution.of(purl)).isNull();
+    }
+
+    @Test
+    void shouldFallBackToRpmDisttagWhenRedhatPurlHasNoQualifier() throws Exception {
+        final var purl = new PackageURL("pkg:rpm/redhat/libsolv@0.7.24-3.el9");
+        final OsDistribution distro = OsDistribution.of(purl);
+        assertThat(distro).isInstanceOf(RedHatDistribution.class);
+        assertThat(distro.purlQualifierValue()).isEqualTo("redhat-9");
+    }
+
+    @Test
+    void shouldNotFallBackToRpmDisttagWhenRedhatPurlHasUnparseableQualifier() throws Exception {
+        // Explicit (but bogus) qualifier should NOT be silently overridden by the
+        // version-based heuristic.
+        final var purl = new PackageURL("pkg:rpm/redhat/libsolv@0.7.24-3.el9?distro=garbage");
+        assertThat(OsDistribution.of(purl)).isNull();
+    }
+
+    @Test
     void shouldNotMatchDebianWithUbuntu() throws Exception {
         final OsDistribution debian = OsDistribution.of(new PackageURL("pkg:deb/debian/sudo@1.9.5?distro=debian-11"));
         final OsDistribution ubuntu = OsDistribution.of(new PackageURL("pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-22.04"));
@@ -74,6 +96,17 @@ class OsDistributionTest {
         assertThat(debian).isNotNull();
         assertThat(alpine.matches(debian)).isFalse();
         assertThat(debian.matches(alpine)).isFalse();
+    }
+
+    @Test
+    void shouldNotMatchRedHatWithAlpine() throws Exception {
+        final OsDistribution redhat = OsDistribution.of(new PackageURL("pkg:rpm/redhat/curl@8.5.0?distro=rhel-9"));
+        final OsDistribution alpine = OsDistribution.of(new PackageURL("pkg:apk/alpine/curl@8.5.0?distro=3.16"));
+
+        assertThat(redhat).isNotNull();
+        assertThat(alpine).isNotNull();
+        assertThat(redhat.matches(alpine)).isFalse();
+        assertThat(alpine.matches(redhat)).isFalse();
     }
 
 }

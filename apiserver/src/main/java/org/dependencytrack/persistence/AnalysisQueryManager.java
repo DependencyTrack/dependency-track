@@ -28,9 +28,11 @@ import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.dependencytrack.util.AnalysisCommentFormatter.AnalysisCommentField;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -39,6 +41,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.dependencytrack.notification.api.NotificationFactory.createVulnerabilityAnalysisDecisionChangeNotification;
+import static org.dependencytrack.util.AnalysisCommentFormatter.formatComment;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
 
 public class AnalysisQueryManager extends QueryManager {
@@ -124,6 +127,15 @@ public class AnalysisQueryManager extends QueryManager {
                 analysis.setSuppressed(command.suppress());
                 suppressionChanged = true;
             }
+            if (command.owaspVector() != null && !command.owaspVector().equals(analysis.getOwaspVector())) {
+                auditTrailComments.add(formatComment(AnalysisCommentField.OWASP_VECTOR, analysis.getOwaspVector(), command.owaspVector()));
+                analysis.setOwaspVector(command.owaspVector());
+            }
+            if (command.owaspScore() != null
+                    && (analysis.getOwaspScore() == null || command.owaspScore().compareTo(analysis.getOwaspScore()) != 0)) {
+                auditTrailComments.add(formatComment(AnalysisCommentField.OWASP_SCORE, analysis.getOwaspScore(), command.owaspScore()));
+                analysis.setOwaspScore(command.owaspScore());
+            }
 
             final List<String> comments =
                     !command.options().contains(MakeAnalysisCommand.Option.OMIT_AUDIT_TRAIL)
@@ -137,6 +149,12 @@ public class AnalysisQueryManager extends QueryManager {
 
             if (!command.options().contains(MakeAnalysisCommand.Option.OMIT_NOTIFICATION)
                     && (stateChanged || suppressionChanged)) {
+                // NB: KEV is a transient field and must be computed ad-hoc.
+                final boolean isKev = !super.getKev(
+                        List.of(VulnerabilityKey.of(
+                                analysis.getVulnerability()))).isEmpty();
+                analysis.getVulnerability().setKev(isKev);
+
                 new JdoNotificationEmitter(this).emit(
                         createVulnerabilityAnalysisDecisionChangeNotification(
                                 NotificationModelConverter.convert(analysis.getProject()),

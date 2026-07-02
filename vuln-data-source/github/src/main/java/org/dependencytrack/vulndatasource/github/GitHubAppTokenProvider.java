@@ -47,6 +47,13 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
     /** Re-mint once the cached token is within this window of its expiry. */
     private static final Duration REFRESH_SKEW = Duration.ofMinutes(5);
 
+    /**
+     * Upper bound on the token-exchange request. The interceptor calls
+     * {@link #currentToken()} on the async client's I/O thread, so an unbounded
+     * request could stall it indefinitely if GitHub's token endpoint hangs.
+     */
+    private static final Duration TOKEN_EXCHANGE_TIMEOUT = Duration.ofSeconds(10);
+
     private static final Pattern TOKEN_FIELD = Pattern.compile("\"token\"\\s*:\\s*\"([^\"]+)\"");
     private static final Pattern EXPIRES_AT_FIELD = Pattern.compile("\"expires_at\"\\s*:\\s*\"([^\"]+)\"");
 
@@ -94,6 +101,7 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
     private void mint() {
         final String appJwt = buildAppJwt(appId, privateKey, clock);
         final HttpRequest request = HttpRequest.newBuilder(URI.create(tokenExchangeUrl))
+                .timeout(TOKEN_EXCHANGE_TIMEOUT)
                 .header("Authorization", "Bearer " + appJwt)
                 .header("Accept", "application/vnd.github+json")
                 .POST(HttpRequest.BodyPublishers.noBody())

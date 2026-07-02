@@ -48,6 +48,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GitHubAppTokenProviderTest {
 
@@ -182,6 +183,30 @@ class GitHubAppTokenProviderTest {
             assertThat(provider.currentToken()).isEqualTo("ghs_second");
 
             verify(2, postRequestedFor(urlPathEqualTo("/app/installations/42/access_tokens")));
+        }
+
+        @Test
+        void currentTokenShouldThrowOnNonCreatedResponse(final WireMockRuntimeInfo wm) throws Exception {
+            stubFor(post(urlPathEqualTo("/app/installations/42/access_tokens"))
+                    .willReturn(aResponse().withStatus(403).withBody("{\"message\":\"Bad credentials\"}")));
+
+            final var provider = provider(wm.getHttpBaseUrl(), clockAt("2026-07-02T12:00:00Z"));
+
+            assertThatThrownBy(provider::currentToken)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("HTTP 403");
+        }
+
+        @Test
+        void currentTokenShouldThrowOnMalformedResponseBody(final WireMockRuntimeInfo wm) throws Exception {
+            stubFor(post(urlPathEqualTo("/app/installations/42/access_tokens"))
+                    .willReturn(aResponse().withStatus(201).withBody("{\"unexpected\":\"shape\"}")));
+
+            final var provider = provider(wm.getHttpBaseUrl(), clockAt("2026-07-02T12:00:00Z"));
+
+            assertThatThrownBy(provider::currentToken)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Unexpected GitHub App token exchange response");
         }
     }
 

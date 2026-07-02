@@ -32,8 +32,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Mints and caches short-lived GitHub App installation access tokens.
@@ -54,8 +56,7 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
      */
     private static final Duration TOKEN_EXCHANGE_TIMEOUT = Duration.ofSeconds(10);
 
-    private static final Pattern TOKEN_FIELD = Pattern.compile("\"token\"\\s*:\\s*\"([^\"]+)\"");
-    private static final Pattern EXPIRES_AT_FIELD = Pattern.compile("\"expires_at\"\\s*:\\s*\"([^\"]+)\"");
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final String appId;
     private final String tokenExchangeUrl;
@@ -118,13 +119,19 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
                     "GitHub App token exchange returned HTTP " + response.statusCode() + ": " + response.body());
         }
 
-        final Matcher tokenMatcher = TOKEN_FIELD.matcher(response.body());
-        final Matcher expiresMatcher = EXPIRES_AT_FIELD.matcher(response.body());
-        if (!tokenMatcher.find() || !expiresMatcher.find()) {
+        final JsonNode body;
+        try {
+            body = OBJECT_MAPPER.readTree(response.body());
+        } catch (Exception e) {
+            throw new IllegalStateException("Unexpected GitHub App token exchange response: " + response.body(), e);
+        }
+        final JsonNode token = body.get("token");
+        final JsonNode expiresAt = body.get("expires_at");
+        if (token == null || expiresAt == null) {
             throw new IllegalStateException("Unexpected GitHub App token exchange response: " + response.body());
         }
-        this.cachedToken = tokenMatcher.group(1);
-        this.cachedTokenExpiresAt = Instant.parse(expiresMatcher.group(1));
+        this.cachedToken = token.asText();
+        this.cachedTokenExpiresAt = Instant.parse(expiresAt.asText());
     }
 
     private static final Pattern PEM_ARMOR = Pattern.compile("-----[^-]+-----|\\s");

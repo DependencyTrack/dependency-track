@@ -65,7 +65,7 @@ class GitHubAppTokenProviderTest {
     }
 
     @Test
-    void parsePrivateKeyShouldParsePkcs1PemIntoUsableSigningKey() throws Exception {
+    void parsePrivateKeyShouldParsePkcs8PemIntoUsableSigningKey() throws Exception {
         final PrivateKey privateKey = GitHubAppTokenProvider.parsePrivateKey(testKeyPem());
 
         final byte[] data = "hello".getBytes(StandardCharsets.UTF_8);
@@ -78,6 +78,15 @@ class GitHubAppTokenProviderTest {
         verifier.initVerify(publicKeyOf(privateKey));
         verifier.update(data);
         assertThat(verifier.verify(signature)).isTrue();
+    }
+
+    @Test
+    void parsePrivateKeyShouldRejectPkcs1WithConversionHint() {
+        final String pkcs1 = "-----BEGIN RSA PRIVATE KEY-----\nMIIabc\n-----END RSA PRIVATE KEY-----";
+
+        assertThatThrownBy(() -> GitHubAppTokenProvider.parsePrivateKey(pkcs1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("openssl pkcs8 -topk8 -nocrypt");
     }
 
     @Test

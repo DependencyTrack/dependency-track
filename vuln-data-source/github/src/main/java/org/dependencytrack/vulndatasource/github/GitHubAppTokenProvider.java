@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.vulndatasource.github;
 
-import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -136,24 +135,20 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
 
     private static final Pattern PEM_ARMOR = Pattern.compile("-----[^-]+-----|\\s");
 
-    /** DER-encoded AlgorithmIdentifier for rsaEncryption (with NULL parameters). */
-    private static final byte[] RSA_ALGORITHM_ID = {
-            0x30, 0x0D, 0x06, 0x09, 0x2A, (byte) 0x86, 0x48, (byte) 0x86,
-            (byte) 0xF7, 0x0D, 0x01, 0x01, 0x01, 0x05, 0x00
-    };
-
     /**
-     * Parses an RSA private key delivered by GitHub in PKCS#1 form
-     * ({@code -----BEGIN RSA PRIVATE KEY-----}) by wrapping the PKCS#1 DER in a
-     * PKCS#8 envelope so the JDK {@link KeyFactory} can read it, avoiding a
-     * BouncyCastle dependency.
+     * Parses an RSA private key in PKCS#8 PEM form ({@code -----BEGIN PRIVATE KEY-----}),
+     * which the JDK {@link KeyFactory} reads natively. GitHub delivers App keys in PKCS#1
+     * ({@code -----BEGIN RSA PRIVATE KEY-----}); operators convert once with
+     * {@code openssl pkcs8 -topk8 -nocrypt}. This keeps key handling to pure JDK with no
+     * DER hand-assembly and no BouncyCastle dependency.
      */
     static PrivateKey parsePrivateKey(final String pem) {
-        final byte[] pkcs1 = Base64.getDecoder().decode(PEM_ARMOR.matcher(pem).replaceAll(""));
-        final byte[] pkcs8 = derTlv(0x30, concat(
-                new byte[]{0x02, 0x01, 0x00}, // version 0
-                RSA_ALGORITHM_ID,
-                derTlv(0x04, pkcs1)));         // privateKey OCTET STRING
+        if (pem.contains("RSA PRIVATE KEY")) {
+            throw new IllegalArgumentException(
+                    "GitHub App private key is in PKCS#1 format (BEGIN RSA PRIVATE KEY); "
+                            + "convert it to PKCS#8 with: openssl pkcs8 -topk8 -nocrypt -in key.pem -out key.pk8.pem");
+        }
+        final byte[] pkcs8 = Base64.getDecoder().decode(PEM_ARMOR.matcher(pem).replaceAll(""));
         try {
             return KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(pkcs8));
         } catch (Exception e) {
@@ -190,32 +185,6 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to sign GitHub App JWT", e);
         }
-    }
-
-    /** DER type-length-value: tag byte, length, then content. */
-    private static byte[] derTlv(final int tag, final byte[] content) {
-        final var out = new ByteArrayOutputStream();
-        out.write(tag);
-        final int len = content.length;
-        if (len < 0x80) {
-            out.write(len);
-        } else {
-            final int numBytes = (Integer.SIZE - Integer.numberOfLeadingZeros(len) + 7) / 8;
-            out.write(0x80 | numBytes);
-            for (int i = numBytes - 1; i >= 0; i--) {
-                out.write((len >> (i * 8)) & 0xFF);
-            }
-        }
-        out.writeBytes(content);
-        return out.toByteArray();
-    }
-
-    private static byte[] concat(final byte[]... parts) {
-        final var out = new ByteArrayOutputStream();
-        for (final byte[] part : parts) {
-            out.writeBytes(part);
-        }
-        return out.toByteArray();
     }
 
 }

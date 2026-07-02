@@ -46,7 +46,7 @@
     "appPrivateKey": {
       "type": "string",
       "title": "GitHub App Private Key",
-      "description": "PEM-encoded RSA private key of the GitHub App (PKCS#1, `-----BEGIN RSA PRIVATE KEY-----`), as downloaded from GitHub.",
+      "description": "PEM-encoded RSA private key of the GitHub App in PKCS#8 format (`-----BEGIN PRIVATE KEY-----`). GitHub delivers keys in PKCS#1 (`-----BEGIN RSA PRIVATE KEY-----`); convert once with `openssl pkcs8 -topk8 -nocrypt -in github-app.pem -out github-app.pk8.pem`.",
       "minLength": 1,
       "x-secret-ref": true
     }

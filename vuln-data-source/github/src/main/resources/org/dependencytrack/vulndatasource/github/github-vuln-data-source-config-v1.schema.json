@@ -27,7 +27,26 @@
     "apiToken": {
       "type": "string",
       "title": "API Token",
-      "description": "Access token to authenticate with the GitHub API.  \n**The token is only required for authentication and does not require any permissions**.  \nBoth [fine-grained](https://github.com/settings/personal-access-tokens/new) and [classic](https://github.com/settings/tokens/new) access tokens work.",
+      "description": "Personal Access Token to authenticate with the GitHub API.  \n**The token is only required for authentication and does not require any permissions**.  \nBoth [fine-grained](https://github.com/settings/personal-access-tokens/new) and [classic](https://github.com/settings/tokens/new) access tokens work.  \nMutually exclusive with the GitHub App credentials.",
+      "minLength": 1,
+      "x-secret-ref": true
+    },
+    "appId": {
+      "type": "string",
+      "title": "GitHub App ID",
+      "description": "ID of the GitHub App to authenticate as. Configure together with the Installation ID and App Private Key as an alternative to the API Token.",
+      "minLength": 1
+    },
+    "installationId": {
+      "type": "string",
+      "title": "GitHub App Installation ID",
+      "description": "ID of the GitHub App installation to mint access tokens for.",
+      "minLength": 1
+    },
+    "appPrivateKey": {
+      "type": "string",
+      "title": "GitHub App Private Key",
+      "description": "PEM-encoded RSA private key of the GitHub App in PKCS#8 format (`-----BEGIN PRIVATE KEY-----`). GitHub delivers keys in PKCS#1 (`-----BEGIN RSA PRIVATE KEY-----`); convert once with `openssl pkcs8 -topk8 -nocrypt -in github-app.pem -out github-app.pk8.pem`.",
       "minLength": 1,
       "x-secret-ref": true
     }

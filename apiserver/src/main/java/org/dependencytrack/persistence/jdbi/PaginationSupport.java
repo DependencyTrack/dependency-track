@@ -26,6 +26,7 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
@@ -155,6 +156,17 @@ public interface PaginationSupport extends SqlObject {
                 count > threshold
                         ? TotalCount.Type.AT_LEAST
                         : TotalCount.Type.EXACT);
+    }
+
+    default <T> T withJitDisabled(Supplier<T> supplier) {
+        return getHandle().inTransaction(trx -> {
+            trx.createUpdate("SET LOCAL jit = OFF")
+                    // The handle may carry bindings from ApiRequestStatementCustomizer
+                    // (e.g. pagination offset / limit) that this statement doesn't consume.
+                    .configure(SqlStatements.class, cfg -> cfg.setUnusedBindingAllowed(true))
+                    .execute();
+            return supplier.get();
+        });
     }
 
 }

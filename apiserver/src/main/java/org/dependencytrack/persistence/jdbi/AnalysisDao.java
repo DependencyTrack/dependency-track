@@ -250,6 +250,7 @@ public final class AnalysisDao {
         final var owaspScores = new Double[commands.size()];
         final var policyAnnotationsJsons = new String[commands.size()];
 
+        final var policyAnnotationsConverter = new PolicyAnnotationsJsonConverter();
         int i = 0;
         for (final MakeAnalysisCommand command : commands) {
             projectIds[i] = command.projectId();
@@ -272,7 +273,7 @@ public final class AnalysisDao {
             cvssV4Scores[i] = command.cvssV4Score();
             owaspVectors[i] = command.owaspVector();
             owaspScores[i] = command.owaspScore();
-            policyAnnotationsJsons[i] = PolicyAnnotationsJsonConverter.toJson(command.policyAnnotations());
+            policyAnnotationsJsons[i] = policyAnnotationsConverter.convertToDatastore(command.policyAnnotations());
             i++;
         }
 

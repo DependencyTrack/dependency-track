@@ -51,7 +51,7 @@ public class NotificationSubjectProjectAuditChangeRowMapper implements RowMapper
         maybeSet(rs, "isVulnAnalysisSuppressed", ResultSet::getBoolean, vulnAnalysisBuilder::setSuppressed);
         maybeSet(rs, "policyAnnotationsJson", ResultSet::getString, json -> {
             final List<AppliedPolicyAnnotation> annotations =
-                    PolicyAnnotationsJsonConverter.fromJson(json);
+                    new PolicyAnnotationsJsonConverter().convertToAttribute(json);
             if (annotations == null || annotations.isEmpty()) {
                 return;
             }

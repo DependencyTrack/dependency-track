@@ -33,7 +33,7 @@ public class PolicyAnnotationsColumnMapper implements ColumnMapper<List<AppliedP
     public List<AppliedPolicyAnnotation> map(final ResultSet r, final int columnNumber, final StatementContext ctx)
             throws SQLException {
         try {
-            return PolicyAnnotationsJsonConverter.fromJson(r.getString(columnNumber));
+            return new PolicyAnnotationsJsonConverter().convertToAttribute(r.getString(columnNumber));
         } catch (IllegalArgumentException e) {
             throw new SQLException("Failed to parse policy annotations", e);
         }

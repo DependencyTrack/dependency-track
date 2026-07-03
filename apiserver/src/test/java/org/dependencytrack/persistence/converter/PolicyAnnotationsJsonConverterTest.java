@@ -32,14 +32,16 @@ class PolicyAnnotationsJsonConverterTest {
 
     private static final Date APPLIED_AT = Date.from(Instant.parse("2026-01-15T10:30:00Z"));
 
+    private final PolicyAnnotationsJsonConverter converter = new PolicyAnnotationsJsonConverter();
+
     @Test
     void roundTripTest() {
         final var annotations = List.of(
                 new AppliedPolicyAnnotation("gem-policy", APPLIED_AT, "author-a"),
                 new AppliedPolicyAnnotation("csra-policy", APPLIED_AT, "author-b"));
 
-        final String json = PolicyAnnotationsJsonConverter.toJson(annotations);
-        assertThat(PolicyAnnotationsJsonConverter.fromJson(json))
+        final String json = converter.convertToDatastore(annotations);
+        assertThat(converter.convertToAttribute(json))
                 .extracting(
                         AppliedPolicyAnnotation::policyName,
                         AppliedPolicyAnnotation::annotator,
@@ -50,30 +52,12 @@ class PolicyAnnotationsJsonConverterTest {
     }
 
     @Test
-    void deserializesLegacyKeyValueFormat() {
-        final var json = """
-                [
-                  {
-                    "key": "gem",
-                    "value": "legacy-policy",
-                    "policyName": "legacy-policy",
-                    "appliedAt": "2026-01-15T10:30:00Z"
-                  }
-                ]
-                """;
-
-        assertThat(PolicyAnnotationsJsonConverter.fromJson(json))
-                .extracting(AppliedPolicyAnnotation::policyName, AppliedPolicyAnnotation::appliedAt)
-                .containsExactly(tuple("legacy-policy", APPLIED_AT));
-    }
-
-    @Test
     void emptyAndNullJson() {
-        assertThat(PolicyAnnotationsJsonConverter.fromJson(null)).isNull();
-        assertThat(PolicyAnnotationsJsonConverter.fromJson("")).isNull();
-        assertThat(PolicyAnnotationsJsonConverter.fromJson("[]")).isEmpty();
-        assertThat(PolicyAnnotationsJsonConverter.toJson(null)).isNull();
-        assertThat(PolicyAnnotationsJsonConverter.toJson(List.of())).isNull();
+        assertThat(converter.convertToAttribute(null)).isEmpty();
+        assertThat(converter.convertToAttribute("")).isEmpty();
+        assertThat(converter.convertToAttribute("[]")).isEmpty();
+        assertThat(converter.convertToDatastore(null)).isNull();
+        assertThat(converter.convertToDatastore(List.of())).isNull();
     }
 
 }

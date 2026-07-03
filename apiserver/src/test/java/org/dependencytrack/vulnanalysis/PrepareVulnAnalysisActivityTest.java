@@ -147,6 +147,16 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
                 IConfigProperty.PropertyType.STRING,
                 null);
 
+        // Property values can be null, make sure that's handled properly.
+        // https://github.com/DependencyTrack/dependency-track/issues/6572
+        qm.createComponentProperty(
+                component,
+                "syft",
+                "package:metadataType",
+                null,
+                IConfigProperty.PropertyType.STRING,
+                null);
+
         final PrepareVulnAnalysisRes res = activity.execute(
                 mockActivityContext(),
                 PrepareVulnAnalysisArg.newBuilder()
@@ -167,6 +177,10 @@ class PrepareVulnAnalysisActivityTest extends PersistenceCapableTest {
                     property -> {
                         assertThat(property.getName()).isEqualTo("aquasecurity:trivy:SrcVersion");
                         assertThat(property.getValue()).isEqualTo("2.35");
+                    },
+                    property -> {
+                        assertThat(property.getName()).isEqualTo("syft:package:metadataType");
+                        assertThat(property.hasValue()).isFalse();
                     });
         });
     }

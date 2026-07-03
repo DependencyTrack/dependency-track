@@ -1254,7 +1254,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
             assertThat(a.getAnalysisState()).isEqualTo(AnalysisState.NOT_SET);
             assertThat(a.getVulnerabilityPolicyId()).isNull();
             assertThat(a.isSuppressed()).isFalse();
-            assertThat(a.getPolicyAnnotations()).isNull();
+            assertThat(a.getPolicyAnnotations()).isEmpty();
             assertThat(a.getAnalysisComments())
                     .extracting(AnalysisComment::getCommenter)
                     .containsOnly("Policy");

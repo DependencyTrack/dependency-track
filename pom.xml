@@ -139,7 +139,7 @@
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.greenmail.version>2.1.9</lib.greenmail.version>
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
-        <lib.httpclient5.version>5.6.1</lib.httpclient5.version>
+        <lib.httpclient5.version>5.6.2</lib.httpclient5.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
         <lib.jackson2.version>2.22.0</lib.jackson2.version>

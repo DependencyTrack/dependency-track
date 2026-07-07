@@ -173,7 +173,7 @@
         <lib.tink.version>1.21.0</lib.tink.version>
         <lib.versatile.version>0.18.3</lib.versatile.version>
         <lib.wiremock.version>3.13.2</lib.wiremock.version>
-        <lib.zstd-jni.version>1.5.7-9</lib.zstd-jni.version>
+        <lib.zstd-jni.version>1.5.7-11</lib.zstd-jni.version>
         <!-- Number of JVM processes to use for unit test parallelization -->
         <unitTestForkCount>1</unitTestForkCount>
 

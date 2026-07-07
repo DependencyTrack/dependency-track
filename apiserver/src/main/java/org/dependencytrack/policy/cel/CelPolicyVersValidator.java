@@ -146,7 +146,7 @@ final class CelPolicyVersValidator {
         }
 
         try {
-            final Vers vers = Vers.parse(constExpr.stringValue());
+            final Vers vers = Vers.parseLenient(constExpr.stringValue());
             vers.validate();
         } catch (VersException e) {
             errors.add(new VersValidationError(e, positions.get(expr.id())));

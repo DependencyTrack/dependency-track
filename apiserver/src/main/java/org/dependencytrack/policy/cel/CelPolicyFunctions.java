@@ -443,7 +443,7 @@ final class CelPolicyFunctions {
 
     static boolean matchesRange(final String version, final String versStr) {
         try {
-            return Vers.parse(versStr).contains(version);
+            return Vers.parseLenient(versStr).contains(version);
         } catch (VersException e) {
             LOGGER.warn("%s: Failed to check if version %s matches range %s"
                     .formatted(MATCHES_RANGE.functionName(), version, versStr), e);
@@ -662,7 +662,7 @@ final class CelPolicyFunctions {
                     sqlFilters.add("\"VERSION\" ~ :versionRegex");
                     sqlFilterParams.put("versionRegex", substringAfter(component.getVersion(), VALUE_PREFIX_REGEX));
                 } else if (component.getVersion().startsWith(VALUE_PREFIX_VERS)) {
-                    final Vers vers = Vers.parse(component.getVersion());
+                    final Vers vers = Vers.parseLenient(component.getVersion());
                     inMemoryFilters.add(node -> node.version() != null && vers.contains(node.version()));
                     sqlSelectColumns.add("\"VERSION\"");
                 } else {

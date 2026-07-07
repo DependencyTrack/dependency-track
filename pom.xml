@@ -164,7 +164,7 @@
         <lib.open-vulnerability-clients.version>9.0.5</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>4.1.2</lib.pebble.version>
-        <lib.postgresql.version>42.7.11</lib.postgresql.version>
+        <lib.postgresql.version>42.7.12</lib.postgresql.version>
         <lib.prometheus.version>1.8.0</lib.prometheus.version>
         <lib.protobuf-java.version>4.35.1</lib.protobuf-java.version>
         <lib.resilience4j.version>2.4.0</lib.resilience4j.version>

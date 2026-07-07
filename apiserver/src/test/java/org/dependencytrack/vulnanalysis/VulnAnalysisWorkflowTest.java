@@ -319,7 +319,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         final Supplier<List<FindingRow>> findingsSupplier = () -> withJdbiHandle(
                 handle -> handle
                         .attach(FindingDao.class)
-                        .getFindingsByProject(
+                        .selectFindingsByProject(
                                 projectId,
                                 /* includeInactive */ false,
                                 /* includeSuppressed */ false,
@@ -328,7 +328,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 /* source */ null,
                                 /* epssFrom */ null,
                                 /* epssTo */ null,
-                                /* isKev */ null));
+                                /* isKev */ null,
+                                /* emitTotalCount */ false,
+                                /* paginate */ false));
 
         List<FindingRow> findings = findingsSupplier.get();
         assertThat(findings).hasSize(1);
@@ -1266,7 +1268,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         final long projectId = project.getId();
         final List<FindingDao.FindingRow> findings = withJdbiHandle(
                 handle -> handle.attach(FindingDao.class)
-                        .getFindingsByProject(
+                        .selectFindingsByProject(
                                 projectId,
                                 /* includeInactive */ false,
                                 /* includeSuppressed */ false,
@@ -1275,7 +1277,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 /* source */ null,
                                 /* epssFrom */ null,
                                 /* epssTo */ null,
-                                /* isKev */ null));
+                                /* isKev */ null,
+                                /* emitTotalCount */ false,
+                                /* paginate */ false));
         assertThat(findings).hasSize(1);
 
         assertThat(getAllAliasGroups()).satisfiesExactly(group ->

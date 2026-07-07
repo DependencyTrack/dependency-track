@@ -72,8 +72,12 @@ import org.mockito.Mockito;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -528,6 +532,59 @@ public class FindingResourceTest extends ResourceTest {
                     assertEquals(p1.getUuid().toString() + ":" + c2.getUuid().toString() + ":" + v3.getUuid().toString(), finding.getString("matrix"));
                 }
         );
+    }
+
+    @Test
+    public void exportFindingsByProjectShouldIgnorePaginationTest() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        for (int i = 1; i <= 3; i++) {
+            qm.addVulnerability(
+                    createVulnerability("Vuln-" + i, Severity.HIGH),
+                    createComponent(project, "Component " + i, "1.0"),
+                    "none");
+        }
+
+        final Response response = jersey
+                .target(V1_FINDING + "/project/" + project.getUuid() + "/export")
+                .queryParam("pageNumber", "1")
+                .queryParam("pageSize", "1")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertEquals(200, response.getStatus(), 0);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.findings[*].vulnerability.vulnId")
+                .isArray()
+                .containsExactlyInAnyOrder("Vuln-1", "Vuln-2", "Vuln-3");
+    }
+
+    @Test
+    public void getSARIFFindingsByProjectShouldIgnorePaginationTest() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        for (int i = 1; i <= 3; i++) {
+            qm.addVulnerability(
+                    createVulnerability("Vuln-" + i, Severity.HIGH),
+                    createComponent(project, "Component " + i, "1.0"),
+                    "none");
+        }
+
+        final Response response = jersey
+                .target(V1_FINDING + "/project/" + project.getUuid())
+                .queryParam("pageNumber", "1")
+                .queryParam("pageSize", "1")
+                .request()
+                .header(HttpHeaders.ACCEPT, MEDIA_TYPE_SARIF_JSON)
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertEquals(200, response.getStatus(), 0);
+        assertThatJson(getPlainTextBody(response))
+                .inPath("$.runs[0].results[*].ruleId")
+                .isArray()
+                .containsExactlyInAnyOrder("Vuln-1", "Vuln-2", "Vuln-3");
     }
 
     @Test
@@ -1878,6 +1935,160 @@ public class FindingResourceTest extends ResourceTest {
 
     }
 
+    @Test
+    public void shouldReportExactTotalCountTypeByDefault() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        for (int i = 0; i < 3; i++) {
+            qm.addVulnerability(
+                    createVulnerability("Vuln-" + i, Severity.HIGH),
+                    createComponent(project, "Component " + i, "1.0"), "none");
+        }
+
+        final Response response = jersey
+                .target(V1_FINDING)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
+        assertThat(response.getHeaderString(TOTAL_COUNT_TYPE_HEADER)).isEqualTo("EXACT");
+    }
+
+    @Test
+    public void shouldReportExactWhenBoundedCountRequestedBelowCap() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        for (int i = 0; i < 3; i++) {
+            qm.addVulnerability(
+                    createVulnerability("Vuln-" + i, Severity.HIGH),
+                    createComponent(project, "Component " + i, "1.0"), "none");
+        }
+
+        final Response response = jersey
+                .target(V1_FINDING)
+                .queryParam("totalCount", "BOUNDED")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
+        assertThat(response.getHeaderString(TOTAL_COUNT_TYPE_HEADER)).isEqualTo("EXACT");
+    }
+
+    @ParameterizedTest
+    @MethodSource("portfolioFilterCombinations")
+    public void shouldMatchExactCountWhenBoundedAcrossFilters(Map<String, String> filters) {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+        seedFilterableFindings();
+
+        assertBoundedMatchesExact(V1_FINDING, filters);
+    }
+
+    @Test
+    public void shouldReportExactGroupedCountByDefault() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+        seedFilterableFindings();
+
+        final Response response = jersey
+                .target(V1_FINDING + "/grouped")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("6");
+        assertThat(response.getHeaderString(TOTAL_COUNT_TYPE_HEADER)).isEqualTo("EXACT");
+    }
+
+    @Test
+    public void shouldReportLowerBoundGroupedCountWhenBounded() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+        seedFilterableFindings();
+
+        // The grouped endpoint has no bounded count query.
+        // BOUNDED skips the count and reports the rows served so far as a lower bound.
+        final Response response = jersey
+                .target(V1_FINDING + "/grouped")
+                .queryParam("totalCount", "BOUNDED")
+                .queryParam("pageNumber", "2")
+                .queryParam("pageSize", "2")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
+        assertThat(response.getHeaderString(TOTAL_COUNT_TYPE_HEADER)).isEqualTo("AT_LEAST");
+    }
+
+    @ParameterizedTest
+    @MethodSource("projectFilterCombinations")
+    public void shouldMatchExactProjectCountWhenBoundedAcrossFilters(Map<String, String> filters) {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+        final Project project = seedFilterableFindings();
+
+        // One suppressed finding so the suppressed / hasAnalysis permutations discriminate.
+        final Component component = createComponent(project, "c-suppressed", "1.0");
+        final Vulnerability vulnerability = createVulnerability("INT-SUPP", Severity.LOW);
+        qm.addVulnerability(vulnerability, component, "none");
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnerability).withSuppress(true));
+
+        assertBoundedMatchesExact(V1_FINDING + "/project/" + project.getUuid(), filters);
+    }
+
+    @Test
+    public void shouldRespectAclInBoundedTotalCount() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+        enablePortfolioAccessControl();
+
+        final Project accessible = qm.createProject("Accessible", null, "1.0", null, null, null, null, false);
+        final Project forbidden = qm.createProject("Forbidden", null, "1.0", null, null, null, null, false);
+        accessible.addAccessTeam(super.team);
+
+        for (int i = 0; i < 3; i++) {
+            qm.addVulnerability(
+                    createVulnerability("Acc-" + i, Severity.HIGH),
+                    createComponent(accessible, "Acc " + i, "1.0"), "none");
+        }
+
+        for (int i = 0; i < 5; i++) {
+            qm.addVulnerability(
+                    createVulnerability("Forb-" + i, Severity.HIGH),
+                    createComponent(forbidden, "Forb " + i, "1.0"), "none");
+        }
+
+        final Response response = jersey
+                .target(V1_FINDING)
+                .queryParam("totalCount", "BOUNDED")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
+        assertThat(response.getHeaderString(TOTAL_COUNT_TYPE_HEADER)).isEqualTo("EXACT");
+    }
+
+    @Test
+    public void shouldRejectUnknownTotalCountValue() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Response response = jersey
+                .target(V1_FINDING)
+                .queryParam("totalCount", "yes")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 400,
+                  "title": "Invalid query parameter",
+                  "detail": "\\"yes\\" is not a valid value for the totalCount parameter. Valid values are: EXACT, BOUNDED."
+                }
+                """);
+    }
+
     private static Stream<Arguments> getSARIFFindingsByProjectTestParameters() {
         return Stream.of(
                 Arguments.of("INTERNAL", "/unit/sarif/expected-internal.sarif.json"),
@@ -1978,6 +2189,116 @@ public class FindingResourceTest extends ResourceTest {
         useJdbiHandle(handle -> handle.attach(EpssDao.class).createOrUpdateAll(List.of(
                 new Epss("Vuln-1", new BigDecimal("0.10"), new BigDecimal("0.11")),
                 new Epss("Vuln-2", new BigDecimal("0.90"), new BigDecimal("0.91")))));
+    }
+
+    private static final List<Map<String, String>> PORTFOLIO_FILTERS = List.of(
+            Map.of("severity", "CRITICAL"),
+            Map.of("severity", "CRITICAL,HIGH"),
+            Map.of("isKev", "true"),
+            Map.of("isKev", "false"),
+            Map.of("epssFrom", "0.5"),
+            Map.of("epssTo", "0.95"),
+            Map.of("epssPercentileFrom", "0.5"),
+            Map.of("epssPercentileTo", "0.5"),
+            Map.of("sortName", "vulnerability.epssScore"),
+            Map.of("sortName", "vulnerability.severity"));
+
+    private static final List<Map<String, String>> PROJECT_FILTERS = List.of(
+            Map.of("suppressed", "true"),
+            Map.of("hasAnalysis", "true"),
+            Map.of("hasAnalysis", "false"),
+            Map.of("searchText", "c-crit"),
+            Map.of("source", "NVD"),
+            Map.of("epssFrom", "0.5"),
+            Map.of("epssTo", "0.95"),
+            Map.of("isKev", "true"),
+            Map.of("isKev", "false"),
+            Map.of("sortName", "vulnerability.epssScore"));
+
+    private static Stream<Map<String, String>> portfolioFilterCombinations() {
+        return filterCombinations(PORTFOLIO_FILTERS);
+    }
+
+    private static Stream<Map<String, String>> projectFilterCombinations() {
+        return filterCombinations(PROJECT_FILTERS);
+    }
+
+    private static Stream<Map<String, String>> filterCombinations(List<Map<String, String>> filters) {
+        final var combinations = new ArrayList<Map<String, String>>();
+        combinations.add(Map.of());
+        combinations.addAll(filters);
+
+        for (int i = 0; i < filters.size(); i++) {
+            for (int j = i + 1; j < filters.size(); j++) {
+                if (!Collections.disjoint(filters.get(i).keySet(), filters.get(j).keySet())) {
+                    continue;
+                }
+
+                final var combined = new LinkedHashMap<>(filters.get(i));
+                combined.putAll(filters.get(j));
+                combinations.add(combined);
+            }
+        }
+
+        return combinations.stream();
+    }
+
+    private void assertBoundedMatchesExact(String path, Map<String, String> queryParams) {
+        var exactTarget = jersey.target(path);
+        var boundedTarget = jersey.target(path).queryParam("totalCount", "BOUNDED");
+
+        for (final Map.Entry<String, String> entry : queryParams.entrySet()) {
+            exactTarget = exactTarget.queryParam(entry.getKey(), entry.getValue());
+            boundedTarget = boundedTarget.queryParam(entry.getKey(), entry.getValue());
+        }
+
+        final var exactResponse = exactTarget.request().header(X_API_KEY, apiKey).get(Response.class);
+        final var boundedResponse = boundedTarget.request().header(X_API_KEY, apiKey).get(Response.class);
+
+        assertThat(exactResponse.getStatus()).as("exact status for %s", queryParams).isEqualTo(200);
+        assertThat(boundedResponse.getStatus()).as("bounded status for %s", queryParams).isEqualTo(200);
+        assertThat(boundedResponse.getHeaderString(TOTAL_COUNT_HEADER))
+                .as("bounded count equals exact count for %s", queryParams)
+                .isEqualTo(exactResponse.getHeaderString(TOTAL_COUNT_HEADER));
+        assertThat(boundedResponse.getHeaderString(TOTAL_COUNT_TYPE_HEADER))
+                .as("bounded type for %s", queryParams)
+                .isEqualTo("EXACT");
+        assertThatJson(getPlainTextBody(boundedResponse))
+                .as("bounded count matches returned findings for %s", queryParams)
+                .isArray()
+                .hasSize(Integer.parseInt(boundedResponse.getHeaderString(TOTAL_COUNT_HEADER)));
+    }
+
+    private Project seedFilterableFindings() {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        qm.addVulnerability(
+                createVulnerability("INT-CRIT", Severity.CRITICAL),
+                createComponent(project, "c-crit", "1.0"),
+                "none");
+        qm.addVulnerability(
+                createVulnerability("INT-HIGH", Severity.HIGH),
+                createComponent(project, "c-high", "1.0"),
+                "none");
+        qm.addVulnerability(createVulnerability(
+                        "INT-MED", Severity.MEDIUM),
+                createComponent(project, "c-med", "1.0"),
+                "none");
+
+        final Vulnerability kevVuln = createVulnerability("INT-KEV", Severity.HIGH);
+        qm.addVulnerability(kevVuln, createComponent(project, "c-kev", "1.0"), "none");
+        useJdbiTransaction(handle -> handle
+                .attach(KevDao.class)
+                .upsertBatch("cisa", List.of(
+                        new KevAssertion("INTERNAL", "INT-KEV", null, null, null, null,
+                                JsonNodeFactory.instance.objectNode()))));
+
+        final Vulnerability epssVuln = createVulnerabilityWithEpss("CVE-2021-0001", Severity.HIGH, new BigDecimal("0.90"));
+        qm.addVulnerability(epssVuln, createComponent(project, "c-epss", "1.0"), "none");
+
+        final Vulnerability epssPercentileVuln = createVulnerabilityWithEpssPercentile("CVE-2021-0002", Severity.HIGH, new BigDecimal("0.80"));
+        qm.addVulnerability(epssPercentileVuln, createComponent(project, "c-epss-percentile", "1.0"), "none");
+
+        return project;
     }
 
 }

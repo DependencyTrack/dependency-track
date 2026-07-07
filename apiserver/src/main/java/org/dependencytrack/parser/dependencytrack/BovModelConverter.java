@@ -474,7 +474,7 @@ public final class BovModelConverter {
 
     static List<Vers> convertRangeToVersList(String range) {
         try {
-            return Vers.parse(range).validate().split();
+            return Vers.parseLenient(range).validate().split();
         } catch (InvalidVersionException e) {
             String[] rangeParts = range.split(":", 2);
             if (SCHEME_GENERIC.equals(rangeParts[0])) {

@@ -68,7 +68,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         pluginManager = new PluginManager(
                 new SmallRyeConfigBuilder().build(),
                 new NoopCacheManager(),
-                secretName -> null,
+                _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
                 List.of(VulnDataSource.class));
@@ -81,7 +81,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         pluginManager = new PluginManager(
                 new SmallRyeConfigBuilder().build(),
                 new NoopCacheManager(),
-                secretName -> null,
+                _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
                 List.of(VulnDataSource.class));
@@ -102,7 +102,7 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         pluginManager = new PluginManager(
                 new SmallRyeConfigBuilder().build(),
                 new NoopCacheManager(),
-                secretName -> null,
+                _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
                 List.of(VulnDataSource.class));

@@ -150,7 +150,7 @@
         <lib.json-schema-validator.version>2.0.3</lib.json-schema-validator.version>
         <lib.json-unit.version>5.1.2</lib.json-unit.version>
         <lib.jspecify.version>1.0.0</lib.jspecify.version>
-        <lib.junit-jupiter.version>6.1.0</lib.junit-jupiter.version>
+        <lib.junit-jupiter.version>6.1.1</lib.junit-jupiter.version>
         <lib.kafka-clients.version>4.3.1</lib.kafka-clients.version>
         <lib.kotlin.version>2.4.0</lib.kotlin.version>
         <lib.logback.version>1.5.37</lib.logback.version>

@@ -175,7 +175,7 @@
         <lib.system-stubs.version>2.1.8</lib.system-stubs.version>
         <lib.testcontainers.version>2.0.5</lib.testcontainers.version>
         <lib.tink.version>1.22.0</lib.tink.version>
-        <lib.versatile.version>0.19.0</lib.versatile.version>
+        <lib.versatile.version>0.20.0</lib.versatile.version>
         <lib.wiremock.version>3.13.2</lib.wiremock.version>
         <lib.zstd-jni.version>1.5.7-11</lib.zstd-jni.version>
         <!-- Number of JVM processes to use for unit test parallelization -->

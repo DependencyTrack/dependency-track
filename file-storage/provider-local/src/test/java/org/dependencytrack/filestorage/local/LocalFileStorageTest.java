@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.filestorage.local;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
@@ -28,6 +30,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.ProxySelector;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -248,6 +252,24 @@ class LocalFileStorageTest {
         }
 
         assertThat(tempDirPath).exists();
+    }
+
+    @Test
+    @SuppressWarnings("resource")
+    void shouldUseForwardSlashesInLocationOnWindowsFilesystem() throws Exception {
+        try (final FileSystem fileSystem = Jimfs.newFileSystem(Configuration.windows())) {
+            final Path baseDirPath = fileSystem.getPath("C:\\storage");
+            Files.createDirectories(baseDirPath);
+            final FileStorage storage = new LocalFileStorage(baseDirPath, 5);
+
+            final FileMetadata fileMetadata = storage.store("foo/bar", new ByteArrayInputStream("baz".getBytes()));
+            assertThat(fileMetadata.getLocation()).isEqualTo("local:///foo/bar");
+
+            final InputStream fileStream = storage.get(fileMetadata);
+            assertThat(fileStream.readAllBytes()).asString().isEqualTo("baz");
+
+            assertThat(storage.delete(fileMetadata)).isTrue();
+        }
     }
 
     private FileStorage createStorage() {

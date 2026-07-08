@@ -143,6 +143,7 @@
         <lib.jdbi.version>3.54.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
         <lib.jetty.version>12.1.11</lib.jetty.version>
+        <lib.jimfs.version>1.3.1</lib.jimfs.version>
         <lib.json-schema-validator.version>1.5.9</lib.json-schema-validator.version>
         <lib.json-unit.version>5.1.2</lib.json-unit.version>
         <lib.jspecify.version>1.0.0</lib.jspecify.version>
@@ -330,6 +331,12 @@
                 <version>${lib.jdbi.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.jimfs</groupId>
+                <artifactId>jimfs</artifactId>
+                <version>${lib.jimfs.version}</version>
             </dependency>
 
             <dependency>

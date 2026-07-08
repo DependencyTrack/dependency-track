@@ -77,7 +77,10 @@ final class LocalFileStorage implements FileStorage {
         }
 
         final Path relativeFilePath = baseDirPath.relativize(filePath);
-        final URI locationUri = URI.create("%s:///%s".formatted(LocalFileStorageProvider.NAME, relativeFilePath));
+        final URI locationUri = URI.create(
+                "%s:///%s".formatted(
+                        LocalFileStorageProvider.NAME,
+                        relativeFilePath.toString().replace(relativeFilePath.getFileSystem().getSeparator(), "/")));
 
         final MessageDigest messageDigest;
         try {

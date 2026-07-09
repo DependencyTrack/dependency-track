@@ -69,8 +69,9 @@ public class CustomizationResource extends AbstractConfigPropertyResource {
     @GET
     @Path("/vulnerability-id")
     @Produces(MediaType.APPLICATION_JSON)
+    @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     @Operation(summary = "Retrieve vulnerability ID settings",
-               description = "Retrieves the current vulnerability ID customization settings")
+               description = "Retrieves the current vulnerability ID customization settings. <p>Requires permission <strong>VIEW_PORTFOLIO</strong></p>")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Vulnerability ID settings retrieved successfully",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON,

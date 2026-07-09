@@ -144,7 +144,7 @@
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
         <lib.jackson2.version>2.22.0</lib.jackson2.version>
         <lib.jackson3.version>3.2.0</lib.jackson3.version>
-        <lib.jdbi.version>3.53.0</lib.jdbi.version>
+        <lib.jdbi.version>3.54.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
         <lib.jetty.version>12.1.10</lib.jetty.version>
         <lib.jimfs.version>1.3.1</lib.jimfs.version>

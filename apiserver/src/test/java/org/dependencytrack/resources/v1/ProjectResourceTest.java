@@ -138,6 +138,28 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void shouldSortProjectListByVersion() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        qm.createProject("acme-app", null, "3.0.0", null, null, null, null, false);
+        qm.createProject("acme-app", null, "1.0.0", null, null, null, null, false);
+        qm.createProject("acme-app", null, "2.0.0", null, null, null, null, false);
+
+        final Response response = jersey.target(V1_PROJECT)
+                .queryParam("sortName", "version")
+                .queryParam("sortOrder", "asc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final JsonArray json = parseJsonArray(response);
+        assertThat(json)
+                .extracting(value -> ((JsonObject) value).getString("version"))
+                .containsExactly("1.0.0", "2.0.0", "3.0.0");
+    }
+
+    @Test
     void shouldReturn400WhenSortNameIsNotSupportedForGetProjects() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 

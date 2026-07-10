@@ -515,7 +515,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                  , "PROJECT"."PURL"
                  , "PROJECT"."SWIDTAGID"
                  , "PROJECT"."UUID"
-                 , "PROJECT"."VERSION"
+                 , "PROJECT"."VERSION" AS "version"
                  , "PROJECT"."SUPPLIER"
                  , "PROJECT"."MANUFACTURER"
                  , "PROJECT"."AUTHORS"

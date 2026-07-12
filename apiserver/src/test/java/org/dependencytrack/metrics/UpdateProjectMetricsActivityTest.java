@@ -35,6 +35,7 @@ import org.dependencytrack.persistence.jdbi.MetricsTestDao;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -93,27 +94,98 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
     }
 
     @Test
-    void shouldUpdateMetricsUnchanged() throws Exception {
+    void shouldNotCreateNewRowsWhenMetricsUnchanged() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.createProject(project, List.of(), false);
 
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib-a");
+        qm.createComponent(component, false);
+
         // Create risk score configproperties
         createTestConfigProperties();
 
-        // Record initial project metrics
+        // Record initial metrics
         executeActivity(project);
-        final ProjectMetrics metrics = withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
-        assertThat(metrics.getLastOccurrence()).isEqualTo(metrics.getFirstOccurrence());
+
+        final ProjectMetrics initialProjectMetrics = withJdbiHandle(
+                handle -> handle
+                        .attach(MetricsDao.class)
+                        .getMostRecentProjectMetrics(project.getId()));
+        assertThat(initialProjectMetrics.getLastOccurrence())
+                .isEqualTo(initialProjectMetrics.getFirstOccurrence());
 
         // Run the task a second time, without any metric being changed
-        final var beforeSecondRun = new Date();
         executeActivity(project);
 
-        // Two records should be created in today's partition since it's append-only
-        final var recentMetrics = withJdbiHandle(handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
-        assertThat(recentMetrics.getLastOccurrence()).isNotEqualTo(metrics.getFirstOccurrence());
-        assertThat(recentMetrics.getLastOccurrence()).isAfterOrEqualTo(beforeSecondRun);
+        // No new row must have been created, and the existing row's timestamp must remain untouched
+        final List<ProjectMetrics> projectMetrics = withJdbiHandle(
+                handle -> handle
+                        .attach(MetricsDao.class)
+                        .getProjectMetricsSince(project.getId(), Instant.EPOCH));
+        assertThat(projectMetrics)
+                .hasSize(1)
+                .first()
+                .extracting(ProjectMetrics::getLastOccurrence)
+                .isEqualTo(initialProjectMetrics.getLastOccurrence());
+
+        final List<DependencyMetrics> componentMetrics = withJdbiHandle(
+                handle -> handle
+                        .attach(MetricsDao.class)
+                        .getDependencyMetricsSince(component.getId(), Instant.EPOCH));
+        assertThat(componentMetrics).hasSize(1);
+    }
+
+    @Test
+    void shouldCreateNewRowsWhenMetricsChanged() throws Exception {
+        createTestConfigProperties();
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.createProject(project, List.of(), false);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib-a");
+        qm.createComponent(component, false);
+
+        // Populate initial metrics.
+        executeActivity(project);
+
+        // Make component affected by a vuln so its metrics values
+        // will differ from the initial ones.
+        var vuln = new Vulnerability();
+        vuln.setVulnId("INTERNAL-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln = qm.createVulnerability(vuln);
+        qm.addVulnerability(vuln, component, "none");
+
+        // Calculate metrics again.
+        executeActivity(project);
+
+        // New rows must be created despite snapshots existing for the current day.
+        final List<ProjectMetrics> projectMetrics = withJdbiHandle(
+                handle -> handle
+                        .attach(MetricsDao.class)
+                        .getProjectMetricsSince(project.getId(), Instant.EPOCH));
+        assertThat(projectMetrics)
+                .hasSize(2)
+                .last()
+                .extracting(ProjectMetrics::getVulnerabilities)
+                .isEqualTo(1);
+
+        final List<DependencyMetrics> componentMetrics = withJdbiHandle(
+                handle -> handle
+                        .attach(MetricsDao.class)
+                        .getDependencyMetricsSince(component.getId(), Instant.EPOCH));
+        assertThat(componentMetrics)
+                .hasSize(2)
+                .last()
+                .extracting(DependencyMetrics::getVulnerabilities)
+                .isEqualTo(1);
     }
 
     @Test
@@ -334,6 +406,235 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         assertThat(componentUnaudited.getLastInheritedRiskScore()).isZero();
         assertThat(componentAudited.getLastInheritedRiskScore()).isZero();
         assertThat(componentSuppressed.getLastInheritedRiskScore()).isZero();
+    }
+
+    @Test
+    void shouldComputeSameMetricsAsComponentLevelComputation() throws Exception {
+        // NB: Project metrics calculate metrics of all components within the project
+        // in bulk. The corresponding logic differs from the one used to update metrics
+        // for individual components (they're different stored procs).
+        //
+        // To ensure consistency between the two paths, it's CRITICAL that both compute
+        // the exact same data. This test is meant to assert this to detect unintended
+        // drift later down the road.
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.createProject(project, List.of(), false);
+
+        createTestConfigProperties();
+
+        var vuln = new Vulnerability();
+        vuln.setVulnId("INTERNAL-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln = qm.createVulnerability(vuln);
+
+        final var componentClean = new Component();
+        componentClean.setProject(project);
+        componentClean.setName("acme-lib-clean");
+        qm.createComponent(componentClean, false);
+
+        final var componentVulnUnaudited = new Component();
+        componentVulnUnaudited.setProject(project);
+        componentVulnUnaudited.setName("acme-lib-vuln-unaudited");
+        qm.createComponent(componentVulnUnaudited, false);
+        qm.addVulnerability(vuln, componentVulnUnaudited, "none");
+
+        final var componentVulnAudited = new Component();
+        componentVulnAudited.setProject(project);
+        componentVulnAudited.setName("acme-lib-vuln-audited");
+        qm.createComponent(componentVulnAudited, false);
+        qm.addVulnerability(vuln, componentVulnAudited, "none");
+        qm.makeAnalysis(
+                new MakeAnalysisCommand(componentVulnAudited, vuln)
+                        .withState(AnalysisState.NOT_AFFECTED));
+
+        final var componentVulnSuppressed = new Component();
+        componentVulnSuppressed.setProject(project);
+        componentVulnSuppressed.setName("acme-lib-vuln-suppressed");
+        qm.createComponent(componentVulnSuppressed, false);
+        qm.addVulnerability(vuln, componentVulnSuppressed, "none");
+        qm.makeAnalysis(
+                new MakeAnalysisCommand(componentVulnSuppressed, vuln)
+                        .withState(AnalysisState.FALSE_POSITIVE)
+                        .withSuppress(true));
+
+        final var componentViolationUnaudited = new Component();
+        componentViolationUnaudited.setProject(project);
+        componentViolationUnaudited.setName("acme-lib-violation-unaudited");
+        qm.createComponent(componentViolationUnaudited, false);
+        createPolicyViolation(
+                componentViolationUnaudited,
+                Policy.ViolationState.FAIL,
+                PolicyViolation.Type.LICENSE);
+
+        final var componentViolationAudited = new Component();
+        componentViolationAudited.setProject(project);
+        componentViolationAudited.setName("acme-lib-violation-audited");
+        qm.createComponent(componentViolationAudited, false);
+        final var violationAudited = createPolicyViolation(
+                componentViolationAudited,
+                Policy.ViolationState.WARN,
+                PolicyViolation.Type.OPERATIONAL);
+        qm.makeViolationAnalysis(
+                new MakeViolationAnalysisCommand(componentViolationAudited, violationAudited)
+                        .withState(ViolationAnalysisState.APPROVED));
+
+        final var componentViolationSuppressed = new Component();
+        componentViolationSuppressed.setProject(project);
+        componentViolationSuppressed.setName("acme-lib-violation-suppressed");
+        qm.createComponent(componentViolationSuppressed, false);
+        final var violationSuppressed = createPolicyViolation(
+                componentViolationSuppressed,
+                Policy.ViolationState.INFO,
+                PolicyViolation.Type.SECURITY);
+        qm.makeViolationAnalysis(
+                new MakeViolationAnalysisCommand(componentViolationSuppressed, violationSuppressed)
+                        .withState(ViolationAnalysisState.REJECTED)
+                        .withSuppress(true));
+
+        final List<Component> components = List.of(
+                componentClean,
+                componentVulnUnaudited,
+                componentVulnAudited,
+                componentVulnSuppressed,
+                componentViolationUnaudited,
+                componentViolationAudited,
+                componentViolationSuppressed);
+
+        executeActivity(project);
+
+        final List<DependencyMetrics> projectLevelMetrics = components.stream()
+                .map(component -> withJdbiHandle(handle -> handle
+                        .attach(MetricsDao.class)
+                        .getMostRecentDependencyMetrics(component.getId())))
+                .toList();
+
+        // Wipe all component metrics so the single-component procedure's
+        // change detection cannot skip any insert.
+        useJdbiHandle(handle -> handle.execute("DELETE FROM \"DEPENDENCYMETRICS\""));
+
+        useJdbiHandle(handle -> {
+            final var dao = handle.attach(MetricsDao.class);
+            components.forEach(component -> dao.updateComponentMetrics(component.getUuid()));
+        });
+
+        for (int i = 0; i < components.size(); i++) {
+            final long componentId = components.get(i).getId();
+            final DependencyMetrics componentMetrics = withJdbiHandle(
+                    handle -> handle
+                            .attach(MetricsDao.class)
+                            .getMostRecentDependencyMetrics(componentId));
+            assertThat(componentMetrics)
+                    .usingRecursiveComparison()
+                    .ignoringFields("firstOccurrence", "lastOccurrence")
+                    .isEqualTo(projectLevelMetrics.get(i));
+        }
+    }
+
+    @Test
+    void shouldCreateNewRowsOnNewDay() throws Exception {
+        // Daily datapoint queries (portfolio metrics, PORTFOLIOMETRICS_GLOBAL, collection metrics)
+        // rely on at least one PROJECTMETRICS row existing per project per day.
+        // Snapshots of a previous day must never suppress an insert, even when their values are identical.
+
+        createTestConfigProperties();
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.createProject(project, List.of(), false);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib-a");
+        qm.createComponent(component, false);
+
+        // Seed yesterday's rows, with values identical to what the metrics update will compute.
+        final Date yesterday = Date.from(Instant.now().minus(Duration.ofDays(1)));
+        useJdbiHandle(handle -> {
+            final var dao = handle.attach(MetricsTestDao.class);
+            dao.createPartitionForDaysAgo("PROJECTMETRICS", 1);
+            dao.createPartitionForDaysAgo("DEPENDENCYMETRICS", 1);
+
+            final var projectMetrics = new ProjectMetrics();
+            projectMetrics.setProjectId(project.getId());
+            projectMetrics.setComponents(1);
+            projectMetrics.setFirstOccurrence(yesterday);
+            projectMetrics.setLastOccurrence(yesterday);
+            dao.createProjectMetrics(projectMetrics);
+
+            final var dependencyMetrics = new DependencyMetrics();
+            dependencyMetrics.setProjectId(project.getId());
+            dependencyMetrics.setComponentId(component.getId());
+            dependencyMetrics.setFirstOccurrence(yesterday);
+            dependencyMetrics.setLastOccurrence(yesterday);
+            dao.createDependencyMetrics(dependencyMetrics);
+        });
+
+        executeActivity(project);
+
+        final List<ProjectMetrics> projectMetrics = withJdbiHandle(
+                handle -> handle
+                        .attach(MetricsDao.class)
+                        .getProjectMetricsSince(project.getId(), Instant.EPOCH));
+        assertThat(projectMetrics).hasSize(2);
+        assertThat(projectMetrics.getLast().getLastOccurrence()).isAfter(yesterday);
+
+        final List<DependencyMetrics> componentMetrics = withJdbiHandle(
+                handle -> handle
+                        .attach(MetricsDao.class)
+                        .getDependencyMetricsSince(component.getId(), Instant.EPOCH));
+        assertThat(componentMetrics).hasSize(2);
+        assertThat(componentMetrics.getLast().getLastOccurrence()).isAfter(yesterday);
+    }
+
+    @Test
+    void shouldCreateNewRowsWhenLatestRowHasNullColumns() throws Exception {
+        // Some metric columns are nullable and may be NULL in rows migrated
+        // from v4. Change detection must treat NULL as changed and insert a fresh row,
+        // rather than silently skipping.
+
+        createTestConfigProperties();
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.createProject(project, List.of(), false);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib-a");
+        qm.createComponent(component, false);
+
+        // Seed a row for the current day whose values match what the
+        // metrics update will compute, then NULL out its nullable columns.
+        useJdbiHandle(handle -> {
+            final var dependencyMetrics = new DependencyMetrics();
+            dependencyMetrics.setProjectId(project.getId());
+            dependencyMetrics.setComponentId(component.getId());
+            dependencyMetrics.setFirstOccurrence(Date.from(Instant.now().minus(Duration.ofMinutes(1))));
+            dependencyMetrics.setLastOccurrence(Date.from(Instant.now().minus(Duration.ofMinutes(1))));
+            handle.attach(MetricsTestDao.class).createDependencyMetrics(dependencyMetrics);
+
+            handle.createUpdate("""
+                            UPDATE "DEPENDENCYMETRICS"
+                               SET "FINDINGS_TOTAL" = NULL
+                                 , "FINDINGS_AUDITED" = NULL
+                                 , "FINDINGS_UNAUDITED" = NULL
+                                 , "UNASSIGNED_SEVERITY" = NULL
+                             WHERE "COMPONENT_ID" = :componentId
+                            """)
+                    .bind("componentId", component.getId())
+                    .execute();
+        });
+
+        executeActivity(project);
+
+        final List<DependencyMetrics> componentMetrics = withJdbiHandle(
+                handle -> handle
+                        .attach(MetricsDao.class)
+                        .getDependencyMetricsSince(component.getId(), Instant.EPOCH));
+        assertThat(componentMetrics).hasSize(2);
     }
 
     private void executeActivity(Project project) throws Exception {

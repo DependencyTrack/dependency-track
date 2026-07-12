@@ -104,10 +104,68 @@ public interface MetricsTestDao extends SqlObject {
 
     @SqlQuery("""
             INSERT INTO "DEPENDENCYMETRICS"(
-                "COMPONENT_ID", "PROJECT_ID", "FIRST_OCCURRENCE", "LAST_OCCURRENCE", "CRITICAL", "HIGH", "MEDIUM", "LOW", "RISKSCORE",
-                "SUPPRESSED", "VULNERABILITIES")
-            VALUES (:componentId, :projectId, :firstOccurrence, :lastOccurrence, :critical, :high, :medium, :low, :inheritedRiskScore,
-                 :suppressed, :vulnerabilities)
+              "COMPONENT_ID"
+            , "PROJECT_ID"
+            , "FIRST_OCCURRENCE"
+            , "LAST_OCCURRENCE"
+            , "CRITICAL"
+            , "FINDINGS_AUDITED"
+            , "FINDINGS_TOTAL"
+            , "FINDINGS_UNAUDITED"
+            , "HIGH"
+            , "LOW"
+            , "MEDIUM"
+            , "POLICYVIOLATIONS_AUDITED"
+            , "POLICYVIOLATIONS_FAIL"
+            , "POLICYVIOLATIONS_INFO"
+            , "POLICYVIOLATIONS_LICENSE_AUDITED"
+            , "POLICYVIOLATIONS_LICENSE_TOTAL"
+            , "POLICYVIOLATIONS_LICENSE_UNAUDITED"
+            , "POLICYVIOLATIONS_OPERATIONAL_AUDITED"
+            , "POLICYVIOLATIONS_OPERATIONAL_TOTAL"
+            , "POLICYVIOLATIONS_OPERATIONAL_UNAUDITED"
+            , "POLICYVIOLATIONS_SECURITY_AUDITED"
+            , "POLICYVIOLATIONS_SECURITY_TOTAL"
+            , "POLICYVIOLATIONS_SECURITY_UNAUDITED"
+            , "POLICYVIOLATIONS_TOTAL"
+            , "POLICYVIOLATIONS_UNAUDITED"
+            , "POLICYVIOLATIONS_WARN"
+            , "RISKSCORE"
+            , "SUPPRESSED"
+            , "UNASSIGNED_SEVERITY"
+            , "VULNERABILITIES"
+            ) VALUES (
+              :componentId
+            , :projectId
+            , :firstOccurrence
+            , :lastOccurrence
+            , :critical
+            , :findingsAudited
+            , :findingsTotal
+            , :findingsUnaudited
+            , :high
+            , :low
+            , :medium
+            , :policyViolationsAudited
+            , :policyViolationsFail
+            , :policyViolationsInfo
+            , :policyViolationsLicenseAudited
+            , :policyViolationsLicenseTotal
+            , :policyViolationsLicenseUnaudited
+            , :policyViolationsOperationalAudited
+            , :policyViolationsOperationalTotal
+            , :policyViolationsOperationalUnaudited
+            , :policyViolationsSecurityAudited
+            , :policyViolationsSecurityTotal
+            , :policyViolationsSecurityUnaudited
+            , :policyViolationsTotal
+            , :policyViolationsUnaudited
+            , :policyViolationsWarn
+            , :inheritedRiskScore
+            , :suppressed
+            , :unassigned
+            , :vulnerabilities
+            )
             RETURNING *
             """)
     @RegisterBeanMapper(DependencyMetrics.class)

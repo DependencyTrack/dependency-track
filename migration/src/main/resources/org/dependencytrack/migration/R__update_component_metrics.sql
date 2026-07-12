@@ -5,33 +5,10 @@ CREATE OR REPLACE PROCEDURE "UPDATE_COMPONENT_METRICS"(
 AS
 $$
 DECLARE
-  v_component                               RECORD; -- The component to update metrics for
-  v_vulnerabilities                         INT     := 0; -- Total number of vulnerabilities
-  v_critical                                INT     := 0; -- Number of vulnerabilities with critical severity
-  v_high                                    INT     := 0; -- Number of vulnerabilities with high severity
-  v_medium                                  INT     := 0; -- Number of vulnerabilities with medium severity
-  v_low                                     INT     := 0; -- Number of vulnerabilities with low severity
-  v_unassigned                              INT     := 0; -- Number of vulnerabilities with unassigned severity
-  v_risk_score                              NUMERIC := 0; -- Inherited risk score
-  v_findings_total                          INT     := 0; -- Total number of findings
-  v_findings_audited                        INT     := 0; -- Number of audited findings
-  v_findings_unaudited                      INT     := 0; -- Number of unaudited findings
-  v_findings_suppressed                     INT     := 0; -- Number of suppressed findings
-  v_policy_violations_total                 INT     := 0; -- Total number of policy violations
-  v_policy_violations_fail                  INT     := 0; -- Number of policy violations with level fail
-  v_policy_violations_warn                  INT     := 0; -- Number of policy violations with level warn
-  v_policy_violations_info                  INT     := 0; -- Number of policy violations with level info
-  v_policy_violations_audited               INT     := 0; -- Number of audited policy violations
-  v_policy_violations_unaudited             INT     := 0; -- Number of unaudited policy violations
-  v_policy_violations_license_total         INT     := 0; -- Total number of policy violations of type license
-  v_policy_violations_license_audited       INT     := 0; -- Number of audited policy violations of type license
-  v_policy_violations_license_unaudited     INT     := 0; -- Number of unaudited policy violations of type license
-  v_policy_violations_operational_total     INT     := 0; -- Total number of policy violations of type operational
-  v_policy_violations_operational_audited   INT     := 0; -- Number of audited policy violations of type operational
-  v_policy_violations_operational_unaudited INT     := 0; -- Number of unaudited policy violations of type operational
-  v_policy_violations_security_total        INT     := 0; -- Total number of policy violations of type security
-  v_policy_violations_security_audited      INT     := 0; -- Number of audited policy violations of type security
-  v_policy_violations_security_unaudited    INT     := 0; -- Number of unaudited policy violations of type security
+  v_component RECORD; -- The component to update metrics for
+  v_metrics   RECORD; -- The computed metrics of the component
+  v_latest    RECORD; -- The latest DEPENDENCYMETRICS snapshot of the component
+  v_today     TIMESTAMPTZ := DATE_TRUNC('day', NOW() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC';
 BEGIN
   SELECT "ID"
        , "PROJECT_ID"
@@ -42,116 +19,83 @@ BEGIN
     RAISE EXCEPTION 'Component with UUID % does not exist', component_uuid;
   END IF;
 
-  WITH deduped AS (
-    SELECT DISTINCT ON (va."GROUP_ID", CASE WHEN va."GROUP_ID" IS NULL THEN v."ID" END)
-           COALESCE(a."SEVERITY", v."SEVERITY") AS effective_severity
-      FROM "VULNERABILITY" AS v
-     INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
-        ON cv."COMPONENT_ID" = v_component."ID"
-       AND cv."VULNERABILITY_ID" = v."ID"
-      LEFT JOIN "ANALYSIS" AS a
-        ON a."COMPONENT_ID" = v_component."ID"
-       AND a."VULNERABILITY_ID" = v."ID"
-      LEFT JOIN "VULNERABILITY_ALIAS" AS va
-        ON va."SOURCE" = v."SOURCE"
-       AND va."VULN_ID" = v."VULNID"
-     WHERE (a."SUPPRESSED" != TRUE OR a."SUPPRESSED" IS NULL)
-       AND EXISTS(
-         SELECT 1 FROM "FINDINGATTRIBUTION" AS fa
-          WHERE fa."COMPONENT_ID" = cv."COMPONENT_ID"
-            AND fa."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
-            AND fa."DELETED_AT" IS NULL
-       )
-     ORDER BY va."GROUP_ID"
-            , CASE WHEN va."GROUP_ID" IS NULL THEN v."ID" END
-            , COALESCE(a."SEVERITY", v."SEVERITY") DESC
-  )
-  SELECT COUNT(*)::INT
-       , COUNT(*) FILTER (WHERE effective_severity = 'CRITICAL')::INT
-       , COUNT(*) FILTER (WHERE effective_severity = 'HIGH')::INT
-       , COUNT(*) FILTER (WHERE effective_severity = 'MEDIUM')::INT
-       , COUNT(*) FILTER (WHERE effective_severity = 'LOW')::INT
-       , COUNT(*) FILTER (WHERE effective_severity NOT IN ('CRITICAL','HIGH','MEDIUM','LOW'))::INT
-    FROM deduped
-    INTO v_vulnerabilities
-       , v_critical
-       , v_high
-       , v_medium
-       , v_low
-       , v_unassigned;
+  SELECT *
+    INTO v_metrics
+    FROM "COMPUTE_COMPONENT_METRICS"(ARRAY[v_component."ID"]);
 
-  v_risk_score = COALESCE("CALC_RISK_SCORE"(v_critical, v_high, v_medium, v_low, v_unassigned), 0);
+  UPDATE "COMPONENT"
+     SET "LAST_RISKSCORE" = v_metrics.risk_score
+   WHERE "ID" = v_component."ID"
+     AND "LAST_RISKSCORE" IS DISTINCT FROM v_metrics.risk_score;
 
-  SELECT COALESCE(COUNT(*) FILTER (
-             WHERE a."SUPPRESSED" = FALSE
-               AND a."STATE" NOT IN ('NOT_SET', 'IN_TRIAGE')
-         ), 0)::INT
-       , COALESCE(COUNT(*) FILTER (
-             WHERE a."SUPPRESSED" = TRUE
-         ), 0)::INT
-    FROM "ANALYSIS" AS a
-   WHERE a."COMPONENT_ID" = v_component."ID"
-     AND EXISTS(
-       SELECT 1 FROM "FINDINGATTRIBUTION" AS fa
-        WHERE fa."COMPONENT_ID" = a."COMPONENT_ID"
-          AND fa."VULNERABILITY_ID" = a."VULNERABILITY_ID"
-          AND fa."DELETED_AT" IS NULL
-     )
-    INTO v_findings_audited
-       , v_findings_suppressed;
+  SELECT *
+    INTO v_latest
+    FROM "DEPENDENCYMETRICS"
+   WHERE "COMPONENT_ID" = v_component."ID"
+     AND "LAST_OCCURRENCE" >= v_today
+   ORDER BY "LAST_OCCURRENCE" DESC
+   LIMIT 1;
 
-  v_findings_total = v_vulnerabilities;
-  v_findings_unaudited = v_findings_total - v_findings_audited;
-
-  SELECT COUNT(*)::INT
-       , COUNT(*) FILTER (WHERE p."VIOLATIONSTATE" = 'FAIL')::INT
-       , COUNT(*) FILTER (WHERE p."VIOLATIONSTATE" = 'WARN')::INT
-       , COUNT(*) FILTER (WHERE p."VIOLATIONSTATE" = 'INFO')::INT
-       , COUNT(*) FILTER (WHERE pv."TYPE" = 'LICENSE')::INT
-       , COUNT(*) FILTER (WHERE pv."TYPE" = 'OPERATIONAL')::INT
-       , COUNT(*) FILTER (WHERE pv."TYPE" = 'SECURITY')::INT
-    FROM "POLICYVIOLATION" AS pv
-   INNER JOIN "POLICYCONDITION" AS pc
-      ON pv."POLICYCONDITION_ID" = pc."ID"
-   INNER JOIN "POLICY" AS p
-      ON pc."POLICY_ID" = p."ID"
-    LEFT JOIN "VIOLATIONANALYSIS" AS va
-      ON va."COMPONENT_ID" = v_component."ID"
-     AND va."POLICYVIOLATION_ID" = pv."ID"
-   WHERE pv."COMPONENT_ID" = v_component."ID"
-     AND (va IS NULL OR va."SUPPRESSED" = FALSE)
-    INTO v_policy_violations_total
-       , v_policy_violations_fail
-       , v_policy_violations_warn
-       , v_policy_violations_info
-       , v_policy_violations_license_total
-       , v_policy_violations_operational_total
-       , v_policy_violations_security_total;
-
-  SELECT COALESCE(COUNT(*) FILTER (WHERE pv."TYPE" = 'LICENSE'), 0)::INT
-       , COALESCE(COUNT(*) FILTER (WHERE pv."TYPE" = 'OPERATIONAL'), 0)::INT
-       , COALESCE(COUNT(*) FILTER (WHERE pv."TYPE" = 'SECURITY'), 0)::INT
-    FROM "VIOLATIONANALYSIS" AS va
-   INNER JOIN "POLICYVIOLATION" AS pv
-      ON pv."ID" = va."POLICYVIOLATION_ID"
-   WHERE va."COMPONENT_ID" = v_component."ID"
-     AND va."SUPPRESSED" = FALSE
-     AND va."STATE" != 'NOT_SET'
-    INTO v_policy_violations_license_audited
-       , v_policy_violations_operational_audited
-       , v_policy_violations_security_audited;
-
-  v_policy_violations_license_unaudited =
-      v_policy_violations_license_total - v_policy_violations_license_audited;
-  v_policy_violations_operational_unaudited =
-      v_policy_violations_operational_total - v_policy_violations_operational_audited;
-  v_policy_violations_security_unaudited =
-      v_policy_violations_security_total - v_policy_violations_security_audited;
-
-  v_policy_violations_audited = v_policy_violations_license_audited
-    + v_policy_violations_operational_audited
-    + v_policy_violations_security_audited;
-  v_policy_violations_unaudited = v_policy_violations_total - v_policy_violations_audited;
+  -- Do not proceed if a record with identical values already exists for today.
+  -- No need to pollute the metrics table with redundant data.
+  -- NB: FOUND is automatically set by Postgres: https://www.postgresql.org/docs/current/plpgsql-statements.html#PLPGSQL-STATEMENTS-DIAGNOSTICS
+  IF FOUND
+     AND ( v_latest."VULNERABILITIES"
+         , v_latest."CRITICAL"
+         , v_latest."HIGH"
+         , v_latest."MEDIUM"
+         , v_latest."LOW"
+         , v_latest."UNASSIGNED_SEVERITY"
+         , v_latest."RISKSCORE"
+         , v_latest."FINDINGS_TOTAL"
+         , v_latest."FINDINGS_AUDITED"
+         , v_latest."FINDINGS_UNAUDITED"
+         , v_latest."SUPPRESSED"
+         , v_latest."POLICYVIOLATIONS_TOTAL"
+         , v_latest."POLICYVIOLATIONS_FAIL"
+         , v_latest."POLICYVIOLATIONS_WARN"
+         , v_latest."POLICYVIOLATIONS_INFO"
+         , v_latest."POLICYVIOLATIONS_AUDITED"
+         , v_latest."POLICYVIOLATIONS_UNAUDITED"
+         , v_latest."POLICYVIOLATIONS_LICENSE_TOTAL"
+         , v_latest."POLICYVIOLATIONS_LICENSE_AUDITED"
+         , v_latest."POLICYVIOLATIONS_LICENSE_UNAUDITED"
+         , v_latest."POLICYVIOLATIONS_OPERATIONAL_TOTAL"
+         , v_latest."POLICYVIOLATIONS_OPERATIONAL_AUDITED"
+         , v_latest."POLICYVIOLATIONS_OPERATIONAL_UNAUDITED"
+         , v_latest."POLICYVIOLATIONS_SECURITY_TOTAL"
+         , v_latest."POLICYVIOLATIONS_SECURITY_AUDITED"
+         , v_latest."POLICYVIOLATIONS_SECURITY_UNAUDITED"
+         ) IS NOT DISTINCT FROM
+         ( v_metrics.vulnerabilities
+         , v_metrics.critical
+         , v_metrics.high
+         , v_metrics.medium
+         , v_metrics.low
+         , v_metrics.unassigned
+         , v_metrics.risk_score
+         , v_metrics.findings_total
+         , v_metrics.findings_audited
+         , v_metrics.findings_unaudited
+         , v_metrics.findings_suppressed
+         , v_metrics.policy_violations_total
+         , v_metrics.policy_violations_fail
+         , v_metrics.policy_violations_warn
+         , v_metrics.policy_violations_info
+         , v_metrics.policy_violations_audited
+         , v_metrics.policy_violations_unaudited
+         , v_metrics.policy_violations_license_total
+         , v_metrics.policy_violations_license_audited
+         , v_metrics.policy_violations_license_unaudited
+         , v_metrics.policy_violations_operational_total
+         , v_metrics.policy_violations_operational_audited
+         , v_metrics.policy_violations_operational_unaudited
+         , v_metrics.policy_violations_security_total
+         , v_metrics.policy_violations_security_audited
+         , v_metrics.policy_violations_security_unaudited
+         ) THEN
+    RETURN;
+  END IF;
 
   INSERT INTO "DEPENDENCYMETRICS" (
     "COMPONENT_ID"
@@ -187,32 +131,32 @@ BEGIN
   )
   SELECT v_component."ID"
        , v_component."PROJECT_ID"
-       , v_vulnerabilities
-       , v_critical
-       , v_high
-       , v_medium
-       , v_low
-       , v_unassigned
-       , v_risk_score
-       , v_findings_total
-       , v_findings_audited
-       , v_findings_unaudited
-       , v_findings_suppressed
-       , v_policy_violations_total
-       , v_policy_violations_fail
-       , v_policy_violations_warn
-       , v_policy_violations_info
-       , v_policy_violations_audited
-       , v_policy_violations_unaudited
-       , v_policy_violations_license_total
-       , v_policy_violations_license_audited
-       , v_policy_violations_license_unaudited
-       , v_policy_violations_operational_total
-       , v_policy_violations_operational_audited
-       , v_policy_violations_operational_unaudited
-       , v_policy_violations_security_total
-       , v_policy_violations_security_audited
-       , v_policy_violations_security_unaudited
+       , v_metrics.vulnerabilities
+       , v_metrics.critical
+       , v_metrics.high
+       , v_metrics.medium
+       , v_metrics.low
+       , v_metrics.unassigned
+       , v_metrics.risk_score
+       , v_metrics.findings_total
+       , v_metrics.findings_audited
+       , v_metrics.findings_unaudited
+       , v_metrics.findings_suppressed
+       , v_metrics.policy_violations_total
+       , v_metrics.policy_violations_fail
+       , v_metrics.policy_violations_warn
+       , v_metrics.policy_violations_info
+       , v_metrics.policy_violations_audited
+       , v_metrics.policy_violations_unaudited
+       , v_metrics.policy_violations_license_total
+       , v_metrics.policy_violations_license_audited
+       , v_metrics.policy_violations_license_unaudited
+       , v_metrics.policy_violations_operational_total
+       , v_metrics.policy_violations_operational_audited
+       , v_metrics.policy_violations_operational_unaudited
+       , v_metrics.policy_violations_security_total
+       , v_metrics.policy_violations_security_audited
+       , v_metrics.policy_violations_security_unaudited
        , NOW()
        , NOW()
    -- Skip insert if the component was deleted while metrics were being computed.
@@ -221,10 +165,5 @@ BEGIN
        FROM "COMPONENT"
       WHERE "ID" = v_component."ID"
    );
-
-  UPDATE "COMPONENT"
-     SET "LAST_RISKSCORE" = v_risk_score
-   WHERE "ID" = v_component."ID"
-     AND "LAST_RISKSCORE" IS DISTINCT FROM v_risk_score;
 END;
 $$;

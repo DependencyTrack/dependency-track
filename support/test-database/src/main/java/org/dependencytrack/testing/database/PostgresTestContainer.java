@@ -46,7 +46,6 @@ public final class PostgresTestContainer extends PostgreSQLContainer {
         withUsername("dtrack");
         withPassword("dtrack");
         withDatabaseName("dtrack");
-        withUrlParam("reWriteBatchedInserts", "true");
         withTmpFs(Map.of("/var/lib/postgresql/data", "rw"));
         withLabel("org.dependencytrack.test-database", "true");
 

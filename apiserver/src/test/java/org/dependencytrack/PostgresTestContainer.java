@@ -38,7 +38,6 @@ public final class PostgresTestContainer extends PostgreSQLContainer {
         withPassword("dtrack");
         withDatabaseName("dtrack");
         withLabel("owner", "apiserver");
-        withUrlParam("reWriteBatchedInserts", "true");
         withTmpFs(Map.of("/var/lib/postgresql/data", "rw"));
 
         // Uncomment this to see queries executed by Postgres:

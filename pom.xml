@@ -156,7 +156,7 @@
         <lib.minio.version>9.0.3</lib.minio.version>
         <lib.mockito.version>5.23.0</lib.mockito.version>
         <lib.okhttp.version>5.4.0</lib.okhttp.version>
-        <lib.open-feign.version>13.12</lib.open-feign.version>
+        <lib.open-feign.version>13.13</lib.open-feign.version>
         <lib.open-vulnerability-clients.version>9.0.5</lib.open-vulnerability-clients.version>
         <lib.packageurl.version>1.5.0</lib.packageurl.version>
         <lib.pebble.version>4.1.1</lib.pebble.version>

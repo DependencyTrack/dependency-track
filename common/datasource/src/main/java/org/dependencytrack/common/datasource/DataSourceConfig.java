@@ -80,6 +80,10 @@ final class DataSourceConfig {
         return config.getOptionalValue(PREFIX + "%s.pool.idle-timeout-ms".formatted(name), long.class);
     }
 
+    Optional<Long> getPoolLeakDetectionThresholdMillis() {
+        return config.getOptionalValue(PREFIX + "%s.pool.leak-detection-threshold-ms".formatted(name), long.class);
+    }
+
     Optional<Long> getPoolMaxLifetimeMillis() {
         return config.getOptionalValue(PREFIX + "%s.pool.max-lifetime-ms".formatted(name), long.class);
     }

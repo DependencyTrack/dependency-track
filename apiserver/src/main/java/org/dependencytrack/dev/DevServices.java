@@ -101,7 +101,6 @@ public class DevServices implements AutoCloseable {
             postgresContainerClass.getMethod("withUsername", String.class).invoke(postgresContainer, postgresUsername);
             postgresContainerClass.getMethod("withPassword", String.class).invoke(postgresContainer, postgresPassword);
             postgresContainerClass.getMethod("withDatabaseName", String.class).invoke(postgresContainer, postgresDatabase);
-            postgresContainerClass.getMethod("withUrlParam", String.class, String.class).invoke(postgresContainer, "reWriteBatchedInserts", "true");
             withReuseMethod.invoke(postgresContainer, shouldReuseContainers);
             withLabelMethod.invoke(postgresContainer, DEV_SERVICES_LABEL, "true");
             addFixedExposedPortMethod.invoke(postgresContainer, /* hostPort */ postgresPort, /* containerPort */  5432);

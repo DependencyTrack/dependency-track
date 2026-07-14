@@ -32,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+import static java.util.Objects.requireNonNull;
 
 public final class HexPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
@@ -84,7 +85,7 @@ public final class HexPackageMetadataResolverFactory implements PackageMetadataR
 
     @Override
     public PackageMetadataResolver create() {
-        return new HexPackageMetadataResolver(objectMapper, cachingHttpClient);
+        return new HexPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
 
 }

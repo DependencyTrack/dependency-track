@@ -32,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+import static java.util.Objects.requireNonNull;
 
 public final class NugetPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
@@ -84,7 +85,7 @@ public final class NugetPackageMetadataResolverFactory implements PackageMetadat
 
     @Override
     public PackageMetadataResolver create() {
-        return new NugetPackageMetadataResolver(objectMapper, cachingHttpClient);
+        return new NugetPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
 
 }

@@ -32,6 +32,9 @@
 
     <properties>
         <project.parentBaseDir>${project.basedir}/../..</project.parentBaseDir>
+
+        <!-- TODO: Remove after fixing all existing findings. -->
+        <nullaway.severity>OFF</nullaway.severity>
     </properties>
 
     <dependencies>

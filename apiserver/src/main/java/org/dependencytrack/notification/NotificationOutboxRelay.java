@@ -84,12 +84,12 @@ final class NotificationOutboxRelay implements Closeable {
     private final int largeNotificationThresholdBytes;
     private final BlockingQueue<Notification> currentBatch;
     private final IntervalFunction backoffIntervalFunction;
+    private final MeterProvider<Timer> cycleLatencyTimer;
+    private final MeterProvider<Counter> cycleCounter;
+    private final Timer pollLatencyTimer;
+    private final Timer sendLatencyTimer;
+    private final MeterProvider<DistributionSummary> sentDistribution;
     private @Nullable ScheduledExecutorService executorService;
-    private @Nullable MeterProvider<Timer> cycleLatencyTimer;
-    private @Nullable MeterProvider<Counter> cycleCounter;
-    private @Nullable Timer pollLatencyTimer;
-    private @Nullable Timer sendLatencyTimer;
-    private @Nullable MeterProvider<DistributionSummary> sentDistribution;
 
     public NotificationOutboxRelay(
             DexEngine dexEngine,
@@ -120,6 +120,31 @@ final class NotificationOutboxRelay implements Closeable {
                 /* initialDelay */ pollIntervalMillis,
                 /* multiplier */ 1.5,
                 /* maxDelay */ TimeUnit.MINUTES.toMillis(3));
+        this.cycleLatencyTimer = Timer
+                .builder("dt.outbox.relay.cycle.latency")
+                .tags(COMMON_METER_TAGS)
+                .description("Latency of a relay cycle")
+                .withRegistry(meterRegistry);
+        this.cycleCounter = Counter
+                .builder("dt.outbox.relay.cycles")
+                .tags(COMMON_METER_TAGS)
+                .description("Number of relay cycles")
+                .withRegistry(meterRegistry);
+        this.pollLatencyTimer = Timer
+                .builder("dt.outbox.relay.poll.latency")
+                .tags(COMMON_METER_TAGS)
+                .description("Latency of polls from the outbox table")
+                .register(meterRegistry);
+        this.sendLatencyTimer = Timer
+                .builder("dt.outbox.relay.send.latency")
+                .tags(COMMON_METER_TAGS)
+                .description("Latency of messages being sent")
+                .register(meterRegistry);
+        this.sentDistribution = DistributionSummary
+                .builder("dt.outbox.relay.messages.sent")
+                .tags(COMMON_METER_TAGS)
+                .description("Number of messages sent")
+                .withRegistry(meterRegistry);
     }
 
     public void start() {
@@ -135,38 +160,8 @@ final class NotificationOutboxRelay implements Closeable {
                                 LOGGER.error("Uncaught exception in thread {}", thread.getName(), throwable))
                         .namingPattern(EXECUTOR_NAME + "-%d")
                         .build());
-        new ExecutorServiceMetrics(executorService, EXECUTOR_NAME, null)
+        new ExecutorServiceMetrics(executorService, EXECUTOR_NAME, List.of())
                 .bindTo(meterRegistry);
-
-        cycleLatencyTimer = Timer
-                .builder("dt.outbox.relay.cycle.latency")
-                .tags(COMMON_METER_TAGS)
-                .description("Latency of a relay cycle")
-                .withRegistry(meterRegistry);
-
-        cycleCounter = Counter
-                .builder("dt.outbox.relay.cycles")
-                .tags(COMMON_METER_TAGS)
-                .description("Number of relay cycles")
-                .withRegistry(meterRegistry);
-
-        pollLatencyTimer = Timer
-                .builder("dt.outbox.relay.poll.latency")
-                .tags(COMMON_METER_TAGS)
-                .description("Latency of polls from the outbox table")
-                .register(meterRegistry);
-
-        sendLatencyTimer = Timer
-                .builder("dt.outbox.relay.send.latency")
-                .tags(COMMON_METER_TAGS)
-                .description("Latency of messages being sent")
-                .register(meterRegistry);
-
-        sentDistribution = DistributionSummary
-                .builder("dt.outbox.relay.messages.sent")
-                .tags(COMMON_METER_TAGS)
-                .description("Number of messages sent")
-                .withRegistry(meterRegistry);
 
         executorService.schedule(
                 () -> run(0),
@@ -183,13 +178,19 @@ final class NotificationOutboxRelay implements Closeable {
     }
 
     private void run(int failureBackoffCount) {
+        final ScheduledExecutorService executor = this.executorService;
+        if (executor == null) {
+            LOGGER.debug("Relay was closed; Skipping cycle");
+            return;
+        }
+
         final Timer.Sample cycleLatencySample = Timer.start();
         try {
             final RelayCycleOutcome cycleOutcome = executeRelayCycle();
             cycleCounter.withTag(OUTCOME_METER_TAG_NAME, cycleOutcome.name()).increment();
             cycleLatencySample.stop(cycleLatencyTimer.withTag(OUTCOME_METER_TAG_NAME, cycleOutcome.name()));
 
-            executorService.schedule(
+            executor.schedule(
                     () -> run(0),
                     pollIntervalMillis,
                     TimeUnit.MILLISECONDS);
@@ -202,7 +203,7 @@ final class NotificationOutboxRelay implements Closeable {
             // Ensure that we don't keep thrashing external services if we run into errors.
             final long backoffDelayMillis = backoffIntervalFunction.apply(failureBackoffCount + 1);
             LOGGER.error("Failed to relay messages, backing off for {}ms", backoffDelayMillis, t);
-            executorService.schedule(
+            executor.schedule(
                     () -> run(failureBackoffCount + 1),
                     backoffDelayMillis,
                     TimeUnit.MILLISECONDS);

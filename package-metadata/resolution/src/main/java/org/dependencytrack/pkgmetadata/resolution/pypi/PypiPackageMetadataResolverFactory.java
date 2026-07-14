@@ -33,6 +33,7 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+import static java.util.Objects.requireNonNull;
 
 public final class PypiPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
@@ -91,7 +92,7 @@ public final class PypiPackageMetadataResolverFactory implements PackageMetadata
 
     @Override
     public PackageMetadataResolver create() {
-        return new PypiPackageMetadataResolver(objectMapper, cachingHttpClient);
+        return new PypiPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
 
 }

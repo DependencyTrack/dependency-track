@@ -89,8 +89,6 @@ public interface PaginationSupport extends SqlObject {
             throw new IllegalArgumentException("ACL column must not be blank");
         }
 
-        final boolean includeAcl = projectIdColumn != null;
-
         // NB: The limit is only effective when used on a subquery.
         // SELECT COUNT(*) ... LIMIT X is *not* sufficient:
         // https://pganalyze.com/blog/5mins-postgres-limited-count
@@ -118,7 +116,7 @@ public interface PaginationSupport extends SqlObject {
                 </#if>
                 """);
 
-        if (includeAcl) {
+        if (projectIdColumn != null) {
             // Only install the secondary ACL customizer when the chosen column
             // differs from the default. Otherwise the existing condition defined
             // by ApiRequestStatementCustomizer is already correct and no rewrite is needed.
@@ -142,7 +140,7 @@ public interface PaginationSupport extends SqlObject {
                 .bindMap(whereParams)
                 .bind("threshold", threshold)
                 .define("fromWhereClause", fromWhereClause)
-                .define("includeAcl", includeAcl)
+                .define("includeAcl", projectIdColumn != null)
                 .defineNamedBindings()
                 .mapTo(long.class)
                 .one();

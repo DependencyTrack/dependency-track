@@ -41,6 +41,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static java.util.Objects.requireNonNull;
+
 /// @since 5.0.0
 @NullMarked
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -138,7 +140,7 @@ public record ListProjectsResponseItem(
                 return null;
             }
 
-            return new Parent(uuid, name, version);
+            return new Parent(uuid, requireNonNull(name, "name must not be null"), version);
         }
 
     }

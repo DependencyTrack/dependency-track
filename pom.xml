@@ -135,6 +135,7 @@
         <lib.datanucleus-javax-jdo.version>3.2.1</lib.datanucleus-javax-jdo.version>
         <lib.datanucleus-rdbms.version>6.0.11</lib.datanucleus-rdbms.version>
         <lib.db-scheduler.version>16.12.0</lib.db-scheduler.version>
+        <lib.errorprone.version>2.50.0</lib.errorprone.version>
         <lib.flyway.version>12.10.0</lib.flyway.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.greenmail.version>2.1.9</lib.greenmail.version>
@@ -160,6 +161,7 @@
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
         <lib.minio.version>9.0.3</lib.minio.version>
         <lib.mockito.version>5.23.0</lib.mockito.version>
+        <lib.nullaway.version>0.13.7</lib.nullaway.version>
         <lib.okhttp.version>5.4.0</lib.okhttp.version>
         <lib.open-feign.version>13.13</lib.open-feign.version>
         <lib.open-vulnerability-clients.version>9.0.5</lib.open-vulnerability-clients.version>
@@ -179,6 +181,10 @@
         <lib.versatile.version>0.21.0</lib.versatile.version>
         <lib.wiremock.version>3.13.2</lib.wiremock.version>
         <lib.zstd-jni.version>1.5.7-11</lib.zstd-jni.version>
+
+        <!-- Severity of NullAway findings. Set to OFF to disable. -->
+        <nullaway.severity>ERROR</nullaway.severity>
+
         <!-- Number of JVM processes to use for unit test parallelization -->
         <unitTestForkCount>1</unitTestForkCount>
 
@@ -646,13 +652,53 @@
                             <arg>-Xlint:-serial</arg>
                             <arg>-Xlint:-try</arg>
                             <arg>-parameters</arg>
+                            <arg>-XDcompilePolicy=simple</arg>
+                            <arg>--should-stop=ifError=FLOW</arg>
+                            <arg>
+                                -Xplugin:ErrorProne
+                                -XepDisableAllChecks
+                                -XepExcludedPaths:.*/target/generated-(test-)?sources/.*
+                                -Xep:NullAway:${nullaway.severity}
+                                -XepOpt:NullAway:OnlyNullMarked=true
+                            </arg>
                         </compilerArgs>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>com.google.errorprone</groupId>
+                                <artifactId>error_prone_core</artifactId>
+                                <version>${lib.errorprone.version}</version>
+                            </path>
+                            <path>
+                                <groupId>com.uber.nullaway</groupId>
+                                <artifactId>nullaway</artifactId>
+                                <version>${lib.nullaway.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                         <!--
                           https://stackoverflow.com/a/76392489
                           https://issues.apache.org/jira/browse/MCOMPILER-209
                         -->
                         <useIncrementalCompilation>false</useIncrementalCompilation>
                     </configuration>
+                    <executions>
+                        <execution>
+                            <!--
+                              Do not run Error Prone on test sources. Nullness of test code is not
+                              enforced, and running the plugin there roughly doubles the Error Prone
+                              overhead for no benefit.
+                            -->
+                            <id>default-testCompile</id>
+                            <configuration>
+                                <compilerArgs>
+                                    <arg>-Xlint:all</arg>
+                                    <arg>-Xlint:-processing</arg>
+                                    <arg>-Xlint:-serial</arg>
+                                    <arg>-Xlint:-try</arg>
+                                    <arg>-parameters</arg>
+                                </compilerArgs>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <plugin>

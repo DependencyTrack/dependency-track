@@ -54,6 +54,7 @@ import java.nio.file.NoSuchFileException;
 import java.util.Map;
 import java.util.function.Function;
 
+import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.common.MdcKeys.MDC_NOTIFICATION_ID;
 import static org.dependencytrack.common.MdcKeys.MDC_NOTIFICATION_RULE_NAME;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -110,8 +111,13 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
 
             final Notification notification = getNotification(argument);
 
-            final var template = ruleMetadata.template() != null
-                    ? new NotificationTemplate(ruleMetadata.template(), ruleMetadata.templateMimeType())
+            final String templateContent = ruleMetadata.template();
+            final var template = templateContent != null
+                    ? new NotificationTemplate(
+                            templateContent,
+                            requireNonNull(
+                                    ruleMetadata.templateMimeType(),
+                                    "templateMimeType must not be null when template is set"))
                     : null;
 
             final var publishCtx = new NotificationPublishContext(

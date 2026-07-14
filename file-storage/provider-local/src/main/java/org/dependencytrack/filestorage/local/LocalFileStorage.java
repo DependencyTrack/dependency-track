@@ -22,6 +22,7 @@ import com.github.luben.zstd.ZstdInputStream;
 import com.github.luben.zstd.ZstdOutputStream;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -161,7 +162,7 @@ final class LocalFileStorage implements FileStorage {
         }
     }
 
-    private void deleteEmptyParentDirectories(Path dirPath) {
+    private void deleteEmptyParentDirectories(@Nullable Path dirPath) {
         while (dirPath != null && dirPath.startsWith(baseDirPath) && !dirPath.equals(baseDirPath)) {
             try {
                 Files.delete(dirPath);

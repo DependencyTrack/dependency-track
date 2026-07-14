@@ -278,25 +278,25 @@ public final class CachingHttpClient {
         final var cacheControl = CacheControl.of(response);
 
         if (status == 304) {
-            requireMatchingEntry(entry, cacheKey);
+            final CacheEntry matchedEntry = requireMatchingEntry(entry, cacheKey);
 
             if (cacheControl.noStore()) {
                 cache.invalidateMany(Set.of(cacheKey));
             } else {
-                final Long effectiveMaxAge = effectiveMaxAgeSeconds(cacheControl, entry);
+                final Long effectiveMaxAge = effectiveMaxAgeSeconds(cacheControl, matchedEntry);
                 final CacheEntry.Builder refreshed = CacheEntry.newBuilder()
-                        .setFreshUntil(freshUntilTs(cacheControl, entry));
+                        .setFreshUntil(freshUntilTs(cacheControl, matchedEntry));
                 if (effectiveMaxAge != null) {
                     refreshed.setMaxAge(secondsAsDuration(effectiveMaxAge));
                 }
-                if (entry.hasBody()) {
-                    refreshed.setBody(entry.getBody());
+                if (matchedEntry.hasBody()) {
+                    refreshed.setBody(matchedEntry.getBody());
                 }
-                applyRefreshedValidators(refreshed, response, entry);
+                applyRefreshedValidators(refreshed, response, matchedEntry);
                 cache.put(cacheKey, refreshed.build().toByteArray());
             }
 
-            return decodedBodyOf(entry);
+            return decodedBodyOf(matchedEntry);
         }
 
         if (status == 200) {
@@ -339,24 +339,24 @@ public final class CachingHttpClient {
         final var cacheControl = CacheControl.of(response);
 
         if (status == 304) {
-            requireMatchingEntry(entry, cacheKey);
+            final CacheEntry matchedEntry = requireMatchingEntry(entry, cacheKey);
 
             if (cacheControl.noStore()) {
                 cache.invalidateMany(Set.of(cacheKey));
-                return rebuildHeaders(entry);
+                return rebuildHeaders(matchedEntry);
             }
 
             // Retain the cached headers map verbatim. RFC 7232 304 carries metadata only
             // (validators, Cache-Control). It does not re-send representation headers like
             // Content-Length, so overwriting would drop information.
-            final Long effectiveMaxAge = effectiveMaxAgeSeconds(cacheControl, entry);
+            final Long effectiveMaxAge = effectiveMaxAgeSeconds(cacheControl, matchedEntry);
             final var refreshedEntryBuilder = CacheEntry.newBuilder()
-                    .setFreshUntil(freshUntilTs(cacheControl, entry))
-                    .putAllHeaders(entry.getHeadersMap());
+                    .setFreshUntil(freshUntilTs(cacheControl, matchedEntry))
+                    .putAllHeaders(matchedEntry.getHeadersMap());
             if (effectiveMaxAge != null) {
                 refreshedEntryBuilder.setMaxAge(secondsAsDuration(effectiveMaxAge));
             }
-            applyRefreshedValidators(refreshedEntryBuilder, response, entry);
+            applyRefreshedValidators(refreshedEntryBuilder, response, matchedEntry);
 
             final CacheEntry refreshedEntry = refreshedEntryBuilder.build();
             cache.put(cacheKey, refreshedEntry.toByteArray());
@@ -432,7 +432,7 @@ public final class CachingHttpClient {
                 "Unexpected status code %d for %s".formatted(response.statusCode(), response.request().uri())));
     }
 
-    private static void requireMatchingEntry(@Nullable CacheEntry entry, String cacheKey) {
+    private static CacheEntry requireMatchingEntry(@Nullable CacheEntry entry, String cacheKey) {
         if (entry == null) {
             // Validators are only attached when a cached entry exists, so a 304 here
             // indicates a misbehaving upstream. Surface the inconsistency so the next
@@ -440,6 +440,8 @@ public final class CachingHttpClient {
             throw new UncheckedIOException(
                     new IOException("Received 304 without a matching cached entry for " + cacheKey));
         }
+
+        return entry;
     }
 
     private static void applyResponseValidators(CacheEntry.Builder builder, HttpResponse<?> response) {

@@ -26,8 +26,8 @@ import org.jspecify.annotations.Nullable;
 public final class CheckConstraintViolationException extends ConstraintViolationException {
 
     public CheckConstraintViolationException(
-            String message,
-            Throwable cause,
+            @Nullable String message,
+            @Nullable Throwable cause,
             @Nullable String constraintName,
             @Nullable String tableName,
             @Nullable String columnName,

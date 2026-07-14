@@ -32,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+import static java.util.Objects.requireNonNull;
 
 public final class CargoPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
@@ -84,7 +85,7 @@ public final class CargoPackageMetadataResolverFactory implements PackageMetadat
 
     @Override
     public PackageMetadataResolver create() {
-        return new CargoPackageMetadataResolver(objectMapper, cachingHttpClient);
+        return new CargoPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
 
 }

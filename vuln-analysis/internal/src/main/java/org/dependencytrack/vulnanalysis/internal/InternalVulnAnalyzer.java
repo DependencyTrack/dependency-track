@@ -141,7 +141,7 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         for (final Map.Entry<Long, Set<Long>> entry : findingsByVuln.entrySet()) {
             final Long vulnDbId = entry.getKey();
             final Set<Long> affectedComponentIds = entry.getValue();
-            final VulnMetadata metadata = vulnMetadata.get(vulnDbId);
+            final VulnMetadata metadata = requireNonNull(vulnMetadata.get(vulnDbId));
 
             final var vulnBuilder = Vulnerability.newBuilder()
                     .setId(metadata.vulnId())

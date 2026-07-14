@@ -19,7 +19,9 @@
 package org.dependencytrack.cache.database;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -29,11 +31,11 @@ import java.util.Optional;
 final class DatabaseCacheMeterBinder extends CacheMeterBinder<DatabaseCache> {
 
     DatabaseCacheMeterBinder(DatabaseCache cache, String cacheName) {
-        super(cache, cacheName, null);
+        super(cache, cacheName, Tags.empty());
     }
 
     @Override
-    protected Long size() {
+    protected @Nullable Long size() {
         final DatabaseCache cache = getCache();
         return cache != null ? cache.size() : null;
     }

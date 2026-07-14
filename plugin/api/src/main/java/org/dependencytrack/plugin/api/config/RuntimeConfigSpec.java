@@ -46,8 +46,8 @@ public final class RuntimeConfigSpec {
 
     public static <T extends RuntimeConfig> RuntimeConfigSpec of(
             T defaultConfig,
-            RuntimeConfigSchemaSource schemaSource,
-            RuntimeConfigValidator<T> validator) {
+            @Nullable RuntimeConfigSchemaSource schemaSource,
+            @Nullable RuntimeConfigValidator<T> validator) {
         return new RuntimeConfigSpec(defaultConfig, schemaSource, validator);
     }
 

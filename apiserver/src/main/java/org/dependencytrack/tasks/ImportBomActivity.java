@@ -75,6 +75,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNullElse;
 import static javax.jdo.FetchPlan.FETCH_SIZE_GREEDY;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
@@ -963,7 +964,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                         ctx.bomFormat.getFormatShortName(),
                         ctx.bomSpecVersion,
                         ctx.token.toString(),
-                        throwable.getMessage()));
+                        requireNonNullElse(throwable.getMessage(), throwable.getClass().getName())));
     }
 
     private @Nullable FileMetadata storeVulnAnalysisContext(ProcessingContext ctx, Collection<Component> components) {

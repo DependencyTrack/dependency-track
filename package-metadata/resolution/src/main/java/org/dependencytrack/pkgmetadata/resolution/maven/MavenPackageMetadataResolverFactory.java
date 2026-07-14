@@ -31,6 +31,8 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 import java.util.Map;
 
+import static java.util.Objects.requireNonNull;
+
 public final class MavenPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
     private @Nullable CachingHttpClient cachingHttpClient;
@@ -91,7 +93,7 @@ public final class MavenPackageMetadataResolverFactory implements PackageMetadat
 
     @Override
     public PackageMetadataResolver create() {
-        return new MavenPackageMetadataResolver(cachingHttpClient);
+        return new MavenPackageMetadataResolver(requireNonNull(cachingHttpClient));
     }
 
 }

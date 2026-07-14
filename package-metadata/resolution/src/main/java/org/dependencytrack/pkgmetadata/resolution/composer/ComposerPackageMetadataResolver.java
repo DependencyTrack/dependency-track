@@ -81,10 +81,8 @@ final class ComposerPackageMetadataResolver implements PackageMetadataResolver {
 
         // NB: provider-includes (V1 provider hashing) is intentionally not supported.
         // Repos with only provider-includes will fall through to the V1 per-package URL fallback.
-        final boolean hasUsableRoot = repoRoot != null
-                && (repoRoot.has("metadata-url") || repoRoot.has("packages") || repoRoot.has("includes"));
-
-        if (!hasUsableRoot) {
+        if (repoRoot == null
+                || !(repoRoot.has("metadata-url") || repoRoot.has("packages") || repoRoot.has("includes"))) {
             LOGGER.debug("No usable packages.json, falling back to V1");
             packageVersions = fetchAndExtractPackage(V1_METADATA_URL_PATTERN, packageKey, repository);
         } else if (!isPackageAvailable(repoRoot, packageKey)) {

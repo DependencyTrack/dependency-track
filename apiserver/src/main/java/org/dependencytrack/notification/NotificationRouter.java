@@ -292,11 +292,12 @@ final class NotificationRouter {
             return true;
         }
 
-        if (rule.isLimitedToTags()) {
-            LOGGER.debug("Rule is limited to tags: {}", rule.limitToTagNames());
+        final Set<String> limitToTagNames = rule.limitToTagNames();
+        if (rule.isLimitedToTags() && limitToTagNames != null) {
+            LOGGER.debug("Rule is limited to tags: {}", limitToTagNames);
 
             final String matchedTagName = project.getTagsList().stream()
-                    .filter(rule.limitToTagNames()::contains)
+                    .filter(limitToTagNames::contains)
                     .findAny()
                     .orElse(null);
             if (matchedTagName != null) {
@@ -308,15 +309,16 @@ final class NotificationRouter {
             }
         }
 
-        if (rule.isLimitedToProjects()) {
-            LOGGER.debug("Rule is limited to projects with UUIDs: {}", rule.limitToProjectUuids());
+        final Set<String> limitToProjectUuids = rule.limitToProjectUuids();
+        if (rule.isLimitedToProjects() && limitToProjectUuids != null) {
+            LOGGER.debug("Rule is limited to projects with UUIDs: {}", limitToProjectUuids);
 
-            if (rule.limitToProjectUuids().contains(project.getUuid())) {
+            if (limitToProjectUuids.contains(project.getUuid())) {
                 LOGGER.debug("Rule matched project on UUID: {}", project.getUuid());
                 return true;
             } else if (rule.isNotifyChildProjects()) {
                 LOGGER.debug("Rule did not match on any project UUID");
-                if (isChildOfAnyActiveParent(rule.limitToProjectUuids(), project.getUuid())) {
+                if (isChildOfAnyActiveParent(limitToProjectUuids, project.getUuid())) {
                     LOGGER.debug("Rule matched parents of project");
                     return true;
                 } else {
@@ -343,7 +345,7 @@ final class NotificationRouter {
         final var expressionEnv = NotificationFilterExpressionEnv.getInstance();
 
         try {
-            final CelRuntime.Program program = expressionEnv.compile(rule.filterExpression());
+            final CelRuntime.Program program = expressionEnv.compile(filterExpression);
             final boolean result = expressionEnv.evaluate(program, notification, subject);
             LOGGER.debug("Filter expression evaluated to {}", result);
             return result;

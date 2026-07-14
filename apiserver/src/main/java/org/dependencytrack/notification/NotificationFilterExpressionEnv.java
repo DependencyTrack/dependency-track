@@ -51,6 +51,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Objects.requireNonNullElse;
 import static org.dependencytrack.cel.CelExpressionUtils.normalizeDurationDays;
 
 /**
@@ -139,7 +140,7 @@ public final class NotificationFilterExpressionEnv {
             } catch (CelEvaluationException e) {
                 throw new InvalidNotificationFilterExpressionException(
                         "Failed to create program",
-                        e.getMessage());
+                        requireNonNullElse(e.getMessage(), e.getClass().getName()));
             }
         });
     }

@@ -31,6 +31,7 @@ import org.jspecify.annotations.Nullable;
 import java.net.http.HttpClient;
 
 import static com.github.packageurl.PackageURLBuilder.aPackageURL;
+import static java.util.Objects.requireNonNull;
 
 public final class NixpkgsPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
 
@@ -80,7 +81,7 @@ public final class NixpkgsPackageMetadataResolverFactory implements PackageMetad
 
     @Override
     public PackageMetadataResolver create() {
-        return new NixpkgsPackageMetadataResolver(packageIndex, cache);
+        return new NixpkgsPackageMetadataResolver(requireNonNull(packageIndex), requireNonNull(cache));
     }
 
 }

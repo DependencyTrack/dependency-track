@@ -92,15 +92,17 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
 
         // Prior is only trustworthy for stable versions of the same PURL.
         // Snapshot versions are mutable, so artifact metadata can change.
-        final boolean canUsePrior = prior != null
-                && purl.getVersion() != null
-                && !isSnapshotVersion(purl.getVersion());
+        final PackageArtifactMetadata usablePrior =
+                (prior != null && purl.getVersion() != null && !isSnapshotVersion(purl.getVersion()))
+                        ? prior
+                        : null;
+        final Instant priorPublishedAt = usablePrior != null ? usablePrior.publishedAt() : null;
         final boolean priorMatchesLatest =
-                canUsePrior && purl.getVersion().equals(latestVersion);
+                usablePrior != null && purl.getVersion().equals(latestVersion);
 
         final String latestArtifactUrl = join(baseUrl, latestVersion, formatArtifactFileName(purl, latestVersion));
-        final Instant latestVersionPublishedAt = (priorMatchesLatest && prior.publishedAt() != null)
-                ? prior.publishedAt()
+        final Instant latestVersionPublishedAt = (priorMatchesLatest && priorPublishedAt != null)
+                ? priorPublishedAt
                 : resolvePublishedAt(latestArtifactUrl, repository);
         if (Thread.interrupted()) {
             throw new InterruptedException();
@@ -115,8 +117,8 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
         final Instant publishedAt;
         if (purl.getVersion().equals(latestVersion)) {
             publishedAt = latestVersionPublishedAt;
-        } else if (canUsePrior && prior.publishedAt() != null) {
-            publishedAt = prior.publishedAt();
+        } else if (priorPublishedAt != null) {
+            publishedAt = priorPublishedAt;
         } else {
             publishedAt = resolvePublishedAt(artifactUrl, repository);
         }
@@ -124,8 +126,8 @@ final class MavenPackageMetadataResolver implements PackageMetadataResolver {
             throw new InterruptedException();
         }
 
-        final String priorSha1 = canUsePrior
-                ? prior.hashes().get(HashAlgorithm.SHA1)
+        final String priorSha1 = usablePrior != null
+                ? usablePrior.hashes().get(HashAlgorithm.SHA1)
                 : null;
         final String sha1 = priorSha1 == null
                 ? fetchSha1Hash(artifactUrl, repository)

@@ -159,20 +159,28 @@ public final class Application {
         }
 
         // Execute init tasks.
+        // Failures must exit the JVM explicitly: the management server started above
+        // keeps the JVM alive with its non-daemon threads, so an exception escaping
+        // the main thread would leave the process running but forever unready.
         final var dataSourceRegistry = DataSourceRegistry.getInstance();
         if (config.getValue(ConfigKeys.INIT_TASKS_ENABLED, boolean.class)) {
-            final String dataSourceName = config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_NAME, String.class);
-            final var initTaskExecutor = new InitTaskExecutor(
-                    config, dataSourceRegistry.get(dataSourceName),
-                    initTasksHealthCheck);
-            initTaskExecutor.execute();
+            try {
+                final String dataSourceName = config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_NAME, String.class);
+                final var initTaskExecutor = new InitTaskExecutor(
+                        config, dataSourceRegistry.get(dataSourceName),
+                        initTasksHealthCheck);
+                initTaskExecutor.execute();
 
-            if (config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_CLOSE_AFTER_COMPLETION, boolean.class)) {
-                dataSourceRegistry.close(dataSourceName);
-            }
-            if (config.getValue(ConfigKeys.INIT_TASKS_EXIT_AFTER_COMPLETION, boolean.class)) {
-                LOGGER.info("Exiting because dt.init-tasks.exit-after-completion is enabled");
-                System.exit(0);
+                if (config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_CLOSE_AFTER_COMPLETION, boolean.class)) {
+                    dataSourceRegistry.close(dataSourceName);
+                }
+                if (config.getValue(ConfigKeys.INIT_TASKS_EXIT_AFTER_COMPLETION, boolean.class)) {
+                    LOGGER.info("Exiting because dt.init-tasks.exit-after-completion is enabled");
+                    System.exit(0);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to execute init tasks", e);
+                System.exit(-1);
             }
         }
         initTasksHealthCheck.markInitialized();

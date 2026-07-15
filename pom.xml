@@ -149,7 +149,7 @@
         <lib.jersey.version>4.0.2</lib.jersey.version>
         <lib.jetty.version>12.1.11</lib.jetty.version>
         <lib.jimfs.version>1.3.1</lib.jimfs.version>
-        <lib.json-schema-validator.version>2.0.3</lib.json-schema-validator.version>
+        <lib.json-schema-validator.version>3.0.6</lib.json-schema-validator.version>
         <lib.json-unit.version>6.0.0</lib.json-unit.version>
         <lib.jspecify.version>1.0.0</lib.jspecify.version>
         <lib.junit-jupiter.version>6.1.1</lib.junit-jupiter.version>

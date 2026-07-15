@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/checkmarx-vuln-analyzer-config-v1.schema.json",
+  "type": "object",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the Checkmarx vulnerability analyzer should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "aliasSyncEnabled": {
+      "type": "boolean",
+      "title": "Alias Synchronization Enabled",
+      "description": "Whether to include alias information in vulnerability data.",
+      "existingJavaType": "boolean"
+    },
+    "authApiBaseUrl": {
+      "type": "string",
+      "title": "Authentication API Base URL",
+      "description": "Base URL of Checkmarx's authentication API.",
+      "format": "uri",
+      "minLength": 1
+    },
+    "apiBaseUrl": {
+      "type": "string",
+      "title": "API Base URL",
+      "description": "Base URL of Checkmarx's REST API.",
+      "format": "uri",
+      "minLength": 1
+    },
+    "orgId": {
+      "type": "string",
+      "title": "Organization ID",
+      "description": "Organization ID to authenticate with the Checkmarx REST API.",
+      "minLength": 1
+    },
+    "refreshToken": {
+      "type": "string",
+      "title": "Refresh Token",
+      "description": "Refresh token (API Key) to authenticate with the Checkmarx REST API.",
+      "minLength": 1,
+      "x-secret-ref": true
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

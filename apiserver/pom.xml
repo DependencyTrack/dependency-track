@@ -18,7 +18,7 @@
         <maven.install.skip>true</maven.install.skip>
 
         <!-- Dependency Versions -->
-        <lib.cloud-sql-postgres-socket-factory.version>1.28.3</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.28.6</lib.cloud-sql-postgres-socket-factory.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.cyclonedx-java.version>12.1.0</lib.cyclonedx-java.version>
         <lib.micrometer-jvm-extras.version>0.3.0</lib.micrometer-jvm-extras.version>

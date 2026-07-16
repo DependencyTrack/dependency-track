@@ -24,6 +24,7 @@ import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.protocol.HttpContext;
 import org.apache.hc.core5.util.TimeValue;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,23 +42,22 @@ import java.util.List;
  */
 final class GitHubHttpRequestRetryStrategy extends DefaultHttpRequestRetryStrategy {
 
-    private enum RateLimitStrategy {
-        RETRY_AFTER,
-        LIMIT_RESET
-    }
+    private sealed interface RateLimitStrategy {
 
-    private record RateLimitInfo(
-            RateLimitStrategy strategy,
-            Duration retryAfter,
-            Long remainingRequests,
-            Long requestLimit,
-            Instant requestLimitResetAt) {
+        record RetryAfter(Duration retryAfter) implements RateLimitStrategy {
+        }
 
-        private static RateLimitInfo of(final HttpResponse response) {
+        record LimitReset(
+                long remainingRequests,
+                long requestLimit,
+                Instant requestLimitResetAt) implements RateLimitStrategy {
+        }
+
+        static @Nullable RateLimitStrategy of(HttpResponse response) {
             final Header retryAfterHeader = response.getFirstHeader("retry-after");
             if (retryAfterHeader != null) {
                 final long retryAfterSeconds = Long.parseLong(retryAfterHeader.getValue().trim());
-                return new RateLimitInfo(RateLimitStrategy.RETRY_AFTER, Duration.ofSeconds(retryAfterSeconds), null, null, null);
+                return new RetryAfter(Duration.ofSeconds(retryAfterSeconds));
             }
 
             final Header remainingRequestsHeader = response.getFirstHeader("x-ratelimit-remaining");
@@ -65,7 +65,7 @@ final class GitHubHttpRequestRetryStrategy extends DefaultHttpRequestRetryStrate
                 final long remainingRequests = Long.parseLong(remainingRequestsHeader.getValue().trim());
                 final long requestLimit = Long.parseLong(response.getFirstHeader("x-ratelimit-limit").getValue().trim());
                 final long requestLimitResetEpochSeconds = Long.parseLong(response.getFirstHeader("x-ratelimit-reset").getValue().trim());
-                return new RateLimitInfo(RateLimitStrategy.LIMIT_RESET, null, remainingRequests, requestLimit, Instant.ofEpochSecond(requestLimitResetEpochSeconds));
+                return new LimitReset(remainingRequests, requestLimit, Instant.ofEpochSecond(requestLimitResetEpochSeconds));
             }
 
             return null;
@@ -100,7 +100,7 @@ final class GitHubHttpRequestRetryStrategy extends DefaultHttpRequestRetryStrate
             return super.retryRequest(response, execCount, context);
         }
 
-        final var rateLimitInfo = RateLimitInfo.of(response);
+        final var rateLimitInfo = RateLimitStrategy.of(response);
         if (rateLimitInfo == null) {
             if (response.getCode() == 403) {
                 // Authorization failure. Do not retry.
@@ -110,35 +110,37 @@ final class GitHubHttpRequestRetryStrategy extends DefaultHttpRequestRetryStrate
             return super.retryRequest(response, execCount, context);
         }
 
-        return switch (rateLimitInfo.strategy()) {
-            case RETRY_AFTER -> {
+        return switch (rateLimitInfo) {
+            case RateLimitStrategy.RetryAfter(Duration retryAfter) -> {
                 // Usually GitHub will request to wait for 1min. This may change though, and we can't risk
                 // blocking a worker thread unnecessarily for a long period of time.
-                if (rateLimitInfo.retryAfter().compareTo(maxRetryDelay) > 0) {
+                if (retryAfter.compareTo(maxRetryDelay) > 0) {
                     LOGGER.warn("""
-                            Rate limiting detected; GitHub API indicates retries to be acceptable after {}, \
-                            which exceeds the maximum retry duration of {}. \
-                            Not performing any further retries.""",
-                            rateLimitInfo.retryAfter(), maxRetryDelay);
+                                    Rate limiting detected; GitHub API indicates retries to be acceptable after {}, \
+                                    which exceeds the maximum retry duration of {}. \
+                                    Not performing any further retries.""",
+                            retryAfter, maxRetryDelay);
                     yield false;
                 }
 
                 yield true;
             }
-            case LIMIT_RESET -> {
-                if (rateLimitInfo.remainingRequests() > 0) {
+            case RateLimitStrategy.LimitReset(
+                    long remainingRequests, long requestLimit, Instant requestLimitResetAt
+            ) -> {
+                if (remainingRequests > 0) {
                     // Still have requests budget remaining. Failure reason is not rate limiting.
                     yield super.retryRequest(response, execCount, context);
                 }
 
                 // The duration after which the limit is reset is not defined in GitHub's API docs.
                 // Need to safeguard ourselves from blocking the worker thread for too long.
-                final var untilResetDuration = Duration.between(Instant.now(), rateLimitInfo.requestLimitResetAt());
+                final var untilResetDuration = Duration.between(Instant.now(), requestLimitResetAt);
                 if (untilResetDuration.compareTo(maxRetryDelay) > 0) {
                     LOGGER.warn("""
-                            Primary rate limit of {} requests exhausted. The rate limit will reset at {} (in {}), \
-                            which exceeds the maximum retry duration of {}. Not performing any further retries.""",
-                            rateLimitInfo.requestLimit(), rateLimitInfo.requestLimitResetAt(), untilResetDuration, maxRetryDelay);
+                                    Primary rate limit of {} requests exhausted. The rate limit will reset at {} (in {}), \
+                                    which exceeds the maximum retry duration of {}. Not performing any further retries.""",
+                            requestLimit, requestLimitResetAt, untilResetDuration, maxRetryDelay);
                     yield false;
                 }
 
@@ -152,24 +154,24 @@ final class GitHubHttpRequestRetryStrategy extends DefaultHttpRequestRetryStrate
         // When this is called, retryRequest was already invoked to determine whether
         // a retry should be performed. So we can skip the status code check here.
 
-        final var rateLimitInfo = RateLimitInfo.of(response);
+        final var rateLimitInfo = RateLimitStrategy.of(response);
         if (rateLimitInfo == null) {
             return super.getRetryInterval(response, execCount, context);
         }
 
-        return switch (rateLimitInfo.strategy()) {
-            case RETRY_AFTER -> {
+        return switch (rateLimitInfo) {
+            case RateLimitStrategy.RetryAfter(Duration retryAfter) -> {
                 LOGGER.warn("""
                         Rate limiting detected; GitHub indicates retries to be acceptable after {}; \
-                        Will wait and try again.""", rateLimitInfo.retryAfter());
-                yield TimeValue.ofMilliseconds(rateLimitInfo.retryAfter().toMillis());
+                        Will wait and try again.""", retryAfter);
+                yield TimeValue.ofMilliseconds(retryAfter.toMillis());
             }
-            case LIMIT_RESET -> {
-                final var retryAfter = Duration.between(Instant.now(), rateLimitInfo.requestLimitResetAt());
+            case RateLimitStrategy.LimitReset(var _, long requestLimit, Instant requestLimitResetAt) -> {
+                final var retryAfter = Duration.between(Instant.now(), requestLimitResetAt);
                 LOGGER.warn("""
-                        Primary rate limit of {} requests exhausted. Limit will reset at {}; \
-                        Will wait for {} and try again.""",
-                        rateLimitInfo.requestLimit(), rateLimitInfo.requestLimitResetAt(), retryAfter);
+                                Primary rate limit of {} requests exhausted. Limit will reset at {}; \
+                                Will wait for {} and try again.""",
+                        requestLimit, requestLimitResetAt, retryAfter);
                 yield TimeValue.ofMilliseconds(retryAfter.toMillis());
             }
         };

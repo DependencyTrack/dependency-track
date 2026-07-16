@@ -660,6 +660,7 @@
                                 -XepExcludedPaths:.*/target/generated-(test-)?sources/.*
                                 -Xep:NullAway:${nullaway.severity}
                                 -XepOpt:NullAway:OnlyNullMarked=true
+                                -XepOpt:NullAway:TreatGeneratedAsUnannotated=true
                             </arg>
                         </compilerArgs>
                         <annotationProcessorPaths>

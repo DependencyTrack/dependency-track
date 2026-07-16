@@ -34,15 +34,17 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.util.Set;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * @since 5.0.0
  */
 final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeConfigurable {
 
-    private ConfigRegistry configRegistry;
-    private KeyValueStore kvStore;
-    private ObjectMapper objectMapper;
-    private HttpClient httpClient;
+    private @Nullable ConfigRegistry configRegistry;
+    private @Nullable KeyValueStore kvStore;
+    private @Nullable ObjectMapper objectMapper;
+    private @Nullable HttpClient httpClient;
 
     @Override
     public String extensionName() {
@@ -92,17 +94,23 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
 
     @Override
     public boolean isDataSourceEnabled() {
+        requireNonNull(configRegistry, "configRegistry must not be null");
         return configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class).isEnabled();
     }
 
     @Override
     public VulnDataSource create() {
+        requireNonNull(configRegistry, "configRegistry must not be null");
+        requireNonNull(kvStore, "kvStore must not be null");
+        requireNonNull(objectMapper, "objectMapper must not be null");
+        requireNonNull(httpClient, "httpClient must not be null");
+
         final var config = configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class);
         if (!config.isEnabled()) {
             throw new IllegalStateException("Vulnerability data source is disabled and cannot be created");
         }
 
-        final @Nullable WatermarkManager watermarkManager = config.isIncrementalMirroringEnabled()
+        final WatermarkManager watermarkManager = config.isIncrementalMirroringEnabled()
                 ? new WatermarkManager(config.getEcosystems(), kvStore)
                 : null;
 

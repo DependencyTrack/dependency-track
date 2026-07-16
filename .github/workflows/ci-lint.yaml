@@ -126,6 +126,10 @@ jobs:
         env:
           BASE_REF: origin/${{ github.base_ref }}
         run: make lint-migrations
+      - name: Lint changed dex migrations
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+        run: make lint-dex-migration
 
   openapi-breaking-changes:
     name: OpenAPI Breaking Changes

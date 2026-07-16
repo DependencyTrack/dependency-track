@@ -48,6 +48,7 @@ import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffectedVersions;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.cyclonedx.proto.v1_7.VulnerabilityRating;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import us.springett.parsers.cpe.Cpe;
@@ -67,10 +68,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static io.github.nscuro.versatile.VersUtils.versFromNvdRange;
+import static java.util.Objects.requireNonNull;
 import static org.cyclonedx.proto.v1_7.Classification.CLASSIFICATION_APPLICATION;
 import static org.cyclonedx.proto.v1_7.Classification.CLASSIFICATION_DEVICE;
 import static org.cyclonedx.proto.v1_7.Classification.CLASSIFICATION_NULL;
@@ -128,7 +129,7 @@ final class ModelConverter {
                 .build();
     }
 
-    private static List<CpeMatch> extractCpeMatches(final String cveId, final List<Config> cveConfigs) {
+    private static List<CpeMatch> extractCpeMatches(String cveId, @Nullable List<Config> cveConfigs) {
         if (cveConfigs == null) {
             return Collections.emptyList();
         }
@@ -189,7 +190,7 @@ final class ModelConverter {
                             Collectors.flatMapping(entry -> entry.getValue().stream(), Collectors.toList())));
             if (!cpeMatchesByPart.getOrDefault(Part.APPLICATION, Collections.emptyList()).isEmpty()
                 && !cpeMatchesByPart.getOrDefault(Part.OPERATING_SYSTEM, Collections.emptyList()).isEmpty()) {
-                return cpeMatchesByPart.get(Part.APPLICATION);
+                return requireNonNull(cpeMatchesByPart.get(Part.APPLICATION));
             }
         }
 
@@ -318,17 +319,23 @@ final class ModelConverter {
     }
 
     private static String parseDescription(List<LangString> descriptions) {
-        AtomicReference<String> enDesc = new AtomicReference<>("null");
-
-        descriptions.forEach(desc -> {
+        String enDesc = "null";
+        for (final LangString desc : descriptions) {
             if (desc.getLang().equalsIgnoreCase("en")) {
-                enDesc.set(desc.getValue());
+                final String value = desc.getValue();
+                if (value != null) {
+                    enDesc = value;
+                }
             }
-        });
-        return enDesc.get();
+        }
+        return enDesc;
     }
 
-    private static List<VulnerabilityRating> parseCveImpact(Metrics metrics) {
+    private static List<VulnerabilityRating> parseCveImpact(@Nullable Metrics metrics) {
+        if (metrics == null) {
+            return List.of();
+        }
+
         List<VulnerabilityRating> ratings = new ArrayList<>();
 
         // CVSS V2
@@ -371,7 +378,7 @@ final class ModelConverter {
             baseMetricV31.forEach(baseMetric -> {
                 CvssV3Data cvss = baseMetric.getCvssData();
                 Optional.ofNullable(cvss)
-                        .map(cvss31 -> VulnerabilityRating.newBuilder()
+                        .map(_ -> VulnerabilityRating.newBuilder()
                                 .setScore(Double.parseDouble(NumberFormat.getInstance(Locale.US).format(cvss.getBaseScore())))
                                 .setMethod(ScoreMethod.SCORE_METHOD_CVSSV31)
                                 .setVector(cvss.getVectorString())
@@ -388,7 +395,7 @@ final class ModelConverter {
             baseMetricV4.forEach(baseMetric -> {
                 CvssV4Data cvss = baseMetric.getCvssData();
                 Optional.ofNullable(cvss)
-                        .map(cvss4 -> VulnerabilityRating.newBuilder()
+                        .map(_ -> VulnerabilityRating.newBuilder()
                                 .setScore(Double.parseDouble(NumberFormat.getInstance(Locale.US).format(cvss.getBaseScore())))
                                 .setMethod(ScoreMethod.SCORE_METHOD_CVSSV4)
                                 .setVector(cvss.getVectorString())
@@ -417,7 +424,7 @@ final class ModelConverter {
         return cwes;
     }
 
-    private static List<ExternalReference> parseReferences(List<Reference> references) {
+    private static List<ExternalReference> parseReferences(@Nullable List<Reference> references) {
         List<ExternalReference> externalReferences = new ArrayList<>();
         if (references != null) {
             references.forEach(reference -> externalReferences.add(ExternalReference.newBuilder()
@@ -427,7 +434,7 @@ final class ModelConverter {
         return externalReferences;
     }
 
-    private static Severity mapSeverity(final CvssV3Data.SeverityType severity) {
+    private static Severity mapSeverity(CvssV3Data.@Nullable SeverityType severity) {
         return switch (severity) {
             case CRITICAL -> SEVERITY_CRITICAL;
             case MEDIUM -> SEVERITY_MEDIUM;
@@ -438,7 +445,7 @@ final class ModelConverter {
         };
     }
 
-    public static Severity mapSeverity(String severity) {
+    public static Severity mapSeverity(@Nullable String severity) {
         if (severity == null) {
             return SEVERITY_UNKNOWN;
         }

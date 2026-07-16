@@ -35,6 +35,9 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Mints and caches short-lived GitHub App installation access tokens.
@@ -63,8 +66,8 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
     private final HttpClient httpClient;
     private final Clock clock;
 
-    private String cachedToken;
-    private Instant cachedTokenExpiresAt;
+    private @Nullable String cachedToken;
+    private @Nullable Instant cachedTokenExpiresAt;
 
     GitHubAppTokenProvider(
             final String appId,
@@ -92,10 +95,11 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
 
     @Override
     public synchronized String currentToken() {
-        if (cachedToken == null || !clock.instant().isBefore(cachedTokenExpiresAt.minus(REFRESH_SKEW))) {
+        if (cachedToken == null || cachedTokenExpiresAt == null
+                || !clock.instant().isBefore(cachedTokenExpiresAt.minus(REFRESH_SKEW))) {
             mint();
         }
-        return cachedToken;
+        return requireNonNull(cachedToken);
     }
 
     private void mint() {

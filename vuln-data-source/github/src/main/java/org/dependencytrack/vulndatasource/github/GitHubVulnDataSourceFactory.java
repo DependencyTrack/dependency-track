@@ -30,6 +30,7 @@ import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
+import org.jspecify.annotations.Nullable;
 
 import java.net.ProxySelector;
 import java.net.URI;
@@ -39,16 +40,17 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import static io.github.jeremylong.openvulnerability.client.ghsa.GitHubSecurityAdvisoryClientBuilder.aGitHubSecurityAdvisoryClient;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @since 5.0.0
  */
 final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeConfigurable {
 
-    private ConfigRegistry configRegistry;
-    private KeyValueStore kvStore;
-    private HttpClient httpClient;
-    private ProxySelector proxySelector;
+    private @Nullable ConfigRegistry configRegistry;
+    private @Nullable KeyValueStore kvStore;
+    private @Nullable HttpClient httpClient;
+    private @Nullable ProxySelector proxySelector;
 
     @Override
     public String extensionName() {
@@ -75,11 +77,15 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
 
     @Override
     public boolean isDataSourceEnabled() {
+        requireNonNull(configRegistry, "configRegistry must not be null");
         return configRegistry.getRuntimeConfig(GithubVulnDataSourceConfigV1.class).isEnabled();
     }
 
     @Override
     public VulnDataSource create() {
+        requireNonNull(configRegistry, "configRegistry must not be null");
+        requireNonNull(kvStore, "kvStore must not be null");
+
         final var config = configRegistry.getRuntimeConfig(GithubVulnDataSourceConfigV1.class);
         if (!config.isEnabled()) {
             throw new IllegalStateException("Vulnerability data source is disabled and cannot be created");
@@ -107,6 +113,7 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
     }
 
     private GitHubTokenProvider createTokenProvider(final GithubVulnDataSourceConfigV1 config) {
+        requireNonNull(httpClient, "httpClient must not be null");
         if (config.getApiToken() != null) {
             return new StaticTokenProvider(config.getApiToken());
         }

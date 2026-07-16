@@ -16,26 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
+@NullMarked
 package org.dependencytrack.vulndatasource.osv;
 
-import org.jspecify.annotations.Nullable;
-
-import java.time.Instant;
-
-import static java.util.Objects.requireNonNull;
-
-/**
- * @since 5.0.0
- */
-record WatermarkRecord(String ecosystem, Instant value, @Nullable Long version) {
-
-    WatermarkRecord {
-        requireNonNull(ecosystem, "ecosystem must not be null");
-        requireNonNull(value, "watermark must not be null");
-    }
-
-    WatermarkRecord(final String ecosystem, final Instant value) {
-        this(ecosystem, value, null);
-    }
-
-}
+import org.jspecify.annotations.NullMarked;

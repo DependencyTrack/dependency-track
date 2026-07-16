@@ -59,7 +59,7 @@ public final class MockVulnAnalyzerPlugin implements Plugin {
         }
 
         @Override
-        public Bom analyze(Bom bom) {
+        public @NonNull Bom analyze(@NonNull Bom bom) {
             return analyzeFn.apply(bom);
         }
     }
@@ -89,7 +89,7 @@ public final class MockVulnAnalyzerPlugin implements Plugin {
         }
 
         @Override
-        public VulnAnalyzer create() {
+        public @NonNull VulnAnalyzer create() {
             return new MockVulnAnalyzer(analyzeFn);
         }
 

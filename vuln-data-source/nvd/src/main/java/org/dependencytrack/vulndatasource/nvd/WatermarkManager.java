@@ -39,9 +39,9 @@ final class WatermarkManager {
     private static final String FEED_DIGEST_KEY_PREFIX = "feed-digest:";
 
     private final KeyValueStore kvStore;
-    private Instant committedWatermark;
-    private Instant pendingWatermark;
-    private Long committedWatermarkVersion;
+    private @Nullable Instant committedWatermark;
+    private @Nullable Instant pendingWatermark;
+    private @Nullable Long committedWatermarkVersion;
     private final Map<String, String> committedFeedDigests;
     private final Map<String, Long> committedFeedDigestVersions;
     private final Map<String, String> pendingFeedDigests;
@@ -86,7 +86,7 @@ final class WatermarkManager {
         this.pendingFeedDigests = new HashMap<>();
     }
 
-    Instant getWatermark() {
+    @Nullable Instant getWatermark() {
         return committedWatermark;
     }
 
@@ -131,7 +131,7 @@ final class WatermarkManager {
         pendingFeedDigests.clear();
     }
 
-    void maybeAdvance(final Instant watermark) {
+    void maybeAdvance(final @Nullable Instant watermark) {
         if (watermark == null) {
             return;
         }

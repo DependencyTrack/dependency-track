@@ -19,6 +19,7 @@
 package org.dependencytrack.vulndatasource.osv;
 
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.time.Instant;
@@ -49,7 +50,7 @@ final class WatermarkManager {
         this.committedRecordByEcosystem = new HashMap<>(recordByEcosystem);
     }
 
-    Instant getWatermark(final String ecosystem) {
+    @Nullable Instant getWatermark(String ecosystem) {
         final WatermarkRecord record = committedRecordByEcosystem.get(ecosystem);
         return record != null ? record.value() : null;
     }

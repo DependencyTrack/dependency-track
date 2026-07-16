@@ -123,7 +123,7 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
                 if (vulnAnalyzerFactory.isEnabled()) {
                     LOGGER.debug("Analyzer is enabled");
                     requirementsByAnalyzer
-                            .computeIfAbsent(analyzerName, k -> new HashSet<>())
+                            .computeIfAbsent(analyzerName, _ -> new HashSet<>())
                             .addAll(vulnAnalyzerFactory.analyzerRequirements());
                 } else {
                     LOGGER.debug("Analyzer is disabled");
@@ -159,13 +159,18 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
                                 final String propertyName = rowView.getColumn("propertyname", String.class);
                                 final String propertyValue = rowView.getColumn("propertyvalue", String.class);
 
-                                map.computeIfAbsent(componentId, k -> new ArrayList<>())
-                                        .add(Property.newBuilder()
+                                final var propertyBuilder =
+                                        Property.newBuilder()
                                                 .setName(groupName != null
                                                         ? "%s:%s".formatted(groupName, propertyName)
-                                                        : propertyName)
-                                                .setValue(propertyValue)
-                                                .build());
+                                                        : propertyName);
+                                if (propertyValue != null) {
+                                    propertyBuilder.setValue(propertyValue);
+                                }
+
+                                map
+                                        .computeIfAbsent(componentId, _ -> new ArrayList<>())
+                                        .add(propertyBuilder.build());
                                 return map;
                             }));
         } else {
@@ -195,7 +200,7 @@ public final class PrepareVulnAnalysisActivity implements Activity<PrepareVulnAn
             return query
                     .bind("projectUuid", projectUuid)
                     .define("requirements", requirements)
-                    .map((rs, stmtCtx) -> {
+                    .map((rs, _) -> {
                         final long componentId = rs.getLong("id");
 
                         final var componentBuilder = Component.newBuilder()

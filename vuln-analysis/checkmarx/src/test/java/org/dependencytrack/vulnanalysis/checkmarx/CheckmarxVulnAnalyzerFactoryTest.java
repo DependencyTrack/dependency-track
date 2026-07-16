@@ -18,16 +18,13 @@
  */
 package org.dependencytrack.vulnanalysis.checkmarx;
 
-import org.jspecify.annotations.Nullable;
+import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
+import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 
-import java.util.List;
+class CheckmarxVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnAnalyzer, CheckmarxVulnAnalyzerFactory> {
 
-/**
- * Represents the response from Checkmarx vulnerabilities API.
- *
- * @since 5.0.0
- */
-public record CheckmarxVulnerabilitiesResponse(
-        @Nullable List<CheckmarxVulnerability> data) {
+    CheckmarxVulnAnalyzerFactoryTest() {
+        super(CheckmarxVulnAnalyzerFactory.class);
+    }
+
 }
-

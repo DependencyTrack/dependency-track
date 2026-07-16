@@ -36,7 +36,7 @@ import java.util.EnumSet;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static java.util.Objects.requireNonNull;
 
-final class CheckmarxVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfigurable {
+public final class CheckmarxVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfigurable {
 
     private @Nullable ConfigRegistry configRegistry;
     private @Nullable CacheManager cacheManager;

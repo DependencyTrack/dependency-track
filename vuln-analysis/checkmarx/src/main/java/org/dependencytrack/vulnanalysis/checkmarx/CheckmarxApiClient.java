@@ -72,12 +72,15 @@ final class CheckmarxApiClient {
      * @param purls the package URLs to analyze
      * @return vulnerabilities response from Checkmarx API
      */
-    CheckmarxVulnerabilitiesResponse fetchVulnerabilities(Collection<String> purls) throws IOException, InterruptedException {
+    CheckmarxApiResponse fetchVulnerabilities(Collection<String> purls) throws IOException, InterruptedException {
         if (purls.isEmpty()) {
-            return new CheckmarxVulnerabilitiesResponse(List.of());
+            return new CheckmarxApiResponse(List.of());
         }
 
         LOGGER.debug("Fetching Checkmarx vulnerabilities for {} PURLs", purls.size());
+
+        final URI requestUrl = apiBaseUrl.resolve("/api/sca/packages/vulnerabilities"
+                                + "?IncludeRiskDetails=true" + "&IncludeVersionDetails=true" + "&IncludeVersionRemediation=true");
 
         // Ensure valid access token (will be cached if still valid)
         final String accessToken = tokenManager.getAccessToken(authApiBaseUrl, orgId, refreshToken);
@@ -85,7 +88,7 @@ final class CheckmarxApiClient {
         final String requestBody = objectMapper.writeValueAsString(new VulnerabilityRequest(new ArrayList<>(purls)));
 
         final var request = HttpRequest.newBuilder()
-                .uri(apiBaseUrl.resolve("/api/sca/packages/vulnerabilities"))
+                .uri(requestUrl)
                 .header("Authorization", "Bearer " + accessToken)
                 .header("Content-Type", "application/json")
                 .header("Accept", "application/json")
@@ -97,14 +100,14 @@ final class CheckmarxApiClient {
 
         try (final InputStream body = response.body()) {
             if (response.statusCode() == 200) {
-                return objectMapper.readValue(body, CheckmarxVulnerabilitiesResponse.class);
+                return objectMapper.readValue(body, CheckmarxApiResponse.class);
             }
 
             body.transferTo(OutputStream.nullOutputStream());
 
             if (response.statusCode() == 404) {
                 LOGGER.debug("No vulnerabilities found for provided PURLs");
-                return new CheckmarxVulnerabilitiesResponse(List.of());
+                return new CheckmarxApiResponse(List.of());
             }
 
             throw new IOException("Checkmarx API request failed with status " + response.statusCode());

@@ -20,18 +20,14 @@ package org.dependencytrack.vulnanalysis.checkmarx;
 
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
+
 /**
- * Represents a vulnerability from Checkmarx API response.
+ * Represents the response from Checkmarx vulnerabilities API.
  *
  * @since 5.0.0
  */
-public record CheckmarxVulnerability(
-        String id,
-        @Nullable String cveName,
-        @Nullable String purl,
-        @Nullable String severity,
-        @Nullable String description,
-        @Nullable String score,
-        @Nullable String recommendation) {
+public record CheckmarxApiResponse(
+        @Nullable List<CheckmarxDataObject> data) {
 }
 

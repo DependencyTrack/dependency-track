@@ -79,7 +79,7 @@ final class CheckmarxVulnAnalyzer implements VulnAnalyzer {
             return Bom.getDefaultInstance();
         }
 
-        final var vulnerabilitiesByPurl = new HashMap<String, List<CheckmarxVulnerability>>(bomRefsByPurl.size());
+        final var vulnerabilitiesByPurl = new HashMap<String, List<CheckmarxDataObject>>(bomRefsByPurl.size());
         final var purlsToAnalyze = new LinkedHashSet<>(bomRefsByPurl.keySet());
 
         for (final var purlBatch : (Iterable<List<String>>) () -> bomRefsByPurl.keySet().stream()
@@ -103,8 +103,8 @@ final class CheckmarxVulnAnalyzer implements VulnAnalyzer {
                 }
 
                 try {
-                    final CheckmarxVulnerability[] vulns = objectMapper.readValue(cachedBytes, CheckmarxVulnerability[].class);
-                    vulnerabilitiesByPurl.put(purl, List.of(vulns));
+                    final CheckmarxDataObject[] cxDataObjects = objectMapper.readValue(cachedBytes, CheckmarxDataObject[].class);
+                    vulnerabilitiesByPurl.put(purl, List.of(cxDataObjects));
                 } catch (IOException e) {
                     LOGGER.warn("Failed to deserialize cached results for PURL '{}'; Will re-fetch", purl, e);
                     purlsToAnalyze.add(purl);
@@ -112,9 +112,87 @@ final class CheckmarxVulnAnalyzer implements VulnAnalyzer {
             }
         }
 
-        vulnerabilitiesByPurl.putAll(fetchAndCacheVulnerabilities(purlsToAnalyze));
+        vulnerabilitiesByPurl.putAll(analyzePurls(purlsToAnalyze, bomRefsByPurl));
 
         return assembleVdr(vulnerabilitiesByPurl, bomRefsByPurl);
+    }
+
+    private Map<String,? extends List<CheckmarxDataObject>> analyzePurls(
+            Collection<String> purls,
+            Map<String, Set<String>> bomRefsByPurl) throws InterruptedException {
+        if (purls.isEmpty()) {
+            return Map.of();
+        }
+
+        final var vulnerabilitiesByPurl = new HashMap<String, List<CheckmarxDataObject>>(purls.size());
+        for (final var purlBatch : (Iterable<List<String>>) () -> purls.stream()
+                .gather(Gatherers.windowFixed(REQUEST_BATCH_SIZE))
+                .iterator()) {
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Interrupted before all components could be analyzed");
+            }
+
+            vulnerabilitiesByPurl.putAll(analyzePurlBatch(purlBatch, bomRefsByPurl));
+        }
+
+        return vulnerabilitiesByPurl;
+    }
+
+    private Map<String,? extends List<CheckmarxDataObject>> analyzePurlBatch(
+            Collection<String> purlBatch,
+            Map<String, Set<String>> bomRefsByPurl) throws InterruptedException {
+        if (purlBatch.isEmpty()) {
+            return Map.of();
+        }
+
+        LOGGER.debug("Fetching vulnerabilities for {} PURLs from Checkmarx", purlBatch.size());
+
+        final CheckmarxApiResponse  response;
+        try {
+            response = apiClient.fetchVulnerabilities(purlBatch);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to fetch Checkmarx vulnerabilities", e);
+        }
+
+        final var vulnerabilitiesByPurl = new HashMap<String, List<CheckmarxDataObject>>();
+        final var entriesToCache = new HashMap<String, byte @Nullable []>(purlBatch.size());
+
+        if (response.data() != null && !response.data().isEmpty()) {
+            for (final CheckmarxDataObject cxDataObject : response.data()) {
+                final String vulnPurl = cxDataObject.pkg().purl();
+                if (vulnPurl == null) {
+                    LOGGER.warn("Unable to extract PURL for package '{}:{}'; Skipping", cxDataObject.pkg().name(), cxDataObject.pkg().version());
+                    continue;
+                }
+
+                final String vulnPurlLower = vulnPurl.toLowerCase();
+                if (!bomRefsByPurl.containsKey(vulnPurlLower)) {
+                    LOGGER.warn("Received vulnerability data for PURL '{}', but no component with this PURL was submitted", vulnPurl);
+                    continue;
+                }
+
+                vulnerabilitiesByPurl
+                        .computeIfAbsent(vulnPurlLower, _ -> new ArrayList<>())
+                        .add(cxDataObject);
+            }
+        }
+
+        for (final var entry : vulnerabilitiesByPurl.entrySet()) {
+            try {
+                entriesToCache.put(entry.getKey(), objectMapper.writeValueAsBytes(entry.getValue()));
+            } catch (IOException e) {
+                LOGGER.warn("Failed to serialize data for PURL '{}'; Skipping cache", entry.getKey(), e);
+            }
+        }
+
+        for (final String purl : purlBatch) {
+            if (!vulnerabilitiesByPurl.containsKey(purl)) {
+                entriesToCache.put(purl, null);
+            }
+        }
+
+        resultsCache.putMany(entriesToCache);
+        return vulnerabilitiesByPurl;
     }
 
     private Map<String, Set<String>> collectAnalyzablePurls(Bom bom) {
@@ -145,64 +223,14 @@ final class CheckmarxVulnAnalyzer implements VulnAnalyzer {
         return bomRefsByPurl;
     }
 
-    private Map<String, List<CheckmarxVulnerability>> fetchAndCacheVulnerabilities(
-            Collection<String> purls) throws InterruptedException {
-        if (purls.isEmpty()) {
-            return Map.of();
-        }
-
-        LOGGER.debug("Fetching vulnerabilities for {} PURLs from Checkmarx", purls.size());
-
-        final var entriesToCache = new HashMap<String, byte @Nullable []>(purls.size());
-        final var vulnerabilitiesByPurl = new HashMap<String, List<CheckmarxVulnerability>>();
-
-        try {
-            final CheckmarxVulnerabilitiesResponse response = apiClient.fetchVulnerabilities(purls);
-
-            if (response.data() != null && !response.data().isEmpty()) {
-                for (final CheckmarxVulnerability vuln : response.data()) {
-                    final String vulnPurl = vuln.purl();
-                    if (vulnPurl == null) {
-                        LOGGER.warn("Unable to extract PURL from vulnerability '{}'; Skipping", vuln.id());
-                        continue;
-                    }
-
-                    final String vulnPurlLower = vulnPurl.toLowerCase();
-                    vulnerabilitiesByPurl
-                            .computeIfAbsent(vulnPurlLower, _ -> new ArrayList<>())
-                            .add(vuln);
-                }
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException("Failed to fetch vulnerabilities from Checkmarx", e);
-        }
-
-        for (final var entry : vulnerabilitiesByPurl.entrySet()) {
-            try {
-                entriesToCache.put(entry.getKey(), objectMapper.writeValueAsBytes(entry.getValue()));
-            } catch (IOException e) {
-                LOGGER.warn("Failed to serialize results for PURL '{}'; Skipping cache", entry.getKey(), e);
-            }
-        }
-
-        for (final String purl : purls) {
-            if (!vulnerabilitiesByPurl.containsKey(purl)) {
-                entriesToCache.put(purl, null);
-            }
-        }
-
-        resultsCache.putMany(entriesToCache);
-        return vulnerabilitiesByPurl;
-    }
-
     private Bom assembleVdr(
-            Map<String, List<CheckmarxVulnerability>> vulnerabilitiesByPurl,
+            Map<String, List<CheckmarxDataObject>> vulnerabilitiesByPurl,
             Map<String, Set<String>> bomRefsByPurl) {
         final var vulnBuilderByVulnId = new HashMap<String, Vulnerability.Builder>();
 
         for (final var entry : vulnerabilitiesByPurl.entrySet()) {
             final String purl = entry.getKey();
-            final List<CheckmarxVulnerability> vulns = entry.getValue();
+            final List<CheckmarxDataObject> cxDataObjects = entry.getValue();
 
             final Set<String> bomRefs = bomRefsByPurl.get(purl);
             if (bomRefs == null) {
@@ -212,18 +240,20 @@ final class CheckmarxVulnAnalyzer implements VulnAnalyzer {
                 continue;
             }
 
-            for (final CheckmarxVulnerability vuln : vulns) {
-                final Vulnerability.Builder vulnBuilder =
-                        vulnBuilderByVulnId.computeIfAbsent(
-                                vuln.id(),
-                                _ -> CheckmarxModelConverter.convert(vuln, aliasSyncEnabled));
+            for (final CheckmarxDataObject cxObject : cxDataObjects) {
+                cxObject.vulnerabilities().forEach(cxVuln -> {
+                    final Vulnerability.Builder vulnBuilder =
+                            vulnBuilderByVulnId.computeIfAbsent(
+                                    cxVuln.cxId(),
+                                    _ -> CheckmarxModelConverter.convert(cxVuln, cxObject.pkg().remediation(), aliasSyncEnabled));
 
-                for (final String bomRef : bomRefs) {
-                    vulnBuilder.addAffects(
-                            VulnerabilityAffects.newBuilder()
-                                    .setRef(bomRef)
-                                    .build());
-                }
+                    for (final String bomRef : bomRefs) {
+                        vulnBuilder.addAffects(
+                                VulnerabilityAffects.newBuilder()
+                                        .setRef(bomRef)
+                                        .build());
+                    }
+                });
             }
         }
 
@@ -234,5 +264,4 @@ final class CheckmarxVulnAnalyzer implements VulnAnalyzer {
                                 .toList())
                 .build();
     }
-
 }

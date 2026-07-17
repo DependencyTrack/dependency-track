@@ -77,7 +77,7 @@
         <lib.bcrypt.version>0.4</lib.bcrypt.version>
         <lib.h2.version>2.4.240</lib.h2.version>
         <lib.logstash-logback-encoder.version>8.1</lib.logstash-logback-encoder.version>
-        <lib.nimbus-oauth2-oidc-sdk.version>11.37.2</lib.nimbus-oauth2-oidc-sdk.version>
+        <lib.nimbus-oauth2-oidc-sdk.version>11.38</lib.nimbus-oauth2-oidc-sdk.version>
         <lib.owasp.security-logging.version>1.1.7</lib.owasp.security-logging.version>
         <lib.parsson.version>1.1.9</lib.parsson.version>
         <!-- Unit test libraries -->

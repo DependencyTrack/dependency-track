@@ -165,6 +165,7 @@ public class DexEngineConfig {
 
         private Duration runRetentionDuration = Duration.ofDays(1);
         private int runDeletionBatchSize = 1000;
+        private int runDeletionMaxBatchesPerCycle = 100;
         private Duration workerInitialDelay = Duration.ofMinutes(1);
         private Duration workerInterval = Duration.ofMinutes(30);
 
@@ -194,6 +195,17 @@ public class DexEngineConfig {
         }
 
         /**
+         * @return The maximum number of deletion batches to execute per worker cycle.
+         */
+        public int runDeletionMaxBatchesPerCycle() {
+            return runDeletionMaxBatchesPerCycle;
+        }
+
+        public void setRunDeletionMaxBatchesPerCycle(int runDeletionMaxBatchesPerCycle) {
+            this.runDeletionMaxBatchesPerCycle = runDeletionMaxBatchesPerCycle;
+        }
+
+        /**
          * @return Initial delay before the maintenance worker first runs.
          */
         public Duration workerInitialDelay() {
@@ -220,6 +232,7 @@ public class DexEngineConfig {
             return new StringJoiner(", ", getClass().getSimpleName() + "[", "]")
                     .add("runRetentionDuration=" + runRetentionDuration)
                     .add("runDeletionBatchSize=" + runDeletionBatchSize)
+                    .add("runDeletionMaxBatchesPerCycle=" + runDeletionMaxBatchesPerCycle)
                     .add("workerInitialDelay=" + workerInitialDelay)
                     .add("workerInterval=" + workerInterval)
                     .toString();

@@ -229,8 +229,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                 Duration.ofMinutes(1));
 
         final Duration policyEvaluationMaxDuration = Duration.ofMillis(
-                config.getOptionalValue(ConfigKeys.POLICY_EVALUATION_MAX_DURATION_MS, long.class)
-                        .orElse(3_600_000L));
+                config.getValue(ConfigKeys.POLICY_EVALUATION_MAX_DURATION_MS, long.class));
 
         engine.registerActivity(
                 new IdentifyInternalComponentsActivity(),

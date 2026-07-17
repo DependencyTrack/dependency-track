@@ -350,6 +350,7 @@ final class DexEngineImpl implements DexEngine {
                     leaderElection::isLeader,
                     config.maintenance().runRetentionDuration(),
                     config.maintenance().runDeletionBatchSize(),
+                    config.maintenance().runDeletionMaxBatchesPerCycle(),
                     config.maintenance().workerInitialDelay(),
                     config.maintenance().workerInterval());
             maintenanceWorker.start();

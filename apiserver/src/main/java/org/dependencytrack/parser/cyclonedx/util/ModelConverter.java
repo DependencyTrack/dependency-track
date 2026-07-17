@@ -930,8 +930,14 @@ public class ModelConverter {
     public static org.cyclonedx.model.vulnerability.Vulnerability convert(final QueryManager qm, final CycloneDXExporter.Variant variant,
                                                                           final Finding finding) {
         final Component component = qm.getObjectByUuid(Component.class, finding.getComponent().get("uuid").toString());
+        if (component == null) {
+            return null;
+        }
         final Project project = component.getProject();
         final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, finding.getVulnerability().get("uuid").toString());
+        if (vulnerability == null) {
+            return null;
+        }
 
         final org.cyclonedx.model.vulnerability.Vulnerability cdxVulnerability = new org.cyclonedx.model.vulnerability.Vulnerability();
         cdxVulnerability.setBomRef(vulnerability.getUuid().toString());
@@ -1037,10 +1043,7 @@ public class ModelConverter {
         }
 
         if (CycloneDXExporter.Variant.VEX == variant || CycloneDXExporter.Variant.VDR == variant) {
-            final Analysis analysis = qm.getAnalysis(
-                    qm.getObjectByUuid(Component.class, component.getUuid()),
-                    qm.getObjectByUuid(Vulnerability.class, vulnerability.getUuid())
-            );
+            final Analysis analysis = qm.getAnalysis(component, vulnerability);
             if (analysis != null) {
                 final org.cyclonedx.model.vulnerability.Vulnerability.Analysis cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
                 if (analysis.getAnalysisResponse() != null) {
@@ -1291,6 +1294,7 @@ public class ModelConverter {
         final var vulnerabilitiesSeen = new HashSet<org.cyclonedx.model.vulnerability.Vulnerability>();
         return findings.stream()
                 .map(finding -> convert(qm, variant, finding))
+                .filter(Objects::nonNull)
                 .filter(vulnerabilitiesSeen::add)
                 .toList();
     }

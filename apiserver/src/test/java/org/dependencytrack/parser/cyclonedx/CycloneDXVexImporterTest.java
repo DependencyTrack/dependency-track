@@ -20,7 +20,9 @@ package org.dependencytrack.parser.cyclonedx;
 
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
+import org.cyclonedx.Version;
 import org.cyclonedx.exception.ParseException;
+import org.cyclonedx.model.Bom;
 import org.cyclonedx.parsers.BomParserFactory;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Analysis;
@@ -32,6 +34,7 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.junit.jupiter.api.Test;
 
 import javax.jdo.Query;
@@ -202,6 +205,63 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         Assertions.assertThat(analysis.getAnalysisComments())
                 .extracting(AnalysisComment::getComment)
                 .containsExactly("Vendor Response: NOT_SET → UPDATE");
+    }
+
+    /**
+     * Round-trip regression for the VEX bom-ref fix: when several components share a vulnerability
+     * but only one is analysed, an exported-then-reimported VEX must apply that analysis to the
+     * analysed component only. Before the fix every {@code affects[].ref} pointed at the project
+     * root, which the importer broadcast to every vulnerable component.
+     */
+    @Test
+    public void shouldApplyExportedVexAnalysisOnlyToAnalyzedComponent() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var componentA = new Component();
+        componentA.setProject(project);
+        componentA.setName("acme-lib-a");
+        componentA.setVersion("1.0.0");
+        qm.persist(componentA);
+
+        final var componentB = new Component();
+        componentB.setProject(project);
+        componentB.setName("acme-lib-b");
+        componentB.setVersion("1.0.0");
+        qm.persist(componentB);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("INT-001");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.HIGH);
+        vuln.setComponents(List.of(componentA, componentB));
+        qm.persist(vuln);
+        qm.addVulnerability(vuln, componentA, "none");
+        qm.addVulnerability(vuln, componentB, "none");
+
+        // Analyse componentA only.
+        qm.makeAnalysis(new MakeAnalysisCommand(componentA, vuln)
+                .withState(AnalysisState.RESOLVED)
+                .withResponse(AnalysisResponse.UPDATE)
+                .withSuppress(true));
+
+        // Export a VEX for the project, then re-import it into the same project.
+        final var exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VEX, qm);
+        final byte[] vexBytes = exporter
+                .export(exporter.create(project), CycloneDXExporter.Format.JSON, Version.VERSION_15)
+                .getBytes(StandardCharsets.UTF_8);
+        final Bom vex = BomParserFactory.createParser(vexBytes).parse(vexBytes);
+        vexImporter.applyVex(qm, vex, project);
+
+        // componentA keeps its analysis; componentB must never receive one.
+        final Analysis analysisA = qm.getAnalysis(componentA, vuln);
+        Assertions.assertThat(analysisA).isNotNull();
+        Assertions.assertThat(analysisA.getAnalysisState()).isEqualTo(AnalysisState.RESOLVED);
+
+        final Analysis analysisB = qm.getAnalysis(componentB, vuln);
+        Assertions.assertThat(analysisB).isNull();
     }
 
     private static final String OWASP_VECTOR =

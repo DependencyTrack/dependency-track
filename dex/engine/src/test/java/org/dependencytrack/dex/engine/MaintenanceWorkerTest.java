@@ -75,7 +75,8 @@ class MaintenanceWorkerTest {
                 jdbi,
                 /* leadershipSupplier */ () -> true,
                 /* runRetentionDuration */ Duration.ofDays(3),
-                /* runRetentionBatchSize */ 10,
+                /* runDeletionBatchSize */ 10,
+                /* runDeletionMaxBatchesPerCycle */ 100,
                 /* initialDelay */ Duration.ZERO,
                 /* interval */ Duration.ofMillis(100));
 

@@ -486,6 +486,8 @@ public final class DexEngineInitializer implements ServletContextListener {
                 .ifPresent(engineConfig.maintenance()::setRunRetentionDuration);
         config.getOptionalValue("dt.dex-engine.maintenance.run-deletion-batch-size", int.class)
                 .ifPresent(engineConfig.maintenance()::setRunDeletionBatchSize);
+        config.getOptionalValue("dt.dex-engine.maintenance.run-deletion-max-batches-per-cycle", int.class)
+                .ifPresent(engineConfig.maintenance()::setRunDeletionMaxBatchesPerCycle);
 
         return engineConfig;
     }

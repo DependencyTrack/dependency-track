@@ -71,6 +71,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.collections4.MultiMapUtils.emptyMultiValuedMap;
 import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationNotification;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
@@ -114,7 +115,9 @@ public final class CelPolicyEngine {
         this.scriptHost = scriptHost;
     }
 
-    public void evaluateProject(UUID uuid) {
+    public void evaluateProject(UUID uuid, Runnable heartbeat) {
+        requireNonNull(heartbeat, "heartbeat must not be null");
+
         // TODO: Should this entire procedure run in a single DB transaction?
         //   Would be better for atomicity, but could block DB connections for prolonged
         //   period of time for larger projects with many violations.
@@ -263,6 +266,7 @@ public final class CelPolicyEngine {
                 protoVulns = List.of();
             }
 
+            heartbeat.run();
             evaluateComponentAgainstPolicies(
                     policiesWithScripts,
                     componentId,

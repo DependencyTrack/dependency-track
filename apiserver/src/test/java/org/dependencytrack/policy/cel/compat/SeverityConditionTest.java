@@ -85,7 +85,7 @@ public class SeverityConditionTest extends PersistenceCapableTest {
         qm.addVulnerability(vulnA, component, "internal");
         qm.addVulnerability(vulnB, component, "internal");
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         if (expectViolation) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
         } else {
@@ -136,7 +136,7 @@ public class SeverityConditionTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 

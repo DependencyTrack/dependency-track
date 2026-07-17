@@ -67,7 +67,7 @@ public class CpeConditionTest extends PersistenceCapableTest {
         component.setCpe(componentCpe);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         if (expectViolation) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
         } else {

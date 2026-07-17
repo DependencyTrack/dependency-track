@@ -67,6 +67,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -1241,6 +1242,87 @@ class DexEngineImplTest {
         await("Displaced execution to observe the lost lock")
                 .untilAsserted(() -> assertThat(lockLostObserved).isTrue());
         assertThat(invocations.get()).isGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void shouldReclaimLongRunningActivityWithoutHeartbeatKeepingAttemptAtOne() {
+        // Reproduces multi-worker thrash when an activity outlives its lock timeout
+        // without renewing the claim: another worker reclaims the same task attempt
+        // while the displaced execution eventually loses the lock.
+        final var invocations = new AtomicInteger();
+        final var lockLostObserved = new AtomicBoolean();
+        final var successorStarted = new CountDownLatch(1);
+
+        registerWorkflow("test", (ctx, _) -> {
+            ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
+            return null;
+        });
+
+        engine.registerActivityInternal(
+                "test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(1),
+                (ctx, _) -> {
+                    final int invocation = invocations.incrementAndGet();
+                    if (invocation == 1) {
+                        assertThat(successorStarted.await(30, TimeUnit.SECONDS)).isTrue();
+                        try {
+                            ctx.maybeHeartbeat();
+                        } catch (TaskLockLostException e) {
+                            lockLostObserved.set(true);
+                            throw e;
+                        }
+                        return null;
+                    }
+
+                    successorStarted.countDown();
+                    return null;
+                });
+        registerWorkflowWorker("workflow-worker", 1);
+        registerTaskWorker("activity-worker", 2);
+        engine.start();
+
+        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+        awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        await("Displaced execution to observe the lost lock")
+                .untilAsserted(() -> assertThat(lockLostObserved).isTrue());
+        // Same activity attempt is reclaimed by another worker rather than retried
+        // as a new attempt after terminal failure.
+        assertThat(invocations.get()).isGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void shouldKeepSingleExecutionWhenLongRunningActivityHeartbeats() {
+        final var invocations = new AtomicInteger();
+        final var heartbeatsEmitted = new AtomicInteger();
+
+        registerWorkflow("test", (ctx, _) -> {
+            ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
+            return null;
+        });
+
+        engine.registerActivityInternal(
+                "test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(1),
+                (ctx, _) -> {
+                    invocations.incrementAndGet();
+                    // Outlive the initial lock window while renewing via heartbeats.
+                    final Instant end = Instant.now().plusSeconds(3);
+                    while (Instant.now().isBefore(end)) {
+                        if (ctx.maybeHeartbeat()) {
+                            heartbeatsEmitted.incrementAndGet();
+                        }
+                        Thread.sleep(200);
+                    }
+                    return null;
+                });
+        registerWorkflowWorker("workflow-worker", 1);
+        registerTaskWorker("activity-worker", 2);
+        engine.start();
+
+        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+        awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        assertThat(invocations.get()).isEqualTo(1);
+        assertThat(heartbeatsEmitted.get()).isPositive();
     }
 
     @Test

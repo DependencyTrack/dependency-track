@@ -73,6 +73,8 @@ public final class ConfigKeys {
     public static final String VULN_POLICY_BUNDLE_AUTH_PASSWORD = "dt.vuln-policy-bundle.auth.password";
     public static final String VULN_POLICY_BUNDLE_AUTH_BEARER_TOKEN = "dt.vuln-policy-bundle.auth.bearer-token";
 
+    public static final String POLICY_EVALUATION_MAX_DURATION_MS = "dt.policy.evaluation.max-duration-ms";
+
     public static final String CACHE_PROVIDER = "dt.cache.provider";
     public static final String FILE_STORAGE_PROVIDER = "dt.file-storage.provider";
     public static final String SECRET_MANAGEMENT_PROVIDER = "dt.secret-management.provider";

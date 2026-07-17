@@ -79,7 +79,7 @@ public class PackageUrlConditionTest extends PersistenceCapableTest {
         component.setPurl(new PackageURL(componentPurl));
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         if (expectViolation) {
             List<PolicyViolation> violations = qm.getAllPolicyViolations(component);
             assertThat(violations).hasSize(1);

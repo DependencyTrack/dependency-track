@@ -417,7 +417,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 .replace("__LICENSE_GROUP_UUID__", licenseGroup.getUuid().toString())
                 .replace("__VULN_UUID__", vuln.getUuid().toString()), PolicyViolation.Type.OPERATIONAL);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(project)).hasSize(1);
     }
 
@@ -440,7 +440,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(2);
     }
 
@@ -482,7 +482,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                             Instant.now())));
         });
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(component).get(0).getPolicyCondition().getValue()).isEqualTo("""
                 component.compare_age("NUMERIC_LESS_THAN", "P666D")
@@ -531,7 +531,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         project.setDirectDependencies("[{\"uuid\":\"" + component.getUuid() + "\"}]");
         qm.persist(project);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(component).get(0).getPolicyCondition().getValue()).isEqualTo("""
                 component.version_distance(">=", v1.VersionDistance{ major: \"0\", minor: \"1\", patch: \"?\" })
@@ -576,7 +576,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                             Instant.now())));
         });
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(component).get(0).getPolicyCondition().getValue()).isEqualTo("""
                 component.compare_age("<", "P666D")
@@ -621,7 +621,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         });
 
         final var policyEngine = new CelPolicyEngine();
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -663,7 +663,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         });
 
         final var policyEngine = new CelPolicyEngine();
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 
@@ -706,7 +706,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         });
 
         final var policyEngine = new CelPolicyEngine();
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
 
         // This matches because the default value of Timestamp is 1970-01-01T00:00:00Z.
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -751,7 +751,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         });
 
         final var policyEngine = new CelPolicyEngine();
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 
@@ -840,7 +840,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
             });
         }
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
 
         if (expectViolation) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -868,7 +868,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -891,7 +891,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 
@@ -914,7 +914,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(2);
     }
 
@@ -937,7 +937,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 
@@ -960,7 +960,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 
@@ -994,8 +994,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         policyB.setProjects(List.of(projectB));
         qm.persist(policyB);
 
-        new CelPolicyEngine().evaluateProject(projectA.getUuid());
-        new CelPolicyEngine().evaluateProject(projectB.getUuid());
+        new CelPolicyEngine().evaluateProject(projectA.getUuid(), () -> {});
+        new CelPolicyEngine().evaluateProject(projectB.getUuid(), () -> {});
 
         assertThat(qm.getAllPolicyViolations(projectA)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(projectB)).hasSize(2);
@@ -1037,8 +1037,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         componentB.setName("acme-lib");
         qm.persist(componentB);
 
-        new CelPolicyEngine().evaluateProject(projectA.getUuid());
-        new CelPolicyEngine().evaluateProject(projectB.getUuid());
+        new CelPolicyEngine().evaluateProject(projectA.getUuid(), () -> {});
+        new CelPolicyEngine().evaluateProject(projectB.getUuid(), () -> {});
 
         assertThat(qm.getAllPolicyViolations(projectA)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(projectB)).hasSize(2);
@@ -1077,8 +1077,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         qm.bind(projectB, List.of(tag));
 
-        new CelPolicyEngine().evaluateProject(projectA.getUuid());
-        new CelPolicyEngine().evaluateProject(projectB.getUuid());
+        new CelPolicyEngine().evaluateProject(projectA.getUuid(), () -> {});
+        new CelPolicyEngine().evaluateProject(projectB.getUuid(), () -> {});
 
         assertThat(qm.getAllPolicyViolations(projectA)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(projectB)).hasSize(2);
@@ -1104,7 +1104,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid()));
+        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {}));
         assertThat(qm.getAllPolicyViolations(component)).satisfiesExactly(violation ->
                 assertThat(violation.getPolicyCondition()).isEqualTo(validCondition)
         );
@@ -1130,7 +1130,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid()));
+        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {}));
         assertThat(qm.getAllPolicyViolations(component)).satisfiesExactly(violation ->
                 assertThat(violation.getPolicyCondition()).isEqualTo(validCondition)
         );
@@ -1164,7 +1164,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         final var policyEngine = new CelPolicyEngine();
 
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentB)).hasSize(1);
     }
@@ -1199,7 +1199,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         final var policyEngine = new CelPolicyEngine();
 
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentB)).hasSize(1);
     }
@@ -1230,7 +1230,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(project);
         qm.persist(componentA);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
 
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).hasSize(1);
@@ -1262,7 +1262,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(project);
         qm.persist(componentA);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
 
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).hasSize(1);
@@ -1298,7 +1298,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(project);
         qm.persist(componentA);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
 
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).hasSize(1);
@@ -1351,7 +1351,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                         component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-a"})
                         """, PolicyViolation.Type.OPERATIONAL);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).hasSize(1);
@@ -1361,7 +1361,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-b"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -1371,7 +1371,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-c"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -1381,7 +1381,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-d"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -1437,7 +1437,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                         component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-a"})
                         """, PolicyViolation.Type.OPERATIONAL);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -1447,7 +1447,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-b"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -1457,7 +1457,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-c"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -1467,7 +1467,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-D"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -1523,7 +1523,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                         component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-a"})
                         """, PolicyViolation.Type.OPERATIONAL);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -1533,7 +1533,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-b"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -1543,7 +1543,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-c"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -1601,7 +1601,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                         component.is_exclusive_dependency_of(v1.Component{name: "spring-boot-starter"})
                         """, PolicyViolation.Type.OPERATIONAL);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringCore)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentJacksonDataformatYaml)).isEmpty();
@@ -1611,7 +1611,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "spring-core"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringCore)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentJacksonDataformatYaml)).isEmpty();
@@ -1621,7 +1621,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "jackson-dataformat-yaml"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringCore)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentJacksonDataformatYaml)).isEmpty();
@@ -1631,7 +1631,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "snakeyaml"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringCore)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentJacksonDataformatYaml)).isEmpty();
@@ -1720,7 +1720,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                         component.is_exclusive_dependency_of(v1.Component{name: "spring-boot-starter"})
                         """, PolicyViolation.Type.OPERATIONAL);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringBoot)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentSpringContext)).hasSize(1);
@@ -1733,7 +1733,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "spring-boot"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringBoot)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringContext)).hasSize(1);
@@ -1746,7 +1746,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "spring-context"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringBoot)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringContext)).isEmpty();
@@ -1759,7 +1759,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "spring-aop"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringBoot)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringContext)).isEmpty();
@@ -1772,7 +1772,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "spring-beans"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringBoot)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringContext)).isEmpty();
@@ -1785,7 +1785,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "spring-expression"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringBoot)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringContext)).isEmpty();
@@ -1798,7 +1798,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "spring-core"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringBoot)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringContext)).isEmpty();
@@ -1811,7 +1811,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 has(component.name) && component.is_exclusive_dependency_of(v1.Component{name: "re:^spring-.*$"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringBoot)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentSpringContext)).hasSize(1);
@@ -1856,7 +1856,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                         component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-a"})
                         """, PolicyViolation.Type.OPERATIONAL);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
 
@@ -1864,7 +1864,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         condition.setValue("""
                 component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-b"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
     }
@@ -1894,7 +1894,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         componentB.setVersion("v2.0.0");
         qm.persist(componentB);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
     }
@@ -1924,7 +1924,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         componentB.setVersion("v2.0.0");
         qm.persist(componentB);
 
-        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid()));
+        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {}));
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
     }
@@ -1956,19 +1956,19 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         componentA.setName("acme-lib-a");
         componentA.setVersion("v1.9.3");
         qm.persist(componentA);
-        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid()));
+        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {}));
         assertThat(qm.getAllPolicyViolations(componentA)).hasSize(1);
 
         toolComponent.setVersion("3.1");
         projectMetadata.setTools(new Tools(List.of(toolComponent), null));
         qm.persist(projectMetadata);
-        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid()));
+        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {}));
         assertThat(qm.getAllPolicyViolations(componentA)).hasSize(1);
     }
 
     @Test
     void testEvaluateProjectWhenProjectDoesNotExist() {
-        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(UUID.randomUUID()));
+        assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(UUID.randomUUID(), () -> {}));
     }
 
     @Test
@@ -2018,7 +2018,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(vulnerability);
         qm.addVulnerability(vulnerability, component, "internal");
         CelPolicyEngine policyEngine = new CelPolicyEngine();
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         final List<PolicyViolation> violations = qm.getAllPolicyViolations(project);
         // NOTE: This behavior changed in CelPolicyEngine over the legacy PolicyEngine.
         // A matched PolicyCondition can now only yield a single PolicyViolation, whereas
@@ -2091,7 +2091,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(component);
 
         CelPolicyEngine policyEngine = new CelPolicyEngine();
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         final List<PolicyViolation> violations = qm.getAllPolicyViolations(project);
         Assertions.assertEquals(2, violations.size());
         PolicyViolation policyViolation = violations.get(0);
@@ -2139,7 +2139,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                         .withCommenter("commenter")
                         .withComment("comment"));
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(project)).satisfiesExactly(violation ->
                 assertThat(violation.getPolicyCondition().getPolicy().getName()).isEqualTo("Policy A"));
     }
@@ -2183,7 +2183,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                         component.is_direct_dependency_of(v1.Component{name: "acme-lib-a"})
                         """, PolicyViolation.Type.OPERATIONAL);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -2246,7 +2246,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                         component.is_direct_dependency_of(v1.Component{name: "acme-lib-a"})
                         && component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-a"})
                         """, PolicyViolation.Type.OPERATIONAL);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentC)).isEmpty();
@@ -2256,7 +2256,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 component.is_direct_dependency_of(v1.Component{name: "acme-lib-d"})
                 && component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-d"})
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentD)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentE)).hasSize(1);
     }
@@ -2298,7 +2298,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                             version: "vers:golang/>=v2.0.0"
                         })
                         """, PolicyViolation.Type.OPERATIONAL);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
 
@@ -2308,7 +2308,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                     version: "vers:golang/>=v1.0.0|<v2.0.0"
                 })
                 """);
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).hasSize(1);
     }
@@ -2332,7 +2332,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 project.properties.size() == 2
                 """, PolicyViolation.Type.OPERATIONAL);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -2360,7 +2360,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 )
                 """, PolicyViolation.Type.OPERATIONAL);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -2385,7 +2385,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 component.properties.size() == 2
                 """, PolicyViolation.Type.OPERATIONAL);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -2420,7 +2420,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 component.resolved_license.groups.size() == 2
                 """, PolicyViolation.Type.OPERATIONAL);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -2454,7 +2454,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setLicenseExpression(licenseExpression);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         if (expectViolation) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
         } else {
@@ -2486,7 +2486,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setResolvedLicense(license);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -2525,7 +2525,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                         .withState(AnalysisState.FALSE_POSITIVE)
                         .withSuppress(true));
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
 
         assertThat(qm.getAllPolicyViolations(componentUnsuppressed)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentSuppressed)).isEmpty();

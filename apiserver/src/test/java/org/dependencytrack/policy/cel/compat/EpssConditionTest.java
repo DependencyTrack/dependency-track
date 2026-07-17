@@ -123,7 +123,7 @@ public class EpssConditionTest extends PersistenceCapableTest {
                         vulnEpssScore != null ? BigDecimal.valueOf(vulnEpssScore) : null,
                         null))));
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         if (expectViolation) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
         } else {

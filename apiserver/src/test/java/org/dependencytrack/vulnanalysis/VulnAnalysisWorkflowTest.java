@@ -161,7 +161,8 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                 new ReconcileVulnAnalysisResultsActivity(
                         fileStorage,
                         pluginManager,
-                        new CelVulnerabilityPolicyEvaluator()),
+                        new CelVulnerabilityPolicyEvaluator(),
+                        Duration.ofHours(1)),
                 protoConverter(ReconcileVulnAnalysisResultsArg.class),
                 voidConverter(),
                 Duration.ofSeconds(5));

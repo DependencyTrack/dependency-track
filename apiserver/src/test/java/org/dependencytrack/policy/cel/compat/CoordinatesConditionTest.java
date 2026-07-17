@@ -141,7 +141,7 @@ public class CoordinatesConditionTest extends PersistenceCapableTest {
         component.setVersion(version);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         if (expectViolation) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
         } else {

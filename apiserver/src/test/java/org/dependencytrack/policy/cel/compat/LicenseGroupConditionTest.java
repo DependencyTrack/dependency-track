@@ -61,7 +61,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -89,7 +89,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 
@@ -113,7 +113,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -139,7 +139,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 
@@ -167,7 +167,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -195,7 +195,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -223,7 +223,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 
@@ -251,7 +251,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -276,7 +276,7 @@ public class LicenseGroupConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 }

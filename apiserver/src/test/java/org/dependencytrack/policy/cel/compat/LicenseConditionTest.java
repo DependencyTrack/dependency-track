@@ -52,7 +52,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -76,7 +76,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
 
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 
@@ -99,7 +99,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         component.setResolvedLicense(license);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 
@@ -124,7 +124,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -149,7 +149,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -174,7 +174,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 
@@ -199,7 +199,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -218,7 +218,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -242,7 +242,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         component.setProject(project);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
     }
 
@@ -267,7 +267,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
 
         CelPolicyEngine policyEngine = new CelPolicyEngine();
 
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentWithoutLicense)).hasSize(1);
 
         final var componentWithLicense = new Component();
@@ -276,7 +276,7 @@ public class LicenseConditionTest extends PersistenceCapableTest {
         componentWithLicense.setResolvedLicense(license);
         qm.persist(componentWithLicense);
 
-        policyEngine.evaluateProject(project.getUuid());
+        policyEngine.evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(componentWithLicense)).hasSize(0);
     }
 }

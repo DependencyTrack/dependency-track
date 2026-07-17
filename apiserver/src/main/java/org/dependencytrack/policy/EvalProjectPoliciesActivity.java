@@ -25,10 +25,14 @@ import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.policy.cel.CelPolicyEngine;
 import org.dependencytrack.proto.internal.workflow.v1.EvalProjectPoliciesArg;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.time.Duration;
 import java.util.UUID;
 
+import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 
 /**
@@ -37,10 +41,17 @@ import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 @ActivitySpec(name = "eval-project-policies", defaultTaskQueue = "policy-evaluations")
 public final class EvalProjectPoliciesActivity implements Activity<EvalProjectPoliciesArg, Void> {
 
-    private final CelPolicyEngine policyEngine;
+    private static final Logger LOGGER = LoggerFactory.getLogger(EvalProjectPoliciesActivity.class);
 
-    public EvalProjectPoliciesActivity(CelPolicyEngine policyEngine) {
-        this.policyEngine = policyEngine;
+    private final CelPolicyEngine policyEngine;
+    private final Duration maxEvaluationDuration;
+
+    public EvalProjectPoliciesActivity(CelPolicyEngine policyEngine, Duration maxEvaluationDuration) {
+        this.policyEngine = requireNonNull(policyEngine, "policyEngine must not be null");
+        this.maxEvaluationDuration = requireNonNull(maxEvaluationDuration, "maxEvaluationDuration must not be null");
+        if (!maxEvaluationDuration.isPositive()) {
+            throw new IllegalArgumentException("maxEvaluationDuration must be positive");
+        }
     }
 
     @Override
@@ -49,8 +60,20 @@ public final class EvalProjectPoliciesActivity implements Activity<EvalProjectPo
             throw new TerminalApplicationFailureException("No argument provided");
         }
 
+        final UUID projectUuid = UUID.fromString(argument.getProjectUuid());
         try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, argument.getProjectUuid())) {
-            policyEngine.evaluateProject(UUID.fromString(argument.getProjectUuid()));
+            try {
+                policyEngine.evaluateProject(
+                        projectUuid,
+                        PolicyEvaluationDeadline.wrapping(ctx::maybeHeartbeat, maxEvaluationDuration));
+            } catch (PolicyEvaluationTimedOutException e) {
+                LOGGER.error(
+                        """
+                                Component policy evaluation for project {} exceeded maximum duration of {}; \
+                                leaving existing violations unchanged. Verify that policies still hold.""",
+                        projectUuid,
+                        e.maxDuration());
+            }
         }
 
         return null;

@@ -256,10 +256,11 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter(),
                 Duration.ofMinutes(1));
         engine.registerActivity(
-                new EvalProjectPoliciesActivity(new CelPolicyEngine(), policyEvaluationMaxDuration),
+                new EvalProjectPoliciesActivity(new CelPolicyEngine()),
                 protoConverter(EvalProjectPoliciesArg.class),
                 voidConverter(),
-                Duration.ofMinutes(5));
+                Duration.ofMinutes(5),
+                policyEvaluationMaxDuration);
         engine.registerActivity(
                 new FetchPackageMetadataResolutionCandidatesActivity(pluginManager),
                 voidConverter(),
@@ -313,11 +314,11 @@ public final class DexEngineInitializer implements ServletContextListener {
                 new ReconcileVulnAnalysisResultsActivity(
                         fileStorage,
                         pluginManager,
-                        new CelVulnerabilityPolicyEvaluator(),
-                        policyEvaluationMaxDuration),
+                        new CelVulnerabilityPolicyEvaluator()),
                 protoConverter(ReconcileVulnAnalysisResultsArg.class),
                 voidConverter(),
-                Duration.ofMinutes(5));
+                Duration.ofMinutes(5),
+                policyEvaluationMaxDuration);
         engine.registerActivity(
                 new RefreshGlobalPortfolioMetricsActivity(),
                 voidConverter(),

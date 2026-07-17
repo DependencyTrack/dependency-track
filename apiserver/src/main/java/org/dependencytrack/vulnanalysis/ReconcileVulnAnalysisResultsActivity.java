@@ -44,8 +44,6 @@ import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.dependencytrack.persistence.jdbi.query.GetProjectAuditChangeNotificationSubjectQuery;
 import org.dependencytrack.plugin.runtime.PluginManager;
-import org.dependencytrack.policy.PolicyEvaluationDeadline;
-import org.dependencytrack.policy.PolicyEvaluationTimedOutException;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicy;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyEvaluator;
 import org.dependencytrack.policy.vulnerability.VulnerabilityPolicyOperation;
@@ -61,7 +59,6 @@ import org.slf4j.MDC;
 
 import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -76,7 +73,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_VULN_ANALYZER_NAME;
@@ -104,20 +100,14 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
     private final FileStorage fileStorage;
     private final PluginManager pluginManager;
     private final VulnerabilityPolicyEvaluator vulnPolicyEvaluator;
-    private final Duration maxEvaluationDuration;
 
     public ReconcileVulnAnalysisResultsActivity(
             FileStorage fileStorage,
             PluginManager pluginManager,
-            VulnerabilityPolicyEvaluator vulnPolicyEvaluator,
-            Duration maxEvaluationDuration) {
+            VulnerabilityPolicyEvaluator vulnPolicyEvaluator) {
         this.fileStorage = fileStorage;
         this.pluginManager = pluginManager;
         this.vulnPolicyEvaluator = vulnPolicyEvaluator;
-        this.maxEvaluationDuration = requireNonNull(maxEvaluationDuration, "maxEvaluationDuration must not be null");
-        if (!maxEvaluationDuration.isPositive()) {
-            throw new IllegalArgumentException("maxEvaluationDuration must be positive");
-        }
     }
 
     @Override
@@ -646,22 +636,11 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             return Map.of();
         }
 
-        final Map<Long, Map<Long, VulnerabilityPolicy>> evaluationResult;
-        try {
-            evaluationResult = vulnPolicyEvaluator.evaluateAll(
-                    projectId,
-                    vulnIdsByComponentId,
-                    PolicyEvaluationDeadline.wrapping(activityContext::maybeHeartbeat, maxEvaluationDuration));
-        } catch (PolicyEvaluationTimedOutException e) {
-            LOGGER.error(
-                    """
-                            Vulnerability policy evaluation for project {} exceeded maximum duration of {}; \
-                            skipping policy application. Findings reconciliation will continue. \
-                            Verify that policies still hold.""",
-                    projectId,
-                    e.maxDuration());
-            return Map.of();
-        }
+        final Map<Long, Map<Long, VulnerabilityPolicy>> evaluationResult =
+                vulnPolicyEvaluator.evaluateAll(
+                        projectId,
+                        vulnIdsByComponentId,
+                        activityContext::maybeHeartbeat);
         if (evaluationResult.isEmpty()) {
             LOGGER.debug("Vulnerability policy evaluation did not yield any results");
             return Map.of();

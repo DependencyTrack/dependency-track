@@ -1326,6 +1326,57 @@ class DexEngineImplTest {
     }
 
     @Test
+    void shouldCancelAndRetryActivityWhenExecutionTimeoutIsExceeded() {
+        final var invocations = new AtomicInteger();
+        final var interruptions = new AtomicInteger();
+        final RetryPolicy retryPolicy = RetryPolicy.ofDefault()
+                .withInitialDelay(Duration.ofMillis(10))
+                .withMaxDelay(Duration.ofMillis(10))
+                .withMaxAttempts(2);
+
+        registerWorkflow("test", (ctx, _) -> {
+            ctx.callActivity(
+                    "test",
+                    ACTIVITY_TASK_QUEUE,
+                    null,
+                    voidConverter(),
+                    voidConverter(),
+                    retryPolicy)
+                    .await();
+            return null;
+        });
+        engine.registerActivityInternal(
+                "test",
+                voidConverter(),
+                voidConverter(),
+                ACTIVITY_TASK_QUEUE,
+                Duration.ofSeconds(5),
+                Duration.ofMillis(100),
+                (_, _) -> {
+                    invocations.incrementAndGet();
+                    try {
+                        Thread.sleep(Duration.ofMinutes(1));
+                    } catch (InterruptedException e) {
+                        interruptions.incrementAndGet();
+                        throw e;
+                    }
+                    return null;
+                });
+        registerWorkflowWorker("workflow-worker", 1);
+        registerTaskWorker("activity-worker", 1);
+        engine.start();
+
+        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+
+        awaitRunStatus(runId, WorkflowRunStatus.FAILED);
+        await("Activity executions to be interrupted")
+                .untilAsserted(() -> {
+                    assertThat(invocations).hasValue(2);
+                    assertThat(interruptions).hasValue(2);
+                });
+    }
+
+    @Test
     void shouldCancelActivitiesDuringGracefulShutdown() throws Exception {
         final var activityStarted = new AtomicBoolean(false);
         final var activityInterrupted = new AtomicBoolean(false);

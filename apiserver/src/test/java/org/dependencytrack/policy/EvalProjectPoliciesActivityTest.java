@@ -23,51 +23,45 @@ import org.dependencytrack.policy.cel.CelPolicyEngine;
 import org.dependencytrack.proto.internal.workflow.v1.EvalProjectPoliciesArg;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class EvalProjectPoliciesActivityTest {
 
     @Test
-    void softFailsWhenPolicyEvaluationTimesOut() {
+    void passesActivityHeartbeatToPolicyEngine() {
         final UUID projectUuid = UUID.randomUUID();
-        final CelPolicyEngine policyEngine = mock(CelPolicyEngine.class);
-        doThrow(new PolicyEvaluationTimedOutException(Duration.ofHours(1)))
-                .when(policyEngine)
-                .evaluateProject(eq(projectUuid), any());
+        final var heartbeatInvoked = new AtomicBoolean();
+        final ActivityContext activityContext = mock(ActivityContext.class);
+        when(activityContext.maybeHeartbeat()).thenAnswer(_ -> {
+            heartbeatInvoked.set(true);
+            return true;
+        });
 
-        final var activity = new EvalProjectPoliciesActivity(policyEngine, Duration.ofHours(1));
+        final CelPolicyEngine policyEngine = mock(CelPolicyEngine.class);
+        doAnswer(invocation -> {
+            final Runnable heartbeat = invocation.getArgument(1);
+            heartbeat.run();
+            return null;
+        }).when(policyEngine).evaluateProject(eq(projectUuid), any());
+
+        final var activity = new EvalProjectPoliciesActivity(policyEngine);
         final var arg = EvalProjectPoliciesArg.newBuilder()
                 .setProjectUuid(projectUuid.toString())
                 .build();
 
-        assertThatNoException().isThrownBy(() -> activity.execute(mock(ActivityContext.class), arg));
-        verify(policyEngine).evaluateProject(eq(projectUuid), any());
-    }
-
-    @Test
-    void passesDeadlineWrappedHeartbeatToPolicyEngine() {
-        final UUID projectUuid = UUID.randomUUID();
-        final CelPolicyEngine policyEngine = mock(CelPolicyEngine.class);
-        doAnswer(_ -> null)
-                .when(policyEngine)
-                .evaluateProject(eq(projectUuid), any());
-
-        final var activity = new EvalProjectPoliciesActivity(policyEngine, Duration.ofMinutes(30));
-        final var arg = EvalProjectPoliciesArg.newBuilder()
-                .setProjectUuid(projectUuid.toString())
-                .build();
-
-        assertThatNoException().isThrownBy(() -> activity.execute(mock(ActivityContext.class), arg));
+        assertThatNoException().isThrownBy(() -> activity.execute(activityContext, arg));
         verify(policyEngine).evaluateProject(eq(projectUuid), any(Runnable.class));
+        assertThat(heartbeatInvoked).isTrue();
     }
 
 }

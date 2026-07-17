@@ -61,9 +61,8 @@ import static org.mockito.Mockito.mock;
  * <p>
  * Dex lock timeout is shortened at registration time. Per-component cost and whether the
  * heartbeat {@link Runnable} from the activity is honored are controlled via a
- * {@link CelPolicyEngine} test double — the real activity always wires
- * {@code PolicyEvaluationDeadline.wrapping(ctx::maybeHeartbeat, …)} and has no switch to
- * disable heartbeats.
+ * {@link CelPolicyEngine} test double — the real activity always passes
+ * {@code ctx::maybeHeartbeat} and has no switch to disable heartbeats.
  */
 class PolicyEvaluationLockThrashTest extends PersistenceCapableTest {
 
@@ -71,7 +70,6 @@ class PolicyEvaluationLockThrashTest extends PersistenceCapableTest {
     private static final Duration ACTIVITY_LOCK_TIMEOUT = Duration.ofSeconds(2);
     /** Per-component simulated cost; 4 components ≈ 3.2s &gt; lock timeout. */
     private static final Duration WORK_PER_COMPONENT = Duration.ofMillis(800);
-    private static final Duration MAX_EVALUATION_DURATION = Duration.ofHours(1);
 
     @RegisterExtension
     private final WorkflowTestExtension workflowTest =
@@ -84,8 +82,7 @@ class PolicyEvaluationLockThrashTest extends PersistenceCapableTest {
         final Project project = createProjectWithComponentsAndPolicy(4);
 
         startEngine(new EvalProjectPoliciesActivity(
-                policyEngineIgnoringHeartbeatUntilSuccessor(invocations, successorStarted),
-                MAX_EVALUATION_DURATION));
+                policyEngineIgnoringHeartbeatUntilSuccessor(invocations, successorStarted)));
 
         final UUID runId = workflowTest.getEngine().createRun(
                 new CreateWorkflowRunRequest<>(EvalProjectPoliciesWorkflow.class)
@@ -106,8 +103,7 @@ class PolicyEvaluationLockThrashTest extends PersistenceCapableTest {
         final Project project = createProjectWithComponentsAndPolicy(4);
 
         startEngine(new EvalProjectPoliciesActivity(
-                policyEngineHonoringHeartbeat(invocations),
-                MAX_EVALUATION_DURATION));
+                policyEngineHonoringHeartbeat(invocations)));
 
         final UUID runId = workflowTest.getEngine().createRun(
                 new CreateWorkflowRunRequest<>(EvalProjectPoliciesWorkflow.class)
@@ -178,8 +174,8 @@ class PolicyEvaluationLockThrashTest extends PersistenceCapableTest {
 
     /**
      * Honors the heartbeat {@link Runnable} from {@link EvalProjectPoliciesActivity}
-     * ({@code ctx::maybeHeartbeat} behind {@link PolicyEvaluationDeadline}) while spending
-     * enough wall time per component to outlive the lock if renewals were skipped.
+     * ({@code ctx::maybeHeartbeat}) while spending enough wall time per component to outlive
+     * the lock if renewals were skipped.
      */
     private static CelPolicyEngine policyEngineHonoringHeartbeat(AtomicInteger invocations) {
         final var realEngine = new CelPolicyEngine();
@@ -190,7 +186,7 @@ class PolicyEvaluationLockThrashTest extends PersistenceCapableTest {
             final Runnable heartbeat = invocation.getArgument(1);
 
             // maybeHeartbeat is debounced until ≤1/3 of the lock remains. We cannot read
-            // the boolean from the activity's Runnable wrapper, so call it until past the
+            // the boolean from the activity's Runnable, so call it until past the
             // debounce window so CelPolicyEngine setup starts on a freshly renewed claim.
             final Instant pastDebounce = Instant.now()
                     .plus(ACTIVITY_LOCK_TIMEOUT.multipliedBy(2).dividedBy(3))

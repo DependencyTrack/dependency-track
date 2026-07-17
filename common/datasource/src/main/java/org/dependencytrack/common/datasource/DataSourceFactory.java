@@ -39,11 +39,16 @@ final class DataSourceFactory {
     private DataSourceFactory() {
     }
 
-    static DataSource createDataSource(final DataSourceConfig config) {
+    static DataSource createDataSource(DataSourceConfig config) {
+        final String appName = "dependency-track[%s]".formatted(config.getName());
+
         if (config.isPoolEnabled()) {
             final var hikariConfig = new HikariConfig();
             hikariConfig.setPoolName(config.getName());
             hikariConfig.setJdbcUrl(config.getUrl());
+            hikariConfig.addDataSourceProperty("ApplicationName", appName);
+            hikariConfig.addDataSourceProperty("reWriteBatchedInserts", "true");
+            hikariConfig.addDataSourceProperty("tcpKeepAlive", "true");
             hikariConfig.setMaximumPoolSize(config.getPoolMaxSize());
             hikariConfig.setMinimumIdle(config.getPoolMinIdle());
             hikariConfig.setMetricRegistry(Metrics.globalRegistry);
@@ -51,23 +56,34 @@ final class DataSourceFactory {
             getPassword(config).ifPresent(hikariConfig::setPassword);
             config.getConnectionTimeoutMillis().ifPresent(hikariConfig::setConnectionTimeout);
             config.getPoolIdleTimeoutMillis().ifPresent(hikariConfig::setIdleTimeout);
+            config.getPoolLeakDetectionThresholdMillis().ifPresent(hikariConfig::setLeakDetectionThreshold);
             config.getPoolMaxLifetimeMillis().ifPresent(hikariConfig::setMaxLifetime);
             config.getPoolKeepaliveIntervalMillis().ifPresent(hikariConfig::setKeepaliveTime);
             return new HikariDataSource(hikariConfig);
         }
 
         final var dataSource = new PGSimpleDataSource();
-        dataSource.setUrl(config.getUrl());
-        config.getUsername().ifPresent(dataSource::setUser);
-        getPassword(config).ifPresent(dataSource::setPassword);
+
+        // NB: These properties must be set BEFORE setUrl is called,
+        // as the driver only then loops over all properties and applies
+        // them to the URL. Setting the URL first would cause these
+        // properties to no-op.
+        dataSource.setApplicationName(appName);
         config.getConnectionTimeoutMillis()
                 .map(TimeUnit.MILLISECONDS::toSeconds)
                 .map(Math::toIntExact)
                 .ifPresent(dataSource::setConnectTimeout);
+        dataSource.setReWriteBatchedInserts(true);
+        dataSource.setTcpKeepAlive(true);
+
+        dataSource.setUrl(config.getUrl());
+        config.getUsername().ifPresent(dataSource::setUser);
+        getPassword(config).ifPresent(dataSource::setPassword);
+
         return dataSource;
     }
 
-    private static Optional<String> getPassword(final DataSourceConfig config) {
+    private static Optional<String> getPassword(DataSourceConfig config) {
         final Path passwordFilePath = config.getPasswordFilePath().orElse(null);
         if (passwordFilePath != null) {
             try {

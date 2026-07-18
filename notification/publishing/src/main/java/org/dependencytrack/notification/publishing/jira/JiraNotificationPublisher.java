@@ -31,7 +31,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
@@ -87,8 +86,9 @@ final class JiraNotificationPublisher implements NotificationPublisher {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RetryablePublishException("Interrupted while sending request", e);
-        } catch (HttpTimeoutException e) {
-            throw new RetryablePublishException("Timed out while sending request", e);
+        } catch (IOException e) {
+            RetryablePublishException.throwIfRetryableNetworkError(e, "Request failed while sending notification");
+            throw e;
         }
 
         if (response.statusCode() != 201) {

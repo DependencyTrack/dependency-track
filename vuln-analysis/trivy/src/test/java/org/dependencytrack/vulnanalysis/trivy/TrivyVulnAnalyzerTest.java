@@ -27,6 +27,7 @@ import org.cyclonedx.proto.v1_7.Bom;
 import org.cyclonedx.proto.v1_7.Classification;
 import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import trivy.proto.cache.v1.PutBlobRequest;
@@ -205,6 +206,7 @@ class TrivyVulnAnalyzerTest {
                 .build();
 
         assertThatThrownBy(() -> analyzer.analyze(bom))
+                .isInstanceOf(RetryableVulnAnalysisException.class)
                 .hasMessageContaining("Trivy API request");
 
         verify(exactly(1), postRequestedFor(urlPathEqualTo("/twirp/trivy.cache.v1.Cache/PutBlob")));

@@ -32,10 +32,13 @@ import org.cyclonedx.proto.v1_7.Source;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.support.distrometadata.OsDistribution;
+import org.dependencytrack.support.jdbi.exception.TransientSqlErrors;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.dependencytrack.vulnanalysis.internal.Coordinate.CpeCoordinate;
 import org.dependencytrack.vulnanalysis.internal.Coordinate.PurlCoordinate;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.statement.Query;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -323,14 +326,21 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
                    AND v."REJECTED" IS NULL
                 """.formatted(innerSql);
 
-        return jdbi.withHandle(handle -> {
-            final Query query = handle.createQuery(sql);
-            binder.accept(query);
-            return query
-                    .mapTo(MatchingCriteria.class)
-                    .collect(Collectors.groupingBy(
-                            criteria -> coordinates.get(criteria.coordinateIndex())));
-        });
+        try {
+            return jdbi.withHandle(handle -> {
+                final Query query = handle.createQuery(sql);
+                binder.accept(query);
+                return query
+                        .mapTo(MatchingCriteria.class)
+                        .collect(Collectors.groupingBy(
+                                criteria -> coordinates.get(criteria.coordinateIndex())));
+            });
+        } catch (JdbiException e) {
+            if (TransientSqlErrors.isTransient(e)) {
+                throw new RetryableVulnAnalysisException("Failed to query matching criteria", e);
+            }
+            throw e;
+        }
     }
 
     private void processCriteria(

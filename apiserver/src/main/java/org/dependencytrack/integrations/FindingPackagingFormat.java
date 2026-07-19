@@ -35,8 +35,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import org.dependencytrack.persistence.jdbi.VulnerabilityDao;
 import org.dependencytrack.resources.v1.vo.AffectedComponent;
@@ -125,23 +126,28 @@ public class FindingPackagingFormat {
                 to a root json object and return.
              */
             useJdbiHandle(handle -> {
-                           var dao = handle.attach(VulnerabilityDao.class);
-                           for(Finding finding : findings) {
-                               UUID uuid = (UUID) finding.getVulnerability().get("uuid");
-                               Long id = dao.getVulnerabilityId(uuid);
-                               if (id == null) {
-                                   continue;
-                               }
-                               List<VulnerableSoftware> vsList = dao.getVulnerableSoftwareByVulnId(id);
-                               List<AffectedComponent> result = new ArrayList<>();
-                               for (VulnerableSoftware vs : vsList) {
-                                   result.add(new AffectedComponent(vs));
-                               }
-                               if(!result.isEmpty()) {
-                               finding.getVulnerability().put("affectedVersions", result);
-                               }
-                           }
-                });
+                var dao = handle.attach(VulnerabilityDao.class);
+                Map<UUID, List<AffectedComponent>> cache = new HashMap<>();
+                for (Finding finding : findings) {
+                    UUID uuid = (UUID) finding.getVulnerability().get("uuid");
+                    Long id = dao.getVulnerabilityId(uuid);
+                    if (id == null) {
+                        continue;
+                    }
+                    List<AffectedComponent> result = cache.get(uuid);
+                    if (result == null) {
+                        List<VulnerableSoftware> vsList = dao.getVulnerableSoftwareByVulnId(id);
+                        result = new ArrayList<>();
+                        for (VulnerableSoftware vs : vsList) {
+                            result.add(new AffectedComponent(vs));
+                        }
+                        cache.put(uuid, result);
+                    }
+                    if (!result.isEmpty()) {
+                        finding.getVulnerability().put("affectedVersions", result);
+                    }
+                }
+            });
             final ObjectNode root = Mappers.jsonMapper().createObjectNode();
             root.put(FIELD_VERSION, FPF_VERSION);
             root.set(FIELD_META, meta);

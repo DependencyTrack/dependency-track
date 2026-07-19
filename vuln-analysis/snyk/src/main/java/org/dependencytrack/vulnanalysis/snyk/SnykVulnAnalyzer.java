@@ -27,6 +27,7 @@ import org.cyclonedx.proto.v1_7.Property;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.cache.api.Cache;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -207,7 +208,9 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         try {
             response = fetchIssues(purlBatch);
         } catch (IOException e) {
-            throw new UncheckedIOException("Failed to fetch Snyk issues", e);
+            final var message = "Failed to fetch Snyk issues";
+            RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, message);
+            throw new UncheckedIOException(message, e);
         }
 
         final var issuesByPurl = new HashMap<String, List<SnykIssue>>(purlBatch.size());
@@ -268,13 +271,21 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                 .POST(BodyPublishers.ofString(requestBody))
                 .build();
 
-        final HttpResponse<InputStream> response = httpClient.send(request, BodyHandlers.ofInputStream());
+        final HttpResponse<InputStream> response;
+        try {
+            response = httpClient.send(request, BodyHandlers.ofInputStream());
+        } catch (IOException e) {
+            final var message = "Snyk API request failed";
+            RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, message);
+            throw new UncheckedIOException(message, e);
+        }
 
         try (final InputStream bodyInputStream = response.body()) {
             if (response.statusCode() == 200) {
                 return objectMapper.readValue(bodyInputStream, SnykIssuesResponse.class);
             }
 
+            RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
             throw new IOException("Snyk API request failed with status " + response.statusCode());
         }
     }

@@ -28,6 +28,7 @@ import org.dependencytrack.migration.MigrationExecutor;
 import org.dependencytrack.plugin.api.MutableServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -46,11 +47,13 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import us.springett.parsers.cpe.Cpe;
 import us.springett.parsers.cpe.CpeParser;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.dependencytrack.vulnanalysis.internal.InternalVulnAnalyzerTest.Range.withRange;
 
 @Testcontainers
@@ -877,6 +880,25 @@ class InternalVulnAnalyzerTest {
             return new Range(this.startIncluding, this.startExcluding, this.endIncluding, endExcluding);
         }
 
+    }
+
+    @Test
+    void shouldThrowRetryableExceptionOnTransientSqlError() {
+        try (final var failingAnalyzer = new InternalVulnAnalyzer(
+                Jdbi.create(() -> {
+                    throw new SQLException("connection failure", "08006");
+                }))) {
+            final var bom = Bom.newBuilder()
+                    .addComponents(Component.newBuilder()
+                            .setBomRef("1")
+                            .setName("jackson-databind")
+                            .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.0")
+                            .build())
+                    .build();
+
+            assertThatThrownBy(() -> failingAnalyzer.analyze(bom))
+                    .isInstanceOf(RetryableVulnAnalysisException.class);
+        }
     }
 
     private long createVulnerability(Handle handle) {

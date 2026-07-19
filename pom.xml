@@ -30,6 +30,7 @@
         <module>support/datanucleus-plugin</module>
         <module>support/flyway</module>
         <module>support/jdbi</module>
+        <module>support/net</module>
         <module>support/os-distro-metadata</module>
         <module>support/smallrye-config-secret-handler-file</module>
         <module>support/smallrye-config-source-memory</module>

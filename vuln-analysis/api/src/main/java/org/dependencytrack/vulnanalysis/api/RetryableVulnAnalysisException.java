@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.notification.api.publishing;
+package org.dependencytrack.vulnanalysis.api;
 
 import org.dependencytrack.support.net.HttpRetry;
 import org.dependencytrack.support.net.TransientNetworkErrors;
@@ -26,16 +26,14 @@ import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
-/**
- * Exception for publish failures that may be retried.
- *
- * @since 5.0.0
- */
-public class RetryablePublishException extends RuntimeException {
+/// Exception for vulnerability analysis failures that may be retried.
+///
+/// @since 5.1.0
+public class RetryableVulnAnalysisException extends RuntimeException {
 
     private final @Nullable Duration retryAfter;
 
-    public RetryablePublishException(
+    public RetryableVulnAnalysisException(
             @Nullable String message,
             @Nullable Throwable cause,
             @Nullable Duration retryAfter) {
@@ -46,16 +44,8 @@ public class RetryablePublishException extends RuntimeException {
         this.retryAfter = retryAfter;
     }
 
-    public RetryablePublishException(@Nullable String message, @Nullable Throwable cause) {
+    public RetryableVulnAnalysisException(@Nullable String message, @Nullable Throwable cause) {
         this(message, cause, null);
-    }
-
-    public RetryablePublishException(@Nullable String message, @Nullable Duration retryAfter) {
-        this(message, null, retryAfter);
-    }
-
-    public RetryablePublishException(@Nullable String message) {
-        this(message, null, null);
     }
 
     public @Nullable Duration retryAfter() {
@@ -68,12 +58,12 @@ public class RetryablePublishException extends RuntimeException {
             return;
         }
 
-        throw new RetryablePublishException(retry.description(), null, retry.retryAfter());
+        throw new RetryableVulnAnalysisException(retry.description(), null, retry.retryAfter());
     }
 
-    public static void throwIfRetryableNetworkError(IOException e, String message) {
+    public static void throwIfRetryableNetworkError(IOException e, @Nullable String message) {
         if (TransientNetworkErrors.isTransient(e)) {
-            throw new RetryablePublishException(message, e);
+            throw new RetryableVulnAnalysisException(message, e);
         }
     }
 

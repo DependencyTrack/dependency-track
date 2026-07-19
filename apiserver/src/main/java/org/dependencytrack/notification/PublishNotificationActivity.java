@@ -129,7 +129,7 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
             } catch (RuntimeException | IOException e) {
                 if (e instanceof final RetryablePublishException rpe) {
                     throw new ApplicationFailureException(
-                            "Failed to publish notification with retryable cause", rpe, rpe.getRetryAfter());
+                            "Failed to publish notification with retryable cause", rpe, rpe.retryAfter());
                 }
 
                 throw new TerminalApplicationFailureException(

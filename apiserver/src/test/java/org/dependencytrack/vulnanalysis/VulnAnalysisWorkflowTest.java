@@ -69,6 +69,7 @@ import org.dependencytrack.proto.internal.workflow.v1.PrepareVulnAnalysisRes;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowContext;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.dependencytrack.vulnanalysis.internal.InternalVulnAnalyzerConfigV1;
 import org.dependencytrack.vulnanalysis.internal.InternalVulnAnalyzerPlugin;
@@ -79,6 +80,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -86,6 +89,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -112,7 +116,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
     private FileStorage fileStorage;
     private PluginManager pluginManager;
     private final AtomicReference<Function<Bom, Bom>> mockAnalyzerFunction =
-            new AtomicReference<>(bom -> Bom.getDefaultInstance());
+            new AtomicReference<>(_ -> Bom.getDefaultInstance());
 
     @BeforeEach
     void beforeEach() {
@@ -127,7 +131,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                         .withDefaultValue("dt.vuln-analyzer.internal.datasource.name", "default")
                         .build(),
                 new NoopCacheManager(),
-                secretName -> null,
+                _ -> null,
                 JdbiFactory.createJdbi(),
                 HttpClient.newHttpClient(),
                 List.of(VulnAnalyzer.class, VulnDataSource.class));
@@ -1135,7 +1139,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                         new InternalVulnAnalyzerConfigV1()
                                 .withEnabled(false));
 
-        mockAnalyzerFunction.set(bom -> null);
+        mockAnalyzerFunction.set(_ -> null);
 
         var project = new Project();
         project.setName("acme-app");
@@ -1156,6 +1160,74 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
 
         qm.getPersistenceManager().refresh(project);
         assertThat(project.getLastVulnerabilityAnalysis()).isNull();
+    }
+
+    @Test
+    void shouldNotRetryAnalyzerWhenFailureIsTerminal() {
+        pluginManager
+                .getMutableConfigRegistry(VulnAnalyzer.class, "internal")
+                .setRuntimeConfig(new InternalVulnAnalyzerConfigV1().withEnabled(false));
+
+        final var invocations = new AtomicInteger();
+        mockAnalyzerFunction.set(_ -> {
+            invocations.incrementAndGet();
+            throw new UncheckedIOException("boom!", new IOException("pow!"));
+        });
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setPurl("pkg:maven/com.example/acme-lib@1.0.0");
+        qm.persist(component);
+
+        final UUID runId = workflowTest.getEngine().createRun(
+                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+                        .withArgument(VulnAnalysisWorkflowArg.newBuilder()
+                                .setProjectUuid(project.getUuid().toString())
+                                .build()));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
+
+        assertThat(invocations.get()).isOne();
+    }
+
+    @Test
+    void shouldRetryAnalyzerWhenFailureIsRetryable() {
+        pluginManager
+                .getMutableConfigRegistry(VulnAnalyzer.class, "internal")
+                .setRuntimeConfig(new InternalVulnAnalyzerConfigV1().withEnabled(false));
+
+        final var invocations = new AtomicInteger();
+        mockAnalyzerFunction.set(_ -> {
+            if (invocations.incrementAndGet() == 1) {
+                throw new RetryableVulnAnalysisException(
+                        "Rate limited", null, Duration.ofMillis(100));
+            }
+
+            return Bom.getDefaultInstance();
+        });
+
+        var project = new Project();
+        project.setName("acme-app");
+        project = qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setPurl("pkg:maven/com.example/acme-lib@1.0.0");
+        qm.persist(component);
+
+        final UUID runId = workflowTest.getEngine().createRun(
+                new CreateWorkflowRunRequest<>(VulnAnalysisWorkflow.class)
+                        .withArgument(VulnAnalysisWorkflowArg.newBuilder()
+                                .setProjectUuid(project.getUuid().toString())
+                                .build()));
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        assertThat(invocations.get()).isEqualTo(2);
     }
 
     @Test

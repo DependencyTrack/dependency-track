@@ -129,6 +129,8 @@ public interface VulnAnalyzer extends ExtensionPoint {
      *
      * @param bom the CycloneDX BOM to analyze.
      * @return A CycloneDX VDR containing discovered vulnerabilities.
+     * @throws InterruptedException           When interrupted.
+     * @throws RetryableVulnAnalysisException When analysis failed with a retryable cause.
      */
     Bom analyze(Bom bom) throws InterruptedException;
 

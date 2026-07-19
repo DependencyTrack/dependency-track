@@ -59,7 +59,7 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
-                          "version": "1.5",
+                          "version": "1.6",
                           "meta": {
                             "application": "${json-unit.matches:appName}",
                             "version": "${json-unit.matches:appVersion}",
@@ -130,7 +130,7 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
-                          "version": "1.5",
+                          "version": "1.6",
                           "meta": {
                             "application": "${json-unit.any-string}",
                             "version": "${json-unit.any-string}",

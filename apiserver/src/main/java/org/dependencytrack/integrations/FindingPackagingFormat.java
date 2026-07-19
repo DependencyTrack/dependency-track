@@ -54,7 +54,7 @@ public class FindingPackagingFormat {
     /**
      * FPF is versioned. If the format changes, the version needs to be bumped.
      */
-    private static final String FPF_VERSION = "1.5";
+    private static final String FPF_VERSION = "1.6";
     private static final String FIELD_APPLICATION = "application";
     private static final String FIELD_VERSION = "version";
     private static final String FIELD_TIMESTAMP = "timestamp";
@@ -122,8 +122,10 @@ public class FindingPackagingFormat {
 
 
             /*
-                Add the meta and project objects along with the findings array
-                to a root json object and return.
+                Enrich each finding's vulnerability with the affected version
+                ranges of the components it applies to, so a consumer can derive
+                the version to upgrade to. Reuses the AffectedComponent shape
+                already exposed by the vulnerability API.
              */
             useJdbiHandle(handle -> {
                 var dao = handle.attach(VulnerabilityDao.class);
@@ -148,6 +150,11 @@ public class FindingPackagingFormat {
                     }
                 }
             });
+
+            /*
+                Add the meta and project objects along with the findings array
+                to a root json object and return.
+             */
             final ObjectNode root = Mappers.jsonMapper().createObjectNode();
             root.put(FIELD_VERSION, FPF_VERSION);
             root.set(FIELD_META, meta);

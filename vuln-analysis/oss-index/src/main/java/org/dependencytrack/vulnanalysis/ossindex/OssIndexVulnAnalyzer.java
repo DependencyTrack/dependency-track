@@ -29,6 +29,7 @@ import org.cyclonedx.proto.v1_7.Property;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.cache.api.Cache;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -213,6 +214,7 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
         try {
             batchReports = getComponentReports(purlBatch);
         } catch (IOException e) {
+            RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, "Failed to retrieve component report");
             throw new UncheckedIOException("Failed to retrieve component report", e);
         }
 
@@ -257,13 +259,20 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
                 .POST(BodyPublishers.ofByteArray(requestBytes))
                 .build();
 
-        final HttpResponse<InputStream> response = httpClient.send(request, BodyHandlers.ofInputStream());
+        final HttpResponse<InputStream> response;
+        try {
+            response = httpClient.send(request, BodyHandlers.ofInputStream());
+        } catch (IOException e) {
+            RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, "OSS Index API request failed");
+            throw new UncheckedIOException("OSS Index API request failed", e);
+        }
 
         try (final InputStream bodyInputStream = response.body()) {
             if (response.statusCode() == 200) {
                 return objectMapper.readValue(bodyInputStream, COMPONENT_REPORTS_TYPE);
             }
 
+            RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
             throw new IOException("OSS Index API request failed with status " + response.statusCode());
         }
     }

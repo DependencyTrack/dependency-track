@@ -26,6 +26,7 @@ import org.cyclonedx.proto.v1_7.Component;
 import org.cyclonedx.proto.v1_7.Property;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -347,13 +348,16 @@ final class TrivyVulnAnalyzer implements VulnAnalyzer {
         try {
             response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
         } catch (IOException e) {
-            throw new UncheckedIOException("Trivy API request to %s failed".formatted(url), e);
+            final String message = "Trivy API request to %s failed".formatted(url);
+            RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, message);
+            throw new UncheckedIOException(message, e);
         }
 
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
             return response.body();
         }
 
+        RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
         throw new IllegalStateException(
                 "Trivy API request to %s failed with status %d".formatted(url, response.statusCode()));
     }

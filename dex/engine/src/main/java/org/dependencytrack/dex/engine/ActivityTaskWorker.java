@@ -201,7 +201,9 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
 
         final Duration retryDelay;
         if (retryAfter != null) {
-            retryDelay = retryAfter;
+            retryDelay = retryAfter.compareTo(retryPolicy.maxDelay()) > 0
+                    ? retryPolicy.maxDelay()
+                    : retryAfter;
         } else {
             final var intervalFunc =
                     IntervalFunction.ofExponentialRandomBackoff(

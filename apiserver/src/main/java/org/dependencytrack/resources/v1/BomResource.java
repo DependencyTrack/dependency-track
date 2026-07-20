@@ -21,6 +21,7 @@ package org.dependencytrack.resources.v1;
 import alpine.model.ConfigProperty;
 import alpine.server.auth.PermissionRequired;
 import com.fasterxml.uuid.Generators;
+import com.github.luben.zstd.ZstdInputStream;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -108,6 +109,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 import static java.util.function.Predicate.not;
 import static org.dependencytrack.common.MdcKeys.MDC_BOM_UPLOAD_TOKEN;
@@ -529,7 +531,10 @@ public class BomResource extends AbstractApiResource {
                       or <strong>PROJECT_CREATION_UPLOAD</strong> permission.
                     </p>
                     <p>
-                      MediaType supported for BOM artifact is 'application/xml' or 'application/json'.
+                      The BOM artifact may be supplied uncompressed or compressed. If the BOM is uncompressed,
+                      the supported MediaType is 'application/xml' or 'application/json'. If the BOM is compressed,
+                      the supported MediaType is 'application/gzip' or 'application/zstd' and must match the actual 
+                      compression of the data.
                       The BOM will be validated against the CycloneDX schema. If schema validation fails,
                       a response with problem details in RFC 9457 format will be returned. In this case,
                       the response's content type will be <code>application/problem+json</code>.
@@ -704,9 +709,16 @@ public class BomResource extends AbstractApiResource {
         }
 
         final FormDataBodyPart firstPart = artifactParts.getFirst();
+        final var encoding = firstPart.getHeaders().getFirst("Content-Type");
+
         final byte[] bomBytes;
         try (final var inputStream = ((BodyPartEntity) firstPart.getEntity()).getInputStream();
-             final var byteOrderMarkInputStream = BOMInputStream.builder().setInputStream(inputStream).get()) {
+             final var encodingStream = (switch (encoding) {
+                 case "application/gzip", "application/x-gzip" -> new GZIPInputStream(inputStream);
+                 case "application/zstd", "application/x-zstd" -> new ZstdInputStream(inputStream);
+                 case null, default -> inputStream;
+             });
+             final var byteOrderMarkInputStream = BOMInputStream.builder().setInputStream(encodingStream).get()) {
             bomBytes = IOUtils.toByteArray(byteOrderMarkInputStream);
         } catch (IOException e) {
             LOGGER.error("An unexpected error occurred while reading BOM from upload", e);

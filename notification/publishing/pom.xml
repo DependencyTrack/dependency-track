@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>notification-parent</artifactId>
-        <version>5.0.3</version>
+        <version>5.0.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>notification-publishing</artifactId>

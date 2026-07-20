@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>package-metadata-parent</artifactId>
-        <version>5.0.3</version>
+        <version>5.0.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>package-metadata-resolution</artifactId>

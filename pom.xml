@@ -145,7 +145,7 @@
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
         <lib.jackson2.version>2.22.1</lib.jackson2.version>
-        <lib.jackson3.version>3.2.0</lib.jackson3.version>
+        <lib.jackson3.version>3.2.1</lib.jackson3.version>
         <lib.jdbi.version>3.54.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
         <lib.jetty.version>12.1.11</lib.jetty.version>

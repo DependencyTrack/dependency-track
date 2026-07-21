@@ -22,12 +22,16 @@ import org.dependencytrack.api.v2.model.ComponentProject;
 import org.dependencytrack.api.v2.model.DependencyMetrics;
 import org.dependencytrack.api.v2.model.Hashes;
 import org.dependencytrack.api.v2.model.License;
+import org.dependencytrack.api.v2.model.ListProjectsResponseItem;
+import org.dependencytrack.api.v2.model.ListProjectsResponseItemTagsInner;
 import org.dependencytrack.api.v2.model.OrganizationalContact;
 import org.dependencytrack.api.v2.model.PackageArtifactMetadata;
 import org.dependencytrack.api.v2.model.PackageMetadata;
 import org.dependencytrack.api.v2.model.Scope;
 import org.dependencytrack.api.v2.model.SortDirection;
+import org.dependencytrack.persistence.jdbi.ProjectDao.ListProjectsRow;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.ProjectMetrics;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -103,6 +107,85 @@ public class ModelMapper {
                 .policyViolationsOperationalAudited(metrics.getPolicyViolationsOperationalAudited())
                 .policyViolationsOperationalUnaudited(metrics.getPolicyViolationsOperationalUnaudited())
                 .build();
+    }
+
+    public static DependencyMetrics mapProjectMetrics(@Nullable ProjectMetrics metrics) {
+        if (metrics == null) {
+            return null;
+        }
+        return DependencyMetrics.builder()
+                .critical(metrics.getCritical())
+                .high(metrics.getHigh())
+                .medium(metrics.getMedium())
+                .low(metrics.getLow())
+                .unassigned(metrics.getUnassigned())
+                .vulnerabilities(metrics.getVulnerabilities())
+                .suppressed(metrics.getSuppressed())
+                .findingsTotal(metrics.getFindingsTotal())
+                .findingsAudited(metrics.getFindingsAudited())
+                .findingsUnaudited(metrics.getFindingsUnaudited())
+                .inheritedRiskScore(metrics.getInheritedRiskScore())
+                .policyViolationsFail(metrics.getPolicyViolationsFail())
+                .policyViolationsWarn(metrics.getPolicyViolationsWarn())
+                .policyViolationsInfo(metrics.getPolicyViolationsInfo())
+                .policyViolationsTotal(metrics.getPolicyViolationsTotal())
+                .policyViolationsAudited(metrics.getPolicyViolationsAudited())
+                .policyViolationsUnaudited(metrics.getPolicyViolationsUnaudited())
+                .policyViolationsSecurityTotal(metrics.getPolicyViolationsSecurityTotal())
+                .policyViolationsSecurityAudited(metrics.getPolicyViolationsSecurityAudited())
+                .policyViolationsSecurityUnaudited(metrics.getPolicyViolationsSecurityUnaudited())
+                .policyViolationsLicenseTotal(metrics.getPolicyViolationsLicenseTotal())
+                .policyViolationsLicenseAudited(metrics.getPolicyViolationsLicenseAudited())
+                .policyViolationsLicenseUnaudited(metrics.getPolicyViolationsLicenseUnaudited())
+                .policyViolationsOperationalTotal(metrics.getPolicyViolationsOperationalTotal())
+                .policyViolationsOperationalAudited(metrics.getPolicyViolationsOperationalAudited())
+                .policyViolationsOperationalUnaudited(metrics.getPolicyViolationsOperationalUnaudited())
+                .build();
+    }
+
+    public static ListProjectsResponseItem mapListProjectsResponseItem(
+            ListProjectsRow row,
+            boolean includeMetrics) {
+        return ListProjectsResponseItem.builder()
+                .uuid(row.uuid())
+                .name(row.name())
+                .version(row.version())
+                .group(row.group())
+                .classifier(row.classifier() != null ? row.classifier().name() : null)
+                .isActive(row.inactiveSince() == null)
+                .isLatest(row.isLatest())
+                .lastBomImport(row.lastBomImport() != null ? row.lastBomImport().getTime() : null)
+                .lastBomImportFormat(row.lastBomImportFormat())
+                .lastInheritedRiskScore(row.lastInheritedRiskScore())
+                .tags(mapNamedItems(row.tagNames()))
+                .teams(mapNamedItems(row.teamNames()))
+                .collectionLogic(row.collectionLogic() != null
+                        ? ListProjectsResponseItem.CollectionLogicEnum.fromValue(row.collectionLogic().name())
+                        : null)
+                .collectionTag(mapNamedItem(row.collectionTagName()))
+                .parent(row.parentUuid() != null
+                        ? ComponentProject.builder()
+                                .uuid(row.parentUuid())
+                                .name(row.parentName())
+                                .version(row.parentVersion())
+                                .build()
+                        : null)
+                .hasChildren(row.hasChildren())
+                .metrics(includeMetrics ? mapProjectMetrics(row.metrics()) : null)
+                .build();
+    }
+
+    private static @Nullable ListProjectsResponseItemTagsInner mapNamedItem(@Nullable String name) {
+        return name != null ? new ListProjectsResponseItemTagsInner(name) : null;
+    }
+
+    private static List<ListProjectsResponseItemTagsInner> mapNamedItems(@Nullable List<String> names) {
+        if (names == null || names.isEmpty()) {
+            return List.of();
+        }
+        return names.stream()
+                .map(ListProjectsResponseItemTagsInner::new)
+                .toList();
     }
 
     public static Hashes mapHashes(Component component) {

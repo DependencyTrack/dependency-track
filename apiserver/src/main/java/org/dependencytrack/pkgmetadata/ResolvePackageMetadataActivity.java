@@ -26,10 +26,12 @@ import org.dependencytrack.dex.api.ActivitySpec;
 import org.dependencytrack.dex.api.failure.ApplicationFailureException;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.PackageMetadataResolutionStatus;
 import org.dependencytrack.model.Repository;
 import org.dependencytrack.model.RepositoryType;
 import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.persistence.jdbi.PackageMetadataResolutionDao;
 import org.dependencytrack.pkgmetadata.resolution.api.HashAlgorithm;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageArtifactMetadata;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageMetadata;
@@ -215,7 +217,7 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
                 isInternalFunc,
                 priorArtifactMetadata);
         if (result != null) {
-            buffer.addResult(purl, result);
+            buffer.addResult(purlStr, purl, result);
         } else {
             buffer.addEmptyResult(purlStr);
         }
@@ -385,8 +387,11 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
 
         private final LinkedHashMap<String, org.dependencytrack.model.PackageMetadata> pkgMetadataByPurl = new LinkedHashMap<>();
         private final LinkedHashMap<String, org.dependencytrack.model.PackageArtifactMetadata> artifactMetadataByPurl = new LinkedHashMap<>();
+        private final LinkedHashMap<String, PackageMetadataResolutionStatus> resolutionStatusByPurl = new LinkedHashMap<>();
 
-        void addResult(PackageURL purl, ResolutionResult resolutionResult) {
+        void addResult(String purlStr, PackageURL purl, ResolutionResult resolutionResult) {
+            resolutionStatusByPurl.put(purlStr, PackageMetadataResolutionStatus.RESOLVED);
+
             final PackageMetadata resolvedMetadata = resolutionResult.packageMetadata();
             final String repositoryIdentifier = resolutionResult.repositoryIdentifier();
             final String resolverName = resolutionResult.resolver();
@@ -430,31 +435,28 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
         }
 
         void addEmptyResult(String purlStr) {
-            final PackageURL purl = PurlUtil.silentPurl(purlStr);
-            if (purl == null) {
-                return;
-            }
-
-            final var resolvedAt = Instant.now();
-            final PackageURL packagePurl = PurlUtil.silentPurlPackageOnly(purl);
-            pkgMetadataByPurl.merge(
-                    packagePurl.canonicalize(),
-                    new org.dependencytrack.model.PackageMetadata(packagePurl, null, null, resolvedAt, null, null),
-                    (existing, incoming) -> existing.latestVersion() != null ? existing : incoming);
-            artifactMetadataByPurl.putIfAbsent(
-                    purl.toString(),
-                    new org.dependencytrack.model.PackageArtifactMetadata(
-                            purl, packagePurl, null, null, null, null, null, null, null, resolvedAt));
+            // A parseable-but-unresolved PURL is negatively cached (NOT_FOUND) and re-attempted
+            // once its record ages past the TTL. An unparseable one is recorded as UNRESOLVABLE
+            // and suppressed permanently. No metadata rows are written for either: candidacy is
+            // driven solely by PACKAGE_METADATA_RESOLUTION, so empty metadata rows would be dead
+            // weight (and, for malformed PURLs, unrepresentable).
+            resolutionStatusByPurl.put(
+                    purlStr,
+                    PurlUtil.silentPurl(purlStr) != null
+                            ? PackageMetadataResolutionStatus.NOT_FOUND
+                            : PackageMetadataResolutionStatus.UNRESOLVABLE);
         }
 
         void maybeFlush() {
-            if (pkgMetadataByPurl.size() >= FLUSH_BATCH_SIZE) {
+            if (resolutionStatusByPurl.size() >= FLUSH_BATCH_SIZE) {
                 flush();
             }
         }
 
         void flush() {
-            if (pkgMetadataByPurl.isEmpty() && artifactMetadataByPurl.isEmpty()) {
+            if (pkgMetadataByPurl.isEmpty()
+                    && artifactMetadataByPurl.isEmpty()
+                    && resolutionStatusByPurl.isEmpty()) {
                 return;
             }
 
@@ -467,10 +469,15 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
                     final int modified = new PackageArtifactMetadataDao(handle).upsertAll(artifactMetadataByPurl.values());
                     LOGGER.debug("Modified {} package artifact metadata records", modified);
                 }
+                if (!resolutionStatusByPurl.isEmpty()) {
+                    final int modified = new PackageMetadataResolutionDao(handle).upsertAll(resolutionStatusByPurl);
+                    LOGGER.debug("Modified {} package metadata resolution records", modified);
+                }
             });
 
             pkgMetadataByPurl.clear();
             artifactMetadataByPurl.clear();
+            resolutionStatusByPurl.clear();
         }
 
     }

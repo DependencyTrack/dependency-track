@@ -365,19 +365,21 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             return qm.callInTransaction(() -> {
                 final Project persistentProject = processProject(ctx, qm, bom.project(), bom.projectMetadata());
 
-                LOGGER.info("Processing %d components".formatted(bom.components().size()));
+                LOGGER.info("Processing {} components", bom.components().size());
                 final Map<ComponentIdentity, Component> persistentComponentsByIdentity =
                         processComponents(qm, persistentProject, bom.components(), bom.identitiesByBomRef(), bom.bomRefsByIdentity());
 
-                LOGGER.info("Processing %d services".formatted(bom.services().size()));
+                LOGGER.info("Processing {} services", bom.services().size());
                 final Map<ComponentIdentity, ServiceComponent> persistentServicesByIdentity =
                         processServices(qm, persistentProject, bom.services(), bom.identitiesByBomRef(), bom.bomRefsByIdentity());
 
-                LOGGER.info("Processing %d dependency graph entries".formatted(bom.dependencyGraph().asMap().size()));
+                LOGGER.info("Processing {} dependency graph entries", bom.dependencyGraph().asMap().size());
                 processDependencyGraph(qm, persistentProject, bom.dependencyGraph(), persistentComponentsByIdentity,
                         bom.identitiesByBomRef(), bom.bomRefsByIdentity());
 
                 recordBomImport(ctx, qm, persistentProject);
+
+                qm.seedPackageMetadataResolution(persistentProject);
 
                 return new ProcessedBom(
                         persistentProject,

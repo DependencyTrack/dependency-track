@@ -36,12 +36,13 @@ import java.util.List;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import org.dependencytrack.persistence.jdbi.VulnerabilityDao;
 import org.dependencytrack.resources.v1.vo.AffectedComponent;
-import org.dependencytrack.model.VulnerableSoftware;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL;
 
@@ -128,25 +129,25 @@ public class FindingPackagingFormat {
                 already exposed by the vulnerability API.
              */
             useJdbiHandle(handle -> {
-                var dao = handle.attach(VulnerabilityDao.class);
-                Map<UUID, List<AffectedComponent>> cache = new HashMap<>();
-                for (Finding finding : findings) {
-                    UUID uuid = (UUID) finding.getVulnerability().get("uuid");
-                    Long id = dao.getVulnerabilityId(uuid);
-                    if (id == null) {
-                        continue;
-                    }
-                    List<AffectedComponent> result = cache.get(uuid);
-                    if (result == null) {
-                        List<VulnerableSoftware> vsList = dao.getVulnerableSoftwareByVulnId(id);
-                        result = new ArrayList<>();
-                        for (VulnerableSoftware vs : vsList) {
-                            result.add(new AffectedComponent(vs));
-                        }
-                        cache.put(uuid, result);
-                    }
-                    if (!result.isEmpty()) {
-                        finding.getVulnerability().put("affectedVersions", result);
+                final var dao = handle.attach(VulnerabilityDao.class);
+
+                final Set<UUID> vulnUuids = new HashSet<>();
+                for (final Finding finding : findings) {
+                    vulnUuids.add((UUID) finding.getVulnerability().get("uuid"));
+                }
+
+                final Map<UUID, List<AffectedComponent>> rangesByVuln = new HashMap<>();
+                for (final var row : dao.getVulnerableSoftwareByVulnUuids(vulnUuids)) {
+                    rangesByVuln
+                            .computeIfAbsent(row.vulnUuid(), key -> new ArrayList<>())
+                            .add(new AffectedComponent(row.vulnerableSoftware()));
+                }
+
+                for (final Finding finding : findings) {
+                    final UUID uuid = (UUID) finding.getVulnerability().get("uuid");
+                    final List<AffectedComponent> ranges = rangesByVuln.get(uuid);
+                    if (ranges != null && !ranges.isEmpty()) {
+                        finding.getVulnerability().put("affectedVersions", ranges);
                     }
                 }
             });

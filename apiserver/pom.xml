@@ -347,6 +347,10 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty.compression</groupId>
+            <artifactId>jetty-compression-zstandard</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty.compression</groupId>
             <artifactId>jetty-compression-server</artifactId>
         </dependency>
         <dependency>

@@ -1,0 +1,259 @@
+# This file is part of Dependency-Track.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) OWASP Foundation. All Rights Reserved.
+get:
+  operationId: listProjects
+  summary: List all projects
+  description: |-
+    Retrieves a paginated list of projects matching the provided filter criteria.
+
+    Text filters are case-insensitive. When portfolio access control is enabled,
+    only projects accessible to the caller are returned.
+
+    Results are sorted by `name` ascending when `sort_by` is omitted.
+
+    Reports `EXACT` total counts for up to 500 items, and `AT_LEAST` past that.
+
+    ### Sortable fields
+
+    Sorting is supported for the following fields:
+
+    * `name`
+    * `group`
+    * `version`
+    * `classifier`
+    * `inactive_since`
+    * `is_latest`
+    * `last_bom_import`
+    * `last_inherited_risk_score`
+
+    ### Expandable fields
+
+    The following fields can be included via `expand`:
+
+    * `metrics`
+
+    Requires permission `VIEW_PORTFOLIO`.
+  tags:
+    - Projects
+  parameters:
+    - name: name_contains
+      in: query
+      description: |-
+        Filter by name (substring match).
+
+        Leading and trailing whitespace is ignored. Values that are empty or
+        whitespace-only are treated as if the parameter was omitted.
+      schema:
+        type: string
+    - name: version_contains
+      in: query
+      description: |-
+        Filter by version (substring match).
+
+        Leading and trailing whitespace is ignored. Values that are empty or
+        whitespace-only are treated as if the parameter was omitted.
+      schema:
+        type: string
+    - name: tags
+      in: query
+      description: |-
+        Filter by tag names (exact match, case-insensitive).
+        When multiple values are provided, only projects matching **all** tags are returned.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+    - name: teams
+      in: query
+      description: |-
+        Filter by team names (exact match, case-insensitive).
+        When multiple values are provided, projects matching **any** of the teams are returned.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+    - name: parent_uuid
+      in: query
+      description: |-
+        Filter by parent project UUID.
+
+        Returns only direct children of the given parent.
+
+        When portfolio access control is enabled and the caller does not have
+        access to the parent project, an empty result set is returned.
+
+        Used for tree-view navigation (lazy loading of one hierarchy level).
+        For a flat list of all descendants under a root (or any ancestor),
+        use `ancestor_uuid` instead.
+      schema:
+        type: string
+        format: uuid
+    - name: ancestor_uuid
+      in: query
+      description: |-
+        Filter by ancestor project UUID.
+
+        Returns all descendants of the given project at any depth
+        (excluding the ancestor itself).
+
+        When portfolio access control is enabled and the caller does not have
+        access to the ancestor project, an empty result set is returned.
+        Individual descendants remain subject to the caller's project ACL.
+      schema:
+        type: string
+        format: uuid
+    - name: only_root
+      in: query
+      description: When `true`, return only root projects (those without a parent).
+      schema:
+        type: boolean
+    - name: has_children
+      in: query
+      description: |-
+        When `true`, return only projects that have at least one direct child
+        visible to the caller.
+
+        Portfolio access control applies to every row in the result set: a project
+        is returned only if the caller is permitted to access that project. With
+        this filter active, the project must also have at least one direct child
+        the caller is permitted to access.
+
+        Projects the caller cannot access are never included. Access is evaluated
+        per project using the standard portfolio ACL rules (including hierarchy:
+        access granted on an ancestor also grants access to its descendants).
+        A project is not listed when all of its direct children are inaccessible
+        to the caller.
+      schema:
+        type: boolean
+    - name: is_active
+      in: query
+      description: |-
+        When `true`, return only active projects.
+        When `false`, return only inactive projects.
+        Omit to include projects regardless of active state.
+      schema:
+        type: boolean
+    - name: is_latest
+      in: query
+      description: |-
+        When `true`, return only latest-version projects.
+        When `false`, return only non-latest projects.
+        Omit to include projects regardless of the flag.
+      schema:
+        type: boolean
+    - name: last_bom_import_since
+      in: query
+      description: |-
+        Filter by last BOM import time (inclusive lower bound).
+
+        Projects that have never imported a BOM are excluded whenever
+        `last_bom_import_since` or `last_bom_import_before` is set.
+      schema:
+        $ref: "../../shared/schemas/timestamp.yaml"
+    - name: last_bom_import_before
+      in: query
+      description: Filter by last BOM import time (exclusive upper bound).
+      schema:
+        $ref: "../../shared/schemas/timestamp.yaml"
+    - name: severity
+      in: query
+      description: |-
+        Filter projects that have at least one vulnerability of the given severities,
+        based on the project's current metrics.
+        When multiple values are provided, projects matching **any** of the severities are returned.
+
+        Values are matched case-insensitively. Unknown values result in `400 Bad Request`.
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - critical
+            - high
+            - medium
+            - low
+            - unassigned
+      style: form
+      explode: true
+    - name: classifier
+      in: query
+      description: |-
+        Filter by project classifier (exact match).
+        When multiple values are provided, projects matching **any** of the classifiers are returned.
+
+        Values are matched case-insensitively. Unknown values result in `400 Bad Request`.
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - APPLICATION
+            - FRAMEWORK
+            - LIBRARY
+            - CONTAINER
+            - OPERATING_SYSTEM
+            - DEVICE
+            - FIRMWARE
+            - FILE
+            - PLATFORM
+            - DEVICE_DRIVER
+            - MACHINE_LEARNING_MODEL
+            - DATA
+            - CRYPTOGRAPHIC_ASSET
+      style: form
+      explode: true
+    - name: expand
+      in: query
+      description: Optional fields to include in each project response item. Unknown values are silently ignored.
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - metrics
+      style: form
+      explode: true
+    - $ref: "../../shared/parameters/pagination-limit.yaml"
+    - $ref: "../../shared/parameters/page-token.yaml"
+    - $ref: "../../shared/parameters/sort-direction.yaml"
+    - $ref: "../../shared/parameters/sort-by.yaml"
+  responses:
+    "200":
+      description: A list of projects matching the provided filters
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/list-projects-response.yaml"
+    "400":
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            anyOf:
+              - $ref: "../../shared/schemas/invalid-sort-field-problem-details.yaml"
+              - $ref: "../../shared/schemas/invalid-request-problem-details.yaml"
+              - $ref: "../../shared/schemas/problem-details.yaml"
+    "401":
+      $ref: "../../shared/responses/generic-unauthorized-error.yaml"
+    "403":
+      $ref: "../../shared/responses/generic-forbidden-error.yaml"
+    default:
+      $ref: "../../shared/responses/generic-error.yaml"

@@ -200,8 +200,6 @@ tags:
   description: Endpoints related to projects
 - name: Secrets
   description: Endpoints related to secrets
-- name: Service Accounts
-  description: Endpoints related to service accounts
 - name: System Capabilities
   description: Endpoints exposing the capabilities of the running server
 - name: Task Queues
@@ -236,6 +234,8 @@ paths:
     $ref: "./resources/kev-data-sources/kev-data-source-mirror-run-latest.yaml"
   /oauth/token:
     $ref: "./resources/oauth/oauth-token.yaml"
+  /projects:
+    $ref: "./resources/projects/projects.yaml"
   /projects/{uuid}/clone:
     $ref: "./resources/projects/project-clone.yaml"
   /projects/{uuid}/components:

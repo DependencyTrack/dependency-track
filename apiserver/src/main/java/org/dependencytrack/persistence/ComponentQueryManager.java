@@ -138,6 +138,7 @@ final class ComponentQueryManager extends QueryManager {
                         "A0"."FILENAME" AS "filename",
                         "A0"."GROUP" AS "group",
                         "A0"."INTERNAL" AS "internal",
+                        "A0"."MANUALLY_CREATED" AS "manuallyCreated",
                         "A0"."LAST_RISKSCORE" AS "lastInheritedRiskScore",
                         "A0"."LICENSE" AS "componentLicenseName",
                         "A0"."LICENSE_EXPRESSION" AS "licenseExpression",

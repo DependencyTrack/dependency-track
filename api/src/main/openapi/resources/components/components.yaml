@@ -17,7 +17,12 @@
 post:
   operationId: createComponent
   summary: Creates a new component for the project
-  description: Requires permission `PORTFOLIO_MANAGEMENT` or `PORTFOLIO_MANAGEMENT_UPDATE`
+  description: |-
+    The created component is flagged as manually created: it stays editable
+    and survives BOM synchronization. Components imported from BOM uploads
+    are read-only and curated via component analyses or component policies.
+
+    Requires permission `PORTFOLIO_MANAGEMENT` or `PORTFOLIO_MANAGEMENT_UPDATE`
   tags:
     - Components
   requestBody:

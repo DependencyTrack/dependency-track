@@ -1,3 +1,12 @@
+-- Components created by hand through the REST API (as opposed to BOM
+-- imports) stay editable and are never deleted by BOM synchronization.
+-- A BOM component matching a manual component's identity takes it over:
+-- the flag clears and the component becomes read-only.
+-- Nullable like "INTERNAL": the JDO layer writes NULL for components it
+-- creates without the flag, and NULL reads as false.
+ALTER TABLE "COMPONENT"
+  ADD COLUMN IF NOT EXISTS "MANUALLY_CREATED" BOOLEAN;
+
 -- Component policies: automated license curation. A CEL condition matched
 -- against each component at BOM ingest (first match by priority wins)
 -- creates/maintains a component analysis with the patch below. Manual

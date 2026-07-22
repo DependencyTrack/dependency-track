@@ -499,7 +499,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                             return previous;
                         }));
 
+        // Manually created components are not part of any BOM and must
+        // survive synchronization.
         final Set<Long> idsOfComponentsToDelete = persistentComponents.stream()
+                .filter(component -> !component.isManuallyCreated())
                 .map(Component::getId)
                 .collect(Collectors.toSet());
 
@@ -550,6 +553,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 applyIfChanged(persistentComponent, component, Component::getLicenseUrl, persistentComponent::setLicenseUrl);
                 applyIfChanged(persistentComponent, component, Component::getLicenseExpression, persistentComponent::setLicenseExpression);
                 applyIfChanged(persistentComponent, component, Component::isInternal, persistentComponent::setInternal);
+                // A BOM component matching the identity of a manually created
+                // component takes it over: the flag clears and the component
+                // becomes read-only like any other imported component.
+                applyIfChanged(persistentComponent, component, Component::isManuallyCreated, persistentComponent::setManuallyCreated);
                 applyIfChanged(persistentComponent, component, Component::getExternalReferences, persistentComponent::setExternalReferences);
                 applyIfChanged(persistentComponent, component, Component::getScope, persistentComponent::setScope);
 

@@ -232,18 +232,18 @@ public class BomResource extends AbstractApiResource {
             try {
                 if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
                     if (download) {
-                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
+                        return Response.ok(exporter.export(exporter.create(project, cdxOutputVersion), CycloneDXExporter.Format.JSON, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
                                 .header("content-disposition", "attachment; filename=\"" + project.getUuid() + "-" + variant + ".cdx.json\"").build();
                     } else {
-                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON, cdxOutputVersion),
+                        return Response.ok(exporter.export(exporter.create(project, cdxOutputVersion), CycloneDXExporter.Format.JSON, cdxOutputVersion),
                                 CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
                     }
                 } else if (format.equalsIgnoreCase("XML")) {
                     if (download) {
-                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.XML, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
+                        return Response.ok(exporter.export(exporter.create(project, cdxOutputVersion), CycloneDXExporter.Format.XML, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
                                 .header("content-disposition", "attachment; filename=\"" + project.getUuid() + "-" + variant + ".cdx.xml\"").build();
                     } else {
-                        return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.XML, cdxOutputVersion),
+                        return Response.ok(exporter.export(exporter.create(project, cdxOutputVersion), CycloneDXExporter.Format.XML, cdxOutputVersion),
                                 CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
                     }
                 } else {
@@ -301,10 +301,10 @@ public class BomResource extends AbstractApiResource {
             final CycloneDXExporter exporter = new CycloneDXExporter(CycloneDXExporter.Variant.INVENTORY, qm);
             try {
                 if (StringUtils.trimToNull(format) == null || format.equalsIgnoreCase("JSON")) {
-                    return Response.ok(exporter.export(exporter.create(component), CycloneDXExporter.Format.JSON, cdxOutputVersion),
+                    return Response.ok(exporter.export(exporter.create(component, cdxOutputVersion), CycloneDXExporter.Format.JSON, cdxOutputVersion),
                             CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
                 } else if (format.equalsIgnoreCase("XML")) {
-                    return Response.ok(exporter.export(exporter.create(component), CycloneDXExporter.Format.XML, cdxOutputVersion),
+                    return Response.ok(exporter.export(exporter.create(component, cdxOutputVersion), CycloneDXExporter.Format.XML, cdxOutputVersion),
                             CycloneDxMediaType.APPLICATION_CYCLONEDX_XML).build();
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST).entity("Invalid BOM format specified.").build();

@@ -27,6 +27,7 @@ import org.datanucleus.flush.FlushMode;
 import org.dependencytrack.analysis.AnalyzeProjectWorkflow;
 import org.dependencytrack.common.Mappers;
 import org.dependencytrack.componentanalysis.ComponentAnalysisApplier;
+import org.dependencytrack.policy.cel.CelComponentPolicyApplier;
 import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivityContext;
 import org.dependencytrack.dex.api.ActivitySpec;
@@ -589,7 +590,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
         // Durable license curation, applied AFTER BOM field synchronization
         // (overrides win over BOM-declared licenses) and before policy
-        // evaluation (LICENSE violations see the curated license).
+        // evaluation (LICENSE violations see the curated license): component
+        // policies maintain their analyses first, then all analyses are
+        // re-applied onto the synchronized components.
+        CelComponentPolicyApplier.applyPolicies(project, persistentComponentByIdentity.values());
         final var componentAnalysisApplier = ComponentAnalysisApplier.forProject(qm, project.getId());
         persistentComponentByIdentity.values().forEach(componentAnalysisApplier::apply);
         qm.getPersistenceManager().flush();

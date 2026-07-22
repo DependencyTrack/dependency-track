@@ -185,6 +185,8 @@ servers:
 tags:
 - name: Component Analyses
   description: Endpoints related to component analyses (license curation)
+- name: Component Policies
+  description: Endpoints related to component policies (automated license curation)
 - name: Components
   description: Endpoints related to components
 - name: Extensions
@@ -225,6 +227,10 @@ paths:
     $ref: "./resources/projects/project-components.yaml"
   /component-analyses:
     $ref: "./resources/component-analyses/component-analyses.yaml"
+  /component-policies:
+    $ref: "./resources/component-policies/component-policies.yaml"
+  /component-policies/{id}:
+    $ref: "./resources/component-policies/component-policy.yaml"
   /component-analyses/{id}:
     $ref: "./resources/component-analyses/component-analysis.yaml"
   /component-analyses/{id}/comments:

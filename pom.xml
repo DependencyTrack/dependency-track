@@ -135,7 +135,7 @@
         <lib.db-scheduler.version>16.12.0</lib.db-scheduler.version>
         <lib.flyway.version>12.11.0</lib.flyway.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
-        <lib.greenmail.version>2.1.10</lib.greenmail.version>
+        <lib.greenmail.version>2.1.11</lib.greenmail.version>
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
         <lib.httpclient5.version>5.6.2</lib.httpclient5.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>

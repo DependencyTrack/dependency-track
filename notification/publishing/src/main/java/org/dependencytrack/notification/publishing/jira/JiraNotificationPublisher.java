@@ -25,6 +25,7 @@ import org.dependencytrack.notification.api.templating.RenderedNotificationTempl
 import org.dependencytrack.notification.proto.v1.Notification;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -82,9 +83,9 @@ final class JiraNotificationPublisher implements NotificationPublisher {
                 .timeout(Duration.ofSeconds(10))
                 .build();
 
-        final HttpResponse<String> response;
         try {
-            response = httpClient.send(request, BodyHandlers.ofString());
+            final HttpResponse<InputStream> response = httpClient.send(request, BodyHandlers.ofInputStream());
+            ensureStatusCode(response, 201, "Request failed with retryable response code: ");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RetryablePublishException("Interrupted while sending request", e);
@@ -92,8 +93,6 @@ final class JiraNotificationPublisher implements NotificationPublisher {
             RetryablePublishException.throwIfRetryableNetworkError(e, "Request failed while sending notification");
             throw e;
         }
-
-        ensureStatusCode(response, 201, "Request failed with retryable response code: ");
     }
 
 }

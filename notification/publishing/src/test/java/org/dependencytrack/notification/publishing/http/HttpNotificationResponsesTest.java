@@ -52,34 +52,33 @@ class HttpNotificationResponsesTest {
 
     @Test
     void ensureStatusCodeShouldNotThrowForExpectedStatus() {
-        final HttpResponse<String> response = mock(HttpResponse.class);
+        final HttpResponse<?> response = mock(HttpResponse.class);
         when(response.statusCode()).thenReturn(201);
 
-        assertThatCode(() -> HttpNotificationResponses.ensureStatusCode(response, 201, "failed: "))
+        assertThatCode(() -> HttpNotificationResponses.ensureStatusCode(response, 201, "failed: ", ""))
                 .doesNotThrowAnyException();
     }
 
     @Test
     void ensureStatusCodeShouldThrowForUnexpectedStatus() {
-        final HttpResponse<String> response = mock(HttpResponse.class);
+        final HttpResponse<?> response = mock(HttpResponse.class);
         when(response.statusCode()).thenReturn(200);
-        when(response.body()).thenReturn("unexpected response payload");
 
         assertThatThrownBy(() -> HttpNotificationResponses.ensureStatusCode(
                 response,
                 201,
-                "Request failed with retryable response code: "))
+                "Request failed with retryable response code: ",
+                "unexpected response payload"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Request failed with retryable response code: 200");
     }
 
     @Test
     void ensureSuccessful2xxResponseShouldThrowForUnexpectedStatus() {
-        final HttpResponse<String> response = mock(HttpResponse.class);
+        final HttpResponse<?> response = mock(HttpResponse.class);
         when(response.statusCode()).thenReturn(400);
-        when(response.body()).thenReturn("bad request");
 
-        assertThatThrownBy(() -> HttpNotificationResponses.ensureSuccessful2xxResponse(response))
+        assertThatThrownBy(() -> HttpNotificationResponses.ensureSuccessful2xxResponse(response, "bad request"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Request failed with unexpected response code: 400");
     }

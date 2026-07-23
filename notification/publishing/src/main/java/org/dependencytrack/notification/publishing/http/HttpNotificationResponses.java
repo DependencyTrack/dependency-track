@@ -23,7 +23,12 @@ import org.dependencytrack.support.net.HttpRetry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.http.HttpResponse;
+
+import static org.dependencytrack.notification.publishing.http.HttpNotificationResponseBodies.discardRemainder;
+import static org.dependencytrack.notification.publishing.http.HttpNotificationResponseBodies.readSnippetAndDiscardRemainder;
 
 /**
  * @since 5.0.0
@@ -38,31 +43,72 @@ public final class HttpNotificationResponses {
     private HttpNotificationResponses() {
     }
 
-    public static void ensureSuccessful2xxResponse(final HttpResponse<String> response) {
+    public static void ensureSuccessful2xxResponse(final HttpResponse<InputStream> response) throws IOException {
+        try (InputStream body = response.body()) {
+            final HttpRetry retry = HttpRetry.of(response);
+            if (retry.isRetryable()) {
+                final String bodySnippet = readSnippetAndDiscardRemainder(body, DEBUG_BODY_SNIPPET_LENGTH);
+                logWarnWithResponseBody(retry.description(), bodySnippet);
+                throw new RetryablePublishException(retry.description(), null, retry.retryAfter());
+            }
+
+            final int statusCode = response.statusCode();
+            if (statusCode < 200 || statusCode > 299) {
+                final String message = "Request failed with unexpected response code: " + statusCode;
+                final String bodySnippet = readSnippetAndDiscardRemainder(body, DEBUG_BODY_SNIPPET_LENGTH);
+                logErrorWithResponseBody(message, bodySnippet);
+                throw new IllegalStateException(message);
+            }
+
+            discardRemainder(body);
+        }
+    }
+
+    public static void ensureStatusCode(
+            final HttpResponse<InputStream> response,
+            final int expectedStatusCode,
+            final String failureMessagePrefix) throws IOException {
+        if (response.statusCode() == expectedStatusCode) {
+            try (InputStream body = response.body()) {
+                discardRemainder(body);
+            }
+            return;
+        }
+
+        try (InputStream body = response.body()) {
+            final String message = failureMessagePrefix + response.statusCode();
+            final String bodySnippet = readSnippetAndDiscardRemainder(body, DEBUG_BODY_SNIPPET_LENGTH);
+            logErrorWithResponseBody(message, bodySnippet);
+            throw new IllegalStateException(message);
+        }
+    }
+
+    static void ensureSuccessful2xxResponse(final HttpResponse<?> response, final String bodySnippet) {
         final HttpRetry retry = HttpRetry.of(response);
         if (retry.isRetryable()) {
-            logWarnWithResponseBody(retry.description(), response.body());
+            logWarnWithResponseBody(retry.description(), bodySnippet);
             throw new RetryablePublishException(retry.description(), null, retry.retryAfter());
         }
 
         final int statusCode = response.statusCode();
         if (statusCode < 200 || statusCode > 299) {
             final String message = "Request failed with unexpected response code: " + statusCode;
-            logErrorWithResponseBody(message, response.body());
+            logErrorWithResponseBody(message, bodySnippet);
             throw new IllegalStateException(message);
         }
     }
 
-    public static void ensureStatusCode(
-            final HttpResponse<String> response,
+    static void ensureStatusCode(
+            final HttpResponse<?> response,
             final int expectedStatusCode,
-            final String failureMessagePrefix) {
+            final String failureMessagePrefix,
+            final String bodySnippet) {
         if (response.statusCode() == expectedStatusCode) {
             return;
         }
 
         final String message = failureMessagePrefix + response.statusCode();
-        logErrorWithResponseBody(message, response.body());
+        logErrorWithResponseBody(message, bodySnippet);
         throw new IllegalStateException(message);
     }
 

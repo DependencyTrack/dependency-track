@@ -25,6 +25,7 @@ import org.dependencytrack.notification.api.templating.RenderedNotificationTempl
 import org.dependencytrack.notification.proto.v1.Notification;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
@@ -80,7 +81,7 @@ final class WebhookNotificationPublisher implements NotificationPublisher {
         }
 
         try {
-            final HttpResponse<String> response = httpClient.send(requestBuilder.build(), BodyHandlers.ofString());
+            final HttpResponse<InputStream> response = httpClient.send(requestBuilder.build(), BodyHandlers.ofInputStream());
             ensureSuccessful2xxResponse(response);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

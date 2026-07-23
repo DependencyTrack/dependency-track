@@ -14,6 +14,7 @@ CREATE FUNCTION "COMPUTE_COMPONENT_METRICS"(
   , medium INT
   , low INT
   , unassigned INT
+  , kev INT
   , risk_score NUMERIC
   , findings_total INT
   , findings_audited INT
@@ -56,6 +57,17 @@ $$
     SELECT DISTINCT ON (cv."COMPONENT_ID", va."GROUP_ID", CASE WHEN va."GROUP_ID" IS NULL THEN v."ID" END)
            cv."COMPONENT_ID" AS component_id
          , COALESCE(a."SEVERITY", v."SEVERITY") AS effective_severity
+         , EXISTS (
+             SELECT 1
+               FROM "KEV_ASSERTION" AS ka
+              WHERE (ka."VULN_SOURCE", ka."VULN_ID") IN (
+                SELECT v."SOURCE", v."VULNID"
+                 UNION
+                SELECT alias_sibling."SOURCE", alias_sibling."VULN_ID"
+                  FROM "VULNERABILITY_ALIAS" AS alias_sibling
+                 WHERE alias_sibling."GROUP_ID" = va."GROUP_ID"
+              )
+           ) AS is_kev
       FROM "COMPONENTS_VULNERABILITIES" AS cv
      INNER JOIN comp
         ON comp.id = cv."COMPONENT_ID"
@@ -87,6 +99,7 @@ $$
          , COUNT(*) FILTER (WHERE effective_severity = 'MEDIUM')::INT AS medium
          , COUNT(*) FILTER (WHERE effective_severity = 'LOW')::INT AS low
          , COUNT(*) FILTER (WHERE effective_severity NOT IN ('CRITICAL','HIGH','MEDIUM','LOW'))::INT AS unassigned
+         , COUNT(*) FILTER (WHERE is_kev)::INT AS kev
       FROM vuln_deduped
      GROUP BY vuln_deduped.component_id
   ),
@@ -151,6 +164,7 @@ $$
        , COALESCE(vc.medium, 0)
        , COALESCE(vc.low, 0)
        , COALESCE(vc.unassigned, 0)
+       , COALESCE(vc.kev, 0)
        , COALESCE(
            COALESCE(vc.critical, 0) * risk_score_weights.w_critical
            + COALESCE(vc.high, 0) * risk_score_weights.w_high

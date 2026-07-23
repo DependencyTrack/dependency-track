@@ -82,6 +82,7 @@ public class ModelMapper {
                 .unassigned(metrics.getUnassigned())
                 .vulnerabilities(metrics.getVulnerabilities())
                 .suppressed(metrics.getSuppressed())
+                .kev(metrics.getKev())
                 .findingsTotal(metrics.getFindingsTotal())
                 .findingsAudited(metrics.getFindingsAudited())
                 .findingsUnaudited(metrics.getFindingsUnaudited())

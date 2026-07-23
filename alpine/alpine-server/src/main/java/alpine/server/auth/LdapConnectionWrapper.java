@@ -131,14 +131,8 @@ public class LdapConnectionWrapper {
         if (ldapSslTls) {
             env.put("java.naming.ldap.factory.socket", "alpine.security.crypto.RelaxedSSLSocketFactory");
         }
-        try {
-            return new InitialLdapContext(env, null);
-        } catch (CommunicationException e) {
-            LOGGER.error("Failed to connect to directory server", e);
-            throw (e);
-        } catch (NamingException e) {
-            throw new NamingException("Failed to authenticate user");
-        }
+
+        return new InitialLdapContext(env, null);
     }
 
     /**

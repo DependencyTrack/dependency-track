@@ -44,6 +44,7 @@ import java.util.Set;
 import static com.icegreen.greenmail.configuration.GreenMailConfiguration.aConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.notification.api.TestNotificationFactory.createBomConsumedTestNotification;
+import static org.dependencytrack.notification.api.TestNotificationFactory.createNewVulnerabilityTestNotification;
 
 class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
 
@@ -356,7 +357,7 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 "text/html; charset=utf-8");
         final NotificationTemplateRenderer htmlRenderer =
                 new PebbleNotificationTemplateRendererFactory(
-                        Map.of("baseUrl", () -> "https://example.com"))
+                        Map.of(PebbleNotificationTemplateRendererFactory.BASE_URL, () -> "https://example.com"))
                         .createRenderer(htmlTemplate);
         final var publishCtx =
                 new NotificationPublishContext(
@@ -374,6 +375,32 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
         assertThat((String) message.getContent()).isEqualTo(/* language=HTML */ """
                 <html><body><p>Bill of Materials Consumed</p></body></html>\
                 """);
+    }
+
+    /**
+     * Reproducer for base URLs configured with a trailing slash producing
+     * {@code https://host//path} links that 404 in the frontend router.
+     *
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/6786">#6786</a>
+     */
+    @Test
+    void shouldNotProduceDoubleSlashesWhenBaseUrlHasTrailingSlash() throws Exception {
+        final NotificationTemplateRenderer renderer =
+                new PebbleNotificationTemplateRendererFactory(
+                        Map.of(PebbleNotificationTemplateRendererFactory.BASE_URL, () -> "https://redacted.hostname/"))
+                        .createRenderer(publisherFactory.defaultTemplate());
+        final var publishCtx =
+                new NotificationPublishContext(publishContext.ruleConfig(), renderer);
+
+        publisher.publish(publishCtx, createNewVulnerabilityTestNotification());
+
+        final ReceivedMessage message = getReceivedMessage();
+        assertThat(message.content())
+                .doesNotContain("https://redacted.hostname//")
+                .contains("Vulnerability URL: https://redacted.hostname/vulnerability/?source=INTERNAL&vulnId=INT-001")
+                .contains("Component URL:     https://redacted.hostname/component/?uuid=94f87321-a5d1-4c2f-b2fe-95165debebc6")
+                .contains("Project URL:       https://redacted.hostname/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95")
+                .contains("Other affected projects: https://redacted.hostname/vulnerabilities/INTERNAL/INT-001/affectedProjects");
     }
 
     private record ReceivedMessage(List<String> from, String subject, String content) {

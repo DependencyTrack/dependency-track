@@ -43,6 +43,12 @@ import static java.util.Objects.requireNonNull;
  */
 public final class PebbleNotificationTemplateRendererFactory {
 
+    /**
+     * Name of the template context variable holding the application base URL,
+     * used to construct frontend links in notification templates.
+     */
+    public static final String BASE_URL = "baseUrl";
+
     private final PebbleEngine pebbleEngine;
     private final Map<String, Supplier<Object>> contextVariableSuppliers;
 

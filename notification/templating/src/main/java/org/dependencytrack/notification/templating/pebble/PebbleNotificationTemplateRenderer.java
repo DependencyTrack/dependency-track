@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory.BASE_URL;
 
 /**
  * A {@link NotificationTemplateRenderer} powered by Pebble.
@@ -93,7 +94,8 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
         if (additionalContext != null) {
             templateCtx.putAll(additionalContext);
         }
-        templateCtx.put("baseUrl", contextVariableSuppliers.getOrDefault("baseUrl", NULL_SUPPLIER).get());
+        templateCtx.put(BASE_URL, normalizeBaseUrl(
+                contextVariableSuppliers.getOrDefault(BASE_URL, NULL_SUPPLIER).get()));
         templateCtx.put("timestampEpochSeconds", Timestamps.toSeconds(notification.getTimestamp()));
         templateCtx.put("timestamp", format(notification.getTimestamp()));
         templateCtx.put("notification", notification);
@@ -131,6 +133,27 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
 
     private static String format(Timestamp protoTimestamp) {
         return TIMESTAMP_FORMATTER.format(Instant.ofEpochMilli(Timestamps.toMillis(protoTimestamp)));
+    }
+
+    /**
+     * Notification templates concatenate {@code baseUrl} with path segments that
+     * already start with {@code /} (e.g. {@code {{ baseUrl }}/projects/...} and
+     * {@code {{ baseUrl }}{{ frontendUri }}}). Configured base URLs commonly
+     * include a trailing slash; strip trailing slashes so rendered links never
+     * contain redundant {@code //}, which breaks the frontend router.
+     *
+     * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/6786">#6786</a>
+     */
+    private static @Nullable Object normalizeBaseUrl(@Nullable Object baseUrl) {
+        if (!(baseUrl instanceof String value)) {
+            return baseUrl;
+        }
+
+        int end = value.length();
+        while (end > 0 && value.charAt(end - 1) == '/') {
+            end--;
+        }
+        return end == value.length() ? value : value.substring(0, end);
     }
 
     private static @Nullable Message extractSubject(Notification notification) throws IOException {

@@ -51,7 +51,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up JDK
-        uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # tag=v5.4.0
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # tag=v5.5.0
         with:
           distribution: 'temurin'
           java-version: '25'
@@ -126,6 +126,10 @@ jobs:
         env:
           BASE_REF: origin/${{ github.base_ref }}
         run: make lint-migrations
+      - name: Lint changed dex migrations
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+        run: make lint-dex-migration
 
   openapi-breaking-changes:
     name: OpenAPI Breaking Changes
@@ -144,7 +148,7 @@ jobs:
           path: base
           persist-credentials: false
       - name: Detect Breaking Changes
-        uses: oasdiff/oasdiff-action/breaking@291b6594ce617f22f49af5898ee038ed0b46e8fe # tag=v0.1.5
+        uses: oasdiff/oasdiff-action/breaking@024f6c399f9a21ada1addb0f9a36ce1bfac995f1 # tag=v0.1.6
         with:
           base: base/api/src/main/openapi/openapi.yaml
           revision: api/src/main/openapi/openapi.yaml

@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.vulndatasource.osv;
 
+import org.jspecify.annotations.Nullable;
+
 import java.time.Instant;
 
 import static java.util.Objects.requireNonNull;
@@ -25,7 +27,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * @since 5.0.0
  */
-record WatermarkRecord(String ecosystem, Instant value, Long version) {
+record WatermarkRecord(String ecosystem, Instant value, @Nullable Long version) {
 
     WatermarkRecord {
         requireNonNull(ecosystem, "ecosystem must not be null");

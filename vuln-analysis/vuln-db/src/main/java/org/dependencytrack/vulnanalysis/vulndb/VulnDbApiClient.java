@@ -19,6 +19,7 @@
 package org.dependencytrack.vulnanalysis.vulndb;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.vulndb.VulnDbApiResponse.PaginatedResponse;
 import org.dependencytrack.vulnanalysis.vulndb.VulnDbApiResponse.Vulnerability;
 
@@ -85,7 +86,8 @@ final class VulnDbApiClient {
                     .GET()
                     .build();
 
-            final HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            final HttpResponse<InputStream> response =
+                    httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
             try (final InputStream body = response.body()) {
                 if (response.statusCode() == 200) {
@@ -108,6 +110,8 @@ final class VulnDbApiClient {
                 if (response.statusCode() == 404) {
                     return List.of();
                 }
+
+                RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
                 throw new IOException("VulnDB API request failed with status " + response.statusCode());
             }
         }

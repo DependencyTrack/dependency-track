@@ -23,15 +23,15 @@ import org.dependencytrack.common.MdcScope;
 import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivityContext;
 import org.dependencytrack.dex.api.ActivitySpec;
+import org.dependencytrack.dex.api.failure.ApplicationFailureException;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
-import org.dependencytrack.plugin.api.config.InvalidRuntimeConfigException;
-import org.dependencytrack.plugin.config.UnresolvableSecretException;
 import org.dependencytrack.plugin.runtime.NoSuchExtensionException;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.InvokeVulnAnalyzerArg;
 import org.dependencytrack.proto.internal.workflow.v1.InvokeVulnAnalyzerRes;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -112,10 +112,12 @@ public final class InvokeVulnAnalyzerActivity implements Activity<InvokeVulnAnal
     private Bom performAnalysis(String analyzerName, Bom bom) throws InterruptedException {
         try (final var vulnAnalyzer = pluginManager.getExtension(VulnAnalyzer.class, analyzerName)) {
             return vulnAnalyzer.analyze(bom);
-        } catch (NoSuchExtensionException
-                 | InvalidRuntimeConfigException
-                 | UnresolvableSecretException e) {
-            throw new TerminalApplicationFailureException(e);
+        } catch (RetryableVulnAnalysisException e) {
+            throw new ApplicationFailureException(
+                    "Failed to invoke vuln analyzer with retryable cause", e, e.retryAfter());
+        } catch (RuntimeException e) {
+            throw new TerminalApplicationFailureException(
+                    "Failed to invoke vuln analyzer with non-retryable cause", e);
         }
     }
 

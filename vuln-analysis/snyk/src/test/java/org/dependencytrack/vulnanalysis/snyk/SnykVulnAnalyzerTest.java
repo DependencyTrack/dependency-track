@@ -30,6 +30,7 @@ import org.dependencytrack.cache.memory.MemoryCacheProvider;
 import org.dependencytrack.plugin.api.MutableServiceRegistry;
 import org.dependencytrack.plugin.api.config.ConfigRegistry;
 import org.dependencytrack.plugin.testing.MockConfigRegistry;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,8 +48,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static com.github.tomakehurst.wiremock.http.Fault.CONNECTION_RESET_BY_PEER;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @WireMockTest
 class SnykVulnAnalyzerTest {
@@ -90,6 +93,25 @@ class SnykVulnAnalyzerTest {
         if (cacheManager != null) {
             cacheManager.close();
         }
+    }
+
+    @Test
+    void shouldThrowRetryableErrorOnConnectionFailure() {
+        stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
+                .willReturn(aResponse().withFault(CONNECTION_RESET_BY_PEER)));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(
+                        Component.newBuilder()
+                                .setBomRef("1")
+                                .setName("jackson-databind")
+                                .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
+                                .build())
+                .build();
+
+        assertThatExceptionOfType(RetryableVulnAnalysisException.class)
+                .isThrownBy(() -> analyzer.analyze(bom))
+                .satisfies(e -> assertThat(e.retryAfter()).isNull());
     }
 
     @Test

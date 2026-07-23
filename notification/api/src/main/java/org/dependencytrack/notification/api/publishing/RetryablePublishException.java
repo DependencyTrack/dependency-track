@@ -18,8 +18,11 @@
  */
 package org.dependencytrack.notification.api.publishing;
 
+import org.dependencytrack.support.net.HttpRetry;
+import org.dependencytrack.support.net.TransientNetworkErrors;
 import org.jspecify.annotations.Nullable;
 
+import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
@@ -55,33 +58,22 @@ public class RetryablePublishException extends RuntimeException {
         this(message, null, null);
     }
 
-    public @Nullable Duration getRetryAfter() {
+    public @Nullable Duration retryAfter() {
         return retryAfter;
     }
 
-    public static void throwIfRetryableError(HttpResponse<?> response) {
-        final int statusCode = response.statusCode();
-        if (statusCode != 429 && statusCode != 503) {
+    public static void throwIfRetryableHttpError(HttpResponse<?> response) {
+        final HttpRetry retry = HttpRetry.of(response);
+        if (!retry.isRetryable()) {
             return;
         }
 
-        final Duration retryAfter = response.headers()
-                .firstValue("Retry-After")
-                .map(RetryablePublishException::parseRetryAfterHeader)
-                .orElse(null);
-
-        throw new RetryablePublishException(
-                "Request failed with retryable response code: " + statusCode, null, retryAfter);
+        throw new RetryablePublishException(retry.description(), null, retry.retryAfter());
     }
 
-    private static @Nullable Duration parseRetryAfterHeader(String value) {
-        try {
-            final long seconds = Long.parseLong(value.strip());
-            return seconds > 0
-                    ? Duration.ofSeconds(seconds)
-                    : null;
-        } catch (NumberFormatException e) {
-            return null;
+    public static void throwIfRetryableNetworkError(IOException e, String message) {
+        if (TransientNetworkErrors.isTransient(e)) {
+            throw new RetryablePublishException(message, e);
         }
     }
 

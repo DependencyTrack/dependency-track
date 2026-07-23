@@ -429,6 +429,9 @@ public final class DexEngineInitializer implements ServletContextListener {
                 .ifPresent(engineConfig.workflowTaskScheduler()::setPollInterval);
         getBackoffFunction(config, "dt.dex-engine.workflow-task-scheduler.poll-backoff")
                 .ifPresent(engineConfig.workflowTaskScheduler()::setPollBackoffFunction);
+        config.getOptionalValue("dt.dex-engine.workflow-task-scheduler.concurrency-key-wakeup-repair-interval-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig.workflowTaskScheduler()::setConcurrencyKeyWakeupRepairInterval);
 
         // Activity task scheduler.
         config.getOptionalValue("dt.dex-engine.activity-task-scheduler.poll-interval-ms", long.class)

@@ -75,8 +75,10 @@ import org.dependencytrack.dex.engine.persistence.command.PollWorkflowTaskComman
 import org.dependencytrack.dex.engine.persistence.command.ScheduleActivityTaskRetryCommand;
 import org.dependencytrack.dex.engine.persistence.command.UpdateAndUnlockRunCommand;
 import org.dependencytrack.dex.engine.persistence.jdbi.JdbiFactory;
+import org.dependencytrack.dex.engine.persistence.model.ConcurrencyKeyWakeup;
 import org.dependencytrack.dex.engine.persistence.model.PolledWorkflowEvents;
 import org.dependencytrack.dex.engine.persistence.model.PolledWorkflowTask;
+import org.dependencytrack.dex.engine.persistence.model.UnlockedWorkflowRun;
 import org.dependencytrack.dex.engine.persistence.request.GetWorkflowRunHistoryRequest;
 import org.dependencytrack.dex.engine.support.Buffer;
 import org.dependencytrack.dex.engine.support.CircuitBreakerStateTransitionLogger;
@@ -104,6 +106,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -248,6 +251,7 @@ final class DexEngineImpl implements DexEngine {
                     config.metrics().meterRegistry(),
                     config.workflowTaskScheduler().pollInterval(),
                     config.workflowTaskScheduler().pollBackoffFunction(),
+                    config.workflowTaskScheduler().concurrencyKeyWakeupRepairInterval(),
                     queueName -> {
                         final TaskWorker worker = workflowWorkerByQueue.get(queueName);
                         if (worker != null) {
@@ -683,6 +687,17 @@ final class DexEngineImpl implements DexEngine {
             if (createdRunIdByRequestId.isEmpty()) {
                 return Collections.emptyList();
             }
+
+            dao.upsertConcurrencyKeyWakeups(
+                    createWorkflowRunCommands.stream()
+                            .filter(cmd -> cmd.concurrencyKey() != null
+                                    && createdRunIdByRequestId.containsKey(cmd.requestId()))
+                            .map(cmd -> new ConcurrencyKeyWakeup(
+                                    cmd.taskQueueName(),
+                                    cmd.concurrencyKey(),
+                                    /* freed */ false))
+                            .collect(Collectors.toSet()));
+
             if (createdRunIdByRequestId.size() != createWorkflowRunCommands.size()) {
                 // Drop messages targeting runs that were not created due to instance ID conflict.
                 // Keeping them would cause a foreign key violation when inserting into the inbox.
@@ -1091,7 +1106,7 @@ final class DexEngineImpl implements DexEngine {
                 .map(WorkflowTaskCompletedEvent::workflowRunState)
                 .collect(Collectors.toList());
 
-        final List<UUID> updatedRunIds = workflowDao.updateAndUnlockRuns(
+        final List<UnlockedWorkflowRun> unlockedWorkflowRuns = workflowDao.updateAndUnlockRuns(
                 this.config.instanceId(),
                 events.stream()
                         .map(event -> new UpdateAndUnlockRunCommand(
@@ -1107,6 +1122,9 @@ final class DexEngineImpl implements DexEngine {
                                 event.task().lock().version()))
                         .toList());
 
+        final List<UUID> updatedRunIds = unlockedWorkflowRuns.stream()
+                .map(UnlockedWorkflowRun::id)
+                .toList();
         if (updatedRunIds.size() != events.size()) {
             final Set<UUID> notUpdatedRunIds = events.stream()
                     .map(WorkflowTaskCompletedEvent::workflowRunState)
@@ -1270,8 +1288,30 @@ final class DexEngineImpl implements DexEngine {
                     historyEntriesCreated, createHistoryEntryCommands.size());
         }
 
+        final var concurrencyKeyWakeups = new HashSet<ConcurrencyKeyWakeup>();
+        for (final UnlockedWorkflowRun unlockedWorkflowRun : unlockedWorkflowRuns) {
+            if (unlockedWorkflowRun.freedConcurrencyKey() != null) {
+                concurrencyKeyWakeups.add(
+                        new ConcurrencyKeyWakeup(
+                                unlockedWorkflowRun.queueName(),
+                                unlockedWorkflowRun.freedConcurrencyKey(),
+                                /* freed */ true));
+            }
+        }
+
         if (!createWorkflowRunCommands.isEmpty()) {
             final Map<UUID, UUID> createdRunIdByRequestId = workflowDao.createRuns(createWorkflowRunCommands);
+
+            for (final CreateWorkflowRunCommand cmd : createWorkflowRunCommands) {
+                if (cmd.concurrencyKey() != null && createdRunIdByRequestId.containsKey(cmd.requestId())) {
+                    concurrencyKeyWakeups.add(
+                            new ConcurrencyKeyWakeup(
+                                    cmd.taskQueueName(),
+                                    cmd.concurrencyKey(),
+                                    /* freed */ false));
+                }
+            }
+
             workflowDao.getJdbiHandle().afterCommit(() -> {
                 for (final CreateWorkflowRunCommand cmd : createWorkflowRunCommands) {
                     if (!createdRunIdByRequestId.containsKey(cmd.requestId())) {
@@ -1326,6 +1366,8 @@ final class DexEngineImpl implements DexEngine {
                 }
             }
         }
+
+        workflowDao.upsertConcurrencyKeyWakeups(concurrencyKeyWakeups);
 
         if (!messagesToCreate.isEmpty()) {
             final int createdMessages = workflowDao.createMessages(messagesToCreate);

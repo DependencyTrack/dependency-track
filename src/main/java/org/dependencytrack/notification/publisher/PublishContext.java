@@ -151,6 +151,28 @@ public record PublishContext(
                 rule.isLogSuccessfulPublish());
     }
 
+    /**
+     * Context for notification rule tests. Includes rule metadata and always emits a log message upon
+     * successful publishing to aid in debugging of notification configuration.
+     */
+    public PublishContext forRuleTest(final NotificationRule rule) {
+        return withRule(rule).withLogSuccess(true);
+    }
+
+    public PublishContext withLogSuccess(final boolean logSuccess) {
+        return new PublishContext(
+                this.notificationGroup,
+                this.notificationLevel,
+                this.notificationScope,
+                this.notificationTimestamp,
+                this.notificationSubjects,
+                this.ruleId,
+                this.ruleName,
+                this.ruleScope,
+                this.ruleLevel,
+                logSuccess);
+    }
+
     public boolean shouldLogSuccess() {
         return logSuccess != null && logSuccess;
     }

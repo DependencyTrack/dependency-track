@@ -35,6 +35,8 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
 
+import static org.dependencytrack.notification.publishing.http.HttpNotificationResponses.ensureStatusCode;
+
 /**
  * @since 5.0.0
  */
@@ -80,9 +82,9 @@ final class JiraNotificationPublisher implements NotificationPublisher {
                 .timeout(Duration.ofSeconds(10))
                 .build();
 
-        final HttpResponse<?> response;
+        final HttpResponse<String> response;
         try {
-            response = httpClient.send(request, BodyHandlers.discarding());
+            response = httpClient.send(request, BodyHandlers.ofString());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RetryablePublishException("Interrupted while sending request", e);
@@ -91,10 +93,7 @@ final class JiraNotificationPublisher implements NotificationPublisher {
             throw e;
         }
 
-        if (response.statusCode() != 201) {
-            throw new IllegalStateException(
-                    "Request failed with retryable response code: " + response.statusCode());
-        }
+        ensureStatusCode(response, 201, "Request failed with retryable response code: ");
     }
 
 }

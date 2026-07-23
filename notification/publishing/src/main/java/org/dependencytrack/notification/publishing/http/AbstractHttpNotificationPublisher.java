@@ -28,10 +28,12 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 
 import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.notification.publishing.http.HttpNotificationResponses.ensureSuccessful2xxResponse;
 
 /**
  * @since 5.0.0
@@ -61,12 +63,8 @@ public abstract class AbstractHttpNotificationPublisher implements NotificationP
                 .build();
 
         try {
-            final var response = httpClient.send(request, BodyHandlers.discarding());
-            RetryablePublishException.throwIfRetryableHttpError(response);
-            final int statusCode = response.statusCode();
-            if (statusCode < 200 || statusCode > 299) {
-                throw new IllegalStateException("Request failed with unexpected response code: " + statusCode);
-            }
+            final HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
+            ensureSuccessful2xxResponse(response);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RetryablePublishException("Interrupted while sending request", e);

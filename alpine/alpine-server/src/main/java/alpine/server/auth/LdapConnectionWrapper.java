@@ -135,7 +135,9 @@ public class LdapConnectionWrapper {
             return new InitialLdapContext(env, null);
         } catch (CommunicationException e) {
             LOGGER.error("Failed to connect to directory server", e);
-            throw e;
+            throw (e);
+        } catch (NamingException e) {
+            throw new NamingException("Failed to authenticate user");
         }
     }
 

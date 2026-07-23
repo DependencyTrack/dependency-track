@@ -33,6 +33,7 @@
     <modules>
         <module>api</module>
         <module>github</module>
+        <module>jvn</module>
         <module>nvd</module>
         <module>osv</module>
     </modules>

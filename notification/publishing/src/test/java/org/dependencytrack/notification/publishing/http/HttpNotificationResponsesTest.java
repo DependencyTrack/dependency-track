@@ -20,13 +20,17 @@ package org.dependencytrack.notification.publishing.http;
 
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class HttpNotificationResponsesTest {
 
@@ -52,20 +56,18 @@ class HttpNotificationResponsesTest {
 
     @Test
     void ensureStatusCodeShouldNotThrowForExpectedStatus() {
-        final HttpResponse<?> response = mock(HttpResponse.class);
-        when(response.statusCode()).thenReturn(201);
-
-        assertThatCode(() -> HttpNotificationResponses.ensureStatusCode(response, 201, "failed: ", ""))
+        assertThatCode(() -> HttpNotificationResponses.ensureStatusCode(
+                stubResponse(201),
+                201,
+                "failed: ",
+                ""))
                 .doesNotThrowAnyException();
     }
 
     @Test
     void ensureStatusCodeShouldThrowForUnexpectedStatus() {
-        final HttpResponse<?> response = mock(HttpResponse.class);
-        when(response.statusCode()).thenReturn(200);
-
         assertThatThrownBy(() -> HttpNotificationResponses.ensureStatusCode(
-                response,
+                stubResponse(200),
                 201,
                 "Request failed with retryable response code: ",
                 "unexpected response payload"))
@@ -75,12 +77,56 @@ class HttpNotificationResponsesTest {
 
     @Test
     void ensureSuccessful2xxResponseShouldThrowForUnexpectedStatus() {
-        final HttpResponse<?> response = mock(HttpResponse.class);
-        when(response.statusCode()).thenReturn(400);
-
-        assertThatThrownBy(() -> HttpNotificationResponses.ensureSuccessful2xxResponse(response, "bad request"))
+        assertThatThrownBy(() -> HttpNotificationResponses.ensureSuccessful2xxResponse(
+                stubResponse(400),
+                "bad request"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Request failed with unexpected response code: 400");
+    }
+
+    private static HttpResponse<Object> stubResponse(final int statusCode) {
+        final var request = HttpRequest.newBuilder(URI.create("http://localhost")).GET().build();
+        return new HttpResponse<>() {
+            @Override
+            public int statusCode() {
+                return statusCode;
+            }
+
+            @Override
+            public HttpRequest request() {
+                return request;
+            }
+
+            @Override
+            public Optional<HttpResponse<Object>> previousResponse() {
+                return Optional.empty();
+            }
+
+            @Override
+            public HttpHeaders headers() {
+                return HttpHeaders.of(Map.of(), (name, value) -> true);
+            }
+
+            @Override
+            public Object body() {
+                return null;
+            }
+
+            @Override
+            public Optional<javax.net.ssl.SSLSession> sslSession() {
+                return Optional.empty();
+            }
+
+            @Override
+            public URI uri() {
+                return request.uri();
+            }
+
+            @Override
+            public HttpClient.Version version() {
+                return HttpClient.Version.HTTP_1_1;
+            }
+        };
     }
 
 }

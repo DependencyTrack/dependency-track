@@ -108,7 +108,7 @@ class CheckmarxVulnAnalyzerTest {
 
     @Test
     void shouldAnalyzeAndCacheWithNoVulns() throws Exception {
-        stubFor(post(urlPathEqualTo("/api/sca/packages/vulnerabilities"))
+        stubFor(post(urlPathEqualTo("/api/v1/packages/risks"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -135,7 +135,7 @@ class CheckmarxVulnAnalyzerTest {
 
     @Test
     void shouldAnalyzeAndCacheWithVulns() throws Exception {
-        stubFor(post(urlPathEqualTo("/api/sca/packages/vulnerabilities"))
+        stubFor(post(urlPathEqualTo("/api/v1/packages/risks"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -260,7 +260,7 @@ class CheckmarxVulnAnalyzerTest {
 
     @Test
     void shouldNotAnalyzeComponentWithUnsupportedPackageType() throws Exception {
-        stubFor(post(urlPathEqualTo("/api/sca/packages/vulnerabilities"))
+        stubFor(post(urlPathEqualTo("/api/v1/packages/risks"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -303,7 +303,7 @@ class CheckmarxVulnAnalyzerTest {
 
     @Test
     void shouldBatchRequestsWithUpTo100Purls() throws Exception {
-        stubFor(post(urlPathEqualTo("/api/sca/packages/vulnerabilities"))
+        stubFor(post(urlPathEqualTo("/api/v1/packages/risks"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -326,6 +326,6 @@ class CheckmarxVulnAnalyzerTest {
         final Bom vdr = analyzer.analyze(bom);
         assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
 
-        verify(2, postRequestedFor(urlPathEqualTo("/api/sca/packages/vulnerabilities")));
+        verify(2, postRequestedFor(urlPathEqualTo("/api/v1/packages/risks")));
     }
 }

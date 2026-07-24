@@ -66,6 +66,7 @@ import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
+import org.dependencytrack.resources.v1.vo.FindingResponse;
 import org.dependencytrack.util.PersistenceUtil;
 import org.dependencytrack.util.PurlUtil;
 import org.slf4j.Logger;
@@ -125,7 +126,7 @@ public class FindingResource extends AbstractApiResource {
                     description = "A list of all findings for a specific project, or a SARIF file",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of findings", schema = @Schema(format = "integer")),
                     content = {
-                            @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)), mediaType = MediaType.APPLICATION_JSON),
+                            @Content(array = @ArraySchema(schema = @Schema(implementation = FindingResponse.class)), mediaType = MediaType.APPLICATION_JSON),
                             @Content(schema = @Schema(type = "string"), mediaType = MEDIA_TYPE_SARIF_JSON)
                     }
             ),
@@ -198,7 +199,9 @@ public class FindingResource extends AbstractApiResource {
                         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An error occurred while generating SARIF file").build();
                     }
                 }
-                return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();
+                return Response.ok(findings.stream().map(FindingResponse::of).toList())
+                        .header(TOTAL_COUNT_HEADER, totalCount)
+                        .build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
@@ -305,7 +308,7 @@ public class FindingResource extends AbstractApiResource {
                     responseCode = "200",
                     description = "A list of all findings",
                     headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of findings", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = FindingResponse.class)))
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
     })
@@ -383,7 +386,9 @@ public class FindingResource extends AbstractApiResource {
         final long totalCount = findingRows.isEmpty() ? 0 : findingRows.getFirst().totalCount();
         List<Finding> findings = findingRows.stream().map(Finding::new).toList();
         findings = mapComponentLatestVersion(findings);
-        return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();
+        return Response.ok(findings.stream().map(FindingResponse::of).toList())
+                .header(TOTAL_COUNT_HEADER, totalCount)
+                .build();
     }
 
     @GET

@@ -117,6 +117,7 @@ class DexEngineImplTest {
         dataSource = new HikariDataSource(hikariConfig);
 
         final var config = new DexEngineConfig(dataSource);
+        config.setActivityHeartbeatInterval(Duration.ofMillis(250));
         config.activityTaskScheduler().setPollInterval(Duration.ofMillis(10));
         config.activityTaskScheduler().setPollBackoffFunction(IntervalFunction.of(10));
         config.workflowTaskScheduler().setPollInterval(Duration.ofMillis(10));
@@ -1397,71 +1398,127 @@ class DexEngineImplTest {
                 entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
-    @Test
-    void shouldHeartbeatActivity() {
-        final var heartbeatsPerformed = new ArrayBlockingQueue<Boolean>(3);
+    @Nested
+    class ActivityHeartbeatTest {
 
-        registerWorkflow("test", (ctx, _) -> {
-            ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
-            return null;
-        });
-        registerActivity("test", (ctx, _) -> {
-            heartbeatsPerformed.add(ctx.maybeHeartbeat());
-            Thread.sleep(3_500);
-            heartbeatsPerformed.add(ctx.maybeHeartbeat());
-            heartbeatsPerformed.add(ctx.maybeHeartbeat());
-            return null;
-        });
-        registerWorkflowWorker("workflow-worker", 1);
-        registerTaskWorker("activity-worker", 1);
-        engine.start();
+        @Test
+        void shouldRefuseToStartWhenActivityLockTimeoutIsTooShortForHeartbeatInterval() {
+            engine.registerActivityInternal("test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(1), (_, _) -> null);
 
-        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
-        awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+            assertThatExceptionOfType(IllegalStateException.class)
+                    .isThrownBy(engine::start)
+                    .withMessageContaining("is too short for the activity heartbeat interval");
+        }
 
-        assertThat(heartbeatsPerformed).containsExactly(false, true, false);
-    }
+        @Test
+        void shouldDiscardActivityExecutionWhenLockIsLost() throws Exception {
+            final var invocations = new AtomicInteger();
+            final var lockLostObserved = new AtomicBoolean();
+            final var firstAttemptStarted = new CountDownLatch(1);
 
-    @Test
-    void shouldDiscardActivityExecutionWhenLockIsLost() {
-        final var invocations = new AtomicInteger();
-        final var lockLostObserved = new AtomicBoolean();
-        final var successorStarted = new CountDownLatch(1);
+            registerWorkflow("test", (ctx, _) -> {
+                ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
+                return null;
+            });
 
-        registerWorkflow("test", (ctx, _) -> {
-            ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
-            return null;
-        });
+            engine.registerActivityInternal(
+                    "test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(3),
+                    (_, _) -> {
+                        if (invocations.incrementAndGet() > 1) {
+                            return null;
+                        }
 
-        engine.registerActivityInternal(
-                "test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(1),
-                (ctx, _) -> {
-                    if (invocations.incrementAndGet() > 1) {
-                        successorStarted.countDown();
+                        // First attempt: block while the test steals the lock.
+                        // The heartbeat scheduler's renewal is rejected, so it should cancel this
+                        // execution by interrupting it, and another worker should reclaim and complete the task.
+                        firstAttemptStarted.countDown();
+                        try {
+                            Thread.sleep(Duration.ofSeconds(30));
+                        } catch (InterruptedException e) {
+                            lockLostObserved.set(true);
+                            Thread.currentThread().interrupt();
+                            throw e;
+                        }
+
                         return null;
-                    }
+                    });
+            registerWorkflowWorker("workflow-worker", 1);
+            registerTaskWorker("activity-worker", 2);
+            engine.start();
 
-                    assertThat(successorStarted.await(30, TimeUnit.SECONDS)).isTrue();
+            final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+            assertThat(firstAttemptStarted.await(30, TimeUnit.SECONDS)).isTrue();
 
-                    try {
-                        ctx.maybeHeartbeat();
-                    } catch (TaskLockLostException e) {
-                        lockLostObserved.set(true);
-                        throw e;
-                    }
+            // Steal the lock, as another worker taking over the task would.
+            final int updatedTasks = Jdbi.create(dataSource).withHandle(handle -> handle
+                    .createUpdate("""
+                            update dex_activity_task
+                               set lock_version = lock_version + 1
+                             where workflow_run_id = :runId
+                            """)
+                    .bind("runId", runId)
+                    .execute());
+            assertThat(updatedTasks).isOne();
 
-                    return null;
-                });
-        registerWorkflowWorker("workflow-worker", 1);
-        registerTaskWorker("activity-worker", 2);
-        engine.start();
+            awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
-        awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+            await("Displaced execution to observe the lost lock")
+                    .untilAsserted(() -> assertThat(lockLostObserved).isTrue());
+            assertThat(invocations.get()).isGreaterThanOrEqualTo(2);
+        }
 
-        await("Displaced execution to observe the lost lock")
-                .untilAsserted(() -> assertThat(lockLostObserved).isTrue());
-        assertThat(invocations.get()).isGreaterThanOrEqualTo(2);
+        @Test
+        void shouldNotDoubleCommitWhenDisplacedExecutionIgnoresLockLoss() throws Exception {
+            final var invocations = new AtomicInteger();
+            final var firstAttemptStarted = new CountDownLatch(1);
+            final var lockStolen = new CountDownLatch(1);
+
+            registerWorkflow("test", (ctx, _) -> ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await());
+
+            engine.registerActivityInternal(
+                    "test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(3),
+                    (_, _) -> {
+                        if (invocations.incrementAndGet() > 1) {
+                            return null;
+                        }
+
+                        // First attempt: wait until the test steals the lock, then return
+                        // normally while swallowing the cancellation interrupt.
+                        // Either the scheduler cancels this execution before it returns,
+                        // or its stale completion is rejected by the lock version check.
+                        // Neither may commit, and the worker that took the task over must complete the run.
+                        firstAttemptStarted.countDown();
+                        try {
+                            boolean _ = lockStolen.await(30, TimeUnit.SECONDS);
+                        } catch (InterruptedException e) {
+                            // Simulate an activity that does not honor the interrupt after losing its lock.
+                        }
+
+                        return null;
+                    });
+            registerWorkflowWorker("workflow-worker", 1);
+            registerTaskWorker("activity-worker", 2);
+            engine.start();
+
+            final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+            assertThat(firstAttemptStarted.await(30, TimeUnit.SECONDS)).isTrue();
+
+            final int updatedTasks = Jdbi.create(dataSource).withHandle(handle -> handle
+                    .createUpdate("""
+                            update dex_activity_task
+                               set lock_version = lock_version + 1
+                             where workflow_run_id = :runId
+                            """)
+                    .bind("runId", runId)
+                    .execute());
+            assertThat(updatedTasks).isOne();
+            lockStolen.countDown();
+
+            // The run completes exactly once via the worker that took the task over.
+            awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+            assertThat(invocations.get()).isGreaterThanOrEqualTo(2);
+        }
+
     }
 
     @Test

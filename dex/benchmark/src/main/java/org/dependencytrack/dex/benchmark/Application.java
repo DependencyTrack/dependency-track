@@ -204,8 +204,7 @@ public class Application {
         dexEngine.registerActivity(
                 new DummyActivity(),
                 voidConverter(),
-                voidConverter(),
-                Duration.ofSeconds(30));
+                voidConverter());
 
         return dexEngine;
     }

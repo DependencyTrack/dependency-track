@@ -137,7 +137,6 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
                         resultBuffer.flush();
                         throw new InterruptedException("Interrupted before all PURLs could be resolved");
                     }
-                    ctx.maybeHeartbeat();
 
                     MDC.put(MDC_PURL, purlStr);
                     try {

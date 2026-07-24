@@ -99,13 +99,11 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
         engine.registerActivity(
                 new FetchPackageMetadataResolutionCandidatesActivity(pluginManager),
                 voidConverter(),
-                protoConverter(FetchPackageMetadataResolutionCandidatesRes.class),
-                Duration.ofSeconds(5));
+                protoConverter(FetchPackageMetadataResolutionCandidatesRes.class));
         engine.registerActivity(
                 new ResolvePackageMetadataActivity(pluginManager, new TestSecretManager()),
                 protoConverter(ResolvePackageMetadataActivityArg.class),
-                voidConverter(),
-                Duration.ofSeconds(10));
+                voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));

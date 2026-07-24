@@ -73,8 +73,7 @@ public class WorkflowTestRuleTest {
         engine.registerActivity(
                 new TestActivity(),
                 voidConverter(),
-                stringConverter(),
-                Duration.ofSeconds(3));
+                stringConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 10));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 10));
@@ -113,8 +112,7 @@ public class WorkflowTestRuleTest {
         engine.registerActivity(
                 activityMock,
                 voidConverter(),
-                stringConverter(),
-                Duration.ofSeconds(3));
+                stringConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 10));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 10));

@@ -43,6 +43,8 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_QUEUE_NAME;
+
 final class ActivityTaskScheduler implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityTaskScheduler.class);
@@ -204,7 +206,7 @@ final class ActivityTaskScheduler implements Closeable {
         boolean didScheduleTasks = false;
         for (final Queue queue : queues) {
             final Timer.Sample latencySample = Timer.start();
-            try (var _ = MDC.putCloseable("queueName", queue.name())) {
+            try (var _ = MDC.putCloseable(MDC_QUEUE_NAME, queue.name())) {
                 didScheduleTasks |= jdbi.inTransaction(handle -> processQueue(handle, queue));
             } finally {
                 latencySample.stop(

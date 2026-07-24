@@ -16,18 +16,12 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.dex.api;
+package org.dependencytrack.dex.engine;
 
-import java.util.UUID;
+@FunctionalInterface
+interface ActivityHeartbeatRegistration extends AutoCloseable {
 
-/**
- * Context available to {@link Activity}s.
- */
-public interface ActivityContext {
-
-    /**
-     * @return ID of the workflow run that this activity execution is part of.
-     */
-    UUID workflowRunId();
+    @Override
+    void close();
 
 }

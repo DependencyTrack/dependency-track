@@ -106,7 +106,8 @@ public final class PublishNotificationWorkflow implements Workflow<PublishNotifi
             String ruleName) {
         final var activityArgBuilder = PublishNotificationActivityArg.newBuilder()
                 .setNotificationId(arg.getNotificationId())
-                .setNotificationRuleName(ruleName);
+                .setNotificationRuleName(ruleName)
+                .setRuleTest(arg.getRuleTest());
 
         if (arg.hasNotification()) {
             activityArgBuilder.setNotification(arg.getNotification());

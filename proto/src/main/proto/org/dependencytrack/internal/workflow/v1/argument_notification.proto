@@ -42,6 +42,10 @@ message PublishNotificationWorkflowArg {
 
   // Names of notification rules for which the notification shall be published.
   repeated string notification_rule_names = 4;
+
+  // When true, successful publishes are logged at INFO regardless of rule configuration.
+  // Used for notification rule tests initiated via the API.
+  bool rule_test = 5;
 }
 
 // Argument of the process-scheduled-notifications workflow.
@@ -70,4 +74,7 @@ message PublishNotificationActivityArg {
     // File metadata of the notification. Used for large notifications.
     org.dependencytrack.filestorage.v1.FileMetadata notification_file_metadata = 4;
   }
+
+  // When true, successful publishes are logged at INFO regardless of rule configuration.
+  bool rule_test = 5;
 }

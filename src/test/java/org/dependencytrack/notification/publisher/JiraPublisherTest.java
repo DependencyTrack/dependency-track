@@ -19,16 +19,32 @@
 package org.dependencytrack.notification.publisher;
 
 import alpine.model.ConfigProperty;
+import alpine.notification.Notification;
+import alpine.notification.NotificationLevel;
 import alpine.security.crypto.DataEncryption;
 import jakarta.json.JsonObjectBuilder;
+import org.dependencytrack.exception.PublisherException;
+import org.dependencytrack.notification.NotificationConstants;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.model.Project;
+import org.dependencytrack.notification.vo.BomConsumedOrProcessed;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_PASSWORD;
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_USERNAME;
@@ -61,6 +77,37 @@ class JiraPublisherTest extends AbstractWebhookPublisherTest<JiraPublisher> {
                 JIRA_PASSWORD.getPropertyType(),
                 JIRA_PASSWORD.getDescription()
         );
+
+        stubFor(post(anyUrl())
+                .willReturn(aResponse()
+                        .withStatus(201)));
+    }
+
+    @Test
+    void testInformRejectsNon201Response() {
+        stubFor(post(anyUrl())
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        final var project = new Project();
+        project.setName("projectName");
+        project.setVersion("projectVersion");
+        qm.persist(project);
+
+        final var subject = new BomConsumedOrProcessed(
+                project, "bomContent", org.dependencytrack.model.Bom.Format.CYCLONEDX, "1.5");
+        final var notification = new Notification()
+                .scope(NotificationScope.PORTFOLIO)
+                .group(NotificationGroup.BOM_CONSUMED)
+                .title(NotificationConstants.Title.BOM_CONSUMED)
+                .content("A CycloneDX BOM was consumed and will be processed")
+                .level(NotificationLevel.INFORMATIONAL)
+                .timestamp(LocalDateTime.ofEpochSecond(66666, 666, ZoneOffset.UTC))
+                .subject(subject);
+
+        assertThatThrownBy(() -> publisherInstance.inform(PublishContext.from(notification), notification, createConfig()))
+                .isInstanceOf(PublisherException.class)
+                .hasMessageContaining("unexpected response code: 200");
     }
 
     @Test

@@ -455,9 +455,9 @@ public class NotificationPublisherResourceTest extends ResourceTest {
                     ConfigPropertyConstants.JIRA_PASSWORD.getPropertyType(),
                     ConfigPropertyConstants.JIRA_PASSWORD.getDescription());
 
-            stubFor(WireMock.post(WireMock.anyUrl())
+            wireMock.stubFor(WireMock.post(WireMock.anyUrl())
                     .willReturn(aResponse()
-                            .withStatus(200)));
+                            .withStatus(201)));
 
             final Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/" + notificationRule.getUuid()).request()
                     .header(X_API_KEY, apiKey)
@@ -481,6 +481,59 @@ public class NotificationPublisherResourceTest extends ResourceTest {
                                       }
                                     }
                                     """))));
+        } finally {
+            wireMock.stop();
+        }
+    }
+
+    @Test
+    public void testNotificationRuleJiraTestRejectsNon201Response() throws Exception {
+        new DefaultObjectGenerator().loadDefaultNotificationPublishers();
+
+        final NotificationPublisher jiraPublisher = qm.getNotificationPublisher(
+                DefaultNotificationPublishers.JIRA.getPublisherName());
+        assertThat(jiraPublisher).isNotNull();
+
+        final var notificationRule = new NotificationRule();
+        notificationRule.setPublisher(jiraPublisher);
+        notificationRule.setPublisherConfig("""
+                {
+                  "destination": "FOO",
+                  "jiraTicketType": "Task"
+                }
+                """);
+        notificationRule.setName("Jira Test");
+        notificationRule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
+        notificationRule.setNotificationLevel(NotificationLevel.INFORMATIONAL);
+        notificationRule.setScope(NotificationScope.PORTFOLIO);
+        notificationRule.setTriggerType(NotificationTriggerType.EVENT);
+        qm.persist(notificationRule);
+
+        final var wireMock = new WireMockServer(options().dynamicPort());
+        wireMock.start();
+
+        try {
+            qm.createConfigProperty(
+                    ConfigPropertyConstants.JIRA_URL.getGroupName(),
+                    ConfigPropertyConstants.JIRA_URL.getPropertyName(),
+                    wireMock.baseUrl(),
+                    ConfigPropertyConstants.JIRA_URL.getPropertyType(),
+                    ConfigPropertyConstants.JIRA_URL.getDescription());
+            qm.createConfigProperty(
+                    ConfigPropertyConstants.JIRA_PASSWORD.getGroupName(),
+                    ConfigPropertyConstants.JIRA_PASSWORD.getPropertyName(),
+                    DataEncryption.encryptAsString("authToken"),
+                    ConfigPropertyConstants.JIRA_PASSWORD.getPropertyType(),
+                    ConfigPropertyConstants.JIRA_PASSWORD.getDescription());
+
+            wireMock.stubFor(WireMock.post(WireMock.anyUrl())
+                    .willReturn(aResponse()
+                            .withStatus(200)));
+
+            final Response response = jersey.target(V1_NOTIFICATION_PUBLISHER + "/test/" + notificationRule.getUuid()).request()
+                    .header(X_API_KEY, apiKey)
+                    .post(null);
+            assertThat(response.getStatus()).isEqualTo(500);
         } finally {
             wireMock.stop();
         }

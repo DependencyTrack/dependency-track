@@ -95,13 +95,8 @@ public abstract class AbstractWebhookPublisher implements Publisher {
             request.setEntity(new StringEntity(content, StandardCharsets.UTF_8));
             try (final CloseableHttpResponse response = HttpClientPool.getClient().execute(request)) {
                 final int statusCode = response.getStatusLine().getStatusCode();
-                if (statusCode < 200 || statusCode >= 300) {
-                    logger.warn("Destination responded with with status code {}, likely indicating a processing failure ({})",
-                            statusCode, ctx);
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Response headers: {}", (Object[]) response.getAllHeaders());
-                        logger.debug("Response body: {}", EntityUtils.toString(response.getEntity()));
-                    }
+                if (!isSuccessfulResponse(statusCode)) {
+                    handleUnsuccessfulResponse(ctx, logger, response, statusCode);
                 } else if (ctx.shouldLogSuccess()) {
                     logger.info("Destination acknowledged reception of notification with status code {} ({})",
                             statusCode, ctx);
@@ -134,6 +129,26 @@ public abstract class AbstractWebhookPublisher implements Publisher {
     }
 
     protected record AuthCredentials(String user, String password) {
+    }
+
+    /**
+     * @return {@code true} when the destination response indicates successful processing
+     */
+    protected boolean isSuccessfulResponse(final int statusCode) {
+        return statusCode >= 200 && statusCode < 300;
+    }
+
+    protected void handleUnsuccessfulResponse(
+            final PublishContext ctx,
+            final Logger logger,
+            final CloseableHttpResponse response,
+            final int statusCode) throws IOException {
+        logger.warn("Destination responded with with status code {}, likely indicating a processing failure ({})",
+                statusCode, ctx);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Response headers: {}", (Object[]) response.getAllHeaders());
+            logger.debug("Response body: {}", EntityUtils.toString(response.getEntity()));
+        }
     }
 
     protected void handleRequestException(final PublishContext ctx, final Logger logger, final Exception e) {

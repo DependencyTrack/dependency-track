@@ -21,11 +21,13 @@ package org.dependencytrack.notification.publisher;
 import alpine.common.logging.Logger;
 import alpine.model.ConfigProperty;
 import alpine.notification.Notification;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.util.DebugDataEncryption;
 
 import jakarta.json.JsonObject;
+import java.io.IOException;
 import java.util.Map;
 
 import static org.dependencytrack.model.ConfigPropertyConstants.JIRA_PASSWORD;
@@ -95,4 +97,20 @@ public class JiraPublisher extends AbstractWebhookPublisher implements Publisher
         context.put("jiraProjectKey", jiraProjectKey);
         context.put("jiraTicketType", jiraTicketType);
     }
+
+    @Override
+    protected boolean isSuccessfulResponse(final int statusCode) {
+        return statusCode == 201;
+    }
+
+    @Override
+    protected void handleUnsuccessfulResponse(
+            final PublishContext ctx,
+            final org.slf4j.Logger logger,
+            final CloseableHttpResponse response,
+            final int statusCode) throws IOException {
+        super.handleUnsuccessfulResponse(ctx, logger, response, statusCode);
+        throw new PublisherException("Request failed with unexpected response code: %d".formatted(statusCode));
+    }
+
 }

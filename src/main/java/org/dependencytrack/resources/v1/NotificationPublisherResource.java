@@ -35,6 +35,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.exception.PublisherException;
 import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.NotificationPublisher;
 import org.dependencytrack.model.NotificationRule;
@@ -371,19 +372,20 @@ public class NotificationPublisherResource extends AlpineResource {
                         .level(rule.getNotificationLevel())
                         .subject(NotificationUtil.generateSubject(rule, group));
 
-                publisher.inform(PublishContext.from(notification), notification, config);
+                publisher.inform(PublishContext.from(notification).forRuleTest(rule), notification, config);
             }
 
             return Response.ok().build();
         } catch (
-                InvocationTargetException
+                PublisherException
+                | InvocationTargetException
                 | InstantiationException
                 | IllegalAccessException
                 | NoSuchMethodException e) {
             LOGGER.error(e.getMessage(), e);
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("Exception occurred while sending the notification.")
+                    .entity("Exception occurred while sending the notification. Check the logs for more details.")
                     .build();
         }
     }

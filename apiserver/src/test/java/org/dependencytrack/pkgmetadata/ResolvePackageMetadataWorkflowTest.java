@@ -277,6 +277,65 @@ class ResolvePackageMetadataWorkflowTest extends PersistenceCapableTest {
     }
 
     @Test
+    void shouldSkipMalformedPurlAndNotReselectIt() {
+        final String malformedPurl = "pkg:nuget/serilog.sinks.file%A%20...5.0.0@5.0.0";
+        final Instant resolvedAt = Instant.now();
+        mockResolveFnRef.set(purl -> new PackageMetadata("9.9.9", Instant.now(), resolvedAt, null));
+
+        var project = new Project();
+        project.setName("test-project");
+        project = qm.persist(project);
+
+        final var malformedComponent = new Component();
+        malformedComponent.setProject(project);
+        malformedComponent.setName("serilog.sinks.file");
+        malformedComponent.setVersion("5.0.0");
+        malformedComponent.setPurl(malformedPurl);
+        qm.persist(malformedComponent);
+
+        final var componentFoo = new Component();
+        componentFoo.setProject(project);
+        componentFoo.setGroup("org.acme");
+        componentFoo.setName("foo");
+        componentFoo.setVersion("1.0");
+        componentFoo.setPurl("pkg:maven/org.acme/foo@1.0");
+        qm.persist(componentFoo);
+
+        final var fetchActivity = new FetchPackageMetadataResolutionCandidatesActivity(pluginManager);
+        final List<String> candidatePurls = fetchActivity.execute(null, null)
+                .getCandidateGroupsList().stream()
+                .flatMap(group -> group.getPurlsList().stream())
+                .toList();
+        assertThat(candidatePurls).contains("pkg:maven/org.acme/foo@1.0")
+                .doesNotContain(malformedPurl);
+
+        // Running workflow again should not reselect the malformed PURL
+        for (int i = 0; i < 2; i++) {
+            final UUID runId = workflowTest.getEngine().createRun(
+                    new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class));
+            workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+        }
+
+        List<String> metadataPurls = withJdbiHandle(handle -> handle
+                .createQuery("""
+                        SELECT "PURL"
+                          FROM "PACKAGE_METADATA"
+                        """)
+                .mapTo(String.class)
+                .list());
+        assertThat(metadataPurls).containsExactly("pkg:maven/org.acme/foo");
+
+        metadataPurls = withJdbiHandle(handle -> handle
+                .createQuery("""
+                        SELECT "PURL"
+                          FROM "PACKAGE_ARTIFACT_METADATA"
+                        """)
+                .mapTo(String.class)
+                .list());
+        assertThat(metadataPurls).containsExactly("pkg:maven/org.acme/foo@1.0");
+    }
+
+    @Test
     void shouldPassPriorArtifactMetadataToResolverWhenAvailable() {
         useJdbiTransaction(handle -> {
             new PackageMetadataDao(handle).upsertAll(List.of(

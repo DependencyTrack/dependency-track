@@ -73,10 +73,9 @@ public final class FetchPackageMetadataResolutionCandidatesActivity
             try {
                 purl = new PackageURL(purlStr);
             } catch (MalformedPackageURLException e) {
-                LOGGER.warn("Failed to parse PURL '{}'; Assigning to empty resolver", purlStr, e);
-                purlsByResolver
-                        .computeIfAbsent("", k -> new ArrayList<>())
-                        .add(purlStr);
+                // Malformed PURL cannot be resolved and is data quality issue.
+                // Skip to avoid resolution attempts and spamming WARN logs on every cycle.
+                LOGGER.debug("Skipping malformed PURL '{}'", purlStr, e);
                 continue;
             }
 

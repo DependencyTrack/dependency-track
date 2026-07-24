@@ -920,6 +920,22 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerableSoftwareQueryManager().synchronizeVulnerableSoftware(persistentVuln, vsList, source);
     }
 
+    public synchronized String generateNextVulnerabilityId(final String projectName) {
+        return getVulnerabilityQueryManager().generateNextVulnerabilityId(projectName);
+    }
+
+    public synchronized String previewNextVulnerabilityId(final String projectName) {
+        return getVulnerabilityQueryManager().previewNextVulnerabilityId(projectName);
+    }
+
+    public synchronized String allocateNextVulnerabilityIdInTransaction(final String projectName) {
+        return getVulnerabilityQueryManager().allocateNextVulnerabilityIdInTransaction(projectName);
+    }
+
+    public boolean vulnerabilityIdExists(final String vulnerabilityId) {
+        return getVulnerabilityQueryManager().vulnerabilityIdExists(vulnerabilityId);
+    }
+
     public boolean contains(Vulnerability vulnerability, Component component) {
         return getVulnerabilityQueryManager().contains(vulnerability, component);
     }

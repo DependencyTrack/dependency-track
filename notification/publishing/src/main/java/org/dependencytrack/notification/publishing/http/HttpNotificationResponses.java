@@ -25,13 +25,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Writer;
 import java.net.http.HttpResponse;
-
-import static org.dependencytrack.notification.publishing.http.HttpNotificationResponseBodies.discardRemainder;
-import static org.dependencytrack.notification.publishing.http.HttpNotificationResponseBodies.readSnippetAndDiscardRemainder;
+import java.nio.charset.StandardCharsets;
 
 /**
- * @since 5.0.0
+ * @since 5.1.0
  */
 public final class HttpNotificationResponses {
 
@@ -83,35 +84,6 @@ public final class HttpNotificationResponses {
         }
     }
 
-    static void ensureSuccessful2xxResponse(final HttpResponse<?> response, final String bodySnippet) {
-        final HttpRetry retry = HttpRetry.of(response);
-        if (retry.isRetryable()) {
-            logWarnWithResponseBody(retry.description(), bodySnippet);
-            throw new RetryablePublishException(retry.description(), null, retry.retryAfter());
-        }
-
-        final int statusCode = response.statusCode();
-        if (statusCode < 200 || statusCode > 299) {
-            final String message = "Request failed with unexpected response code: " + statusCode;
-            logErrorWithResponseBody(message, bodySnippet);
-            throw new IllegalStateException(message);
-        }
-    }
-
-    static void ensureStatusCode(
-            final HttpResponse<?> response,
-            final int expectedStatusCode,
-            final String failureMessagePrefix,
-            final String bodySnippet) {
-        if (response.statusCode() == expectedStatusCode) {
-            return;
-        }
-
-        final String message = failureMessagePrefix + response.statusCode();
-        logErrorWithResponseBody(message, bodySnippet);
-        throw new IllegalStateException(message);
-    }
-
     static String truncate(final String value, final int maxLength) {
         if (value == null || value.isEmpty()) {
             return "";
@@ -120,6 +92,31 @@ public final class HttpNotificationResponses {
             return value;
         }
         return value.substring(0, maxLength);
+    }
+
+    private static String readSnippetAndDiscardRemainder(final InputStream body, final int maxChars) throws IOException {
+        if (body == null) {
+            return "";
+        }
+
+        try (var reader = new InputStreamReader(body, StandardCharsets.UTF_8)) {
+            final var snippetBuffer = new char[maxChars];
+            int snippetLength = 0;
+            int read;
+            while (snippetLength < maxChars && (read = reader.read(snippetBuffer, snippetLength, maxChars - snippetLength)) != -1) {
+                snippetLength += read;
+            }
+
+            reader.transferTo(Writer.nullWriter());
+
+            return new String(snippetBuffer, 0, snippetLength);
+        }
+    }
+
+    private static void discardRemainder(final InputStream body) throws IOException {
+        if (body != null) {
+            body.transferTo(OutputStream.nullOutputStream());
+        }
     }
 
     private static void logWarnWithResponseBody(final String message, final String responseBody) {

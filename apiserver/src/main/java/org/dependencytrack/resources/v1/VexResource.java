@@ -163,10 +163,10 @@ public class VexResource extends AbstractApiResource {
 
             try {
                 if (download) {
-                    return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
+                    return Response.ok(exporter.export(exporter.create(project, cdxOutputVersion), CycloneDXExporter.Format.JSON, cdxOutputVersion), MediaType.APPLICATION_OCTET_STREAM)
                             .header("content-disposition", "attachment; filename=\"" + project.getUuid() + "-vex.cdx.json\"").build();
                 } else {
-                    return Response.ok(exporter.export(exporter.create(project), CycloneDXExporter.Format.JSON, cdxOutputVersion),
+                    return Response.ok(exporter.export(exporter.create(project, cdxOutputVersion), CycloneDXExporter.Format.JSON, cdxOutputVersion),
                             CycloneDxMediaType.APPLICATION_CYCLONEDX_JSON).build();
                 }
             } catch (GeneratorException e) {

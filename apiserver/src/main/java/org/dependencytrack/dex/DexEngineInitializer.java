@@ -411,6 +411,10 @@ public final class DexEngineInitializer implements ServletContextListener {
         final var engineConfig = new DexEngineConfig(dataSource);
         engineConfig.setPageTokenEncoder(new SimplePageTokenEncoder());
 
+        config.getOptionalValue("dt.dex-engine.query-timeout-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig::setQueryTimeout);
+
         // Leader election.
         config.getOptionalValue("dt.dex-engine.leader-election.enabled", boolean.class)
                 .ifPresent(engineConfig.leaderElection()::setEnabled);

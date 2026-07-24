@@ -51,7 +51,7 @@ class MaintenanceWorkerTest {
         dataSource.setPassword(postgresContainer.getPassword());
         dataSource.setDatabaseName(postgresContainer.getDatabaseName());
 
-        jdbi = JdbiFactory.create(dataSource, new SimplePageTokenEncoder());
+        jdbi = JdbiFactory.create(dataSource, Duration.ofSeconds(10), new SimplePageTokenEncoder());
     }
 
     @Test

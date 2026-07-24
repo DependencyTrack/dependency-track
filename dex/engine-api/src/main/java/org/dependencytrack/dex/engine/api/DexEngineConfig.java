@@ -340,6 +340,7 @@ public class DexEngineConfig {
     private final TaskSchedulerConfig workflowTaskSchedulerConfig = new TaskSchedulerConfig();
     private final TaskSchedulerConfig activityTaskSchedulerConfig = new TaskSchedulerConfig();
 
+    private Duration queryTimeout = Duration.ofSeconds(10);
     private PageTokenEncoder pageTokenEncoder = new SimplePageTokenEncoder();
 
     public DexEngineConfig(DataSource dataSource) {
@@ -409,6 +410,21 @@ public class DexEngineConfig {
         return activityTaskSchedulerConfig;
     }
 
+    /**
+     * @return Timeout for database queries.
+     */
+    public Duration queryTimeout() {
+        return queryTimeout;
+    }
+
+    public void setQueryTimeout(Duration queryTimeout) {
+        requireNonNull(queryTimeout, "queryTimeout must not be null");
+        if (!queryTimeout.isPositive()) {
+            throw new IllegalArgumentException("queryTimeout must not be negative or zero");
+        }
+        this.queryTimeout = queryTimeout;
+    }
+
     public PageTokenEncoder pageTokenEncoder() {
         return pageTokenEncoder;
     }
@@ -431,6 +447,7 @@ public class DexEngineConfig {
                 .add("metricsConfig=" + metricsConfig)
                 .add("workflowTaskSchedulerConfig=" + workflowTaskSchedulerConfig)
                 .add("activityTaskSchedulerConfig=" + activityTaskSchedulerConfig)
+                .add("queryTimeout=" + queryTimeout)
                 .add("pageTokenEncoder=" + pageTokenEncoder)
                 .toString();
     }

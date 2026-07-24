@@ -102,6 +102,7 @@ public final class Finding implements Serializable {
 
         optValue(analysis, "state", findingRow.analysisState());
         optValue(analysis, "isSuppressed", findingRow.suppressed(), false);
+        analysis.put("policyAnnotations", toPolicyAnnotationsApi(findingRow.policyAnnotationsJson()));
         optValue(analysis, "detail", findingRow.analysisDetail());
         if (findingRow.vulnPublished() != null) {
             optValue(vulnerability, "published", Date.from(findingRow.vulnPublished()));
@@ -138,6 +139,32 @@ public final class Finding implements Serializable {
         if (value != null) {
             map.put(key, value);
         }
+    }
+
+    private static List<Map<String, Object>> toPolicyAnnotationsApi(
+            final List<AppliedPolicyAnnotation> annotations) {
+        if (annotations == null || annotations.isEmpty()) {
+            return List.of();
+        }
+
+        final var apiAnnotations = new ArrayList<Map<String, Object>>(annotations.size());
+        for (final AppliedPolicyAnnotation annotation : annotations) {
+            if (annotation == null) {
+                continue;
+            }
+
+            final var apiAnnotation = new LinkedHashMap<String, Object>();
+            apiAnnotation.put("policyName", annotation.policyName());
+            if (annotation.annotator() != null) {
+                apiAnnotation.put("annotator", annotation.annotator());
+            }
+            if (annotation.appliedAt() != null) {
+                apiAnnotation.put("appliedAt", annotation.appliedAt());
+            }
+            apiAnnotations.add(apiAnnotation);
+        }
+
+        return List.copyOf(apiAnnotations);
     }
 
     static List<Cwe> getCwes(final List<Integer> cweIds) {

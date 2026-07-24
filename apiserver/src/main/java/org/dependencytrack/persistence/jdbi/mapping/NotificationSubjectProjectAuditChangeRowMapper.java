@@ -18,16 +18,21 @@
  */
 package org.dependencytrack.persistence.jdbi.mapping;
 
+import org.dependencytrack.model.AppliedPolicyAnnotation;
 import org.dependencytrack.notification.proto.v1.Component;
 import org.dependencytrack.notification.proto.v1.Project;
 import org.dependencytrack.notification.proto.v1.Vulnerability;
 import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysis;
 import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject;
+import org.dependencytrack.persistence.converter.PolicyAnnotationsJsonConverter;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
+
+import com.google.protobuf.util.Timestamps;
 
 import static org.dependencytrack.persistence.jdbi.mapping.RowMapperUtil.maybeSet;
 
@@ -44,6 +49,25 @@ public class NotificationSubjectProjectAuditChangeRowMapper implements RowMapper
                 .setVulnerability(vulnRowMapper.map(rs, ctx));
         maybeSet(rs, "vulnAnalysisState", ResultSet::getString, vulnAnalysisBuilder::setState);
         maybeSet(rs, "isVulnAnalysisSuppressed", ResultSet::getBoolean, vulnAnalysisBuilder::setSuppressed);
+        maybeSet(rs, "policyAnnotationsJson", ResultSet::getString, json -> {
+            final List<AppliedPolicyAnnotation> annotations =
+                    new PolicyAnnotationsJsonConverter().convertToAttribute(json);
+            if (annotations == null || annotations.isEmpty()) {
+                return;
+            }
+            for (final AppliedPolicyAnnotation annotation : annotations) {
+                final org.dependencytrack.notification.proto.v1.AppliedPolicyAnnotation.Builder annotationBuilder =
+                        org.dependencytrack.notification.proto.v1.AppliedPolicyAnnotation.newBuilder()
+                                .setPolicyName(annotation.policyName());
+                if (annotation.appliedAt() != null) {
+                    annotationBuilder.setAppliedAt(Timestamps.fromMillis(annotation.appliedAt().getTime()));
+                }
+                if (annotation.annotator() != null) {
+                    annotationBuilder.setAnnotator(annotation.annotator());
+                }
+                vulnAnalysisBuilder.addPolicyAnnotations(annotationBuilder);
+            }
+        });
         final VulnerabilityAnalysisDecisionChangeSubject.Builder builder = VulnerabilityAnalysisDecisionChangeSubject.newBuilder()
                 .setComponent(componentRowMapper.map(rs, ctx))
                 .setProject(projectRowMapper.map(rs, ctx))

@@ -42,7 +42,8 @@ public final class AnalysisCommentFormatter {
         CVSSV4_VECTOR("CVSSv4 Vector", "(None)"),
         CVSSV4_SCORE("CVSSv4 Score", "(None)"),
         OWASP_VECTOR("OWASP Vector", "(None)"),
-        OWASP_SCORE("OWASP Score", "(None)");
+        OWASP_SCORE("OWASP Score", "(None)"),
+        POLICY_ANNOTATIONS("Policy annotations", "(None)");
 
         private final String displayName;
         private final String nullValue;

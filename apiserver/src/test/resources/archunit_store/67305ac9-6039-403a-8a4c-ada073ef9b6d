@@ -68,7 +68,6 @@ org.dependencytrack.resources.v1.UserResource.updateManagedUser(alpine.model.Man
 org.dependencytrack.resources.v1.UserResource.updateSelf(alpine.model.ManagedUser) declares JDO model class alpine.model.ManagedUser as Swagger response schema
 org.dependencytrack.resources.v1.VulnerabilityResource.createVulnerability(org.dependencytrack.model.Vulnerability) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
 org.dependencytrack.resources.v1.VulnerabilityResource.getAllVulnerabilities() declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
-org.dependencytrack.resources.v1.VulnerabilityResource.getVulnerabilitiesByComponent(java.lang.String, boolean) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
 org.dependencytrack.resources.v1.VulnerabilityResource.getVulnerabilitiesByProject(java.lang.String, boolean) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
 org.dependencytrack.resources.v1.VulnerabilityResource.getVulnerabilitiesByTag(java.lang.String) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema
 org.dependencytrack.resources.v1.VulnerabilityResource.getVulnerabilityByUuid(java.lang.String) declares JDO model class org.dependencytrack.model.Vulnerability as Swagger response schema

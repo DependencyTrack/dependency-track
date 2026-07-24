@@ -25,10 +25,12 @@ import java.util.List;
 
 /**
  * Represents package and vulnerability data from Checkmarx API response.
+ * Schema reference:
+ * https://checkmarx.stoplight.io/docs/checkmarx-one-api-reference-guide/drwbfz2dzursa-retrieve-package-risks-data#response-body
  */
-public record CheckmarxDataObject(Package pkg, List<Vulnerability> vulnerabilities) {
+public record CheckmarxDataObject(@JsonProperty("package") Package pkg, List<Vulnerability> vulnerabilities) {
 
-    record Package(String purl, String name, String version, @Nullable Remediation remediation) {}
+    record Package(String status, String purl, String name, String version, @Nullable Remediation remediation) {}
 
     record Vulnerability(String cve, String cxId, Double score, String severity, VulnerabilityDetail details) {}
 
@@ -52,4 +54,3 @@ public record CheckmarxDataObject(Package pkg, List<Vulnerability> vulnerabiliti
 
     record RemedyVersion(String version) {}
 }
-

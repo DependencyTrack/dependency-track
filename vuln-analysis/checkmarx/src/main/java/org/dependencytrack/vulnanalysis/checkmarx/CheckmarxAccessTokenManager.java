@@ -92,6 +92,7 @@ final class CheckmarxAccessTokenManager {
             accessToken = tokenResponse.accessToken();
             accessTokenExpiresAt = Instant.now().plusSeconds(tokenResponse.expiresIn()).minus(EXPIRY_BUFFER);
             this.authApiBaseUrl = authApiBaseUrl;
+            this.orgId = orgId;
             this.refreshToken = refreshToken;
 
             return accessToken;

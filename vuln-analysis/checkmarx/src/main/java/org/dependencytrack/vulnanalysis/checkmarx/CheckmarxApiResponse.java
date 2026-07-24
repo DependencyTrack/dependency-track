@@ -18,7 +18,7 @@
  */
 package org.dependencytrack.vulnanalysis.checkmarx;
 
-import org.jspecify.annotations.Nullable;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.List;
 
@@ -28,6 +28,10 @@ import java.util.List;
  * @since 5.0.0
  */
 public record CheckmarxApiResponse(
-        @Nullable List<CheckmarxDataObject> data) {
-}
+        List<CheckmarxDataObject> packageRisks) {
 
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+    public CheckmarxApiResponse {
+    }
+
+}

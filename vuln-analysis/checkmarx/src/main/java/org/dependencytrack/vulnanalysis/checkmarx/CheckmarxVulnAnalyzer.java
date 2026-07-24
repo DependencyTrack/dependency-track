@@ -157,8 +157,14 @@ final class CheckmarxVulnAnalyzer implements VulnAnalyzer {
         final var vulnerabilitiesByPurl = new HashMap<String, List<CheckmarxDataObject>>();
         final var entriesToCache = new HashMap<String, byte @Nullable []>(purlBatch.size());
 
-        if (response.data() != null && !response.data().isEmpty()) {
-            for (final CheckmarxDataObject cxDataObject : response.data()) {
+        if (!response.packageRisks().isEmpty()) {
+            for (final CheckmarxDataObject cxDataObject : response.packageRisks()) {
+                final var status = cxDataObject.pkg().status();
+                if (!status.equalsIgnoreCase("Ok")) {
+                    LOGGER.warn("Received non-OK status '{}' for package '{}:{}'; Skipping", status, cxDataObject.pkg().name(), cxDataObject.pkg().version());
+                    continue;
+                }
+
                 final String vulnPurl = cxDataObject.pkg().purl();
                 if (vulnPurl == null) {
                     LOGGER.warn("Unable to extract PURL for package '{}:{}'; Skipping", cxDataObject.pkg().name(), cxDataObject.pkg().version());

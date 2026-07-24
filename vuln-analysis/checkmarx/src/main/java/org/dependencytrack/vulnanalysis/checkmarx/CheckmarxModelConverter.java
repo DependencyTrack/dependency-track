@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,7 +55,6 @@ final class CheckmarxModelConverter {
     private static final Pattern CWE_PATTERN = Pattern.compile("(CWE-)?(\\d+)", Pattern.CASE_INSENSITIVE);
     private static final Source SOURCE_CX = Source.newBuilder().setName("CX").build();
     private static final Source SOURCE_NVD = Source.newBuilder().setName("NVD").build();
-    private static final List<String> SEVERITY_SOURCE_PRIORITY = List.of("NVD", "CX");
 
     private CheckmarxModelConverter() {
     }
@@ -97,10 +95,10 @@ final class CheckmarxModelConverter {
         if (remediation != null) {
             final var recommendations = new ArrayList<String>();
             if (remediation.nearest() != null) {
-                recommendations.add("Smallest package upgrade that resolves the identified risks in the current package version: " + remediation.nearest());
+                recommendations.add("Smallest package upgrade that resolves the identified risks in the current package version: " + remediation.nearest().version());
             }
             if (remediation.latest() != null) {
-                recommendations.add("Latest version of the package: " + remediation.latest());
+                recommendations.add("Latest version of the package: " + remediation.latest().version());
             }
             if (!recommendations.isEmpty()) {
                 vulnBuilder.setRecommendation(String.join(System.lineSeparator(), recommendations));
@@ -142,10 +140,10 @@ final class CheckmarxModelConverter {
 
     private static Severity convertSeverity(String severity) {
         return switch (severity) {
-            case "CRITICAL" -> SEVERITY_CRITICAL;
-            case "HIGH" -> SEVERITY_HIGH;
-            case "MEDIUM" -> SEVERITY_MEDIUM;
-            case "LOW" -> SEVERITY_LOW;
+            case "Critical" -> SEVERITY_CRITICAL;
+            case "High" -> SEVERITY_HIGH;
+            case "Medium" -> SEVERITY_MEDIUM;
+            case "Low" -> SEVERITY_LOW;
             default -> SEVERITY_UNKNOWN;
         };
     }

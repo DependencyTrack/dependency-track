@@ -53,6 +53,7 @@ import static org.cyclonedx.CycloneDxSchema.NS_BOM_13;
 import static org.cyclonedx.CycloneDxSchema.NS_BOM_14;
 import static org.cyclonedx.CycloneDxSchema.NS_BOM_15;
 import static org.cyclonedx.CycloneDxSchema.NS_BOM_16;
+import static org.cyclonedx.CycloneDxSchema.NS_BOM_17;
 import static org.cyclonedx.Version.VERSION_10;
 import static org.cyclonedx.Version.VERSION_11;
 import static org.cyclonedx.Version.VERSION_12;
@@ -60,6 +61,7 @@ import static org.cyclonedx.Version.VERSION_13;
 import static org.cyclonedx.Version.VERSION_14;
 import static org.cyclonedx.Version.VERSION_15;
 import static org.cyclonedx.Version.VERSION_16;
+import static org.cyclonedx.Version.VERSION_17;
 
 /**
  * @since 4.11.0
@@ -223,6 +225,7 @@ public class CycloneDxValidator {
                             case "1.4" -> VERSION_14;
                             case "1.5" -> VERSION_15;
                             case "1.6" -> VERSION_16;
+                            case "1.7" -> VERSION_17;
                             default ->
                                     throw new InvalidBomException("Unrecognized specVersion %s".formatted(specVersion));
                         };
@@ -262,6 +265,7 @@ public class CycloneDxValidator {
                         case NS_BOM_14 -> VERSION_14;
                         case NS_BOM_15 -> VERSION_15;
                         case NS_BOM_16 -> VERSION_16;
+                        case NS_BOM_17 -> VERSION_17;
                         default -> null;
                     };
 

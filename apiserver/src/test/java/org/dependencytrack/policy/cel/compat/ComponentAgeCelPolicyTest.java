@@ -107,7 +107,7 @@ public class ComponentAgeCelPolicyTest extends PersistenceCapableTest {
                             Instant.now())));
         });
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
 
         if (shouldViolate) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);

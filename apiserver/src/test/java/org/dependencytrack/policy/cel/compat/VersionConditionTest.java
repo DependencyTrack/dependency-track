@@ -67,7 +67,7 @@ public class VersionConditionTest extends PersistenceCapableTest {
         component.setVersion(componentVersion);
         qm.persist(component);
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         if (expectViolation) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
         } else {

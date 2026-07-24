@@ -29,6 +29,7 @@ import org.slf4j.MDC;
 
 import java.util.UUID;
 
+import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 
 /**
@@ -40,7 +41,7 @@ public final class EvalProjectPoliciesActivity implements Activity<EvalProjectPo
     private final CelPolicyEngine policyEngine;
 
     public EvalProjectPoliciesActivity(CelPolicyEngine policyEngine) {
-        this.policyEngine = policyEngine;
+        this.policyEngine = requireNonNull(policyEngine, "policyEngine must not be null");
     }
 
     @Override
@@ -49,8 +50,9 @@ public final class EvalProjectPoliciesActivity implements Activity<EvalProjectPo
             throw new TerminalApplicationFailureException("No argument provided");
         }
 
+        final UUID projectUuid = UUID.fromString(argument.getProjectUuid());
         try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, argument.getProjectUuid())) {
-            policyEngine.evaluateProject(UUID.fromString(argument.getProjectUuid()));
+            policyEngine.evaluateProject(projectUuid, ctx::maybeHeartbeat);
         }
 
         return null;

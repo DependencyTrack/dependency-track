@@ -114,6 +114,15 @@ final class MetadataRegistry {
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
             Duration lockTimeout) {
+        registerActivity(activity, argumentConverter, resultConverter, lockTimeout, null);
+    }
+
+    <A, R> void registerActivity(
+            Activity<A, R> activity,
+            PayloadConverter<A> argumentConverter,
+            PayloadConverter<R> resultConverter,
+            Duration lockTimeout,
+            @Nullable Duration executionTimeout) {
         requireNonNull(activity, "activity must not be null");
 
         final ActivitySpec activitySpec = requireActivitySpec(activity.getClass());
@@ -124,6 +133,7 @@ final class MetadataRegistry {
                 resultConverter,
                 activitySpec.defaultTaskQueue(),
                 lockTimeout,
+                executionTimeout,
                 activity);
     }
 
@@ -134,11 +144,30 @@ final class MetadataRegistry {
             String defaultTaskQueueName,
             Duration lockTimeout,
             Activity<A, R> activity) {
+        registerActivity(
+                name,
+                argumentConverter,
+                resultConverter,
+                defaultTaskQueueName,
+                lockTimeout,
+                null,
+                activity);
+    }
+
+    <A, R> void registerActivity(
+            String name,
+            PayloadConverter<A> argumentConverter,
+            PayloadConverter<R> resultConverter,
+            String defaultTaskQueueName,
+            Duration lockTimeout,
+            @Nullable Duration executionTimeout,
+            Activity<A, R> activity) {
         requireValidActivityName(name);
         requireNonNull(argumentConverter, "argumentConverter must not be null");
         requireNonNull(resultConverter, "resultConverter must not be null");
         requireValidTaskQueueName(defaultTaskQueueName);
         requireValidLockTimeout(lockTimeout);
+        requireValidExecutionTimeout(executionTimeout);
         requireNonNull(activity, "activity must not be null");
 
         if (activityNameByExecutorClass.containsKey(activity.getClass())) {
@@ -157,7 +186,8 @@ final class MetadataRegistry {
                 argumentConverter,
                 resultConverter,
                 defaultTaskQueueName,
-                lockTimeout);
+                lockTimeout,
+                executionTimeout);
         activityNameByExecutorClass.put(activity.getClass(), name);
         activityMetadataByName.put(name, metadata);
     }
@@ -272,6 +302,12 @@ final class MetadataRegistry {
         requireNonNull(lockTimeout, "lockTimeout must not be null");
         if (!lockTimeout.isPositive()) {
             throw new IllegalArgumentException("lockTimeout must positive");
+        }
+    }
+
+    private static void requireValidExecutionTimeout(@Nullable Duration executionTimeout) {
+        if (executionTimeout != null && !executionTimeout.isPositive()) {
+            throw new IllegalArgumentException("executionTimeout must be positive when set");
         }
     }
 

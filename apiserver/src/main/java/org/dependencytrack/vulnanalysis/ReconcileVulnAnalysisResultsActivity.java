@@ -195,7 +195,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                     projectUuid,
                     reportedFindings,
                     vulnDbIdByVulnKey,
-                    failedAnalyzers);
+                    failedAnalyzers,
+                    ctx);
         }
 
         return null;
@@ -400,7 +401,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             UUID projectUuid,
             List<ReportedFinding> reportedFindings,
             Map<VulnerabilityKey, Long> vulnDbIdByVulnKey,
-            Set<String> failedAnalyzers) throws InterruptedException {
+            Set<String> failedAnalyzers,
+            ActivityContext activityContext) throws InterruptedException {
         final Long projectId = withJdbiHandle(
                 handle -> handle.attach(ProjectDao.class).getProjectId(projectUuid));
         if (projectId == null) {
@@ -501,7 +503,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                 .collect(Collectors.toSet());
 
         final Map<Long, Map<Long, VulnerabilityPolicy>> policyResults =
-                evaluateVulnPolicies(projectId, vulnDbIdsByComponentId);
+                evaluateVulnPolicies(projectId, vulnDbIdsByComponentId, activityContext);
 
         if (Thread.interrupted()) {
             throw new InterruptedException("Interrupted before reconciling findings transaction");
@@ -628,13 +630,17 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
     private Map<Long, Map<Long, VulnerabilityPolicy>> evaluateVulnPolicies(
             long projectId,
-            Map<Long, Set<Long>> vulnIdsByComponentId) {
+            Map<Long, Set<Long>> vulnIdsByComponentId,
+            ActivityContext activityContext) {
         if (vulnIdsByComponentId.isEmpty()) {
             return Map.of();
         }
 
         final Map<Long, Map<Long, VulnerabilityPolicy>> evaluationResult =
-                vulnPolicyEvaluator.evaluateAll(projectId, vulnIdsByComponentId);
+                vulnPolicyEvaluator.evaluateAll(
+                        projectId,
+                        vulnIdsByComponentId,
+                        activityContext::maybeHeartbeat);
         if (evaluationResult.isEmpty()) {
             LOGGER.debug("Vulnerability policy evaluation did not yield any results");
             return Map.of();

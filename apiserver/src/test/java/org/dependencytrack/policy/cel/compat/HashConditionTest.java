@@ -81,7 +81,7 @@ public class HashConditionTest extends PersistenceCapableTest {
         qm.persist(component);
 
 
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         if (expectViolation) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
             assertThat(qm.getAllPolicyViolations(component).get(0).getPolicyCondition().getViolationType()).isEqualTo(actualType);
@@ -104,7 +104,7 @@ public class HashConditionTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         component.setSha256("actualHash");
         qm.persist(component);
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         assertThat(qm.getAllPolicyViolations(component)).isEmpty();
     }
 

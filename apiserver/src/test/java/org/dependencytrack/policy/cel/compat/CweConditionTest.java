@@ -68,7 +68,7 @@ public class CweConditionTest extends PersistenceCapableTest {
         qm.persist(component);
         qm.persist(vulnerability);
         qm.addVulnerability(vulnerability, component, "internal");
-        new CelPolicyEngine().evaluateProject(project.getUuid());
+        new CelPolicyEngine().evaluateProject(project.getUuid(), () -> {});
         if (expectViolation) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
             assertThat(qm.getAllPolicyViolations(component).get(0).getPolicyCondition().getSubject()).isEqualTo(PolicyCondition.Subject.CWE);

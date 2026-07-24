@@ -228,6 +228,9 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter(),
                 Duration.ofMinutes(1));
 
+        final Duration policyEvaluationMaxDuration = Duration.ofMillis(
+                config.getValue(ConfigKeys.POLICY_EVALUATION_MAX_DURATION_MS, long.class));
+
         engine.registerActivity(
                 new IdentifyInternalComponentsActivity(),
                 voidConverter(),
@@ -255,7 +258,8 @@ public final class DexEngineInitializer implements ServletContextListener {
                 new EvalProjectPoliciesActivity(new CelPolicyEngine()),
                 protoConverter(EvalProjectPoliciesArg.class),
                 voidConverter(),
-                Duration.ofMinutes(5));
+                Duration.ofMinutes(5),
+                policyEvaluationMaxDuration);
         engine.registerActivity(
                 new FetchPackageMetadataResolutionCandidatesActivity(pluginManager),
                 voidConverter(),
@@ -312,7 +316,8 @@ public final class DexEngineInitializer implements ServletContextListener {
                         new CelVulnerabilityPolicyEvaluator()),
                 protoConverter(ReconcileVulnAnalysisResultsArg.class),
                 voidConverter(),
-                Duration.ofMinutes(5));
+                Duration.ofMinutes(5),
+                policyEvaluationMaxDuration);
         engine.registerActivity(
                 new RefreshGlobalPortfolioMetricsActivity(),
                 voidConverter(),

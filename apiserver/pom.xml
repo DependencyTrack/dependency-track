@@ -139,6 +139,11 @@
         </dependency>
         <dependency>
             <groupId>org.dependencytrack</groupId>
+            <artifactId>vuln-analyzer-checkmarx</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
             <artifactId>package-metadata-api</artifactId>
             <version>${project.version}</version>
         </dependency>

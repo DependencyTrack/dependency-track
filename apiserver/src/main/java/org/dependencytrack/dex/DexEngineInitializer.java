@@ -158,7 +158,7 @@ public final class DexEngineInitializer implements ServletContextListener {
         requireNonNull(secretManager, "secretManager has not been initialized");
 
         final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
-                Map.of("baseUrl", () -> withJdbiHandle(
+                Map.of(PebbleNotificationTemplateRendererFactory.BASE_URL, () -> withJdbiHandle(
                         handle -> handle
                                 .attach(ConfigPropertyDao.class)
                                 .getOptionalValue(GENERAL_BASE_URL)

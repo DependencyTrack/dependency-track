@@ -101,7 +101,7 @@ public abstract class AbstractNotificationPublisherTest {
 
         final var templateRendererFactory =
                 new PebbleNotificationTemplateRendererFactory(
-                        Map.of("baseUrl", () -> "https://example.com"));
+                        Map.of(PebbleNotificationTemplateRendererFactory.BASE_URL, () -> "https://example.com"));
         final NotificationTemplateRenderer templateRenderer =
                 templateRendererFactory.createRenderer(
                         publisherFactory.defaultTemplate());

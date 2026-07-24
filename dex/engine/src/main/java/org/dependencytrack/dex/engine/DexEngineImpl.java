@@ -175,7 +175,7 @@ final class DexEngineImpl implements DexEngine {
 
     DexEngineImpl(DexEngineConfig config) {
         this.config = requireNonNull(config);
-        this.jdbi = JdbiFactory.create(config.dataSource(), config.pageTokenEncoder());
+        this.jdbi = JdbiFactory.create(config.dataSource(), config.queryTimeout(), config.pageTokenEncoder());
         this.runsCreatedCounter = Counter
                 .builder("dt.dex.engine.runs.created")
                 .withRegistry(config.metrics().meterRegistry());

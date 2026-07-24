@@ -1,0 +1,12 @@
+[
+  {
+    "package": {
+      "status": "Ok",
+      "remediation": {},
+      "name": "com.fasterxml.jackson.core:jackson-databind",
+      "version": "2.13.4",
+      "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4"
+    },
+    "vulnerabilities": []
+  }
+]

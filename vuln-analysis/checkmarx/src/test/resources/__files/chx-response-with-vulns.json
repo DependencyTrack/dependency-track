@@ -1,0 +1,73 @@
+[
+  {
+    "package": {
+      "status": "Ok",
+      "remediation": {
+        "latest": {
+            "version": "2.13.4"
+        },
+        "nearest": {
+          "version": "2.13.4"
+        }
+      },
+      "type": "Maven",
+      "name": "com.fasterxml.jackson.core:jackson-databind",
+      "version": "2.13.4",
+      "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4"
+    },
+    "vulnerabilities": [
+      {
+        "details": {
+          "description": "A vulnerability was found in jackson-databind.",
+          "created": "2020-12-15T00:00:00.000Z",
+          "updatedTime": "2021-12-15T00:00:00.000Z",
+          "published": "2021-10-15T00:00:00.000Z",
+          "cwe": "CWE-502",
+          "references": [
+            {
+              "url": "https://nvd.nist.gov/vuln/detail/CVE-2020-25649"
+            },
+            {
+              "url": "https://spring.io/security/CVE-2020-25649"
+            }
+          ],
+          "cvss3": {
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+            "baseScore": 7.5,
+            "severity": "High"
+          }
+        },
+        "cve": "CVE-2020-25649",
+        "cxId": "cx123456-78c9",
+        "severity": "High",
+        "score": 7.5
+      },
+      {
+        "details": {
+          "description": "A vulnerability was found in jackson-databind.",
+          "created": "2020-12-15T00:00:00.000Z",
+          "updatedTime": "2021-12-15T00:00:00.000Z",
+          "published": "2021-10-15T00:00:00.000Z",
+          "cwe": "CWE-501",
+          "references": [
+            {
+              "url": "https://nvd.nist.gov/vuln/detail/CVE-2021-25649"
+            },
+            {
+              "url": "https://spring.io/security/CVE-2021-25649"
+            }
+          ],
+          "cvss4": {
+            "vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N",
+            "baseScore": 5.0,
+            "severity": "Medium"
+          }
+        },
+        "cve": "CVE-2021-25649",
+        "cxId": "cx987654-32g1",
+        "severity": "Medium",
+        "score": 5.0
+      }
+    ]
+  }
+]

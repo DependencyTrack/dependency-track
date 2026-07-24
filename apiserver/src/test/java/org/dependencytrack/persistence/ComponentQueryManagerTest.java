@@ -20,12 +20,17 @@ package org.dependencytrack.persistence;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.PackageMetadataResolutionStatus;
 import org.dependencytrack.model.Project;
+import org.dependencytrack.persistence.jdbi.PackageMetadataResolutionDao;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class ComponentQueryManagerTest extends PersistenceCapableTest {
 
@@ -69,4 +74,99 @@ public class ComponentQueryManagerTest extends PersistenceCapableTest {
                     assertThat(component.getSha1()).isEqualTo("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3");
                 });
     }
+
+    @Test
+    void shouldSeedPendingResolutionRowsOnComponentCreationWithoutResettingExistingOnes() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        useJdbiHandle(
+                handle -> new PackageMetadataResolutionDao(handle).upsertAll(
+                        Map.of("pkg:maven/com.acme/resolved@1.0.0", PackageMetadataResolutionStatus.RESOLVED)));
+
+        final var componentResolved = new Component();
+        componentResolved.setProject(project);
+        componentResolved.setName("resolved");
+        componentResolved.setVersion("1.0.0");
+        componentResolved.setPurl("pkg:maven/com.acme/resolved@1.0.0");
+        qm.createComponent(componentResolved, false);
+
+        final var componentMalformedPurl = new Component();
+        componentMalformedPurl.setProject(project);
+        componentMalformedPurl.setName("malformed");
+        componentMalformedPurl.setVersion("1.0.0");
+        componentMalformedPurl.setPurl("pkg:maven/com.acme/malformed%ZZ@1.0.0");
+        qm.createComponent(componentMalformedPurl, false);
+
+        final var componentNoPurl = new Component();
+        componentNoPurl.setProject(project);
+        componentNoPurl.setName("no-purl");
+        componentNoPurl.setVersion("1.0.0");
+        qm.createComponent(componentNoPurl, false);
+
+        assertThat(packageMetadataResolutionRows()).satisfiesExactly(
+                row -> {
+                    assertThat(row).containsEntry("purl", "pkg:maven/com.acme/malformed%ZZ@1.0.0");
+                    assertThat(row).containsEntry("status", "PENDING");
+                },
+                row -> {
+                    assertThat(row).containsEntry("purl", "pkg:maven/com.acme/resolved@1.0.0");
+                    assertThat(row).containsEntry("status", "RESOLVED");
+                });
+    }
+
+    @Test
+    void shouldSeedPendingResolutionRowsForProjectIncludingMalformedPurls() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentResolved = new Component();
+        componentResolved.setProject(project);
+        componentResolved.setName("resolved");
+        componentResolved.setVersion("1.0.0");
+        componentResolved.setPurl("pkg:maven/com.acme/resolved@1.0.0");
+        qm.persist(componentResolved);
+
+        final var componentMalformedPurl = new Component();
+        componentMalformedPurl.setProject(project);
+        componentMalformedPurl.setName("malformed");
+        componentMalformedPurl.setVersion("1.0.0");
+        componentMalformedPurl.setPurl("pkg:maven/com.acme/malformed%ZZ@1.0.0");
+        qm.persist(componentMalformedPurl);
+
+        final var componentNoPurl = new Component();
+        componentNoPurl.setProject(project);
+        componentNoPurl.setName("no-purl");
+        componentNoPurl.setVersion("1.0.0");
+        qm.persist(componentNoPurl);
+
+        assertThat(packageMetadataResolutionRows()).isEmpty();
+
+        qm.seedPackageMetadataResolution(project);
+
+        assertThat(packageMetadataResolutionRows()).satisfiesExactly(
+                row -> {
+                    assertThat(row).containsEntry("purl", "pkg:maven/com.acme/malformed%ZZ@1.0.0");
+                    assertThat(row).containsEntry("status", "PENDING");
+                },
+                row -> {
+                    assertThat(row).containsEntry("purl", "pkg:maven/com.acme/resolved@1.0.0");
+                    assertThat(row).containsEntry("status", "PENDING");
+                });
+    }
+
+    private static List<Map<String, Object>> packageMetadataResolutionRows() {
+        return withJdbiHandle(handle -> handle
+                .createQuery("""
+                        SELECT "PURL"
+                             , "STATUS"
+                          FROM "PACKAGE_METADATA_RESOLUTION"
+                         ORDER BY "PURL"
+                        """)
+                .mapToMap()
+                .list());
+    }
+
 }

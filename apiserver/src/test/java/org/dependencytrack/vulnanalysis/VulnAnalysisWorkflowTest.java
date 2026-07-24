@@ -149,26 +149,22 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         engine.registerActivity(
                 new DeleteFilesActivity(fileStorage),
                 protoConverter(DeleteFilesArgument.class),
-                voidConverter(),
-                Duration.ofSeconds(5));
+                voidConverter());
         engine.registerActivity(
                 new InvokeVulnAnalyzerActivity(fileStorage, pluginManager),
                 protoConverter(InvokeVulnAnalyzerArg.class),
-                protoConverter(InvokeVulnAnalyzerRes.class),
-                Duration.ofSeconds(5));
+                protoConverter(InvokeVulnAnalyzerRes.class));
         engine.registerActivity(
                 new PrepareVulnAnalysisActivity(fileStorage, pluginManager),
                 protoConverter(PrepareVulnAnalysisArg.class),
-                protoConverter(PrepareVulnAnalysisRes.class),
-                Duration.ofSeconds(5));
+                protoConverter(PrepareVulnAnalysisRes.class));
         engine.registerActivity(
                 new ReconcileVulnAnalysisResultsActivity(
                         fileStorage,
                         pluginManager,
                         new CelVulnerabilityPolicyEvaluator()),
                 protoConverter(ReconcileVulnAnalysisResultsArg.class),
-                voidConverter(),
-                Duration.ofSeconds(5));
+                voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));

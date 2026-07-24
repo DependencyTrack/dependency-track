@@ -90,13 +90,11 @@ class ImportBomWorkflowTest extends PersistenceCapableTest {
                 new ImportBomActivity(
                         fileStorage, mock(DexEngine.class), false),
                 protoConverter(ImportBomArg.class),
-                voidConverter(),
-                Duration.ofSeconds(30));
+                voidConverter());
         engine.registerActivity(
                 new DeleteFilesActivity(fileStorage),
                 protoConverter(DeleteFilesArgument.class),
-                voidConverter(),
-                Duration.ofSeconds(5));
+                voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));

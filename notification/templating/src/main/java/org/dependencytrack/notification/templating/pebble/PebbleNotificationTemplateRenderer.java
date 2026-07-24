@@ -54,7 +54,12 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
-import static org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory.BASE_URL;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.BASE_URL;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.NOTIFICATION;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.SUBJECT;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.SUBJECT_JSON;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.TIMESTAMP;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.TIMESTAMP_EPOCH_SECONDS;
 
 /**
  * A {@link NotificationTemplateRenderer} powered by Pebble.
@@ -96,9 +101,9 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
         }
         templateCtx.put(BASE_URL, normalizeBaseUrl(
                 contextVariableSuppliers.getOrDefault(BASE_URL, NULL_SUPPLIER).get()));
-        templateCtx.put("timestampEpochSeconds", Timestamps.toSeconds(notification.getTimestamp()));
-        templateCtx.put("timestamp", format(notification.getTimestamp()));
-        templateCtx.put("notification", notification);
+        templateCtx.put(TIMESTAMP_EPOCH_SECONDS, Timestamps.toSeconds(notification.getTimestamp()));
+        templateCtx.put(TIMESTAMP, format(notification.getTimestamp()));
+        templateCtx.put(NOTIFICATION, notification);
 
         final Message subject;
         try {
@@ -108,10 +113,10 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
         }
 
         if (subject != null) {
-            templateCtx.put("subject", subject);
+            templateCtx.put(SUBJECT, subject);
 
             try {
-                templateCtx.put("subjectJson", JsonFormat.printer().print(subject));
+                templateCtx.put(SUBJECT_JSON, JsonFormat.printer().print(subject));
             } catch (IOException e) {
                 throw new UncheckedIOException("Failed to serialize subject as JSON", e);
             }
@@ -136,11 +141,12 @@ final class PebbleNotificationTemplateRenderer implements NotificationTemplateRe
     }
 
     /**
-     * Notification templates concatenate {@code baseUrl} with path segments that
-     * already start with {@code /} (e.g. {@code {{ baseUrl }}/projects/...} and
-     * {@code {{ baseUrl }}{{ frontendUri }}}). Configured base URLs commonly
-     * include a trailing slash; strip trailing slashes so rendered links never
-     * contain redundant {@code //}, which breaks the frontend router.
+     * Notification templates concatenate
+     * {@link org.dependencytrack.notification.api.templating.NotificationTemplateVariables#BASE_URL}
+     * with path segments that already start with {@code /}
+     * (e.g. {@code {{ baseUrl }}/projects/...} and {@code {{ baseUrl }}{{ frontendUri }}}).
+     * Configured base URLs commonly include a trailing slash; strip trailing slashes
+     * so rendered links never contain redundant {@code //}, which breaks the frontend router.
      *
      * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/6786">#6786</a>
      */

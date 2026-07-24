@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.dependencytrack.notification.api.templating.NotificationTemplateVariables.BASE_URL;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
@@ -45,11 +46,11 @@ class PebbleNotificationTemplateRendererTest {
         final RenderedNotificationTemplate rendered = render(
                 configuredBaseUrl,
                 """
-                        Vulnerability URL: {{ baseUrl }}/vulnerability/?source=GITHUB&vulnId=GHSA-45gg-vh54-h5m9
-                        Component URL:     {{ baseUrl }}/component/?uuid=a0f76ff1-4f7b-4c97-af53-a39629a4d18c
-                        Project URL:       {{ baseUrl }}/projects/24593709-c6f4-4341-b8b4-852b8379a61e
-                        Other affected projects: {{ baseUrl }}{{ frontendUri }}\
-                        """,
+                        Vulnerability URL: {{ %1$s }}/vulnerability/?source=GITHUB&vulnId=GHSA-45gg-vh54-h5m9
+                        Component URL:     {{ %1$s }}/component/?uuid=a0f76ff1-4f7b-4c97-af53-a39629a4d18c
+                        Project URL:       {{ %1$s }}/projects/24593709-c6f4-4341-b8b4-852b8379a61e
+                        Other affected projects: {{ %1$s }}{{ frontendUri }}\
+                        """.formatted(BASE_URL),
                 Map.of("frontendUri", "/vulnerabilities/GITHUB/GHSA-45gg-vh54-h5m9/affectedProjects"));
 
         assertThat(rendered.content()).isEqualTo("""
@@ -58,10 +59,6 @@ class PebbleNotificationTemplateRendererTest {
                 Project URL:       %s/projects/24593709-c6f4-4341-b8b4-852b8379a61e
                 Other affected projects: %s/vulnerabilities/GITHUB/GHSA-45gg-vh54-h5m9/affectedProjects\
                 """.formatted(expectedBaseUrl, expectedBaseUrl, expectedBaseUrl, expectedBaseUrl));
-        assertThat(rendered.content()).doesNotContain("//vulnerability")
-                .doesNotContain("//component")
-                .doesNotContain("//projects")
-                .doesNotContain("//vulnerabilities");
     }
 
     private static Stream<Arguments> baseUrlNormalizationArguments() {
@@ -77,21 +74,21 @@ class PebbleNotificationTemplateRendererTest {
     void shouldLeaveNullBaseUrlAsNull() {
         final RenderedNotificationTemplate rendered = render(
                 null,
-                "baseUrl=[{{ baseUrl }}]",
+                "%1$s=[{{ %1$s }}]".formatted(BASE_URL),
                 Map.of());
 
         // Pebble renders null variables as empty strings.
-        assertThat(rendered.content()).isEqualTo("baseUrl=[]");
+        assertThat(rendered.content()).isEqualTo("%s=[]".formatted(BASE_URL));
     }
 
     @Test
     void shouldLeaveEmptyBaseUrlEmpty() {
         final RenderedNotificationTemplate rendered = render(
                 "",
-                "baseUrl=[{{ baseUrl }}]",
+                "%1$s=[{{ %1$s }}]".formatted(BASE_URL),
                 Map.of());
 
-        assertThat(rendered.content()).isEqualTo("baseUrl=[]");
+        assertThat(rendered.content()).isEqualTo("%s=[]".formatted(BASE_URL));
     }
 
     private static RenderedNotificationTemplate render(
@@ -100,7 +97,7 @@ class PebbleNotificationTemplateRendererTest {
             Map<String, Object> additionalContext) {
         final NotificationTemplateRenderer renderer =
                 new PebbleNotificationTemplateRendererFactory(
-                        Map.of(PebbleNotificationTemplateRendererFactory.BASE_URL, () -> baseUrl))
+                        Map.of(BASE_URL, () -> baseUrl))
                         .createRenderer(new NotificationTemplate(templateContent, "text/plain"));
 
         final RenderedNotificationTemplate rendered = renderer.render(

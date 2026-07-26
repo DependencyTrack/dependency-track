@@ -759,6 +759,227 @@ class DexEngineImplTest {
             assertThat(executionQueue).containsExactly("5", "4", "3", "2", "1");
         }
 
+        @Test
+        void shouldBlockContenderWhileConcurrencyKeyHolderIsExecuting() throws Exception {
+            registerWorkflow("holder", (ctx, _) -> {
+                ctx.waitForExternalEvent("resume", voidConverter(), Duration.ofSeconds(30)).await();
+                return null;
+            });
+            registerWorkflow("contender", (_, _) -> null);
+            registerWorkflowWorker("workflow-worker", 2);
+            engine.start();
+
+            final UUID holderRunId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("holder", 1)
+                            .withConcurrencyKey("someConcurrencyKey"));
+            await("Holder to await the external event")
+                    .atMost(Duration.ofSeconds(5))
+                    .untilAsserted(
+                            () -> assertThat(engine.getRunMetadataById(holderRunId).updatedAt())
+                                    .isNotNull());
+
+            final UUID contenderRunId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("contender", 1)
+                            .withConcurrencyKey("someConcurrencyKey"));
+
+            await("Contender to stay pending while holder is executing")
+                    .during(Duration.ofMillis(750))
+                    .atMost(Duration.ofSeconds(5))
+                    .untilAsserted(
+                            () -> assertThat(engine.getRunMetadataById(contenderRunId).status())
+                                    .isEqualTo(WorkflowRunStatus.CREATED));
+
+            // The blocked key's wakeup must have been verified and consumed.
+            // The holder's later completion is what re-creates it.
+            final Jdbi jdbi = Jdbi.create(dataSource);
+            await("Blocked key's wakeup to be consumed")
+                    .atMost(Duration.ofSeconds(5))
+                    .untilAsserted(() -> {
+                        final Integer wakeupCount = jdbi.withHandle(handle -> handle
+                                .createQuery("""
+                                        select count(*)
+                                          from dex_workflow_concurrency_key_wakeup
+                                         where concurrency_key = 'someConcurrencyKey'
+                                        """)
+                                .mapTo(Integer.class)
+                                .one());
+                        assertThat(wakeupCount).isZero();
+                    });
+
+            engine.sendExternalEvent(new ExternalEvent(holderRunId, "resume", null)).get(1, TimeUnit.SECONDS);
+            awaitRunStatus(holderRunId, WorkflowRunStatus.COMPLETED);
+            awaitRunStatus(contenderRunId, WorkflowRunStatus.COMPLETED);
+        }
+
+        @Test
+        void shouldBlockContenderWhileConcurrencyKeyHolderIsSuspended() throws Exception {
+            registerWorkflow("holder", (ctx, _) -> {
+                ctx.waitForExternalEvent("resume", voidConverter(), Duration.ofSeconds(30)).await();
+                return null;
+            });
+            registerWorkflow("contender", (_, _) -> null);
+            registerWorkflowWorker("workflow-worker", 2);
+            engine.start();
+
+            final UUID holderRunId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("holder", 1)
+                            .withConcurrencyKey("someConcurrencyKey"));
+            await("Holder to await the external event")
+                    .atMost(Duration.ofSeconds(5))
+                    .untilAsserted(
+                            () -> assertThat(engine.getRunMetadataById(holderRunId).updatedAt())
+                                    .isNotNull());
+            engine.requestRunSuspension(holderRunId);
+            awaitRunStatus(holderRunId, WorkflowRunStatus.SUSPENDED);
+
+            final UUID contenderRunId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("contender", 1)
+                            .withConcurrencyKey("someConcurrencyKey"));
+
+            await("Contender to stay pending while holder is suspended")
+                    .during(Duration.ofMillis(750))
+                    .atMost(Duration.ofSeconds(5))
+                    .untilAsserted(
+                            () -> assertThat(engine.getRunMetadataById(contenderRunId).status())
+                                    .isEqualTo(WorkflowRunStatus.CREATED));
+
+            engine.requestRunResumption(holderRunId);
+            engine.sendExternalEvent(new ExternalEvent(holderRunId, "resume", null)).get(1, TimeUnit.SECONDS);
+            awaitRunStatus(holderRunId, WorkflowRunStatus.COMPLETED);
+            awaitRunStatus(contenderRunId, WorkflowRunStatus.COMPLETED);
+        }
+
+        @Test
+        void shouldScheduleContenderWhenConcurrencyKeyHolderIsCancelled() {
+            registerWorkflow("holder", (ctx, _) -> {
+                ctx.waitForExternalEvent("never", voidConverter(), Duration.ofSeconds(60)).await();
+                return null;
+            });
+            registerWorkflow("contender", (_, _) -> null);
+            registerWorkflowWorker("workflow-worker", 2);
+            engine.start();
+
+            final UUID holderRunId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("holder", 1)
+                            .withConcurrencyKey("someConcurrencyKey"));
+            await("Holder to await the external event")
+                    .atMost(Duration.ofSeconds(5))
+                    .untilAsserted(
+                            () -> assertThat(engine.getRunMetadataById(holderRunId).updatedAt())
+                                    .isNotNull());
+
+            final UUID contenderRunId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("contender", 1)
+                            .withConcurrencyKey("someConcurrencyKey"));
+
+            engine.requestRunCancellation(holderRunId, "someReason");
+            awaitRunStatus(holderRunId, WorkflowRunStatus.CANCELLED);
+            awaitRunStatus(contenderRunId, WorkflowRunStatus.COMPLETED);
+        }
+
+        @Test
+        void shouldBlockContenderWhileKeyHolderContinuesAsNew() throws Exception {
+            final var secondGenerationStarted = new CountDownLatch(1);
+            registerWorkflow("holder", stringConverter(), voidConverter(), (ctx, arg) -> {
+                if ("first".equals(arg)) {
+                    ctx.continueAsNew(
+                            new ContinueAsNewOptions<String>()
+                                    .withArgument("second"));
+                    return null;
+                }
+
+                secondGenerationStarted.countDown();
+                ctx.waitForExternalEvent("resume", voidConverter(), Duration.ofSeconds(30)).await();
+                return null;
+            });
+            registerWorkflow("contender", (_, _) -> null);
+            registerWorkflowWorker("workflow-worker", 2);
+            engine.start();
+
+            final UUID holderRunId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("holder", 1)
+                            .withConcurrencyKey("someConcurrencyKey")
+                            .withArgument("first"));
+
+            final UUID contenderRunId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("contender", 1)
+                            .withConcurrencyKey("someConcurrencyKey"));
+
+            // The continued run keeps holding its key, so the contender must
+            // stay blocked across the continue-as-new boundary.
+            assertThat(secondGenerationStarted.await(5, TimeUnit.SECONDS)).isTrue();
+            await("Contender to stay pending while holder continues as new")
+                    .during(Duration.ofMillis(750))
+                    .atMost(Duration.ofSeconds(5))
+                    .untilAsserted(
+                            () -> assertThat(engine.getRunMetadataById(contenderRunId).status())
+                                    .isEqualTo(WorkflowRunStatus.CREATED));
+
+            engine.sendExternalEvent(new ExternalEvent(holderRunId, "resume", null)).get(1, TimeUnit.SECONDS);
+            awaitRunStatus(holderRunId, WorkflowRunStatus.COMPLETED);
+            awaitRunStatus(contenderRunId, WorkflowRunStatus.COMPLETED);
+        }
+
+        @Test
+        void shouldExecuteChildWorkflowWithConcurrencyKey() {
+            registerWorkflow("parent", (ctx, _) -> {
+                ctx.callChildWorkflow(
+                        "child", 1, null, WORKFLOW_TASK_QUEUE,
+                        "childConcurrencyKey", null, voidConverter(), voidConverter()).await();
+                return null;
+            });
+            registerWorkflow("child", (_, _) -> null);
+            registerWorkflowWorker("workflow-worker", 2);
+            engine.start();
+
+            final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("parent", 1));
+
+            awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+        }
+
+        @Test
+        void shouldRepairLostConcurrencyKeyWakeups() throws Exception {
+            engine.close();
+
+            final var config = new DexEngineConfig(dataSource);
+            config.workflowTaskScheduler().setPollInterval(Duration.ofMillis(10));
+            config.workflowTaskScheduler().setPollBackoffFunction(IntervalFunction.of(10));
+            config.workflowTaskScheduler().setConcurrencyKeyWakeupRepairInterval(Duration.ofMillis(250));
+            config.activityTaskScheduler().setPollInterval(Duration.ofMillis(10));
+            config.activityTaskScheduler().setPollBackoffFunction(IntervalFunction.of(10));
+            config.taskEventBuffer().setFlushInterval(Duration.ofMillis(10));
+            engine = new DexEngineImpl(config);
+
+            registerWorkflow("test", (_, _) -> null);
+            registerWorkflowWorker("workflow-worker", 1);
+            engine.start();
+
+            // While the queue is paused, the scheduler leaves the wakeup alone.
+            engine.updateTaskQueue(new UpdateTaskQueueRequest(
+                    TaskType.WORKFLOW, WORKFLOW_TASK_QUEUE, TaskQueueStatus.PAUSED, null));
+            final UUID runId = engine.createRun(
+                    new CreateWorkflowRunRequest<>("test", 1)
+                            .withConcurrencyKey("someConcurrencyKey"));
+
+            final Jdbi jdbi = Jdbi.create(dataSource);
+            final Integer wakeupCount = jdbi.withHandle(handle -> handle
+                    .createQuery("""
+                            select count(*)
+                              from dex_workflow_concurrency_key_wakeup
+                             where concurrency_key = 'someConcurrencyKey'
+                            """)
+                    .mapTo(Integer.class)
+                    .one());
+            assertThat(wakeupCount).isEqualTo(1);
+
+            // Simulate the wakeup loss of a crash (the table is unlogged).
+            jdbi.useHandle(handle -> handle.execute("truncate table dex_workflow_concurrency_key_wakeup"));
+
+            // No write path will leave another wakeup for this run. Only the repair pass can revive it.
+            engine.updateTaskQueue(new UpdateTaskQueueRequest(
+                    TaskType.WORKFLOW, WORKFLOW_TASK_QUEUE, TaskQueueStatus.ACTIVE, null));
+            awaitRunStatus(runId, WorkflowRunStatus.COMPLETED, Duration.ofSeconds(10));
+        }
     }
 
     @Test
@@ -1306,7 +1527,7 @@ class DexEngineImplTest {
                 .until(activityStarted::get);
 
         engine.close();
-        
+
         final Integer attempt = Jdbi.create(dataSource).withHandle(handle -> handle
                 .createQuery("SELECT attempt FROM dex_activity_task WHERE workflow_run_id = :runId")
                 .bind("runId", runId)

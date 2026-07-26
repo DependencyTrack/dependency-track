@@ -33,9 +33,11 @@ import org.dependencytrack.dex.engine.persistence.command.CreateWorkflowRunHisto
 import org.dependencytrack.dex.engine.persistence.command.DeleteWorkflowMessagesCommand;
 import org.dependencytrack.dex.engine.persistence.command.PollWorkflowTaskCommand;
 import org.dependencytrack.dex.engine.persistence.command.UpdateAndUnlockRunCommand;
+import org.dependencytrack.dex.engine.persistence.model.ConcurrencyKeyWakeup;
 import org.dependencytrack.dex.engine.persistence.model.PolledWorkflowEvent;
 import org.dependencytrack.dex.engine.persistence.model.PolledWorkflowEvents;
 import org.dependencytrack.dex.engine.persistence.model.PolledWorkflowTask;
+import org.dependencytrack.dex.engine.persistence.model.UnlockedWorkflowRun;
 import org.dependencytrack.dex.engine.persistence.request.GetWorkflowRunHistoryRequest;
 import org.dependencytrack.dex.proto.event.v1.WorkflowEvent;
 import org.jdbi.v3.core.Handle;
@@ -109,7 +111,7 @@ public final class WorkflowDao extends AbstractDao {
 
         final Map.Entry<Boolean, Boolean> existsAndUpdated = query
                 .bindMethods(request)
-                .map((rs, ctx) -> Map.entry(rs.getBoolean(1), rs.getBoolean(2)))
+                .map((rs, _) -> Map.entry(rs.getBoolean(1), rs.getBoolean(2)))
                 .one();
 
         final boolean exists = existsAndUpdated.getKey();
@@ -309,16 +311,16 @@ public final class WorkflowDao extends AbstractDao {
                 .bind("priorities", priorities)
                 .bind("labelsJsons", labelsJsons)
                 .bind("createdAts", createdAts)
-                .map((rs, ctx) -> Map.entry(
+                .map((rs, _) -> Map.entry(
                         rs.getObject("request_id", UUID.class),
                         rs.getObject("run_id", UUID.class)))
                 .collectToMap(Map.Entry::getKey, Map.Entry::getValue);
     }
 
-    public List<UUID> updateAndUnlockRuns(
+    public List<UnlockedWorkflowRun> updateAndUnlockRuns(
             String engineInstanceId,
             Collection<UpdateAndUnlockRunCommand> commands) {
-        final Update update = jdbiHandle.createUpdate("""
+        final Query query = jdbiHandle.createQuery("""
                 with
                 cte_cmd as (
                   select *
@@ -335,26 +337,39 @@ public final class WorkflowDao extends AbstractDao {
                      and task.lock_version = cte_cmd.lock_version
                   returning task.workflow_run_id
                           , task.queue_name
+                ),
+                cte_updated_run as (
+                  update dex_workflow_run as run
+                     set status = coalesce(cte_cmd.status, run.status)
+                       , custom_status = coalesce(cte_cmd.custom_status, run.custom_status)
+                       , continued_as_new_generation =
+                           case
+                             when cte_cmd.continued_as_new
+                             then run.continued_as_new_generation + 1
+                             else run.continued_as_new_generation
+                           end
+                       , sticky_to = cte_cmd.sticky_to
+                       , sticky_until = case when cte_cmd.sticky_to is not null then now() + interval '30 seconds' end
+                       , updated_at = coalesce(cte_cmd.updated_at, run.updated_at)
+                       , started_at = coalesce(cte_cmd.started_at, run.started_at)
+                       , completed_at = coalesce(cte_cmd.completed_at, run.completed_at)
+                    from cte_deleted_task
+                   inner join cte_cmd
+                      on cte_cmd.id = cte_deleted_task.workflow_run_id
+                   where run.id = cte_deleted_task.workflow_run_id
+                  returning run.id
+                          , run.status
+                          , run.concurrency_key
+                          , cte_deleted_task.queue_name
                 )
-                update dex_workflow_run as run
-                   set status = coalesce(cte_cmd.status, run.status)
-                     , custom_status = coalesce(cte_cmd.custom_status, run.custom_status)
-                     , continued_as_new_generation =
-                         case
-                           when cte_cmd.continued_as_new
-                           then run.continued_as_new_generation + 1
-                           else run.continued_as_new_generation
-                         end
-                     , sticky_to = cte_cmd.sticky_to
-                     , sticky_until = case when cte_cmd.sticky_to is not null then now() + interval '30 seconds' end
-                     , updated_at = coalesce(cte_cmd.updated_at, run.updated_at)
-                     , started_at = coalesce(cte_cmd.started_at, run.started_at)
-                     , completed_at = coalesce(cte_cmd.completed_at, run.completed_at)
-                  from cte_deleted_task
-                 inner join cte_cmd
-                    on cte_cmd.id = cte_deleted_task.workflow_run_id
-                 where run.id = cte_deleted_task.workflow_run_id
-                returning run.id
+                select id
+                     , queue_name
+                     , case
+                         when concurrency_key is not null
+                          and status not in ('RUNNING', 'SUSPENDED')
+                         then concurrency_key
+                       end as freed_concurrency_key
+                  from cte_updated_run
                 """);
 
         final var ids = new UUID[commands.size()];
@@ -385,7 +400,7 @@ public final class WorkflowDao extends AbstractDao {
             i++;
         }
 
-        return update
+        return query
                 .bind("engineInstanceId", engineInstanceId)
                 .bind("ids", ids)
                 .bind("queueNames", queueNames)
@@ -397,9 +412,74 @@ public final class WorkflowDao extends AbstractDao {
                 .bind("startedAts", startedAts)
                 .bind("completedAts", completedAts)
                 .bind("lockVersions", lockVersions)
-                .executeAndReturnGeneratedKeys()
-                .mapTo(UUID.class)
+                .map((rs, _) -> new UnlockedWorkflowRun(
+                        rs.getObject("id", UUID.class),
+                        rs.getString("queue_name"),
+                        rs.getString("freed_concurrency_key")))
                 .list();
+    }
+
+    public void upsertConcurrencyKeyWakeups(Collection<ConcurrencyKeyWakeup> wakeups) {
+        if (wakeups.isEmpty()) {
+            return;
+        }
+
+        final var queueNames = new String[wakeups.size()];
+        final var concurrencyKeys = new String[wakeups.size()];
+        final var freeds = new boolean[wakeups.size()];
+
+        int i = 0;
+        for (final ConcurrencyKeyWakeup wakeup : wakeups) {
+            queueNames[i] = wakeup.queueName();
+            concurrencyKeys[i] = wakeup.concurrencyKey();
+            freeds[i] = wakeup.freed();
+            i++;
+        }
+
+        jdbiHandle
+                .createUpdate("""
+                        insert into dex_workflow_concurrency_key_wakeup (
+                          queue_name
+                        , concurrency_key
+                        , priority
+                        , freed
+                        )
+                        select hint.queue_name
+                             , hint.concurrency_key
+                             , winner.priority
+                             , hint.freed
+                          from (
+                            select queue_name
+                                 , concurrency_key
+                                 , bool_or(freed) as freed
+                              from unnest(:queueNames, :concurrencyKeys, :freeds)
+                                as t(queue_name, concurrency_key, freed)
+                             group by queue_name
+                                    , concurrency_key
+                          ) as hint
+                          left join lateral (
+                            select run.priority
+                              from dex_workflow_run as run
+                             where run.concurrency_key = hint.concurrency_key
+                               and run.status = 'CREATED'
+                             order by run.priority desc
+                                    , run.id
+                             limit 1
+                          ) as winner on true
+                         -- Skip keys without a CREATED run. There is nothing to schedule for them,
+                         -- and if a run is created later, that creation causes its own wakeup.
+                         where winner.priority is not null
+                         order by hint.queue_name
+                                , hint.concurrency_key
+                        on conflict (queue_name, concurrency_key)
+                        do update set priority = greatest(dex_workflow_concurrency_key_wakeup.priority, excluded.priority)
+                                    , version = dex_workflow_concurrency_key_wakeup.version + 1
+                                    , freed = dex_workflow_concurrency_key_wakeup.freed or excluded.freed
+                        """)
+                .bind("queueNames", queueNames)
+                .bind("concurrencyKeys", concurrencyKeys)
+                .bind("freeds", freeds)
+                .execute();
     }
 
     public @Nullable WorkflowRunMetadata getRunMetadataById(UUID id) {

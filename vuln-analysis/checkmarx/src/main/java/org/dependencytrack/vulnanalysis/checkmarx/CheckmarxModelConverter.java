@@ -59,7 +59,7 @@ final class CheckmarxModelConverter {
     private CheckmarxModelConverter() {
     }
 
-    static Vulnerability.Builder convert(CheckmarxDataObject.Vulnerability cxVuln, CheckmarxDataObject.Remediation remediation, boolean aliasSyncEnabled) {
+    static Vulnerability.Builder convert(CheckmarxDataObject.Vulnerability cxVuln, CheckmarxDataObject.@Nullable Remediation remediation, boolean aliasSyncEnabled) {
         final var vulnBuilder = Vulnerability.newBuilder();
 
         vulnBuilder.setId(cxVuln.cxId());
@@ -75,7 +75,7 @@ final class CheckmarxModelConverter {
         convertTimestamp(vulnDetails.updatedTime()).ifPresent(vulnBuilder::setUpdated);
         convertTimestamp(vulnDetails.published()).ifPresent(vulnBuilder::setPublished);
 
-        if (aliasSyncEnabled && cxVuln.cve() != null) {
+        if (aliasSyncEnabled) {
             vulnBuilder.addReferences(VulnerabilityReference.newBuilder()
                     .setId(cxVuln.cve())
                     .setSource(SOURCE_NVD).build());
@@ -94,24 +94,20 @@ final class CheckmarxModelConverter {
 
         if (remediation != null) {
             final var recommendations = new ArrayList<String>();
-            if (remediation.nearest() != null) {
-                recommendations.add("Smallest package upgrade that resolves the identified risks in the current package version: " + remediation.nearest().version());
-            }
-            if (remediation.latest() != null) {
-                recommendations.add("Latest version of the package: " + remediation.latest().version());
-            }
-            if (!recommendations.isEmpty()) {
-                vulnBuilder.setRecommendation(String.join(System.lineSeparator(), recommendations));
-            }
+            recommendations.add("Smallest package upgrade that resolves the identified risks in the current package version: " + remediation.nearest().version());
+            recommendations.add("Latest version of the package: " + remediation.latest().version());
+            vulnBuilder.setRecommendation(String.join(System.lineSeparator(), recommendations));
         }
 
         if (vulnDetails.cvss4() != null) {
             final var cvss4 = vulnDetails.cvss4();
             final var ratingBuilder = VulnerabilityRating.newBuilder()
                     .setMethod(SCORE_METHOD_CVSSV4)
-                    .setVector(cvss4.vector())
                     .setScore(cvss4.baseScore())
                     .setSeverity(convertSeverity(cvss4.severity()));
+            if (cvss4.vector() != null) {
+                ratingBuilder.setVector(cvss4.vector());
+            }
             vulnBuilder.addRatings(ratingBuilder.build());
         }
 
@@ -119,9 +115,11 @@ final class CheckmarxModelConverter {
             final var cvss3 = vulnDetails.cvss3();
             final var ratingBuilder = VulnerabilityRating.newBuilder()
                     .setMethod(SCORE_METHOD_CVSSV3)
-                    .setVector(cvss3.vector())
                     .setScore(cvss3.baseScore())
                     .setSeverity(convertSeverity(cvss3.severity()));
+            if (cvss3.vector() != null) {
+                ratingBuilder.setVector(cvss3.vector());
+            }
             vulnBuilder.addRatings(ratingBuilder.build());
         }
 
@@ -129,9 +127,11 @@ final class CheckmarxModelConverter {
             final var cvss2 = vulnDetails.cvss2();
             final var ratingBuilder = VulnerabilityRating.newBuilder()
                     .setMethod(SCORE_METHOD_CVSSV2)
-                    .setVector(cvss2.vector())
                     .setScore(cvss2.baseScore())
                     .setSeverity(convertSeverity(cvss2.severity()));
+            if (cvss2.vector() != null) {
+                ratingBuilder.setVector(cvss2.vector());
+            }
             vulnBuilder.addRatings(ratingBuilder.build());
         }
 
@@ -148,7 +148,10 @@ final class CheckmarxModelConverter {
         };
     }
 
-    private static @Nullable Integer convertToCwe(String cwe) {
+    private static @Nullable Integer convertToCwe(@Nullable String cwe) {
+        if (cwe == null) {
+            return null;
+        }
         final Matcher matcher = CWE_PATTERN.matcher(cwe);
         if (matcher.matches()) {
             return Integer.parseInt(matcher.group(2));

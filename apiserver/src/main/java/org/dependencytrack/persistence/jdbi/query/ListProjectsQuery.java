@@ -34,10 +34,11 @@ public record ListProjectsQuery(
         @Nullable String searchText,
         boolean excludeInactive,
         boolean onlyRoot,
+        boolean onlyLatestVersions,
         boolean includeMetrics) {
 
     public ListProjectsQuery() {
-        this(null, null, null, null, null, null, null, null, false, false, false);
+        this(null, null, null, null, null, null, null, null, false, false, false, false);
     }
 
     public ListProjectsQuery withNameFilter(@Nullable String nameFilter) {
@@ -52,6 +53,7 @@ public record ListProjectsQuery(
                 this.searchText,
                 this.excludeInactive,
                 this.onlyRoot,
+                this.onlyLatestVersions,
                 this.includeMetrics);
     }
 
@@ -67,6 +69,7 @@ public record ListProjectsQuery(
                 this.searchText,
                 this.excludeInactive,
                 this.onlyRoot,
+                this.onlyLatestVersions,
                 this.includeMetrics);
     }
 
@@ -82,6 +85,7 @@ public record ListProjectsQuery(
                 this.searchText,
                 this.excludeInactive,
                 this.onlyRoot,
+                this.onlyLatestVersions,
                 this.includeMetrics);
     }
 
@@ -97,6 +101,7 @@ public record ListProjectsQuery(
                 this.searchText,
                 this.excludeInactive,
                 this.onlyRoot,
+                this.onlyLatestVersions,
                 this.includeMetrics);
     }
 
@@ -112,6 +117,7 @@ public record ListProjectsQuery(
                 this.searchText,
                 this.excludeInactive,
                 this.onlyRoot,
+                this.onlyLatestVersions,
                 this.includeMetrics);
     }
 
@@ -127,6 +133,7 @@ public record ListProjectsQuery(
                 this.searchText,
                 this.excludeInactive,
                 this.onlyRoot,
+                this.onlyLatestVersions,
                 this.includeMetrics);
     }
 
@@ -142,6 +149,7 @@ public record ListProjectsQuery(
                 this.searchText,
                 this.excludeInactive,
                 this.onlyRoot,
+                this.onlyLatestVersions,
                 this.includeMetrics);
     }
 
@@ -157,6 +165,7 @@ public record ListProjectsQuery(
                 searchText,
                 this.excludeInactive,
                 this.onlyRoot,
+                this.onlyLatestVersions,
                 this.includeMetrics);
     }
 
@@ -172,6 +181,7 @@ public record ListProjectsQuery(
                 this.searchText,
                 excludeInactive,
                 this.onlyRoot,
+                this.onlyLatestVersions,
                 this.includeMetrics);
     }
 
@@ -187,6 +197,23 @@ public record ListProjectsQuery(
                 this.searchText,
                 this.excludeInactive,
                 onlyRoot,
+                this.onlyLatestVersions,
+                this.includeMetrics);
+    }
+
+    public ListProjectsQuery withOnlyLatestVersions(boolean onlyLatestVersions) {
+        return new ListProjectsQuery(
+                this.nameFilter,
+                this.classifierFilter,
+                this.tagFilter,
+                this.teamFilter,
+                this.notAssignedToTeamWithUuidFilter,
+                this.parentUuidFilter,
+                this.excludeDescendantsOfUuid,
+                this.searchText,
+                this.excludeInactive,
+                this.onlyRoot,
+                onlyLatestVersions,
                 this.includeMetrics);
     }
 
@@ -202,6 +229,7 @@ public record ListProjectsQuery(
                 this.searchText,
                 this.excludeInactive,
                 this.onlyRoot,
+                this.onlyLatestVersions,
                 includeMetrics);
     }
 

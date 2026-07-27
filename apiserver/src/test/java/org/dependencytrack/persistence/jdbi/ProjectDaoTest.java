@@ -364,6 +364,20 @@ public class ProjectDaoTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vuln).withState(AnalysisState.EXPLOITABLE));
+        jdbiHandle.createUpdate(/* language=SQL */ """
+                        UPDATE "ANALYSIS" a
+                           SET "POLICY_ANNOTATIONS" = CAST(:policyAnnotationsJson AS jsonb)
+                          FROM "COMPONENT" c
+                         WHERE c."ID" = a."COMPONENT_ID"
+                           AND c."UUID" = :componentUuid
+                        """)
+                .bind("componentUuid", component.getUuid())
+                .bind("policyAnnotationsJson", """
+                        [{"policyName":"gem-policy","appliedAt":"2026-01-01T00:00:00Z","annotator":"policy-author"}]
+                        """)
+                .execute();
+
         final UUID clonedUuid = projectDao.cloneProject(new CloneProjectCommand(
                 project.getUuid(),
                 "1.1.0",
@@ -391,6 +405,20 @@ public class ProjectDaoTest extends PersistenceCapableTest {
                 .mapTo(Long.class)
                 .one();
         assertThat(clonedCvCount).isOne();
+
+        final String clonedPolicyAnnotations = jdbiHandle.createQuery(/* language=SQL */ """
+                        SELECT a."POLICY_ANNOTATIONS"
+                          FROM "ANALYSIS" a
+                         INNER JOIN "COMPONENT" c
+                            ON c."ID" = a."COMPONENT_ID"
+                         INNER JOIN "PROJECT" p
+                            ON p."ID" = c."PROJECT_ID"
+                         WHERE p."UUID" = :projectUuid
+                        """)
+                .bind("projectUuid", clonedUuid)
+                .mapTo(String.class)
+                .one();
+        assertThat(clonedPolicyAnnotations).contains("gem-policy").contains("policy-author");
     }
 
     @Test

@@ -180,7 +180,8 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                         "isKev": false
                                       },
                                       "analysis": {
-                                        "isSuppressed": false
+                                        "isSuppressed": false,
+                                        "policyAnnotations": []
                                       },
                                       "matrix": "${json-unit.any-string}"
                                     }
@@ -319,7 +320,8 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                         "isKev": false
                                       },
                                       "analysis": {
-                                        "isSuppressed": false
+                                        "isSuppressed": false,
+                                        "policyAnnotations": []
                                       },
                                       "matrix": "${json-unit.any-string}"
                                     }
@@ -575,7 +577,8 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                                         "isKev": false
                                       },
                                       "analysis": {
-                                        "isSuppressed": false
+                                        "isSuppressed": false,
+                                        "policyAnnotations": []
                                       },
                                       "matrix": "${json-unit.any-string}"
                                     }

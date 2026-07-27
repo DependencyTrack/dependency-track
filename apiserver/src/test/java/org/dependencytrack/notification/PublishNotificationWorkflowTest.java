@@ -38,6 +38,7 @@ import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.NotificationTriggerType;
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.publishing.DefaultNotificationPublishersPlugin;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
@@ -291,7 +292,7 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
         final var publisher = new org.dependencytrack.model.NotificationPublisher();
         publisher.setName("Test Publisher");
         publisher.setExtensionName(publisherExtensionName);
-        publisher.setTemplate("{{ notification.subject.project.name }}");
+        publisher.setTemplate("{{ %s.subject.project.name }}".formatted(NotificationTemplateVariables.NOTIFICATION));
         publisher.setTemplateMimeType("text/plain");
         qm.persist(publisher);
 

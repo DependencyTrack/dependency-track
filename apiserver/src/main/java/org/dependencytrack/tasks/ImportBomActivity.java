@@ -55,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import javax.jdo.FetchGroup;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import java.io.ByteArrayInputStream;
@@ -862,6 +863,25 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
     private static List<Component> getAllComponents(final QueryManager qm, final Project project) {
         final Query<Component> query = qm.getPersistenceManager().newQuery(Component.class);
+
+        // Every component contains a reference to its parent project, which also contains the set of direct references
+        // it has. For large BOM uploads, this results in massively duplicated data being fetched that we don't
+        // actually need. Unfortunately, a lot of other code relies on the project being part of the default fetch
+        // group, so it can't just be removed everywhere just yet. Instead, we'll selectively remove it here.
+        final var trimmedFetchGroup = qm.getPersistenceManager().getFetchGroup(Component.class, "DEFAULT_TRIMMED");
+        if (!trimmedFetchGroup.isUnmodifiable()) {
+            final var defaultFetchGroup = qm.getPersistenceManager().getFetchGroup(Component.class, FetchGroup.DEFAULT);
+            for (final var member : defaultFetchGroup.getMembers()) {
+                trimmedFetchGroup.addMembers(member.toString());
+            }
+
+            trimmedFetchGroup.removeMember("project");
+            trimmedFetchGroup.setUnmodifiable();
+        }
+
+        query.getFetchPlan().removeGroup(FetchGroup.DEFAULT);
+        query.getFetchPlan().addGroup("DEFAULT_TRIMMED");
+
         query.getFetchPlan().addGroup(Component.FetchGroup.BOM_UPLOAD_PROCESSING.name());
         query.getFetchPlan().setFetchSize(FETCH_SIZE_GREEDY);
         query.setFilter("project.id == :projectId");
@@ -876,6 +896,22 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
     private static List<ServiceComponent> getAllServices(final QueryManager qm, final Project project) {
         final Query<ServiceComponent> query = qm.getPersistenceManager().newQuery(ServiceComponent.class);
+
+        // Every service component contains a reference to its parent project, which also contains the set of direct
+        // references it has. For large BOM uploads, this results in massively duplicated data being fetched that we don't
+        // actually need. Unfortunately, a lot of other code relies on the project being part of the default fetch
+        // group, so it can't just be removed everywhere just yet. Instead, we'll selectively remove it here.
+        final var trimmedFetchGroup = qm.getPersistenceManager().getFetchGroup(ServiceComponent.class, "DEFAULT_TRIMMED");
+        if (!trimmedFetchGroup.isUnmodifiable()) {
+            final var defaultFetchGroup = qm.getPersistenceManager().getFetchGroup(ServiceComponent.class, FetchGroup.DEFAULT);
+            for (final var member : defaultFetchGroup.getMembers()) {
+                trimmedFetchGroup.addMembers(member.toString());
+            }
+
+            trimmedFetchGroup.removeMember("project");
+            trimmedFetchGroup.setUnmodifiable();
+        }
+
         query.getFetchPlan().setFetchSize(FETCH_SIZE_GREEDY);
         query.setFilter("project.id == :projectId");
         query.setParameters(project.getId());

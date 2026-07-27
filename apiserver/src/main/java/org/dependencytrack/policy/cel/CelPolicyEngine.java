@@ -34,22 +34,7 @@ import org.dependencytrack.notification.JdbiNotificationEmitter;
 import org.dependencytrack.persistence.jdbi.NotificationSubjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.policy.cel.CelPolicyCompiler.CacheMode;
-import org.dependencytrack.policy.cel.compat.CelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.ComponentAgeCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.ComponentHashCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.CoordinatesCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.CpeCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.CweCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.EpssCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.InternalStatusCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.LicenseCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.LicenseGroupCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.PackageUrlCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.SeverityCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.SwidTagIdCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.VersionCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.VersionDistanceCelScriptBuilder;
-import org.dependencytrack.policy.cel.compat.VulnerabilityIdCelPolicyScriptSourceBuilder;
+import org.dependencytrack.policy.cel.compat.*;
 import org.dependencytrack.policy.cel.persistence.CelPolicyDao;
 import org.dependencytrack.policy.cel.persistence.CelPolicyDao.ComponentWithLicenseId;
 import org.dependencytrack.proto.policy.v1.Component;
@@ -89,6 +74,7 @@ public final class CelPolicyEngine {
     private static final Map<Subject, CelPolicyScriptSourceBuilder> SCRIPT_BUILDERS = Map.ofEntries(
             Map.entry(Subject.AGE, new ComponentAgeCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.COMPONENT_HASH, new ComponentHashCelPolicyScriptSourceBuilder()),
+            Map.entry(Subject.COMPONENT_SCOPE, new ComponentScopeCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.COORDINATES, new CoordinatesCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.CPE, new CpeCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.CWE, new CweCelPolicyScriptSourceBuilder()),

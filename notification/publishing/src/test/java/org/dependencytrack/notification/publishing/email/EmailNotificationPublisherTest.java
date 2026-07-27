@@ -27,6 +27,7 @@ import org.dependencytrack.notification.api.publishing.NotificationPublishContex
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplate;
 import org.dependencytrack.notification.api.templating.NotificationTemplateRenderer;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherTest;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
@@ -351,12 +352,12 @@ class EmailNotificationPublisherTest extends AbstractNotificationPublisherTest {
     @Test
     void shouldSendHtmlBodyWhenTemplateMimeTypeIsHtml() throws Exception {
         final var htmlTemplate = new NotificationTemplate(/* language=HTML */ """
-                <html><body><p>{{ notification.title }}</p></body></html>\
-                """,
+                <html><body><p>{{ %s.title }}</p></body></html>\
+                """.formatted(NotificationTemplateVariables.NOTIFICATION),
                 "text/html; charset=utf-8");
         final NotificationTemplateRenderer htmlRenderer =
                 new PebbleNotificationTemplateRendererFactory(
-                        Map.of("baseUrl", () -> "https://example.com"))
+                        Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"))
                         .createRenderer(htmlTemplate);
         final var publishCtx =
                 new NotificationPublishContext(

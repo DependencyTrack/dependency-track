@@ -50,6 +50,7 @@ import org.dependencytrack.notification.ProcessScheduledNotificationRuleActivity
 import org.dependencytrack.notification.ProcessScheduledNotificationsWorkflow;
 import org.dependencytrack.notification.PublishNotificationActivity;
 import org.dependencytrack.notification.PublishNotificationWorkflow;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.pkgmetadata.FetchPackageMetadataResolutionCandidatesActivity;
@@ -158,7 +159,7 @@ public final class DexEngineInitializer implements ServletContextListener {
         requireNonNull(secretManager, "secretManager has not been initialized");
 
         final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
-                Map.of("baseUrl", () -> withJdbiHandle(
+                Map.of(NotificationTemplateVariables.BASE_URL, () -> withJdbiHandle(
                         handle -> handle
                                 .attach(ConfigPropertyDao.class)
                                 .getOptionalValue(GENERAL_BASE_URL)

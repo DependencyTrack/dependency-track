@@ -156,11 +156,11 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
         doReturn(List.of(new NotificationRouter.Result(notification, Set.of(rule.getName()))))
                 .when(routerMock).route(anyCollection());
 
-        relay.start();
-
         doThrow(new IllegalStateException("Boom!"))
                 .doReturn(List.of(UUID.fromString("2777be5d-5a95-40b3-9226-311874a21bf6")))
                 .when(dexEngineMock).createRuns(anyCollection());
+
+        relay.start();
 
         final ArgumentCaptor<Collection<CreateWorkflowRunRequest<?>>> requestsCaptor = ArgumentCaptor.captor();
 

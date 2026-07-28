@@ -38,7 +38,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
-      "description": "Current workflow run counts grouped by lifecycle status.",
+      "description": "Current non-terminal workflow run counts grouped by lifecycle status.",
       "fieldConfig": {
         "defaults": {
           "color": {

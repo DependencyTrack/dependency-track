@@ -1,0 +1,32 @@
+{
+  "jsonapi": {
+    "version": "1.0"
+  },
+  "data": [],
+  "meta": {
+    "errors": [],
+    "packages": {
+      "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final?checksum=sha1%3Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+        "package": {
+          "name": "jboss-logging",
+          "namespace": "org.jboss.logging",
+          "type": "maven",
+          "url": "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final",
+          "version": "3.4.1.Final"
+        },
+        "match": {
+          "type": "partial",
+          "details": {
+            "name_version": true,
+            "checksum": false
+          },
+          "description": "Only the package name and version matched; checksum did not match",
+          "input": {
+            "purl": "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final?checksum=sha1%3Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "checksum": "sha1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        }
+      }
+    }
+  }
+}

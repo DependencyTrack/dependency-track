@@ -557,16 +557,22 @@
 
         <plugins>
             <plugin>
-                <groupId>us.springett</groupId>
-                <artifactId>maven-uuid-generator</artifactId>
-                <version>1.0.1</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>generate-uuid</id>
+                        <id>generate-build-uuid</id>
                         <phase>initialize</phase>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>bsh-property</goal>
                         </goals>
+                        <configuration>
+                            <source>
+                                project.getProperties().setProperty(
+                                    "project.build.uuid",
+                                    java.util.UUID.randomUUID().toString());
+                            </source>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

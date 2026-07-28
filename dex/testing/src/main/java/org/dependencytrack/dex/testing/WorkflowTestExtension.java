@@ -73,6 +73,7 @@ public final class WorkflowTestExtension implements BeforeEachCallback, AfterEac
         // Reduce buffer flush, poll intervals, backoffs, and leader election
         // check interval to make tests more responsive.
         engineConfig.leaderElection().setLeaseCheckInterval(Duration.ofSeconds(5));
+        engineConfig.setActivityHeartbeatInterval(Duration.ofMillis(500));
         engineConfig.activityTaskHeartbeatBuffer().setFlushInterval(Duration.ofMillis(10));
         engineConfig.externalEventBuffer().setFlushInterval(Duration.ofMillis(10));
         engineConfig.taskEventBuffer().setFlushInterval(Duration.ofMillis(10));

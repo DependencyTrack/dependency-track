@@ -52,32 +52,51 @@ $$
      WHERE "GROUPNAME" = 'risk-score'
        AND "PROPERTYTYPE" = 'INTEGER'
   ),
-  vuln_deduped AS (
-    SELECT DISTINCT ON (cv."COMPONENT_ID", va."GROUP_ID", CASE WHEN va."GROUP_ID" IS NULL THEN v."ID" END)
-           cv."COMPONENT_ID" AS component_id
-         , COALESCE(a."SEVERITY", v."SEVERITY") AS effective_severity
+  components_vulns AS (
+    SELECT cv."COMPONENT_ID" AS component_id
+         , cv."VULNERABILITY_ID" AS vulnerability_id
       FROM "COMPONENTS_VULNERABILITIES" AS cv
      INNER JOIN comp
         ON comp.id = cv."COMPONENT_ID"
-     INNER JOIN "VULNERABILITY" AS v
-        ON v."ID" = cv."VULNERABILITY_ID"
-      LEFT JOIN "ANALYSIS" AS a
-        ON a."COMPONENT_ID" = cv."COMPONENT_ID"
-       AND a."VULNERABILITY_ID" = v."ID"
+     WHERE EXISTS(
+       SELECT 1
+         FROM "FINDINGATTRIBUTION" AS fa
+        WHERE fa."COMPONENT_ID" = cv."COMPONENT_ID"
+          AND fa."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
+          AND fa."DELETED_AT" IS NULL
+     )
+  ),
+  -- Resolve alias groups once per vulnerability rather than once per
+  -- component-vulnerability pair, which could lead to a nested loop
+  -- over VULNERABILITY_ALIAS.
+  --
+  -- NB: MATERIALIZED is required to prevent the CTE from getting inlined,
+  -- which would defeat its purpose.
+  vuln_alias_group AS MATERIALIZED (
+    SELECT v."ID" AS vulnerability_id
+         , v."SEVERITY" AS severity
+         , va."GROUP_ID" AS group_id
+      FROM "VULNERABILITY" AS v
       LEFT JOIN "VULNERABILITY_ALIAS" AS va
         ON va."SOURCE" = v."SOURCE"
        AND va."VULN_ID" = v."VULNID"
+     WHERE v."ID" IN (SELECT vulnerability_id FROM components_vulns)
+  ),
+  vuln_deduped AS (
+    SELECT DISTINCT ON (cvs.component_id, vag.group_id, CASE WHEN vag.group_id IS NULL THEN vag.vulnerability_id END)
+           cvs.component_id AS component_id
+         , COALESCE(a."SEVERITY", vag.severity) AS effective_severity
+      FROM components_vulns AS cvs
+     INNER JOIN vuln_alias_group AS vag
+        ON vag.vulnerability_id = cvs.vulnerability_id
+      LEFT JOIN "ANALYSIS" AS a
+        ON a."COMPONENT_ID" = cvs.component_id
+       AND a."VULNERABILITY_ID" = cvs.vulnerability_id
      WHERE a."SUPPRESSED" IS DISTINCT FROM TRUE
-       AND EXISTS(
-         SELECT 1 FROM "FINDINGATTRIBUTION" AS fa
-          WHERE fa."COMPONENT_ID" = cv."COMPONENT_ID"
-            AND fa."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
-            AND fa."DELETED_AT" IS NULL
-       )
-     ORDER BY cv."COMPONENT_ID"
-            , va."GROUP_ID"
-            , CASE WHEN va."GROUP_ID" IS NULL THEN v."ID" END
-            , COALESCE(a."SEVERITY", v."SEVERITY") DESC
+     ORDER BY cvs.component_id
+            , vag.group_id
+            , CASE WHEN vag.group_id IS NULL THEN vag.vulnerability_id END
+            , COALESCE(a."SEVERITY", vag.severity) DESC
   ),
   vuln_counts AS (
     SELECT vuln_deduped.component_id

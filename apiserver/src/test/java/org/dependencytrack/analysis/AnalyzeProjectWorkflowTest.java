@@ -87,13 +87,11 @@ class AnalyzeProjectWorkflowTest extends PersistenceCapableTest {
         engine.registerActivity(
                 evalProjectPoliciesActivityMock,
                 protoConverter(EvalProjectPoliciesArg.class),
-                voidConverter(),
-                Duration.ofSeconds(5));
+                voidConverter());
         engine.registerActivity(
                 updateProjectMetricsActivityMock,
                 protoConverter(UpdateProjectMetricsArg.class),
-                voidConverter(),
-                Duration.ofSeconds(5));
+                voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));

@@ -120,7 +120,6 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
                     if (Thread.interrupted()) {
                         throw new InterruptedException("Interrupted before all vulnerabilities could be consumed");
                     }
-                    ctx.maybeHeartbeat();
 
                     final Bom bov = dataSource.next();
                     bovBatch.add(bov);
@@ -136,7 +135,6 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
                 }
 
                 if (!bovBatch.isEmpty()) {
-                    ctx.maybeHeartbeat();
                     processBatch(dataSource, bovBatch, source, arg.getDataSourceName(), updatePolicy);
                     vulnsProcessed += bovBatch.size();
                     bovBatch.clear();

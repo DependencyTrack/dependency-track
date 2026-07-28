@@ -43,6 +43,8 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_QUEUE_NAME;
+
 final class WorkflowTaskScheduler implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorkflowTaskScheduler.class);
@@ -223,7 +225,7 @@ final class WorkflowTaskScheduler implements Closeable {
         boolean madeProgress = false;
         for (final Queue queue : queues) {
             final Timer.Sample latencySample = Timer.start();
-            try (var _ = MDC.putCloseable("queueName", queue.name())) {
+            try (var _ = MDC.putCloseable(MDC_QUEUE_NAME, queue.name())) {
                 madeProgress |= jdbi.inTransaction(handle -> processQueue(handle, queue));
             } finally {
                 latencySample.stop(
@@ -353,6 +355,17 @@ final class WorkflowTaskScheduler implements Closeable {
                            and has_queued_task is null
                            and has_message is not null
                          ) as schedulable
+                       -- Only consume hints for reasons that don't depend on the clock.
+                       -- `has_message` must NOT be one of them: `now()` is this transaction's
+                       -- start time, but this statement sees rows committed after it, since we use
+                       -- READ_COMMITTED isolation. Such a run is visible here, yet its message looks
+                       -- not-yet-due (i.e. `visible_from > now()`), and deleting its just-written
+                       -- hint would stall it until the next repair.
+                       , (
+                           run.id is null
+                           or has_executing is not null
+                           or has_queued_task is not null
+                         ) as consumable
                     from cte_hint
                     -- The key's highest priority CREATED run.
                     left join lateral (
@@ -398,7 +411,7 @@ final class WorkflowTaskScheduler implements Closeable {
                       on verified.concurrency_key = wakeup.concurrency_key
                    where wakeup.queue_name = :queueName
                      and wakeup.version = verified.version
-                     and not verified.schedulable
+                     and verified.consumable
                    order by wakeup.concurrency_key
                      for update of wakeup
                 ),

@@ -39,6 +39,8 @@ final class MetadataRegistry {
 
     private static final Pattern WORKFLOW_NAME_PATTERN = Pattern.compile("^[\\w-]+");
     private static final Pattern ACTIVITY_NAME_PATTERN = WORKFLOW_NAME_PATTERN;
+    private final Duration defaultActivityLockTimeout;
+    private final Duration defaultActivityExecutionTimeout;
 
     @SuppressWarnings("rawtypes")
     private final Map<Class<? extends Workflow>, String> workflowNameByExecutorClass = new ConcurrentHashMap<>();
@@ -51,6 +53,17 @@ final class MetadataRegistry {
 
     @SuppressWarnings("rawtypes")
     private final Map<String, ActivityMetadata> activityMetadataByName = new HashMap<>();
+
+    MetadataRegistry(
+            Duration defaultActivityLockTimeout,
+            Duration defaultActivityExecutionTimeout) {
+        this.defaultActivityLockTimeout = requireNonNull(
+                defaultActivityLockTimeout,
+                "defaultActivityLockTimeout must not be null");
+        this.defaultActivityExecutionTimeout = requireNonNull(
+                defaultActivityExecutionTimeout,
+                "defaultActivityExecutionTimeout must not be null");
+    }
 
     <A, R> void registerWorkflow(
             Workflow<A, R> workflow,
@@ -113,7 +126,8 @@ final class MetadataRegistry {
             Activity<A, R> activity,
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
-            Duration lockTimeout) {
+            @Nullable Duration lockTimeout,
+            @Nullable Duration executionTimeout) {
         requireNonNull(activity, "activity must not be null");
 
         final ActivitySpec activitySpec = requireActivitySpec(activity.getClass());
@@ -124,6 +138,7 @@ final class MetadataRegistry {
                 resultConverter,
                 activitySpec.defaultTaskQueue(),
                 lockTimeout,
+                executionTimeout,
                 activity);
     }
 
@@ -132,14 +147,26 @@ final class MetadataRegistry {
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
             String defaultTaskQueueName,
-            Duration lockTimeout,
+            @Nullable Duration lockTimeout,
+            @Nullable Duration executionTimeout,
             Activity<A, R> activity) {
         requireValidActivityName(name);
         requireNonNull(argumentConverter, "argumentConverter must not be null");
         requireNonNull(resultConverter, "resultConverter must not be null");
         requireValidTaskQueueName(defaultTaskQueueName);
-        requireValidLockTimeout(lockTimeout);
         requireNonNull(activity, "activity must not be null");
+
+        final Duration effectiveLockTimeout =
+                lockTimeout == null
+                        ? defaultActivityLockTimeout
+                        : lockTimeout;
+        requireValidLockTimeout(effectiveLockTimeout);
+
+        final Duration effectiveExecutionTimeout =
+                executionTimeout == null
+                        ? defaultActivityExecutionTimeout
+                        : executionTimeout;
+        requireValidExecutionTimeout(effectiveExecutionTimeout);
 
         if (activityNameByExecutorClass.containsKey(activity.getClass())) {
             throw new IllegalArgumentException(
@@ -157,7 +184,8 @@ final class MetadataRegistry {
                 argumentConverter,
                 resultConverter,
                 defaultTaskQueueName,
-                lockTimeout);
+                effectiveLockTimeout,
+                effectiveExecutionTimeout);
         activityNameByExecutorClass.put(activity.getClass(), name);
         activityMetadataByName.put(name, metadata);
     }
@@ -272,6 +300,12 @@ final class MetadataRegistry {
         requireNonNull(lockTimeout, "lockTimeout must not be null");
         if (!lockTimeout.isPositive()) {
             throw new IllegalArgumentException("lockTimeout must positive");
+        }
+    }
+
+    private static void requireValidExecutionTimeout(Duration executionTimeout) {
+        if (!executionTimeout.isPositive()) {
+            throw new IllegalArgumentException("executionTimeout must be positive");
         }
     }
 

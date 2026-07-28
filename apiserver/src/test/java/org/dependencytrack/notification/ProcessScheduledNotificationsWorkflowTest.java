@@ -80,8 +80,7 @@ class ProcessScheduledNotificationsWorkflowTest extends PersistenceCapableTest {
                         new MemoryFileStorage(),
                         Integer.MAX_VALUE),
                 protoConverter(ProcessScheduledNotificationRuleArg.class),
-                voidConverter(),
-                Duration.ofSeconds(15));
+                voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "notifications", 1));

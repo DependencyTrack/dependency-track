@@ -137,7 +137,6 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
                         resultBuffer.flush();
                         throw new InterruptedException("Interrupted before all PURLs could be resolved");
                     }
-                    ctx.maybeHeartbeat();
 
                     MDC.put(MDC_PURL, purlStr);
                     try {
@@ -155,8 +154,17 @@ public final class ResolvePackageMetadataActivity implements Activity<ResolvePac
                         throw e;
                     } catch (RetryableResolutionException e) {
                         resultBuffer.flush();
+                        if (Thread.interrupted()) {
+                            throw new InterruptedException("Interrupted before all PURLs could be resolved");
+                        }
+
                         throw new ApplicationFailureException(e.getMessage(), e, e.retryAfter());
                     } catch (Exception e) {
+                        if (Thread.interrupted()) {
+                            resultBuffer.flush();
+                            throw new InterruptedException("Interrupted before all PURLs could be resolved");
+                        }
+
                         LOGGER.warn("Failed to resolve metadata; persisting empty result", e);
                         resultBuffer.addEmptyResult(purlStr);
                     } finally {

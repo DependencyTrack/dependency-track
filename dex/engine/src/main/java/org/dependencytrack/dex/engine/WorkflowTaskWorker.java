@@ -36,6 +36,9 @@ import java.util.NoSuchElementException;
 import java.util.function.BooleanSupplier;
 
 import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_WORKFLOW_INSTANCE_ID;
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_WORKFLOW_NAME;
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_WORKFLOW_RUN_ID;
 
 final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
 
@@ -71,9 +74,9 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
     void process(final WorkflowTask task) {
-        try (var _ = MDC.putCloseable("workflowName", task.workflowName());
-             var _ = MDC.putCloseable("workflowInstanceId", task.workflowInstanceId());
-             var _ = MDC.putCloseable("workflowRunId", task.workflowRunId().toString())) {
+        try (var _ = MDC.putCloseable(MDC_WORKFLOW_NAME, task.workflowName());
+             var _ = MDC.putCloseable(MDC_WORKFLOW_INSTANCE_ID, task.workflowInstanceId());
+             var _ = MDC.putCloseable(MDC_WORKFLOW_RUN_ID, task.workflowRunId().toString())) {
             final WorkflowMetadata workflowMetadata;
             try {
                 workflowMetadata = metadataRegistry.getWorkflowMetadata(task.workflowName());

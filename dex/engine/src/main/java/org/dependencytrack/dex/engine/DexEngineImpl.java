@@ -118,6 +118,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
@@ -155,7 +156,7 @@ final class DexEngineImpl implements DexEngine {
     private final DexEngineConfig config;
     private final Jdbi jdbi;
     private final ReentrantLock statusLock = new ReentrantLock();
-    private final MetadataRegistry metadataRegistry = new MetadataRegistry();
+    private final MetadataRegistry metadataRegistry;
     private final Map<String, TaskWorker> taskWorkerByName = new HashMap<>();
     private final Map<String, TaskWorker> workflowWorkerByQueue = new HashMap<>();
     private final Map<String, TaskWorker> activityWorkerByQueue = new HashMap<>();
@@ -172,12 +173,16 @@ final class DexEngineImpl implements DexEngine {
     private @Nullable Buffer<ExternalEvent> externalEventBuffer;
     private @Nullable Buffer<TaskEvent> taskEventBuffer;
     private @Nullable Buffer<ActivityTaskHeartbeat> activityTaskHeartbeatBuffer;
+    private @Nullable ActivityHeartbeatScheduler activityHeartbeatScheduler;
     private @Nullable CircuitBreakerRegistry bufferFlushCircuitBreakerRegistry;
     private @Nullable MaintenanceWorker maintenanceWorker;
     private @Nullable Cache<WorkflowRunHistoryCacheKey, CachedWorkflowRunHistory> runHistoryCache;
 
     DexEngineImpl(DexEngineConfig config) {
         this.config = requireNonNull(config);
+        this.metadataRegistry = new MetadataRegistry(
+                config.defaultActivityLockTimeout(),
+                config.defaultActivityExecutionTimeout());
         this.jdbi = JdbiFactory.create(config.dataSource(), config.queryTimeout(), config.pageTokenEncoder());
         this.runsCreatedCounter = Counter
                 .builder("dt.dex.engine.runs.created")
@@ -189,6 +194,8 @@ final class DexEngineImpl implements DexEngine {
 
     @Override
     public void start() {
+        requireSupportedActivityLockTimeouts();
+
         setStatus(Status.STARTING);
         LOGGER.debug("Starting");
 
@@ -347,6 +354,12 @@ final class DexEngineImpl implements DexEngine {
                 bufferFlushCircuitBreakerRegistry);
         activityTaskHeartbeatBuffer.start();
 
+        LOGGER.debug("Starting activity heartbeat scheduler");
+        activityHeartbeatScheduler = new ActivityHeartbeatScheduler(
+                this::tryHeartbeatActivityTask,
+                config.activityHeartbeatInterval());
+        activityHeartbeatScheduler.start();
+
         if (config.leaderElection().isEnabled()) {
             LOGGER.debug("Starting maintenance worker");
             maintenanceWorker = new MaintenanceWorker(
@@ -412,6 +425,12 @@ final class DexEngineImpl implements DexEngine {
             LOGGER.debug("Waiting for external event buffer to stop");
             externalEventBuffer.close();
             externalEventBuffer = null;
+        }
+
+        if (activityHeartbeatScheduler != null) {
+            LOGGER.debug("Stopping activity heartbeat scheduler");
+            activityHeartbeatScheduler.close();
+            activityHeartbeatScheduler = null;
         }
 
         if (activityTaskHeartbeatBuffer != null) {
@@ -515,9 +534,11 @@ final class DexEngineImpl implements DexEngine {
             Activity<A, R> activity,
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
-            Duration lockTimeout) {
+            @Nullable Duration lockTimeout,
+            @Nullable Duration executionTimeout) {
         requireStatusAnyOf(Status.CREATED, Status.STOPPED);
-        metadataRegistry.registerActivity(activity, argumentConverter, resultConverter, lockTimeout);
+        metadataRegistry.registerActivity(
+                activity, argumentConverter, resultConverter, lockTimeout, executionTimeout);
     }
 
     <A, R> void registerActivityInternal(
@@ -525,7 +546,25 @@ final class DexEngineImpl implements DexEngine {
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
             String defaultTaskQueueName,
-            Duration lockTimeout,
+            @Nullable Duration lockTimeout,
+            Activity<A, R> activity) {
+        registerActivityInternal(
+                activityName,
+                argumentConverter,
+                resultConverter,
+                defaultTaskQueueName,
+                lockTimeout,
+                null,
+                activity);
+    }
+
+    <A, R> void registerActivityInternal(
+            String activityName,
+            PayloadConverter<A> argumentConverter,
+            PayloadConverter<R> resultConverter,
+            String defaultTaskQueueName,
+            @Nullable Duration lockTimeout,
+            @Nullable Duration executionTimeout,
             Activity<A, R> activity) {
         requireStatusAnyOf(Status.CREATED, Status.STOPPED);
         metadataRegistry.registerActivity(
@@ -534,6 +573,7 @@ final class DexEngineImpl implements DexEngine {
                 resultConverter,
                 defaultTaskQueueName,
                 lockTimeout,
+                executionTimeout,
                 activity);
     }
 
@@ -1560,21 +1600,73 @@ final class DexEngineImpl implements DexEngine {
         }
     }
 
-    CompletableFuture<TaskLock> heartbeatActivityTask(
+    @SuppressWarnings("rawtypes")
+    private void requireSupportedActivityLockTimeouts() {
+        final Duration minLockTimeout =
+                ActivityHeartbeatScheduler.minSupportedLockTimeout(
+                        config.activityHeartbeatInterval());
+
+        for (final ActivityMetadata metadata : metadataRegistry.getAllActivityMetadata()) {
+            if (metadata.lockTimeout().compareTo(minLockTimeout) < 0) {
+                throw new IllegalStateException("""
+                        Lock timeout %s of activity %s is too short for the activity heartbeat \
+                        interval %s: the heartbeat scheduler would give up on the lock before ever \
+                        attempting a renewal. Increase the lock timeout to at least %s, or decrease \
+                        the heartbeat interval.""".formatted(
+                        metadata.lockTimeout(),
+                        metadata.name(),
+                        config.activityHeartbeatInterval(),
+                        minLockTimeout));
+            }
+        }
+    }
+
+    ActivityHeartbeatRegistration registerActivityHeartbeat(
+            ActivityTask task,
+            Duration lockTimeout,
+            Future<?> activityFuture) {
+        // NB: STOPPING is permitted because workers keep processing already polled
+        // tasks while the engine shuts down. Those executions must keep their lock.
+        requireStatusAnyOf(Status.RUNNING, Status.STOPPING);
+        final ActivityHeartbeatScheduler scheduler = requireNonNull(
+                activityHeartbeatScheduler,
+                "activityHeartbeatScheduler must not be null");
+
+        scheduler.register(
+                task.activityName(),
+                task.id(),
+                task.executionId(),
+                lockTimeout,
+                task::lock,
+                task::setLock,
+                activityFuture);
+        return () -> scheduler.unregister(activityFuture);
+    }
+
+    private @Nullable CompletableFuture<TaskLock> tryHeartbeatActivityTask(
             ActivityTaskId taskId,
             TaskLock taskLock,
             Duration lockTimeout) {
+        final Buffer<ActivityTaskHeartbeat> buffer = activityTaskHeartbeatBuffer;
+        if (buffer == null) {
+            return null;
+        }
+
         final var future = new CompletableFuture<TaskLock>();
         final var heartbeat = new ActivityTaskHeartbeat(taskId, taskLock, lockTimeout, future);
-
-        try {
-            activityTaskHeartbeatBuffer.add(heartbeat);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            future.completeExceptionally(e);
-        } catch (TimeoutException e) {
-            future.completeExceptionally(e);
+        final CompletableFuture<Void> bufferFuture = buffer.offer(heartbeat);
+        if (bufferFuture == null) {
+            return null;
         }
+
+        // The buffer may fail an item without ever invoking the batch consumer,
+        // e.g. when its circuit breaker is open. Propagate such failures, or the
+        // renewal would never settle and the scheduler would wait for it forever.
+        bufferFuture.whenComplete((_, error) -> {
+            if (error != null) {
+                future.completeExceptionally(error);
+            }
+        });
 
         return future;
     }
@@ -1585,7 +1677,7 @@ final class DexEngineImpl implements DexEngine {
             lockByTaskId = jdbi.inTransaction(handle -> {
                 final Update update = handle.createUpdate("""
                         update dex_activity_task as task
-                           set locked_until = locked_until + t.lock_timeout
+                           set locked_until = now() + t.lock_timeout
                              , lock_version = task.lock_version + 1
                              , updated_at = now()
                           from unnest(:queueNames, :workflowRunIds, :createdEventIds, :lockTimeouts, :lockVersions)

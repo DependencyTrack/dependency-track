@@ -41,6 +41,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 
 import static java.util.Objects.requireNonNull;
@@ -120,9 +121,11 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
                 abandon(task);
                 return;
             }
-
+            final Duration executionTimeout = activityMetadata.executionTimeout();
             try {
-                final Object activityResult = future.get();
+                final Object activityResult = executionTimeout != null
+                        ? future.get(executionTimeout.toMillis(), TimeUnit.MILLISECONDS)
+                        : future.get();
                 final Payload result;
                 try {
                     result = activityMetadata.resultConverter().convertToPayload(activityResult);
@@ -136,6 +139,25 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
                     return;
                 }
                 engine.onTaskEvent(new ActivityTaskCompletedEvent(task, result));
+            } catch (TimeoutException e) {
+                future.cancel(/* interruptIfRunning */ true);
+                final var cause = new TimeoutException(
+                        "Activity execution exceeded timeout of %s".formatted(executionTimeout));
+                cause.initCause(e);
+                final Instant retryAt = computeRetryAt(task, cause);
+                if (retryAt == null) {
+                    logger.warn(
+                            "Activity execution exceeded timeout of {}; Failing task terminally",
+                            executionTimeout);
+                } else {
+                    logger.warn(
+                            "Activity execution exceeded timeout of {}; Next retry due at {} (attempt {}/{})",
+                            executionTimeout,
+                            retryAt,
+                            task.attempt() + 1,
+                            task.retryPolicy().maxAttempts());
+                }
+                engine.onTaskEvent(new ActivityTaskFailedEvent(task, cause, retryAt));
             } catch (ExecutionException e) {
                 final Throwable cause = e.getCause();
                 if (cause instanceof InterruptedException || executionExecutor.isShutdown()) {

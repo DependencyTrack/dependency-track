@@ -514,9 +514,11 @@ final class DexEngineImpl implements DexEngine {
             Activity<A, R> activity,
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
-            Duration lockTimeout) {
+            Duration lockTimeout,
+            @Nullable Duration executionTimeout) {
         requireStatusAnyOf(Status.CREATED, Status.STOPPED);
-        metadataRegistry.registerActivity(activity, argumentConverter, resultConverter, lockTimeout);
+        metadataRegistry.registerActivity(
+                activity, argumentConverter, resultConverter, lockTimeout, executionTimeout);
     }
 
     <A, R> void registerActivityInternal(
@@ -526,6 +528,24 @@ final class DexEngineImpl implements DexEngine {
             String defaultTaskQueueName,
             Duration lockTimeout,
             Activity<A, R> activity) {
+        registerActivityInternal(
+                activityName,
+                argumentConverter,
+                resultConverter,
+                defaultTaskQueueName,
+                lockTimeout,
+                null,
+                activity);
+    }
+
+    <A, R> void registerActivityInternal(
+            String activityName,
+            PayloadConverter<A> argumentConverter,
+            PayloadConverter<R> resultConverter,
+            String defaultTaskQueueName,
+            Duration lockTimeout,
+            @Nullable Duration executionTimeout,
+            Activity<A, R> activity) {
         requireStatusAnyOf(Status.CREATED, Status.STOPPED);
         metadataRegistry.registerActivity(
                 activityName,
@@ -533,6 +553,7 @@ final class DexEngineImpl implements DexEngine {
                 resultConverter,
                 defaultTaskQueueName,
                 lockTimeout,
+                executionTimeout,
                 activity);
     }
 

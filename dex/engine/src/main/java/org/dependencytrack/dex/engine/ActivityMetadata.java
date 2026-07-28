@@ -20,7 +20,6 @@ package org.dependencytrack.dex.engine;
 
 import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.payload.PayloadConverter;
-import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 
@@ -31,5 +30,5 @@ record ActivityMetadata<A, R>(
         PayloadConverter<R> resultConverter,
         String defaultTaskQueueName,
         Duration lockTimeout,
-        @Nullable Duration executionTimeout) {
+        Duration executionTimeout) {
 }

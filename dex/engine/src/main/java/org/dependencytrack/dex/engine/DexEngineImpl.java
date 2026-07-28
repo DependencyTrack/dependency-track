@@ -155,7 +155,7 @@ final class DexEngineImpl implements DexEngine {
     private final DexEngineConfig config;
     private final Jdbi jdbi;
     private final ReentrantLock statusLock = new ReentrantLock();
-    private final MetadataRegistry metadataRegistry = new MetadataRegistry();
+    private final MetadataRegistry metadataRegistry;
     private final Map<String, TaskWorker> taskWorkerByName = new HashMap<>();
     private final Map<String, TaskWorker> workflowWorkerByQueue = new HashMap<>();
     private final Map<String, TaskWorker> activityWorkerByQueue = new HashMap<>();
@@ -178,6 +178,7 @@ final class DexEngineImpl implements DexEngine {
 
     DexEngineImpl(DexEngineConfig config) {
         this.config = requireNonNull(config);
+        this.metadataRegistry = new MetadataRegistry(config.defaultActivityExecutionTimeout());
         this.jdbi = JdbiFactory.create(config.dataSource(), config.queryTimeout(), config.pageTokenEncoder());
         this.runsCreatedCounter = Counter
                 .builder("dt.dex.engine.runs.created")

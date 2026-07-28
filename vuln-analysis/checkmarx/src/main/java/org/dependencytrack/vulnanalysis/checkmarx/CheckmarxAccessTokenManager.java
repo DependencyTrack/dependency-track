@@ -21,9 +21,12 @@ package org.dependencytrack.vulnanalysis.checkmarx;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -83,9 +86,17 @@ final class CheckmarxAccessTokenManager {
                             objectMapper.writeValueAsString(new TokenRequest(refreshToken))))
                     .build();
 
-            final HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            final HttpResponse<InputStream> response;
+            try {
+                response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            } catch (IOException e) {
+                RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, "Checkmarx Auth API request failed");
+                throw new UncheckedIOException("Checkmarx Auth API request failed", e);
+            }
+
             if (response.statusCode() != 200) {
-                throw new IOException("Checkmarx auth API request failed with status " + response.statusCode());
+                RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
+                throw new IOException("Checkmarx Auth API request failed with status " + response.statusCode());
             }
 
             final var tokenResponse = objectMapper.readValue(response.body(), TokenResponse.class);

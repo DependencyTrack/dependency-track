@@ -19,12 +19,14 @@
 package org.dependencytrack.vulnanalysis.checkmarx;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -96,7 +98,13 @@ final class CheckmarxApiClient {
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
 
-        final HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        final HttpResponse<InputStream> response;
+        try {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        } catch (IOException e) {
+            RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, "Checkmarx API request failed");
+            throw new UncheckedIOException("Checkmarx API request failed", e);
+        }
 
         try (final InputStream body = response.body()) {
             if (response.statusCode() == 200) {
@@ -110,6 +118,7 @@ final class CheckmarxApiClient {
                 return new CheckmarxApiResponse(List.of());
             }
 
+            RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
             throw new IOException("Checkmarx API request failed with status " + response.statusCode());
         }
     }

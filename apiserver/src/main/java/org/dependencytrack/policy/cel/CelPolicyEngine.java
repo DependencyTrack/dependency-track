@@ -31,6 +31,7 @@ import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyCondition.Subject;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.notification.JdbiNotificationEmitter;
+import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.persistence.jdbi.NotificationSubjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.policy.cel.CelPolicyCompiler.CacheMode;
@@ -284,13 +285,25 @@ public final class CelPolicyEngine {
         LOGGER.info("Identified {} new violations", newViolationIds.size());
 
         if (!newViolationIds.isEmpty()) {
-            useJdbiTransaction(handle -> new JdbiNotificationEmitter(handle).emitAll(
-                    handle.attach(NotificationSubjectDao.class)
-                            .getForNewPolicyViolations(newViolationIds)
-                            .stream()
-                            .map(subject -> createPolicyViolationNotification(
-                                    subject.getProject(), subject.getComponent(), subject.getPolicyViolation()))
-                            .toList()));
+            useJdbiTransaction(handle -> {
+                final var notificationSubjectDao = handle.attach(NotificationSubjectDao.class);
+
+                // Assembling notification subjects is expensive. Skip it for groups that no
+                // enabled rule subscribes to. The emitter would discard those notifications anyway.
+                if (!notificationSubjectDao
+                        .getSubscribedNotificationGroups()
+                        .contains(NotificationGroup.POLICY_VIOLATION.name())) {
+                    return;
+                }
+
+                new JdbiNotificationEmitter(handle).emitAll(
+                        notificationSubjectDao
+                                .getForNewPolicyViolations(newViolationIds)
+                                .stream()
+                                .map(subject -> createPolicyViolationNotification(
+                                        subject.getProject(), subject.getComponent(), subject.getPolicyViolation()))
+                                .toList());
+            });
         }
     }
 

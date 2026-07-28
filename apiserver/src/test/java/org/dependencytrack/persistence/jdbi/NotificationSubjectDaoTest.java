@@ -24,6 +24,8 @@ import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
+import org.dependencytrack.model.NotificationPublisher;
+import org.dependencytrack.model.NotificationRule;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition.Operator;
 import org.dependencytrack.model.PolicyCondition.Subject;
@@ -33,6 +35,9 @@ import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
+import org.dependencytrack.notification.NotificationGroup;
+import org.dependencytrack.notification.NotificationLevel;
+import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.proto.v1.NewVulnerabilitySubject;
 import org.dependencytrack.notification.proto.v1.NewVulnerableDependencySubject;
 import org.dependencytrack.notification.proto.v1.PolicyViolationSubject;
@@ -54,6 +59,49 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.hamcrest.Matchers.equalTo;
 
 public class NotificationSubjectDaoTest extends PersistenceCapableTest {
+
+    @Test
+    public void testGetSubscribedNotificationGroups() {
+        final NotificationPublisher publisher =
+                qm.createNotificationPublisher(
+                        "publisher",
+                        "description",
+                        "extensionName",
+                        "templateContent",
+                        "templateMimeType",
+                        /* isDefault */ false);
+
+        final NotificationRule enabledRule =
+                qm.createNotificationRule(
+                        "enabled",
+                        NotificationScope.PORTFOLIO,
+                        NotificationLevel.INFORMATIONAL,
+                        publisher);
+        enabledRule.setNotifyOn(Set.of(
+                NotificationGroup.NEW_VULNERABILITY,
+                NotificationGroup.NEW_VULNERABLE_DEPENDENCY));
+
+        final NotificationRule disabledRule =
+                qm.createNotificationRule(
+                        "disabled",
+                        NotificationScope.PORTFOLIO,
+                        NotificationLevel.INFORMATIONAL,
+                        publisher);
+        disabledRule.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION));
+        disabledRule.setEnabled(false);
+
+        qm.persist(enabledRule);
+        qm.persist(disabledRule);
+
+        final Set<String> subscribedGroups = withJdbiHandle(
+                handle -> handle
+                        .attach(NotificationSubjectDao.class)
+                        .getSubscribedNotificationGroups());
+
+        assertThat(subscribedGroups).containsExactlyInAnyOrder(
+                NotificationGroup.NEW_VULNERABILITY.name(),
+                NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name());
+    }
 
     @Test
     public void testGetForNewVulnerabilities() {

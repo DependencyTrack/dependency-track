@@ -405,7 +405,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithPolicyOperatorAnyAndAllConditionsMatching() {
+    void testEvaluateProjectWithPolicyOperatorAnyAndAllConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.name == "acme-app"
@@ -833,7 +833,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithPolicyOperatorAnyAndNotAllConditionsMatching() {
+    void testEvaluateProjectWithPolicyOperatorAnyAndNotAllConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.name == "acme-app"
@@ -856,7 +856,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithPolicyOperatorAnyAndNoConditionsMatching() {
+    void testEvaluateProjectWithPolicyOperatorAnyAndNoConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.name == "someOtherProjectThatIsNotAcmeApp"
@@ -879,7 +879,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithPolicyOperatorAllAndAllConditionsMatching() {
+    void testEvaluateProjectWithPolicyOperatorAllAndAllConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ALL, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.name == "acme-app"
@@ -902,7 +902,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithPolicyOperatorAllAndNotAllConditionsMatching() {
+    void testEvaluateProjectWithPolicyOperatorAllAndNotAllConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ALL, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.name == "acme-app"
@@ -925,7 +925,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithPolicyOperatorAllAndNoConditionsMatching() {
+    void testEvaluateProjectWithPolicyOperatorAllAndNoConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ALL, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.name == "someOtherProjectThatIsNotAcmeApp"
@@ -948,7 +948,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithPolicyAssignedToProject() {
+    void testEvaluateProjectWithPolicyAssignedToProject() throws Exception {
         final var policyA = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policyA, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 component.name.startsWith("acme-lib")
@@ -985,7 +985,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithPolicyAssignedToProjectParent() {
+    void testEvaluateProjectWithPolicyAssignedToProjectParent() throws Exception {
         final var policyA = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policyA, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 component.name.startsWith("acme-lib")
@@ -1028,7 +1028,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithPolicyAssignedToTag() {
+    void testEvaluateProjectWithPolicyAssignedToTag() throws Exception {
         final Tag tag = qm.createTag("foo");
 
         final var policyA = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
@@ -1068,7 +1068,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithInvalidScript() {
+    void testEvaluateProjectWithInvalidScript() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 component.doesNotExist == "foo"
@@ -1094,7 +1094,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithScriptExecutionException() {
+    void testEvaluateProjectWithScriptExecutionException() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.last_bom_import == timestamp("invalid")
@@ -1120,7 +1120,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncProjectDependsOnComponent() {
+    void testEvaluateProjectWithFuncProjectDependsOnComponent() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.depends_on(v1.Component{name: "acme-lib-a"})
@@ -1153,7 +1153,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncProjectDependsOnComponentWithRegexAndVers() {
+    void testEvaluateProjectWithFuncProjectDependsOnComponentWithRegexAndVers() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.depends_on(v1.Component{name: "re:^acme-lib-.*$", version: "vers:generic/>1|<2.0"})
@@ -1188,7 +1188,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDependencyOfComponent() {
+    void testEvaluateProjectWithFuncComponentIsDependencyOfComponent() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 component.is_dependency_of(v1.Component{name: "acme-lib-a"})
@@ -1220,7 +1220,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDependencyOfComponentWithRegex() {
+    void testEvaluateProjectWithFuncComponentIsDependencyOfComponentWithRegex() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 component.is_dependency_of(v1.Component{name: "re:.*-lib-.*"})
@@ -1252,7 +1252,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDependencyOfComponentWithVersRange() {
+    void testEvaluateProjectWithFuncComponentIsDependencyOfComponentWithVersRange() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 component.is_dependency_of(v1.Component{
@@ -1288,7 +1288,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithSinglePath() {
+    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithSinglePath() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -1372,7 +1372,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithMultiplePaths() {
+    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithMultiplePaths() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -1458,7 +1458,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithMultiplePaths2() {
+    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithMultiplePaths2() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -1534,7 +1534,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithMultiplePaths3() {
+    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithMultiplePaths3() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -1622,7 +1622,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithMultiplePaths4() {
+    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithMultiplePaths4() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -1805,7 +1805,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithMultiplePaths5() {
+    void testEvaluateProjectWithFuncComponentIsDependencyOfExclusiveComponentWithMultiplePaths5() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -1853,7 +1853,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncMatchesRange() {
+    void testEvaluateProjectWithFuncMatchesRange() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.matches_range("vers:generic/<1")
@@ -1883,7 +1883,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncMatchesRangeWithInvalidRange() {
+    void testEvaluateProjectWithFuncMatchesRangeWithInvalidRange() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.matches_range("foo")
@@ -1913,7 +1913,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithToolMetadata() {
+    void testEvaluateProjectWithToolMetadata() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 project.metadata.tools.components.exists(tool,
@@ -1950,12 +1950,12 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWhenProjectDoesNotExist() {
+    void testEvaluateProjectWhenProjectDoesNotExist() throws Exception {
         assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(UUID.randomUUID()));
     }
 
     @Test
-    void issue1924() {
+    void issue1924() throws Exception {
         Policy policy = qm.createPolicy("Policy 1924", Policy.Operator.ALL, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
         qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.NO_MATCH, "pkg:deb");
@@ -2029,7 +2029,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void issue2455() {
+    void issue2455() throws Exception {
         Policy policy = qm.createPolicy("Policy 1924", Policy.Operator.ALL, Policy.ViolationState.INFO);
 
         License license = new License();
@@ -2086,7 +2086,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithNoLongerApplicableViolationWithAnalysis() {
+    void testEvaluateProjectWithNoLongerApplicableViolationWithAnalysis() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0.0");
@@ -2128,7 +2128,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDirectDependencyOfComponent() {
+    void testEvaluateProjectWithFuncComponentIsDirectDependencyOfComponent() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -2173,7 +2173,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDirectDependencyOfExclusiveComponent() {
+    void testEvaluateProjectWithFuncComponentIsDirectDependencyOfExclusiveComponent() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -2245,7 +2245,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithFuncComponentIsDirectDependencyOfComponentWithInMemoryFilter() {
+    void testEvaluateProjectWithFuncComponentIsDirectDependencyOfComponentWithInMemoryFilter() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         project.setVersion("1.0");
@@ -2297,7 +2297,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithPropertiesSize() {
+    void testEvaluateProjectWithPropertiesSize() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -2320,7 +2320,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void shouldEvaluateComponentPropertyFields() {
+    void shouldEvaluateComponentPropertyFields() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -2348,7 +2348,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void shouldEvaluateComponentPropertiesSize() {
+    void shouldEvaluateComponentPropertiesSize() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -2373,7 +2373,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void testEvaluateProjectWithLicenseGroupsSize() {
+    void testEvaluateProjectWithLicenseGroupsSize() throws Exception {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
@@ -2422,7 +2422,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     void shouldEvaluateSpdxExprFunctionOnLicenseExpression(
             String celExpression,
             String licenseExpression,
-            boolean expectViolation) {
+            boolean expectViolation) throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION,
                 PolicyCondition.Operator.MATCHES, celExpression, PolicyViolation.Type.LICENSE);
@@ -2446,7 +2446,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void shouldEvaluateSpdxExprFunctionOnResolvedLicenseId() {
+    void shouldEvaluateSpdxExprFunctionOnResolvedLicenseId() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 has(component.resolved_license)
@@ -2474,7 +2474,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
-    void shouldNotEvaluateSuppressedVulnerabilities() {
+    void shouldNotEvaluateSuppressedVulnerabilities() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
                 vulns.exists(v, v.id == "CVE-001")

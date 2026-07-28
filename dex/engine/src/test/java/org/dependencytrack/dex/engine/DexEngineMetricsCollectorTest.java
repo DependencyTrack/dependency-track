@@ -31,6 +31,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -68,13 +69,14 @@ class DexEngineMetricsCollectorTest {
                     values ('a0000000-0000-0000-0000-000000000001', 'wf-a', 1, 'default', 'RUNNING', now())
                          , ('a0000000-0000-0000-0000-000000000002', 'wf-a', 1, 'default', 'RUNNING', now())
                          , ('a0000000-0000-0000-0000-000000000003', 'wf-a', 1, 'default', 'CREATED', now())
+                         , ('a0000000-0000-0000-0000-000000000004', 'wf-a', 1, 'default', 'SUSPENDED', now())
                          , ('b0000000-0000-0000-0000-000000000001', 'wf-b', 1, 'default', 'COMPLETED', now())
                          , ('b0000000-0000-0000-0000-000000000002', 'wf-b', 1, 'default', 'FAILED', now())
                     """);
         });
 
         try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+                jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")
@@ -88,11 +90,11 @@ class DexEngineMetricsCollectorTest {
                                 .tag("workflowName", "wf-a").tag("status", "created")
                                 .gauge().value()).isEqualTo(1.0);
                         assertThat(meterRegistry.get("dt.dex.engine.workflow.runs.current")
-                                .tag("workflowName", "wf-b").tag("status", "completed")
+                                .tag("workflowName", "wf-a").tag("status", "suspended")
                                 .gauge().value()).isEqualTo(1.0);
-                        assertThat(meterRegistry.get("dt.dex.engine.workflow.runs.current")
-                                .tag("workflowName", "wf-b").tag("status", "failed")
-                                .gauge().value()).isEqualTo(1.0);
+
+                        assertThat(meterRegistry.get("dt.dex.engine.workflow.runs.current").gauges())
+                                .noneSatisfy(gauge -> assertThat(gauge.getId().getTag("workflowName")).isEqualTo("wf-b"));
                     });
         }
     }
@@ -109,7 +111,7 @@ class DexEngineMetricsCollectorTest {
         });
 
         try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+                jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("First Collection")
@@ -124,7 +126,7 @@ class DexEngineMetricsCollectorTest {
                             .isEqualTo(2.0));
 
             jdbi.useHandle(handle -> handle.execute("""
-                    update dex_workflow_run set status = 'COMPLETED', completed_at = now()
+                    update dex_workflow_run set status = 'RUNNING', started_at = now()
                     """));
 
             await("Second Collection")
@@ -134,7 +136,7 @@ class DexEngineMetricsCollectorTest {
                         assertThat(meterRegistry
                                 .get("dt.dex.engine.workflow.runs.current")
                                 .tag("workflowName", "wf-a")
-                                .tag("status", "completed")
+                                .tag("status", "running")
                                 .gauge()
                                 .value())
                                 .isEqualTo(2.0);
@@ -146,6 +148,44 @@ class DexEngineMetricsCollectorTest {
                                 .gauge())
                                 .isNull();
                     });
+        }
+    }
+
+    @Test
+    void shouldNotCollectWhenNotLeader() {
+        jdbi.useHandle(handle -> {
+            handle.execute("select dex_create_workflow_task_queue('default', cast(100 as smallint))");
+            handle.execute("""
+                    insert into dex_workflow_run(id, workflow_name, workflow_version, task_queue_name, status, created_at)
+                    values ('a0000000-0000-0000-0000-000000000001', 'wf-a', 1, 'default', 'CREATED', now())
+                    """);
+        });
+
+        final var leader = new AtomicBoolean(true);
+
+        try (final var collector = new DexEngineMetricsCollector(
+                jdbi, leader::get, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+            collector.start();
+
+            await("Collection While Leader")
+                    .atMost(Duration.ofSeconds(5))
+                    .ignoreException(MeterNotFoundException.class)
+                    .untilAsserted(() -> assertThat(meterRegistry
+                            .get("dt.dex.engine.workflow.runs.current")
+                            .tag("workflowName", "wf-a")
+                            .tag("status", "created")
+                            .gauge()
+                            .value())
+                            .isEqualTo(1.0));
+
+            leader.set(false);
+
+            await("Gauges cleared after losing leadership")
+                    .atMost(Duration.ofSeconds(5))
+                    .untilAsserted(() -> assertThat(meterRegistry
+                            .find("dt.dex.engine.workflow.runs.current")
+                            .gauges())
+                            .isEmpty());
         }
     }
 
@@ -171,7 +211,7 @@ class DexEngineMetricsCollectorTest {
         });
 
         try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+                jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")
@@ -218,7 +258,7 @@ class DexEngineMetricsCollectorTest {
         });
 
         try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+                jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")
@@ -255,7 +295,7 @@ class DexEngineMetricsCollectorTest {
                     values ('a0000000-0000-0000-0000-000000000001', 'wf-a', 1, 'default', 'RUNNING', now())
                          , ('a0000000-0000-0000-0000-000000000002', 'wf-a', 1, 'default', 'RUNNING', now())
                     """);
-            
+
             handle.execute("""
                     insert into dex_activity_task(queue_name, workflow_run_id, created_event_id, activity_name, priority, retry_policy, status, visible_from, created_at)
                     values ('act-queue-a', 'a0000000-0000-0000-0000-000000000001', 1, 'act-a', 0, ''::bytea, 'CREATED', now() - interval '1 second', now())
@@ -267,7 +307,7 @@ class DexEngineMetricsCollectorTest {
         });
 
         try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+                jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")
@@ -308,7 +348,7 @@ class DexEngineMetricsCollectorTest {
         });
 
         try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+                jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")
@@ -328,7 +368,7 @@ class DexEngineMetricsCollectorTest {
     @Test
     void shouldHandleEmptyDatabase() {
         try (final var collector = new DexEngineMetricsCollector(
-                jdbi, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
+                jdbi, () -> true, Duration.ZERO, Duration.ofMillis(50), meterRegistry)) {
             collector.start();
 
             await("Collection")

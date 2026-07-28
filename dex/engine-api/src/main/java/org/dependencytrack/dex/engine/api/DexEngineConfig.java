@@ -357,6 +357,7 @@ public class DexEngineConfig {
     private final TaskSchedulerConfig activityTaskSchedulerConfig = new TaskSchedulerConfig();
 
     private Duration queryTimeout = Duration.ofSeconds(10);
+    private Duration defaultActivityExecutionTimeout = Duration.ofHours(1);
     private PageTokenEncoder pageTokenEncoder = new SimplePageTokenEncoder();
 
     public DexEngineConfig(DataSource dataSource) {
@@ -441,6 +442,21 @@ public class DexEngineConfig {
         this.queryTimeout = queryTimeout;
     }
 
+    /**
+     * @return Execution timeout applied to activities registered without an explicit one.
+     */
+    public Duration defaultActivityExecutionTimeout() {
+        return defaultActivityExecutionTimeout;
+    }
+
+    public void setDefaultActivityExecutionTimeout(Duration defaultActivityExecutionTimeout) {
+        requireNonNull(defaultActivityExecutionTimeout, "defaultActivityExecutionTimeout must not be null");
+        if (!defaultActivityExecutionTimeout.isPositive()) {
+            throw new IllegalArgumentException("defaultActivityExecutionTimeout must not be negative or zero");
+        }
+        this.defaultActivityExecutionTimeout = defaultActivityExecutionTimeout;
+    }
+
     public PageTokenEncoder pageTokenEncoder() {
         return pageTokenEncoder;
     }
@@ -464,6 +480,7 @@ public class DexEngineConfig {
                 .add("workflowTaskSchedulerConfig=" + workflowTaskSchedulerConfig)
                 .add("activityTaskSchedulerConfig=" + activityTaskSchedulerConfig)
                 .add("queryTimeout=" + queryTimeout)
+                .add("defaultActivityExecutionTimeout=" + defaultActivityExecutionTimeout)
                 .add("pageTokenEncoder=" + pageTokenEncoder)
                 .toString();
     }

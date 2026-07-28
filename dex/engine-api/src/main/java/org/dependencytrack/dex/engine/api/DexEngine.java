@@ -96,14 +96,14 @@ public interface DexEngine extends Closeable {
      * <p>
      * The executor's class <strong>must</strong> be annotated with {@link ActivitySpec}.
      *
-     * @param executor             The {@link Activity} of the activity.
-     * @param argumentConverter    The {@link PayloadConverter} to use for arguments.
-     * @param resultConverter      The {@link PayloadConverter} to use for results.
-     * @param lockTimeout          How instances of this activity shall be locked for execution.
-     * @param executionTimeout     Maximum time the activity may execute before it is cancelled.
-     *                             {@code null} means no execution timeout.
-     * @param <A>                  Type of the activity's argument.
-     * @param <R>                  Type of the activity's result.
+     * @param executor          The {@link Activity} of the activity.
+     * @param argumentConverter The {@link PayloadConverter} to use for arguments.
+     * @param resultConverter   The {@link PayloadConverter} to use for results.
+     * @param lockTimeout       How instances of this activity shall be locked for execution.
+     * @param executionTimeout  Maximum time the activity may execute before it is cancelled.
+     *                          When {@code null}, {@link DexEngineConfig#defaultActivityExecutionTimeout()} is assumed.
+     * @param <A>               Type of the activity's argument.
+     * @param <R>               Type of the activity's result.
      * @throws IllegalStateException When the engine was already started.
      */
     <A, R> void registerActivity(

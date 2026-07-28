@@ -534,7 +534,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
-      "description": "Activity tasks ready to schedule that are waiting in the database.",
+      "description": "Activity tasks ready to schedule that are waiting in the database. The count is capped at 10000; a series flat-lining at that value is saturated, and the real backlog may be higher.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -570,7 +570,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line"
             }
           },
           "mappings": [],
@@ -580,6 +580,10 @@
               {
                 "color": "green",
                 "value": 0
+              },
+              {
+                "color": "red",
+                "value": 10000
               }
             ]
           },
@@ -713,7 +717,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "max by (queueName) (dt_dex_engine_activity_task_queue_backlog_age{instance=~\"$instance\",queueName=~\"$activityQueue\"})",
+          "expr": "max by (queueName) (dt_dex_engine_activity_task_queue_backlog_age_seconds{instance=~\"$instance\",queueName=~\"$activityQueue\"})",
           "instant": false,
           "range": true,
           "legendFormat": "{{queueName}}",

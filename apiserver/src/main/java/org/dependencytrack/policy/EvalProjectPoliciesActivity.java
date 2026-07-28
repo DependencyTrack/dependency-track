@@ -50,9 +50,8 @@ public final class EvalProjectPoliciesActivity implements Activity<EvalProjectPo
             throw new TerminalApplicationFailureException("No argument provided");
         }
 
-        final UUID projectUuid = UUID.fromString(argument.getProjectUuid());
         try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, argument.getProjectUuid())) {
-            policyEngine.evaluateProject(projectUuid, ctx::maybeHeartbeat);
+            policyEngine.evaluateProject(UUID.fromString(argument.getProjectUuid()));
         }
 
         return null;

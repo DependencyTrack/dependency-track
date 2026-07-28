@@ -24,7 +24,6 @@ import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.api.NoopCacheManager;
-import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dex.engine.api.DexEngine;
@@ -84,16 +83,6 @@ class DexEngineInitializerTest {
         if (dataSourceRegistry != null) {
             dataSourceRegistry.closeAll();
         }
-    }
-
-    @Test
-    void shouldLoadPolicyEvaluationMaxDurationFromApplicationProperties() {
-        final var config = new SmallRyeConfigBuilder()
-                .addDefaultSources()
-                .build();
-
-        assertThat(config.getValue(ConfigKeys.POLICY_EVALUATION_MAX_DURATION_MS, long.class))
-                .isEqualTo(600_000L);
     }
 
     @Test

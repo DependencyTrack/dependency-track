@@ -228,9 +228,6 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter(),
                 Duration.ofMinutes(1));
 
-        final Duration policyEvaluationMaxDuration = Duration.ofMillis(
-                config.getValue(ConfigKeys.POLICY_EVALUATION_MAX_DURATION_MS, long.class));
-
         engine.registerActivity(
                 new IdentifyInternalComponentsActivity(),
                 voidConverter(),
@@ -259,7 +256,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                 protoConverter(EvalProjectPoliciesArg.class),
                 voidConverter(),
                 Duration.ofMinutes(5),
-                policyEvaluationMaxDuration);
+                activityExecutionTimeout(config, "eval-project-policies").orElse(null));
         engine.registerActivity(
                 new FetchPackageMetadataResolutionCandidatesActivity(pluginManager),
                 voidConverter(),
@@ -316,8 +313,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                         new CelVulnerabilityPolicyEvaluator()),
                 protoConverter(ReconcileVulnAnalysisResultsArg.class),
                 voidConverter(),
-                Duration.ofMinutes(5),
-                policyEvaluationMaxDuration);
+                Duration.ofMinutes(5));
         engine.registerActivity(
                 new RefreshGlobalPortfolioMetricsActivity(),
                 voidConverter(),
@@ -586,6 +582,13 @@ public final class DexEngineInitializer implements ServletContextListener {
                 maxDelayMillis.get());
 
         return Optional.of(backoffFunction);
+    }
+
+    private static Optional<Duration> activityExecutionTimeout(Config config, String activityName) {
+        return config.getOptionalValue(
+                "dt.dex.engine.activity.%s.execution-timeout-ms".formatted(activityName),
+                long.class)
+                .map(Duration::ofMillis);
     }
 
 }

@@ -35,6 +35,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -112,20 +113,25 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
                 return;
             }
 
-            final Future<Object> future;
+            final var executionStoppedLatch = new CountDownLatch(1);
+            final Future<Object> executionFuture;
             try {
-                future = executionExecutor.submit(
-                        () -> activityMetadata.executor().execute(ctx, arg));
+                executionFuture = executionExecutor.submit(() -> {
+                    try {
+                        return activityMetadata.executor().execute(ctx, arg);
+                    } finally {
+                        executionStoppedLatch.countDown();
+                    }
+                });
             } catch (RejectedExecutionException e) {
                 logger.debug("Execution executor is shut down; Abandoning task");
                 abandon(task);
                 return;
             }
+
             final Duration executionTimeout = activityMetadata.executionTimeout();
             try {
-                final Object activityResult = executionTimeout != null
-                        ? future.get(executionTimeout.toMillis(), TimeUnit.MILLISECONDS)
-                        : future.get();
+                final Object activityResult = executionFuture.get(executionTimeout.toMillis(), TimeUnit.MILLISECONDS);
                 final Payload result;
                 try {
                     result = activityMetadata.resultConverter().convertToPayload(activityResult);
@@ -140,10 +146,27 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
                 }
                 engine.onTaskEvent(new ActivityTaskCompletedEvent(task, result));
             } catch (TimeoutException e) {
-                future.cancel(/* interruptIfRunning */ true);
+                executionFuture.cancel(/* interruptIfRunning */ true);
+
+                // Wait a short moment for the activity task to terminate before moving on.
+                //
+                // NB: Calling Future#get after cancellation returns immediately even
+                // when the backing task is still executing. Hence, using a latch instead.
+                try {
+                    if (!executionStoppedLatch.await(5, TimeUnit.SECONDS)) {
+                        logger.warn("""
+                                Activity did not complete within 5s after cancellation; \
+                                the next attempt may run concurrently with it""");
+                    }
+                } catch (InterruptedException _) {
+                    logger.debug("Interrupted while waiting for cancelled task execution to complete");
+                }
+
                 final var cause = new TimeoutException(
-                        "Activity execution exceeded timeout of %s".formatted(executionTimeout));
+                        "Activity execution exceeded timeout of %s".formatted(
+                                executionTimeout));
                 cause.initCause(e);
+
                 final Instant retryAt = computeRetryAt(task, cause);
                 if (retryAt == null) {
                     logger.warn(
@@ -181,7 +204,7 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
                 }
             } catch (InterruptedException e) {
                 logger.debug("Interrupted while waiting for activity execution to complete; Abandoning task");
-                future.cancel(true);
+                executionFuture.cancel(true);
                 abandon(task);
                 Thread.currentThread().interrupt();
             }

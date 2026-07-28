@@ -36,6 +36,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 final class DexEngineMetricsCollector implements Closeable {
 
@@ -43,6 +44,7 @@ final class DexEngineMetricsCollector implements Closeable {
     private static final int ACTIVITY_TASK_QUEUE_BACKLOG_COUNT_CAP = 10_000;
 
     private final Jdbi jdbi;
+    private final Supplier<Boolean> leadershipSupplier;
     private final Duration initialDelay;
     private final Duration interval;
     private final MultiGauge runCountGauge;
@@ -55,13 +57,19 @@ final class DexEngineMetricsCollector implements Closeable {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private @Nullable ScheduledExecutorService executor;
 
-    DexEngineMetricsCollector(Jdbi jdbi, Duration initialDelay, Duration interval, MeterRegistry meterRegistry) {
+    DexEngineMetricsCollector(
+            Jdbi jdbi,
+            Supplier<Boolean> leadershipSupplier,
+            Duration initialDelay,
+            Duration interval,
+            MeterRegistry meterRegistry) {
         this.jdbi = jdbi;
+        this.leadershipSupplier = leadershipSupplier;
         this.initialDelay = initialDelay;
         this.interval = interval;
         this.runCountGauge = MultiGauge
                 .builder("dt.dex.engine.workflow.runs.current")
-                .description("Current number of workflow runs by name and status")
+                .description("Current number of workflow runs by name and status (non-terminal only)")
                 .register(meterRegistry);
         this.workflowTaskQueueCapacityGauge = MultiGauge
                 .builder("dt.dex.engine.workflow.task.queue.capacity")
@@ -133,6 +141,18 @@ final class DexEngineMetricsCollector implements Closeable {
     }
 
     private void collectMetrics() {
+        if (!leadershipSupplier.get()) {
+            LOGGER.debug("Not the leader; Skipping collection");
+            runCountGauge.register(List.of(), /* overwrite */ true);
+            workflowTaskQueueCapacityGauge.register(List.of(), /* overwrite */ true);
+            workflowTaskQueueDepthGauge.register(List.of(), /* overwrite */ true);
+            activityTaskQueueCapacityGauge.register(List.of(), /* overwrite */ true);
+            activityTaskQueueDepthGauge.register(List.of(), /* overwrite */ true);
+            activityTaskQueueBacklogGauge.register(List.of(), /* overwrite */ true);
+            activityTaskQueueBacklogAgeGauge.register(List.of(), /* overwrite */ true);
+            return;
+        }
+
         collectRunMetrics();
         collectWorkflowTaskQueueMetrics();
         collectActivityTaskQueueMetrics();
@@ -147,6 +167,7 @@ final class DexEngineMetricsCollector implements Closeable {
                                      , status
                                      , count(*)
                                   from dex_workflow_run
+                                 where status in ('CREATED', 'RUNNING', 'SUSPENDED')
                                  group by workflow_name
                                         , status
                                 """)

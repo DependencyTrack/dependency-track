@@ -242,6 +242,7 @@ final class DexEngineImpl implements DexEngine {
             LOGGER.debug("Starting metrics collector");
             metricsCollector = new DexEngineMetricsCollector(
                     jdbi,
+                    () -> leaderElection == null || leaderElection.isLeader(),
                     config.metrics().collectorInitialDelay(),
                     config.metrics().collectorInterval(),
                     config.metrics().meterRegistry());

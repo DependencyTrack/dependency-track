@@ -51,7 +51,7 @@ public class SwidTagIdConditionTest extends PersistenceCapableTest {
 
     @ParameterizedTest
     @MethodSource("parameters")
-    public void testCondition(final Operator operator, final String conditionSwidTagId, final String componentSwidTagId, final boolean expectViolation) {
+    public void testCondition(final Operator operator, final String conditionSwidTagId, final String componentSwidTagId, final boolean expectViolation) throws Exception {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.SWID_TAGID, operator, conditionSwidTagId);
 

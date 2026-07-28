@@ -256,7 +256,8 @@ public final class DexEngineInitializer implements ServletContextListener {
                 new EvalProjectPoliciesActivity(new CelPolicyEngine()),
                 protoConverter(EvalProjectPoliciesArg.class),
                 voidConverter(),
-                Duration.ofMinutes(5));
+                Duration.ofMinutes(5),
+                activityExecutionTimeout(config, "eval-project-policies").orElse(null));
         engine.registerActivity(
                 new FetchPackageMetadataResolutionCandidatesActivity(pluginManager),
                 voidConverter(),
@@ -591,6 +592,13 @@ public final class DexEngineInitializer implements ServletContextListener {
                 maxDelayMillis.get());
 
         return Optional.of(backoffFunction);
+    }
+
+    private static Optional<Duration> activityExecutionTimeout(Config config, String activityName) {
+        return config.getOptionalValue(
+                "dt.dex.engine.activity.%s.execution-timeout-ms".formatted(activityName),
+                long.class)
+                .map(Duration::ofMillis);
     }
 
 }

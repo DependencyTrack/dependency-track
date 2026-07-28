@@ -34,6 +34,7 @@ import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.TestSecretManager;
 import org.dependencytrack.secret.management.SecretManager;
+import org.eclipse.microprofile.config.spi.ConfigSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.net.http.HttpClient;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -60,12 +62,13 @@ class DexEngineInitializerTest {
     @Container
     private final PostgreSQLContainer postgresContainer =
             new PostgreSQLContainer(DockerImageName.parse("postgres:14-alpine"));
+    private PGSimpleDataSource dataSource;
     private DataSourceRegistry dataSourceRegistry;
     private DexEngineInitializer initializer;
 
     @BeforeEach
     void beforeEach() {
-        final var dataSource = new PGSimpleDataSource();
+        dataSource = new PGSimpleDataSource();
         dataSource.setUrl(postgresContainer.getJdbcUrl());
         dataSource.setUser(postgresContainer.getUsername());
         dataSource.setPassword(postgresContainer.getPassword());
@@ -85,12 +88,11 @@ class DexEngineInitializerTest {
     @Test
     void shouldStartEngine() throws Exception {
         final var config = new SmallRyeConfigBuilder()
-                .withDefaultValues(Map.ofEntries(
-                        Map.entry("dt.dex-engine.datasource.name", "foo"),
-                        Map.entry("dt.datasource.foo.url", postgresContainer.getJdbcUrl()),
-                        Map.entry("dt.datasource.foo.username", postgresContainer.getUsername()),
-                        Map.entry("dt.datasource.foo.password", postgresContainer.getPassword()),
-                        Map.entry("dt.notification.outbox-relay.large-notification-threshold-bytes", "65536")))
+                .addDefaultSources()
+                .withSources(configSource(Map.of(
+                        "dt.datasource.default.url", postgresContainer.getJdbcUrl(),
+                        "dt.datasource.default.username", postgresContainer.getUsername(),
+                        "dt.datasource.default.password", postgresContainer.getPassword())))
                 .build();
 
         dataSourceRegistry = new DataSourceRegistry(config);
@@ -104,7 +106,7 @@ class DexEngineInitializerTest {
         doReturn(new MemoryFileStorage())
                 .when(servletContextMock).getAttribute(eq(FileStorage.class.getName()));
         doReturn(new PluginManager(config, cacheManager, secretManager::getSecretValue,
-                JdbiFactory.createJdbi(),
+                JdbiFactory.createLocalJdbi(dataSource),
                 HttpClient.newHttpClient(), Collections.emptyList()))
                 .when(servletContextMock).getAttribute(eq(PluginManager.class.getName()));
         doReturn(secretManager)
@@ -124,6 +126,35 @@ class DexEngineInitializerTest {
         final DexEngine engine = engineCaptor.getValue();
         assertThat(engine).isNotNull();
         engine.close();
+    }
+
+    private static ConfigSource configSource(Map<String, String> properties) {
+        return new ConfigSource() {
+            @Override
+            public Map<String, String> getProperties() {
+                return properties;
+            }
+
+            @Override
+            public Set<String> getPropertyNames() {
+                return properties.keySet();
+            }
+
+            @Override
+            public String getValue(String propertyName) {
+                return properties.get(propertyName);
+            }
+
+            @Override
+            public String getName() {
+                return DexEngineInitializerTest.class.getSimpleName();
+            }
+
+            @Override
+            public int getOrdinal() {
+                return 500;
+            }
+        };
     }
 
 }

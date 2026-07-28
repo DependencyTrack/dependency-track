@@ -71,7 +71,6 @@
         <!-- Maven Plugin Versions -->
         <maven.dependency.plugin.version>3.8.1</maven.dependency.plugin.version>
         <maven.shade.plugin.version>3.6.1</maven.shade.plugin.version>
-        <maven.uuidgenerator.plugin.version>1.0.1</maven.uuidgenerator.plugin.version>
 
         <!-- Dependency Versions -->
         <lib.bcrypt.version>0.4</lib.bcrypt.version>
@@ -166,16 +165,22 @@
             </plugin>
 
             <plugin>
-                <groupId>us.springett</groupId>
-                <artifactId>maven-uuid-generator</artifactId>
-                <version>${maven.uuidgenerator.plugin.version}</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>generate-uuid</id>
+                        <id>generate-build-uuid</id>
                         <phase>initialize</phase>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>bsh-property</goal>
                         </goals>
+                        <configuration>
+                            <source>
+                                project.getProperties().setProperty(
+                                    "project.build.uuid",
+                                    java.util.UUID.randomUUID().toString());
+                            </source>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

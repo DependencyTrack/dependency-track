@@ -97,7 +97,7 @@ public class EpssConditionTest extends PersistenceCapableTest {
             final String conditionValue,
             final Double vulnEpssScore,
             final boolean expectViolation
-    ) {
+    ) throws Exception {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EPSS, operator, conditionValue);
 

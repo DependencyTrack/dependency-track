@@ -71,6 +71,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -180,7 +181,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         return null;
     }
 
-    private void processEvent(final ProcessingContext ctx, final byte[] cdxBomBytes) {
+    private void processEvent(final ProcessingContext ctx, final byte[] cdxBomBytes) throws InterruptedException {
         final ConsumedBom consumedBom;
         try {
             final Parser parser = BomParserFactory.createParser(cdxBomBytes);
@@ -202,6 +203,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             throw new TerminalApplicationFailureException("Failed to consume BOM", e);
         }
 
+        if (Thread.interrupted()) {
+            throw new InterruptedException("Interrupted before the BOM could be processed");
+        }
+
         dispatchBomConsumedNotification(ctx);
 
         final ProcessedBom processedBom;
@@ -211,6 +216,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
              var _ = MDC.putCloseable(MDC_BOM_VERSION, String.valueOf(ctx.bomVersion))) {
             try {
                 processedBom = processBom(ctx, consumedBom);
+            } catch (CancellationException e) {
+                final var interruptedException = new InterruptedException("BOM processing was interrupted");
+                interruptedException.initCause(e);
+                throw interruptedException;
             } catch (Throwable e) {
                 LOGGER.error("Failed to process BOM", e);
                 try (final var qm = new QueryManager()) {
@@ -491,6 +500,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 .collect(Collectors.toSet());
 
         for (final Component component : components) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new CancellationException("Interrupted before all components could be processed");
+            }
+
             component.setInternal(internalComponentIdentifier.isInternal(component));
             resolveAndApplyLicense(qm, component, licenseCache, customLicenseCache);
 
@@ -603,6 +616,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 .collect(Collectors.toSet());
 
         for (final ServiceComponent service : services) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new CancellationException("Interrupted before all services could be processed");
+            }
+
             final var componentIdentity = new ComponentIdentity(service);
             ServiceComponent persistentService = persistentServiceByIdentity.get(componentIdentity);
             if (persistentService == null) {
@@ -691,6 +708,11 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         }
 
         for (final Component component : componentsByIdentity.values()) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new CancellationException(
+                        "Interrupted before the dependency graph could be processed for all components");
+            }
+
             assertPersistent(component, "Component must be persistent");
             final String mergedDirectDependenciesJson = resolveMergedDirectDependenciesJson(
                     component, dependencyGraph, identitiesByBomRef, bomRefsByIdentity);

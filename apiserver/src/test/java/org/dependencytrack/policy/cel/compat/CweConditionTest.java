@@ -49,7 +49,7 @@ public class CweConditionTest extends PersistenceCapableTest {
     @MethodSource("parameters")
     public void testSingleCwe(Policy.Operator policyOperator, Policy.ViolationState violationState,
                               PolicyCondition.Operator conditionOperator, String inputConditionCwe, int inputCweId, int inputCweId2,
-                              boolean expectViolation, PolicyViolation.Type actualType, Policy.ViolationState actualViolationState) {
+                              boolean expectViolation, PolicyViolation.Type actualType, Policy.ViolationState actualViolationState) throws Exception {
         Policy policy = qm.createPolicy("Test Policy", policyOperator, violationState);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.CWE, conditionOperator, inputConditionCwe);
         final var project = new Project();

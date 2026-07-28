@@ -30,13 +30,14 @@ import static org.dependencytrack.dex.api.payload.PayloadConverters.voidConverte
 
 class MetadataRegistryTest {
 
+    private static final Duration DEFAULT_LOCK_TIMEOUT = Duration.ofMinutes(5);
     private static final Duration DEFAULT_EXECUTION_TIMEOUT = Duration.ofHours(1);
 
     private MetadataRegistry metadataRegistry;
 
     @BeforeEach
     void beforeEach() {
-        metadataRegistry = new MetadataRegistry(DEFAULT_EXECUTION_TIMEOUT);
+        metadataRegistry = new MetadataRegistry(DEFAULT_LOCK_TIMEOUT, DEFAULT_EXECUTION_TIMEOUT);
     }
 
     @Test
@@ -45,6 +46,22 @@ class MetadataRegistryTest {
 
         assertThat(metadataRegistry.getActivityMetadata("test").executionTimeout())
                 .isEqualTo(DEFAULT_EXECUTION_TIMEOUT);
+    }
+
+    @Test
+    void shouldApplyDefaultLockTimeoutWhenNoneIsProvided() {
+        registerActivity("test", /* lockTimeout */ null, /* executionTimeout */ null);
+
+        assertThat(metadataRegistry.getActivityMetadata("test").lockTimeout())
+                .isEqualTo(DEFAULT_LOCK_TIMEOUT);
+    }
+
+    @Test
+    void shouldPreferProvidedLockTimeoutOverDefault() {
+        registerActivity("test", Duration.ofMinutes(15), /* executionTimeout */ null);
+
+        assertThat(metadataRegistry.getActivityMetadata("test").lockTimeout())
+                .isEqualTo(Duration.ofMinutes(15));
     }
 
     @Test
@@ -62,7 +79,10 @@ class MetadataRegistryTest {
                 .withMessageContaining("executionTimeout must be positive");
     }
 
-    private void registerActivity(String name, Duration lockTimeout, @Nullable Duration executionTimeout) {
+    private void registerActivity(
+            String name,
+            @Nullable Duration lockTimeout,
+            @Nullable Duration executionTimeout) {
         metadataRegistry.registerActivity(
                 name,
                 voidConverter(),

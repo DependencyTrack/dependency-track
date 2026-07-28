@@ -234,14 +234,33 @@ public final class Buffer<T> implements Closeable {
             throw new TimeoutException("Timed out while waiting for buffer queue to accept the item");
         }
 
+        maybeRequestFlush();
+
+        return future;
+    }
+
+    public @Nullable CompletableFuture<Void> offer(T item) {
+        if (status != Status.RUNNING) {
+            return null;
+        }
+
+        final var future = new CompletableFuture<Void>();
+
+        final boolean added = itemsQueue.offer(new BufferedItem<>(item, System.nanoTime(), future));
+        if (!added) {
+            return null;
+        }
+
+        maybeRequestFlush();
+
+        return future;
+    }
+
+    private void maybeRequestFlush() {
         if (itemsQueue.size() >= maxBatchSize) {
-            // Request a flush to be performed, but don't block
-            // if the queue already has a pending request.
             LOGGER.debug("{}: Requesting another flush because {} items are still queued", name, itemsQueue.size());
             boolean _ = flushRequestQueue.offer(true);
         }
-
-        return future;
     }
 
     private void flushLoop() {

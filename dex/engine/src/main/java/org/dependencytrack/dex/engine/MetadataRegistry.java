@@ -39,6 +39,7 @@ final class MetadataRegistry {
 
     private static final Pattern WORKFLOW_NAME_PATTERN = Pattern.compile("^[\\w-]+");
     private static final Pattern ACTIVITY_NAME_PATTERN = WORKFLOW_NAME_PATTERN;
+    private final Duration defaultActivityLockTimeout;
     private final Duration defaultActivityExecutionTimeout;
 
     @SuppressWarnings("rawtypes")
@@ -53,7 +54,12 @@ final class MetadataRegistry {
     @SuppressWarnings("rawtypes")
     private final Map<String, ActivityMetadata> activityMetadataByName = new HashMap<>();
 
-    MetadataRegistry(Duration defaultActivityExecutionTimeout) {
+    MetadataRegistry(
+            Duration defaultActivityLockTimeout,
+            Duration defaultActivityExecutionTimeout) {
+        this.defaultActivityLockTimeout = requireNonNull(
+                defaultActivityLockTimeout,
+                "defaultActivityLockTimeout must not be null");
         this.defaultActivityExecutionTimeout = requireNonNull(
                 defaultActivityExecutionTimeout,
                 "defaultActivityExecutionTimeout must not be null");
@@ -120,15 +126,7 @@ final class MetadataRegistry {
             Activity<A, R> activity,
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
-            Duration lockTimeout) {
-        registerActivity(activity, argumentConverter, resultConverter, lockTimeout, null);
-    }
-
-    <A, R> void registerActivity(
-            Activity<A, R> activity,
-            PayloadConverter<A> argumentConverter,
-            PayloadConverter<R> resultConverter,
-            Duration lockTimeout,
+            @Nullable Duration lockTimeout,
             @Nullable Duration executionTimeout) {
         requireNonNull(activity, "activity must not be null");
 
@@ -149,32 +147,20 @@ final class MetadataRegistry {
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
             String defaultTaskQueueName,
-            Duration lockTimeout,
-            Activity<A, R> activity) {
-        registerActivity(
-                name,
-                argumentConverter,
-                resultConverter,
-                defaultTaskQueueName,
-                lockTimeout,
-                null,
-                activity);
-    }
-
-    <A, R> void registerActivity(
-            String name,
-            PayloadConverter<A> argumentConverter,
-            PayloadConverter<R> resultConverter,
-            String defaultTaskQueueName,
-            Duration lockTimeout,
+            @Nullable Duration lockTimeout,
             @Nullable Duration executionTimeout,
             Activity<A, R> activity) {
         requireValidActivityName(name);
         requireNonNull(argumentConverter, "argumentConverter must not be null");
         requireNonNull(resultConverter, "resultConverter must not be null");
         requireValidTaskQueueName(defaultTaskQueueName);
-        requireValidLockTimeout(lockTimeout);
         requireNonNull(activity, "activity must not be null");
+
+        final Duration effectiveLockTimeout =
+                lockTimeout == null
+                        ? defaultActivityLockTimeout
+                        : lockTimeout;
+        requireValidLockTimeout(effectiveLockTimeout);
 
         final Duration effectiveExecutionTimeout =
                 executionTimeout == null
@@ -198,7 +184,7 @@ final class MetadataRegistry {
                 argumentConverter,
                 resultConverter,
                 defaultTaskQueueName,
-                lockTimeout,
+                effectiveLockTimeout,
                 effectiveExecutionTimeout);
         activityNameByExecutorClass.put(activity.getClass(), name);
         activityMetadataByName.put(name, metadata);

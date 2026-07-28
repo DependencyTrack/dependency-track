@@ -35,6 +35,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -46,6 +47,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 
 import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_ACTIVITY_NAME;
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_ACTIVITY_TASK_ATTEMPT;
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_ACTIVITY_TASK_EXECUTION_ID;
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_WORKFLOW_RUN_ID;
 
 final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
 
@@ -86,9 +91,10 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
     void process(final ActivityTask task) {
-        try (var _ = MDC.putCloseable("workflowRunId", task.id().workflowRunId().toString());
-             var _ = MDC.putCloseable("activityName", task.activityName());
-             var _ = MDC.putCloseable("activityTaskAttempt", String.valueOf(task.attempt()))) {
+        try (var _ = MDC.putCloseable(MDC_WORKFLOW_RUN_ID, task.id().workflowRunId().toString());
+             var _ = MDC.putCloseable(MDC_ACTIVITY_NAME, task.activityName());
+             var _ = MDC.putCloseable(MDC_ACTIVITY_TASK_ATTEMPT, String.valueOf(task.attempt()));
+             var _ = MDC.putCloseable(MDC_ACTIVITY_TASK_EXECUTION_ID, task.executionId())) {
             final ActivityMetadata activityMetadata;
             try {
                 activityMetadata = metadataRegistry.getActivityMetadata(task.activityName());
@@ -98,21 +104,15 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
                 return;
             }
 
-            final var ctx = new ActivityContextImpl(engine, task, activityMetadata.lockTimeout());
-
             final Object arg;
             try {
                 arg = activityMetadata.argumentConverter().convertFromPayload(task.argument());
             } catch (RuntimeException e) {
-                logger.warn("Failed to deserialize activity argument; Failing task terminally", e);
-                engine.onTaskEvent(
-                        new ActivityTaskFailedEvent(
-                                task,
-                                new TerminalApplicationFailureException(e),
-                                /* retryAt */ null));
+                fail(task, "Failed to deserialize activity argument", new TerminalApplicationFailureException(e));
                 return;
             }
 
+            final var ctx = new ActivityContextImpl(task);
             final var executionStoppedLatch = new CountDownLatch(1);
             final Future<Object> executionFuture;
             try {
@@ -130,84 +130,57 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
             }
 
             final Duration executionTimeout = activityMetadata.executionTimeout();
-            try {
-                final Object activityResult = executionFuture.get(executionTimeout.toMillis(), TimeUnit.MILLISECONDS);
-                final Payload result;
-                try {
-                    result = activityMetadata.resultConverter().convertToPayload(activityResult);
-                } catch (RuntimeException e) {
-                    logger.warn("Failed to serialize activity result; Failing task terminally", e);
-                    engine.onTaskEvent(
-                            new ActivityTaskFailedEvent(
-                                    task,
-                                    new TerminalApplicationFailureException(e),
-                                    /* retryAt */ null));
-                    return;
-                }
-                engine.onTaskEvent(new ActivityTaskCompletedEvent(task, result));
+            final ActivityHeartbeatRegistration heartbeatRegistration =
+                    engine.registerActivityHeartbeat(
+                            task,
+                            activityMetadata.lockTimeout(),
+                            executionFuture);
+            final Object activityResult;
+
+            try (heartbeatRegistration) {
+                activityResult = executionFuture.get(executionTimeout.toMillis(), TimeUnit.MILLISECONDS);
+            } catch (CancellationException e) {
+                tryAwaitExecutionCompletion(executionStoppedLatch);
+                logger.warn("""
+                        Activity task lock was lost; discarding this execution as \
+                        another worker has taken over the task""");
+                return;
             } catch (TimeoutException e) {
                 executionFuture.cancel(/* interruptIfRunning */ true);
+                tryAwaitExecutionCompletion(executionStoppedLatch);
 
-                // Wait a short moment for the activity task to terminate before moving on.
-                //
-                // NB: Calling Future#get after cancellation returns immediately even
-                // when the backing task is still executing. Hence, using a latch instead.
-                try {
-                    if (!executionStoppedLatch.await(5, TimeUnit.SECONDS)) {
-                        logger.warn("""
-                                Activity did not complete within 5s after cancellation; \
-                                the next attempt may run concurrently with it""");
-                    }
-                } catch (InterruptedException _) {
-                    logger.debug("Interrupted while waiting for cancelled task execution to complete");
-                }
-
-                final var cause = new TimeoutException(
-                        "Activity execution exceeded timeout of %s".formatted(
-                                executionTimeout));
+                final String message = "Activity execution exceeded timeout of %s".formatted(executionTimeout);
+                final var cause = new TimeoutException(message);
                 cause.initCause(e);
 
-                final Instant retryAt = computeRetryAt(task, cause);
-                if (retryAt == null) {
-                    logger.warn(
-                            "Activity execution exceeded timeout of {}; Failing task terminally",
-                            executionTimeout);
-                } else {
-                    logger.warn(
-                            "Activity execution exceeded timeout of {}; Next retry due at {} (attempt {}/{})",
-                            executionTimeout,
-                            retryAt,
-                            task.attempt() + 1,
-                            task.retryPolicy().maxAttempts());
-                }
-                engine.onTaskEvent(new ActivityTaskFailedEvent(task, cause, retryAt));
+                fail(task, message, cause);
+                return;
             } catch (ExecutionException e) {
                 final Throwable cause = e.getCause();
                 if (cause instanceof InterruptedException || executionExecutor.isShutdown()) {
                     logger.debug("Activity was interrupted or worker is shutting down; abandoning task");
                     abandon(task);
-                } else if (cause instanceof TaskLockLostException) {
-                    logger.warn("""
-                            Activity task lock was lost, likely because execution took longer than \
-                            the lock timeout without a heartbeat; discarding this execution as \
-                            another worker has taken over the task""");
                 } else {
-                    final Instant retryAt = computeRetryAt(task, cause);
-                    if (retryAt == null) {
-                        logger.warn("Activity failed terminally after {} attempt(s)", task.attempt(), cause);
-                    } else {
-                        logger.warn(
-                                "Activity failed; Next retry due at {} (attempt {}/{})",
-                                retryAt, task.attempt() + 1, task.retryPolicy().maxAttempts(), cause);
-                    }
-                    engine.onTaskEvent(new ActivityTaskFailedEvent(task, cause, retryAt));
+                    fail(task, "Activity failed", cause);
                 }
+                return;
             } catch (InterruptedException e) {
                 logger.debug("Interrupted while waiting for activity execution to complete; Abandoning task");
                 executionFuture.cancel(true);
                 abandon(task);
                 Thread.currentThread().interrupt();
+                return;
             }
+
+            final Payload result;
+            try {
+                result = activityMetadata.resultConverter().convertToPayload(activityResult);
+            } catch (RuntimeException e) {
+                fail(task, "Failed to serialize activity result", new TerminalApplicationFailureException(e));
+                return;
+            }
+
+            engine.onTaskEvent(new ActivityTaskCompletedEvent(task, result));
         }
     }
 
@@ -228,6 +201,35 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
             Thread.currentThread().interrupt();
         }
         super.close();
+    }
+
+    private void tryAwaitExecutionCompletion(CountDownLatch executionStoppedLatch) {
+        // Wait a short moment for the activity task to terminate before moving on.
+        //
+        // NB: Calling Future#get after cancellation returns immediately even
+        // when the backing task is still executing. Hence, using a latch instead.
+        try {
+            if (!executionStoppedLatch.await(5, TimeUnit.SECONDS)) {
+                logger.warn("""
+                        Activity did not complete within 5s after cancellation; \
+                        the next attempt may run concurrently with it""");
+            }
+        } catch (InterruptedException _) {
+            logger.debug("Interrupted while waiting for cancelled task execution to complete");
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void fail(ActivityTask task, String message, Throwable cause) {
+        final Instant retryAt = computeRetryAt(task, cause);
+        if (retryAt == null) {
+            logger.warn("{}; Failing task terminally after {} attempt(s)", message, task.attempt(), cause);
+        } else {
+            logger.warn(
+                    "{}; Next retry due at {} (attempt {}/{})",
+                    message, retryAt, task.attempt() + 1, task.retryPolicy().maxAttempts(), cause);
+        }
+        engine.onTaskEvent(new ActivityTaskFailedEvent(task, cause, retryAt));
     }
 
     private static @Nullable Instant computeRetryAt(ActivityTask task, Throwable cause) {

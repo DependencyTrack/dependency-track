@@ -25,15 +25,17 @@ import org.dependencytrack.notification.api.templating.RenderedNotificationTempl
 import org.dependencytrack.notification.proto.v1.Notification;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 
 import static java.util.Objects.requireNonNull;
+import static org.dependencytrack.notification.publishing.http.HttpNotificationResponses.ensureSuccessful2xxResponse;
 
 /**
  * @since 5.0.0
@@ -79,17 +81,14 @@ final class WebhookNotificationPublisher implements NotificationPublisher {
         }
 
         try {
-            final var response = httpClient.send(requestBuilder.build(), BodyHandlers.discarding());
-            RetryablePublishException.throwIfRetryableError(response);
-            final int statusCode = response.statusCode();
-            if (statusCode < 200 || statusCode > 299) {
-                throw new IllegalStateException("Request failed with unexpected response code: " + statusCode);
-            }
+            final HttpResponse<InputStream> response = httpClient.send(requestBuilder.build(), BodyHandlers.ofInputStream());
+            ensureSuccessful2xxResponse(response);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RetryablePublishException("Interrupted while sending request", e);
-        } catch (HttpTimeoutException e) {
-            throw new RetryablePublishException("Timed out while sending request", e);
+        } catch (IOException e) {
+            RetryablePublishException.throwIfRetryableNetworkError(e, "Request failed while sending notification");
+            throw e;
         }
     }
 

@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * @since 5.0.0
  */
@@ -59,7 +61,7 @@ final class WatermarkStore {
         for (final Map.Entry<String, KeyValueStore.Entry> mapEntry : kvEntryByKey.entrySet()) {
             final String kvKey = mapEntry.getKey();
             final KeyValueStore.Entry kvEntry = mapEntry.getValue();
-            final String ecosystem = ecosystemByKey.get(kvKey);
+            final String ecosystem = requireNonNull(ecosystemByKey.get(kvKey), "ecosystem must not be null");
 
             final Instant watermark;
             try {

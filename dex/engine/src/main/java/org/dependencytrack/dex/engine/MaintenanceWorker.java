@@ -39,6 +39,7 @@ final class MaintenanceWorker implements Closeable {
     private final Supplier<Boolean> leadershipSupplier;
     private final Duration runRetentionDuration;
     private final int runDeletionBatchSize;
+    private final int runDeletionMaxBatchesPerCycle;
     private final Duration initialDelay;
     private final Duration interval;
     private @Nullable ScheduledExecutorService executor;
@@ -48,12 +49,14 @@ final class MaintenanceWorker implements Closeable {
             Supplier<Boolean> leadershipSupplier,
             Duration runRetentionDuration,
             int runDeletionBatchSize,
+            int runDeletionMaxBatchesPerCycle,
             Duration initialDelay,
             Duration interval) {
         this.jdbi = jdbi;
         this.leadershipSupplier = leadershipSupplier;
         this.runRetentionDuration = runRetentionDuration;
         this.runDeletionBatchSize = runDeletionBatchSize;
+        this.runDeletionMaxBatchesPerCycle = runDeletionMaxBatchesPerCycle;
         this.initialDelay = initialDelay;
         this.interval = interval;
     }
@@ -91,32 +94,48 @@ final class MaintenanceWorker implements Closeable {
 
         LOGGER.debug("Enforcing run retention");
 
-        jdbi.useTransaction(handle -> {
-            final Update update = handle.createUpdate("""
-                    with cte_candidates as (
-                      select id
-                        from dex_workflow_run
-                       where completed_at < (NOW() - (:retentionDuration))
-                       order by completed_at
-                       limit :batchSize
-                         for no key update
-                        skip locked
-                    )
-                    delete from dex_workflow_run
-                     where id in (select id from cte_candidates)
-                    """);
+        long totalDeleted = 0;
+        int batchDeleted;
+        int batchesExecuted = 0;
 
-            final int runsDeleted = update
-                    .bind("retentionDuration", runRetentionDuration)
-                    .bind("batchSize", runDeletionBatchSize)
-                    .execute();
-
-            if (runsDeleted > 0) {
-                LOGGER.info("Deleted {} completed workflow run(s)", runsDeleted);
-            } else {
-                LOGGER.debug("No completed workflow runs deleted");
+        do {
+            if (!leadershipSupplier.get()) {
+                LOGGER.debug("Leadership lost after {} batch(es)", batchesExecuted);
+                break;
             }
-        });
+
+            batchDeleted = jdbi.inTransaction(handle -> {
+                final Update update = handle.createUpdate("""
+                        with cte_candidates as (
+                          select id
+                            from dex_workflow_run
+                           where completed_at < (NOW() - (:retentionDuration))
+                           order by completed_at
+                           limit :batchSize
+                             for no key update
+                            skip locked
+                        )
+                        delete from dex_workflow_run
+                         where id in (select id from cte_candidates)
+                        """);
+
+                return update
+                        .bind("retentionDuration", runRetentionDuration)
+                        .bind("batchSize", runDeletionBatchSize)
+                        .execute();
+            });
+
+            totalDeleted += batchDeleted;
+        } while (batchDeleted == runDeletionBatchSize
+                && ++batchesExecuted < runDeletionMaxBatchesPerCycle);
+
+        if (totalDeleted > 0) {
+            LOGGER.info(
+                    "Deleted {} completed workflow run(s) in {} batch(es)",
+                    totalDeleted, batchesExecuted);
+        } else {
+            LOGGER.debug("No completed workflow runs deleted");
+        }
     }
 
 }

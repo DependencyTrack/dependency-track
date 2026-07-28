@@ -51,7 +51,7 @@ class MaintenanceWorkerTest {
         dataSource.setPassword(postgresContainer.getPassword());
         dataSource.setDatabaseName(postgresContainer.getDatabaseName());
 
-        jdbi = JdbiFactory.create(dataSource, new SimplePageTokenEncoder());
+        jdbi = JdbiFactory.create(dataSource, Duration.ofSeconds(10), new SimplePageTokenEncoder());
     }
 
     @Test
@@ -75,7 +75,8 @@ class MaintenanceWorkerTest {
                 jdbi,
                 /* leadershipSupplier */ () -> true,
                 /* runRetentionDuration */ Duration.ofDays(3),
-                /* runRetentionBatchSize */ 10,
+                /* runDeletionBatchSize */ 10,
+                /* runDeletionMaxBatchesPerCycle */ 100,
                 /* initialDelay */ Duration.ZERO,
                 /* interval */ Duration.ofMillis(100));
 

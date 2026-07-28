@@ -37,6 +37,11 @@
     <dependencies>
         <dependency>
             <groupId>org.dependencytrack</groupId>
+            <artifactId>net-support</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
             <artifactId>plugin-api</artifactId>
             <version>${project.version}</version>
         </dependency>

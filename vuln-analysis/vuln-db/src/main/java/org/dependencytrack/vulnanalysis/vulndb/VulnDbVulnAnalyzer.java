@@ -27,6 +27,7 @@ import org.cyclonedx.proto.v1_7.Property;
 import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.dependencytrack.cache.api.Cache;
+import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -157,7 +158,9 @@ final class VulnDbVulnAnalyzer implements VulnAnalyzer {
             try {
                 vulns = apiClient.getVulnerabilitiesByCpe(cpe);
             } catch (IOException e) {
-                throw new UncheckedIOException("Failed to fetch vulnerabilities for CPE '%s'".formatted(cpe), e);
+                final var message = "Failed to fetch vulnerabilities for CPE '%s'".formatted(cpe);
+                RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, message);
+                throw new UncheckedIOException(message, e);
             }
 
             if (!vulns.isEmpty()) {

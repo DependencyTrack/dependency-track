@@ -34,6 +34,7 @@ If Maven needs to be invoked directly, only do so from the repository root.
 * Favor strong cohesion, loose coupling.
 * Prefer raw SQL + JDBI for new persistence code. JDO/DataNucleus is legacy; avoid touching unless necessary.
 * Legacy `apiserver` reuses persistence models as REST DTOs. New endpoints must separate API from persistence.
+* Nullability is declared with JSpecify and enforced by NullAway. Every new package must have a `package-info.java` annotated with `@NullMarked`. See [`docs/NULLABILITY.md`](docs/NULLABILITY.md).
 * Substantial changes need an ADR under `docs/adr/` (*Accepted* before merge). See `CONTRIBUTING.md#architecture-decision-records` for the trigger criteria and `docs/adr/README.md` for the format and writing style. Start from `docs/adr/000-template.md`.
 
 ## GitHub Issues and PRs

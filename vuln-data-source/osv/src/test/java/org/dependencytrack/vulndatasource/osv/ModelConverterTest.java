@@ -751,11 +751,6 @@ class ModelConverterTest {
             assertThat(trimSummary("I'm a short Summary")).isEqualTo("I'm a short Summary");
         }
 
-        @Test
-        void shouldReturnNullForNullSummary() {
-            assertThat(trimSummary(null)).isNull();
-        }
-
     }
 
     @Test

@@ -50,6 +50,7 @@ import org.dependencytrack.notification.ProcessScheduledNotificationRuleActivity
 import org.dependencytrack.notification.ProcessScheduledNotificationsWorkflow;
 import org.dependencytrack.notification.PublishNotificationActivity;
 import org.dependencytrack.notification.PublishNotificationWorkflow;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.pkgmetadata.FetchPackageMetadataResolutionCandidatesActivity;
@@ -158,7 +159,7 @@ public final class DexEngineInitializer implements ServletContextListener {
         requireNonNull(secretManager, "secretManager has not been initialized");
 
         final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
-                Map.of("baseUrl", () -> withJdbiHandle(
+                Map.of(NotificationTemplateVariables.BASE_URL, () -> withJdbiHandle(
                         handle -> handle
                                 .attach(ConfigPropertyDao.class)
                                 .getOptionalValue(GENERAL_BASE_URL)
@@ -411,6 +412,10 @@ public final class DexEngineInitializer implements ServletContextListener {
         final var engineConfig = new DexEngineConfig(dataSource);
         engineConfig.setPageTokenEncoder(new SimplePageTokenEncoder());
 
+        config.getOptionalValue("dt.dex-engine.query-timeout-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig::setQueryTimeout);
+
         // Leader election.
         config.getOptionalValue("dt.dex-engine.leader-election.enabled", boolean.class)
                 .ifPresent(engineConfig.leaderElection()::setEnabled);
@@ -438,6 +443,9 @@ public final class DexEngineInitializer implements ServletContextListener {
                 .ifPresent(engineConfig.workflowTaskScheduler()::setPollInterval);
         getBackoffFunction(config, "dt.dex-engine.workflow-task-scheduler.poll-backoff")
                 .ifPresent(engineConfig.workflowTaskScheduler()::setPollBackoffFunction);
+        config.getOptionalValue("dt.dex-engine.workflow-task-scheduler.concurrency-key-wakeup-repair-interval-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig.workflowTaskScheduler()::setConcurrencyKeyWakeupRepairInterval);
 
         // Activity task scheduler.
         config.getOptionalValue("dt.dex-engine.activity-task-scheduler.poll-interval-ms", long.class)
@@ -486,6 +494,8 @@ public final class DexEngineInitializer implements ServletContextListener {
                 .ifPresent(engineConfig.maintenance()::setRunRetentionDuration);
         config.getOptionalValue("dt.dex-engine.maintenance.run-deletion-batch-size", int.class)
                 .ifPresent(engineConfig.maintenance()::setRunDeletionBatchSize);
+        config.getOptionalValue("dt.dex-engine.maintenance.run-deletion-max-batches-per-cycle", int.class)
+                .ifPresent(engineConfig.maintenance()::setRunDeletionMaxBatchesPerCycle);
 
         return engineConfig;
     }

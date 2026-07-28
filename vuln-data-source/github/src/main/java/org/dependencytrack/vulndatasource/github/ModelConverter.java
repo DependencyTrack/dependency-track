@@ -39,6 +39,7 @@ import org.cyclonedx.proto.v1_7.VulnerabilityAffectedVersions;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.cyclonedx.proto.v1_7.VulnerabilityRating;
 import org.cyclonedx.proto.v1_7.VulnerabilityReference;
+import org.jspecify.annotations.Nullable;
 import org.metaeffekt.core.security.cvss.CvssVector;
 import org.metaeffekt.core.security.cvss.v3.Cvss3;
 import org.metaeffekt.core.security.cvss.v3.Cvss3P0;
@@ -192,7 +193,7 @@ final class ModelConverter {
         return List.of();
     }
 
-    private static Optional<VulnerabilityRating> buildCvssRating(final String cvssVector) {
+    private static Optional<VulnerabilityRating> buildCvssRating(@Nullable String cvssVector) {
         if (cvssVector == null) {
             return Optional.empty();
         }
@@ -218,7 +219,7 @@ final class ModelConverter {
         return Optional.empty();
     }
 
-    private static List<VulnerabilityReference> mapVulnerabilityReferences(final SecurityAdvisory advisory) {
+    private static @Nullable List<VulnerabilityReference> mapVulnerabilityReferences(SecurityAdvisory advisory) {
         if (advisory.getIdentifiers() == null || advisory.getIdentifiers().isEmpty()) {
             return null;
         }
@@ -254,7 +255,7 @@ final class ModelConverter {
     }
 
 
-    private static List<ExternalReference> mapExternalReferences(SecurityAdvisory advisory) {
+    private static @Nullable List<ExternalReference> mapExternalReferences(SecurityAdvisory advisory) {
         if (advisory.getReferences() == null || advisory.getReferences().isEmpty()) {
             return null;
         }
@@ -267,7 +268,7 @@ final class ModelConverter {
         return externalReferences;
     }
 
-    private static VulnerabilityAffectedVersions parseVersionRangeAffected(final io.github.jeremylong.openvulnerability.client.ghsa.Vulnerability vuln) {
+    private static @Nullable VulnerabilityAffectedVersions parseVersionRangeAffected(final io.github.jeremylong.openvulnerability.client.ghsa.Vulnerability vuln) {
         var vulnerableVersionRange = vuln.getVulnerableVersionRange();
         try {
             var vers = versFromGhsaRange(vuln.getPackage().getEcosystem(), vulnerableVersionRange);
@@ -292,7 +293,7 @@ final class ModelConverter {
         return cwes;
     }
 
-    private static PackageURL convertToPurl(final Package pkg) {
+    private static @Nullable PackageURL convertToPurl(Package pkg) {
         final String purlType = switch (pkg.getEcosystem().toLowerCase()) {
             case "composer" -> PackageURL.StandardTypes.COMPOSER;
             case "erlang" -> PackageURL.StandardTypes.HEX;
@@ -308,8 +309,9 @@ final class ModelConverter {
             case "swift" -> "swift"; // https://github.com/package-url/purl-spec/blob/master/PURL-TYPES.rst#swift
             default -> {
                 // Not optimal, but still better than ignoring the package entirely.
-                LOGGER.warn("Unrecognized ecosystem %s; Assuming PURL type %s for %s".formatted(
-                        pkg.getEcosystem(), PackageURL.StandardTypes.GENERIC, pkg));
+                LOGGER.warn(
+                        "Unrecognized ecosystem {}; Assuming PURL type {} for {}",
+                        pkg.getEcosystem(), PackageURL.StandardTypes.GENERIC, pkg);
                 yield PackageURL.StandardTypes.GENERIC;
             }
         };
@@ -342,7 +344,7 @@ final class ModelConverter {
         }
     }
 
-    private static Severity calculateCvssSeverity(final CvssVector cvss) {
+    private static Severity calculateCvssSeverity(@Nullable CvssVector cvss) {
         if (cvss == null) {
             return SEVERITY_UNKNOWN;
         }
@@ -363,7 +365,7 @@ final class ModelConverter {
         return SEVERITY_UNKNOWN;
     }
 
-    private static Severity mapSeverity(String severity) {
+    private static Severity mapSeverity(@Nullable String severity) {
         if (severity == null) {
             return SEVERITY_UNKNOWN;
         }
@@ -378,8 +380,8 @@ final class ModelConverter {
         };
     }
 
-    private static String abbreviate(final String value, final int maxLength) {
-        if (value != null && value.length() > maxLength) {
+    private static String abbreviate(String value, int maxLength) {
+        if (value.length() > maxLength) {
             return value.substring(0, maxLength - 3) + "...";
         }
 

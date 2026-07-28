@@ -165,6 +165,7 @@ public class DexEngineConfig {
 
         private Duration runRetentionDuration = Duration.ofDays(1);
         private int runDeletionBatchSize = 1000;
+        private int runDeletionMaxBatchesPerCycle = 100;
         private Duration workerInitialDelay = Duration.ofMinutes(1);
         private Duration workerInterval = Duration.ofMinutes(30);
 
@@ -194,6 +195,17 @@ public class DexEngineConfig {
         }
 
         /**
+         * @return The maximum number of deletion batches to execute per worker cycle.
+         */
+        public int runDeletionMaxBatchesPerCycle() {
+            return runDeletionMaxBatchesPerCycle;
+        }
+
+        public void setRunDeletionMaxBatchesPerCycle(int runDeletionMaxBatchesPerCycle) {
+            this.runDeletionMaxBatchesPerCycle = runDeletionMaxBatchesPerCycle;
+        }
+
+        /**
          * @return Initial delay before the maintenance worker first runs.
          */
         public Duration workerInitialDelay() {
@@ -220,6 +232,7 @@ public class DexEngineConfig {
             return new StringJoiner(", ", getClass().getSimpleName() + "[", "]")
                     .add("runRetentionDuration=" + runRetentionDuration)
                     .add("runDeletionBatchSize=" + runDeletionBatchSize)
+                    .add("runDeletionMaxBatchesPerCycle=" + runDeletionMaxBatchesPerCycle)
                     .add("workerInitialDelay=" + workerInitialDelay)
                     .add("workerInterval=" + workerInterval)
                     .toString();
@@ -285,6 +298,7 @@ public class DexEngineConfig {
 
         private Duration pollInterval = Duration.ofMillis(100);
         private IntervalFunction pollBackoffFunction = ofExponentialRandomBackoff(100L, 2.0, 0.3, 3000L);
+        private Duration concurrencyKeyWakeupRepairInterval = Duration.ofSeconds(60);
 
         private TaskSchedulerConfig() {
         }
@@ -305,11 +319,26 @@ public class DexEngineConfig {
             this.pollBackoffFunction = pollBackoffFunction;
         }
 
+        /**
+         * @return Interval in which missing wakeup hints are repaired from source-of-truth state.
+         */
+        public Duration concurrencyKeyWakeupRepairInterval() {
+            return concurrencyKeyWakeupRepairInterval;
+        }
+
+        public void setConcurrencyKeyWakeupRepairInterval(Duration concurrencyKeyWakeupRepairInterval) {
+            if (concurrencyKeyWakeupRepairInterval.isNegative() || concurrencyKeyWakeupRepairInterval.isZero()) {
+                throw new IllegalArgumentException("concurrencyKeyWakeupRepairInterval must be positive");
+            }
+            this.concurrencyKeyWakeupRepairInterval = concurrencyKeyWakeupRepairInterval;
+        }
+
         @Override
         public String toString() {
             return new StringJoiner(", ", getClass().getSimpleName() + "[", "]")
                     .add("pollInterval=" + pollInterval)
                     .add("pollBackoffFunction=" + pollBackoffFunction)
+                    .add("concurrencyKeyWakeupRepairInterval=" + concurrencyKeyWakeupRepairInterval)
                     .toString();
         }
 
@@ -327,6 +356,7 @@ public class DexEngineConfig {
     private final TaskSchedulerConfig workflowTaskSchedulerConfig = new TaskSchedulerConfig();
     private final TaskSchedulerConfig activityTaskSchedulerConfig = new TaskSchedulerConfig();
 
+    private Duration queryTimeout = Duration.ofSeconds(10);
     private PageTokenEncoder pageTokenEncoder = new SimplePageTokenEncoder();
 
     public DexEngineConfig(DataSource dataSource) {
@@ -396,6 +426,21 @@ public class DexEngineConfig {
         return activityTaskSchedulerConfig;
     }
 
+    /**
+     * @return Timeout for database queries executed by the engine.
+     */
+    public Duration queryTimeout() {
+        return queryTimeout;
+    }
+
+    public void setQueryTimeout(Duration queryTimeout) {
+        requireNonNull(queryTimeout, "queryTimeout must not be null");
+        if (!queryTimeout.isPositive()) {
+            throw new IllegalArgumentException("queryTimeout must not be negative or zero");
+        }
+        this.queryTimeout = queryTimeout;
+    }
+
     public PageTokenEncoder pageTokenEncoder() {
         return pageTokenEncoder;
     }
@@ -418,6 +463,7 @@ public class DexEngineConfig {
                 .add("metricsConfig=" + metricsConfig)
                 .add("workflowTaskSchedulerConfig=" + workflowTaskSchedulerConfig)
                 .add("activityTaskSchedulerConfig=" + activityTaskSchedulerConfig)
+                .add("queryTimeout=" + queryTimeout)
                 .add("pageTokenEncoder=" + pageTokenEncoder)
                 .toString();
     }

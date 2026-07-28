@@ -63,16 +63,16 @@ final class NvdVulnDataSource implements VulnDataSource {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final List<NvdDataFeed> feeds;
-    private NvdDataFeed currentFeed;
+    private @Nullable NvdDataFeed currentFeed;
     private @Nullable String currentFeedSha256;
     private int currentFeedIndex = 0;
     private int currentFeedCvesProcessed = 0;
     private int currentFeedCvesSkipped = 0;
-    private InputStream currentFileInputStream;
-    private JsonParser currentJsonParser;
+    private @Nullable InputStream currentFileInputStream;
+    private @Nullable JsonParser currentJsonParser;
     private boolean hasNextCalled = false;
     private boolean completedSuccessfully = false;
-    private Bom nextItem;
+    private @Nullable Bom nextItem;
 
     NvdVulnDataSource(
             final WatermarkManager watermarkManager,
@@ -134,7 +134,7 @@ final class NvdVulnDataSource implements VulnDataSource {
             throw new NoSuchElementException();
         }
 
-        final Bom item = nextItem;
+        final Bom item = requireNonNull(nextItem);
         nextItem = null;
         hasNextCalled = false;
         return item;
@@ -239,7 +239,7 @@ final class NvdVulnDataSource implements VulnDataSource {
         return false;
     }
 
-    private Bom readNextItem() {
+    private @Nullable Bom readNextItem() {
         if (currentJsonParser == null) {
             return null;
         }

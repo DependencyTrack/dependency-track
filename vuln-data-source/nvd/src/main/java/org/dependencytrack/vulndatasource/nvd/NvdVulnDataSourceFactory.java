@@ -33,7 +33,6 @@ import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +57,6 @@ import static java.util.Objects.requireNonNull;
 /**
  * @since 5.0.0
  */
-@NullMarked
 final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeConfigurable, Testable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NvdVulnDataSourceFactory.class);
@@ -120,6 +118,8 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     public VulnDataSource create() {
         requireNonNull(configRegistry, "configRegistry must not be null");
         requireNonNull(kvStore, "kvStore must not be null");
+        requireNonNull(objectMapper, "objectMapper must not be null");
+        requireNonNull(httpClient, "httpClient must not be null");
 
         final var config = configRegistry.getRuntimeConfig(NvdVulnDataSourceConfigV1.class);
         if (!config.isEnabled()) {

@@ -276,8 +276,7 @@ final class ActivityTaskScheduler implements Closeable {
                     ) as limited
                 ),
                 cte_eligible_task as (
-                  select workflow_run_id
-                       , created_event_id
+                  select ctid
                     from dex_activity_task
                    where queue_name = :queueName
                      -- Only consider tasks that are not already queued.
@@ -297,10 +296,10 @@ final class ActivityTaskScheduler implements Closeable {
                 update dex_activity_task as wat
                    set status = 'QUEUED'
                      , updated_at = now()
-                  from cte_eligible_task
                  where wat.queue_name = :queueName
-                   and wat.workflow_run_id = cte_eligible_task.workflow_run_id
-                   and wat.created_event_id = cte_eligible_task.created_event_id
+                   -- NB: the non-constant limit in cte_eligible_task causes the query planner
+                   -- to over-estimate row counts. A CTID scan bypasses the suboptimal plan.
+                   and wat.ctid = any(array(select ctid from cte_eligible_task))
                 returning activity_name
                 """);
 

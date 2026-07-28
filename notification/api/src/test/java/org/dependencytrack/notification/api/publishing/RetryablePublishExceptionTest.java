@@ -28,12 +28,14 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 class RetryablePublishExceptionTest {
 
     @Test
+    @SuppressWarnings("ThrowableNotThrown")
     void shouldThrowWhenRetryAfterIsNegative() {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> new RetryablePublishException(null, Duration.of(-1, ChronoUnit.SECONDS)));
     }
 
     @Test
+    @SuppressWarnings("ThrowableNotThrown")
     void shouldThrowWhenRetryAfterIsZero() {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> new RetryablePublishException(null, Duration.of(0, ChronoUnit.SECONDS)));

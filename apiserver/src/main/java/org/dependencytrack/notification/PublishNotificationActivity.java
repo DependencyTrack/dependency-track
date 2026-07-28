@@ -129,13 +129,13 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
             try (final NotificationPublisher publisher = publisherFactory.create()) {
                 publisher.publish(publishCtx, notification);
 
-                if (ruleMetadata.logSuccessfulPublish()) {
+                if (shouldLogSuccessfulPublish(ruleMetadata.logSuccessfulPublish(), argument.getRuleTest())) {
                     LOGGER.info("Notification published successfully");
                 }
             } catch (RuntimeException | IOException e) {
                 if (e instanceof final RetryablePublishException rpe) {
                     throw new ApplicationFailureException(
-                            "Failed to publish notification with retryable cause", rpe, rpe.getRetryAfter());
+                            "Failed to publish notification with retryable cause", rpe, rpe.retryAfter());
                 }
 
                 throw new TerminalApplicationFailureException(
@@ -144,6 +144,10 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
         }
 
         return null;
+    }
+
+    static boolean shouldLogSuccessfulPublish(final boolean logSuccessfulPublish, final boolean ruleTest) {
+        return logSuccessfulPublish || ruleTest;
     }
 
     private record RuleMetadata(

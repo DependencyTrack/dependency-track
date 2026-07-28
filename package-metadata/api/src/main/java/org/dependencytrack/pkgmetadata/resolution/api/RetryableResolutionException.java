@@ -18,15 +18,14 @@
  */
 package org.dependencytrack.pkgmetadata.resolution.api;
 
+import org.dependencytrack.support.net.HttpRetry;
+import org.dependencytrack.support.net.TransientNetworkErrors;
 import org.jspecify.annotations.Nullable;
 
+import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 
 /**
  * Exception for resolution failures that may be retried.
@@ -64,48 +63,18 @@ public class RetryableResolutionException extends RuntimeException {
         return retryAfter;
     }
 
-    public static void throwIfRetryableError(HttpResponse<?> response, Clock clock) {
-        final int statusCode = response.statusCode();
-
-        if (statusCode == 429) {
-            throw new RetryableResolutionException(
-                    "Rate limited by %s".formatted(response.request().uri()),
-                    null,
-                    extractRetryAfter(response, clock));
+    public static void throwIfRetryableHttpError(HttpResponse<?> response, Clock clock) {
+        final HttpRetry retry = HttpRetry.of(response, clock);
+        if (!retry.isRetryable()) {
+            return;
         }
 
-        if (statusCode == 503 || statusCode == 504) {
-            throw new RetryableResolutionException(
-                    "Server error %d from %s".formatted(statusCode, response.request().uri()),
-                    null,
-                    extractRetryAfter(response, clock));
-        }
+        throw new RetryableResolutionException(retry.description(), null, retry.retryAfter());
     }
 
-    private static @Nullable Duration extractRetryAfter(HttpResponse<?> response, Clock clock) {
-        return response.headers()
-                .firstValue("Retry-After")
-                .map(value -> tryParseRetryAfterHeader(value, clock))
-                .orElse(null);
-    }
-
-    static @Nullable Duration tryParseRetryAfterHeader(String value, Clock clock) {
-        final String trimmed = value.strip();
-        try {
-            final long seconds = Long.parseLong(trimmed);
-            return seconds > 0 ? Duration.ofSeconds(seconds) : null;
-        } catch (NumberFormatException _) {
-            // Fallthrough to date parsing.
-        }
-
-        try {
-            final Instant deadline = ZonedDateTime
-                    .parse(trimmed, DateTimeFormatter.RFC_1123_DATE_TIME)
-                    .toInstant();
-            final Duration delta = Duration.between(clock.instant(), deadline);
-            return (delta.isZero() || delta.isNegative()) ? null : delta;
-        } catch (DateTimeParseException _) {
-            return null;
+    public static void throwIfRetryableNetworkError(IOException e, @Nullable String message) {
+        if (TransientNetworkErrors.isTransient(e)) {
+            throw new RetryableResolutionException(message, e);
         }
     }
 

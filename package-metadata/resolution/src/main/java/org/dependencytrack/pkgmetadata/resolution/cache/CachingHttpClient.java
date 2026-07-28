@@ -25,6 +25,7 @@ import org.dependencytrack.cache.api.Cache;
 import org.dependencytrack.pkgmetadata.resolution.api.PackageRepository;
 import org.dependencytrack.pkgmetadata.resolution.api.RetryableResolutionException;
 import org.dependencytrack.pkgmetadata.resolution.cache.proto.v1.CacheEntry;
+import org.dependencytrack.support.net.TransientNetworkErrors;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpTimeoutException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -205,12 +205,17 @@ public final class CachingHttpClient {
             NetworkCall<T> call) throws InterruptedException {
         try {
             return call.execute();
-        } catch (HttpTimeoutException e) {
-            return fallbackOrRethrow(entry, staleExtractor, uri, e, () -> new RetryableResolutionException(e));
         } catch (RetryableResolutionException e) {
             return fallbackOrRethrow(entry, staleExtractor, uri, e, () -> e);
         } catch (IOException e) {
-            return fallbackOrRethrow(entry, staleExtractor, uri, e, () -> new UncheckedIOException(e));
+            return fallbackOrRethrow(
+                    entry,
+                    staleExtractor,
+                    uri,
+                    e,
+                    TransientNetworkErrors.isTransient(e)
+                            ? () -> new RetryableResolutionException(e)
+                            : () -> new UncheckedIOException(e));
         }
     }
 
@@ -419,7 +424,7 @@ public final class CachingHttpClient {
 
     private <T> T throwUnexpected(HttpResponse<?> response) {
         try {
-            RetryableResolutionException.throwIfRetryableError(response, clock);
+            RetryableResolutionException.throwIfRetryableHttpError(response, clock);
         } catch (RetryableResolutionException e) {
             final Duration effectiveBackoff =
                     rateLimitGate.recordRateLimit(

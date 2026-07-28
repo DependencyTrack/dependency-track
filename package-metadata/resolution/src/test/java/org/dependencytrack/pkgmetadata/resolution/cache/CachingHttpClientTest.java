@@ -619,13 +619,13 @@ class CachingHttpClientTest {
     }
 
     @Test
-    void shouldRethrowIoExceptionWhenNoCachedEntry(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldThrowRetryableExceptionOnConnectionResetWhenNoCachedEntry(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlPathEqualTo(PATH))
                 .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
 
         final var cachingHttpClient = new CachingHttpClient(httpClient, cache, Duration.ofHours(1));
 
-        assertThatExceptionOfType(UncheckedIOException.class)
+        assertThatExceptionOfType(RetryableResolutionException.class)
                 .isThrownBy(() -> cachingHttpClient.get(requestBuilderFor(wmRuntimeInfo), null));
     }
 

@@ -17,6 +17,7 @@
 
 BASE_REF ?= origin/main
 MIGRATION_DIR := migration/src/main/resources/org/dependencytrack/migration
+DEX_MIGRATION_DIR := dex/engine-migration/src/main/resources/org/dependencytrack/dex/engine/migration
 SQUAWK_IMAGE := ghcr.io/sbdchd/squawk:2.58.0
 
 MVN := $(shell command -v mvn 2>/dev/null)
@@ -103,6 +104,10 @@ lint-migrations:
 		lint $$changed
 .PHONY: lint-migrations
 
+lint-dex-migration:
+	@$(MAKE) lint-migrations MIGRATION_DIR="$(DEX_MIGRATION_DIR)"
+.PHONY: lint-dex-migration
+
 lint-openapi:
 	@dups=$$(find api/src/main/openapi -path '*/schemas/*.yaml' -exec basename {} \; \
 		| sort | uniq -d); \
@@ -123,7 +128,7 @@ lint-proto:
 	buf lint
 .PHONY: lint-proto
 
-lint: lint-java lint-migrations lint-openapi lint-proto
+lint: lint-java lint-migrations lint-dex-migration lint-openapi lint-proto
 .PHONY: lint
 
 test:

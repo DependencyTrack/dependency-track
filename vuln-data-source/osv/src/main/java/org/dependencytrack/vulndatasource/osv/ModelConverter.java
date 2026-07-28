@@ -141,11 +141,12 @@ final class ModelConverter {
                         .setName(CycloneDxPropertyNames.OSV_ECOSYSTEM)
                         .setValue(currentEcosystem));
 
-        if (osv.getSummary() != null) {
+        final String summary = osv.getSummary();
+        if (summary != null) {
             vuln.addProperties(
                     Property.newBuilder()
                             .setName(CycloneDxPropertyNames.VULN_TITLE)
-                            .setValue(trimSummary(osv.getSummary())));
+                            .setValue(trimSummary(summary)));
         }
         if (osv.getDetails() != null) {
             vuln.setDescription(osv.getDetails());
@@ -667,11 +668,7 @@ final class ModelConverter {
         return null;
     }
 
-    static String trimSummary(@Nullable String summary) {
-        if (summary == null) {
-            return null;
-        }
-
+    static String trimSummary(String summary) {
         if (summary.length() > MAX_TITLE_LEN) {
             return summary.substring(0, MAX_TITLE_LEN - 2) + "..";
         }

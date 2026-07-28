@@ -385,6 +385,7 @@ public class NotificationPublisherResource extends AbstractApiResource {
                         .setNotificationId(notification.getId())
                         .setNotification(notification)
                         .addNotificationRuleNames(rule.getName())
+                        .setRuleTest(true)
                         .build();
 
                 createRunRequests.add(

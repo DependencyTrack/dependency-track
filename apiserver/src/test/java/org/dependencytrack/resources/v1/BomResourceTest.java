@@ -26,6 +26,7 @@ import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.github.luben.zstd.ZstdOutputStream;
 import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -79,6 +80,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -100,6 +102,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPOutputStream;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.json;
@@ -2698,5 +2701,52 @@ class BomResourceTest extends ResourceTest {
         assertThat(project).isNotNull();
         assertThat(project.isActive()).isFalse();
         assertThat(project.getInactiveSince()).isNotNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"gzip", "zstd"})
+    void uploadBomAcceptsCompressedBomTest(String encoding) throws Exception {
+        initializeWithPermissions(Permissions.BOM_UPLOAD);
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.createProject(project, List.of(), false);
+
+        final var bomBytes = resourceToByteArray("/unit/bom-1.xml");
+        var encodedBomStream = new ByteArrayOutputStream();
+        final var encoder = switch (encoding) {
+            case "gzip" -> new GZIPOutputStream(encodedBomStream);
+            case "zstd" -> new ZstdOutputStream(encodedBomStream);
+            default -> null;
+        };
+
+        assertThat(encoder).isNotNull();
+
+        encoder.write(bomBytes);
+        encoder.close();
+
+        final var encodedBomBytes = encodedBomStream.toByteArray();
+
+        final var multiPart = new FormDataMultiPart()
+                .field("project", project.getUuid().toString())
+                .field("bom", encodedBomBytes, new MediaType("application", encoding))
+                .field("isActive", "true");
+
+        // NB: The GrizzlyConnectorProvider doesn't work with MultiPart requests.
+        // https://github.com/eclipse-ee4j/jersey/issues/5094
+        final var client = ClientBuilder.newClient(new ClientConfig()
+                .register(MultiPartFeature.class)
+                .connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response = client.target(jersey.target(V1_BOM).getUri()).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "token": "${json-unit.any-string}",
+                  "projectUuid": "${json-unit.any-string}"
+                }
+                """);
     }
 }

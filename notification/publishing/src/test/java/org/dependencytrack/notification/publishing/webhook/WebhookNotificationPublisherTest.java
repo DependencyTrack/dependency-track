@@ -25,6 +25,7 @@ import org.dependencytrack.notification.api.publishing.NotificationPublishContex
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.publishing.RetryablePublishException;
 import org.dependencytrack.notification.api.templating.NotificationTemplateRenderer;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherTest;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
@@ -46,8 +47,8 @@ import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.binaryEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
@@ -373,7 +374,7 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {429, 503})
+    @ValueSource(ints = {429, 502, 503, 504})
     void shouldThrowRetryableExceptionWhenDestinationRespondsWithRetryableStatus(int status) {
         WIREMOCK.stubFor(post(anyUrl())
                 .willReturn(aResponse()
@@ -381,11 +382,11 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
 
         assertThatExceptionOfType(RetryablePublishException.class)
                 .isThrownBy(() -> publisher.publish(publishContext, createBomConsumedTestNotification()))
-                .satisfies(exception -> Assertions.assertThat(exception.getRetryAfter()).isNull());
+                .satisfies(exception -> Assertions.assertThat(exception.retryAfter()).isNull());
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {429, 503})
+    @ValueSource(ints = {429, 502, 503, 504})
     void shouldThrowRetryableExceptionWhenDestinationRespondsWithRetryableStatusAndRetryAfterHeader(int status) {
         WIREMOCK.stubFor(post(anyUrl())
                 .willReturn(aResponse()
@@ -394,11 +395,11 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
 
         assertThatExceptionOfType(RetryablePublishException.class)
                 .isThrownBy(() -> publisher.publish(publishContext, createBomConsumedTestNotification()))
-                .satisfies(exception -> Assertions.assertThat(exception.getRetryAfter()).hasMinutes(5));
+                .satisfies(exception -> Assertions.assertThat(exception.retryAfter()).hasMinutes(5));
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {400, 401, 403, 405, 500, 504})
+    @ValueSource(ints = {400, 401, 403, 405, 500})
     void shouldThrowWhenDestinationRespondsWithNonRetryableStatus(int status) {
         WIREMOCK.stubFor(post(anyUrl())
                 .willReturn(aResponse()
@@ -428,7 +429,7 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
 
                 final var templateRendererFactory =
                         new PebbleNotificationTemplateRendererFactory(
-                                Map.of("baseUrl", () -> "https://example.com"));
+                                Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"));
                 final NotificationTemplateRenderer templateRenderer =
                         templateRendererFactory.createRenderer(factory.defaultTemplate());
 
@@ -461,7 +462,7 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
 
                 final var templateRendererFactory =
                         new PebbleNotificationTemplateRendererFactory(
-                                Map.of("baseUrl", () -> "https://example.com"));
+                                Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"));
                 final NotificationTemplateRenderer templateRenderer =
                         templateRendererFactory.createRenderer(factory.defaultTemplate());
 

@@ -524,6 +524,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
             final var arg = (PublishNotificationWorkflowArg) request.argument();
             assertThat(arg.getNotificationRuleNamesList()).containsExactly("Example Rule 1");
             assertThat(arg.getNotification().getTitle()).startsWith("[TEST] ");
+            assertThat(arg.getRuleTest()).isTrue();
         });
         assertThat(qm.getNotificationOutbox()).isEmpty();
     }
@@ -555,6 +556,7 @@ class NotificationPublisherResourceTest extends ResourceTest {
             final var arg = (PublishNotificationWorkflowArg) request.argument();
             assertThat(arg.getNotificationRuleNamesList()).containsExactly("Scheduled Rule");
             assertThat(arg.getNotification().getTitle()).startsWith("[TEST] ");
+            assertThat(arg.getRuleTest()).isTrue();
         });
     }
 

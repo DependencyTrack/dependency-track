@@ -247,18 +247,9 @@ public final class NotificationFactory {
         }
         title += "]";
 
-        final String content;
-        if (vulnerability.hasDescription()) {
-            content = vulnerability.getDescription();
-        } else {
-            content = vulnerability.hasTitle()
-                    ? "%s: %s".formatted(vulnerability.getVulnId(), vulnerability.getTitle())
-                    : vulnerability.getVulnId();
-        }
-
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_VULNERABILITY_RETRACTED, LEVEL_INFORMATIONAL)
                 .setTitle(title)
-                .setContent(content)
+                .setContent(contentFor(vulnerability))
                 .setSubject(Any.pack(
                         VulnerabilityRetractedSubject.newBuilder()
                                 .setProject(project)
@@ -294,18 +285,9 @@ public final class NotificationFactory {
         }
         title += "]";
 
-        final String content;
-        if (vulnerability.hasDescription()) {
-            content = vulnerability.getDescription();
-        } else {
-            content = vulnerability.hasTitle()
-                    ? "%s: %s".formatted(vulnerability.getVulnId(), vulnerability.getTitle())
-                    : vulnerability.getVulnId();
-        }
-
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_NEW_VULNERABILITY, LEVEL_INFORMATIONAL)
                 .setTitle(title)
-                .setContent(content)
+                .setContent(contentFor(vulnerability))
                 .setSubject(Any.pack(
                         NewVulnerabilitySubject.newBuilder()
                                 .setProject(project)
@@ -603,6 +585,17 @@ public final class NotificationFactory {
                 .setScope(scope)
                 .setGroup(group)
                 .setLevel(level);
+    }
+
+    private static String contentFor(Vulnerability vulnerability) {
+        if (!vulnerability.getDescription().isBlank()) {
+            return vulnerability.getDescription();
+        }
+        if (!vulnerability.getTitle().isBlank()) {
+            return "%s: %s".formatted(vulnerability.getVulnId(), vulnerability.getTitle());
+        }
+
+        return vulnerability.getVulnId();
     }
 
 }

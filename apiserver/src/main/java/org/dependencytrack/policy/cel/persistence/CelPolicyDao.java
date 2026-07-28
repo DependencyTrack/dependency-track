@@ -188,7 +188,8 @@ public final class CelPolicyDao {
                            AND EXISTS (
                              SELECT 1
                                FROM "FINDINGATTRIBUTION" AS fa
-                              WHERE fa."COMPONENT_ID" = c."ID"
+                              WHERE fa."PROJECT_ID" = :projectId
+                                AND fa."COMPONENT_ID" = c."ID"
                                 AND fa."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
                                 AND fa."DELETED_AT" IS NULL
                            )

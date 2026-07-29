@@ -34,6 +34,7 @@ public final class CelPolicyFieldMappingRegistry {
             new FieldMapping("group", "c.\"GROUP\""),
             new FieldMapping("name", "c.\"NAME\""),
             new FieldMapping("version", "c.\"VERSION\""),
+            new FieldMapping("scope", "c.\"SCOPE\""),
             new FieldMapping("classifier", "c.\"CLASSIFIER\""),
             new FieldMapping("cpe", "c.\"CPE\""),
             new FieldMapping("purl", "c.\"PURL\""),

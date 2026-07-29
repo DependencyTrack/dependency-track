@@ -127,7 +127,6 @@
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
         <lib.caffeine.version>3.2.4</lib.caffeine.version>
         <lib.cel-java.version>0.13.1</lib.cel-java.version>
-        <lib.cel-extensions.version>0.4.1</lib.cel-extensions.version>
         <lib.commons-lang3.version>3.20.0</lib.commons-lang3.version>
         <lib.cpe-parser.version>3.0.1</lib.cpe-parser.version>
         <lib.cyclonedx-java.version>12.2.0</lib.cyclonedx-java.version>
@@ -176,7 +175,6 @@
         <lib.slf4j.version>2.0.18</lib.slf4j.version>
         <lib.smallrye-config.version>3.18.1</lib.smallrye-config.version>
         <lib.swagger.version>2.2.52</lib.swagger.version>
-        <lib.system-stubs.version>2.1.8</lib.system-stubs.version>
         <lib.testcontainers.version>2.0.5</lib.testcontainers.version>
         <lib.tink.version>1.23.0</lib.tink.version>
         <lib.versatile.version>0.21.1</lib.versatile.version>
@@ -241,12 +239,6 @@
                 <artifactId>cel</artifactId>
                 <version>${lib.cel-java.version}</version>
             </dependency>
-            <dependency>
-                <groupId>dev.cel</groupId>
-                <artifactId>extensions</artifactId>
-                <version>${lib.cel-extensions.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
@@ -433,13 +425,9 @@
                 <artifactId>kafka-clients</artifactId>
                 <version>${lib.kafka-clients.version}</version>
                 <exclusions>
-                    <!--
-                        The lz4-java project is archived and has vulnerabilities.
-                        Kafka needs to move to https://github.com/yawkat/lz4-java to resolve them.
-                        Since we don't use lz4, we can safely exclude it until then.
-                    -->
+                    <!-- lz4 compression is not used. -->
                     <exclusion>
-                        <groupId>org.lz4</groupId>
+                        <groupId>at.yawk.lz4</groupId>
                         <artifactId>lz4-java</artifactId>
                     </exclusion>
                 </exclusions>
@@ -596,12 +584,6 @@
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-jaxrs2-jakarta</artifactId>
                 <version>${lib.swagger.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>uk.org.webcompere</groupId>
-                <artifactId>system-stubs-jupiter</artifactId>
-                <version>${lib.system-stubs.version}</version>
             </dependency>
 
             <dependency>

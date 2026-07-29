@@ -102,6 +102,8 @@ message Component {
   // available immediately. Policies should explicitly check presence using the has() macro.
   optional google.protobuf.Timestamp latest_version_published_at = 59;
 
+  optional string scope = 60;
+
   message Property {
     string group = 1;
     string name = 2;

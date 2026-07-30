@@ -285,6 +285,7 @@ public class DexEngineConfig {
 
         private Duration pollInterval = Duration.ofMillis(100);
         private IntervalFunction pollBackoffFunction = ofExponentialRandomBackoff(100L, 2.0, 0.3, 3000L);
+        private Duration concurrencyKeyWakeupRepairInterval = Duration.ofSeconds(60);
 
         private TaskSchedulerConfig() {
         }
@@ -305,11 +306,26 @@ public class DexEngineConfig {
             this.pollBackoffFunction = pollBackoffFunction;
         }
 
+        /**
+         * @return Interval in which missing wakeup hints are repaired from source-of-truth state.
+         */
+        public Duration concurrencyKeyWakeupRepairInterval() {
+            return concurrencyKeyWakeupRepairInterval;
+        }
+
+        public void setConcurrencyKeyWakeupRepairInterval(Duration concurrencyKeyWakeupRepairInterval) {
+            if (concurrencyKeyWakeupRepairInterval.isNegative() || concurrencyKeyWakeupRepairInterval.isZero()) {
+                throw new IllegalArgumentException("concurrencyKeyWakeupRepairInterval must be positive");
+            }
+            this.concurrencyKeyWakeupRepairInterval = concurrencyKeyWakeupRepairInterval;
+        }
+
         @Override
         public String toString() {
             return new StringJoiner(", ", getClass().getSimpleName() + "[", "]")
                     .add("pollInterval=" + pollInterval)
                     .add("pollBackoffFunction=" + pollBackoffFunction)
+                    .add("concurrencyKeyWakeupRepairInterval=" + concurrencyKeyWakeupRepairInterval)
                     .toString();
         }
 
@@ -398,7 +414,7 @@ public class DexEngineConfig {
     }
 
     /**
-     * @return Timeout for database queries.
+     * @return Timeout for database queries executed by the engine.
      */
     public Duration queryTimeout() {
         return queryTimeout;

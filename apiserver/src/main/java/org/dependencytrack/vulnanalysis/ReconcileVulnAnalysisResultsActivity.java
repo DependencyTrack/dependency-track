@@ -628,7 +628,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
     private Map<Long, Map<Long, VulnerabilityPolicy>> evaluateVulnPolicies(
             long projectId,
-            Map<Long, Set<Long>> vulnIdsByComponentId) {
+            Map<Long, Set<Long>> vulnIdsByComponentId) throws InterruptedException {
         if (vulnIdsByComponentId.isEmpty()) {
             return Map.of();
         }

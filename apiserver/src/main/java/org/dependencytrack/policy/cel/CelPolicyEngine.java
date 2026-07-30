@@ -113,7 +113,7 @@ public final class CelPolicyEngine {
         this.scriptHost = scriptHost;
     }
 
-    public void evaluateProject(UUID uuid) {
+    public void evaluateProject(UUID uuid) throws InterruptedException {
         // TODO: Should this entire procedure run in a single DB transaction?
         //   Would be better for atomicity, but could block DB connections for prolonged
         //   period of time for larger projects with many violations.
@@ -243,6 +243,10 @@ public final class CelPolicyEngine {
         final Timestamp protoNow = Timestamps.now();
 
         for (final Map.Entry<Long, Component> entry : componentsById.entrySet()) {
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Interrupted before policies could be evaluated for all components");
+            }
+
             final long componentId = entry.getKey();
             final Component protoComponent = entry.getValue();
 

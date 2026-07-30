@@ -66,7 +66,7 @@ public class HashConditionTest extends PersistenceCapableTest {
     @MethodSource("parameters")
     public void testCondition(Policy.Operator policyOperator, final Operator condition, final String conditionHash,
                               final String actualHash, final boolean expectViolation, ViolationState violationState,
-                              Type actualType, ViolationState actualViolationState) {
+                              Type actualType, ViolationState actualViolationState) throws Exception {
         final Policy policy = qm.createPolicy("policy", policyOperator, violationState);
         qm.createPolicyCondition(policy, Subject.COMPONENT_HASH, condition, conditionHash);
 
@@ -93,7 +93,7 @@ public class HashConditionTest extends PersistenceCapableTest {
 
 
     @Test
-    public void testWithNullPolicyCondition() {
+    public void testWithNullPolicyCondition() throws Exception {
 
         final var project = new Project();
         project.setName("acme-app");

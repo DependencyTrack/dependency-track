@@ -53,7 +53,7 @@ public class VersionConditionTest extends PersistenceCapableTest {
 
     @ParameterizedTest
     @MethodSource("parameters")
-    public void testCondition(final PolicyCondition.Operator operator, final String conditionVersion, final String componentVersion, final boolean expectViolation) {
+    public void testCondition(final PolicyCondition.Operator operator, final String conditionVersion, final String componentVersion, final boolean expectViolation) throws Exception {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, operator, conditionVersion);
 

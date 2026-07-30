@@ -56,7 +56,7 @@ class InternalStatusConditionTest extends PersistenceCapableTest {
             Operator operator,
             String conditionValue,
             boolean componentInternal,
-            boolean expectViolation) {
+            boolean expectViolation) throws Exception {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, ViolationState.INFO);
         qm.createPolicyCondition(policy, Subject.IS_INTERNAL, operator, conditionValue);
 

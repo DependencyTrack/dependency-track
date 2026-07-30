@@ -39,6 +39,7 @@ final class MetadataRegistry {
 
     private static final Pattern WORKFLOW_NAME_PATTERN = Pattern.compile("^[\\w-]+");
     private static final Pattern ACTIVITY_NAME_PATTERN = WORKFLOW_NAME_PATTERN;
+    private final Duration defaultActivityExecutionTimeout;
 
     @SuppressWarnings("rawtypes")
     private final Map<Class<? extends Workflow>, String> workflowNameByExecutorClass = new ConcurrentHashMap<>();
@@ -51,6 +52,12 @@ final class MetadataRegistry {
 
     @SuppressWarnings("rawtypes")
     private final Map<String, ActivityMetadata> activityMetadataByName = new HashMap<>();
+
+    MetadataRegistry(Duration defaultActivityExecutionTimeout) {
+        this.defaultActivityExecutionTimeout = requireNonNull(
+                defaultActivityExecutionTimeout,
+                "defaultActivityExecutionTimeout must not be null");
+    }
 
     <A, R> void registerWorkflow(
             Workflow<A, R> workflow,
@@ -167,8 +174,13 @@ final class MetadataRegistry {
         requireNonNull(resultConverter, "resultConverter must not be null");
         requireValidTaskQueueName(defaultTaskQueueName);
         requireValidLockTimeout(lockTimeout);
-        requireValidExecutionTimeout(executionTimeout);
         requireNonNull(activity, "activity must not be null");
+
+        final Duration effectiveExecutionTimeout =
+                executionTimeout == null
+                        ? defaultActivityExecutionTimeout
+                        : executionTimeout;
+        requireValidExecutionTimeout(effectiveExecutionTimeout);
 
         if (activityNameByExecutorClass.containsKey(activity.getClass())) {
             throw new IllegalArgumentException(
@@ -187,7 +199,7 @@ final class MetadataRegistry {
                 resultConverter,
                 defaultTaskQueueName,
                 lockTimeout,
-                executionTimeout);
+                effectiveExecutionTimeout);
         activityNameByExecutorClass.put(activity.getClass(), name);
         activityMetadataByName.put(name, metadata);
     }
@@ -305,9 +317,9 @@ final class MetadataRegistry {
         }
     }
 
-    private static void requireValidExecutionTimeout(@Nullable Duration executionTimeout) {
-        if (executionTimeout != null && !executionTimeout.isPositive()) {
-            throw new IllegalArgumentException("executionTimeout must be positive when set");
+    private static void requireValidExecutionTimeout(Duration executionTimeout) {
+        if (!executionTimeout.isPositive()) {
+            throw new IllegalArgumentException("executionTimeout must be positive");
         }
     }
 

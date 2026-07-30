@@ -23,6 +23,8 @@ import org.dependencytrack.dex.engine.persistence.model.PolledActivityTask;
 import org.dependencytrack.dex.proto.payload.v1.Payload;
 import org.jspecify.annotations.Nullable;
 
+import java.util.UUID;
+
 public final class ActivityTask implements Task {
 
     private final String activityName;
@@ -30,7 +32,8 @@ public final class ActivityTask implements Task {
     private final @Nullable Payload argument;
     private final RetryPolicy retryPolicy;
     private final int attempt;
-    private TaskLock lock;
+    private final String executionId;
+    private volatile TaskLock lock;
 
     private ActivityTask(
             final String activityName,
@@ -38,12 +41,14 @@ public final class ActivityTask implements Task {
             final @Nullable Payload argument,
             final RetryPolicy retryPolicy,
             final int attempt,
+            final String executionId,
             final TaskLock lock) {
         this.activityName = activityName;
         this.id = id;
         this.argument = argument;
         this.retryPolicy = retryPolicy;
         this.attempt = attempt;
+        this.executionId = executionId;
         this.lock = lock;
     }
 
@@ -57,6 +62,7 @@ public final class ActivityTask implements Task {
                 polledTask.argument(),
                 RetryPolicy.fromProto(polledTask.retryPolicy()),
                 polledTask.attempt(),
+                UUID.randomUUID().toString(),
                 new TaskLock(
                         polledTask.lockedUntil(),
                         polledTask.lockVersion()));
@@ -85,6 +91,10 @@ public final class ActivityTask implements Task {
 
     public int attempt() {
         return attempt;
+    }
+
+    public String executionId() {
+        return executionId;
     }
 
     public TaskLock lock() {

@@ -227,8 +227,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                 engine,
                 new IdentifyInternalComponentsActivity(),
                 voidConverter(),
-                voidConverter(),
-                Duration.ofMinutes(30));
+                voidConverter());
         registerActivity(
                 engine,
                 new ImportBomActivity(
@@ -236,58 +235,47 @@ public final class DexEngineInitializer implements ServletContextListener {
                         engine,
                         config.getOptionalValue("dt.tmp.delay-bom-processed-notification", boolean.class).orElse(false)),
                 protoConverter(ImportBomArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
+                voidConverter());
         registerActivity(
                 engine,
                 new ImportVexActivity(fileStorage),
                 protoConverter(ImportVexArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
+                voidConverter());
         registerActivity(
                 engine,
                 new DeleteFilesActivity(fileStorage),
                 protoConverter(DeleteFilesArgument.class),
-                voidConverter(),
-                Duration.ofMinutes(1));
+                voidConverter());
         registerActivity(
                 engine,
                 new EvalProjectPoliciesActivity(new CelPolicyEngine()),
                 protoConverter(EvalProjectPoliciesArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
+                voidConverter());
         registerActivity(
                 engine,
                 new FetchPackageMetadataResolutionCandidatesActivity(pluginManager),
                 voidConverter(),
-                protoConverter(FetchPackageMetadataResolutionCandidatesRes.class),
-                Duration.ofMinutes(1));
+                protoConverter(FetchPackageMetadataResolutionCandidatesRes.class));
         registerActivity(
                 engine,
                 new FetchProjectMetricsUpdateCandidatesActivity(),
                 voidConverter(),
-                protoConverter(FetchProjectMetricsUpdateCandidatesRes.class),
-                Duration.ofMinutes(1));
+                protoConverter(FetchProjectMetricsUpdateCandidatesRes.class));
         registerActivity(
                 engine,
                 new InvokeVulnAnalyzerActivity(fileStorage, pluginManager),
                 protoConverter(InvokeVulnAnalyzerArg.class),
-                protoConverter(InvokeVulnAnalyzerRes.class),
-                Duration.ofMinutes(5));
+                protoConverter(InvokeVulnAnalyzerRes.class));
         registerActivity(
                 engine,
                 new MirrorVulnDataSourceActivity(pluginManager),
                 protoConverter(MirrorVulnDataSourceArg.class),
-                voidConverter(),
-                // NB: Account for slow downloads, mainly of sources relying on data dumps.
-                // Activities can't heartbeat while blocked on I/O.
-                Duration.ofMinutes(15));
+                voidConverter());
         registerActivity(
                 engine,
                 new PrepareVulnAnalysisActivity(fileStorage, pluginManager),
                 protoConverter(PrepareVulnAnalysisArg.class),
-                protoConverter(PrepareVulnAnalysisRes.class),
-                Duration.ofMinutes(5));
+                protoConverter(PrepareVulnAnalysisRes.class));
         registerActivity(
                 engine,
                 new ProcessScheduledNotificationRuleActivity(
@@ -295,8 +283,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                         fileStorage,
                         config.getValue(ConfigKeys.NOTIFICATION_OUTBOX_RELAY_LARGE_NOTIFICATION_THRESHOLD_BYTES, int.class)),
                 protoConverter(ProcessScheduledNotificationRuleArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
+                voidConverter());
         registerActivity(
                 engine,
                 new PublishNotificationActivity(
@@ -305,8 +292,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                         secretManager::getSecretValue,
                         templateRendererFactory),
                 protoConverter(PublishNotificationActivityArg.class),
-                voidConverter(),
-                Duration.ofMinutes(1));
+                voidConverter());
         registerActivity(
                 engine,
                 new ReconcileVulnAnalysisResultsActivity(
@@ -314,38 +300,32 @@ public final class DexEngineInitializer implements ServletContextListener {
                         pluginManager,
                         new CelVulnerabilityPolicyEvaluator()),
                 protoConverter(ReconcileVulnAnalysisResultsArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
+                voidConverter());
         registerActivity(
                 engine,
                 new RefreshGlobalPortfolioMetricsActivity(),
                 voidConverter(),
-                voidConverter(),
-                Duration.ofMinutes(5));
+                voidConverter());
         registerActivity(
                 engine,
                 new RefreshVulnerabilityMetricsActivity(),
                 voidConverter(),
-                voidConverter(),
-                Duration.ofMinutes(5));
+                voidConverter());
         registerActivity(
                 engine,
                 new ResolvePackageMetadataActivity(pluginManager, secretManager),
                 protoConverter(ResolvePackageMetadataActivityArg.class),
-                voidConverter(),
-                Duration.ofMinutes(10));
+                voidConverter());
         registerActivity(
                 engine,
                 new SyncVulnPolicyBundleActivity(config, HttpClient.INSTANCE),
                 protoConverter(SyncVulnPolicyBundleArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
+                voidConverter());
         registerActivity(
                 engine,
                 new UpdateProjectMetricsActivity(),
                 protoConverter(UpdateProjectMetricsArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
+                voidConverter());
 
         ensureTaskQueues(engine, List.of(
                 new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1000),
@@ -423,6 +403,9 @@ public final class DexEngineInitializer implements ServletContextListener {
                 .map(Duration::ofMillis)
                 .ifPresent(engineConfig::setQueryTimeout);
 
+        config.getOptionalValue("dt.dex-engine.activity.lock-timeout-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig::setDefaultActivityLockTimeout);
         config.getOptionalValue("dt.dex-engine.activity.execution-timeout-ms", long.class)
                 .map(Duration::ofMillis)
                 .ifPresent(engineConfig::setDefaultActivityExecutionTimeout);
@@ -608,8 +591,7 @@ public final class DexEngineInitializer implements ServletContextListener {
             DexEngine engine,
             Activity<A, R> activity,
             PayloadConverter<A> argumentConverter,
-            PayloadConverter<R> resultConverter,
-            Duration lockTimeout) {
+            PayloadConverter<R> resultConverter) {
         final var activitySpec = activity.getClass().getAnnotation(ActivitySpec.class);
         requireNonNull(activitySpec, "Activity class must be annotated with @" + ActivitySpec.class.getSimpleName());
 
@@ -619,7 +601,12 @@ public final class DexEngineInitializer implements ServletContextListener {
                 .map(Duration::ofMillis)
                 .orElse(null);
 
-        engine.registerActivity(activity, argumentConverter, resultConverter, lockTimeout, executionTimeout);
+        engine.registerActivity(
+                activity,
+                argumentConverter,
+                resultConverter,
+                /* lockTimeout */ null,
+                executionTimeout);
     }
 
 }

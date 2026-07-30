@@ -103,13 +103,11 @@ class PublishNotificationWorkflowTest extends PersistenceCapableTest {
                         secretName -> null,
                         new PebbleNotificationTemplateRendererFactory(Collections.emptyMap())),
                 protoConverter(PublishNotificationActivityArg.class),
-                voidConverter(),
-                Duration.ofSeconds(15));
+                voidConverter());
         engine.registerActivity(
                 new DeleteFilesActivity(fileStorage),
                 protoConverter(DeleteFilesArgument.class),
-                voidConverter(),
-                Duration.ofSeconds(15));
+                voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));

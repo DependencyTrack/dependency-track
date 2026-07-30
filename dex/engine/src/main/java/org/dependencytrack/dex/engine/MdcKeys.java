@@ -16,18 +16,19 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.dex.api;
+package org.dependencytrack.dex.engine;
 
-import java.util.UUID;
+final class MdcKeys {
 
-/**
- * Context available to {@link Activity}s.
- */
-public interface ActivityContext {
+    static final String MDC_ACTIVITY_NAME = "activityName";
+    static final String MDC_ACTIVITY_TASK_ATTEMPT = "activityTaskAttempt";
+    static final String MDC_ACTIVITY_TASK_EXECUTION_ID = "activityTaskExecutionId";
+    static final String MDC_QUEUE_NAME = "queueName";
+    static final String MDC_WORKFLOW_INSTANCE_ID = "workflowInstanceId";
+    static final String MDC_WORKFLOW_NAME = "workflowName";
+    static final String MDC_WORKFLOW_RUN_ID = "workflowRunId";
 
-    /**
-     * @return ID of the workflow run that this activity execution is part of.
-     */
-    UUID workflowRunId();
+    private MdcKeys() {
+    }
 
 }

@@ -79,18 +79,15 @@ class UpdatePortfolioMetricsWorkflowTest extends AbstractMetricsUpdateTaskTest {
         engine.registerActivity(
                 new FetchProjectMetricsUpdateCandidatesActivity(),
                 voidConverter(),
-                protoConverter(FetchProjectMetricsUpdateCandidatesRes.class),
-                Duration.ofSeconds(10));
+                protoConverter(FetchProjectMetricsUpdateCandidatesRes.class));
         engine.registerActivity(
                 new RefreshGlobalPortfolioMetricsActivity(),
                 voidConverter(),
-                voidConverter(),
-                Duration.ofSeconds(10));
+                voidConverter());
         engine.registerActivity(
                 new UpdateProjectMetricsActivity(),
                 protoConverter(UpdateProjectMetricsArg.class),
-                voidConverter(),
-                Duration.ofSeconds(10));
+                voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));

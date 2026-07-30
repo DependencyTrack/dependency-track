@@ -78,7 +78,6 @@ public interface DexEngine extends Closeable {
      * @param executor          The {@link Activity} of the activity.
      * @param argumentConverter The {@link PayloadConverter} to use for arguments.
      * @param resultConverter   The {@link PayloadConverter} to use for results.
-     * @param lockTimeout       How instances of this activity shall be locked for execution.
      * @param <A>               Type of the activity's argument.
      * @param <R>               Type of the activity's result.
      * @throws IllegalStateException When the engine was already started.
@@ -86,9 +85,8 @@ public interface DexEngine extends Closeable {
     default <A, R> void registerActivity(
             Activity<A, R> executor,
             PayloadConverter<A> argumentConverter,
-            PayloadConverter<R> resultConverter,
-            Duration lockTimeout) {
-        registerActivity(executor, argumentConverter, resultConverter, lockTimeout, null);
+            PayloadConverter<R> resultConverter) {
+        registerActivity(executor, argumentConverter, resultConverter, null, null);
     }
 
     /**
@@ -100,6 +98,7 @@ public interface DexEngine extends Closeable {
      * @param argumentConverter The {@link PayloadConverter} to use for arguments.
      * @param resultConverter   The {@link PayloadConverter} to use for results.
      * @param lockTimeout       How instances of this activity shall be locked for execution.
+     *                          When {@code null}, {@link DexEngineConfig#defaultActivityLockTimeout()} is assumed.
      * @param executionTimeout  Maximum time the activity may execute before it is cancelled.
      *                          When {@code null}, {@link DexEngineConfig#defaultActivityExecutionTimeout()} is assumed.
      * @param <A>               Type of the activity's argument.
@@ -110,7 +109,7 @@ public interface DexEngine extends Closeable {
             Activity<A, R> executor,
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
-            Duration lockTimeout,
+            @Nullable Duration lockTimeout,
             @Nullable Duration executionTimeout);
 
     /**

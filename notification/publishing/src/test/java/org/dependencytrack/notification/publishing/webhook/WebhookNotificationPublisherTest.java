@@ -25,6 +25,7 @@ import org.dependencytrack.notification.api.publishing.NotificationPublishContex
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.publishing.RetryablePublishException;
 import org.dependencytrack.notification.api.templating.NotificationTemplateRenderer;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.publishing.AbstractNotificationPublisherTest;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
@@ -425,7 +426,7 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
 
                 final var templateRendererFactory =
                         new PebbleNotificationTemplateRendererFactory(
-                                Map.of("baseUrl", () -> "https://example.com"));
+                                Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"));
                 final NotificationTemplateRenderer templateRenderer =
                         templateRendererFactory.createRenderer(factory.defaultTemplate());
 

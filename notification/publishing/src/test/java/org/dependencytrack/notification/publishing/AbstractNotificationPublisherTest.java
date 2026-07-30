@@ -25,6 +25,7 @@ import org.dependencytrack.notification.api.publishing.NotificationPublishContex
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplateRenderer;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.proto.v1.Group;
 import org.dependencytrack.notification.proto.v1.Level;
 import org.dependencytrack.notification.proto.v1.Notification;
@@ -101,7 +102,7 @@ public abstract class AbstractNotificationPublisherTest {
 
         final var templateRendererFactory =
                 new PebbleNotificationTemplateRendererFactory(
-                        Map.of("baseUrl", () -> "https://example.com"));
+                        Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"));
         final NotificationTemplateRenderer templateRenderer =
                 templateRendererFactory.createRenderer(
                         publisherFactory.defaultTemplate());

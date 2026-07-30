@@ -353,6 +353,17 @@ final class WorkflowTaskScheduler implements Closeable {
                            and has_queued_task is null
                            and has_message is not null
                          ) as schedulable
+                       -- Only consume hints for reasons that don't depend on the clock.
+                       -- `has_message` must NOT be one of them: `now()` is this transaction's
+                       -- start time, but this statement sees rows committed after it, since we use
+                       -- READ_COMMITTED isolation. Such a run is visible here, yet its message looks
+                       -- not-yet-due (i.e. `visible_from > now()`), and deleting its just-written
+                       -- hint would stall it until the next repair.
+                       , (
+                           run.id is null
+                           or has_executing is not null
+                           or has_queued_task is not null
+                         ) as consumable
                     from cte_hint
                     -- The key's highest priority CREATED run.
                     left join lateral (
@@ -398,7 +409,7 @@ final class WorkflowTaskScheduler implements Closeable {
                       on verified.concurrency_key = wakeup.concurrency_key
                    where wakeup.queue_name = :queueName
                      and wakeup.version = verified.version
-                     and not verified.schedulable
+                     and verified.consumable
                    order by wakeup.concurrency_key
                      for update of wakeup
                 ),

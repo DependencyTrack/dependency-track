@@ -48,8 +48,10 @@ public final class JdbiFactory {
 
     public static Jdbi create(
             final DataSource dataSource,
+            final Duration queryTimeout,
             final PageTokenEncoder pageTokenEncoder) {
         requireNonNull(dataSource, "dataSource must not be null");
+        requireNonNull(queryTimeout, "queryTimeout must not be null");
         requireNonNull(pageTokenEncoder, "pageTokenEncoder must not be null");
 
         return Jdbi
@@ -57,8 +59,10 @@ public final class JdbiFactory {
                 .installPlugin(new Jackson2Plugin())
                 .installPlugin(new PostgresPlugin())
                 .setTemplateEngine(FreemarkerEngine.instance())
-                .configure(PaginationConfig.class, config -> config.setPageTokenEncoder(pageTokenEncoder))
-                .configure(SqlStatements.class, statementsCfg -> statementsCfg.setQueryTimeout(10))
+                .configure(PaginationConfig.class, cfg -> cfg.setPageTokenEncoder(pageTokenEncoder))
+                .configure(
+                        SqlStatements.class,
+                        cfg -> cfg.setQueryTimeout(Math.toIntExact(queryTimeout.toSeconds())))
                 // Ensure all required mappings are registered *once*
                 // on startup. Defining these on a per-query basis imposes
                 // additional overhead that is worth avoiding given how

@@ -46,7 +46,7 @@ public class ComponentScopeCelPolicyTest extends PersistenceCapableTest {
                 // IS with no match when the actual scope is unassigned
                 new Object[]{PolicyCondition.Operator.IS, "REQUIRED", null, false},
                 // IS_NOT with exact match when the actual scope is unassigned
-                new Object[]{PolicyCondition.Operator.IS, "REQUIRED", null, true},
+                new Object[]{PolicyCondition.Operator.IS_NOT, "REQUIRED", null, true},
                 // IS_NOT with no match when the actual scope is unassigned
                 new Object[]{PolicyCondition.Operator.IS, "UNASSIGNED", null, true},
                 // IS with quotes (scope can't have quotes because it's an enum)

@@ -78,6 +78,26 @@ class S3FileStorageTest {
                 .withMessage("Failed to determine if bucket does-not-exist exists");
     }
 
+    @Test
+    void shouldThrowWhenOnlyAccessKeyIsConfigured() {
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> createStorage(Map.ofEntries(
+                        Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                        Map.entry("dt.file-storage.s3.access-key", "foo"),
+                        Map.entry("dt.file-storage.s3.bucket", "test"))))
+                .withMessageContaining("Incomplete static credentials");
+    }
+
+    @Test
+    void shouldThrowWhenOnlySecretKeyIsConfigured() {
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> createStorage(Map.ofEntries(
+                        Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                        Map.entry("dt.file-storage.s3.secret-key", "bar"),
+                        Map.entry("dt.file-storage.s3.bucket", "test"))))
+                .withMessageContaining("Incomplete static credentials");
+    }
+
     /**
      * Without static credentials, the client must resolve them from the environment
      * rather than falling back to unsigned (anonymous) requests.

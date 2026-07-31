@@ -71,6 +71,10 @@ public final class S3FileStorageProvider implements FileStorageProvider {
         final var secretKey = config.getOptionalValue("dt.file-storage.s3.secret-key", String.class).orElse(null);
         if (accessKey != null && secretKey != null) {
             clientBuilder.credentials(accessKey, secretKey);
+        } else if (accessKey != null || secretKey != null) {
+            throw new IllegalStateException(
+                    "Incomplete static credentials: dt.file-storage.s3.access-key and dt.file-storage.s3.secret-key "
+                    + "must either both be configured, or both be omitted to resolve credentials from the environment");
         } else {
             // No static credentials. Resolve them from the environment instead, mirroring the
             // credential provider chain of the AWS SDK. This covers AWS_* environment variables,

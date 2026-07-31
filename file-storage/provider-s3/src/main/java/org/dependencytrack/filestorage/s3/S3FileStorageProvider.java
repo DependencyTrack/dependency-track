@@ -21,6 +21,10 @@ package org.dependencytrack.filestorage.s3;
 import com.github.luben.zstd.Zstd;
 import io.minio.BucketExistsArgs;
 import io.minio.MinioClient;
+import io.minio.credentials.AwsConfigProvider;
+import io.minio.credentials.AwsEnvironmentProvider;
+import io.minio.credentials.ChainedProvider;
+import io.minio.credentials.IamAwsProvider;
 import okhttp3.OkHttpClient;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.api.FileStorageProvider;
@@ -67,6 +71,18 @@ public final class S3FileStorageProvider implements FileStorageProvider {
         final var secretKey = config.getOptionalValue("dt.file-storage.s3.secret-key", String.class).orElse(null);
         if (accessKey != null && secretKey != null) {
             clientBuilder.credentials(accessKey, secretKey);
+        } else {
+            // No static credentials. Resolve them from the environment instead, mirroring the
+            // credential provider chain of the AWS SDK. This covers AWS_* environment variables,
+            // the shared AWS config file, ECS task roles, EKS IRSA, and EC2 instance profiles.
+            // Resolution is lazy: the chain is consulted on the first request, and throws
+            // java.security.ProviderException when no provider yields credentials. The bucket
+            // existence check below is that first request, so unresolvable credentials fail startup.
+            LOGGER.debug("No static credentials configured; resolving credentials from the environment");
+            clientBuilder.credentialsProvider(new ChainedProvider(
+                    new AwsEnvironmentProvider(),
+                    new AwsConfigProvider(/* filename */ null, /* profile */ null),
+                    new IamAwsProvider(/* customEndpoint */ null, httpClient)));
         }
 
         config.getOptionalValue("dt.file-storage.s3.region", String.class).ifPresent(clientBuilder::region);

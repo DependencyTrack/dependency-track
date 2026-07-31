@@ -252,7 +252,38 @@ class Foo {
   deal with missing files, and perform compensating actions accordingly. Since file storage is not the
   primary system of record, files existing without the application knowing about them is not an issue.
 
+## Follow-up (2026-07-31)
+
+The `s3` provider originally supported static credentials only. When both the access key and the
+secret key were left empty, the provider installed no credentials at all and sent unsigned requests.
+It did not fall back to the credentials that a cloud platform offers on its own.
+
+This made the provider hard to use on AWS. There, the usual way to grant access to a bucket is an
+IAM role attached to the workload, not a long-lived key pair. Many organizations do not allow
+static keys at all.
+
+We adjusted the default. When both keys are omitted, the provider now resolves credentials from its
+environment. It tries environment variables, the shared AWS configuration file, IAM Roles for
+Service Accounts (IRSA) on EKS, task roles on ECS, and instance profiles on EC2, in that order.
+Static keys still take precedence when they are configured, so existing deployments keep working.
+
+The S3 client library we already depend on ships these resolvers, so this added no new dependency.
+We looked at the AWS SDK as an alternative and decided against it. It would add roughly 4 MB of
+dependencies, and its synchronous S3 client cannot stream uploads the way our current client does.
+
+Anonymous access is no longer reachable by leaving both keys empty. The provider resolves
+credentials on its first request, which is the bucket check during startup. A deployment without
+usable credentials now fails to start instead of sending unsigned requests. We consider this the
+better default, because anonymous writes would require a publicly writable bucket.
+
+EKS Pod Identity is not covered. The client library does not read the token file that the Pod
+Identity Agent provides, and it rejects the agent's endpoint because that address is not a loopback
+address. IRSA is the supported option on EKS.
+
+See [dependency-track/#6851].
+
 [ADR-001]: 001-drop-kafka-dependency.md
 [ADR-002]: 002-workflow-orchestration.md
 
 [hyades-apiserver/#805]: https://github.com/DependencyTrack/hyades-apiserver/pull/805
+[dependency-track/#6851]: https://github.com/DependencyTrack/dependency-track/issues/6851

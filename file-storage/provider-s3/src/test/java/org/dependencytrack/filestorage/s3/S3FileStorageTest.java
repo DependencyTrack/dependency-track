@@ -19,7 +19,10 @@
 package org.dependencytrack.filestorage.s3;
 
 import com.adobe.testing.s3mock.testcontainers.S3MockContainer;
+import io.minio.credentials.IamAwsProvider;
+import io.minio.credentials.StaticProvider;
 import io.smallrye.config.SmallRyeConfigBuilder;
+import okhttp3.OkHttpClient;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.eclipse.microprofile.config.Config;
@@ -58,24 +61,110 @@ class S3FileStorageTest {
     @Test
     void shouldThrowWhenBucketDoesNotExist() {
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> createStorage(Map.ofEntries(
-                        Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
-                        Map.entry("dt.file-storage.s3.access-key", "foo"),
-                        Map.entry("dt.file-storage.s3.secret-key", "bar"),
-                        Map.entry("dt.file-storage.s3.bucket", "does-not-exist"))))
+                .isThrownBy(() -> {
+                    try (final FileStorage ignored = createStorage(Map.ofEntries(
+                            Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                            Map.entry("dt.file-storage.s3.access-key", "foo"),
+                            Map.entry("dt.file-storage.s3.secret-key", "bar"),
+                            Map.entry("dt.file-storage.s3.bucket", "does-not-exist")))) {}
+                })
                 .withMessage("Bucket does-not-exist does not exist");
     }
 
     @Test
     void shouldThrowWhenBucketExistenceCheckFailed() {
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> createStorage(Map.ofEntries(
-                        Map.entry("dt.file-storage.s3.endpoint", "http://localhost:1"),
-                        Map.entry("dt.file-storage.s3.access-key", "foo"),
-                        Map.entry("dt.file-storage.s3.secret-key", "bar"),
-                        Map.entry("dt.file-storage.s3.bucket", "does-not-exist"),
-                        Map.entry("dt.file-storage.s3.connect-timeout-ms", "500"))))
+                .isThrownBy(() -> {
+                    try (final FileStorage ignored = createStorage(Map.ofEntries(
+                            Map.entry("dt.file-storage.s3.endpoint", "http://localhost:1"),
+                            Map.entry("dt.file-storage.s3.access-key", "foo"),
+                            Map.entry("dt.file-storage.s3.secret-key", "bar"),
+                            Map.entry("dt.file-storage.s3.bucket", "does-not-exist"),
+                            Map.entry("dt.file-storage.s3.connect-timeout-ms", "500")))) {}
+                })
                 .withMessage("Failed to determine if bucket does-not-exist exists");
+    }
+
+    @Test
+    void resolveCredentialsProviderShouldReturnStaticProviderByDefault() {
+        final Config config = configOf(Map.ofEntries(
+                Map.entry("dt.file-storage.s3.access-key", "foo"),
+                Map.entry("dt.file-storage.s3.secret-key", "bar")));
+
+        assertThat(S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
+                .hasValueSatisfying(provider -> assertThat(provider).isInstanceOf(StaticProvider.class));
+    }
+
+    @Test
+    void resolveCredentialsProviderShouldReturnStaticProviderWhenSourceIsStatic() {
+        final Config config = configOf(Map.ofEntries(
+                Map.entry("dt.file-storage.s3.credentials-source", "static"),
+                Map.entry("dt.file-storage.s3.access-key", "foo"),
+                Map.entry("dt.file-storage.s3.secret-key", "bar")));
+
+        assertThat(S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
+                .hasValueSatisfying(provider -> assertThat(provider).isInstanceOf(StaticProvider.class));
+    }
+
+    @Test
+    void resolveCredentialsProviderShouldReturnEmptyWhenStaticKeysAreMissing() {
+        final Config config = configOf(Map.ofEntries(
+                Map.entry("dt.file-storage.s3.credentials-source", "static")));
+
+        assertThat(S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient())).isEmpty();
+    }
+
+    @Test
+    void resolveCredentialsProviderShouldThrowWhenOnlyAccessKeyIsConfigured() {
+        final Config config = configOf(Map.ofEntries(
+                Map.entry("dt.file-storage.s3.credentials-source", "static"),
+                Map.entry("dt.file-storage.s3.access-key", "foo")));
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
+                .withMessage("Both dt.file-storage.s3.access-key and dt.file-storage.s3.secret-key "
+                        + "must be set when using static credentials");
+    }
+
+    @Test
+    void resolveCredentialsProviderShouldThrowWhenOnlySecretKeyIsConfigured() {
+        final Config config = configOf(Map.ofEntries(
+                Map.entry("dt.file-storage.s3.credentials-source", "static"),
+                Map.entry("dt.file-storage.s3.secret-key", "bar")));
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
+                .withMessage("Both dt.file-storage.s3.access-key and dt.file-storage.s3.secret-key "
+                        + "must be set when using static credentials");
+    }
+
+    @Test
+    void resolveCredentialsProviderShouldReturnIamAwsProviderWhenSourceIsAws() {
+        final Config config = configOf(Map.ofEntries(
+                Map.entry("dt.file-storage.s3.credentials-source", "aws")));
+
+        assertThat(S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
+                .hasValueSatisfying(provider -> assertThat(provider).isInstanceOf(IamAwsProvider.class));
+    }
+
+    @Test
+    void resolveCredentialsProviderShouldIgnoreCaseAndWhitespaceForSource() {
+        final Config config = configOf(Map.ofEntries(
+                Map.entry("dt.file-storage.s3.credentials-source", "  AWS  ")));
+
+        assertThat(S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
+                .hasValueSatisfying(provider -> assertThat(provider).isInstanceOf(IamAwsProvider.class));
+    }
+
+    @Test
+    void resolveCredentialsProviderShouldThrowWhenSourceIsInvalid() {
+        final Config config = configOf(Map.ofEntries(
+                Map.entry("dt.file-storage.s3.credentials-source", "bogus")));
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
+                .withMessage("Invalid value for dt.file-storage.s3.credentials-source: "
+                        + "'bogus' (valid values: [static, aws])");
     }
 
     @Test
@@ -206,6 +295,12 @@ class S3FileStorageTest {
                 .withDefaultValues(configValues)
                 .build();
         return new S3FileStorageProvider().create(config, ProxySelector.getDefault());
+    }
+
+    private static Config configOf(Map<String, String> configValues) {
+        return new SmallRyeConfigBuilder()
+                .withDefaultValues(configValues)
+                .build();
     }
 
 }

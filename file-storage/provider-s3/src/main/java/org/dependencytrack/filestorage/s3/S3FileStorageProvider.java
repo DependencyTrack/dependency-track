@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.ProxySelector;
 import java.time.Duration;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -44,8 +43,11 @@ public final class S3FileStorageProvider implements FileStorageProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(S3FileStorageProvider.class);
     static final String NAME = "s3";
-    static final String CREDENTIALS_SOURCE_STATIC = "static";
-    static final String CREDENTIALS_SOURCE_AWS = "aws";
+
+    enum CredentialsSource {
+        STATIC,
+        AWS
+    }
 
     @Override
     public String name() {
@@ -94,36 +96,13 @@ public final class S3FileStorageProvider implements FileStorageProvider {
         return new S3FileStorage(s3Client, bucketName, compressionLevel);
     }
 
-    /**
-     * Resolves the {@link Provider} used to authenticate against the S3 endpoint.
-     * <p>
-     * The credentials source is selected via {@code dt.file-storage.s3.credentials-source}:
-     * <ul>
-     *     <li>{@code static} (default): Use the statically configured {@code access-key} and
-     *     {@code secret-key}. When both are missing, no credentials are configured and requests
-     *     are performed anonymously (unchanged legacy behavior). When only one key is configured,
-     *     initialization fails.</li>
-     *     <li>{@code aws}: Resolve credentials from the workload's AWS identity via
-     *     {@link IamAwsProvider}. This supports IRSA / web identity
-     *     ({@code AWS_WEB_IDENTITY_TOKEN_FILE}), ECS task roles
-     *     ({@code AWS_CONTAINER_CREDENTIALS_RELATIVE_URI} / {@code AWS_CONTAINER_CREDENTIALS_FULL_URI}),
-     *     and the EC2 instance metadata service, in that order of precedence. No static keys are
-     *     required. Note that this is not the full AWS default credential provider chain:
-     *     {@code AWS_ACCESS_KEY_ID} / {@code AWS_SECRET_ACCESS_KEY} environment variables and
-     *     {@code ~/.aws/credentials} profiles are not consulted; use {@code static} for those.</li>
-     * </ul>
-     *
-     * @return The resolved {@link Provider}, if one should be configured.
-     */
     static Optional<Provider> resolveCredentialsProvider(Config config, OkHttpClient httpClient) {
-        final String credentialsSource = config
-                .getOptionalValue("dt.file-storage.s3.credentials-source", String.class)
-                .map(String::trim)
-                .map(value -> value.toLowerCase(Locale.ROOT))
-                .orElse(CREDENTIALS_SOURCE_STATIC);
+        final CredentialsSource credentialsSource = config
+                .getOptionalValue("dt.file-storage.s3.credentials-source", CredentialsSource.class)
+                .orElse(CredentialsSource.STATIC);
 
         return switch (credentialsSource) {
-            case CREDENTIALS_SOURCE_STATIC -> {
+            case STATIC -> {
                 final var accessKey = config
                         .getOptionalValue("dt.file-storage.s3.access-key", String.class).orElse(null);
                 final var secretKey = config
@@ -137,10 +116,7 @@ public final class S3FileStorageProvider implements FileStorageProvider {
                 }
                 yield Optional.empty();
             }
-            case CREDENTIALS_SOURCE_AWS -> Optional.of(new IamAwsProvider(null, httpClient));
-            default -> throw new IllegalStateException(
-                    "Invalid value for dt.file-storage.s3.credentials-source: '%s' (valid values: [%s, %s])".formatted(
-                            credentialsSource, CREDENTIALS_SOURCE_STATIC, CREDENTIALS_SOURCE_AWS));
+            case AWS -> Optional.of(new IamAwsProvider(null, httpClient));
         };
     }
 

@@ -148,23 +148,12 @@ class S3FileStorageTest {
     }
 
     @Test
-    void resolveCredentialsProviderShouldIgnoreCaseAndWhitespaceForSource() {
-        final Config config = configOf(Map.ofEntries(
-                Map.entry("dt.file-storage.s3.credentials-source", "  AWS  ")));
-
-        assertThat(S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
-                .hasValueSatisfying(provider -> assertThat(provider).isInstanceOf(IamAwsProvider.class));
-    }
-
-    @Test
     void resolveCredentialsProviderShouldThrowWhenSourceIsInvalid() {
         final Config config = configOf(Map.ofEntries(
                 Map.entry("dt.file-storage.s3.credentials-source", "bogus")));
 
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
-                .withMessage("Invalid value for dt.file-storage.s3.credentials-source: "
-                        + "'bogus' (valid values: [static, aws])");
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()));
     }
 
     @Test

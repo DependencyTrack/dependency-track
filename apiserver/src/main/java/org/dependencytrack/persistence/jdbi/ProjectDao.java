@@ -868,8 +868,16 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
     @SqlUpdate("""
             UPDATE "PROJECT"
                SET "LAST_VULNERABILITY_ANALYSIS" = NOW()
+                 , "COMPONENTS_CHANGED_SINCE_ANALYSIS" = FALSE
              WHERE "UUID" = :uuid
             """)
     void updateLastVulnAnalysis(@Bind UUID uuid);
+
+    @SqlUpdate("""
+            UPDATE "PROJECT"
+               SET "COMPONENTS_CHANGED_SINCE_ANALYSIS" = TRUE
+             WHERE "UUID" = :uuid
+            """)
+    void markComponentsChangedSinceAnalysis(@Bind UUID uuid);
 
 }

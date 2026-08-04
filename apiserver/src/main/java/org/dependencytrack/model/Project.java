@@ -298,6 +298,11 @@ public class Project implements Serializable {
     private Date lastVulnerabilityAnalysis;
 
     @Persistent
+    @Column(name = "COMPONENTS_CHANGED_SINCE_ANALYSIS", defaultValue = "false", allowsNull = "false")
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
+    private boolean componentsChangedSinceAnalysis;
+
+    @Persistent
     @Column(name = "INACTIVE_SINCE")
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private Date inactiveSince;
@@ -537,6 +542,15 @@ public class Project implements Serializable {
 
     public void setLastVulnerabilityAnalysis(Date lastVulnerabilityAnalysis) {
         this.lastVulnerabilityAnalysis = lastVulnerabilityAnalysis;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    public boolean isComponentsChangedSinceAnalysis() {
+        return componentsChangedSinceAnalysis;
+    }
+
+    public void setComponentsChangedSinceAnalysis(boolean componentsChangedSinceAnalysis) {
+        this.componentsChangedSinceAnalysis = componentsChangedSinceAnalysis;
     }
 
     public List<ExternalReference> getExternalReferences() {

@@ -637,6 +637,61 @@ public class ComponentResourceTest extends ResourceTest {
         Assertions.assertEquals("APPLICATION", json.getString("classifier"));
         Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
         assertThat(resolutionStatusForPurl("pkg:maven/org.acme/abc")).isEqualTo("PENDING");
+
+        qm.getPersistenceManager().refresh(project);
+        Assertions.assertTrue(project.isComponentsChangedSinceAnalysis());
+    }
+
+    @Test
+    public void updateComponentMarksComponentsChangedSinceAnalysisTest() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_UPDATE);
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setPurl("pkg:maven/org.acme/abc");
+        component.setName("My Component");
+        component.setVersion("1.0");
+        component.setClassifier(Classifier.APPLICATION);
+        qm.createComponent(component, false);
+
+        // Reset flag so we can assert that update sets it again.
+        project.setComponentsChangedSinceAnalysis(false);
+        qm.persist(project);
+
+        var jsonComponent = new Component();
+        jsonComponent.setUuid(component.getUuid());
+        jsonComponent.setPurl("pkg:maven/org.acme/abc");
+        jsonComponent.setName("My Component");
+        jsonComponent.setVersion("2.0");
+        jsonComponent.setClassifier(Classifier.LIBRARY);
+        Response response = jersey.target(V1_COMPONENT).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(jsonComponent, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+
+        qm.getPersistenceManager().refresh(project);
+        Assertions.assertTrue(project.isComponentsChangedSinceAnalysis());
+    }
+
+    @Test
+    public void deleteComponentMarksComponentsChangedSinceAnalysisTest() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_DELETE);
+        Project project = qm.createProject("Acme Application", null, null, null, null, null, null, false);
+        Component component = new Component();
+        component.setProject(project);
+        component.setName("My Component");
+        component.setVersion("1.0");
+        component = qm.createComponent(component, false);
+
+        project.setComponentsChangedSinceAnalysis(false);
+        qm.persist(project);
+
+        Response response = jersey.target(V1_COMPONENT + "/" + component.getUuid())
+                .request().header(X_API_KEY, apiKey).delete();
+        Assertions.assertEquals(204, response.getStatus(), 0);
+
+        qm.getPersistenceManager().refresh(project);
+        Assertions.assertTrue(project.isComponentsChangedSinceAnalysis());
     }
 
     @Test

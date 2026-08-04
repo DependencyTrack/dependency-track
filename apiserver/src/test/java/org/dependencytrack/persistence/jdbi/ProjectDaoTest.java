@@ -402,4 +402,20 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         qm.persist(project);
         assertThat(projectDao.getProjectId(project.getUuid())).isEqualTo(project.getId());
     }
+
+    @Test
+    public void testUpdateLastVulnAnalysisClearsComponentsChangedSinceAnalysis() {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setComponentsChangedSinceAnalysis(true);
+        qm.persist(project);
+
+        projectDao.updateLastVulnAnalysis(project.getUuid());
+
+        qm.getPersistenceManager().evictAll();
+        final Project refreshed = qm.getObjectByUuid(Project.class, project.getUuid());
+        assertThat(refreshed.isComponentsChangedSinceAnalysis()).isFalse();
+        assertThat(refreshed.getLastVulnerabilityAnalysis()).isNotNull();
+    }
 }

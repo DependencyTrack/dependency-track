@@ -425,6 +425,7 @@ final class ComponentQueryManager extends QueryManager {
     public Component createComponent(Component component, boolean commitIndex) {
         final Component result = persist(component);
         seedPackageMetadataResolution(result);
+        markComponentsChangedSinceAnalysis(result.getProject());
         return result;
     }
 
@@ -463,6 +464,7 @@ final class ComponentQueryManager extends QueryManager {
         component.setExternalReferences(transientComponent.getExternalReferences());
         final Component result = persist(component);
         seedPackageMetadataResolution(result);
+        markComponentsChangedSinceAnalysis(result.getProject());
         return result;
     }
 
@@ -497,6 +499,12 @@ final class ComponentQueryManager extends QueryManager {
                     ON CONFLICT ("PURL") DO NOTHING
                     """);
             executeAndCloseWithArray(query, project.getId());
+        }
+    }
+
+    private void markComponentsChangedSinceAnalysis(final Project project) {
+        if (project != null) {
+            project.setComponentsChangedSinceAnalysis(true);
         }
     }
 

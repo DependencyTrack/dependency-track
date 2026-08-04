@@ -80,6 +80,7 @@ public class ModelMapper {
                 .medium(metrics.getMedium())
                 .low(metrics.getLow())
                 .unassigned(metrics.getUnassigned())
+                .kev(metrics.getKev())
                 .vulnerabilities(metrics.getVulnerabilities())
                 .suppressed(metrics.getSuppressed())
                 .findingsTotal(metrics.getFindingsTotal())

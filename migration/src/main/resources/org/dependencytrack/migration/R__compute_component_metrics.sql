@@ -14,6 +14,7 @@ CREATE FUNCTION "COMPUTE_COMPONENT_METRICS"(
   , medium INT
   , low INT
   , unassigned INT
+  , kev INT
   , risk_score NUMERIC
   , findings_total INT
   , findings_audited INT
@@ -66,6 +67,19 @@ $$
           AND fa."DELETED_AT" IS NULL
      )
   ),
+  kev_alias_group AS MATERIALIZED (
+    SELECT DISTINCT va."GROUP_ID" AS group_id
+      FROM "VULNERABILITY" AS v
+     INNER JOIN "VULNERABILITY_ALIAS" AS va
+        ON va."SOURCE" = v."SOURCE"
+       AND va."VULN_ID" = v."VULNID"
+     INNER JOIN "VULNERABILITY_ALIAS" AS va2
+        ON va2."GROUP_ID" = va."GROUP_ID"
+     INNER JOIN "KEV_ASSERTION" AS ka
+        ON ka."VULN_SOURCE" = va2."SOURCE"
+       AND ka."VULN_ID" = va2."VULN_ID"
+     WHERE v."ID" IN (SELECT vulnerability_id FROM components_vulns)
+  ),
   -- Resolve alias groups once per vulnerability rather than once per
   -- component-vulnerability pair, which could lead to a nested loop
   -- over VULNERABILITY_ALIAS.
@@ -76,6 +90,19 @@ $$
     SELECT v."ID" AS vulnerability_id
          , v."SEVERITY" AS severity
          , va."GROUP_ID" AS group_id
+         , (
+             EXISTS (
+               SELECT 1
+                 FROM kev_alias_group AS kag
+                WHERE kag.group_id = va."GROUP_ID"
+             )
+             OR EXISTS (
+               SELECT 1
+                 FROM "KEV_ASSERTION" AS ka
+                WHERE ka."VULN_SOURCE" = v."SOURCE"
+                  AND ka."VULN_ID" = v."VULNID"
+             )
+           ) AS is_kev
       FROM "VULNERABILITY" AS v
       LEFT JOIN "VULNERABILITY_ALIAS" AS va
         ON va."SOURCE" = v."SOURCE"
@@ -86,6 +113,7 @@ $$
     SELECT DISTINCT ON (cvs.component_id, vag.group_id, CASE WHEN vag.group_id IS NULL THEN vag.vulnerability_id END)
            cvs.component_id AS component_id
          , COALESCE(a."SEVERITY", vag.severity) AS effective_severity
+         , vag.is_kev AS is_kev
       FROM components_vulns AS cvs
      INNER JOIN vuln_alias_group AS vag
         ON vag.vulnerability_id = cvs.vulnerability_id
@@ -106,6 +134,7 @@ $$
          , COUNT(*) FILTER (WHERE effective_severity = 'MEDIUM')::INT AS medium
          , COUNT(*) FILTER (WHERE effective_severity = 'LOW')::INT AS low
          , COUNT(*) FILTER (WHERE effective_severity NOT IN ('CRITICAL','HIGH','MEDIUM','LOW'))::INT AS unassigned
+         , COUNT(*) FILTER (WHERE is_kev)::INT AS kev
       FROM vuln_deduped
      GROUP BY vuln_deduped.component_id
   ),
@@ -170,6 +199,7 @@ $$
        , COALESCE(vc.medium, 0)
        , COALESCE(vc.low, 0)
        , COALESCE(vc.unassigned, 0)
+       , COALESCE(vc.kev, 0)
        , COALESCE(
            COALESCE(vc.critical, 0) * risk_score_weights.w_critical
            + COALESCE(vc.high, 0) * risk_score_weights.w_high

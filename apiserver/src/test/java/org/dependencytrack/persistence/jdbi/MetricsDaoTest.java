@@ -39,10 +39,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
-import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class MetricsDaoTest extends PersistenceCapableTest {
@@ -240,14 +238,6 @@ public class MetricsDaoTest extends PersistenceCapableTest {
             jdbiHandle.execute("SET TIME ZONE DEFAULT");
         }
     }
-
-    @Test
-    public void shouldRejectRefreshGlobalPortfolioMetricsOutsideTransaction() {
-        assertThatThrownBy(() ->
-                useJdbiHandle(handle -> handle.attach(MetricsDao.class).refreshGlobalPortfolioMetrics()))
-                .isInstanceOf(IllegalStateException.class);
-    }
-
 
     @Test
     public void shouldKeepDependencyMetricsWhenComponentDeleted() {

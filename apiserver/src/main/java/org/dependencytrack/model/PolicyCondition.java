@@ -79,7 +79,6 @@ public class PolicyCondition implements Serializable {
         SWID_TAGID(PolicyViolation.Type.OPERATIONAL),
         VERSION(PolicyViolation.Type.OPERATIONAL),
         COMPONENT_HASH(PolicyViolation.Type.OPERATIONAL),
-        COMPONENT_SCOPE(PolicyViolation.Type.OPERATIONAL),
         IS_INTERNAL(PolicyViolation.Type.OPERATIONAL),
         CWE(PolicyViolation.Type.SECURITY),
         VULNERABILITY_ID(PolicyViolation.Type.SECURITY),

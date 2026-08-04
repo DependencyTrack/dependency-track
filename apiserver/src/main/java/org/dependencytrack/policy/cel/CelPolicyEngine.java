@@ -37,7 +37,6 @@ import org.dependencytrack.policy.cel.CelPolicyCompiler.CacheMode;
 import org.dependencytrack.policy.cel.compat.CelPolicyScriptSourceBuilder;
 import org.dependencytrack.policy.cel.compat.ComponentAgeCelPolicyScriptSourceBuilder;
 import org.dependencytrack.policy.cel.compat.ComponentHashCelPolicyScriptSourceBuilder;
-import org.dependencytrack.policy.cel.compat.ComponentScopeCelPolicyScriptSourceBuilder;
 import org.dependencytrack.policy.cel.compat.CoordinatesCelPolicyScriptSourceBuilder;
 import org.dependencytrack.policy.cel.compat.CpeCelPolicyScriptSourceBuilder;
 import org.dependencytrack.policy.cel.compat.CweCelPolicyScriptSourceBuilder;
@@ -90,7 +89,6 @@ public final class CelPolicyEngine {
     private static final Map<Subject, CelPolicyScriptSourceBuilder> SCRIPT_BUILDERS = Map.ofEntries(
             Map.entry(Subject.AGE, new ComponentAgeCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.COMPONENT_HASH, new ComponentHashCelPolicyScriptSourceBuilder()),
-            Map.entry(Subject.COMPONENT_SCOPE, new ComponentScopeCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.COORDINATES, new CoordinatesCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.CPE, new CpeCelPolicyScriptSourceBuilder()),
             Map.entry(Subject.CWE, new CweCelPolicyScriptSourceBuilder()),

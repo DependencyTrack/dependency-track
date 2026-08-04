@@ -82,6 +82,7 @@ import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.mockito.Mockito.mock;
 
 class ImportBomActivityTest extends PersistenceCapableTest {
@@ -225,6 +226,8 @@ class ImportBomActivityTest extends PersistenceCapableTest {
                     assertThat(property.getDescription()).isNull();
                 }
         );
+
+        assertThat(packageMetadataResolutionStatusForPurl(component.getPurl().canonicalize())).isEqualTo("PENDING");
     }
 
     @Test
@@ -1670,6 +1673,19 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         return fileStorage.store(
                 "test/%s-%s".formatted(ImportBomActivityTest.class.getSimpleName(), UUID.randomUUID()),
                 new ByteArrayInputStream(bomBytes));
+    }
+
+    private static String packageMetadataResolutionStatusForPurl(String purl) {
+        return withJdbiHandle(handle -> handle
+                .createQuery("""
+                        SELECT "STATUS"
+                          FROM "PACKAGE_METADATA_RESOLUTION"
+                         WHERE "PURL" = :purl
+                        """)
+                .bind("purl", purl)
+                .mapTo(String.class)
+                .findOne()
+                .orElse(null));
     }
 
 }

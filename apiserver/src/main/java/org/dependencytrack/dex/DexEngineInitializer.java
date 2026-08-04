@@ -68,6 +68,7 @@ import org.dependencytrack.policy.vulnerability.SyncVulnPolicyBundleWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
 import org.dependencytrack.proto.internal.workflow.v1.EvalProjectPoliciesArg;
+import org.dependencytrack.proto.internal.workflow.v1.FetchPackageMetadataResolutionCandidatesArg;
 import org.dependencytrack.proto.internal.workflow.v1.FetchPackageMetadataResolutionCandidatesRes;
 import org.dependencytrack.proto.internal.workflow.v1.FetchProjectMetricsUpdateCandidatesRes;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
@@ -84,6 +85,7 @@ import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationActivit
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg;
 import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataActivityArg;
+import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowArg;
@@ -213,7 +215,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
                 new ResolvePackageMetadataWorkflow(),
-                voidConverter(),
+                protoConverter(ResolvePackageMetadataWorkflowArg.class),
                 voidConverter(),
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
@@ -263,7 +265,7 @@ public final class DexEngineInitializer implements ServletContextListener {
         registerActivity(
                 engine,
                 new FetchPackageMetadataResolutionCandidatesActivity(pluginManager),
-                voidConverter(),
+                protoConverter(FetchPackageMetadataResolutionCandidatesArg.class),
                 protoConverter(FetchPackageMetadataResolutionCandidatesRes.class));
         registerActivity(
                 engine,

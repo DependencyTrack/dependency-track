@@ -23,6 +23,14 @@ package org.dependencytrack.internal.workflow.v1;
 option java_multiple_files = true;
 option java_package = "org.dependencytrack.proto.internal.workflow.v1";
 
+message ResolvePackageMetadataWorkflowArg {
+  optional string cursor = 1;
+}
+
+message FetchPackageMetadataResolutionCandidatesArg {
+  optional string cursor = 1;
+}
+
 message PackageMetadataResolutionCandidateGroup {
   string resolver_name = 1;
   repeated string purls = 2;
@@ -30,6 +38,8 @@ message PackageMetadataResolutionCandidateGroup {
 
 message FetchPackageMetadataResolutionCandidatesRes {
   repeated PackageMetadataResolutionCandidateGroup candidate_groups = 1;
+  optional string next_cursor = 2;
+  bool has_more = 3;
 }
 
 message ResolvePackageMetadataActivityArg {

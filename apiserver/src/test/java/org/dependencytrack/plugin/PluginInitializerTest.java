@@ -30,6 +30,7 @@ import org.dependencytrack.plugin.runtime.ExtensionPointMetadata;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.TestSecretManager;
 import org.dependencytrack.secret.management.SecretManager;
+import org.dependencytrack.vulnanalysis.checkmarx.CheckmarxVulnAnalyzerPlugin;
 import org.dependencytrack.vulnanalysis.internal.InternalVulnAnalyzerPlugin;
 import org.dependencytrack.vulnanalysis.ossindex.OssIndexVulnAnalyzerPlugin;
 import org.dependencytrack.vulnanalysis.snyk.SnykVulnAnalyzerPlugin;
@@ -99,6 +100,7 @@ class PluginInitializerTest extends PersistenceCapableTest {
                         "vuln-data-source");
         assertThat(pluginManager.getLoadedPlugins()).satisfiesExactlyInAnyOrder(
                 plugin -> assertThat(plugin).isInstanceOf(BuiltinKevDataSourcePlugin.class),
+                plugin -> assertThat(plugin).isInstanceOf(CheckmarxVulnAnalyzerPlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(DefaultNotificationPublishersPlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(DefaultPackageMetadataResolutionPlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(GitHubVulnDataSourcePlugin.class),

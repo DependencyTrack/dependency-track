@@ -32,6 +32,7 @@
 
     <modules>
         <module>api</module>
+        <module>checkmarx</module>
         <module>internal</module>
         <module>oss-index</module>
         <module>snyk</module>

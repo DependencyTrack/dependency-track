@@ -27,6 +27,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityAlias;
+import org.dependencytrack.model.VulnerableSoftware;
 import org.dependencytrack.persistence.jdbi.FindingDao;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,7 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
-                          "version": "1.5",
+                          "version": "1.6",
                           "meta": {
                             "application": "${json-unit.matches:appName}",
                             "version": "${json-unit.matches:appVersion}",
@@ -129,7 +130,7 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
-                          "version": "1.5",
+                          "version": "1.6",
                           "meta": {
                             "application": "${json-unit.any-string}",
                             "version": "${json-unit.any-string}",
@@ -257,5 +258,173 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                           ]
                         }
                         """);
+    }
+
+    @Test
+    public void testFindingsExposeAffectedVersionRanges() {
+        final Project project = qm.createProject(
+                "Test", "Sample project", "1.0", null, null, null, null, false);
+
+        // A vulnerability that affects two separate release trains of the same
+        // component. There is no single fixed version, so the FPF must carry the
+        // full ranges and let the consumer derive the version to upgrade to.
+        var vuln = new Vulnerability();
+        vuln.setVulnId("GHSA-xxxx-yyyy-zzzz");
+        vuln.setSource(Vulnerability.Source.GITHUB);
+        vuln.setSeverity(Severity.CRITICAL);
+        vuln = qm.createVulnerability(vuln);
+
+        final var vsTrain2 = new VulnerableSoftware();
+        vsTrain2.setPurl("pkg:maven/com.acme/acme-lib");
+        vsTrain2.setPurlType("maven");
+        vsTrain2.setPurlNamespace("com.acme");
+        vsTrain2.setPurlName("acme-lib");
+        vsTrain2.setVersionStartIncluding("2.1.0");
+        vsTrain2.setVersionEndExcluding("2.3.0");
+        qm.persist(vsTrain2);
+
+        final var vsTrain3 = new VulnerableSoftware();
+        vsTrain3.setPurl("pkg:maven/com.acme/acme-lib");
+        vsTrain3.setPurlType("maven");
+        vsTrain3.setPurlNamespace("com.acme");
+        vsTrain3.setPurlName("acme-lib");
+        vsTrain3.setVersionStartIncluding("3.1.0");
+        vsTrain3.setVersionEndExcluding("3.3.0");
+        qm.persist(vsTrain3);
+
+        vuln.setVulnerableSoftware(List.of(vsTrain2, vsTrain3));
+
+        final var findingRow = new FindingDao.FindingRow(project.getUuid(), UUID.randomUUID(), project.getName(), project.getVersion(),
+                "acme-lib", "com.acme", "2.2.0", "pkg:maven/com.acme/acme-lib@2.2.0", null, "Required", true,
+                vuln.getUuid(), Vulnerability.Source.GITHUB, "GHSA-xxxx-yyyy-zzzz", "vuln-title", "vuln-subtitle", "vuln-description",
+                "vuln-recommendation", "vuln-references", Instant.now(), Severity.CRITICAL, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
+                "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
+                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
+                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, false, null, 1);
+        final Finding finding = new Finding(findingRow);
+
+        final var fpf = new FindingPackagingFormat(project.getUuid(), List.of(finding));
+
+        // The affected ranges are surfaced per component, keeping the same shape
+        // as the affectedComponents field on the vulnerability API. Both trains
+        // are present, each with its own bound; the consumer reads
+        // versionEndExcluding as the first patched version.
+        assertThatJson(fpf.getDocument())
+                .withOptions(Option.IGNORING_ARRAY_ORDER)
+                .node("findings[0].vulnerability.affectedVersions")
+                .isEqualTo(/* language=JSON */ """
+                        [
+                          {
+                            "identityType": "PURL",
+                            "identity": "pkg:maven/com.acme/acme-lib",
+                            "versionType": "RANGE",
+                            "versionStartIncluding": "2.1.0",
+                            "versionEndExcluding": "2.3.0",
+                            "uuid": "${json-unit.any-string}"
+                          },
+                          {
+                            "identityType": "PURL",
+                            "identity": "pkg:maven/com.acme/acme-lib",
+                            "versionType": "RANGE",
+                            "versionStartIncluding": "3.1.0",
+                            "versionEndExcluding": "3.3.0",
+                            "uuid": "${json-unit.any-string}"
+                          }
+                        ]
+                        """);
+    }
+
+    @Test
+    public void testFindingsWithoutAffectedSoftwareOmitAffectedVersions() {
+        final Project project = qm.createProject(
+                "Test", "Sample project", "1.0", null, null, null, null, false);
+
+        // The finding references a vulnerability that has no vulnerable software
+        // recorded (e.g. a Trivy verdict). The affectedVersions field must be
+        // omitted entirely rather than serialized as an empty array.
+        var vuln = new Vulnerability();
+        vuln.setVulnId("INT-1");
+        vuln.setSource(Vulnerability.Source.INTERNAL);
+        vuln.setSeverity(Severity.MEDIUM);
+        vuln = qm.createVulnerability(vuln);
+
+        final var findingRow = new FindingDao.FindingRow(project.getUuid(), UUID.randomUUID(), project.getName(), project.getVersion(),
+                "component-name", null, "component-version", null, null, "Required", true,
+                vuln.getUuid(), Vulnerability.Source.INTERNAL, "INT-1", "vuln-title", "vuln-subtitle", "vuln-description",
+                "vuln-recommendation", "vuln-references", Instant.now(), Severity.MEDIUM, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
+                "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
+                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
+                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, false, null, 1);
+        final Finding finding = new Finding(findingRow);
+
+        final var fpf = new FindingPackagingFormat(project.getUuid(), List.of(finding));
+
+        assertThatJson(fpf.getDocument())
+                .node("findings[0].vulnerability")
+                .isObject()
+                .doesNotContainKey("affectedVersions");
+    }
+
+    @Test
+    public void testFindingsSharingVulnerabilityBothGetRanges() {
+        final Project project = qm.createProject(
+                "Test", "Sample project", "1.0", null, null, null, null, false);
+
+        // One vulnerability with a single affected range, referenced by two
+        // different components. The batched lookup groups the range per
+        // vulnerability, so both findings must receive it from the shared map.
+        var vuln = new Vulnerability();
+        vuln.setVulnId("GHSA-xxxx-yyyy-zzzz");
+        vuln.setSource(Vulnerability.Source.GITHUB);
+        vuln.setSeverity(Severity.CRITICAL);
+        vuln = qm.createVulnerability(vuln);
+
+        final var vs = new VulnerableSoftware();
+        vs.setPurl("pkg:maven/com.acme/acme-lib");
+        vs.setPurlType("maven");
+        vs.setPurlNamespace("com.acme");
+        vs.setPurlName("acme-lib");
+        vs.setVersionStartIncluding("2.1.0");
+        vs.setVersionEndExcluding("2.3.0");
+        qm.persist(vs);
+
+        vuln.setVulnerableSoftware(List.of(vs));
+
+        final var findingRow1 = new FindingDao.FindingRow(project.getUuid(), UUID.randomUUID(), project.getName(), project.getVersion(),
+                "acme-lib", "com.acme", "2.2.0", "pkg:maven/com.acme/acme-lib@2.2.0", null, "Required", true,
+                vuln.getUuid(), Vulnerability.Source.GITHUB, "GHSA-xxxx-yyyy-zzzz", "vuln-title", "vuln-subtitle", "vuln-description",
+                "vuln-recommendation", "vuln-references", Instant.now(), Severity.CRITICAL, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
+                "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
+                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
+                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, false, null, 1);
+
+        final var findingRow2 = new FindingDao.FindingRow(project.getUuid(), UUID.randomUUID(), project.getName(), project.getVersion(),
+                "other-lib", "com.acme", "1.0.0", "pkg:maven/com.acme/other-lib@1.0.0", null, "Required", true,
+                vuln.getUuid(), Vulnerability.Source.GITHUB, "GHSA-xxxx-yyyy-zzzz", "vuln-title", "vuln-subtitle", "vuln-description",
+                "vuln-recommendation", "vuln-references", Instant.now(), Severity.CRITICAL, null, BigDecimal.valueOf(7.2), BigDecimal.valueOf(8.4), BigDecimal.valueOf(8.4),
+                "cvssV2-vector", "cvssV3-vector", "cvssV4-vector", BigDecimal.valueOf(1.25), BigDecimal.valueOf(1.75), BigDecimal.valueOf(1.3),
+                "owasp-vector", null, BigDecimal.valueOf(0.5), BigDecimal.valueOf(0.9), false,
+                "internal", Instant.now(), null, null, AnalysisState.NOT_AFFECTED, false, null, 1);
+
+        final var fpf = new FindingPackagingFormat(
+                project.getUuid(),
+                List.of(new Finding(findingRow1), new Finding(findingRow2)));
+
+        final String expectedRanges = /* language=JSON */ """
+                [
+                  {
+                    "identityType": "PURL",
+                    "identity": "pkg:maven/com.acme/acme-lib",
+                    "versionType": "RANGE",
+                    "versionStartIncluding": "2.1.0",
+                    "versionEndExcluding": "2.3.0",
+                    "uuid": "${json-unit.any-string}"
+                  }
+                ]
+                """;
+
+        final String doc = fpf.getDocument();
+        assertThatJson(doc).node("findings[0].vulnerability.affectedVersions").isEqualTo(expectedRanges);
+        assertThatJson(doc).node("findings[1].vulnerability.affectedVersions").isEqualTo(expectedRanges);
     }
 }

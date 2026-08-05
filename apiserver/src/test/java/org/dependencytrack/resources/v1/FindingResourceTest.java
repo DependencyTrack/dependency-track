@@ -488,7 +488,7 @@ public class FindingResourceTest extends ResourceTest {
         assertEquals("Acme Example", json.getJsonObject("project").getString("name"));
         assertEquals("1.0", json.getJsonObject("project").getString("version"));
         assertEquals(p1.getUuid().toString(), json.getJsonObject("project").getString("uuid"));
-        assertEquals("1.5", json.getString("version")); // FPF version
+        assertEquals("1.6", json.getString("version")); // FPF version
         JsonArray findings = json.getJsonArray("findings");
         assertThat(findings).satisfiesExactlyInAnyOrder(
                 jsonValue -> {

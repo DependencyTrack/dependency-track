@@ -42,8 +42,10 @@ import java.util.ArrayList;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
@@ -108,7 +110,7 @@ class CheckmarxVulnAnalyzerTest {
 
     @Test
     void shouldAnalyzeAndCacheWithNoVulns() throws Exception {
-        stubFor(post(urlPathEqualTo("/api/v1/packages/risks"))
+        stubFor(post(urlPathEqualTo("/api/v1/Packages/risks"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -129,13 +131,24 @@ class CheckmarxVulnAnalyzerTest {
         final Bom secondVdr = analyzer.analyze(bom);
         assertThat(secondVdr).isEqualTo(vdr);
 
-        verify(1, postRequestedFor(anyUrl())
-                .withHeader("Authorization", equalTo("Bearer test-access-token")));
+        verify(1, postRequestedFor(urlEqualTo(
+                        "/api/v1/Packages/risks?IncludeRiskDetails=true&IncludeVersionDetails=true&IncludeVersionRemediation=true"))
+                .withHeader("Authorization", equalTo("Bearer test-access-token"))
+                .withRequestBody(equalToJson(/* language=JSON */ """
+                        {
+                          "format": "purl",
+                          "items": [
+                            {
+                              "purl": "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4"
+                            }
+                          ]
+                        }
+                        """)));
     }
 
     @Test
     void shouldAnalyzeAndCacheWithVulns() throws Exception {
-        stubFor(post(urlPathEqualTo("/api/v1/packages/risks"))
+        stubFor(post(urlPathEqualTo("/api/v1/Packages/risks"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -260,7 +273,7 @@ class CheckmarxVulnAnalyzerTest {
 
     @Test
     void shouldNotAnalyzeComponentWithUnsupportedPackageType() throws Exception {
-        stubFor(post(urlPathEqualTo("/api/v1/packages/risks"))
+        stubFor(post(urlPathEqualTo("/api/v1/Packages/risks"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -303,7 +316,7 @@ class CheckmarxVulnAnalyzerTest {
 
     @Test
     void shouldBatchRequestsWithUpTo100Purls() throws Exception {
-        stubFor(post(urlPathEqualTo("/api/v1/packages/risks"))
+        stubFor(post(urlPathEqualTo("/api/v1/Packages/risks"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -326,6 +339,6 @@ class CheckmarxVulnAnalyzerTest {
         final Bom vdr = analyzer.analyze(bom);
         assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
 
-        verify(2, postRequestedFor(urlPathEqualTo("/api/v1/packages/risks")));
+        verify(2, postRequestedFor(urlPathEqualTo("/api/v1/Packages/risks")));
     }
 }

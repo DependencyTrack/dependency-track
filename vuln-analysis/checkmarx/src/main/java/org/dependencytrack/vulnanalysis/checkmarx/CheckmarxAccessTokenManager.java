@@ -77,13 +77,17 @@ final class CheckmarxAccessTokenManager {
                 return accessToken;
             }
 
+            final var tokenRequest = new TokenRequest(apiKey);
+            final String requestBody = "client_id=" + tokenRequest.clientId()
+                    + "&grant_type=" + tokenRequest.grantType()
+                    + "&refresh_token=" + java.net.URLEncoder.encode(tokenRequest.apiKey());
+            
             final var request = HttpRequest.newBuilder()
                     .uri(authApiBaseUrl.resolve("/auth/realms/" + orgId + "/protocol/openid-connect/token"))
-                    .header("Content-Type", "application/json")
+                    .header("Content-Type", "application/x-www-form-urlencoded")
                     .header("Accept", "application/json")
                     .timeout(Duration.ofSeconds(10))
-                    .POST(HttpRequest.BodyPublishers.ofString(
-                            objectMapper.writeValueAsString(new TokenRequest(apiKey))))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
 
             final HttpResponse<InputStream> response;

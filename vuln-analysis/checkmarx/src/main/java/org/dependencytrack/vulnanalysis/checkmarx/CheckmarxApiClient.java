@@ -18,21 +18,21 @@
  */
 package org.dependencytrack.vulnanalysis.checkmarx;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dependencytrack.vulnanalysis.api.RetryableVulnAnalysisException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -81,13 +81,13 @@ final class CheckmarxApiClient {
 
         LOGGER.debug("Fetching Checkmarx vulnerabilities for {} PURLs", purls.size());
 
-        final URI requestUrl = apiBaseUrl.resolve("/api/v1/packages/risks"
+        final URI requestUrl = apiBaseUrl.resolve("/api/v1/Packages/risks"
                                 + "?IncludeRiskDetails=true" + "&IncludeVersionDetails=true" + "&IncludeVersionRemediation=true");
 
         // Ensure valid access token (will be cached if still valid)
         final String accessToken = tokenManager.getAccessToken(authApiBaseUrl, orgId, apiKey);
 
-        final String requestBody = objectMapper.writeValueAsString(new VulnerabilityRequest(new ArrayList<>(purls)));
+        final String requestBody = objectMapper.writeValueAsString(VulnerabilityRequest.of(purls));
 
         final var request = HttpRequest.newBuilder()
                 .uri(requestUrl)
@@ -111,7 +111,8 @@ final class CheckmarxApiClient {
                 return objectMapper.readValue(body, CheckmarxApiResponse.class);
             }
 
-            body.transferTo(OutputStream.nullOutputStream());
+            final var errorBody = new ByteArrayOutputStream();
+            body.transferTo(errorBody);
 
             if (response.statusCode() == 404) {
                 LOGGER.debug("No vulnerabilities found for provided PURLs");
@@ -119,12 +120,33 @@ final class CheckmarxApiClient {
             }
 
             RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
-            throw new IOException("Checkmarx API request failed with status " + response.statusCode());
+            final String errorMessage = errorBody.toString().trim();
+            if (errorMessage.isEmpty()) {
+                throw new IOException("Checkmarx API request failed with status " + response.statusCode());
+            }
+
+            throw new IOException("Checkmarx API request failed with status %d: %s"
+                    .formatted(response.statusCode(), errorMessage));
         }
     }
 
-    private record VulnerabilityRequest(List<String> packageUrls) {
+    private record VulnerabilityRequest(List<VulnerabilityRequestItem> items) {
+
+        @JsonProperty("format")
+        private String format() {
+            return "purl";
+        }
+
+        private static VulnerabilityRequest of(Collection<String> purls) {
+            return new VulnerabilityRequest(
+                    purls.stream()
+                            .map(VulnerabilityRequestItem::new)
+                            .toList());
+        }
+
+    }
+
+    private record VulnerabilityRequestItem(@JsonProperty("purl") String purl) {
     }
 
 }
-

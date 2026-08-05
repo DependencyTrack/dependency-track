@@ -600,6 +600,7 @@ class BovModelConverterTest {
                 "GITHUB,   GITHUB",
                 "OSV,      OSV",
                 "SNYK,     SNYK",
+                "CX,       CX",
                 "OSSINDEX, OSSINDEX",
                 "VULNDB,   VULNDB",
                 "INTERNAL, INTERNAL",

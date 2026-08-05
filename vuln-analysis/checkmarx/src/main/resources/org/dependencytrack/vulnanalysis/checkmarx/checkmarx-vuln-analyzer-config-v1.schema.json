@@ -38,10 +38,10 @@
       "description": "Organization ID to authenticate with the Checkmarx REST API.",
       "minLength": 1
     },
-    "refreshToken": {
+    "apiKey": {
       "type": "string",
-      "title": "Refresh Token",
-      "description": "Refresh token (API Key) to authenticate with the Checkmarx REST API.",
+      "title": "API Key",
+      "description": "API key to authenticate with the Checkmarx REST API.",
       "minLength": 1,
       "x-secret-ref": true
     }

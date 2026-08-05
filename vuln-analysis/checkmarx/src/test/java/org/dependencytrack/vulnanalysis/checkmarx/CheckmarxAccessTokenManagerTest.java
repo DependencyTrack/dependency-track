@@ -62,7 +62,7 @@ class CheckmarxAccessTokenManagerTest {
                                 {"access_token": "tok-123", "token_type": "Bearer", "expires_in": 3600}
                                 """)));
 
-        final String token = tokenManager.getAccessToken(apiBaseUrl, "org-id", "refresh-token");
+        final String token = tokenManager.getAccessToken(apiBaseUrl, "org-id", "api-key");
         assertThat(token).isEqualTo("tok-123");
     }
 
@@ -76,8 +76,8 @@ class CheckmarxAccessTokenManagerTest {
                                 {"access_token": "tok-cached", "token_type": "Bearer", "expires_in": 3600}
                                 """)));
 
-        final String token1 = tokenManager.getAccessToken(apiBaseUrl, "org-id", "refresh-token");
-        final String token2 = tokenManager.getAccessToken(apiBaseUrl, "org-id", "refresh-token");
+        final String token1 = tokenManager.getAccessToken(apiBaseUrl, "org-id", "api-key");
+        final String token2 = tokenManager.getAccessToken(apiBaseUrl, "org-id", "api-key");
 
         assertThat(token1).isEqualTo("tok-cached");
         assertThat(token2).isEqualTo("tok-cached");
@@ -94,7 +94,7 @@ class CheckmarxAccessTokenManagerTest {
                                 {"access_token": "tok-expired", "token_type": "Bearer", "expires_in": 0}
                                 """)));
 
-        tokenManager.getAccessToken(apiBaseUrl, "org-id", "refresh-token");
+        tokenManager.getAccessToken(apiBaseUrl, "org-id", "api-key");
 
         stubFor(post(urlPathEqualTo("/auth/realms/org-id/protocol/openid-connect/token"))
                 .willReturn(aResponse()
@@ -104,7 +104,7 @@ class CheckmarxAccessTokenManagerTest {
                                 {"access_token": "tok-refreshed", "token_type": "Bearer", "expires_in": 3600}
                                 """)));
 
-        final String token = tokenManager.getAccessToken(apiBaseUrl, "org-id", "refresh-token");
+        final String token = tokenManager.getAccessToken(apiBaseUrl, "org-id", "api-key");
         assertThat(token).isEqualTo("tok-refreshed");
         verify(2, postRequestedFor(urlPathEqualTo("/auth/realms/org-id/protocol/openid-connect/token")));
     }
@@ -119,7 +119,7 @@ class CheckmarxAccessTokenManagerTest {
                                 {"access_token": "tok-old", "token_type": "Bearer", "expires_in": 3600}
                                 """)));
 
-        tokenManager.getAccessToken(apiBaseUrl, "org-id-1", "refresh-token-1");
+        tokenManager.getAccessToken(apiBaseUrl, "org-id-1", "api-key-1");
 
         stubFor(post(urlPathEqualTo("/auth/realms/org-id-2/protocol/openid-connect/token"))
                 .willReturn(aResponse()
@@ -129,7 +129,7 @@ class CheckmarxAccessTokenManagerTest {
                                 {"access_token": "tok-new", "token_type": "Bearer", "expires_in": 3600}
                                 """)));
 
-        final String token = tokenManager.getAccessToken(apiBaseUrl, "org-id-2", "refresh-token-2");
+        final String token = tokenManager.getAccessToken(apiBaseUrl, "org-id-2", "api-key-2");
         assertThat(token).isEqualTo("tok-new");
         verify(1, postRequestedFor(urlPathMatching("/auth/realms/org-id-1/protocol/openid-connect/token")));
         verify(1, postRequestedFor(urlPathMatching("/auth/realms/org-id-2/protocol/openid-connect/token")));
@@ -142,7 +142,7 @@ class CheckmarxAccessTokenManagerTest {
                         .withStatus(401)
                         .withBody("Unauthorized")));
 
-        assertThatThrownBy(() -> tokenManager.getAccessToken(apiBaseUrl, "bad-id", "bad-token"))
+        assertThatThrownBy(() -> tokenManager.getAccessToken(apiBaseUrl, "bad-id", "bad-key"))
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("401");
     }

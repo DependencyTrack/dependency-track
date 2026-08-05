@@ -79,7 +79,7 @@ public final class CheckmarxVulnAnalyzerFactory implements VulnAnalyzerFactory, 
                 httpClient,
                 objectMapper,
                 tokenManager,
-                config.getRefreshToken(),
+                config.getApiKey(),
                 config.getOrgId(),
                 config.getAuthApiBaseUrl(),
                 config.getApiBaseUrl());
@@ -117,8 +117,8 @@ public final class CheckmarxVulnAnalyzerFactory implements VulnAnalyzerFactory, 
                     if (config.getApiBaseUrl() == null) {
                         throw new InvalidRuntimeConfigException("No API base URL provided");
                     }
-                    if (config.getRefreshToken() == null) {
-                        throw new InvalidRuntimeConfigException("No Refresh Token provided");
+                    if (config.getApiKey() == null) {
+                        throw new InvalidRuntimeConfigException("No API Key provided");
                     }
                     if (config.getOrgId() == null) {
                         throw new InvalidRuntimeConfigException("No Organization ID provided");

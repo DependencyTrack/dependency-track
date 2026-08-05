@@ -50,7 +50,7 @@ final class CheckmarxAccessTokenManager {
     private @Nullable Instant accessTokenExpiresAt;
     private @Nullable URI authApiBaseUrl;
     private @Nullable String orgId;
-    private @Nullable String refreshToken;
+    private @Nullable String apiKey;
 
     CheckmarxAccessTokenManager(HttpClient httpClient, ObjectMapper objectMapper) {
         this.httpClient = httpClient;
@@ -58,14 +58,14 @@ final class CheckmarxAccessTokenManager {
     }
 
     /**
-     * Gets a valid access token, fetching a new one via refresh token if necessary.
+     * Gets a valid access token, fetching a new one via API Key if necessary.
      *
      * @param authApiBaseUrl the Checkmarx authentication API base URL
      * @param orgId the organization ID
-     * @param refreshToken the refresh token (apiKey from config)
+     * @param apiKey the API Key
      * @return a valid access token
      */
-    String getAccessToken(URI authApiBaseUrl, String orgId, String refreshToken) throws IOException, InterruptedException {
+    String getAccessToken(URI authApiBaseUrl, String orgId, String apiKey) throws IOException, InterruptedException {
         lock.lockInterruptibly();
         try {
             if (accessToken != null
@@ -73,7 +73,7 @@ final class CheckmarxAccessTokenManager {
                     && Instant.now().isBefore(accessTokenExpiresAt)
                     && Objects.equals(authApiBaseUrl, this.authApiBaseUrl)
                     && Objects.equals(orgId, this.orgId)
-                    && Objects.equals(refreshToken, this.refreshToken)) {
+                    && Objects.equals(apiKey, this.apiKey)) {
                 return accessToken;
             }
 
@@ -83,7 +83,7 @@ final class CheckmarxAccessTokenManager {
                     .header("Accept", "application/json")
                     .timeout(Duration.ofSeconds(10))
                     .POST(HttpRequest.BodyPublishers.ofString(
-                            objectMapper.writeValueAsString(new TokenRequest(refreshToken))))
+                            objectMapper.writeValueAsString(new TokenRequest(apiKey))))
                     .build();
 
             final HttpResponse<InputStream> response;
@@ -104,7 +104,7 @@ final class CheckmarxAccessTokenManager {
             accessTokenExpiresAt = Instant.now().plusSeconds(tokenResponse.expiresIn()).minus(EXPIRY_BUFFER);
             this.authApiBaseUrl = authApiBaseUrl;
             this.orgId = orgId;
-            this.refreshToken = refreshToken;
+            this.apiKey = apiKey;
 
             return accessToken;
         } finally {
@@ -115,10 +115,10 @@ final class CheckmarxAccessTokenManager {
     private record TokenRequest(
             @JsonProperty("client_id") String clientId,
             @JsonProperty("grant_type") String grantType,
-            @JsonProperty("refresh_token") String refreshToken) {
+            @JsonProperty("refresh_token") String apiKey) {
 
-        TokenRequest(String refreshToken) {
-            this(CLIENT_ID, GRANT_TYPE, refreshToken);
+        TokenRequest(String apiKey) {
+            this(CLIENT_ID, GRANT_TYPE, apiKey);
         }
 
     }
@@ -127,7 +127,7 @@ final class CheckmarxAccessTokenManager {
     private record TokenResponse(
             @JsonProperty("access_token") String accessToken,
             @JsonProperty("expires_in") long expiresIn,
-            @JsonProperty("refresh_token") String refreshToken,
+            @JsonProperty("refresh_token") String apiKey,
             @JsonProperty("refresh_expires_in") long refreshExpiresIn) {
     }
 

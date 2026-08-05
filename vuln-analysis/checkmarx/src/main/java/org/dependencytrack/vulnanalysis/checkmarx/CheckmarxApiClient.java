@@ -46,7 +46,7 @@ final class CheckmarxApiClient {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final CheckmarxAccessTokenManager tokenManager;
-    private final String refreshToken;
+    private final String apiKey;
     private final String orgId;
     private final URI authApiBaseUrl;
     private final URI apiBaseUrl;
@@ -55,14 +55,14 @@ final class CheckmarxApiClient {
             HttpClient httpClient,
             ObjectMapper objectMapper,
             CheckmarxAccessTokenManager tokenManager,
-            String refreshToken,
+            String apiKey,
             String orgId,
             URI authApiBaseUrl,
             URI apiBaseUrl) {
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
         this.tokenManager = tokenManager;
-        this.refreshToken = refreshToken;
+        this.apiKey = apiKey;
         this.orgId = orgId;
         this.authApiBaseUrl = authApiBaseUrl;
         this.apiBaseUrl = apiBaseUrl;
@@ -85,7 +85,7 @@ final class CheckmarxApiClient {
                                 + "?IncludeRiskDetails=true" + "&IncludeVersionDetails=true" + "&IncludeVersionRemediation=true");
 
         // Ensure valid access token (will be cached if still valid)
-        final String accessToken = tokenManager.getAccessToken(authApiBaseUrl, orgId, refreshToken);
+        final String accessToken = tokenManager.getAccessToken(authApiBaseUrl, orgId, apiKey);
 
         final String requestBody = objectMapper.writeValueAsString(new VulnerabilityRequest(new ArrayList<>(purls)));
 

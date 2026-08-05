@@ -73,7 +73,7 @@ class CheckmarxVulnAnalyzerTest {
                         .withApiBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
                         .withOrgId("test-org-id")
                         .withAuthApiBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
-                        .withRefreshToken("test-refresh-token"));
+                        .withApiKey("test-api-key"));
 
         analyzerFactory.init(
                 new MutableServiceRegistry()
@@ -89,7 +89,7 @@ class CheckmarxVulnAnalyzerTest {
                         .withBody("""
                              {   "access_token": "test-access-token",
                                  "expires_in": 3600,
-                                 "refresh_token": "test-refresh-token",
+                                 "refresh_token": "test-api-key",
                                  "refresh_expires_in": 3600
                              }""")));
 

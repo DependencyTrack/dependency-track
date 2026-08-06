@@ -47,19 +47,8 @@ public interface PaginationSupport extends SqlObject {
             @Nullable Map<String, Object> whereParams,
             @Nullable Integer threshold,
             String projectIdColumn) {
-        return getBoundedTotalCountWithProjectAcl(
-                fromWhereClause, whereParams, threshold, projectIdColumn, false);
-    }
-
-    default TotalCount getBoundedTotalCountWithProjectAcl(
-            String fromWhereClause,
-            @Nullable Map<String, Object> whereParams,
-            @Nullable Integer threshold,
-            String projectIdColumn,
-            boolean filterHasChildren) {
         requireNonNull(projectIdColumn, "projectIdColumn must not be null");
-        return getBoundedTotalCount(
-                fromWhereClause, whereParams, threshold, projectIdColumn, filterHasChildren);
+        return getBoundedTotalCount(fromWhereClause, whereParams, threshold, projectIdColumn);
     }
 
     /// Calculates the total count of rows that match a given `FROM ... WHERE` clause.
@@ -97,16 +86,6 @@ public interface PaginationSupport extends SqlObject {
             @Nullable Map<String, Object> whereParams,
             @Nullable Integer threshold,
             @Nullable String projectIdColumn) {
-        return getBoundedTotalCount(
-                fromWhereClause, whereParams, threshold, projectIdColumn, false);
-    }
-
-    default TotalCount getBoundedTotalCount(
-            String fromWhereClause,
-            @Nullable Map<String, Object> whereParams,
-            @Nullable Integer threshold,
-            @Nullable String projectIdColumn,
-            boolean filterHasChildren) {
         requireNonNull(fromWhereClause, "fromWhereClause must not be null");
         if (threshold != null && threshold < 1) {
             throw new IllegalArgumentException("threshold must not be less than 1");
@@ -123,8 +102,6 @@ public interface PaginationSupport extends SqlObject {
                 <#-- @ftlvariable name="fromWhereClause" type="String" -->
                 <#-- @ftlvariable name="includeAcl" type="boolean" -->
                 <#-- @ftlvariable name="threshold" type="boolean" -->
-                <#-- @ftlvariable name="filterHasChildren" type="boolean" -->
-                <#assign childProjectAclCondition = apiProjectAclCondition?replace('"PROJECT"."ID"', '"CHILD_PROJECT"."ID"')>
                 <#if threshold>
                 SELECT COUNT(*)
                   FROM (
@@ -133,13 +110,6 @@ public interface PaginationSupport extends SqlObject {
                 <#if includeAcl>
                        AND ${apiProjectAclCondition}
                 </#if>
-                <#if filterHasChildren>
-                       AND EXISTS (
-                         SELECT 1
-                           FROM "PROJECT" AS "CHILD_PROJECT"
-                          WHERE "CHILD_PROJECT"."PARENT_PROJECT_ID" = "PROJECT"."ID"
-                            AND (${childProjectAclCondition}))
-                </#if>
                      LIMIT (:threshold + 1)
                   ) AS t
                 <#else>
@@ -147,13 +117,6 @@ public interface PaginationSupport extends SqlObject {
                   ${fromWhereClause}
                 <#if includeAcl>
                    AND ${apiProjectAclCondition}
-                </#if>
-                <#if filterHasChildren>
-                   AND EXISTS (
-                     SELECT 1
-                       FROM "PROJECT" AS "CHILD_PROJECT"
-                      WHERE "CHILD_PROJECT"."PARENT_PROJECT_ID" = "PROJECT"."ID"
-                        AND (${childProjectAclCondition}))
                 </#if>
                 </#if>
                 """);
@@ -179,7 +142,6 @@ public interface PaginationSupport extends SqlObject {
                 .bind("threshold", threshold)
                 .define("fromWhereClause", fromWhereClause)
                 .define("includeAcl", projectIdColumn != null)
-                .define("filterHasChildren", filterHasChildren)
                 .defineNamedBindings()
                 .mapTo(long.class)
                 .one();

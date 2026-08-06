@@ -45,6 +45,8 @@ get:
     The following fields can be included via `expand`:
 
     * `metrics`
+    * `parent`
+    * `teams`
 
     Requires permission `VIEW_PORTFOLIO`.
   tags:
@@ -68,7 +70,7 @@ get:
         whitespace-only are treated as if the parameter was omitted.
       schema:
         type: string
-    - name: tags
+    - name: tags_all
       in: query
       description: |-
         Filter by tag names (exact match, case-insensitive).
@@ -79,7 +81,7 @@ get:
           type: string
       style: form
       explode: true
-    - name: teams
+    - name: teams_any
       in: query
       description: |-
         Filter by team names (exact match, case-insensitive).
@@ -95,13 +97,12 @@ get:
       description: |-
         Filter by parent project UUID.
 
-        Returns only direct children of the given parent.
+        Returns only direct children of the given parent (one hierarchy level).
 
         When portfolio access control is enabled and the caller does not have
         access to the parent project, an empty result set is returned.
 
-        Used for tree-view navigation (lazy loading of one hierarchy level).
-        For a flat list of all descendants under a root (or any ancestor),
+        For all descendants at any depth under a root or other ancestor,
         use `ancestor_uuid` instead.
       schema:
         type: string
@@ -139,18 +140,16 @@ get:
         Projects the caller cannot access are never included. Access is evaluated
         per project using the standard portfolio ACL rules (including hierarchy:
         access granted on an ancestor also grants access to its descendants).
-        A project is not listed when all of its direct children are inaccessible
-        to the caller.
       schema:
         type: boolean
     - name: is_active
       in: query
       description: |-
-        When `true`, return only active projects.
-        When `false`, return only inactive projects.
+        Filter by project active state.
+
         Omit to include projects regardless of active state.
       schema:
-        type: boolean
+        $ref: "../../shared/schemas/project-state.yaml"
     - name: is_latest
       in: query
       description: |-
@@ -186,11 +185,11 @@ get:
         items:
           type: string
           enum:
-            - critical
-            - high
-            - medium
-            - low
-            - unassigned
+            - CRITICAL
+            - HIGH
+            - MEDIUM
+            - LOW
+            - UNASSIGNED
       style: form
       explode: true
     - name: classifier
@@ -199,25 +198,11 @@ get:
         Filter by project classifier (exact match).
         When multiple values are provided, projects matching **any** of the classifiers are returned.
 
-        Values are matched case-insensitively. Unknown values result in `400 Bad Request`.
+        Values must match the shared classifier schema. Unknown values result in `400 Bad Request`.
       schema:
         type: array
         items:
-          type: string
-          enum:
-            - APPLICATION
-            - FRAMEWORK
-            - LIBRARY
-            - CONTAINER
-            - OPERATING_SYSTEM
-            - DEVICE
-            - FIRMWARE
-            - FILE
-            - PLATFORM
-            - DEVICE_DRIVER
-            - MACHINE_LEARNING_MODEL
-            - DATA
-            - CRYPTOGRAPHIC_ASSET
+          $ref: "../../shared/schemas/classifier.yaml"
       style: form
       explode: true
     - name: expand
@@ -227,8 +212,6 @@ get:
         type: array
         items:
           type: string
-          enum:
-            - metrics
       style: form
       explode: true
     - $ref: "../../shared/parameters/pagination-limit.yaml"

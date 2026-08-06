@@ -43,6 +43,8 @@ public record ListAllProjectsQuery(
         @Nullable List<String> severities,
         @Nullable List<String> classifiers,
         boolean includeMetrics,
+        boolean includeParent,
+        boolean includeTeams,
         int limit,
         @Nullable String pageToken,
         @Nullable SortBy sortBy,

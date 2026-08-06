@@ -27,17 +27,18 @@ import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.api.v2.ProjectsApi;
+import org.dependencytrack.api.v2.model.Classifier;
 import org.dependencytrack.api.v2.model.CloneProjectInclude;
 import org.dependencytrack.api.v2.model.CloneProjectRequest;
 import org.dependencytrack.api.v2.model.CloneProjectResponse;
 import org.dependencytrack.api.v2.model.ListProjectComponentsResponse;
 import org.dependencytrack.api.v2.model.ListProjectComponentsResponseItem;
 import org.dependencytrack.api.v2.model.ListProjectsResponse;
+import org.dependencytrack.api.v2.model.ProjectState;
 import org.dependencytrack.api.v2.model.SortDirection;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.exception.InvalidSortFieldException;
-import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PackageArtifactMetadata;
@@ -58,7 +59,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -90,18 +90,18 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
     public Response listProjects(
             final String nameContains,
             final String versionContains,
-            final List<String> tags,
-            final List<String> teams,
+            final List<String> tagsAll,
+            final List<String> teamsAny,
             final UUID parentUuid,
             final UUID ancestorUuid,
             final Boolean onlyRoot,
             final Boolean hasChildren,
-            final Boolean isActive,
+            final ProjectState isActive,
             final Boolean isLatest,
             final Long lastBomImportSince,
             final Long lastBomImportBefore,
             final List<String> severity,
-            final List<String> classifier,
+            final List<Classifier> classifier,
             final List<String> expand,
             final Integer limit,
             final String pageToken,
@@ -110,6 +110,8 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
 
         final boolean hasExpand = expand != null && !expand.isEmpty();
         final boolean expandMetrics = hasExpand && expand.contains("metrics");
+        final boolean expandParent = hasExpand && expand.contains("parent");
+        final boolean expandTeams = hasExpand && expand.contains("teams");
         final List<String> severities = normalizeSeverityFilter(severity);
         final List<String> classifiers = normalizeClassifierFilter(classifier);
 
@@ -135,30 +137,36 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
                         "last_inherited_risk_score"));
             };
 
-            final Page<ProjectDao.ListProjectsRow> projectsPage = handle.attach(ProjectDao.class)
+            final Page<ProjectDao.ListAllProjectsRow> projectsPage = handle.attach(ProjectDao.class)
                     .listAllProjects(new ListAllProjectsQuery(
                             StringUtils.trimToNull(nameContains),
                             StringUtils.trimToNull(versionContains),
-                            tags,
-                            teams,
+                            tagsAll,
+                            teamsAny,
                             parentUuid,
                             ancestorUuid,
                             onlyRoot,
                             hasChildren,
-                            isActive,
+                            switch (isActive) {
+                                case ACTIVE -> Boolean.TRUE;
+                                case INACTIVE -> Boolean.FALSE;
+                                case null -> null;
+                            },
                             isLatest,
                             lastBomImportSince != null ? Instant.ofEpochMilli(lastBomImportSince) : null,
                             lastBomImportBefore != null ? Instant.ofEpochMilli(lastBomImportBefore) : null,
                             severities,
                             classifiers,
                             expandMetrics,
+                            expandParent,
+                            expandTeams,
                             limit,
                             pageToken,
                             sortByEnum,
                             mapSortDirection(sortDirection)));
 
             final var responseItems = projectsPage.items().stream()
-                    .map(row -> mapListProjectsResponseItem(row, expandMetrics))
+                    .map(row -> mapListProjectsResponseItem(row, expandMetrics, expandParent, expandTeams))
                     .toList();
 
             return Response.ok(ListProjectsResponse.builder()
@@ -363,51 +371,42 @@ public class ProjectsResource extends AbstractApiResource implements ProjectsApi
     }
 
     private static final Set<String> ALLOWED_PROJECT_SEVERITY_FILTERS = Set.of(
-            "critical",
-            "high",
-            "medium",
-            "low",
-            "unassigned");
+            "CRITICAL",
+            "HIGH",
+            "MEDIUM",
+            "LOW",
+            "UNASSIGNED");
 
-    private static final String ALLOWED_CLASSIFIER_FILTERS = Arrays.stream(Classifier.values())
-            .map(Enum::name)
-            .collect(Collectors.joining(", "));
+    private static final String ALLOWED_SEVERITY_FILTERS = "CRITICAL, HIGH, MEDIUM, LOW, UNASSIGNED";
 
     private static List<String> normalizeSeverityFilter(final List<String> severity) {
         if (severity == null || severity.isEmpty()) {
             return null;
         }
 
-        final var normalized = severity.stream()
-                .map(value -> value == null ? null : value.trim().toLowerCase(Locale.ROOT))
-                .toList();
-        for (final String value : normalized) {
-            if (value == null || value.isEmpty() || !ALLOWED_PROJECT_SEVERITY_FILTERS.contains(value)) {
-                throw new BadRequestException(
-                        "severity must be one of: critical, high, medium, low, unassigned");
+        final var normalized = new ArrayList<String>();
+        for (final String value : severity) {
+            if (value == null || value.isBlank()) {
+                throw new BadRequestException("severity must be one of: " + ALLOWED_SEVERITY_FILTERS);
             }
+            final String normalizedValue = value.trim().toUpperCase(Locale.ROOT);
+            if (!ALLOWED_PROJECT_SEVERITY_FILTERS.contains(normalizedValue)) {
+                throw new BadRequestException("severity must be one of: " + ALLOWED_SEVERITY_FILTERS);
+            }
+            normalized.add(normalizedValue);
         }
 
         return normalized.stream().distinct().toList();
     }
 
-    private static List<String> normalizeClassifierFilter(final List<String> classifier) {
+    private static List<String> normalizeClassifierFilter(final List<Classifier> classifier) {
         if (classifier == null || classifier.isEmpty()) {
             return null;
         }
 
-        final var normalized = new ArrayList<String>();
-        for (final String value : classifier) {
-            if (value == null || value.isBlank()) {
-                throw new BadRequestException("classifier must be one of: " + ALLOWED_CLASSIFIER_FILTERS);
-            }
-            try {
-                normalized.add(Classifier.valueOf(value.trim().toUpperCase(Locale.ROOT)).name());
-            } catch (IllegalArgumentException e) {
-                throw new BadRequestException("classifier must be one of: " + ALLOWED_CLASSIFIER_FILTERS);
-            }
-        }
-
-        return normalized.stream().distinct().toList();
+        return classifier.stream()
+                .map(Classifier::name)
+                .distinct()
+                .toList();
     }
 }

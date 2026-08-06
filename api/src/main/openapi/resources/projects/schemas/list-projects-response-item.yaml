@@ -29,12 +29,11 @@ properties:
     type: string
     maxLength: 255
   classifier:
-    type: string
-    maxLength: 255
+    $ref: "../../../shared/schemas/classifier.yaml"
   is_latest:
     type: boolean
   is_active:
-    type: boolean
+    $ref: "../../../shared/schemas/project-state.yaml"
   last_bom_import:
     $ref: "../../../shared/schemas/timestamp.yaml"
   last_bom_import_format:
@@ -47,12 +46,7 @@ properties:
     type: array
     description: Tag names assigned to the project. Empty when no tags are assigned.
     items:
-      type: object
-      properties:
-        name:
-          type: string
-      required:
-        - name
+      type: string
   collection_logic:
     type: string
     enum:
@@ -60,15 +54,13 @@ properties:
       - AGGREGATE_DIRECT_CHILDREN_WITH_TAG
       - AGGREGATE_LATEST_VERSION_CHILDREN
   collection_tag:
-    type: object
-    properties:
-      name:
-        type: string
-    required:
-      - name
+    type: string
+    description: Tag name used by collection logic, when applicable.
   teams:
     type: array
-    description: Teams with access to the project. Empty when no teams are assigned.
+    description: >-
+      Teams with access to the project. Only present when `expand=teams` is requested.
+      Empty array when expanded and no teams are assigned.
     items:
       type: object
       properties:
@@ -77,15 +69,14 @@ properties:
       required:
         - name
   parent:
-    $ref: "../../components/schemas/component-project.yaml"
+    $ref: "../../../shared/schemas/component-project.yaml"
   has_children:
     type: boolean
     description: >-
-      Whether the project has at least one direct child that is accessible to the
-      caller. When portfolio access control is disabled, this reflects all direct
+      Whether the project has at least one direct child. When portfolio access control is disabled, this reflects all direct
       children in the database.
   metrics:
-    $ref: "../../components/schemas/dependency-metrics.yaml"
+    $ref: "./project-metrics.yaml"
 required:
   - uuid
   - name

@@ -37,6 +37,7 @@ import java.net.ConnectException;
 import java.net.ProxySelector;
 import java.nio.file.NoSuchFileException;
 import java.util.Map;
+import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -76,6 +77,105 @@ class S3FileStorageTest {
                         Map.entry("dt.file-storage.s3.bucket", "does-not-exist"),
                         Map.entry("dt.file-storage.s3.connect-timeout-ms", "500"))))
                 .withMessage("Failed to determine if bucket does-not-exist exists");
+    }
+
+    @Test
+    void shouldThrowWhenOnlyAccessKeyIsConfigured() {
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> createStorage(Map.ofEntries(
+                        Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                        Map.entry("dt.file-storage.s3.access-key", "foo"),
+                        Map.entry("dt.file-storage.s3.bucket", "test"))))
+                .withMessageContaining("Incomplete static credentials");
+    }
+
+    @Test
+    void shouldThrowWhenOnlySecretKeyIsConfigured() {
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> createStorage(Map.ofEntries(
+                        Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                        Map.entry("dt.file-storage.s3.secret-key", "bar"),
+                        Map.entry("dt.file-storage.s3.bucket", "test"))))
+                .withMessageContaining("Incomplete static credentials");
+    }
+
+    @Test
+    void shouldThrowWhenAwsCredentialsSourceIsCombinedWithStaticCredentials() {
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> createStorage(Map.ofEntries(
+                        Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                        Map.entry("dt.file-storage.s3.credentials-source", "aws"),
+                        Map.entry("dt.file-storage.s3.access-key", "foo"),
+                        Map.entry("dt.file-storage.s3.secret-key", "bar"),
+                        Map.entry("dt.file-storage.s3.bucket", "test"))))
+                .withMessageContaining("Conflicting credentials configuration");
+    }
+
+    @Test
+    void shouldThrowWhenCredentialsSourceIsInvalid() {
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> createStorage(Map.ofEntries(
+                        Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                        Map.entry("dt.file-storage.s3.credentials-source", "foo"),
+                        Map.entry("dt.file-storage.s3.bucket", "test"))))
+                .withMessage("Invalid credentials source: must be static or aws, but is foo");
+    }
+
+    @Test
+    void shouldSendUnsignedRequestsWhenNoCredentialsAreConfigured() throws Exception {
+        try (final FileStorage storage = createStorage(Map.ofEntries(
+                Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                Map.entry("dt.file-storage.s3.bucket", "test")))) {
+            final FileMetadata fileMetadata = storage.store(
+                    "anonymous/foo", new ByteArrayInputStream("baz".getBytes()));
+            assertThat(storage.get(fileMetadata).readAllBytes()).asString().isEqualTo("baz");
+            assertThat(storage.delete(fileMetadata)).isTrue();
+        }
+    }
+
+    /**
+     * Anonymous uploads must stay single-part regardless of size, because the whole-file
+     * Content-MD5 header cannot be provided per part of a multipart upload. Random data is
+     * incompressible, so 12MiB of it exceeds both the 10MiB part size of the credentialed
+     * path and the 5MiB minimum part size, exercising the part sizing of the anonymous path.
+     */
+    @Test
+    void shouldStoreLargeFileWhenNoCredentialsAreConfigured() throws Exception {
+        final var content = new byte[12 * 1024 * 1024];
+        new Random(6889).nextBytes(content);
+
+        try (final FileStorage storage = createStorage(Map.ofEntries(
+                Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                Map.entry("dt.file-storage.s3.bucket", "test")))) {
+            final FileMetadata fileMetadata = storage.store(
+                    "anonymous/large", new ByteArrayInputStream(content));
+            assertThat(storage.get(fileMetadata).readAllBytes()).isEqualTo(content);
+            assertThat(storage.delete(fileMetadata)).isTrue();
+        }
+    }
+
+    /**
+     * With the aws credentials source, the client must resolve credentials from the
+     * environment rather than falling back to unsigned (anonymous) requests.
+     * {@link io.minio.credentials.EnvironmentProvider} reads system properties before
+     * environment variables, which is what lets this test drive the chain.
+     */
+    @Test
+    void shouldResolveCredentialsFromEnvironmentWhenCredentialsSourceIsAws() throws Exception {
+        System.setProperty("AWS_ACCESS_KEY_ID", "foo");
+        System.setProperty("AWS_SECRET_ACCESS_KEY", "bar");
+        try (final FileStorage storage = createStorage(Map.ofEntries(
+                Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                Map.entry("dt.file-storage.s3.credentials-source", "aws"),
+                Map.entry("dt.file-storage.s3.bucket", "test")))) {
+            final FileMetadata fileMetadata = storage.store(
+                    "ambient/foo", new ByteArrayInputStream("baz".getBytes()));
+            assertThat(storage.get(fileMetadata).readAllBytes()).asString().isEqualTo("baz");
+            assertThat(storage.delete(fileMetadata)).isTrue();
+        } finally {
+            System.clearProperty("AWS_ACCESS_KEY_ID");
+            System.clearProperty("AWS_SECRET_ACCESS_KEY");
+        }
     }
 
     @Test

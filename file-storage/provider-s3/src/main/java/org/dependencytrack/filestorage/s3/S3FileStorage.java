@@ -23,8 +23,10 @@ import com.github.luben.zstd.ZstdOutputStream;
 import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
+import io.minio.ObjectWriteArgs;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
+import io.minio.UploadObjectArgs;
 import io.minio.errors.ErrorResponseException;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.proto.v1.FileMetadata;
@@ -38,11 +40,15 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.HexFormat;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.Objects.requireNonNull;
@@ -58,14 +64,17 @@ final class S3FileStorage implements FileStorage {
     private final MinioClient s3Client;
     private final String bucketName;
     private final int compressionLevel;
+    private final boolean anonymousAccess;
 
     S3FileStorage(
             MinioClient s3Client,
             String bucketName,
-            int compressionLevel) {
+            int compressionLevel,
+            boolean anonymousAccess) {
         this.s3Client = s3Client;
         this.bucketName = bucketName;
         this.compressionLevel = compressionLevel;
+        this.anonymousAccess = anonymousAccess;
     }
 
     @Override
@@ -126,6 +135,24 @@ final class S3FileStorage implements FileStorage {
             throw new IllegalStateException(e);
         }
 
+        if (anonymousAccess) {
+            storeAnonymously(fileLocation, contentStream, messageDigest);
+        } else {
+            storeStreaming(fileLocation, contentStream, messageDigest);
+        }
+
+        return FileMetadata.newBuilder()
+                .setProviderName(S3FileStorageProvider.NAME)
+                .setLocation(locationUri.toString())
+                .setMediaType(mediaType)
+                .setSha256Digest(HexFormat.of().formatHex(messageDigest.digest()))
+                .build();
+    }
+
+    private void storeStreaming(
+            S3FileLocation fileLocation,
+            InputStream contentStream,
+            MessageDigest messageDigest) throws IOException {
         final var pipedOutputStream = new PipedOutputStream();
         final var pipedInputStream = new PipedInputStream(pipedOutputStream, 65536 /* (64KiB) */);
 
@@ -169,13 +196,51 @@ final class S3FileStorage implements FileStorage {
         } finally {
             pipedInputStream.close();
         }
+    }
 
-        return FileMetadata.newBuilder()
-                .setProviderName(S3FileStorageProvider.NAME)
-                .setLocation(locationUri.toString())
-                .setMediaType(mediaType)
-                .setSha256Digest(HexFormat.of().formatHex(messageDigest.digest()))
-                .build();
+    /**
+     * The S3 client rejects unsigned request bodies that carry no Content-MD5 header.
+     * That hash cannot be computed for a stream of unknown length, and cannot be provided
+     * per part of a multipart upload. Spool the compressed content to a temporary file to
+     * compute its MD5 hash first, then upload the file in a single part. This limits
+     * anonymous uploads to the maximum size of a single part (5GiB).
+     */
+    private void storeAnonymously(
+            S3FileLocation fileLocation,
+            InputStream contentStream,
+            MessageDigest messageDigest) throws IOException {
+        final MessageDigest md5Digest;
+        try {
+            md5Digest = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+
+        final Path tempFile = Files.createTempFile("dt-file-storage-s3", null);
+        try {
+            try (final var md5OutputStream = new DigestOutputStream(
+                    Files.newOutputStream(tempFile), md5Digest);
+                 final var digestOutputStream = new DigestOutputStream(md5OutputStream, messageDigest);
+                 final var zstdOutputStream = new ZstdOutputStream(digestOutputStream, compressionLevel)) {
+                contentStream.transferTo(zstdOutputStream);
+            }
+
+            final long objectSize = Files.size(tempFile);
+            final long partSize = Math.max(objectSize, ObjectWriteArgs.MIN_MULTIPART_SIZE);
+            final String contentMd5 = Base64.getEncoder().encodeToString(md5Digest.digest());
+            s3Client.uploadObject(UploadObjectArgs.builder()
+                    .bucket(fileLocation.bucket())
+                    .object(fileLocation.object())
+                    .filename(tempFile.toString(), partSize)
+                    .headers(Map.of("Content-MD5", contentMd5))
+                    .build());
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException(e);
+        } finally {
+            Files.deleteIfExists(tempFile);
+        }
     }
 
     @Override

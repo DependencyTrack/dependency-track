@@ -18,6 +18,13 @@
       "description": "Whether to include alias information in vulnerability data.",
       "existingJavaType": "boolean"
     },
+    "checksumMatchingEnabled": {
+      "type": "boolean",
+      "title": "Checksum Matching Enabled",
+      "description": "When enabled, send checksum qualifiers from Maven component PURLs to Snyk and interpret meta.packages match results. Only pkg:maven PURLs with a checksum qualifier use checksum matching; all others use coordinates-only matching.",
+      "existingJavaType": "boolean"
+    },
+
     "apiBaseUrl": {
       "type": "string",
       "title": "API Base URL",

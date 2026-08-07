@@ -54,6 +54,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Gatherers;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * @since 5.0.0
  */
@@ -74,6 +76,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
     private final String apiToken;
     private final String apiVersion;
     private final boolean aliasSyncEnabled;
+    private final boolean checksumMatchingEnabled;
 
     SnykVulnAnalyzer(
             Cache resultsCache,
@@ -83,7 +86,8 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             String orgId,
             String apiToken,
             String apiVersion,
-            boolean aliasSyncEnabled) {
+            boolean aliasSyncEnabled,
+            boolean checksumMatchingEnabled) {
         this.resultsCache = resultsCache;
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
@@ -92,6 +96,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         this.apiToken = apiToken;
         this.apiVersion = apiVersion;
         this.aliasSyncEnabled = aliasSyncEnabled;
+        this.checksumMatchingEnabled = checksumMatchingEnabled;
     }
 
     @Override
@@ -121,17 +126,14 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
                 purlsToAnalyze.remove(purl);
 
-                if (cachedBytes == null) {
+                final SnykCachedPurlResult cached = deserializeCachedResult(purl, cachedBytes);
+                if (cached == null) {
+                    // Corrupt entry — re-fetch.
+                    purlsToAnalyze.add(purl);
                     continue;
                 }
 
-                try {
-                    final SnykIssue[] issues = objectMapper.readValue(cachedBytes, SnykIssue[].class);
-                    issuesByPurl.put(purl, List.of(issues));
-                } catch (IOException e) {
-                    LOGGER.warn("Failed to deserialize cached issues for PURL '{}'; Will re-fetch", purl, e);
-                    purlsToAnalyze.add(purl);
-                }
+                applyCachedResult(purl, cached, issuesByPurl);
             }
         }
 
@@ -160,10 +162,9 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                     continue;
                 }
 
-                // Lowercase PURL coordinates for consistent cache keys and
-                // correlation with Snyk responses, which lowercase PURLs.
+                final String requestPurl = SnykPurlUtil.toSnykRequestPurl(purl, checksumMatchingEnabled);
                 bomRefsByPurl
-                        .computeIfAbsent(purl.getCoordinates().toLowerCase(), k -> new HashSet<>())
+                        .computeIfAbsent(requestPurl, _ -> new HashSet<>())
                         .add(component.getBomRef());
             } catch (MalformedPackageURLException e) {
                 LOGGER.warn("Failed to parse PURL '{}'; Skipping", component.getPurl(), e);
@@ -213,9 +214,16 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             throw new UncheckedIOException(message, e);
         }
 
-        final var issuesByPurl = new HashMap<String, List<SnykIssue>>(purlBatch.size());
-        final var entriesToCache = new HashMap<String, byte @Nullable []>(purlBatch.size());
+        if (response.meta() != null && response.meta().errors() != null) {
+            for (final SnykIssuesMeta.Error error : response.meta().errors()) {
+                LOGGER.warn("Snyk meta error: id={}, status={}, detail={}",
+                        error.id(), error.status(), error.detail());
+            }
+        }
 
+        final Map<String, SnykIssuesMeta.PackageMetaEntry> metaByNormalizedPurl = indexMetaPackages(response.meta());
+
+        final var issuesByIssuePurl = new HashMap<String, List<SnykIssue>>();
         if (response.data() != null) {
             for (final SnykIssue issue : response.data()) {
                 final String issuePurl = SnykModelConverter.getIssuePurl(issue);
@@ -224,34 +232,257 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                     continue;
                 }
 
-                final String issuePurlLower = issuePurl.toLowerCase();
-                if (!bomRefsByPurl.containsKey(issuePurlLower)) {
-                    LOGGER.warn("Received issue {} for PURL '{}', but no component with this PURL was submitted", issue.id(), issuePurl);
-                    continue;
-                }
-
-                issuesByPurl
-                        .computeIfAbsent(issuePurlLower, k -> new ArrayList<>())
+                issuesByIssuePurl
+                        .computeIfAbsent(issuePurl.toLowerCase(), _ -> new ArrayList<>())
                         .add(issue);
             }
         }
 
-        for (final var entry : issuesByPurl.entrySet()) {
-            try {
-                entriesToCache.put(entry.getKey(), objectMapper.writeValueAsBytes(entry.getValue()));
-            } catch (IOException e) {
-                LOGGER.warn("Failed to serialize issues for PURL '{}'; Skipping cache", entry.getKey(), e);
-            }
-        }
+        final var issuesByRequestPurl = new HashMap<String, List<SnykIssue>>(purlBatch.size());
+        final var entriesToCache = new HashMap<String, byte @Nullable []>(purlBatch.size());
+        final boolean hasMetaErrors = response.meta() != null
+                && response.meta().errors() != null
+                && !response.meta().errors().isEmpty();
 
-        for (final String purl : purlBatch) {
-            if (!issuesByPurl.containsKey(purl)) {
-                entriesToCache.put(purl, null);
+        for (final String requestPurl : purlBatch) {
+            final boolean checksumPath = isChecksumQualifiedRequestPurl(requestPurl);
+            if (checksumPath) {
+                processChecksumQualifiedPurl(
+                        requestPurl,
+                        metaByNormalizedPurl,
+                        issuesByIssuePurl,
+                        issuesByRequestPurl,
+                        entriesToCache,
+                        hasMetaErrors);
+            } else {
+                processCoordinatesOnlyPurl(
+                        requestPurl,
+                        bomRefsByPurl,
+                        issuesByIssuePurl,
+                        issuesByRequestPurl,
+                        entriesToCache);
             }
         }
 
         resultsCache.putMany(entriesToCache);
-        return issuesByPurl;
+        return issuesByRequestPurl;
+    }
+
+    private void processChecksumQualifiedPurl(
+            String requestPurl,
+            Map<String, SnykIssuesMeta.PackageMetaEntry> metaByNormalizedPurl,
+            Map<String, List<SnykIssue>> issuesByIssuePurl,
+            Map<String, List<SnykIssue>> issuesByRequestPurl,
+            Map<String, byte @Nullable []> entriesToCache,
+            boolean hasMetaErrors) {
+        final String normalizedKey = SnykPurlUtil.normalizePurlKey(requestPurl);
+        final SnykIssuesMeta.PackageMetaEntry metaEntry = normalizedKey != null
+                ? metaByNormalizedPurl.get(normalizedKey)
+                : null;
+
+        if (metaEntry == null || metaEntry.match() == null || metaEntry.match().type() == null) {
+            LOGGER.warn("""
+                    No usable meta.packages entry for checksum-qualified PURL '{}'; \
+                    Skipping findings and not caching""", requestPurl);
+            return;
+        }
+
+        final SnykIssuesMeta.Match match = metaEntry.match();
+        final SnykMatchType matchType = requireNonNull(match.type());
+
+        switch (matchType) {
+            case FULL -> {
+                final List<SnykIssue> issues = resolveIssuesForRequestPurl(
+                        requestPurl, metaEntry, issuesByIssuePurl);
+                if (!issues.isEmpty()) {
+                    issuesByRequestPurl.put(requestPurl, issues);
+                }
+                putCachedResult(entriesToCache, requestPurl,
+                        SnykCachedPurlResult.of(SnykMatchType.FULL, issues.isEmpty() ? List.of() : issues, match));
+            }
+            case PARTIAL, NONE -> {
+                LOGGER.warn(
+                        "Snyk match type {} for PURL '{}': {}; details={}",
+                        matchType.jsonValue(),
+                        requestPurl,
+                        match.description(),
+                        match.details());
+                if (!hasMetaErrors) {
+                    putCachedResult(entriesToCache, requestPurl,
+                            SnykCachedPurlResult.of(matchType, List.of(), match));
+                }
+            }
+        }
+    }
+
+    private void processCoordinatesOnlyPurl(
+            String requestPurl,
+            Map<String, Set<String>> bomRefsByPurl,
+            Map<String, List<SnykIssue>> issuesByIssuePurl,
+            Map<String, List<SnykIssue>> issuesByRequestPurl,
+            Map<String, byte @Nullable []> entriesToCache) {
+        final List<SnykIssue> issues = new ArrayList<>();
+
+        // Exact key match (coordinates-only request PURL == lowercase issue PURL).
+        final List<SnykIssue> direct = issuesByIssuePurl.get(requestPurl);
+        if (direct != null) {
+            for (final SnykIssue issue : direct) {
+                if (bomRefsByPurl.containsKey(requestPurl)) {
+                    issues.add(issue);
+                } else {
+                    LOGGER.warn(
+                            "Received issue {} for PURL '{}', but no component with this PURL was submitted",
+                            issue.id(), requestPurl);
+                }
+            }
+        } else {
+            // Issue PURL may include qualifiers; match on coordinates.
+            for (final var entry : issuesByIssuePurl.entrySet()) {
+                final String coords = coordinatesLower(entry.getKey());
+                if (requestPurl.equals(coords) && bomRefsByPurl.containsKey(requestPurl)) {
+                    issues.addAll(entry.getValue());
+                }
+            }
+        }
+
+        if (!issues.isEmpty()) {
+            issuesByRequestPurl.put(requestPurl, issues);
+            putCachedResult(entriesToCache, requestPurl, SnykCachedPurlResult.full(issues));
+        } else {
+            putCachedResult(entriesToCache, requestPurl, SnykCachedPurlResult.full(List.of()));
+        }
+    }
+
+    private List<SnykIssue> resolveIssuesForRequestPurl(
+            String requestPurl,
+            SnykIssuesMeta.PackageMetaEntry metaEntry,
+            Map<String, List<SnykIssue>> issuesByIssuePurl) {
+        // Prefer correlating via package URL from meta (coordinates without requiring checksum on issue).
+        if (metaEntry.packageInfo() != null && metaEntry.packageInfo().url() != null) {
+            final String packageUrl = metaEntry.packageInfo().url();
+            final String packageCoords = coordinatesLower(packageUrl);
+            if (packageCoords != null) {
+                final List<SnykIssue> byPackage = issuesByIssuePurl.get(packageCoords);
+                if (byPackage != null && !byPackage.isEmpty()) {
+                    return byPackage;
+                }
+            }
+            final String packageKey = SnykPurlUtil.normalizePurlKey(packageUrl);
+            if (packageKey != null) {
+                final List<SnykIssue> byNormalized = issuesByIssuePurl.get(packageKey);
+                if (byNormalized != null && !byNormalized.isEmpty()) {
+                    return byNormalized;
+                }
+            }
+        }
+
+        // Direct key match (issue PURL equals request PURL, rare for checksum keys).
+        final List<SnykIssue> direct = issuesByIssuePurl.get(requestPurl);
+        if (direct != null && !direct.isEmpty()) {
+            return direct;
+        }
+
+        final String requestCoords = coordinatesLower(requestPurl);
+        if (requestCoords != null) {
+            final List<SnykIssue> byCoords = issuesByIssuePurl.get(requestCoords);
+            if (byCoords != null) {
+                return byCoords;
+            }
+        }
+
+        return List.of();
+    }
+
+    private static @Nullable String coordinatesLower(@Nullable String purl) {
+        if (purl == null || purl.isBlank()) {
+            return null;
+        }
+        try {
+            return new PackageURL(purl).getCoordinates().toLowerCase();
+        } catch (MalformedPackageURLException e) {
+            return null;
+        }
+    }
+
+    private void applyCachedResult(
+            String requestPurl,
+            SnykCachedPurlResult cached,
+            Map<String, List<SnykIssue>> issuesByPurl) {
+        if (isChecksumQualifiedRequestPurl(requestPurl)) {
+            if (cached.matchType() != SnykMatchType.FULL) {
+                // PARTIAL / NONE on checksum-qualified key: skip findings, do not re-fetch.
+                return;
+            }
+            // FULL checksum-qualified match: attach cached issues when present (or negative cache when empty).
+            attachCachedIssuesIfPresent(requestPurl, cached, issuesByPurl);
+            return;
+        }
+        // Coordinates-only keys are always cached as FULL; attach issues when present.
+        attachCachedIssuesIfPresent(requestPurl, cached, issuesByPurl);
+    }
+
+    private void attachCachedIssuesIfPresent(
+            String requestPurl,
+            SnykCachedPurlResult cached,
+            Map<String, List<SnykIssue>> issuesByPurl) {
+        if (cached.issues() != null && !cached.issues().isEmpty()) {
+            issuesByPurl.put(requestPurl, cached.issues());
+        }
+        // Empty issues is a cached negative result (shared across projects until TTL).
+    }
+
+    private boolean isChecksumQualifiedRequestPurl(String requestPurl) {
+        if (!checksumMatchingEnabled) {
+            return false;
+        }
+        try {
+            return SnykPurlUtil.requiresChecksumMeta(new PackageURL(requestPurl), true);
+        } catch (MalformedPackageURLException e) {
+            return requestPurl.contains("checksum=");
+        }
+    }
+
+    private Map<String, SnykIssuesMeta.PackageMetaEntry> indexMetaPackages(@Nullable SnykIssuesMeta meta) {
+        final var indexed = new HashMap<String, SnykIssuesMeta.PackageMetaEntry>();
+        if (meta == null || meta.packages() == null) {
+            return indexed;
+        }
+
+        for (final var entry : meta.packages().entrySet()) {
+            final String normalizedKey = SnykPurlUtil.normalizePurlKey(entry.getKey());
+            if (normalizedKey != null) {
+                indexed.put(normalizedKey, entry.getValue());
+            }
+            if (entry.getValue().match() != null
+                    && entry.getValue().match().input() != null
+                    && entry.getValue().match().input().purl() != null) {
+                final String inputKey = SnykPurlUtil.normalizePurlKey(entry.getValue().match().input().purl());
+                if (inputKey != null) {
+                    indexed.putIfAbsent(inputKey, entry.getValue());
+                }
+            }
+        }
+        return indexed;
+    }
+
+    private void putCachedResult(
+            Map<String, byte @Nullable []> entriesToCache,
+            String purl,
+            SnykCachedPurlResult result) {
+        try {
+            entriesToCache.put(purl, SnykCacheCodec.encode(objectMapper, result));
+        } catch (IOException e) {
+            LOGGER.warn("Failed to serialize cached result for PURL '{}'; Skipping cache", purl, e);
+        }
+    }
+
+    private @Nullable SnykCachedPurlResult deserializeCachedResult(String purl, byte @Nullable [] cachedBytes) {
+        try {
+            return SnykCacheCodec.decode(objectMapper, cachedBytes);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to deserialize cached issues for PURL '{}'; Will re-fetch", purl, e);
+            return null;
+        }
     }
 
     private SnykIssuesResponse fetchIssues(Collection<String> purls) throws InterruptedException, IOException {

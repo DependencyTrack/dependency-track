@@ -619,7 +619,7 @@ class BovModelConverterTest {
                 "INTERNAL-foo,     INTERNAL",
                 "OSV-2024-1,       OSV",
                 "SNYK-JS-FOO-123,  SNYK",
-                "Cxfoo-123,  CX"
+                "Cx0307b55a-2578,  CX"
         })
         void shouldInferSourceFromVulnIdWhenSourceNameIsUnrecognized(String vulnId, Vulnerability.Source expected) {
             final var source = Source.newBuilder().setName("NOT_A_REAL_SOURCE").build();

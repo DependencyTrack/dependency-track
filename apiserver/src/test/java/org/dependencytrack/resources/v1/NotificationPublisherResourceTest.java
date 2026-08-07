@@ -38,6 +38,7 @@ import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.publishing.DefaultNotificationPublishersPlugin;
+import org.dependencytrack.notification.proto.v1.Level;
 import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
@@ -557,6 +558,37 @@ class NotificationPublisherResourceTest extends ResourceTest {
             assertThat(arg.getNotificationRuleNamesList()).containsExactly("Scheduled Rule");
             assertThat(arg.getNotification().getTitle()).startsWith("[TEST] ");
             assertThat(arg.getRuleTest()).isTrue();
+        });
+    }
+
+    @Test
+    void shouldDispatchTestNotificationForErrorLevelRule() {
+        initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION);
+
+        new DefaultNotificationPublisherInitializer().seedDefaultPublishers(pluginManager);
+
+        final NotificationPublisher slackPublisher = qm.getNotificationPublisher("Slack");
+        final NotificationRule rule = qm.createNotificationRule(
+                "Error Rule",
+                NotificationScope.PORTFOLIO,
+                NotificationLevel.ERROR,
+                slackPublisher);
+        rule.setNotifyOn(Set.of(NotificationGroup.NEW_VULNERABILITY));
+        rule.setPublisherConfig("{\"destination\":\"https://example.com/webhook\"}");
+
+        final Response response = jersey
+                .target(V1_NOTIFICATION_PUBLISHER + "/test/" + rule.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity("", MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+
+        final Collection<? extends CreateWorkflowRunRequest<?>> requests = captureBatchedCreateRunRequests();
+        assertThat(requests).singleElement().satisfies(request -> {
+            final var arg = (PublishNotificationWorkflowArg) request.argument();
+            assertThat(arg.getNotification().getLevel()).isEqualTo(Level.LEVEL_ERROR);
+            assertThat(arg.getNotification().getTitle()).startsWith("[TEST] ");
         });
     }
 

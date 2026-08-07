@@ -72,6 +72,7 @@ public final class S3FileStorageProvider implements FileStorageProvider {
         final var credentialsSource = config
                 .getOptionalValue("dt.file-storage.s3.credentials-source", String.class)
                 .orElse("static");
+        var anonymousAccess = false;
         switch (credentialsSource) {
             case "aws" -> {
                 if (accessKey != null || secretKey != null) {
@@ -102,6 +103,7 @@ public final class S3FileStorageProvider implements FileStorageProvider {
                     // Installing no credentials provider makes the client send unsigned requests.
                     // Intended for S3-compatible endpoints that allow anonymous access.
                     LOGGER.debug("No static credentials configured; requests will be unsigned");
+                    anonymousAccess = true;
                 }
             }
             default -> throw new IllegalStateException(
@@ -126,7 +128,7 @@ public final class S3FileStorageProvider implements FileStorageProvider {
                             compressionLevel));
         }
 
-        return new S3FileStorage(s3Client, bucketName, compressionLevel);
+        return new S3FileStorage(s3Client, bucketName, compressionLevel, anonymousAccess);
     }
 
     private static void requireBucketExists(MinioClient s3Client, String bucketName) {

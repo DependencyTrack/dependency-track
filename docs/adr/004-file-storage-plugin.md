@@ -275,6 +275,12 @@ The S3 client library we already depend on ships these resolvers, so this added 
 We looked at the AWS SDK as an alternative and decided against it. It would add roughly 4 MB of
 dependencies, and its synchronous S3 client cannot stream uploads the way our current client does.
 
+Anonymous uploads take a different path than credentialed ones. The client library refuses to
+send an unsigned request body without its MD5 hash, which cannot be known for a stream that is
+still being compressed, and cannot be provided for each part of a multipart upload. Uploads are
+therefore spooled to a temporary file first and sent in a single part, which caps anonymous
+uploads at 5GiB per file. Credentialed uploads keep streaming without touching disk.
+
 EKS Pod Identity is not covered. The client library does not read the token file that the Pod
 Identity Agent provides, and it rejects the agent's endpoint because that address is not a loopback
 address. IRSA is the supported option on EKS.

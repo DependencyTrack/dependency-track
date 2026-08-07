@@ -671,6 +671,9 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
         if (query.onlyRoot()) {
             whereConditions.add("\"PROJECT\".\"PARENT_PROJECT_ID\" IS NULL");
         }
+        if (query.onlyLatestVersions()) {
+            whereConditions.add("\"PROJECT\".\"IS_LATEST\"");
+        }
         if (query.searchText() != null) {
             whereConditions.add(/* language=SQL */ """
                     (

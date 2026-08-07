@@ -174,6 +174,24 @@ public final class TestNotificationFactory {
         return null;
     }
 
+    /**
+     * Returns a test notification for the given scope and group, regardless of level.
+     * Used by notification rule tests where the rule's configured level is applied separately.
+     */
+    public static @Nullable Notification createTestNotification(Scope scope, Group group) {
+        requireNonNull(scope, "scope must not be null");
+        requireNonNull(group, "group must not be null");
+
+        for (final var entry : SUPPLIER_MATRIX.entrySet()) {
+            final SupplierMatrixKey key = entry.getKey();
+            if (key.scope() == scope && key.group() == group) {
+                return entry.getValue().get();
+            }
+        }
+
+        return null;
+    }
+
     public static Notification createAnalyzerErrorTestNotification() {
         return createAnalyzerErrorNotification("failure");
     }

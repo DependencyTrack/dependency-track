@@ -69,24 +69,43 @@ public final class S3FileStorageProvider implements FileStorageProvider {
 
         final var accessKey = config.getOptionalValue("dt.file-storage.s3.access-key", String.class).orElse(null);
         final var secretKey = config.getOptionalValue("dt.file-storage.s3.secret-key", String.class).orElse(null);
-        if (accessKey != null && secretKey != null) {
-            clientBuilder.credentials(accessKey, secretKey);
-        } else if (accessKey != null || secretKey != null) {
-            throw new IllegalStateException(
-                    "Incomplete static credentials: dt.file-storage.s3.access-key and dt.file-storage.s3.secret-key "
-                    + "must either both be configured, or both be omitted to resolve credentials from the environment");
-        } else {
-            // No static credentials. Resolve them from the environment instead, mirroring the
-            // credential provider chain of the AWS SDK. This covers AWS_* environment variables,
-            // the shared AWS config file, ECS task roles, EKS IRSA, and EC2 instance profiles.
-            // Resolution is lazy: the chain is consulted on the first request, and throws
-            // java.security.ProviderException when no provider yields credentials. The bucket
-            // existence check below is that first request, so unresolvable credentials fail startup.
-            LOGGER.debug("No static credentials configured; resolving credentials from the environment");
-            clientBuilder.credentialsProvider(new ChainedProvider(
-                    new AwsEnvironmentProvider(),
-                    new AwsConfigProvider(/* filename */ null, /* profile */ null),
-                    new IamAwsProvider(/* customEndpoint */ null, httpClient)));
+        final var credentialsSource = config
+                .getOptionalValue("dt.file-storage.s3.credentials-source", String.class)
+                .orElse("static");
+        switch (credentialsSource) {
+            case "aws" -> {
+                if (accessKey != null || secretKey != null) {
+                    throw new IllegalStateException(
+                            "Conflicting credentials configuration: dt.file-storage.s3.credentials-source is aws, "
+                            + "but dt.file-storage.s3.access-key or dt.file-storage.s3.secret-key is also configured");
+                }
+                // Resolve credentials from the environment, mirroring the credential provider
+                // chain of the AWS SDK. This covers AWS_* environment variables, the shared AWS
+                // config file, ECS task roles, EKS IRSA, and EC2 instance profiles.
+                // Resolution is lazy: the chain is consulted on the first request, and throws
+                // java.security.ProviderException when no provider yields credentials. The bucket
+                // existence check below is that first request, so unresolvable credentials fail startup.
+                LOGGER.debug("Resolving credentials from the environment");
+                clientBuilder.credentialsProvider(new ChainedProvider(
+                        new AwsEnvironmentProvider(),
+                        new AwsConfigProvider(/* filename */ null, /* profile */ null),
+                        new IamAwsProvider(/* customEndpoint */ null, httpClient)));
+            }
+            case "static" -> {
+                if (accessKey != null && secretKey != null) {
+                    clientBuilder.credentials(accessKey, secretKey);
+                } else if (accessKey != null || secretKey != null) {
+                    throw new IllegalStateException(
+                            "Incomplete static credentials: dt.file-storage.s3.access-key and "
+                            + "dt.file-storage.s3.secret-key must either both be configured, or both be omitted");
+                } else {
+                    // Installing no credentials provider makes the client send unsigned requests.
+                    // Intended for S3-compatible endpoints that allow anonymous access.
+                    LOGGER.debug("No static credentials configured; requests will be unsigned");
+                }
+            }
+            default -> throw new IllegalStateException(
+                    "Invalid credentials source: must be static or aws, but is " + credentialsSource);
         }
 
         config.getOptionalValue("dt.file-storage.s3.region", String.class).ifPresent(clientBuilder::region);

@@ -98,18 +98,41 @@ class S3FileStorageTest {
                 .withMessageContaining("Incomplete static credentials");
     }
 
+    @Test
+    void shouldThrowWhenAwsCredentialsSourceIsCombinedWithStaticCredentials() {
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> createStorage(Map.ofEntries(
+                        Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                        Map.entry("dt.file-storage.s3.credentials-source", "aws"),
+                        Map.entry("dt.file-storage.s3.access-key", "foo"),
+                        Map.entry("dt.file-storage.s3.secret-key", "bar"),
+                        Map.entry("dt.file-storage.s3.bucket", "test"))))
+                .withMessageContaining("Conflicting credentials configuration");
+    }
+
+    @Test
+    void shouldThrowWhenCredentialsSourceIsInvalid() {
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> createStorage(Map.ofEntries(
+                        Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                        Map.entry("dt.file-storage.s3.credentials-source", "foo"),
+                        Map.entry("dt.file-storage.s3.bucket", "test"))))
+                .withMessage("Invalid credentials source: must be static or aws, but is foo");
+    }
+
     /**
-     * Without static credentials, the client must resolve them from the environment
-     * rather than falling back to unsigned (anonymous) requests.
+     * With the aws credentials source, the client must resolve credentials from the
+     * environment rather than falling back to unsigned (anonymous) requests.
      * {@link io.minio.credentials.EnvironmentProvider} reads system properties before
      * environment variables, which is what lets this test drive the chain.
      */
     @Test
-    void shouldResolveCredentialsFromEnvironmentWhenStaticCredentialsAreAbsent() throws Exception {
+    void shouldResolveCredentialsFromEnvironmentWhenCredentialsSourceIsAws() throws Exception {
         System.setProperty("AWS_ACCESS_KEY_ID", "foo");
         System.setProperty("AWS_SECRET_ACCESS_KEY", "bar");
         try (final FileStorage storage = createStorage(Map.ofEntries(
                 Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                Map.entry("dt.file-storage.s3.credentials-source", "aws"),
                 Map.entry("dt.file-storage.s3.bucket", "test")))) {
             final FileMetadata fileMetadata = storage.store(
                     "ambient/foo", new ByteArrayInputStream("baz".getBytes()));

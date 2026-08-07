@@ -262,19 +262,18 @@ This made the provider hard to use on AWS. There, the usual way to grant access 
 IAM role attached to the workload, not a long-lived key pair. Many organizations do not allow
 static keys at all.
 
-We adjusted the default. When both keys are omitted, the provider now resolves credentials from its
-environment. It tries environment variables, the shared AWS configuration file, IAM Roles for
-Service Accounts (IRSA) on EKS, task roles on ECS, and instance profiles on EC2, in that order.
-Static keys still take precedence when they are configured, so existing deployments keep working.
+We added a credentials source option. It defaults to static, which keeps the original behavior:
+configured keys are used, and when both are left empty, requests are sent unsigned. This keeps
+anonymous access to S3-compatible endpoints working without any configuration change. Setting the
+source to aws instead resolves credentials from the environment. It tries environment variables,
+the shared AWS configuration file, IAM Roles for Service Accounts (IRSA) on EKS, task roles on
+ECS, and instance profiles on EC2, in that order. Resolution happens on the first request, which
+is the bucket check during startup, so a deployment without resolvable credentials fails to start.
+Combining the aws source with static keys fails at startup, because the two contradict each other.
 
 The S3 client library we already depend on ships these resolvers, so this added no new dependency.
 We looked at the AWS SDK as an alternative and decided against it. It would add roughly 4 MB of
 dependencies, and its synchronous S3 client cannot stream uploads the way our current client does.
-
-Anonymous access is no longer reachable by leaving both keys empty. The provider resolves
-credentials on its first request, which is the bucket check during startup. A deployment without
-usable credentials now fails to start instead of sending unsigned requests. We consider this the
-better default, because anonymous writes would require a publicly writable bucket.
 
 EKS Pod Identity is not covered. The client library does not read the token file that the Pod
 Identity Agent provides, and it rejects the agent's endpoint because that address is not a loopback

@@ -217,6 +217,8 @@ paths:
     $ref: "./resources/extensions/extension-config-schema.yaml"
   /extension-points/{extension_point_name}/extensions/{extension_name}/test:
     $ref: "./resources/extensions/extension-test.yaml"
+  /projects:
+    $ref: "./resources/projects/projects.yaml"
   /projects/{uuid}/clone:
     $ref: "./resources/projects/project-clone.yaml"
   /projects/{uuid}/components:

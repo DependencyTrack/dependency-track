@@ -28,9 +28,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
@@ -78,9 +80,10 @@ final class CheckmarxAccessTokenManager {
             }
 
             final var tokenRequest = new TokenRequest(apiKey);
-            final String requestBody = "client_id=" + tokenRequest.clientId()
-                    + "&grant_type=" + tokenRequest.grantType()
-                    + "&refresh_token=" + java.net.URLEncoder.encode(tokenRequest.apiKey());
+            final String requestBody =
+                    "client_id=" + URLEncoder.encode(tokenRequest.clientId(), StandardCharsets.UTF_8)
+                            + "&grant_type=" + URLEncoder.encode(tokenRequest.grantType(), StandardCharsets.UTF_8)
+                            + "&refresh_token=" + URLEncoder.encode(tokenRequest.apiKey(), StandardCharsets.UTF_8);
             
             final var request = HttpRequest.newBuilder()
                     .uri(authApiBaseUrl.resolve("/auth/realms/" + orgId + "/protocol/openid-connect/token"))

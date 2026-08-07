@@ -121,12 +121,18 @@ final class CheckmarxApiClient {
 
             RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
             final String errorMessage = errorBody.toString().trim();
-            if (errorMessage.isEmpty()) {
-                throw new IOException("Checkmarx API request failed with status " + response.statusCode());
+
+            if (!errorMessage.isEmpty()) {
+                LOGGER.debug(
+                        "Checkmarx API request failed with status {} : {}",
+                        response.statusCode(),
+                        errorMessage.length() > 1000
+                                ? errorMessage.substring(0, 1000) + "..."
+                                : errorMessage);
             }
 
-            throw new IOException("Checkmarx API request failed with status %d: %s"
-                    .formatted(response.statusCode(), errorMessage));
+            throw new IOException(
+                    "Checkmarx API request failed with status " + response.statusCode());
         }
     }
 

@@ -29,6 +29,7 @@ import jakarta.json.JsonValue;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
+import org.cyclonedx.Version;
 import org.cyclonedx.model.BomReference;
 import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.Evidence;
@@ -799,14 +800,9 @@ public class ModelConverter {
         return cdxProperties;
     }
 
-    public static org.cyclonedx.model.Metadata createMetadata(final Project project) {
+    public static org.cyclonedx.model.Metadata createMetadata(final Project project, final Version version) {
         final org.cyclonedx.model.Metadata metadata = new org.cyclonedx.model.Metadata();
-        final org.cyclonedx.model.Tool tool = new org.cyclonedx.model.Tool();
-        tool.setVendor("OWASP");
-        final Config config = ConfigProvider.getConfig();
-        tool.setName(config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_NAME, String.class));
-        tool.setVersion(config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_VERSION, String.class));
-        metadata.setTools(Collections.singletonList(tool));
+        setMetadataTools(metadata, version);
         if (project != null) {
             metadata.setManufacture(convert(project.getManufacturer()));
             final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
@@ -862,6 +858,41 @@ public class ModelConverter {
             }
         }
         return metadata;
+    }
+
+    private static void setMetadataTools(final org.cyclonedx.model.Metadata metadata, final Version version) {
+        final Config config = ConfigProvider.getConfig();
+        final String applicationName = config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_NAME, String.class);
+        final String applicationVersion = config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_VERSION, String.class);
+
+        if (version.compareTo(Version.VERSION_15) >= 0) {
+            final var supplier = new org.cyclonedx.model.OrganizationalEntity();
+            supplier.setName("OWASP");
+
+            final var toolComponent = new org.cyclonedx.model.Component();
+            toolComponent.setType(org.cyclonedx.model.Component.Type.APPLICATION);
+            toolComponent.setSupplier(supplier);
+            toolComponent.setName(applicationName);
+            toolComponent.setVersion(applicationVersion);
+
+            final var toolInformation = new org.cyclonedx.model.metadata.ToolInformation();
+            toolInformation.setComponents(List.of(toolComponent));
+            metadata.setToolChoice(toolInformation);
+        } else {
+            setLegacyMetadataTool(metadata, applicationName, applicationVersion);
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private static void setLegacyMetadataTool(
+            final org.cyclonedx.model.Metadata metadata,
+            final String applicationName,
+            final String applicationVersion) {
+        final var tool = new org.cyclonedx.model.Tool();
+        tool.setVendor("OWASP");
+        tool.setName(applicationName);
+        tool.setVersion(applicationVersion);
+        metadata.setTools(List.of(tool));
     }
 
     public static org.cyclonedx.model.Service convert(final QueryManager qm, final ServiceComponent service) {

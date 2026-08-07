@@ -36,6 +36,9 @@ import net.javacrumbs.jsonunit.core.Option;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
+import org.cyclonedx.model.Bom;
+import org.cyclonedx.parsers.JsonParser;
+import org.cyclonedx.parsers.XmlParser;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -64,6 +67,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.notification.NotificationScope;
 import org.dependencytrack.notification.proto.v1.BomValidationFailedSubject;
 import org.dependencytrack.parser.cyclonedx.CycloneDxValidator;
+import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.resources.v1.vo.BomSubmitRequest;
 import org.glassfish.jersey.client.ClientConfig;
@@ -150,7 +154,7 @@ class BomResourceTest extends ResourceTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"1.2", "1.3", "1.4", "1.5", "1.6", ""})
-    void exportProjectAsCycloneDxTest(String version) {
+    void exportProjectAsCycloneDxTest(String version) throws Exception {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
@@ -171,11 +175,45 @@ class BomResourceTest extends ResourceTest {
 
         String expectedCdxVersionSpec = version.isEmpty() ? "1.5" : version;
         assertThatJson(body, json -> json.inPath("specVersion").isEqualTo("\"" + expectedCdxVersionSpec + "\""));
+        assertThatNoException().isThrownBy(
+                () -> CycloneDxValidator.getInstance().validate(body.getBytes(StandardCharsets.UTF_8)));
+        if (usesModernToolsMetadata(expectedCdxVersionSpec)) {
+            assertThatJson(body)
+                    .node("metadata.tools")
+                    .isEqualTo(/* language=JSON */ """
+                            {
+                              "components": [
+                                {
+                                  "type": "application",
+                                  "supplier": {
+                                    "name": "OWASP"
+                                  },
+                                  "name": "Dependency-Track",
+                                  "version": "${json-unit.any-string}"
+                                }
+                              ]
+                            }
+                            """);
+        } else {
+            assertThatJson(body)
+                    .node("metadata.tools")
+                    .isEqualTo(/* language=JSON */ """
+                            [
+                              {
+                                "vendor": "OWASP",
+                                "name": "Dependency-Track",
+                                "version": "${json-unit.any-string}"
+                              }
+                            ]
+                            """);
+        }
+        assertToolsMetadataRoundTrip(
+                new JsonParser().parse(body.getBytes(StandardCharsets.UTF_8)), expectedCdxVersionSpec);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", ""})
-    void exportProjectAsCycloneDxXMLTest(String version) {
+    void exportProjectAsCycloneDxXMLTest(String version) throws Exception {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
@@ -192,13 +230,62 @@ class BomResourceTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         String body = getPlainTextBody(response);
-        if (version.isEmpty()) {
-            version = "1.5"; // Expect 1.5 as default for null / not set parameter
-        }
+        final String expectedCdxVersionSpec = version.isEmpty() ? "1.5" : version;
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         assertThat(body).startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        assertThat(body).contains("version=\"1\" xmlns=\"http://cyclonedx.org/schema/bom/" + version + "\"");
+        assertThat(body)
+                .contains("version=\"1\" xmlns=\"http://cyclonedx.org/schema/bom/" + expectedCdxVersionSpec + "\"");
+        if ("1.0".equals(expectedCdxVersionSpec) || "1.1".equals(expectedCdxVersionSpec)) {
+            assertThat(body).doesNotContain("<tools>");
+            return;
+        }
+
+        assertThatNoException().isThrownBy(
+                () -> CycloneDxValidator.getInstance().validate(body.getBytes(StandardCharsets.UTF_8)));
+        if (usesModernToolsMetadata(expectedCdxVersionSpec)) {
+            assertThat(body)
+                    .contains(
+                            "<tools>",
+                            "<components>",
+                            "<component type=\"application\">",
+                            "<supplier>",
+                            "<name>OWASP</name>");
+        } else {
+            assertThat(body).contains("<tools>", "<tool>", "<vendor>OWASP</vendor>");
+        }
+        assertToolsMetadataRoundTrip(
+                new XmlParser().parse(body.getBytes(StandardCharsets.UTF_8)), expectedCdxVersionSpec);
+    }
+
+    private static boolean usesModernToolsMetadata(final String version) {
+        return "1.5".equals(version) || "1.6".equals(version);
+    }
+
+    @SuppressWarnings("deprecation")
+    private static void assertToolsMetadataRoundTrip(final Bom bom, final String version) {
+        assertThat(bom.getMetadata()).isNotNull();
+        if (usesModernToolsMetadata(version)) {
+            assertThat(bom.getMetadata().getTools()).isNullOrEmpty();
+            assertThat(bom.getMetadata().getToolChoice()).isNotNull();
+        } else {
+            assertThat(bom.getMetadata().getTools()).hasSize(1);
+            assertThat(bom.getMetadata().getToolChoice()).isNull();
+        }
+
+        final ProjectMetadata importedMetadata = ModelConverter.convertToProjectMetadata(bom.getMetadata());
+        assertThat(importedMetadata).isNotNull();
+        assertThat(importedMetadata.getTools()).isNotNull();
+        assertThat(importedMetadata.getTools().components()).satisfiesExactly(component -> {
+            assertThat(component.getSupplier()).isNotNull();
+            assertThat(component.getSupplier().getName()).isEqualTo("OWASP");
+            assertThat(component.getName()).isEqualTo("Dependency-Track");
+            assertThat(component.getVersion()).isNotBlank();
+            if (usesModernToolsMetadata(version)) {
+                assertThat(component.getClassifier()).isEqualTo(Classifier.APPLICATION);
+            }
+        });
+        assertThat(importedMetadata.getTools().services()).isNull();
     }
 
     @Test
@@ -441,13 +528,18 @@ class BomResourceTest extends ResourceTest {
                                 "supplier": {
                                   "name": "bomSupplier"
                                 },
-                                "tools": [
-                                    {
-                                        "vendor": "OWASP",
-                                        "name": "Dependency-Track",
-                                        "version": "${json-unit.any-string}"
-                                    }
-                                ]
+                                "tools": {
+                                    "components": [
+                                        {
+                                            "type": "application",
+                                            "supplier": {
+                                              "name": "OWASP"
+                                            },
+                                            "name": "Dependency-Track",
+                                            "version": "${json-unit.any-string}"
+                                        }
+                                    ]
+                                }
                             },
                             "components": [
                                 {
@@ -554,13 +646,18 @@ class BomResourceTest extends ResourceTest {
                             "version": 1,
                             "metadata": {
                                 "timestamp": "${json-unit.any-string}",
-                                "tools": [
-                                    {
-                                        "vendor": "OWASP",
-                                        "name": "Dependency-Track",
-                                        "version": "${json-unit.any-string}"
-                                    }
-                                ],
+                                "tools": {
+                                    "components": [
+                                        {
+                                            "type": "application",
+                                            "supplier": {
+                                              "name": "OWASP"
+                                            },
+                                            "name": "Dependency-Track",
+                                            "version": "${json-unit.any-string}"
+                                        }
+                                    ]
+                                },
                                 "component": {
                                     "type": "library",
                                     "bom-ref": "${json-unit.matches:projectUuid}",
@@ -691,13 +788,18 @@ class BomResourceTest extends ResourceTest {
                                     "name": "acme-app",
                                     "version": "SNAPSHOT"
                                 },
-                                "tools": [
-                                    {
-                                        "vendor": "OWASP",
-                                        "name": "Dependency-Track",
-                                        "version": "${json-unit.any-string}"
-                                    }
-                                ]
+                                "tools": {
+                                    "components": [
+                                        {
+                                            "type": "application",
+                                            "supplier": {
+                                              "name": "OWASP"
+                                            },
+                                            "name": "Dependency-Track",
+                                            "version": "${json-unit.any-string}"
+                                        }
+                                    ]
+                                }
                             },
                             "components": [
                                 {
@@ -909,13 +1011,18 @@ class BomResourceTest extends ResourceTest {
                                     "name": "acme-app",
                                     "version": "SNAPSHOT"
                                 },
-                                "tools": [
-                                    {
-                                        "vendor": "OWASP",
-                                        "name": "Dependency-Track",
-                                        "version": "${json-unit.any-string}"
-                                    }
-                                ]
+                                "tools": {
+                                    "components": [
+                                        {
+                                            "type": "application",
+                                            "supplier": {
+                                              "name": "OWASP"
+                                            },
+                                            "name": "Dependency-Track",
+                                            "version": "${json-unit.any-string}"
+                                        }
+                                    ]
+                                }
                             },
                             "components": [
                                 {

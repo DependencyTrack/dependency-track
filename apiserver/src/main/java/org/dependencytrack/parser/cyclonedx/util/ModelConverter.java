@@ -76,14 +76,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -96,6 +97,28 @@ import static org.dependencytrack.util.PurlUtil.silentPurlCoordinatesOnly;
 public class ModelConverter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelConverter.class);
+
+    private record ComponentHashFieldAccessors(
+            Function<Component, String> getter,
+            BiConsumer<Component, String> setter) {
+    }
+
+    private static final Map<Hash.Algorithm, ComponentHashFieldAccessors> COMPONENT_HASH_FIELD_ACCESSORS_BY_ALGORITHM =
+            new EnumMap<>(Map.ofEntries(
+                    Map.entry(Hash.Algorithm.MD5, new ComponentHashFieldAccessors(Component::getMd5, Component::setMd5)),
+                    Map.entry(Hash.Algorithm.SHA1, new ComponentHashFieldAccessors(Component::getSha1, Component::setSha1)),
+                    Map.entry(Hash.Algorithm.SHA_256, new ComponentHashFieldAccessors(Component::getSha256, Component::setSha256)),
+                    Map.entry(Hash.Algorithm.SHA_384, new ComponentHashFieldAccessors(Component::getSha384, Component::setSha384)),
+                    Map.entry(Hash.Algorithm.SHA_512, new ComponentHashFieldAccessors(Component::getSha512, Component::setSha512)),
+                    Map.entry(Hash.Algorithm.SHA3_256, new ComponentHashFieldAccessors(Component::getSha3_256, Component::setSha3_256)),
+                    Map.entry(Hash.Algorithm.SHA3_384, new ComponentHashFieldAccessors(Component::getSha3_384, Component::setSha3_384)),
+                    Map.entry(Hash.Algorithm.SHA3_512, new ComponentHashFieldAccessors(Component::getSha3_512, Component::setSha3_512)),
+                    Map.entry(Hash.Algorithm.BLAKE2b_256, new ComponentHashFieldAccessors(Component::getBlake2b_256, Component::setBlake2b_256)),
+                    Map.entry(Hash.Algorithm.BLAKE2b_384, new ComponentHashFieldAccessors(Component::getBlake2b_384, Component::setBlake2b_384)),
+                    Map.entry(Hash.Algorithm.BLAKE2b_512, new ComponentHashFieldAccessors(Component::getBlake2b_512, Component::setBlake2b_512)),
+                    Map.entry(Hash.Algorithm.BLAKE3, new ComponentHashFieldAccessors(Component::getBlake3, Component::setBlake3)),
+                    Map.entry(Hash.Algorithm.STREEBOG_256, new ComponentHashFieldAccessors(Component::getStreebog_256, Component::setStreebog_256)),
+                    Map.entry(Hash.Algorithm.STREEBOG_512, new ComponentHashFieldAccessors(Component::getStreebog_512, Component::setStreebog_512))));
 
     /**
      * Private Constructor.
@@ -235,28 +258,7 @@ public class ModelConverter {
             component.setSwidTagId(trimToNull(cdxComponent.getSwid().getTagId()));
         }
 
-        if (cdxComponent.getHashes() != null && !cdxComponent.getHashes().isEmpty()) {
-            for (final org.cyclonedx.model.Hash cdxHash : cdxComponent.getHashes()) {
-                final Consumer<String> hashSetter = switch (cdxHash.getAlgorithm().toLowerCase()) {
-                    case "md5" -> component::setMd5;
-                    case "sha-1" -> component::setSha1;
-                    case "sha-256" -> component::setSha256;
-                    case "sha-384" -> component::setSha384;
-                    case "sha-512" -> component::setSha512;
-                    case "sha3-256" -> component::setSha3_256;
-                    case "sha3-384" -> component::setSha3_384;
-                    case "sha3-512" -> component::setSha3_512;
-                    case "blake2b-256" -> component::setBlake2b_256;
-                    case "blake2b-384" -> component::setBlake2b_384;
-                    case "blake2b-512" -> component::setBlake2b_512;
-                    case "blake3" -> component::setBlake3;
-                    default -> null;
-                };
-                if (hashSetter != null) {
-                    hashSetter.accept(cdxHash.getValue());
-                }
-            }
-        }
+        applyHashes(component, cdxComponent.getHashes());
 
         final var licenseCandidates = new ArrayList<org.cyclonedx.model.License>();
         if (cdxComponent.getLicenses() != null) {
@@ -326,30 +328,31 @@ public class ModelConverter {
         component.setVersion(trimToNull(tool.getVersion()));
         component.setExternalReferences(convertExternalReferences(tool.getExternalReferences()));
 
-        if (tool.getHashes() != null && !tool.getHashes().isEmpty()) {
-            for (final org.cyclonedx.model.Hash cdxHash : tool.getHashes()) {
-                final Consumer<String> hashSetter = switch (cdxHash.getAlgorithm().toLowerCase()) {
-                    case "md5" -> component::setMd5;
-                    case "sha-1" -> component::setSha1;
-                    case "sha-256" -> component::setSha256;
-                    case "sha-384" -> component::setSha384;
-                    case "sha-512" -> component::setSha512;
-                    case "sha3-256" -> component::setSha3_256;
-                    case "sha3-384" -> component::setSha3_384;
-                    case "sha3-512" -> component::setSha3_512;
-                    case "blake2b-256" -> component::setBlake2b_256;
-                    case "blake2b-384" -> component::setBlake2b_384;
-                    case "blake2b-512" -> component::setBlake2b_512;
-                    case "blake3" -> component::setBlake3;
-                    default -> null;
-                };
-                if (hashSetter != null) {
-                    hashSetter.accept(cdxHash.getValue());
-                }
-            }
-        }
+        applyHashes(component, tool.getHashes());
 
         return component;
+    }
+
+    private static void applyHashes(Component component, List<org.cyclonedx.model.Hash> cdxHashes) {
+        if (cdxHashes == null) {
+            return;
+        }
+
+        for (final org.cyclonedx.model.Hash cdxHash : cdxHashes) {
+            final Hash.Algorithm cdxHashAlgo;
+            try {
+                cdxHashAlgo = Hash.Algorithm.fromSpec(cdxHash.getAlgorithm());
+            } catch (IllegalArgumentException e) {
+                LOGGER.debug("Encountered hash with unknown algorithm {}", cdxHash.getAlgorithm());
+                continue;
+            }
+
+            final ComponentHashFieldAccessors accessors =
+                    COMPONENT_HASH_FIELD_ACCESSORS_BY_ALGORITHM.get(cdxHashAlgo);
+            if (accessors != null) {
+                accessors.setter().accept(component, cdxHash.getValue());
+            }
+        }
     }
 
     public static OrganizationalEntity convert(final org.cyclonedx.model.OrganizationalEntity cdxEntity) {
@@ -663,24 +666,12 @@ public class ModelConverter {
             cycloneComponent.setType(org.cyclonedx.model.Component.Type.LIBRARY);
         }
 
-        if (component.getMd5() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.MD5, component.getMd5()));
-        }
-        if (component.getSha1() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA1, component.getSha1()));
-        }
-        if (component.getSha256() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA_256, component.getSha256()));
-        }
-        if (component.getSha512() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA_512, component.getSha512()));
-        }
-        if (component.getSha3_256() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA3_256, component.getSha3_256()));
-        }
-        if (component.getSha3_512() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA3_512, component.getSha3_512()));
-        }
+        COMPONENT_HASH_FIELD_ACCESSORS_BY_ALGORITHM.forEach((algorithm, accessors) -> {
+            final String hashValue = accessors.getter().apply(component);
+            if (hashValue != null && !hashValue.isBlank()) {
+                cycloneComponent.addHash(new Hash(algorithm, hashValue));
+            }
+        });
 
         final LicenseChoice licenses = new LicenseChoice();
         if (component.getResolvedLicense() != null) {

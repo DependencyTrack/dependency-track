@@ -71,7 +71,9 @@ public class ComponentsResourceTest extends ResourceTest {
                           "purl": "pkg:maven/org.acme/abc",
                           "hashes": {
                             "sha1": "640ab2bae07bedc4c163f679a746f7ab7fb5d1fa",
-                            "sha3_512": "301bb421c971fbb7ed01dcc3a9976ce53df034022ba982b97d0f27d48c4f03883aabf7c6bc778aa7c383062f6823045a6d41b8a720afbb8a9607690f89fbe1a7"
+                            "sha3_512": "301bb421c971fbb7ed01dcc3a9976ce53df034022ba982b97d0f27d48c4f03883aabf7c6bc778aa7c383062f6823045a6d41b8a720afbb8a9607690f89fbe1a7",
+                            "blake2b_256": "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d90e0e1f0b1a8a1f0b1a8a1f0",
+                            "streebog_256": "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb"
                           },
                           "supplier": {
                             "name": "supplier",
@@ -99,6 +101,8 @@ public class ComponentsResourceTest extends ResourceTest {
                     "name" : "foo",
                     "sha1" : "640ab2bae07bedc4c163f679a746f7ab7fb5d1fa",
                     "sha3_512" : "301bb421c971fbb7ed01dcc3a9976ce53df034022ba982b97d0f27d48c4f03883aabf7c6bc778aa7c383062f6823045a6d41b8a720afbb8a9607690f89fbe1a7",
+                    "blake2b_256" : "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d90e0e1f0b1a8a1f0b1a8a1f0",
+                    "streebog_256" : "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb",
                     "purl" : "pkg:maven/org.acme/abc",
                     "purlCoordinates" : "pkg:maven/org.acme/abc",
                     "project" : {
@@ -511,6 +515,50 @@ public class ComponentsResourceTest extends ResourceTest {
                             "uuid": "${json-unit.any-string}"
                         }
                       }
+                  ],
+                  "total": {
+                    "count": 1,
+                    "type": "EXACT"
+                  }
+                }
+                """);
+    }
+
+    @Test
+    public void listComponentByStreebogHashTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final Project project = qm.createProject("projectA", null, "1.0", null, null, null, null, false);
+        project.addAccessTeam(team);
+        var component = new Component();
+        component.setProject(project);
+        component.setName("nameA");
+        component.setStreebog_256("3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb");
+        qm.createComponent(component, false);
+
+        final Response response = jersey.target("/components")
+                .queryParam("hash_type", "STREEBOG_256")
+                .queryParam("hash", "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(parseJsonObject(response).toString()).isEqualTo(/* language=JSON */ """
+                {
+                  "items": [
+                    {
+                      "name": "nameA",
+                      "hashes": {
+                        "streebog_256": "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb"
+                      },
+                      "internal": false,
+                      "uuid": "${json-unit.any-string}",
+                      "project": {
+                        "name": "projectA",
+                        "version": "1.0",
+                        "uuid": "${json-unit.any-string}"
+                      }
+                    }
                   ],
                   "total": {
                     "count": 1,

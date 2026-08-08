@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.parser.cyclonedx;
 
+import org.cyclonedx.model.Hash;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Finding;
@@ -36,6 +37,9 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class ModelConverterTest extends PersistenceCapableTest {
+
+    private static final String STREEBOG_256_VALUE = "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb";
+    private static final String STREEBOG_512_VALUE = "8e945da209aa869f0455928529bcae4679e9873ab707b55315f56ceb98bef0a7362f715528356ee83cda5f2aac4c6ad2ba3a715c1bcd81cb8e9f90bf4c1c1a8a";
 
     @Test
     void shouldSkipFindingWhoseComponentWasDeleted() {
@@ -98,4 +102,17 @@ class ModelConverterTest extends PersistenceCapableTest {
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getId()).isEqualTo("INT-001");
     }
+
+    @Test
+    void shouldConvertStreebogHashes() {
+        final var cdxComponent = new org.cyclonedx.model.Component();
+        cdxComponent.setName("acme-lib");
+        cdxComponent.addHash(new Hash(Hash.Algorithm.STREEBOG_256, STREEBOG_256_VALUE.toUpperCase()));
+        cdxComponent.addHash(new Hash(Hash.Algorithm.STREEBOG_512, STREEBOG_512_VALUE.toUpperCase()));
+
+        final Component component = ModelConverter.convertComponent(cdxComponent);
+        assertThat(component.getStreebog_256()).isEqualTo(STREEBOG_256_VALUE);
+        assertThat(component.getStreebog_512()).isEqualTo(STREEBOG_512_VALUE);
+    }
+
 }

@@ -179,6 +179,8 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
         component.setBlake2b_384("componentBlake2b_384");
         component.setBlake2b_512("componentBlake2b_512");
         component.setBlake3("componentBlake3");
+        component.setStreebog_256("componentstreebog_256");
+        component.setStreebog_512("componentstreebog_512");
         component.setLicense("componentLicenseName");
         component.setLicenseExpression("componentLicenseExpression");
         component.setResolvedLicense(license);
@@ -247,6 +249,8 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                           "blake2b384": "componentBlake2b_384",
                           "blake2b512": "componentBlake2b_512",
                           "blake3": "componentBlake3",
+                          "streebog256": "componentstreebog_256",
+                          "streebog512": "componentstreebog_512",
                           "licenseName": "componentLicenseName",
                           "licenseExpression": "componentLicenseExpression",
                           "latestVersion": "1.0.0",

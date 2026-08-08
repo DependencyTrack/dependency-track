@@ -99,6 +99,10 @@ public class ComponentProjection {
 
     public String blake3;
 
+    public String streebog_256;
+
+    public String streebog_512;
+
     public String licenseUrl;
 
     public String componentLicenseName;
@@ -204,6 +208,8 @@ public class ComponentProjection {
         componentPersistent.setSha3_256(result.sha3_256);
         componentPersistent.setSha3_384(result.sha3_384);
         componentPersistent.setSha3_512(result.sha3_512);
+        componentPersistent.setStreebog_256(result.streebog_256);
+        componentPersistent.setStreebog_512(result.streebog_512);
 
         var project = new Project();
         if (result.projectId != null) {

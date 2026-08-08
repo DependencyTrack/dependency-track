@@ -52,6 +52,8 @@ public final class CelPolicyFieldMappingRegistry {
             new FieldMapping("blake2b_384", "c.\"BLAKE2B_384\""),
             new FieldMapping("blake2b_512", "c.\"BLAKE2B_512\""),
             new FieldMapping("blake3", "c.\"BLAKE3\""),
+            new FieldMapping("streebog_256", "c.\"STREEBOG_256\""),
+            new FieldMapping("streebog_512", "c.\"STREEBOG_512\""),
             new FieldMapping("license_name", "c.\"LICENSE\""),
             new FieldMapping("license_expression", "c.\"LICENSE_EXPRESSION\""),
             new FieldMapping("published_at", "pam.\"PUBLISHED_AT\""),

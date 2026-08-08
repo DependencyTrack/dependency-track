@@ -21,6 +21,9 @@ package org.dependencytrack.filestorage.s3;
 import com.github.luben.zstd.Zstd;
 import io.minio.BucketExistsArgs;
 import io.minio.MinioClient;
+import io.minio.credentials.AwsConfigProvider;
+import io.minio.credentials.AwsEnvironmentProvider;
+import io.minio.credentials.ChainedProvider;
 import io.minio.credentials.IamAwsProvider;
 import io.minio.credentials.Provider;
 import io.minio.credentials.StaticProvider;
@@ -116,7 +119,22 @@ public final class S3FileStorageProvider implements FileStorageProvider {
                 }
                 yield Optional.empty();
             }
-            case AWS -> Optional.of(new IamAwsProvider(null, httpClient));
+            case AWS -> {
+                final var accessKey = config
+                        .getOptionalValue("dt.file-storage.s3.access-key", String.class).orElse(null);
+                final var secretKey = config
+                        .getOptionalValue("dt.file-storage.s3.secret-key", String.class).orElse(null);
+                if (Objects.nonNull(accessKey) || Objects.nonNull(secretKey)) {
+                    throw new IllegalStateException(
+                            "Conflicting credentials configuration: dt.file-storage.s3.credentials-source is aws, "
+                                    + "but dt.file-storage.s3.access-key or dt.file-storage.s3.secret-key is also configured");
+                }
+                yield Optional.of(new ChainedProvider(
+                        new AwsEnvironmentProvider(),
+                        new AwsConfigProvider(/* filename */ null, /* profile */ null),
+                        new IamAwsProvider(/* customEndpoint */ null, httpClient)
+                ));
+            }
         };
     }
 

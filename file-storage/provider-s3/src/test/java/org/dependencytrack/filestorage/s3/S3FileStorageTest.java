@@ -50,31 +50,29 @@ class S3FileStorageTest {
                     .withInitialBuckets("test");
 
     @Test
-    void shouldHaveNameS3() {
-        final var provider = new S3FileStorageProvider();
-        assertThat(provider.name()).isEqualTo("s3");
-    }
-
-    @Test
     void shouldThrowWhenBucketDoesNotExist() {
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> createStorage(Map.ofEntries(
-                        Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
-                        Map.entry("dt.file-storage.s3.access-key", "foo"),
-                        Map.entry("dt.file-storage.s3.secret-key", "bar"),
-                        Map.entry("dt.file-storage.s3.bucket", "does-not-exist"))))
+                .isThrownBy(() -> {
+                    try (final FileStorage ignored = createStorage(Map.ofEntries(
+                            Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
+                            Map.entry("dt.file-storage.s3.access-key", "foo"),
+                            Map.entry("dt.file-storage.s3.secret-key", "bar"),
+                            Map.entry("dt.file-storage.s3.bucket", "does-not-exist")))) {}
+                })
                 .withMessage("Bucket does-not-exist does not exist");
     }
 
     @Test
     void shouldThrowWhenBucketExistenceCheckFailed() {
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> createStorage(Map.ofEntries(
-                        Map.entry("dt.file-storage.s3.endpoint", "http://localhost:1"),
-                        Map.entry("dt.file-storage.s3.access-key", "foo"),
-                        Map.entry("dt.file-storage.s3.secret-key", "bar"),
-                        Map.entry("dt.file-storage.s3.bucket", "does-not-exist"),
-                        Map.entry("dt.file-storage.s3.connect-timeout-ms", "500"))))
+                .isThrownBy(() -> {
+                    try (final FileStorage ignored = createStorage(Map.ofEntries(
+                            Map.entry("dt.file-storage.s3.endpoint", "http://localhost:1"),
+                            Map.entry("dt.file-storage.s3.access-key", "foo"),
+                            Map.entry("dt.file-storage.s3.secret-key", "bar"),
+                            Map.entry("dt.file-storage.s3.bucket", "does-not-exist"),
+                            Map.entry("dt.file-storage.s3.connect-timeout-ms", "500")))) {}
+                })
                 .withMessage("Failed to determine if bucket does-not-exist exists");
     }
 

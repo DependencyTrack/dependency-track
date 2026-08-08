@@ -61,6 +61,7 @@ import java.util.function.Supplier;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.mock;
 
@@ -635,6 +636,7 @@ public class ComponentResourceTest extends ResourceTest {
         Assertions.assertEquals("SampleAuthor" ,json.getJsonArray("authors").getJsonObject(0).getString("name"));
         Assertions.assertEquals("APPLICATION", json.getString("classifier"));
         Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
+        assertThat(resolutionStatusForPurl("pkg:maven/org.acme/abc")).isEqualTo("PENDING");
     }
 
     @Test
@@ -723,7 +725,7 @@ public class ComponentResourceTest extends ResourceTest {
 
         var jsonComponent = new Component();
         jsonComponent.setUuid(component.getUuid());
-        jsonComponent.setPurl("pkg:maven/org.acme/abc");
+        jsonComponent.setPurl("pkg:maven/org.acme/abc@2.0.0");
         jsonComponent.setName("My Component");
         jsonComponent.setVersion("1.0");
         jsonComponent.setClassifier(Classifier.LIBRARY);
@@ -744,6 +746,7 @@ public class ComponentResourceTest extends ResourceTest {
         Assertions.assertEquals("Test component", json.getString("description"));
         Assertions.assertEquals("LIBRARY", json.getString("classifier"));
         Assertions.assertEquals(1, json.getJsonArray("externalReferences").size());
+        assertThat(resolutionStatusForPurl("pkg:maven/org.acme/abc@2.0.0")).isEqualTo("PENDING");
     }
 
     @Test
@@ -1485,6 +1488,19 @@ public class ComponentResourceTest extends ResourceTest {
 
         final JsonArray json = parseJsonArray(response);
         assertThat(json).hasSize(5);
+    }
+
+    private static String resolutionStatusForPurl(final String purl) {
+        return withJdbiHandle(handle -> handle
+                .createQuery("""
+                        SELECT "STATUS"
+                          FROM "PACKAGE_METADATA_RESOLUTION"
+                         WHERE "PURL" = :purl
+                        """)
+                .bind("purl", purl)
+                .mapTo(String.class)
+                .findOne()
+                .orElse(null));
     }
 
     private Project prepareProject() throws Exception {

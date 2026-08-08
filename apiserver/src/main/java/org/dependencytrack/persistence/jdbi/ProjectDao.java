@@ -143,6 +143,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                  , COALESCE(SUM(pm."MEDIUM"), 0) AS medium
                  , COALESCE(SUM(pm."LOW"), 0) AS low
                  , COALESCE(SUM(pm."UNASSIGNED_SEVERITY"), 0) AS unassigned
+                 , COALESCE(SUM(pm."KEV"), 0) AS kev
                  , COALESCE(SUM(pm."RISKSCORE"), 0) AS "inheritedRiskScore"
                  , COALESCE(SUM(pm."FINDINGS_TOTAL"), 0) AS "findingsTotal"
                  , COALESCE(SUM(pm."FINDINGS_AUDITED"), 0) AS "findingsAudited"
@@ -189,6 +190,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                  , "MEDIUM" AS medium
                  , "LOW" AS low
                  , "UNASSIGNED_SEVERITY" AS unassigned
+                 , "KEV" AS kev
                  , "RISKSCORE" AS "inheritedRiskScore"
                  , "FINDINGS_TOTAL" AS "findingsTotal"
                  , "FINDINGS_AUDITED" AS "findingsAudited"
@@ -434,6 +436,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             int components,
             int critical,
             int high,
+            int kev,
             int low,
             int medium,
             int policyViolationsFail,

@@ -22,6 +22,8 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_QUERY_NAME;
+
 /**
  * @since 5.0.0
  */
@@ -48,6 +50,25 @@ public final class PackageMetadataMaintenanceTask extends AbstractBatchingMainte
         if (deletedPackageMetadata > 0) {
             LOGGER.info("Deleted {} orphan PACKAGE_METADATA rows", deletedPackageMetadata);
         }
+
+        final int deletedResolutions = runBatched(
+                BATCH_SIZE, PackageMetadataMaintenanceTask::deleteOrphanedResolutions);
+        if (deletedResolutions > 0) {
+            LOGGER.info("Deleted {} orphan PACKAGE_METADATA_RESOLUTION rows", deletedResolutions);
+        }
+
+        // Ensure every component PURL has a resolution row.
+        // Eligibility for resolution is derived solely from PACKAGE_METADATA_RESOLUTION,
+        // so a missing row means a PURL is never resolved.
+        //
+        // It can happen that a PURL is re-added while its row is being deleted,
+        // or rows can never be added in the first place through operator actions
+        // that bypass triggers (e.g. logical replication restore, disabled triggers).
+        final int backfilledResolutions = runBatched(
+                BATCH_SIZE, PackageMetadataMaintenanceTask::backfillMissingResolutions);
+        if (backfilledResolutions > 0) {
+            LOGGER.info("Backfilled {} missing PACKAGE_METADATA_RESOLUTION rows", backfilledResolutions);
+        }
     }
 
     private static int deleteOrphanedArtifactMetadata(Handle handle) {
@@ -66,6 +87,10 @@ public final class PackageMetadataMaintenanceTask extends AbstractBatchingMainte
                             LIMIT :batchSize
                          )
                         """)
+                .define(
+                        ATTRIBUTE_QUERY_NAME,
+                        "%s#deleteOrphanedArtifactMetadata".formatted(
+                                PackageMetadataMaintenanceTask.class.getSimpleName()))
                 .bind("batchSize", BATCH_SIZE)
                 .execute();
     }
@@ -86,6 +111,59 @@ public final class PackageMetadataMaintenanceTask extends AbstractBatchingMainte
                             LIMIT :batchSize
                          )
                         """)
+                .define(
+                        ATTRIBUTE_QUERY_NAME,
+                        "%s#deleteOrphanedPackageMetadata".formatted(
+                                PackageMetadataMaintenanceTask.class.getSimpleName()))
+                .bind("batchSize", BATCH_SIZE)
+                .execute();
+    }
+
+    private static int deleteOrphanedResolutions(Handle handle) {
+        return handle
+                .createUpdate("""
+                        DELETE
+                          FROM "PACKAGE_METADATA_RESOLUTION"
+                         WHERE "PURL" IN (
+                           SELECT "PURL"
+                             FROM "PACKAGE_METADATA_RESOLUTION" AS r
+                            WHERE NOT EXISTS (
+                              SELECT 1
+                                FROM "COMPONENT" AS c
+                               WHERE c."PURL" = r."PURL"
+                            )
+                            LIMIT :batchSize
+                         )
+                        """)
+                .define(
+                        ATTRIBUTE_QUERY_NAME,
+                        "%s#deleteOrphanedResolutions".formatted(
+                                PackageMetadataMaintenanceTask.class.getSimpleName()))
+                .bind("batchSize", BATCH_SIZE)
+                .execute();
+    }
+
+    private static int backfillMissingResolutions(Handle handle) {
+        return handle
+                .createUpdate("""
+                        INSERT INTO "PACKAGE_METADATA_RESOLUTION" ("PURL", "STATUS")
+                        SELECT DISTINCT c."PURL"
+                             , 'PENDING'
+                          FROM "COMPONENT" AS c
+                         WHERE c."PURL" IS NOT NULL
+                           AND NOT EXISTS (
+                             SELECT 1
+                               FROM "PACKAGE_METADATA_RESOLUTION" AS pmr
+                              WHERE pmr."PURL" = c."PURL"
+                           )
+                         ORDER BY 1
+                         LIMIT :batchSize
+                        ON CONFLICT ("PURL") DO NOTHING
+                        """)
+                .define(
+                        ATTRIBUTE_QUERY_NAME,
+                        "%s#backfillMissingResolutions".formatted(
+                                PackageMetadataMaintenanceTask.class.getSimpleName()))
                 .bind("batchSize", BATCH_SIZE)
                 .execute();
     }

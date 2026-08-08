@@ -511,6 +511,10 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().updateComponent(transientComponent, commitIndex);
     }
 
+    public void seedPackageMetadataResolution(Project project) {
+        getComponentQueryManager().seedPackageMetadataResolution(project);
+    }
+
     public Map<String, Component> getDependencyGraphForComponents(Project project, List<Component> components) {
         return getComponentQueryManager().getDependencyGraphForComponents(project, components);
     }

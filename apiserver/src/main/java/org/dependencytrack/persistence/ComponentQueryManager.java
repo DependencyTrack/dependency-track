@@ -21,6 +21,7 @@ package org.dependencytrack.persistence;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
+import alpine.persistence.ScopedCustomization;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
@@ -56,6 +57,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 import static org.dependencytrack.model.sqlmapping.ComponentProjection.mapToComponent;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.assertNonPersistent;
@@ -422,6 +424,7 @@ final class ComponentQueryManager extends QueryManager {
      */
     public Component createComponent(Component component, boolean commitIndex) {
         final Component result = persist(component);
+        seedPackageMetadataResolution(result);
         return result;
     }
 
@@ -459,7 +462,42 @@ final class ComponentQueryManager extends QueryManager {
         component.setSupplier(transientComponent.getSupplier());
         component.setExternalReferences(transientComponent.getExternalReferences());
         final Component result = persist(component);
+        seedPackageMetadataResolution(result);
         return result;
+    }
+
+    /// @since 5.1.0
+    private void seedPackageMetadataResolution(Component component) {
+        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
+            final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
+                    INSERT INTO "PACKAGE_METADATA_RESOLUTION" ("PURL", "STATUS")
+                    SELECT "PURL"
+                         , 'PENDING'
+                      FROM "COMPONENT"
+                     WHERE "ID" = ?
+                       AND "PURL" IS NOT NULL
+                    ON CONFLICT ("PURL") DO NOTHING
+                    """);
+            executeAndCloseWithArray(query, component.getId());
+        }
+    }
+
+    /// @since 5.1.0
+    @Override
+    public void seedPackageMetadataResolution(Project project) {
+        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
+            final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
+                    INSERT INTO "PACKAGE_METADATA_RESOLUTION" ("PURL", "STATUS")
+                    SELECT DISTINCT "PURL"
+                         , 'PENDING'
+                      FROM "COMPONENT"
+                     WHERE "PROJECT_ID" = ?
+                       AND "PURL" IS NOT NULL
+                     ORDER BY "PURL"
+                    ON CONFLICT ("PURL") DO NOTHING
+                    """);
+            executeAndCloseWithArray(query, project.getId());
+        }
     }
 
     /**

@@ -18,7 +18,7 @@
         <maven.install.skip>true</maven.install.skip>
 
         <!-- Dependency Versions -->
-        <lib.cloud-sql-postgres-socket-factory.version>1.28.6</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.29.0</lib.cloud-sql-postgres-socket-factory.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.micrometer-jvm-extras.version>0.3.0</lib.micrometer-jvm-extras.version>
         <lib.swagger-parser.version>2.1.45</lib.swagger-parser.version>
@@ -135,6 +135,11 @@
         <dependency>
             <groupId>org.dependencytrack</groupId>
             <artifactId>vuln-analyzer-internal</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
+            <artifactId>vuln-analyzer-checkmarx</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -272,10 +277,6 @@
             <artifactId>cel</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.cel</groupId>
-            <artifactId>extensions</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.metaeffekt.core</groupId>
             <artifactId>ae-security</artifactId>
         </dependency>
@@ -329,10 +330,6 @@
             <artifactId>cyclonedx-core-java</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>jakarta.activation</groupId>
-            <artifactId>jakarta.activation-api</artifactId>
-        </dependency>
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
@@ -453,16 +450,7 @@
         <!-- Resilience4J -->
         <dependency>
             <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-retry</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-micrometer</artifactId>
-        </dependency>
-        <!-- Logging -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>log4j-over-slf4j</artifactId>
+            <artifactId>resilience4j-core</artifactId>
         </dependency>
         <!-- YAML -->
         <dependency>
@@ -507,11 +495,6 @@
         <dependency>
             <groupId>net.javacrumbs.json-unit</groupId>
             <artifactId>json-unit-assertj</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>uk.org.webcompere</groupId>
-            <artifactId>system-stubs-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -652,7 +635,7 @@
             <plugin>
                 <groupId>org.cyclonedx</groupId>
                 <artifactId>cyclonedx-maven-plugin</artifactId>
-                <version>2.9.2</version>
+                <version>2.9.3</version>
                 <executions>
                     <execution>
                         <id>cyclonedx-aggregate</id>

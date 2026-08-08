@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SequencedCollection;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -59,6 +60,14 @@ import java.util.stream.Collectors;
         @RegisterRowMapper(NotificationVulnerabilityRowMapper.class)
 })
 public interface NotificationSubjectDao extends SqlObject {
+
+    /// @since 5.1.0
+    @SqlQuery("""
+            SELECT DISTINCT UNNEST("NOTIFY_ON")
+              FROM "NOTIFICATIONRULE"
+             WHERE "ENABLED"
+            """)
+    Set<String> getSubscribedNotificationGroups();
 
     @SqlQuery("""
             SELECT c."UUID" AS "componentUuid"

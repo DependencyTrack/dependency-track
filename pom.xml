@@ -127,7 +127,6 @@
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
         <lib.caffeine.version>3.2.4</lib.caffeine.version>
         <lib.cel-java.version>0.13.1</lib.cel-java.version>
-        <lib.cel-extensions.version>0.4.1</lib.cel-extensions.version>
         <lib.commons-lang3.version>3.20.0</lib.commons-lang3.version>
         <lib.cpe-parser.version>3.0.1</lib.cpe-parser.version>
         <lib.cyclonedx-java.version>13.0.0</lib.cyclonedx-java.version>
@@ -141,7 +140,7 @@
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.greenmail.version>2.1.11</lib.greenmail.version>
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
-        <lib.httpclient5.version>5.6.2</lib.httpclient5.version>
+        <lib.httpclient5.version>5.6.3</lib.httpclient5.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
         <lib.jackson2.version>2.22.1</lib.jackson2.version>
@@ -152,11 +151,11 @@
         <lib.jimfs.version>1.3.1</lib.jimfs.version>
         <lib.json-schema-validator.version>2.0.3</lib.json-schema-validator.version>
         <lib.json-unit.version>6.0.1</lib.json-unit.version>
-        <lib.jspecify.version>1.0.0</lib.jspecify.version>
+        <lib.jspecify.version>1.0.1</lib.jspecify.version>
         <lib.junit-jupiter.version>6.1.2</lib.junit-jupiter.version>
         <lib.kafka-clients.version>4.3.1</lib.kafka-clients.version>
         <lib.kotlin.version>2.4.10</lib.kotlin.version>
-        <lib.logback.version>1.5.38</lib.logback.version>
+        <lib.logback.version>1.6.1</lib.logback.version>
         <lib.micrometer.version>1.17.0</lib.micrometer.version>
         <lib.microprofile-config.version>3.1.1</lib.microprofile-config.version>
         <lib.microprofile-health.version>4.0.1</lib.microprofile-health.version>
@@ -176,12 +175,11 @@
         <lib.slf4j.version>2.0.18</lib.slf4j.version>
         <lib.smallrye-config.version>3.18.1</lib.smallrye-config.version>
         <lib.swagger.version>2.2.52</lib.swagger.version>
-        <lib.system-stubs.version>2.1.8</lib.system-stubs.version>
         <lib.testcontainers.version>2.0.5</lib.testcontainers.version>
         <lib.tink.version>1.23.0</lib.tink.version>
         <lib.versatile.version>0.21.1</lib.versatile.version>
         <lib.wiremock.version>3.13.2</lib.wiremock.version>
-        <lib.zstd-jni.version>1.5.7-11</lib.zstd-jni.version>
+        <lib.zstd-jni.version>1.5.7-12</lib.zstd-jni.version>
 
         <!-- Severity of NullAway findings. Set to OFF to disable. -->
         <nullaway.severity>ERROR</nullaway.severity>
@@ -241,12 +239,6 @@
                 <artifactId>cel</artifactId>
                 <version>${lib.cel-java.version}</version>
             </dependency>
-            <dependency>
-                <groupId>dev.cel</groupId>
-                <artifactId>extensions</artifactId>
-                <version>${lib.cel-extensions.version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
@@ -433,13 +425,9 @@
                 <artifactId>kafka-clients</artifactId>
                 <version>${lib.kafka-clients.version}</version>
                 <exclusions>
-                    <!--
-                        The lz4-java project is archived and has vulnerabilities.
-                        Kafka needs to move to https://github.com/yawkat/lz4-java to resolve them.
-                        Since we don't use lz4, we can safely exclude it until then.
-                    -->
+                    <!-- lz4 compression is not used. -->
                     <exclusion>
-                        <groupId>org.lz4</groupId>
+                        <groupId>at.yawk.lz4</groupId>
                         <artifactId>lz4-java</artifactId>
                     </exclusion>
                 </exclusions>
@@ -596,12 +584,6 @@
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-jaxrs2-jakarta</artifactId>
                 <version>${lib.swagger.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>uk.org.webcompere</groupId>
-                <artifactId>system-stubs-jupiter</artifactId>
-                <version>${lib.system-stubs.version}</version>
             </dependency>
 
             <dependency>
@@ -812,7 +794,7 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.8.0</version>
+                <version>3.9.0</version>
                 <configuration>
                     <java>
                         <licenseHeader>

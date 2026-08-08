@@ -21,6 +21,9 @@ package org.dependencytrack.filestorage.s3;
 import com.github.luben.zstd.Zstd;
 import io.minio.BucketExistsArgs;
 import io.minio.MinioClient;
+import io.minio.credentials.AwsConfigProvider;
+import io.minio.credentials.AwsEnvironmentProvider;
+import io.minio.credentials.ChainedProvider;
 import io.minio.credentials.IamAwsProvider;
 import io.minio.credentials.Provider;
 import io.minio.credentials.StaticProvider;
@@ -116,7 +119,11 @@ public final class S3FileStorageProvider implements FileStorageProvider {
                 }
                 yield Optional.empty();
             }
-            case AWS -> Optional.of(new IamAwsProvider(null, httpClient));
+            case AWS -> Optional.of(new ChainedProvider(
+                    new AwsEnvironmentProvider(),
+                    new AwsConfigProvider(/* filename */ null, /* profile */ null),
+                    new IamAwsProvider(/* customEndpoint */ null, httpClient)
+            ));
         };
     }
 

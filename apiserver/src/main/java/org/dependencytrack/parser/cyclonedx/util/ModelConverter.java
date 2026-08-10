@@ -67,6 +67,7 @@ import org.dependencytrack.parser.spdx.expression.SpdxExpression;
 import org.dependencytrack.parser.spdx.expression.SpdxExpressionParser;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentLicenseDao;
+import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.util.VulnerabilityUtil;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -103,6 +104,11 @@ import static java.util.Objects.requireNonNullElse;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
+import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_MANUFACTURER_CONTACT_EMAIL;
+import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_MANUFACTURER_CONTACT_NAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_MANUFACTURER_NAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_MANUFACTURER_URL;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PurlUtil.silentPurlCoordinatesOnly;
 
 public class ModelConverter {
@@ -975,7 +981,58 @@ public class ModelConverter {
                 metadata.setSupplier(convert(project.getMetadata().getSupplier()));
             }
         }
+        final OrganizationalEntity bomManufacturer = resolveBomManufacturer(project);
+        if (bomManufacturer != null) {
+            metadata.setManufacturer(convert(bomManufacturer));
+        }
         return metadata;
+    }
+
+    /**
+     * Resolves the organization that manufactured the BOM document itself
+     * (CycloneDX {@code metadata.manufacturer}), as opposed to the manufacturer
+     * of the project described by the BOM.
+     * <p>
+     * A manufacturer captured from a previously imported BOM of this project takes
+     * precedence over the instance-wide default.
+     */
+    private static OrganizationalEntity resolveBomManufacturer(final Project project) {
+        if (project != null && project.getMetadata() != null && project.getMetadata().getManufacturer() != null) {
+            return project.getMetadata().getManufacturer();
+        }
+
+        return manufacturerFromConfig();
+    }
+
+    private static OrganizationalEntity manufacturerFromConfig() {
+        return withJdbiHandle(handle -> {
+            final ConfigPropertyDao dao = handle.attach(ConfigPropertyDao.class);
+            final String name =
+                    trimToNull(dao.getOptionalValue(GENERAL_MANUFACTURER_NAME).orElse(null));
+            final String url =
+                    trimToNull(dao.getOptionalValue(GENERAL_MANUFACTURER_URL).orElse(null));
+            final String contactName = trimToNull(
+                    dao.getOptionalValue(GENERAL_MANUFACTURER_CONTACT_NAME).orElse(null));
+            final String contactEmail = trimToNull(
+                    dao.getOptionalValue(GENERAL_MANUFACTURER_CONTACT_EMAIL).orElse(null));
+            if (name == null && url == null && contactName == null && contactEmail == null) {
+                return null;
+            }
+
+            final var manufacturer = new OrganizationalEntity();
+            manufacturer.setName(name);
+            if (url != null) {
+                manufacturer.setUrls(new String[] {url});
+            }
+            if (contactName != null || contactEmail != null) {
+                final var contact = new OrganizationalContact();
+                contact.setName(contactName);
+                contact.setEmail(contactEmail);
+                manufacturer.setContacts(List.of(contact));
+            }
+
+            return manufacturer;
+        });
     }
 
     private static void setMetadataTools(final Metadata metadata, final Version version) {

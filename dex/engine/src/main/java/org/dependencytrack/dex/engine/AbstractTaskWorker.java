@@ -25,9 +25,9 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter.MeterProvider;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,21 +57,20 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
     private final IntervalFunction pollBackoffFunction;
     private final int maxConcurrency;
     private final Semaphore semaphore;
-    private final MeterRegistry meterRegistry;
     private final BooleanSupplier downstreamAcceptsWork;
     private final Lock statusLock;
+    private final Thread pollThread;
+    private final ExecutorService taskExecutor;
+    private final Timer pollLatencyTimer;
+    private final Counter pollsCounter;
+    private final Counter backpressureSkipsCounter;
+    private final MeterProvider<DistributionSummary> polledTasksDistribution;
+    private final MeterProvider<Counter> processedCounter;
+    private final MeterProvider<Timer> processLatencyTimer;
     final Logger logger;
 
     private volatile Status status = Status.CREATED;
     private volatile boolean nudged = false;
-    private @Nullable Thread pollThread;
-    private @Nullable ExecutorService taskExecutor;
-    private @Nullable Timer pollLatencyTimer;
-    private @Nullable Counter pollsCounter;
-    private @Nullable Counter backpressureSkipsCounter;
-    private @Nullable MeterProvider<DistributionSummary> polledTasksDistribution;
-    private @Nullable MeterProvider<Counter> processedCounter;
-    private @Nullable MeterProvider<Timer> processLatencyTimer;
 
     AbstractTaskWorker(
             final String name,
@@ -83,58 +82,46 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
         this.name = name;
         this.minPollIntervalMillis = requireNonNull(minPollInterval, "minPollInterval must not be null").toMillis();
         this.pollBackoffFunction = requireNonNull(pollBackoffFunction, "pollBackoffFunction must not be null");
-        this.meterRegistry = requireNonNull(meterRegistry, "meterRegistry must not be null");
+        requireNonNull(meterRegistry, "meterRegistry must not be null");
         this.downstreamAcceptsWork = requireNonNull(downstreamAcceptsWork, "downstreamAcceptsWork must not be null");
         this.statusLock = new ReentrantLock();
         this.maxConcurrency = maxConcurrency;
         this.semaphore = new Semaphore(maxConcurrency);
         this.logger = LoggerFactory.getLogger(getClass());
-    }
 
-    abstract List<T> poll(int limit);
-
-    abstract void process(T task);
-
-    abstract void abandon(T task);
-
-    @Override
-    public void start() {
-        setStatus(Status.STARTING);
-
-        pollThread = Thread.ofPlatform()
+        this.pollThread = Thread.ofPlatform()
                 .name("%s-Poller-".formatted(getClass().getSimpleName()), 0)
                 .unstarted(this::pollAndDispatch);
 
         final var taskExecutorName = "%s-%s-Executor".formatted(getClass().getSimpleName(), name);
-        taskExecutor = Executors.newThreadPerTaskExecutor(
+        this.taskExecutor = Executors.newThreadPerTaskExecutor(
                 Thread.ofVirtual()
                         .name(taskExecutorName + "-", 0)
                         .factory());
-
-        new ExecutorServiceMetrics(taskExecutor, taskExecutorName, null).bindTo(meterRegistry);
+        new ExecutorServiceMetrics(taskExecutor, taskExecutorName, Tags.empty()).bindTo(meterRegistry);
 
         final var commonMeterTags = List.of(Tag.of("workerType", getClass().getSimpleName()));
-        pollLatencyTimer = Timer
+        this.pollLatencyTimer = Timer
                 .builder("dt.dex.engine.task.worker.poll.latency")
                 .tags(commonMeterTags)
                 .register(meterRegistry);
-        pollsCounter = Counter
+        this.pollsCounter = Counter
                 .builder("dt.dex.engine.task.worker.polls")
                 .tags(commonMeterTags)
                 .register(meterRegistry);
-        backpressureSkipsCounter = Counter
+        this.backpressureSkipsCounter = Counter
                 .builder("dt.dex.engine.task.worker.poll.skipped.backpressure")
                 .tags(commonMeterTags)
                 .register(meterRegistry);
-        polledTasksDistribution = DistributionSummary
+        this.polledTasksDistribution = DistributionSummary
                 .builder("dt.dex.engine.task.worker.tasks.polled")
                 .tags(commonMeterTags)
                 .withRegistry(meterRegistry);
-        processedCounter = Counter
+        this.processedCounter = Counter
                 .builder("dt.dex.engine.task.worker.tasks.processed")
                 .tags(commonMeterTags)
                 .withRegistry(meterRegistry);
-        processLatencyTimer = Timer
+        this.processLatencyTimer = Timer
                 .builder("dt.dex.engine.task.worker.process.latency")
                 .tags(commonMeterTags)
                 .withRegistry(meterRegistry);
@@ -147,6 +134,17 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
                 .tags(commonMeterTags)
                 .tag("name", name)
                 .register(meterRegistry);
+    }
+
+    abstract List<T> poll(int limit);
+
+    abstract void process(T task);
+
+    abstract void abandon(T task);
+
+    @Override
+    public void start() {
+        setStatus(Status.STARTING);
 
         pollThread.start();
 
@@ -162,7 +160,7 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
     public void close() {
         setStatus(Status.STOPPING);
 
-        if (pollThread != null && pollThread.isAlive()) {
+        if (pollThread.isAlive()) {
             LockSupport.unpark(pollThread);
             logger.debug("Waiting for poll thread to stop");
             try {
@@ -177,23 +175,20 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
                 pollThread.interrupt();
             }
         }
-        if (taskExecutor != null) {
-            logger.debug("Waiting for task executor to stop");
-            taskExecutor.shutdown();
+        logger.debug("Waiting for task executor to stop");
+        taskExecutor.shutdown();
 
-            try {
-                final boolean terminated = taskExecutor.awaitTermination(30, TimeUnit.SECONDS);
-                if (!terminated) {
-                    logger.warn("Task executor did not stop in time; Interrupting it");
-                    taskExecutor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                logger.warn("Interrupted while waiting for task executor to stop", e);
-                Thread.currentThread().interrupt();
+        try {
+            final boolean terminated = taskExecutor.awaitTermination(30, TimeUnit.SECONDS);
+            if (!terminated) {
+                logger.warn("Task executor did not stop in time; Interrupting it");
                 taskExecutor.shutdownNow();
             }
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted while waiting for task executor to stop", e);
+            Thread.currentThread().interrupt();
+            taskExecutor.shutdownNow();
         }
-
 
         setStatus(Status.STOPPED);
     }
@@ -201,9 +196,7 @@ abstract class AbstractTaskWorker<T extends Task> implements TaskWorker {
     @Override
     public void nudge() {
         nudged = true;
-        if (pollThread != null) {
-            LockSupport.unpark(pollThread);
-        }
+        LockSupport.unpark(pollThread);
     }
 
     private void pollAndDispatch() {

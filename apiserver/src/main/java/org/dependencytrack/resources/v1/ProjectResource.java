@@ -582,7 +582,7 @@ public class ProjectResource extends AbstractApiResource {
                                 .entity("""
                                         accessTeams must either specify a UUID or a name,\
                                         but the team %s has neither.\
-                                        """.formatted(chosenTeam))
+                                        """.formatted(chosenTeam.getName()))
                                 .build());
                     }
                 }

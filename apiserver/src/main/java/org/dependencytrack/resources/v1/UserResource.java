@@ -852,7 +852,7 @@ public class UserResource extends AbstractApiResource {
                 principal.setTeams(requestedTeams);
                 qm.persist(principal);
                 super.logSecurityEvent(LOGGER, SecurityMarkers.SECURITY_AUDIT,
-                        "Added team membership for: " + principal.getUsername() + " / team: " + requestedTeams.toString());
+                        "Added team membership for: " + principal.getUsername() + " / team: " + requestedTeams.stream().map(Team::getName).toList());
                 return Response.ok(principal).build();
             });
         }

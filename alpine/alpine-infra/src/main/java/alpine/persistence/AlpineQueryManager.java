@@ -421,7 +421,7 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
             }
             for (final String groupDN: groupDNs) {
                 for (final MappedLdapGroup mappedLdapGroup: getMappedLdapGroups(groupDN)) {
-                    LOGGER.debug("Adding user: {} to team: {}", user.getUsername(), mappedLdapGroup.getTeam());
+                    LOGGER.debug("Adding user: {} to team: {}", user.getUsername(), mappedLdapGroup.getTeam().getName());
                     addUserToTeam(user, mappedLdapGroup.getTeam());
                 }
             }

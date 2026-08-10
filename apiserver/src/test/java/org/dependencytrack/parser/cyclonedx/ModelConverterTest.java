@@ -28,18 +28,22 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.FindingDao;
+import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class ModelConverterTest extends PersistenceCapableTest {
-
-    private static final String STREEBOG_256_VALUE = "3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb";
-    private static final String STREEBOG_512_VALUE = "8e945da209aa869f0455928529bcae4679e9873ab707b55315f56ceb98bef0a7362f715528356ee83cda5f2aac4c6ad2ba3a715c1bcd81cb8e9f90bf4c1c1a8a";
 
     @Test
     void shouldSkipFindingWhoseComponentWasDeleted() {
@@ -103,16 +107,86 @@ class ModelConverterTest extends PersistenceCapableTest {
         assertThat(result.getFirst().getId()).isEqualTo("INT-001");
     }
 
-    @Test
-    void shouldConvertStreebogHashes() {
-        final var cdxComponent = new org.cyclonedx.model.Component();
-        cdxComponent.setName("acme-lib");
-        cdxComponent.addHash(new Hash(Hash.Algorithm.STREEBOG_256, STREEBOG_256_VALUE.toUpperCase()));
-        cdxComponent.addHash(new Hash(Hash.Algorithm.STREEBOG_512, STREEBOG_512_VALUE.toUpperCase()));
+    @Nested
+    class HashConversionTest {
 
-        final Component component = ModelConverter.convertComponent(cdxComponent);
-        assertThat(component.getStreebog_256()).isEqualTo(STREEBOG_256_VALUE);
-        assertThat(component.getStreebog_512()).isEqualTo(STREEBOG_512_VALUE);
+        @ParameterizedTest
+        @MethodSource("hashFixtures")
+        void shouldConvertHashFromCdxComponent(HashFixture fixture) {
+            final var cdxComponent = new org.cyclonedx.model.Component();
+            cdxComponent.setName("acme-lib");
+            cdxComponent.addHash(new Hash(fixture.algorithm(), fixture.value()));
+
+            final Component component = ModelConverter.convertComponent(cdxComponent);
+            assertThat(fixture.getter().apply(component)).isEqualTo(fixture.value());
+        }
+
+        @ParameterizedTest
+        @MethodSource("hashFixtures")
+        void shouldConvertHashToCdxComponent(HashFixture fixture) {
+            final var component = new Component();
+            component.setUuid(UUID.randomUUID());
+            component.setName("acme-lib");
+            fixture.setter().accept(component, fixture.value());
+
+            assertThat(ModelConverter.convert(component).getHashes()).satisfiesExactly(hash -> {
+                assertThat(hash.getAlgorithm()).isEqualTo(fixture.algorithm().getSpec());
+                assertThat(hash.getValue()).isEqualTo(fixture.value());
+            });
+        }
+
+        @Test
+        void hashFixturesShouldCoverAllAlgorithms() {
+            // Make sure we detect when upstream schema adds new hash algos
+            // that we don't have coverage for yet.
+            assertThat(hashFixtures())
+                    .map(HashFixture::algorithm)
+                    .containsExactlyInAnyOrder(Hash.Algorithm.values());
+        }
+
+        private record HashFixture(
+                Hash.Algorithm algorithm,
+                String value,
+                BiConsumer<Component, String> setter,
+                Function<Component, String> getter) {
+
+            @Override
+            public @NonNull String toString() {
+                return algorithm.name();
+            }
+
+        }
+
+        private static List<HashFixture> hashFixtures() {
+            return List.of(
+                    hashFixture(Hash.Algorithm.MD5, 32, Component::setMd5, Component::getMd5),
+                    hashFixture(Hash.Algorithm.SHA1, 40, Component::setSha1, Component::getSha1),
+                    hashFixture(Hash.Algorithm.SHA_256, 64, Component::setSha256, Component::getSha256),
+                    hashFixture(Hash.Algorithm.SHA_384, 96, Component::setSha384, Component::getSha384),
+                    hashFixture(Hash.Algorithm.SHA_512, 128, Component::setSha512, Component::getSha512),
+                    hashFixture(Hash.Algorithm.SHA3_256, 64, Component::setSha3_256, Component::getSha3_256),
+                    hashFixture(Hash.Algorithm.SHA3_384, 96, Component::setSha3_384, Component::getSha3_384),
+                    hashFixture(Hash.Algorithm.SHA3_512, 128, Component::setSha3_512, Component::getSha3_512),
+                    hashFixture(Hash.Algorithm.BLAKE2b_256, 64, Component::setBlake2b_256, Component::getBlake2b_256),
+                    hashFixture(Hash.Algorithm.BLAKE2b_384, 96, Component::setBlake2b_384, Component::getBlake2b_384),
+                    hashFixture(Hash.Algorithm.BLAKE2b_512, 128, Component::setBlake2b_512, Component::getBlake2b_512),
+                    hashFixture(Hash.Algorithm.BLAKE3, 64, Component::setBlake3, Component::getBlake3),
+                    hashFixture(Hash.Algorithm.STREEBOG_256, 64, Component::setStreebog_256, Component::getStreebog_256),
+                    hashFixture(Hash.Algorithm.STREEBOG_512, 128, Component::setStreebog_512, Component::getStreebog_512));
+        }
+
+        private static HashFixture hashFixture(
+                Hash.Algorithm algorithm,
+                int valueLength,
+                BiConsumer<Component, String> setter,
+                Function<Component, String> getter) {
+            return new HashFixture(
+                    algorithm,
+                    "%02x".formatted(algorithm.ordinal()) + "a".repeat(valueLength - 2),
+                    setter,
+                    getter);
+        }
+
     }
 
 }

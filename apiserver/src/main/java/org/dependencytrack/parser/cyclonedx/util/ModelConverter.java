@@ -39,6 +39,7 @@ import org.cyclonedx.model.Swid;
 import org.cyclonedx.model.Tool;
 import org.cyclonedx.model.component.evidence.Occurrence;
 import org.cyclonedx.model.license.Expression;
+import org.cyclonedx.model.license.ExpressionDetailed;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
@@ -272,12 +273,12 @@ public class ModelConverter {
                         .forEach(licenseCandidates::add);
             }
 
-            final Expression licenseExpression = cdxComponent.getLicenses().getExpression();
-            if (licenseExpression != null && isNotBlank(licenseExpression.getValue())) {
+            final String licenseExpression = convertLicenseExpression(cdxComponent.getLicenses());
+            if (isNotBlank(licenseExpression)) {
                 // If the expression consists of just one license ID, add it as another option.
-                final SpdxExpression expression = SpdxExpressionParser.getInstance().tryParse(licenseExpression.getValue());
+                final SpdxExpression expression = SpdxExpressionParser.getInstance().tryParse(licenseExpression);
                 if (expression != null) {
-                    component.setLicenseExpression(trim(licenseExpression.getValue()));
+                    component.setLicenseExpression(trim(licenseExpression));
 
                     if (expression instanceof SpdxExpression.Identifier(String id)) {
                         final var expressionLicense = new org.cyclonedx.model.License();
@@ -287,10 +288,10 @@ public class ModelConverter {
                     }
                 } else {
                     LOGGER.warn("""
-                            Encountered invalid license expression "%s" for \
-                            Component{group=%s, name=%s, version=%s, bomRef=%s}; Skipping\
-                            """.formatted(cdxComponent.getLicenses().getExpression(), component.getGroup(),
-                            component.getName(), component.getVersion(), component.getBomRef()));
+                                    Encountered invalid license expression "{}" for \
+                                    Component{group={}, name={}, version={}, bomRef={}}; Skipping\
+                                    """, licenseExpression, component.getGroup(),
+                            component.getName(), component.getVersion(), component.getBomRef());
                 }
             }
         }
@@ -331,6 +332,20 @@ public class ModelConverter {
         applyHashes(component, tool.getHashes());
 
         return component;
+    }
+
+    @SuppressWarnings("deprecation")
+    private static String convertLicenseExpression(LicenseChoice cdxLicenses) {
+        final Expression expression = cdxLicenses.getExpression();
+        if (expression != null) {
+            return expression.getValue();
+        }
+
+        // NB: New in CycloneDX 1.7.
+        final ExpressionDetailed expressionDetailed = cdxLicenses.getExpressionDetailed();
+        return expressionDetailed != null
+                ? expressionDetailed.getExpression()
+                : null;
     }
 
     private static void applyHashes(Component component, List<org.cyclonedx.model.Hash> cdxHashes) {

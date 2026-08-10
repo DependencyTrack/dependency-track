@@ -759,6 +759,47 @@ class ImportBomActivityTest extends PersistenceCapableTest {
     }
 
     @Test
+    void informWithBomContainingDetailedLicenseExpressionTest() throws Exception {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final var bomFileMetadata = storeBomFile(/* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.7",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib",
+                      "version": "1.0.0",
+                      "licenses": [
+                        {
+                          "expression": "EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0",
+                          "expressionDetails": [
+                            {
+                              "licenseIdentifier": "EPL-2.0",
+                              "url": "https://www.eclipse.org/legal/epl-2.0/"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8));
+        final var bomUploadToken = UUID.randomUUID();
+        activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
+        assertBomProcessedNotification();
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getLicense()).isNull();
+            assertThat(component.getLicenseExpression()).isEqualTo("EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0");
+            assertThat(component.getResolvedLicense()).isNull();
+        });
+    }
+
+    @Test
     void informWithBomContainingLicenseExpressionWithSingleIdTest() throws Exception {
         final var license = new License();
         license.setLicenseId("EPL-2.0");

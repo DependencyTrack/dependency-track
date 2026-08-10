@@ -54,6 +54,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.fasterxml.uuid.Generators.timeBasedEpochRandomGenerator;
+import static java.util.Objects.requireNonNull;
 import static org.dependencytrack.dex.engine.support.ProtobufUtil.toInstant;
 import static org.dependencytrack.dex.engine.support.ProtobufUtil.toProtoTimestamp;
 
@@ -124,14 +125,12 @@ final class WorkflowRunState {
         return parentId;
     }
 
-    @Nullable
     String workflowName() {
-        return workflowName;
+        return requireNonNull(workflowName, "workflowName is not set because no RunCreated event was applied");
     }
 
-    @Nullable
-    Integer workflowVersion() {
-        return workflowVersion;
+    int workflowVersion() {
+        return requireNonNull(workflowVersion, "workflowVersion is not set because no RunCreated event was applied");
     }
 
     @Nullable
@@ -139,9 +138,8 @@ final class WorkflowRunState {
         return workflowInstanceId;
     }
 
-    @Nullable
     String taskQueueName() {
-        return taskQueueName;
+        return requireNonNull(taskQueueName, "taskQueueName is not set because no RunCreated event was applied");
     }
 
     @Nullable
@@ -189,9 +187,12 @@ final class WorkflowRunState {
         return pendingTimerCreatedEventIds;
     }
 
-    @Nullable
+    boolean isCreated() {
+        return createdEvent != null;
+    }
+
     WorkflowRunStatus status() {
-        return status;
+        return requireNonNull(status, "status is not set because no RunCreated event was applied");
     }
 
     @Nullable
@@ -203,9 +204,8 @@ final class WorkflowRunState {
         this.customStatus = customStatus;
     }
 
-    @Nullable
-    Integer priority() {
-        return priority;
+    int priority() {
+        return requireNonNull(priority, "priority is not set because no RunCreated event was applied");
     }
 
     @Nullable
@@ -228,9 +228,8 @@ final class WorkflowRunState {
         return failure;
     }
 
-    @Nullable
     Instant createdAt() {
-        return createdAt;
+        return requireNonNull(createdAt, "createdAt is not set because no RunCreated event was applied");
     }
 
     @Nullable
@@ -391,6 +390,7 @@ final class WorkflowRunState {
 
     private void processCompleteRunCommand(final CompleteRunCommand command) {
         // If this is a sub-workflow run, ensure the parent run is informed about the outcome.
+        final WorkflowEvent createdEvent = createdEvent();
         if (createdEvent.getRunCreated().hasParentRun()) {
             final RunCreated.ParentRun parentRun = createdEvent.getRunCreated().getParentRun();
             final var parentRunId = UUID.fromString(parentRun.getId());
@@ -444,10 +444,10 @@ final class WorkflowRunState {
 
     private void processContinueAsNewCommand(final ContinueRunAsNewCommand command) {
         final var newRunCreatedBuilder = RunCreated.newBuilder()
-                .setWorkflowName(this.workflowName)
-                .setWorkflowVersion(this.workflowVersion)
-                .setTaskQueueName(this.taskQueueName)
-                .setPriority(this.priority);
+                .setWorkflowName(workflowName())
+                .setWorkflowVersion(workflowVersion())
+                .setTaskQueueName(taskQueueName())
+                .setPriority(priority());
         if (command.argument() != null) {
             newRunCreatedBuilder.setArgument(command.argument());
         }
@@ -460,8 +460,9 @@ final class WorkflowRunState {
         if (this.labels != null && !this.labels.isEmpty()) {
             newRunCreatedBuilder.putAllLabels(this.labels);
         }
-        if (this.createdEvent.getRunCreated().hasParentRun()) {
-            newRunCreatedBuilder.setParentRun(this.createdEvent.getRunCreated().getParentRun());
+        final WorkflowEvent createdEvent = createdEvent();
+        if (createdEvent.getRunCreated().hasParentRun()) {
+            newRunCreatedBuilder.setParentRun(createdEvent.getRunCreated().getParentRun());
         }
 
         this.continuedAsNew = true;
@@ -548,8 +549,8 @@ final class WorkflowRunState {
         final var parentRunBuilder = RunCreated.ParentRun.newBuilder()
                 .setChildRunCreatedEventId(command.eventId())
                 .setId(this.id.toString())
-                .setWorkflowName(this.workflowName)
-                .setWorkflowVersion(this.workflowVersion);
+                .setWorkflowName(workflowName())
+                .setWorkflowVersion(workflowVersion());
         if (this.workflowInstanceId != null) {
             parentRunBuilder.setWorkflowInstanceId(this.workflowInstanceId);
         }
@@ -599,6 +600,10 @@ final class WorkflowRunState {
                                                 .build())
                                 .build(),
                         command.elapseAt()));
+    }
+
+    private WorkflowEvent createdEvent() {
+        return requireNonNull(createdEvent, "createdEvent is not set because no RunCreated event was applied");
     }
 
     private void setStatus(final WorkflowRunStatus newStatus) {

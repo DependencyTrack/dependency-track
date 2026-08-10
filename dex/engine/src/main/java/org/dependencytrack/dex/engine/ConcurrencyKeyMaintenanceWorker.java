@@ -45,10 +45,9 @@ final class ConcurrencyKeyMaintenanceWorker implements Closeable {
 
     private final Jdbi jdbi;
     private final Supplier<Boolean> leadershipSupplier;
-    private final MeterRegistry meterRegistry;
     private final long repairIntervalMillis;
     private final Runnable onWakeupsRepaired;
-    private @Nullable Counter repairedWakeupsCounter;
+    private final Counter repairedWakeupsCounter;
     private @Nullable ScheduledExecutorService executor;
     private volatile boolean stopped = false;
     private boolean wasLeader = false;
@@ -61,15 +60,14 @@ final class ConcurrencyKeyMaintenanceWorker implements Closeable {
             Runnable onWakeupsRepaired) {
         this.jdbi = jdbi;
         this.leadershipSupplier = leadershipSupplier;
-        this.meterRegistry = meterRegistry;
         this.repairIntervalMillis = repairInterval.toMillis();
         this.onWakeupsRepaired = onWakeupsRepaired;
+        this.repairedWakeupsCounter = Counter
+                .builder("dt.dex.engine.workflow.concurrency.key.wakeups.repaired")
+                .register(meterRegistry);
     }
 
     void start() {
-        repairedWakeupsCounter = Counter
-                .builder("dt.dex.engine.workflow.concurrency.key.wakeups.repaired")
-                .register(meterRegistry);
         executor = Executors.newSingleThreadScheduledExecutor(
                 Thread.ofPlatform()
                         .name(getClass().getSimpleName())

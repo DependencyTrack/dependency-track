@@ -27,7 +27,6 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Query;
 import org.jdbi.v3.core.statement.StatementContext;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -52,17 +51,16 @@ final class WorkflowTaskScheduler implements Closeable {
 
     private final Jdbi jdbi;
     private final Supplier<Boolean> leadershipSupplier;
-    private final MeterRegistry meterRegistry;
     private final long pollIntervalMillis;
     private final IntervalFunction pollBackoffFunction;
     private final Consumer<String> onTasksScheduled;
     private final ConcurrencyKeyMaintenanceWorker concurrencyKeyMaintenanceWorker;
     private final Thread pollThread;
+    private final Counter pollsCounter;
+    private final MeterProvider<Timer> taskSchedulingLatencyTimer;
+    private final MeterProvider<Counter> tasksScheduledCounter;
     private volatile boolean stopped = false;
     private volatile boolean nudged = false;
-    private @Nullable Counter pollsCounter;
-    private @Nullable MeterProvider<Timer> taskSchedulingLatencyTimer;
-    private @Nullable MeterProvider<Counter> tasksScheduledCounter;
     private boolean wasLeader = false;
 
     WorkflowTaskScheduler(
@@ -75,7 +73,6 @@ final class WorkflowTaskScheduler implements Closeable {
             Consumer<String> onTasksScheduled) {
         this.jdbi = jdbi;
         this.leadershipSupplier = leadershipSupplier;
-        this.meterRegistry = meterRegistry;
         this.pollIntervalMillis = pollInterval.toMillis();
         this.pollBackoffFunction = pollBackoffFunction;
         this.onTasksScheduled = onTasksScheduled;
@@ -89,18 +86,18 @@ final class WorkflowTaskScheduler implements Closeable {
         this.pollThread = Thread.ofPlatform()
                 .name(getClass().getSimpleName())
                 .unstarted(this::pollLoop);
+        this.pollsCounter = Counter
+                .builder("dt.dex.engine.workflow.task.scheduler.polls")
+                .register(meterRegistry);
+        this.taskSchedulingLatencyTimer = Timer
+                .builder("dt.dex.engine.workflow.task.scheduling.latency")
+                .withRegistry(meterRegistry);
+        this.tasksScheduledCounter = Counter
+                .builder("dt.dex.engine.workflow.tasks.scheduled")
+                .withRegistry(meterRegistry);
     }
 
     void start() {
-        pollsCounter = Counter
-                .builder("dt.dex.engine.workflow.task.scheduler.polls")
-                .register(meterRegistry);
-        taskSchedulingLatencyTimer = Timer
-                .builder("dt.dex.engine.workflow.task.scheduling.latency")
-                .withRegistry(meterRegistry);
-        tasksScheduledCounter = Counter
-                .builder("dt.dex.engine.workflow.tasks.scheduled")
-                .withRegistry(meterRegistry);
         concurrencyKeyMaintenanceWorker.start();
         pollThread.start();
     }

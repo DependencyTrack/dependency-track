@@ -47,6 +47,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 import static org.dependencytrack.dex.engine.MdcKeys.MDC_ACTIVITY_NAME;
 import static org.dependencytrack.dex.engine.MdcKeys.MDC_ACTIVITY_TASK_ATTEMPT;
 import static org.dependencytrack.dex.engine.MdcKeys.MDC_ACTIVITY_TASK_EXECUTION_ID;
@@ -161,7 +162,7 @@ final class ActivityTaskWorker extends AbstractTaskWorker<ActivityTask> {
                     logger.debug("Activity was interrupted or worker is shutting down; abandoning task");
                     abandon(task);
                 } else {
-                    fail(task, "Activity failed", cause);
+                    fail(task, "Activity failed", requireNonNullElse(cause, e));
                 }
                 return;
             } catch (InterruptedException e) {

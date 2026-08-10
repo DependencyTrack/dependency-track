@@ -102,7 +102,11 @@ public interface VulnAnalyzer extends ExtensionPoint {
      * <p>
      * Vulnerabilities MAY include a {@code dependency-track:vuln:reference-url} property,
      * containing a URL that links to the analyzer-specific advisory or issue page for the
-     * vulnerability. Example:
+     * vulnerability.
+     * <p>
+     * Vulnerabilities MAY include a {@code dependency-track:vuln:matching-percentage} property
+     * (integer 0–100) indicating how confidently the analyzer matched the component.
+     * Example:
      * <pre>{@code
      * {
      *   "vulnerabilities": [
@@ -115,6 +119,10 @@ public interface VulnAnalyzer extends ExtensionPoint {
      *         {
      *           "name": "dependency-track:vuln:reference-url",
      *           "value": "https://security.snyk.io/vuln/SNYK-JAVA-EXAMPLE-1234"
+     *         },
+     *         {
+     *           "name": "dependency-track:vuln:matching-percentage",
+     *           "value": "100"
      *         }
      *       ],
      *       "affects": [

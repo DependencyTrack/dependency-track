@@ -205,6 +205,10 @@ class SnykVulnAnalyzerTest {
                         {
                           "name": "dependency-track:vuln:reference-url",
                           "value": "https://security.snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-3038426"
+                        },
+                        {
+                          "name": "dependency-track:vuln:matching-percentage",
+                          "value": "100"
                         }
                       ],
                       "references": [

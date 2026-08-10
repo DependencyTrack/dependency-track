@@ -34,7 +34,6 @@ import java.util.Map;
 final class SnykPurlUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SnykPurlUtil.class);
-    private static final String MAVEN = "maven";
     private static final String CHECKSUM = "checksum";
 
     private SnykPurlUtil() {
@@ -46,6 +45,10 @@ final class SnykPurlUtil {
      * When checksum matching is enabled and the PURL is Maven with a {@code checksum}
      * qualifier, returns the full canonical lowercase PURL (preserving checksum).
      * Otherwise returns lowercase coordinates only (legacy behavior).
+     * <p>
+     * Checksum-qualified matching is currently limited to Maven because that is the
+     * ecosystem Snyk supports for checksum PURL qualifiers; other ecosystems remain
+     * coordinates-only even when a checksum qualifier is present.
      */
     static String toSnykRequestPurl(PackageURL purl, boolean checksumMatchingEnabled) {
         if (requiresChecksumMeta(purl, checksumMatchingEnabled)) {
@@ -56,10 +59,11 @@ final class SnykPurlUtil {
 
     /**
      * Whether this PURL should use checksum matching and {@code meta.packages} semantics.
+     * Limited to Maven per current Snyk API support.
      */
     static boolean requiresChecksumMeta(PackageURL purl, boolean checksumMatchingEnabled) {
         return checksumMatchingEnabled
-                && MAVEN.equals(purl.getType())
+                && PackageURL.StandardTypes.MAVEN.equals(purl.getType())
                 && hasChecksumQualifier(purl);
     }
 

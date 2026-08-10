@@ -23,11 +23,15 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 /**
- * Cached Snyk analysis result for a single request PURL.
+ * Cached Snyk analysis result for a single request PURL when findings are present.
  * <p>
- * Distinguishes trustworthy empty results ({@link SnykMatchType#FULL} with no issues)
- * from untrusted matches ({@link SnykMatchType#PARTIAL} / {@link SnykMatchType#NONE})
- * so subsequent analyses can skip HTTP without attaching findings.
+ * Outcomes with no findings (including {@link SnykMatchType#NONE}, empty
+ * {@link SnykMatchType#FULL}, and empty {@link SnykMatchType#PARTIAL}) are cached as
+ * {@code null} and do not use this type.
+ * <p>
+ * {@link SnykMatchType#PARTIAL} may still include issues (name/version matched, checksum
+ * did not); those are cached here with {@code matchType = PARTIAL} so cache hits retain
+ * findings without re-fetching.
  *
  * @since 5.1.0
  */
@@ -38,8 +42,8 @@ record SnykCachedPurlResult(
         @Nullable Boolean checksumMatched) {
 
     /**
-     * Coordinates-only or legacy cache entry: name/version matched, no checksum in the request.
-     * By default, if snyk is provided with coordinates only, it returns a nameVersionMatched true and list of issues, if any, with it.
+     * Coordinates-only or legacy cache entry with findings: name/version matched,
+     * no checksum in the request ({@code checksumMatched = null}).
      */
     static SnykCachedPurlResult full(@Nullable List<SnykIssue> issues) {
         return new SnykCachedPurlResult(SnykMatchType.FULL, issues, true, null);

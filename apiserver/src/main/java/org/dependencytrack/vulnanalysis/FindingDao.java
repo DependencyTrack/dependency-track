@@ -99,6 +99,7 @@ final class FindingDao {
         final var projectIds = new long[commands.size()];
         final var analyzerIdentities = new String[commands.size()];
         final var referenceUrls = new String[commands.size()];
+        final var matchingPercentages = new Short[commands.size()];
 
         int i = 0;
         for (final CreateAttributionCommand command : commands) {
@@ -107,6 +108,7 @@ final class FindingDao {
             projectIds[i] = command.projectId();
             analyzerIdentities[i] = command.analyzerName();
             referenceUrls[i] = command.referenceUrl();
+            matchingPercentages[i] = command.matchingPercentage();
             i++;
         }
 
@@ -119,6 +121,7 @@ final class FindingDao {
                         , "ANALYZERIDENTITY"
                         , "ATTRIBUTED_ON"
                         , "REFERENCE_URL"
+                        , "MATCHING_PERCENTAGE"
                         )
                         SELECT vuln_id
                              , component_id
@@ -126,8 +129,21 @@ final class FindingDao {
                              , analyzer_identity
                              , NOW()
                              , reference_url
-                          FROM UNNEST(:vulnIds, :componentIds, :projectIds, :analyzerIdentities, :referenceUrls)
-                            AS t(vuln_id, component_id, project_id, analyzer_identity, reference_url)
+                             , matching_percentage
+                          FROM UNNEST(
+                                 :vulnIds
+                               , :componentIds
+                               , :projectIds
+                               , :analyzerIdentities
+                               , :referenceUrls
+                               , :matchingPercentages)
+                            AS t(
+                                 vuln_id
+                               , component_id
+                               , project_id
+                               , analyzer_identity
+                               , reference_url
+                               , matching_percentage)
                          ORDER BY vuln_id
                                 , component_id
                                 , analyzer_identity
@@ -135,6 +151,7 @@ final class FindingDao {
                         SET "ATTRIBUTED_ON" = EXCLUDED."ATTRIBUTED_ON"
                           , "DELETED_AT" = NULL
                           , "REFERENCE_URL" = EXCLUDED."REFERENCE_URL"
+                          , "MATCHING_PERCENTAGE" = EXCLUDED."MATCHING_PERCENTAGE"
                         WHERE fa."DELETED_AT" IS NOT NULL
                         """)
                 .bind("vulnIds", vulnIds)
@@ -142,6 +159,7 @@ final class FindingDao {
                 .bind("projectIds", projectIds)
                 .bind("analyzerIdentities", analyzerIdentities)
                 .bind("referenceUrls", referenceUrls)
+                .bind("matchingPercentages", matchingPercentages)
                 .execute();
     }
 
@@ -173,7 +191,8 @@ final class FindingDao {
             long componentId,
             long projectId,
             String analyzerName,
-            @Nullable String referenceUrl) {
+            @Nullable String referenceUrl,
+            @Nullable Short matchingPercentage) {
     }
 
 }

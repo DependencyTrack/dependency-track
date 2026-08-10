@@ -55,7 +55,7 @@ class SnykVulnAnalyzerChecksumMatchingTest {
     private static final String CHECKSUM_PURL =
             "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final?checksum=sha1:40fd4d696c55793e996d1ff3c475833f836c2498";
     private static final String PARTIAL_CHECKSUM_PURL =
-            "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final?checksum=sha1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+            "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?checksum=sha1:ad9503c3e994a4f611a4892f2e67ac82df727086";
     private static final String NONE_CHECKSUM_PURL =
             "pkg:maven/org.example/unknown@1.0.0?checksum=sha1:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
@@ -145,15 +145,25 @@ class SnykVulnAnalyzerChecksumMatchingTest {
         assertThat(vdr.getVulnerabilitiesCount()).isEqualTo(1);
         assertThat(vdr.getVulnerabilities(0).getId()).isEqualTo("SNYK-JAVA-ORGJBOSSLOGGING-0000001");
         assertThat(vdr.getVulnerabilities(0).getAffects(0).getRef()).isEqualTo("1");
+        assertThat(vdr.getVulnerabilities(0).getPropertiesList())
+                .anySatisfy(prop -> {
+                    assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
+                    assertThat(prop.getValue()).isEqualTo("100");
+                });
 
         final Bom cachedVdr = analyzer.analyze(bom);
         assertThat(cachedVdr.getVulnerabilitiesCount()).isEqualTo(1);
+        assertThat(cachedVdr.getVulnerabilities(0).getPropertiesList())
+                .anySatisfy(prop -> {
+                    assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
+                    assertThat(prop.getValue()).isEqualTo("100");
+                });
 
         verify(1, postRequestedFor(anyUrl()));
     }
 
     @Test
-    void shouldSkipFindingsButCachePartialMatch() throws Exception {
+    void shouldAttachFindingsOnPartialMatchAndSkipHttpOnCacheHit() throws Exception {
         stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -163,13 +173,33 @@ class SnykVulnAnalyzerChecksumMatchingTest {
         final var bom = Bom.newBuilder()
                 .addComponents(Component.newBuilder()
                         .setBomRef("1")
-                        .setName("jboss-logging")
+                        .setName("woodstox-core")
                         .setPurl(PARTIAL_CHECKSUM_PURL)
                         .build())
                 .build();
 
-        assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
-        assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr.getVulnerabilitiesList()).hasSize(2);
+        assertThat(vdr.getVulnerabilitiesList())
+                .extracting(org.cyclonedx.proto.v1_7.Vulnerability::getId)
+                .containsExactlyInAnyOrder(
+                        "SNYK-JAVA-COMFASTERXMLWOODSTOX-3091135",
+                        "SNYK-JAVA-COMFASTERXMLWOODSTOX-2928754");
+        assertThat(vdr.getVulnerabilitiesList())
+                .allSatisfy(vuln -> assertThat(vuln.getPropertiesList())
+                        .anySatisfy(prop -> {
+                            assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
+                            assertThat(prop.getValue()).isEqualTo("50");
+                        }));
+
+        final Bom cachedVdr = analyzer.analyze(bom);
+        assertThat(cachedVdr.getVulnerabilitiesList()).hasSize(2);
+        assertThat(cachedVdr.getVulnerabilitiesList())
+                .allSatisfy(vuln -> assertThat(vuln.getPropertiesList())
+                        .anySatisfy(prop -> {
+                            assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
+                            assertThat(prop.getValue()).isEqualTo("50");
+                        }));
 
         verify(1, postRequestedFor(anyUrl()));
     }
@@ -255,7 +285,7 @@ class SnykVulnAnalyzerChecksumMatchingTest {
     }
 
     @Test
-    void shouldNotCacheWhenMetaErrorsPresentForChecksumPurl() throws Exception {
+    void shouldNegativeCacheWhenMetaErrorsPresentForChecksumPurl() throws Exception {
         stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -271,10 +301,10 @@ class SnykVulnAnalyzerChecksumMatchingTest {
                 .build();
 
         assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
-        // No usable meta.packages → not cached → second call hits HTTP again.
+        // Permanent meta.errors failure is negative-cached — no second HTTP.
         assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
 
-        verify(2, postRequestedFor(anyUrl()));
+        verify(1, postRequestedFor(anyUrl()));
     }
 
     @Test

@@ -66,6 +66,11 @@ public class ProjectMetadata {
     private OrganizationalEntity supplier;
 
     @Persistent(defaultFetchGroup = "true")
+    @Convert(OrganizationalEntityJsonConverter.class)
+    @Column(name = "MANUFACTURER", jdbcType = "CLOB", allowsNull = "true")
+    private OrganizationalEntity manufacturer;
+
+    @Persistent(defaultFetchGroup = "true")
     @Convert(OrganizationalContactsJsonConverter.class)
     @Column(name = "AUTHORS", jdbcType = "CLOB", allowsNull = "true")
     private List<OrganizationalContact> authors;
@@ -97,6 +102,14 @@ public class ProjectMetadata {
 
     public void setSupplier(final OrganizationalEntity supplier) {
         this.supplier = supplier;
+    }
+
+    public OrganizationalEntity getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(final OrganizationalEntity manufacturer) {
+        this.manufacturer = manufacturer;
     }
 
     public List<OrganizationalContact> getAuthors() {

@@ -19,6 +19,7 @@
 package org.dependencytrack.parser.cyclonedx.util;
 
 import alpine.config.AlpineConfigKeys;
+import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
@@ -47,6 +48,7 @@ import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.ComponentOccurrence;
 import org.dependencytrack.model.ComponentProperty;
+import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Cwe;
 import org.dependencytrack.model.DataClassification;
 import org.dependencytrack.model.ExternalReference;
@@ -110,6 +112,7 @@ public class ModelConverter {
 
         final var projectMetadata = new ProjectMetadata();
         projectMetadata.setSupplier(ModelConverter.convert(cdxMetadata.getSupplier()));
+        projectMetadata.setManufacturer(ModelConverter.convert(cdxMetadata.getManufacturer()));
         projectMetadata.setAuthors(ModelConverter.convertCdxContacts(cdxMetadata.getAuthors()));
 
         final var toolComponents = new ArrayList<Component>();
@@ -799,7 +802,7 @@ public class ModelConverter {
         return cdxProperties;
     }
 
-    public static org.cyclonedx.model.Metadata createMetadata(final Project project) {
+    public static org.cyclonedx.model.Metadata createMetadata(final Project project, final QueryManager qm) {
         final org.cyclonedx.model.Metadata metadata = new org.cyclonedx.model.Metadata();
         final org.cyclonedx.model.Tool tool = new org.cyclonedx.model.Tool();
         tool.setVendor("OWASP");
@@ -861,7 +864,55 @@ public class ModelConverter {
                 metadata.setSupplier(convert(project.getMetadata().getSupplier()));
             }
         }
+        final OrganizationalEntity bomManufacturer = resolveBomManufacturer(project, qm);
+        if (bomManufacturer != null) {
+            metadata.setManufacturer(convert(bomManufacturer));
+        }
         return metadata;
+    }
+
+    /**
+     * Resolves the organization that manufactured the BOM document itself
+     * (CycloneDX {@code metadata.manufacturer}), as opposed to the manufacturer
+     * of the project/subject component described by the BOM.
+     * <p>
+     * A manufacturer captured from a previously imported BOM for this project
+     * takes precedence over the system-wide default configured in Admin > General.
+     */
+    private static OrganizationalEntity resolveBomManufacturer(final Project project, final QueryManager qm) {
+        if (project != null && project.getMetadata() != null && project.getMetadata().getManufacturer() != null) {
+            return project.getMetadata().getManufacturer();
+        }
+        return manufacturerFromConfig(qm);
+    }
+
+    private static OrganizationalEntity manufacturerFromConfig(final QueryManager qm) {
+        final String name = trimToNull(getConfigPropertyValue(qm, ConfigPropertyConstants.GENERAL_MANUFACTURER_NAME));
+        final String url = trimToNull(getConfigPropertyValue(qm, ConfigPropertyConstants.GENERAL_MANUFACTURER_URL));
+        final String contactName = trimToNull(getConfigPropertyValue(qm, ConfigPropertyConstants.GENERAL_MANUFACTURER_CONTACT_NAME));
+        final String contactEmail = trimToNull(getConfigPropertyValue(qm, ConfigPropertyConstants.GENERAL_MANUFACTURER_CONTACT_EMAIL));
+        if (name == null && url == null && contactName == null && contactEmail == null) {
+            return null;
+        }
+
+        final var manufacturer = new OrganizationalEntity();
+        manufacturer.setName(name);
+        if (url != null) {
+            manufacturer.setUrls(new String[]{url});
+        }
+        if (contactName != null || contactEmail != null) {
+            final var contact = new OrganizationalContact();
+            contact.setName(contactName);
+            contact.setEmail(contactEmail);
+            manufacturer.setContacts(Collections.singletonList(contact));
+        }
+        return manufacturer;
+    }
+
+    private static String getConfigPropertyValue(final QueryManager qm, final ConfigPropertyConstants configPropertyConstant) {
+        final ConfigProperty configProperty = qm.getConfigProperty(
+                configPropertyConstant.getGroupName(), configPropertyConstant.getPropertyName());
+        return configProperty != null ? configProperty.getPropertyValue() : null;
     }
 
     public static org.cyclonedx.model.Service convert(final QueryManager qm, final ServiceComponent service) {

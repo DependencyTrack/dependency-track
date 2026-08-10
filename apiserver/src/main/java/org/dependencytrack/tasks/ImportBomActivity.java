@@ -449,6 +449,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 hasChanged |= applyIfChanged(persistentProject.getMetadata(), projectMetadata, ProjectMetadata::getAuthors,
                         authors -> persistentProject.getMetadata().setAuthors(authors != null ? new ArrayList<>(authors) : null));
                 hasChanged |= applyIfChanged(persistentProject.getMetadata(), projectMetadata, ProjectMetadata::getSupplier, persistentProject.getMetadata()::setSupplier);
+                hasChanged |= applyIfChanged(persistentProject.getMetadata(), projectMetadata, ProjectMetadata::getManufacturer, persistentProject.getMetadata()::setManufacturer);
                 hasChanged |= applyIfChanged(persistentProject.getMetadata(), projectMetadata, ProjectMetadata::getTools, persistentProject.getMetadata()::setTools);
             }
         }

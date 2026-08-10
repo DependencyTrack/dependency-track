@@ -42,11 +42,10 @@ final class DexEngineLeaderElection implements Closeable {
     private final Jdbi jdbi;
     private final Duration leaseDuration;
     private final Duration checkInterval;
-    private final MeterRegistry meterRegistry;
+    private final Counter leadershipAcquiredCounter;
+    private final Counter leadershipLostCounter;
 
     private @Nullable ScheduledExecutorService executor;
-    private @Nullable Counter leadershipAcquiredCounter;
-    private @Nullable Counter leadershipLostCounter;
     private volatile boolean isLeader;
 
     DexEngineLeaderElection(
@@ -59,22 +58,18 @@ final class DexEngineLeaderElection implements Closeable {
         this.jdbi = jdbi;
         this.leaseDuration = leaseDuration;
         this.checkInterval = checkInterval;
-        this.meterRegistry = meterRegistry;
-    }
-
-    void start() {
+        this.leadershipAcquiredCounter = Counter
+                .builder("dt.dex.engine.leadership.acquired")
+                .register(meterRegistry);
+        this.leadershipLostCounter = Counter
+                .builder("dt.dex.engine.leadership.lost")
+                .register(meterRegistry);
         Gauge
                 .builder("dt.dex.engine.leadership.status", this, it -> it.isLeader ? 1 : 0)
                 .register(meterRegistry);
+    }
 
-        leadershipAcquiredCounter = Counter
-                .builder("dt.dex.engine.leadership.acquired")
-                .register(meterRegistry);
-
-        leadershipLostCounter = Counter
-                .builder("dt.dex.engine.leadership.lost")
-                .register(meterRegistry);
-
+    void start() {
         executor = Executors.newSingleThreadScheduledExecutor(
                 Thread.ofPlatform()
                         .name(getClass().getSimpleName())

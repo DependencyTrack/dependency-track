@@ -189,6 +189,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setBlake2b_384("componentBlake2b_384");
         component.setBlake2b_512("componentBlake2b_512");
         component.setBlake3("componentBlake3");
+        component.setStreebog_256("componentstreebog_256");
+        component.setStreebog_512("componentstreebog_512");
         component.setLicense("componentLicenseName");
         component.setLicenseExpression("componentLicenseExpression");
         component.setResolvedLicense(license);
@@ -304,6 +306,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                   && component.blake2b_384 == "componentBlake2b_384"
                   && component.blake2b_512 == "componentBlake2b_512"
                   && component.blake3 == "componentBlake3"
+                  && component.streebog_256 == "componentstreebog_256"
+                  && component.streebog_512 == "componentstreebog_512"
                   && component.license_name == "componentLicenseName"
                   && component.license_expression == "componentLicenseExpression"
                   && component.resolved_license.uuid == "__RESOLVED_LICENSE_UUID__"

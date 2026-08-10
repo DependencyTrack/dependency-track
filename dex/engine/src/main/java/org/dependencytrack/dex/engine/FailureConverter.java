@@ -166,8 +166,9 @@ final class FailureConverter {
             }
         }
 
-        if (throwable.getStackTrace() != null && throwable.getStackTrace().length > 0) {
-            failureBuilder.setStackTrace(serializeStackTrace(throwable.getStackTrace()));
+        final String stackTrace = serializeStackTrace(throwable.getStackTrace());
+        if (stackTrace != null) {
+            failureBuilder.setStackTrace(stackTrace);
         }
 
         if (throwable.getCause() != null) {

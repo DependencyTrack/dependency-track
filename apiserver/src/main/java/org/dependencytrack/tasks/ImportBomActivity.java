@@ -541,6 +541,8 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 applyIfChanged(persistentComponent, component, Component::getBlake2b_384, persistentComponent::setBlake2b_384);
                 applyIfChanged(persistentComponent, component, Component::getBlake2b_512, persistentComponent::setBlake2b_512);
                 applyIfChanged(persistentComponent, component, Component::getBlake3, persistentComponent::setBlake3);
+                applyIfChanged(persistentComponent, component, Component::getStreebog_256, persistentComponent::setStreebog_256);
+                applyIfChanged(persistentComponent, component, Component::getStreebog_512, persistentComponent::setStreebog_512);
                 applyIfChanged(persistentComponent, component, Component::getResolvedLicense, persistentComponent::setResolvedLicense);
                 applyIfChanged(persistentComponent, component, Component::getLicense, persistentComponent::setLicense);
                 applyIfChanged(persistentComponent, component, Component::getLicenseUrl, persistentComponent::setLicenseUrl);

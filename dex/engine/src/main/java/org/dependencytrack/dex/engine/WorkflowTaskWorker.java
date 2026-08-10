@@ -88,7 +88,7 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
 
             // Hydrate workflow run state from the history.
             final var workflowRunState = new WorkflowRunState(task.workflowRunId(), task.history());
-            if (workflowRunState.status() != null && workflowRunState.status().isTerminal()) {
+            if (workflowRunState.isCreated() && workflowRunState.status().isTerminal()) {
                 logger.warn("""
                         Task was scheduled despite the workflow run already being in terminal state {}. \
                         Discarding {} events in the run's inbox.""", workflowRunState.status(), task.inbox().size());
@@ -132,6 +132,14 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
                 logger.warn("No new events; Abandoning task");
                 abandon(task);
                 return;
+            }
+
+            // All actions after this require state that only the RunCreated event provides,
+            // so a run without it can not make progress. Fail here rather than when task events
+            // are flushed, where the failure would take down the entire batch.
+            if (!workflowRunState.isCreated()) {
+                throw new IllegalStateException(
+                        "Run has no RunCreated event in its history or inbox and can not make progress");
             }
 
             final var ctx = new WorkflowContextImpl<>(

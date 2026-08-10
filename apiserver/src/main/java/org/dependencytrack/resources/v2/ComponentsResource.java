@@ -340,6 +340,12 @@ public class ComponentsResource extends AbstractApiResource implements Component
             component.setSha3_256(StringUtils.trimToNull(request.getHashes().getSha3256()));
             component.setSha3_384(StringUtils.trimToNull(request.getHashes().getSha3384()));
             component.setSha3_512(StringUtils.trimToNull(request.getHashes().getSha3512()));
+            component.setBlake2b_256(StringUtils.trimToNull(request.getHashes().getBlake2b256()));
+            component.setBlake2b_384(StringUtils.trimToNull(request.getHashes().getBlake2b384()));
+            component.setBlake2b_512(StringUtils.trimToNull(request.getHashes().getBlake2b512()));
+            component.setBlake3(StringUtils.trimToNull(request.getHashes().getBlake3()));
+            component.setStreebog_256(StringUtils.trimToNull(request.getHashes().getStreebog256()));
+            component.setStreebog_512(StringUtils.trimToNull(request.getHashes().getStreebog512()));
         }
         if (resolvedLicense != null) {
             component.setLicense(null);

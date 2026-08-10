@@ -124,6 +124,10 @@ public class ComponentHashPolicyEvaluator extends AbstractPolicyEvaluator {
                 return value.equalsIgnoreCase(component.getBlake2b_384());
             } else if (Hash.Algorithm.BLAKE2b_512.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
                 return value.equalsIgnoreCase(component.getBlake2b_512());
+            } else if (Hash.Algorithm.STREEBOG_256.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
+                return value.equalsIgnoreCase(component.getStreebog_256());
+            } else if (Hash.Algorithm.STREEBOG_512.getSpec().equalsIgnoreCase(hash.getAlgorithm())) {
+                return value.equalsIgnoreCase(component.getStreebog_512());
             }
         }
         LOGGER.info("No match found - hash or algorithm is null.");

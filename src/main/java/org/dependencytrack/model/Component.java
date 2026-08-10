@@ -296,6 +296,20 @@ public class Component implements Serializable {
     private String blake3;
 
     @Persistent
+    @Index(name = "COMPONENT_STREEBOG_256_IDX")
+    @Column(name = "STREEBOG_256", jdbcType = "VARCHAR", length = 64)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = "^[0-9a-fA-F]{64}$", message = "The Streebog-256 hash must be a valid 64 character HEX number")
+    private String streebog_256;
+
+    @Persistent
+    @Index(name = "COMPONENT_STREEBOG_512_IDX")
+    @Column(name = "STREEBOG_512", jdbcType = "VARCHAR", length = 128)
+    @JsonDeserialize(using = TrimmedStringDeserializer.class)
+    @Pattern(regexp = "^[0-9a-fA-F]{128}$", message = "The Streebog-512 hash must be a valid 128 character HEX number")
+    private String streebog_512;
+
+    @Persistent
     @Index(name = "COMPONENT_CPE_IDX")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
@@ -626,6 +640,22 @@ public class Component implements Serializable {
 
     public void setBlake3(String blake3) {
         this.blake3 = blake3;
+    }
+
+    public String getStreebog_256() {
+        return streebog_256;
+    }
+
+    public void setStreebog_256(String streebog_256) {
+        this.streebog_256 = streebog_256 == null ? null : streebog_256.toLowerCase();
+    }
+
+    public String getStreebog_512() {
+        return streebog_512;
+    }
+
+    public void setStreebog_512(String streebog_512) {
+        this.streebog_512 = streebog_512 == null ? null : streebog_512.toLowerCase();
     }
 
     public String getCpe() {

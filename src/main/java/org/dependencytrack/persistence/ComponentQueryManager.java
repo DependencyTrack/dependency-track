@@ -217,9 +217,9 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         final String queryFilter = switch (hash.length()) {
             case 32 -> "(md5 == :hash)";
             case 40 -> "(sha1 == :hash)";
-            case 64 -> "(sha256 == :hash || sha3_256 == :hash || blake2b_256 == :hash)";
+            case 64 -> "(sha256 == :hash || sha3_256 == :hash || blake2b_256 == :hash || streebog_256 == :hash)";
             case 96 -> "(sha384 == :hash || sha3_384 == :hash || blake2b_384 == :hash)";
-            case 128 -> "(sha512 == :hash || sha3_512 == :hash || blake2b_512 == :hash)";
+            case 128 -> "(sha512 == :hash || sha3_512 == :hash || blake2b_512 == :hash || streebog_512 == :hash)";
             default -> "(blake3 == :hash)";
         };
 
@@ -422,9 +422,17 @@ final class ComponentQueryManager extends QueryManager implements IQueryManager 
         component.setMd5(transientComponent.getMd5());
         component.setSha1(transientComponent.getSha1());
         component.setSha256(transientComponent.getSha256());
+        component.setSha384(transientComponent.getSha384());
         component.setSha512(transientComponent.getSha512());
         component.setSha3_256(transientComponent.getSha3_256());
+        component.setSha3_384(transientComponent.getSha3_384());
         component.setSha3_512(transientComponent.getSha3_512());
+        component.setBlake2b_256(transientComponent.getBlake2b_256());
+        component.setBlake2b_384(transientComponent.getBlake2b_384());
+        component.setBlake2b_512(transientComponent.getBlake2b_512());
+        component.setBlake3(transientComponent.getBlake3());
+        component.setStreebog_256(transientComponent.getStreebog_256());
+        component.setStreebog_512(transientComponent.getStreebog_512());
         component.setDescription(transientComponent.getDescription());
         component.setCopyright(transientComponent.getCopyright());
         component.setLicense(transientComponent.getLicense());

@@ -730,6 +730,9 @@ class ComponentResourceTest extends ResourceTest {
         component.setSha512("c6ee9e33cf5c6715a1d148fd73f7318884b41adcb916021e2bc0e800a5c5dd97f5142178f6ae88c8fdd98e1afb0ce4c8d2c54b5f37b30b7da1997bb33b0b8a31".toUpperCase());
         component.setSha3_512("301bb421c971fbb7ed01dcc3a9976ce53df034022ba982b97d0f27d48c4f03883aabf7c6bc778aa7c383062f6823045a6d41b8a720afbb8a9607690f89fbe1a7".toUpperCase());
         component.setMd5("0cbc6611f5540bd0809a388dc95a615b".toUpperCase());
+        component.setBlake2b_256("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d90e0e1f0b1a8a1f0b1a8a1f0");
+        component.setBlake3("af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262");
+        component.setStreebog_256("3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb".toUpperCase());
         Response response = jersey.target(V1_COMPONENT + "/project/" + project.getUuid().toString()).request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(component, MediaType.APPLICATION_JSON));
@@ -748,6 +751,9 @@ class ComponentResourceTest extends ResourceTest {
         Assertions.assertEquals(component.getSha512(), json.getString("sha512"));
         Assertions.assertEquals(component.getSha3_512(), json.getString("sha3_512"));
         Assertions.assertEquals(component.getMd5(), json.getString("md5"));
+        Assertions.assertEquals(component.getBlake2b_256(), json.getString("blake2b_256"));
+        Assertions.assertEquals(component.getBlake3(), json.getString("blake3"));
+        Assertions.assertEquals(component.getStreebog_256(), json.getString("streebog_256"));
     }
 
     @Test

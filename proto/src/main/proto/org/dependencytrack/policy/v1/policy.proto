@@ -62,6 +62,8 @@ message Component {
   optional string blake2b_384 = 29;
   optional string blake2b_512 = 30;
   optional string blake3 = 31;
+  optional string streebog_256 = 32;
+  optional string streebog_512 = 33;
 
   optional string license_name = 50;
   optional string license_expression = 51;

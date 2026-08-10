@@ -249,6 +249,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                  , "C"."SHA3_256"
                  , "C"."SHA3_384"
                  , "C"."SHA3_512"
+                 , "C"."STREEBOG_256"
+                 , "C"."STREEBOG_512"
                  , "C"."SWIDTAGID"
                  , "C"."UUID"
                  , "C"."VERSION"
@@ -410,6 +412,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                 case BLAKE2B_384 -> "\"C\".\"BLAKE2B_384\"";
                 case BLAKE2B_512 -> "\"C\".\"BLAKE2B_512\"";
                 case BLAKE3 -> "\"C\".\"BLAKE3\"";
+                case STREEBOG_256 -> "\"C\".\"STREEBOG_256\"";
+                case STREEBOG_512 -> "\"C\".\"STREEBOG_512\"";
             };
             whereConditions.add("%s = :componentHash".formatted(hashColumn));
             queryParams.put("componentHash", query.hashValue());
@@ -526,6 +530,8 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                         "C"."SHA3_256",
                         "C"."SHA3_384",
                         "C"."SHA3_512",
+                        "C"."STREEBOG_256",
+                        "C"."STREEBOG_512",
                         "C"."SWIDTAGID",
                         "C"."UUID",
                         "C"."VERSION",

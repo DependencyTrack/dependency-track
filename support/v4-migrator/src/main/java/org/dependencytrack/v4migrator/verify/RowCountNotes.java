@@ -45,6 +45,8 @@ final class RowCountNotes {
         Map.entry("FINDINGATTRIBUTION", "one attribution per (component, vulnerability, analyzer)"),
         Map.entry("VULNERABLESOFTWARE", "dropped rows without vulnerability refs or with invalid UUID"),
         Map.entry("USER", "consolidated from MANAGED/LDAP/OIDC users; invalid rows skipped"),
+        Map.entry("MAPPEDLDAPGROUP", "dedup on (TEAM_ID, DN) after team collapse"),
+        Map.entry("MAPPEDOIDCGROUP", "dedup on (TEAM_ID, GROUP_ID) after team and group collapse"),
         // Permission join tables: v4-only permissions are dropped during the rename remap, while
         // v5-only permissions (PORTFOLIO_ACCESS_CONTROL_BYPASS, SECRET_MANAGEMENT) are fanned out
         // for the v4 holders of their v4-era equivalents. The net delta is a deterministic

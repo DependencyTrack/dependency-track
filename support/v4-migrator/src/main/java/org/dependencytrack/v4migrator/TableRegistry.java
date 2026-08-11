@@ -3036,6 +3036,11 @@ public final class TableRegistry {
      * 1:1 migration of {@code MAPPEDLDAPGROUP}. {@code TEAM_ID} is rewritten through
      * {@code team_canonical_id_map}. UUID stays {@code varchar(36)} in v5 (a straggler that
      * did not convert to native uuid). v5 IDs are preserved.
+     *
+     * <p>v4 and v5 both enforce {@code UNIQUE (TEAM_ID, DN)}, but the team collapse can turn
+     * two rows that were distinct in v4 into the same pair (same DN, two same-named teams).
+     * The staging tgt enforces the composite key and {@code DISTINCT ON} keeps {@code MIN(ID)},
+     * matching the canonical-ID convention and keeping reruns deterministic.
      */
     private static final TableMigration MAPPEDLDAPGROUP = new TableMigration(
         "MAPPEDLDAPGROUP",
@@ -3063,6 +3068,7 @@ public final class TableRegistry {
           , "DN"      varchar(1024) NOT NULL
           , "TEAM_ID" bigint NOT NULL
           , "UUID"    varchar(36) NOT NULL
+          , UNIQUE ("TEAM_ID", "DN")
         );
         INSERT INTO "%1$s".tgt_mappedldapgroup (
             "ID"
@@ -3070,12 +3076,14 @@ public final class TableRegistry {
           , "TEAM_ID"
           , "UUID"
         )
-        SELECT s."ID"
+        SELECT DISTINCT ON (tm.canonical_id, s."DN")
+               s."ID"
              , s."DN"
              , tm.canonical_id
              , s."UUID"
           FROM "%1$s".src_mappedldapgroup s
           JOIN "%1$s".team_canonical_id_map tm ON tm.orig_id = s."TEAM_ID"
+         ORDER BY tm.canonical_id, s."DN", s."ID"
         """,
         """
         INSERT INTO "MAPPEDLDAPGROUP" (
@@ -3096,6 +3104,12 @@ public final class TableRegistry {
      * {@code team_canonical_id_map} and {@code GROUP_ID} through
      * {@code oidcgroup_canonical_id_map}. UUID stays {@code varchar(36)} in v5 (straggler).
      * v5 IDs are preserved.
+     *
+     * <p>v4 and v5 both enforce {@code UNIQUE (TEAM_ID, GROUP_ID)}, but the team and OIDC group
+     * collapses can turn two rows that were distinct in v4 into the same pair (two same-named
+     * teams mapped to one group, or one team mapped to two same-named groups). The staging tgt
+     * enforces the composite key and {@code DISTINCT ON} keeps {@code MIN(ID)}, matching the
+     * canonical-ID convention and keeping reruns deterministic.
      */
     private static final TableMigration MAPPEDOIDCGROUP = new TableMigration(
         "MAPPEDOIDCGROUP",
@@ -3123,6 +3137,7 @@ public final class TableRegistry {
           , "GROUP_ID" bigint NOT NULL
           , "TEAM_ID"  bigint NOT NULL
           , "UUID"     varchar(36) NOT NULL
+          , UNIQUE ("TEAM_ID", "GROUP_ID")
         );
         INSERT INTO "%1$s".tgt_mappedoidcgroup (
             "ID"
@@ -3130,13 +3145,15 @@ public final class TableRegistry {
           , "TEAM_ID"
           , "UUID"
         )
-        SELECT s."ID"
+        SELECT DISTINCT ON (tm.canonical_id, gm.canonical_id)
+               s."ID"
              , gm.canonical_id
              , tm.canonical_id
              , s."UUID"
           FROM "%1$s".src_mappedoidcgroup s
           JOIN "%1$s".team_canonical_id_map     tm ON tm.orig_id = s."TEAM_ID"
           JOIN "%1$s".oidcgroup_canonical_id_map gm ON gm.orig_id = s."GROUP_ID"
+         ORDER BY tm.canonical_id, gm.canonical_id, s."ID"
         """,
         """
         INSERT INTO "MAPPEDOIDCGROUP" (

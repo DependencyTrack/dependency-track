@@ -26,20 +26,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * A {@link VulnDataSource} for JVN (Japan Vulnerability Notes).
  * <p>
  * Mirrors the complete JVN history by downloading the yearly detail feeds
- * ({@code jvndb_detail_YYYY.rdf}) for {@code startYear..endYear}, parsing every {@code <Vulinfo>}
- * via {@link JvnDetailParser} and converting it to a CycloneDX BOV. Years whose feed digest
- * ({@code sha256} from {@code checksum.txt}) is unchanged since the previous run are skipped.
+ * ({@code jvndb_detail_YYYY.rdf}) for {@code startYear..endYear} to a temporary file and streaming
+ * one {@code <Vulinfo>} at a time via {@link JvnAdvisorySource}, converting each to a CycloneDX
+ * BOV. Years whose feed digest ({@code sha256} from {@code checksum.txt}) is unchanged since the
+ * previous run are skipped.
  *
  * @since 5.1.0
  */
@@ -50,11 +53,15 @@ final class JvnVulnDataSource implements VulnDataSource {
     private final JvnClient client;
     private final WatermarkManager watermarkManager;
     private final Deque<Integer> pendingYears = new ArrayDeque<>();
-    private final Deque<JvnAdvisory> advisoryBuffer = new ArrayDeque<>();
 
     private @Nullable Map<String, String> feedDigestByFilename;
     private boolean completedSuccessfully;
     private @Nullable Bom nextBom;
+
+    private @Nullable JvnAdvisorySource currentSource;
+    private @Nullable String currentFeedFilename;
+    private @Nullable String currentFeedDigest;
+    private int currentFeedAdvisoryCount;
 
     JvnVulnDataSource(
             final JvnClient client,
@@ -75,15 +82,20 @@ final class JvnVulnDataSource implements VulnDataSource {
         }
 
         while (true) {
-            if (!advisoryBuffer.isEmpty()) {
-                nextBom = ModelConverter.convert(advisoryBuffer.poll());
-                return true;
+            final JvnAdvisorySource source = currentSource;
+            if (source != null) {
+                final JvnAdvisory advisory = readAdvisory(source);
+                if (advisory != null) {
+                    nextBom = ModelConverter.convert(advisory);
+                    return true;
+                }
+                continue;
             }
             if (pendingYears.isEmpty()) {
                 completedSuccessfully = true;
                 return false;
             }
-            loadYear(pendingYears.poll());
+            openYear(pendingYears.poll());
         }
     }
 
@@ -92,7 +104,7 @@ final class JvnVulnDataSource implements VulnDataSource {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        final Bom bom = nextBom;
+        final Bom bom = requireNonNull(nextBom);
         nextBom = null;
         return bom;
     }
@@ -116,10 +128,33 @@ final class JvnVulnDataSource implements VulnDataSource {
         if (completedSuccessfully) {
             watermarkManager.maybeCommit();
         }
+        closeCurrentFeed();
     }
 
-    /** Fetches, parses and buffers a single year's detail feed, unless its checksum is unchanged. */
-    private void loadYear(final int year) {
+    /**
+     * Returns the next advisory of the current feed, or {@code null} after closing it — either
+     * because it was fully drained (only then is its digest recorded, so a partially parsed year
+     * is retried next run) or because parsing failed.
+     */
+    private @Nullable JvnAdvisory readAdvisory(final JvnAdvisorySource source) {
+        try {
+            if (source.hasNext()) {
+                currentFeedAdvisoryCount++;
+                return source.next();
+            }
+            if (currentFeedFilename != null && currentFeedDigest != null) {
+                watermarkManager.recordFeedDigest(currentFeedFilename, currentFeedDigest);
+            }
+            LOGGER.info("Fetched {} JVN advisories from {}", currentFeedAdvisoryCount, currentFeedFilename);
+        } catch (RuntimeException e) {
+            LOGGER.warn("Failed to parse JVN feed {}; skipping", currentFeedFilename, e);
+        }
+        closeCurrentFeed();
+        return null;
+    }
+
+    /** Downloads a single year's detail feed and opens it for streaming, unless its checksum is unchanged. */
+    private void openYear(final int year) {
         final String filename = JvnClient.detailFeedFilename(year);
         final @Nullable String digest = feedDigest(filename);
         if (digest != null && digest.equals(watermarkManager.getCommittedFeedDigest(filename))) {
@@ -127,19 +162,31 @@ final class JvnVulnDataSource implements VulnDataSource {
             return;
         }
         try {
-            final List<JvnAdvisory> advisories = JvnDetailParser.parse(client.fetchDetailFeed(year));
-            advisoryBuffer.addAll(advisories);
-            // Record the digest only after a successful fetch+parse, so a failed year is retried.
-            if (digest != null) {
-                watermarkManager.recordFeedDigest(filename, digest);
-            }
-            LOGGER.info("Fetched {} JVN advisories from {}", advisories.size(), filename);
+            final Path feedFile = client.downloadDetailFeed(year);
+            currentSource = JvnAdvisorySource.open(feedFile);
+            currentFeedFilename = filename;
+            currentFeedDigest = digest;
+            currentFeedAdvisoryCount = 0;
         } catch (IOException e) {
             LOGGER.warn("Failed to fetch JVN feed {}; skipping", filename, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        } catch (RuntimeException e) {
-            LOGGER.warn("Failed to parse JVN feed {}; skipping", filename, e);
+        }
+    }
+
+    /** Closes the current feed's source, which also deletes its temporary file. */
+    private void closeCurrentFeed() {
+        final JvnAdvisorySource source = currentSource;
+        currentSource = null;
+        currentFeedFilename = null;
+        currentFeedDigest = null;
+        currentFeedAdvisoryCount = 0;
+        if (source != null) {
+            try {
+                source.close();
+            } catch (IOException e) {
+                LOGGER.warn("Failed to close JVN feed source", e);
+            }
         }
     }
 

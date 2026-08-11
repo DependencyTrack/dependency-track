@@ -33,6 +33,7 @@ import org.cyclonedx.proto.v1_7.Vulnerability;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffectedVersions;
 import org.cyclonedx.proto.v1_7.VulnerabilityAffects;
 import org.cyclonedx.proto.v1_7.VulnerabilityRating;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import us.springett.parsers.cpe.Cpe;
@@ -230,7 +231,7 @@ final class ModelConverter {
         return ratings;
     }
 
-    private static ScoreMethod mapMethod(final String version) {
+    private static ScoreMethod mapMethod(final @Nullable String version) {
         if (version == null) {
             return ScoreMethod.SCORE_METHOD_OTHER;
         }
@@ -249,7 +250,7 @@ final class ModelConverter {
         return ScoreMethod.SCORE_METHOD_OTHER;
     }
 
-    private static Severity mapSeverity(final String severity) {
+    private static Severity mapSeverity(final @Nullable String severity) {
         if (severity == null) {
             return Severity.SEVERITY_UNKNOWN;
         }

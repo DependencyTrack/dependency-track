@@ -19,18 +19,12 @@
 package org.dependencytrack.vulndatasource.jvn;
 
 import org.jspecify.annotations.Nullable;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
@@ -39,7 +33,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Parses the XML returned by the MyJVN {@code getVulnDetailInfo} API into a {@link JvnAdvisory}.
+ * Parses a single {@code <Vulinfo>} element of a VULDEF document into a {@link JvnAdvisory}.
  * <p>
  * Uses namespace-agnostic local-name matching, since the VULDEF document mixes several XML
  * namespaces ({@code vuldef}, {@code sec}, {@code marking}, ...).
@@ -48,29 +42,23 @@ import java.util.regex.Pattern;
  */
 final class JvnDetailParser {
 
-    private static final Pattern CVE_ID = Pattern.compile("CVE-\\d{4}-\\d{4,}");
     private static final Pattern CWE_ID = Pattern.compile("CWE-(\\d+)");
 
     private JvnDetailParser() {
     }
 
-    static List<JvnAdvisory> parse(final byte[] xml) {
-        return parse(new ByteArrayInputStream(xml));
-    }
-
+    /** Drains a whole feed into a list; intended for tests — production code streams instead. */
     static List<JvnAdvisory> parse(final InputStream xml) {
-        final Document document = parseDocument(xml);
-        final var advisories = new ArrayList<JvnAdvisory>();
-        for (final Element vulinfo : childElementsByLocalName(document.getDocumentElement(), "Vulinfo")) {
-            final JvnAdvisory advisory = parseVulinfo(vulinfo);
-            if (advisory != null) {
-                advisories.add(advisory);
-            }
+        try (final var source = new JvnAdvisorySource(xml)) {
+            final var advisories = new ArrayList<JvnAdvisory>();
+            source.forEachRemaining(advisories::add);
+            return advisories;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to parse JVN detail XML", e);
         }
-        return advisories;
     }
 
-    private static @Nullable JvnAdvisory parseVulinfo(final Element vulinfo) {
+    static @Nullable JvnAdvisory parseVulinfo(final Element vulinfo) {
         final String jvnDbId = firstText(vulinfo, "VulinfoID");
         if (jvnDbId == null || jvnDbId.isBlank()) {
             return null;
@@ -89,7 +77,6 @@ final class JvnDetailParser {
         final String recommendation =
                 data != null ? joinItemDescriptions(data, "Solution", "SolutionItem") : null;
 
-        final var cveIds = new ArrayList<String>();
         final var cweIds = new ArrayList<Integer>();
         final var referenceUrls = new ArrayList<String>();
         for (final Element related : descendantsByLocalName(vulinfo, "RelatedItem")) {
@@ -103,9 +90,6 @@ final class JvnDetailParser {
                     cweIds.add(cwe);
                 }
                 continue;
-            }
-            if (id != null && CVE_ID.matcher(id).matches() && !cveIds.contains(id)) {
-                cveIds.add(id);
             }
             final String url = firstText(related, "URL");
             if (url != null && !url.isBlank() && !referenceUrls.contains(url)) {
@@ -148,7 +132,6 @@ final class JvnDetailParser {
                 overview,
                 detail,
                 recommendation,
-                List.copyOf(cveIds),
                 List.copyOf(cweIds),
                 List.copyOf(cvssList),
                 List.copyOf(affected),
@@ -158,23 +141,6 @@ final class JvnDetailParser {
     }
 
     // ---- DOM helpers (namespace-agnostic) ----
-
-    private static Document parseDocument(final InputStream xml) {
-        try {
-            final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-            final DocumentBuilder builder = factory.newDocumentBuilder();
-            final Document document = builder.parse(new InputSource(xml));
-            document.getDocumentElement().normalize();
-            return document;
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to parse JVN detail XML", e);
-        }
-    }
 
     private static List<Element> childElementsByLocalName(final Element parent, final String localName) {
         final var result = new ArrayList<Element>();
@@ -296,9 +262,5 @@ final class JvnDetailParser {
         } catch (DateTimeParseException e) {
             return null;
         }
-    }
-
-    static byte[] bytes(final String s) {
-        return s.getBytes(StandardCharsets.UTF_8);
     }
 }

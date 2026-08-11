@@ -34,7 +34,6 @@ record JvnAdvisory(
         @Nullable String overview,
         @Nullable String detail,
         @Nullable String recommendation,
-        List<String> cveIds,
         List<Integer> cweIds,
         List<Cvss> cvssList,
         List<AffectedProduct> affected,

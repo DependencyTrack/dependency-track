@@ -55,9 +55,6 @@ class JvnDetailParserTest {
         assertNotNull(advisory.recommendation(), "expected the solution/recommendation to be parsed");
         assertTrue(advisory.recommendation().contains("ベンダ情報を参照"));
 
-        assertFalse(advisory.cveIds().isEmpty(), "expected at least one CVE id");
-        assertTrue(advisory.cveIds().stream().allMatch(id -> id.startsWith("CVE-")));
-
         // The fixture carries a <RelatedItem type="cwe"> of CWE-1287; its numeric id is collected,
         // and its glossary URL must NOT leak into the reference list.
         assertEquals(List.of(1287), advisory.cweIds());

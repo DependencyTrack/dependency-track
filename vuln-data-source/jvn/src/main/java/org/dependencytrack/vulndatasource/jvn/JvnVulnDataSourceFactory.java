@@ -29,7 +29,6 @@ import org.dependencytrack.plugin.api.config.RuntimeConfigSpec;
 import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +41,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Year;
 import java.time.ZoneOffset;
@@ -53,7 +54,6 @@ import static java.util.Objects.requireNonNull;
 /**
  * @since 5.1.0
  */
-@NullMarked
 final class JvnVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeConfigurable, Testable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JvnVulnDataSourceFactory.class);
@@ -178,32 +178,52 @@ final class JvnVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
                 .GET()
                 .build();
 
-        final HttpResponse<byte[]> response;
+        final Path tempFile;
         try {
-            response = httpClient.send(request, BodyHandlers.ofByteArray());
-        } catch (IOException | InterruptedException e) {
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
+            tempFile = Files.createTempFile(null, null);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to create temp file for probe of {}", probeUri, e);
+            return testResult.fail("connection", "Failed to create temporary file, check logs for details");
+        }
+
+        try {
+            final HttpResponse<Path> response;
+            try {
+                response = httpClient.send(request, BodyHandlers.ofFile(tempFile));
+            } catch (IOException | InterruptedException e) {
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+                LOGGER.warn("Failed to connect to {}", probeUri, e);
+                return testResult.fail("connection", "Connection failed, check logs for details");
             }
-            LOGGER.warn("Failed to connect to {}", probeUri, e);
-            return testResult.fail("connection", "Connection failed, check logs for details");
-        }
 
-        if (response.statusCode() != 200) {
-            LOGGER.warn("Unexpected response code {} from {}", response.statusCode(), probeUri);
-            return testResult.fail("connection", "Unexpected response code, check logs for details");
-        }
-        testResult.pass("connection");
+            if (response.statusCode() != 200) {
+                LOGGER.warn("Unexpected response code {} from {}", response.statusCode(), probeUri);
+                return testResult.fail("connection", "Unexpected response code, check logs for details");
+            }
+            testResult.pass("connection");
 
-        try {
-            var _ = JvnDetailParser.parse(response.body());
-            testResult.pass("feed_format");
-        } catch (RuntimeException e) {
-            LOGGER.warn("Failed to parse detail feed from {}", probeUri, e);
-            testResult.fail("feed_format", "Failed to parse detail feed, check logs for details");
-        }
+            // Drain the feed one advisory at a time, so the probe validates the whole document
+            // without ever holding more than a single advisory in memory.
+            try (final var advisorySource = JvnAdvisorySource.open(tempFile)) {
+                while (advisorySource.hasNext()) {
+                    var _ = advisorySource.next();
+                }
+                testResult.pass("feed_format");
+            } catch (IOException | RuntimeException e) {
+                LOGGER.warn("Failed to parse detail feed from {}", probeUri, e);
+                testResult.fail("feed_format", "Failed to parse detail feed, check logs for details");
+            }
 
-        return testResult;
+            return testResult;
+        } finally {
+            try {
+                Files.deleteIfExists(tempFile);
+            } catch (IOException e) {
+                LOGGER.warn("Failed to delete temp file {}", tempFile, e);
+            }
+        }
     }
 
     private static String feedBaseUrlOf(final JvnVulnDataSourceConfigV1 config) {

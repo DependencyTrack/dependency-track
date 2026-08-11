@@ -34,6 +34,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @WireMockTest
@@ -82,5 +83,43 @@ class JvnVulnDataSourceTest {
         assertEquals("JVN", bom.getVulnerabilities(0).getSource().getName());
         assertTrue(bom.getVulnerabilities(0).getId().startsWith("JVNDB-"));
         assertEquals(4, bom.getVulnerabilities(0).getAffects(0).getVersionsCount());
+    }
+
+    @Test
+    void skipsTruncatedFeedWithoutCommittingItsDigest(final WireMockRuntimeInfo wm) throws Exception {
+        final String detailXml = new String(
+                getClass().getResourceAsStream("/jvn-detail-with-range.xml").readAllBytes(),
+                StandardCharsets.UTF_8);
+        // Cut the feed off in the middle of its <Vulinfo>, after the JVNDB id.
+        final String truncatedXml = detailXml.substring(0, detailXml.indexOf("</Vulinfo>"));
+        final String checksumJson = """
+                [{"url":"x","filename":"%s","sha256":"deadbeef","size":1,"lastModified":"2026/01/01 00:00:00"}]
+                """.formatted(FEED_FILENAME);
+
+        stubFor(get(urlPathEqualTo("/checksum.txt"))
+                .willReturn(aResponse().withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(checksumJson)));
+        stubFor(get(urlPathEqualTo("/detail/" + FEED_FILENAME))
+                .willReturn(aResponse().withStatus(200)
+                        .withHeader("Content-Type", "application/xml")
+                        .withBody(truncatedXml)));
+
+        final var client = new JvnClient(HttpClient.newHttpClient(), wm.getHttpBaseUrl());
+        final var kvStore = new MockKeyValueStore();
+
+        final var boms = new ArrayList<Bom>();
+        final var watermark = new WatermarkManager(kvStore, List.of(FEED_FILENAME));
+        try (final var dataSource = new JvnVulnDataSource(client, watermark, YEAR, YEAR)) {
+            while (dataSource.hasNext()) {
+                boms.add(dataSource.next());
+            }
+        }
+
+        // The advisory parsed before the truncation point may or may not surface; what must hold
+        // is that no exception escaped, and the digest was not committed, so a subsequent run
+        // re-fetches the failed year rather than skipping it as unchanged.
+        final var secondWatermark = new WatermarkManager(kvStore, List.of(FEED_FILENAME));
+        assertNull(secondWatermark.getCommittedFeedDigest(FEED_FILENAME));
     }
 }

@@ -20,6 +20,8 @@ package org.dependencytrack.vulndatasource.jvn;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -27,6 +29,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +49,10 @@ final class JvnClient {
 
     static final String DEFAULT_FEED_BASE_URL = "https://jvndb.jvn.jp/ja/feed";
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(JvnClient.class);
     private static final ObjectMapper JSON = new ObjectMapper();
+    private static final Duration FEED_REQUEST_TIMEOUT = Duration.ofMinutes(10);
+    private static final Duration CHECKSUM_REQUEST_TIMEOUT = Duration.ofSeconds(60);
 
     private final HttpClient httpClient;
     private final String feedBaseUrl;
@@ -57,9 +64,31 @@ final class JvnClient {
                 : feedBaseUrl;
     }
 
-    /** Downloads the full detail feed (a VULDEF document) for a single publication year. */
-    byte[] fetchDetailFeed(final int year) throws IOException, InterruptedException {
-        return get(feedBaseUrl + "/detail/" + detailFeedFilename(year));
+    /**
+     * Downloads the full detail feed (a VULDEF document) for a single publication year to a
+     * temporary file, so the feed is never buffered on the heap. The caller owns the returned
+     * file and is responsible for deleting it.
+     */
+    Path downloadDetailFeed(final int year) throws IOException, InterruptedException {
+        final String url = feedBaseUrl + "/detail/" + detailFeedFilename(year);
+        final HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(FEED_REQUEST_TIMEOUT)
+                .GET()
+                .build();
+        final Path tempFile = Files.createTempFile(null, null);
+        try {
+            final HttpResponse<Path> response = httpClient.send(request, BodyHandlers.ofFile(tempFile));
+            if (response.statusCode() != 200) {
+                // BodyHandlers.ofFile writes the error body to the file as well.
+                throw new IOException("Unexpected response code " + response.statusCode()
+                        + " from JVN feed: " + url);
+            }
+            return response.body();
+        } catch (IOException | InterruptedException | RuntimeException e) {
+            tryDelete(tempFile);
+            throw e;
+        }
     }
 
     /**
@@ -93,8 +122,7 @@ final class JvnClient {
     private byte[] get(final String url) throws IOException, InterruptedException {
         final HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
-                .timeout(Duration.ofSeconds(60))
-                .header("User-Agent", "Dependency-Track JVN data source")
+                .timeout(CHECKSUM_REQUEST_TIMEOUT)
                 .GET()
                 .build();
         final HttpResponse<byte[]> response = httpClient.send(request, BodyHandlers.ofByteArray());
@@ -103,5 +131,13 @@ final class JvnClient {
                     + " from JVN feed: " + url);
         }
         return response.body();
+    }
+
+    private static void tryDelete(final Path filePath) {
+        try {
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to delete temp file {}", filePath, e);
+        }
     }
 }

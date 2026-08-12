@@ -44,7 +44,10 @@ public final class BootstrapCommand extends AbstractMigratorCommand {
     @Override
     protected int execute(final Jdbi target) {
         LOGGER.info("Applying v5 Flyway schema up to {}", Preflight.EXPECTED_FLYWAY_HEAD);
-        new MigrationExecutor(Connections.targetDataSource(global), Preflight.EXPECTED_FLYWAY_HEAD).execute();
+        new MigrationExecutor(
+                Connections.targetDataSource(global),
+                Preflight.EXPECTED_FLYWAY_HEAD,
+                /* skipRepeatable */ true).execute();
 
         final String head = target.withHandle(h ->
             h.createQuery("""

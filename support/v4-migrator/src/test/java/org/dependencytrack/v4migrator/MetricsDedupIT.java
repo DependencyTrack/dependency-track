@@ -80,8 +80,8 @@ class MetricsDedupIT {
                     "FIRST_OCCURRENCE", "LAST_OCCURRENCE",
                     "RISKSCORE", "SUPPRESSED", "VULNERABILITIES"
                 ) VALUES
-                  (1, 10, 1, 1, 0, 0, 0, '2026-05-12T10:00:00Z', '2026-05-12T10:00:00Z', 1.5, 0, 1),
-                  (2, 10, 1, 7, 0, 0, 0, '2026-05-12T10:00:00Z', '2026-05-12T10:00:00Z', 9.9, 0, 7)
+                  (1, 10, 1, 1, 0, 0, 0, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day', 1.5, 0, 1),
+                  (2, 10, 1, 7, 0, 0, 0, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day', 9.9, 0, 7)
                 """);
         });
 

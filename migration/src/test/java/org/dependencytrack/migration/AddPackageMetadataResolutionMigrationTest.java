@@ -53,7 +53,7 @@ class AddPackageMetadataResolutionMigrationTest {
         dataSource.setPassword(postgresContainer.getPassword());
 
         // Migrate up to the previous schema version.
-        new MigrationExecutor(dataSource, "202606292105").execute();
+        new MigrationExecutor(dataSource, "202606292105", /* skipRepeatable */ false).execute();
 
         // Seed component and package (artifact) metadata to migrate.
         try (final Connection connection = dataSource.getConnection();
@@ -97,7 +97,7 @@ class AddPackageMetadataResolutionMigrationTest {
         }
 
         // Execute migration and backfill.
-        new MigrationExecutor(dataSource, "202608041242").execute();
+        new MigrationExecutor(dataSource, "202608041242", /* skipRepeatable */ false).execute();
 
         final Map<String, ResolutionRow> rowByPurl = fetchResolutionRows(dataSource);
         assertThat(rowByPurl).containsOnlyKeys(

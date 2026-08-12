@@ -27,6 +27,9 @@ import alpine.notification.Subscriber;
 import alpine.notification.Subscription;
 import alpine.security.crypto.DataEncryption;
 import com.github.packageurl.PackageURL;
+import com.github.tomakehurst.wiremock.http.Fault;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 import jakarta.json.Json;
 import org.apache.http.HttpHeaders;
 import org.assertj.core.api.SoftAssertions;
@@ -47,11 +50,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockserver.integration.ClientAndServer;
-import org.mockserver.matchers.Times;
-import org.mockserver.verify.VerificationTimes;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.jdo.Query;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -59,7 +59,17 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.jdo.Query;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
@@ -69,18 +79,17 @@ import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_API
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_BASE_URL;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_SNYK_ORG_ID;
-import static org.mockserver.model.HttpError.error;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
 class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
-    private static ClientAndServer mockServer;
+    @RegisterExtension
+    static final WireMockExtension wm = WireMockExtension.newInstance()
+            .configureStaticDsl(true)
+            .build();
 
     @BeforeAll
     public static void beforeClass() {
         NotificationService.getInstance().subscribe(new Subscription(NotificationSubscriber.class));
-        mockServer = ClientAndServer.startClientAndServer(1080);
     }
 
     @BeforeEach
@@ -117,20 +126,18 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
                 "version");
         qm.createConfigProperty(SCANNER_SNYK_BASE_URL.getGroupName(),
                 SCANNER_SNYK_BASE_URL.getPropertyName(),
-                "http://localhost:1080",
+                wm.baseUrl(),
                 IConfigProperty.PropertyType.STRING,
                 "url");
     }
 
     @AfterEach
     public void tearDown() {
-        mockServer.reset();
         NOTIFICATIONS.clear();
     }
 
     @AfterAll
     public static void afterClass() {
-        mockServer.stop();
         NotificationService.getInstance().unsubscribe(new Subscription(NotificationSubscriber.class));
     }
 
@@ -154,7 +161,7 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
     void testShouldAnalyzeWhenCacheIsCurrent() throws Exception {
-        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, "http://localhost:1080",
+        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, wm.baseUrl(),
                 Vulnerability.Source.SNYK.name(), "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0", new Date(),
                 Json.createObjectBuilder()
                         .add("vulnIds", Json.createArrayBuilder().add(123))
@@ -170,17 +177,24 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
     void testAnalyzeWithRateLimiting() {
-        mockServer
-                .when(request(), Times.exactly(2))
-                .respond(response().withStatusCode(429));
+        stubFor(get(anyUrl())
+                .inScenario("rateLimiting")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(aResponse().withStatus(429))
+                .willSetStateTo("secondAttempt"));
 
-        mockServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/rest/orgs/orgid/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues")
-                        .withQueryStringParameter("version", "version"))
-                .respond(response()
-                        .withStatusCode(200)
+        stubFor(get(anyUrl())
+                .inScenario("rateLimiting")
+                .whenScenarioStateIs("secondAttempt")
+                .willReturn(aResponse().withStatus(429))
+                .willSetStateTo("thirdAttempt"));
+
+        stubFor(get(urlPathEqualTo("/rest/orgs/orgid/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues"))
+                .withQueryParam("version", equalTo("version"))
+                .inScenario("rateLimiting")
+                .whenScenarioStateIs("thirdAttempt")
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.api+json")
                         .withBody("""
                                 {
@@ -280,7 +294,7 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
                                      }
                                    }
                                  }
-                                """));
+                                """)));
 
         var project = new Project();
         project.setName("acme-app");
@@ -339,12 +353,12 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
         assertThat(cacheEntries).hasSize(1);
 
         final ComponentAnalysisCache cacheEntry = cacheEntries.get(0);
-        assertThat(cacheEntry.getTargetHost()).isEqualTo("http://localhost:1080");
+        assertThat(cacheEntry.getTargetHost()).isEqualTo(wm.baseUrl());
         assertThat(cacheEntry.getTarget()).isEqualTo("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0");
         assertThat(cacheEntry.getResult())
                 .containsEntry("vulnIds", Json.createArrayBuilder().add(vulnerability.getId()).build());
 
-        mockServer.verify(request(), VerificationTimes.exactly(3));
+        verify(3, RequestPatternBuilder.allRequests());
     }
 
     @Test
@@ -356,13 +370,10 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
         aliasSyncProperty.setPropertyValue("false");
         qm.persist(aliasSyncProperty);
 
-        mockServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/rest/orgs/orgid/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues")
-                        .withQueryStringParameter("version", "version"))
-                .respond(response()
-                        .withStatusCode(200)
+        stubFor(get(urlPathEqualTo("/rest/orgs/orgid/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues"))
+                .withQueryParam("version", equalTo("version"))
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.api+json")
                         .withBody("""
                                 {
@@ -462,7 +473,7 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
                                      }
                                    }
                                  }
-                                """));
+                                """)));
 
         var project = new Project();
         project.setName("acme-app");
@@ -488,13 +499,10 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
     void testAnalyzeWithNoIssues() {
-        mockServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/rest/orgs/orgid/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%406.4.0/issues")
-                        .withQueryStringParameter("version", "version"))
-                .respond(response()
-                        .withStatusCode(200)
+        stubFor(get(urlPathEqualTo("/rest/orgs/orgid/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%406.4.0/issues"))
+                .withQueryParam("version", equalTo("version"))
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.api+json")
                         .withBody("""
                                 {
@@ -514,7 +522,7 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
                                      }
                                    }
                                  }
-                                """));
+                                """)));
 
         var project = new Project();
         project.setName("acme-app");
@@ -546,13 +554,10 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
     void testAnalyzeWithError() {
-        mockServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/rest/orgs/orgid/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues")
-                        .withQueryStringParameter("version", "version"))
-                .respond(response()
-                        .withStatusCode(400)
+        stubFor(get(urlPathEqualTo("/rest/orgs/orgid/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues"))
+                .withQueryParam("version", equalTo("version"))
+                .willReturn(aResponse()
+                        .withStatus(400)
                         .withHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.api+json")
                         .withBody("""
                                 {
@@ -580,7 +585,7 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
                                     }
                                   ]
                                 }
-                                """));
+                                """)));
 
         var project = new Project();
         project.setName("acme-app");
@@ -606,14 +611,10 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
     void testAnalyzeWithUnspecifiedError() {
-        mockServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/rest/orgs/orgid/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues")
-                        .withQueryStringParameter("version", "version"))
-                .respond(response()
-                        .withStatusCode(403)
-                );
+        stubFor(get(urlPathEqualTo("/rest/orgs/orgid/packages/pkg%3Amaven%2Fcom.fasterxml.woodstox%2Fwoodstox-core%405.0.0/issues"))
+                .withQueryParam("version", equalTo("version"))
+                .willReturn(aResponse()
+                        .withStatus(403)));
 
         var project = new Project();
         project.setName("acme-app");
@@ -639,9 +640,8 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
     void testAnalyzeWithConnectionError() {
-        mockServer
-                .when(request().withPath("/rest/.+"))
-                .error(error().withDropConnection(true));
+        stubFor(get(urlPathMatching("/rest/.+"))
+                .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
 
         var project = new Project();
         project.setName("acme-app");
@@ -673,7 +673,7 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln, false);
 
-        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, "http://localhost:1080",
+        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, wm.baseUrl(),
                 Vulnerability.Source.SNYK.name(), "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0", new Date(),
                 Json.createObjectBuilder()
                         .add("vulnIds", Json.createArrayBuilder().add(vuln.getId()))
@@ -697,17 +697,14 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(1);
 
-        mockServer.verifyZeroInteractions();
+        verify(0, RequestPatternBuilder.allRequests());
     }
 
     @Test
     void testAnalyzeWithDeprecatedApiVersion() throws Exception {
-        mockServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/rest/.+"))
-                .respond(response()
-                        .withStatusCode(200)
+        stubFor(get(urlPathMatching("/rest/.+"))
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.api+json")
                         .withHeader("Sunset", "Wed, 11 Nov 2021 11:11:11 GMT")
                         .withBody("""
@@ -728,7 +725,7 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
                                      }
                                    }
                                  }
-                                """));
+                                """)));
 
         var project = new Project();
         project.setName("acme-app");
@@ -766,12 +763,9 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
         configProperty.setPropertyValue(DataEncryption.encryptAsString("token1;token2;token3;token4;token5"));
         qm.persist(configProperty);
 
-        mockServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/rest/.+"))
-                .respond(response()
-                        .withStatusCode(404));
+        stubFor(get(urlPathMatching("/rest/.+"))
+                .willReturn(aResponse()
+                        .withStatus(404)));
 
         var project = new Project();
         project.setName("acme-app");
@@ -791,21 +785,23 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
         new SnykAnalysisTask().inform(
                 new SnykAnalysisEvent(components, VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
-        mockServer.verify(request().withHeader("Authorization", "token token1"), VerificationTimes.exactly(20));
-        mockServer.verify(request().withHeader("Authorization", "token token2"), VerificationTimes.exactly(20));
-        mockServer.verify(request().withHeader("Authorization", "token token3"), VerificationTimes.exactly(20));
-        mockServer.verify(request().withHeader("Authorization", "token token4"), VerificationTimes.exactly(20));
-        mockServer.verify(request().withHeader("Authorization", "token token5"), VerificationTimes.exactly(20));
+        verify(20, RequestPatternBuilder.allRequests()
+                .withHeader("Authorization", equalTo("token token1")));
+        verify(20, RequestPatternBuilder.allRequests()
+                .withHeader("Authorization", equalTo("token token2")));
+        verify(20, RequestPatternBuilder.allRequests()
+                .withHeader("Authorization", equalTo("token token3")));
+        verify(20, RequestPatternBuilder.allRequests()
+                .withHeader("Authorization", equalTo("token token4")));
+        verify(20, RequestPatternBuilder.allRequests()
+                .withHeader("Authorization", equalTo("token token5")));
     }
 
     @Test
     void testSendsUserAgent() throws Exception {
-        mockServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/rest/.+"))
-                .respond(response()
-                        .withStatusCode(404));
+        stubFor(get(urlPathMatching("/rest/.+"))
+                .willReturn(aResponse()
+                        .withStatus(404)));
 
         var project = new Project();
         project.setName("acme-app");
@@ -822,10 +818,8 @@ class SnykAnalysisTaskTest extends PersistenceCapableTest {
         new SnykAnalysisTask().inform(
                 new SnykAnalysisEvent(List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
-        mockServer.verify(
-                request().withHeader("User-Agent", ManagedHttpClientFactory.getUserAgent()),
-                VerificationTimes.once()
-        );
+        verify(1, RequestPatternBuilder.allRequests()
+                .withHeader("User-Agent", equalTo(ManagedHttpClientFactory.getUserAgent())));
     }
 
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();

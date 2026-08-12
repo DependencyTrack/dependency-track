@@ -1,7 +1,7 @@
 {
   "count": 60,
   "lower": "1.0.19123.2-preview",
-  "parent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/microsoft.data.sqlclient/index.json",
+  "parent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/microsoft.data.sqlclient/index.json",
   "upper": "1.1.2",
   "items": [
     {
@@ -12,7 +12,7 @@
         "language": "",
         "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19123.2-Preview/license",
         "listed": true,
-        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19123.2-preview",
+        "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19123.2-preview",
         "projectUrl": "https://aka.ms/sqlclientproject",
         "requireLicenseAcceptance": true,
         "summary": "",
@@ -27,7 +27,7 @@
             "dependencies": [
               {
                 "range": "[4.3.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
                 "id": "System.Data.Common"
               }
             ],
@@ -37,27 +37,27 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               }
             ],
@@ -67,42 +67,42 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
                 "id": "System.Buffers"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
                 "id": "System.Diagnostics.DiagnosticSource"
               },
               {
                 "range": "[4.5.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
                 "id": "System.Memory"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               }
             ],
@@ -111,9 +111,9 @@
         ],
         "id": "Microsoft.Data.SqlClient"
       },
-      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19123.2-preview",
-      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
-      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19123.2-preview.json"
+      "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19123.2-preview",
+      "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19123.2-preview.json"
     },
     {
       "catalogEntry": {
@@ -123,7 +123,7 @@
         "language": "",
         "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19128.1-Preview/license",
         "listed": true,
-        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19128.1-preview",
+        "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19128.1-preview",
         "projectUrl": "https://aka.ms/sqlclientproject",
         "requireLicenseAcceptance": true,
         "summary": "",
@@ -138,7 +138,7 @@
             "dependencies": [
               {
                 "range": "[4.3.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
                 "id": "System.Data.Common"
               }
             ],
@@ -148,32 +148,32 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
                 "id": "System.Runtime.Caching"
               }
             ],
@@ -183,42 +183,42 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
                 "id": "System.Buffers"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
                 "id": "System.Diagnostics.DiagnosticSource"
               },
               {
                 "range": "[4.5.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
                 "id": "System.Memory"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               }
             ],
@@ -227,9 +227,9 @@
         ],
         "id": "Microsoft.Data.SqlClient"
       },
-      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19128.1-preview",
-      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
-      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19128.1-preview.json"
+      "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19128.1-preview",
+      "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19128.1-preview.json"
     },
     {
       "catalogEntry": {
@@ -239,7 +239,7 @@
         "language": "",
         "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19189.1-Preview/license",
         "listed": true,
-        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19189.1-preview",
+        "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19189.1-preview",
         "projectUrl": "https://aka.ms/sqlclientproject",
         "requireLicenseAcceptance": true,
         "summary": "",
@@ -254,12 +254,12 @@
             "dependencies": [
               {
                 "range": "[4.3.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
                 "id": "System.Data.Common"
               },
               {
                 "range": "[1.0.19178.1-Preview, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
                 "id": "Microsoft.Data.SqlClient.sni"
               }
             ],
@@ -269,32 +269,32 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
                 "id": "System.Runtime.Caching"
               }
             ],
@@ -304,42 +304,42 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
                 "id": "System.Buffers"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
                 "id": "System.Diagnostics.DiagnosticSource"
               },
               {
                 "range": "[4.5.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
                 "id": "System.Memory"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               }
             ],
@@ -348,9 +348,9 @@
         ],
         "id": "Microsoft.Data.SqlClient"
       },
-      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19189.1-preview",
-      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
-      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19189.1-preview.json"
+      "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19189.1-preview",
+      "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19189.1-preview.json"
     },
     {
       "catalogEntry": {
@@ -360,7 +360,7 @@
         "language": "",
         "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19221.1-Preview/license",
         "listed": true,
-        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19221.1-preview",
+        "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19221.1-preview",
         "projectUrl": "https://aka.ms/sqlclientproject",
         "requireLicenseAcceptance": true,
         "summary": "",
@@ -375,17 +375,17 @@
             "dependencies": [
               {
                 "range": "[4.3.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
                 "id": "System.Data.Common"
               },
               {
                 "range": "[1.0.19221.2-Preview, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
                 "id": "Microsoft.Data.SqlClient.sni"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -395,37 +395,37 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
                 "id": "System.Runtime.Caching"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -435,47 +435,47 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
                 "id": "System.Buffers"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
                 "id": "System.Diagnostics.DiagnosticSource"
               },
               {
                 "range": "[4.5.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
                 "id": "System.Memory"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -484,9 +484,9 @@
         ],
         "id": "Microsoft.Data.SqlClient"
       },
-      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19221.1-preview",
-      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
-      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19221.1-preview.json"
+      "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19221.1-preview",
+      "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19221.1-preview.json"
     },
     {
       "catalogEntry": {
@@ -496,7 +496,7 @@
         "language": "",
         "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19239.1/license",
         "listed": true,
-        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19239.1",
+        "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19239.1",
         "projectUrl": "https://aka.ms/sqlclientproject",
         "requireLicenseAcceptance": true,
         "summary": "",
@@ -511,17 +511,17 @@
             "dependencies": [
               {
                 "range": "[4.3.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
                 "id": "System.Data.Common"
               },
               {
                 "range": "[1.0.19235.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
                 "id": "Microsoft.Data.SqlClient.sni"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -531,37 +531,37 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
                 "id": "System.Runtime.Caching"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -571,47 +571,47 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
                 "id": "System.Buffers"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
                 "id": "System.Diagnostics.DiagnosticSource"
               },
               {
                 "range": "[4.5.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
                 "id": "System.Memory"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -620,9 +620,9 @@
         ],
         "id": "Microsoft.Data.SqlClient"
       },
-      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19239.1",
-      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
-      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19239.1.json"
+      "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19239.1",
+      "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19239.1.json"
     },
     {
       "catalogEntry": {
@@ -632,7 +632,7 @@
         "language": "",
         "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19249.1/license",
         "listed": true,
-        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19249.1",
+        "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19249.1",
         "projectUrl": "https://aka.ms/sqlclientproject",
         "requireLicenseAcceptance": true,
         "summary": "",
@@ -647,17 +647,17 @@
             "dependencies": [
               {
                 "range": "[4.3.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
                 "id": "System.Data.Common"
               },
               {
                 "range": "[1.0.19235.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
                 "id": "Microsoft.Data.SqlClient.sni"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -667,37 +667,37 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
                 "id": "System.Runtime.Caching"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -707,47 +707,47 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
                 "id": "System.Buffers"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
                 "id": "System.Diagnostics.DiagnosticSource"
               },
               {
                 "range": "[4.5.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
                 "id": "System.Memory"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -756,9 +756,9 @@
         ],
         "id": "Microsoft.Data.SqlClient"
       },
-      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19249.1",
-      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
-      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19249.1.json"
+      "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19249.1",
+      "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19249.1.json"
     },
     {
       "catalogEntry": {
@@ -768,7 +768,7 @@
         "language": "",
         "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.0.19269.1/license",
         "listed": true,
-        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19269.1",
+        "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19269.1",
         "projectUrl": "https://aka.ms/sqlclientproject",
         "requireLicenseAcceptance": true,
         "summary": "",
@@ -783,17 +783,17 @@
             "dependencies": [
               {
                 "range": "[4.3.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
                 "id": "System.Data.Common"
               },
               {
                 "range": "[1.0.19235.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
                 "id": "Microsoft.Data.SqlClient.sni"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -803,37 +803,37 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
                 "id": "System.Runtime.Caching"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -843,47 +843,47 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
                 "id": "System.Buffers"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
                 "id": "System.Diagnostics.DiagnosticSource"
               },
               {
                 "range": "[4.5.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
                 "id": "System.Memory"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -892,9 +892,9 @@
         ],
         "id": "Microsoft.Data.SqlClient"
       },
-      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19269.1",
-      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
-      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19269.1.json"
+      "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.0.19269.1",
+      "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.0.19269.1.json"
     },
     {
       "catalogEntry": {
@@ -904,7 +904,7 @@
         "language": "",
         "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.1.0/license",
         "listed": true,
-        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.0",
+        "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.0",
         "projectUrl": "https://aka.ms/sqlclientproject",
         "requireLicenseAcceptance": true,
         "summary": "",
@@ -919,27 +919,27 @@
             "dependencies": [
               {
                 "range": "[4.3.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
                 "id": "System.Data.Common"
               },
               {
                 "range": "[1.1.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
                 "id": "Microsoft.Data.SqlClient.sni"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
                 "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
                 "id": "Microsoft.IdentityModel.JsonWebTokens"
               }
             ],
@@ -949,47 +949,47 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
                 "id": "System.Runtime.Caching"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
                 "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
                 "id": "Microsoft.IdentityModel.JsonWebTokens"
               }
             ],
@@ -999,47 +999,47 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
                 "id": "System.Buffers"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
                 "id": "System.Diagnostics.DiagnosticSource"
               },
               {
                 "range": "[4.5.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
                 "id": "System.Memory"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -1048,9 +1048,9 @@
         ],
         "id": "Microsoft.Data.SqlClient"
       },
-      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.0",
-      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
-      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.1.0.json"
+      "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.0",
+      "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.1.0.json"
     },
     {
       "catalogEntry": {
@@ -1060,7 +1060,7 @@
         "language": "",
         "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.1.1/license",
         "listed": true,
-        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.1",
+        "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.1",
         "projectUrl": "https://aka.ms/sqlclientproject",
         "requireLicenseAcceptance": true,
         "summary": "",
@@ -1075,27 +1075,27 @@
             "dependencies": [
               {
                 "range": "[4.3.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
                 "id": "System.Data.Common"
               },
               {
                 "range": "[1.1.0, 1.2.0)",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
                 "id": "Microsoft.Data.SqlClient.sni"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
                 "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
                 "id": "Microsoft.IdentityModel.JsonWebTokens"
               }
             ],
@@ -1105,47 +1105,47 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
                 "id": "System.Runtime.Caching"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
                 "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
                 "id": "Microsoft.IdentityModel.JsonWebTokens"
               }
             ],
@@ -1155,47 +1155,47 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
                 "id": "System.Buffers"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
                 "id": "System.Diagnostics.DiagnosticSource"
               },
               {
                 "range": "[4.5.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
                 "id": "System.Memory"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -1204,9 +1204,9 @@
         ],
         "id": "Microsoft.Data.SqlClient"
       },
-      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.1",
-      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
-      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.1.1.json"
+      "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.1",
+      "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.1.1.json"
     },
     {
       "catalogEntry": {
@@ -1216,7 +1216,7 @@
         "language": "",
         "licenseUrl": "https://www.nuget.org/packages/Microsoft.Data.SqlClient/1.1.2/license",
         "listed": true,
-        "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.2",
+        "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.2",
         "projectUrl": "https://aka.ms/sqlclientproject",
         "requireLicenseAcceptance": true,
         "summary": "",
@@ -1231,27 +1231,27 @@
             "dependencies": [
               {
                 "range": "[4.3.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.data.common/index.json",
                 "id": "System.Data.Common"
               },
               {
                 "range": "[1.1.0, 1.2.0)",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient.sni/index.json",
                 "id": "Microsoft.Data.SqlClient.sni"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
                 "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
                 "id": "Microsoft.IdentityModel.JsonWebTokens"
               }
             ],
@@ -1261,47 +1261,47 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.runtime.caching/index.json",
                 "id": "System.Runtime.Caching"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.protocols.openidconnect/index.json",
                 "id": "Microsoft.IdentityModel.Protocols.OpenIdConnect"
               },
               {
                 "range": "[5.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identitymodel.jsonwebtokens/index.json",
                 "id": "Microsoft.IdentityModel.JsonWebTokens"
               }
             ],
@@ -1311,47 +1311,47 @@
             "dependencies": [
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.win32.registry/index.json",
                 "id": "Microsoft.Win32.Registry"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/runtime.native.system.data.sqlclient.sni/index.json",
                 "id": "runtime.native.System.Data.SqlClient.sni"
               },
               {
                 "range": "[4.4.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.buffers/index.json",
                 "id": "System.Buffers"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.diagnostics.diagnosticsource/index.json",
                 "id": "System.Diagnostics.DiagnosticSource"
               },
               {
                 "range": "[4.5.1, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.memory/index.json",
                 "id": "System.Memory"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.security.principal.windows/index.json",
                 "id": "System.Security.Principal.Windows"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.text.encoding.codepages/index.json",
                 "id": "System.Text.Encoding.CodePages"
               },
               {
                 "range": "[4.5.0, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/system.configuration.configurationmanager/index.json",
                 "id": "System.Configuration.ConfigurationManager"
               },
               {
                 "range": "[3.0.8, )",
-                "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
+                "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.identity.client/index.json",
                 "id": "Microsoft.Identity.Client"
               }
             ],
@@ -1360,10 +1360,10 @@
         ],
         "id": "Microsoft.Data.SqlClient"
       },
-      "packageContent": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.2",
-      "registration": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
-      "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.1.2.json"
+      "packageContent": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/Download/microsoft.data.sqlclient/1.1.2",
+      "registration": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/index.json",
+      "@id": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/registration/microsoft.data.sqlclient/1.1.2.json"
     }
   ],
-  "@id": "http://localhost:1080/artifactory/api/nuget/v3/nuget-repo/registration/microsoft.data.sqlclient/page/1.0.19123.2-preview/6.1.0.json"
+  "@id": "{{request.baseUrl}}/artifactory/api/nuget/v3/nuget-repo/registration/microsoft.data.sqlclient/page/1.0.19123.2-preview/6.1.0.json"
 }

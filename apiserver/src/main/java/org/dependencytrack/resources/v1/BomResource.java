@@ -584,7 +584,7 @@ public class BomResource extends AbstractApiResource {
             @FormDataParam("parentUUID") String parentUUID,
             @DefaultValue("false") @FormDataParam("isLatest") boolean isLatest,
             @FormDataParam("isActive") Boolean isActive,
-            @Parameter(schema = @Schema(type = "string")) @FormDataParam("bom") final List<FormDataBodyPart> artifactParts
+            @Parameter(schema = @Schema(type = "string", format = "binary")) @FormDataParam("bom") final List<FormDataBodyPart> artifactParts
     ) {
         if (artifactParts == null || artifactParts.isEmpty()) {
             throw new WebApplicationException(Response

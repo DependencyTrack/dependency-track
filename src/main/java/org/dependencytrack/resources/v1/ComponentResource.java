@@ -258,7 +258,7 @@ public class ComponentResource extends AlpineResource {
     })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
     public Response getComponentByHash(
-            @Parameter(description = "The MD5, SHA-1, SHA-256, SHA-384, SHA-512, SHA3-256, SHA3-384, SHA3-512, BLAKE2b-256, BLAKE2b-384, BLAKE2b-512, or BLAKE3 hash of the component to retrieve", required = true)
+            @Parameter(description = "The MD5, SHA-1, SHA-256, SHA-384, SHA-512, SHA3-256, SHA3-384, SHA3-512, BLAKE2b-256, BLAKE2b-384, BLAKE2b-512, BLAKE3, Streebog-256, or Streebog-512 hash of the component to retrieve", required = true)
             @PathParam("hash") String hash) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getComponentByHash(hash);
@@ -311,7 +311,13 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "sha512"),
                 validator.validateProperty(jsonComponent, "sha3_256"),
                 validator.validateProperty(jsonComponent, "sha3_384"),
-                validator.validateProperty(jsonComponent, "sha3_512")
+                validator.validateProperty(jsonComponent, "sha3_512"),
+                validator.validateProperty(jsonComponent, "blake2b_256"),
+                validator.validateProperty(jsonComponent, "blake2b_384"),
+                validator.validateProperty(jsonComponent, "blake2b_512"),
+                validator.validateProperty(jsonComponent, "blake3"),
+                validator.validateProperty(jsonComponent, "streebog_256"),
+                validator.validateProperty(jsonComponent, "streebog_512")
         );
 
         try (QueryManager qm = new QueryManager()) {
@@ -353,6 +359,12 @@ public class ComponentResource extends AlpineResource {
             component.setSha3_256(StringUtils.trimToNull(jsonComponent.getSha3_256()));
             component.setSha3_384(StringUtils.trimToNull(jsonComponent.getSha3_384()));
             component.setSha3_512(StringUtils.trimToNull(jsonComponent.getSha3_512()));
+            component.setBlake2b_256(StringUtils.trimToNull(jsonComponent.getBlake2b_256()));
+            component.setBlake2b_384(StringUtils.trimToNull(jsonComponent.getBlake2b_384()));
+            component.setBlake2b_512(StringUtils.trimToNull(jsonComponent.getBlake2b_512()));
+            component.setBlake3(StringUtils.trimToNull(jsonComponent.getBlake3()));
+            component.setStreebog_256(StringUtils.trimToNull(jsonComponent.getStreebog_256()));
+            component.setStreebog_512(StringUtils.trimToNull(jsonComponent.getStreebog_512()));
             if (resolvedLicense != null) {
                 component.setLicense(null);
                 component.setLicenseExpression(null);
@@ -420,9 +432,17 @@ public class ComponentResource extends AlpineResource {
                 validator.validateProperty(jsonComponent, "md5"),
                 validator.validateProperty(jsonComponent, "sha1"),
                 validator.validateProperty(jsonComponent, "sha256"),
+                validator.validateProperty(jsonComponent, "sha384"),
                 validator.validateProperty(jsonComponent, "sha512"),
                 validator.validateProperty(jsonComponent, "sha3_256"),
-                validator.validateProperty(jsonComponent, "sha3_512")
+                validator.validateProperty(jsonComponent, "sha3_384"),
+                validator.validateProperty(jsonComponent, "sha3_512"),
+                validator.validateProperty(jsonComponent, "blake2b_256"),
+                validator.validateProperty(jsonComponent, "blake2b_384"),
+                validator.validateProperty(jsonComponent, "blake2b_512"),
+                validator.validateProperty(jsonComponent, "blake3"),
+                validator.validateProperty(jsonComponent, "streebog_256"),
+                validator.validateProperty(jsonComponent, "streebog_512")
         );
         try (QueryManager qm = new QueryManager()) {
             Component component = qm.getObjectByUuid(Component.class, jsonComponent.getUuid());
@@ -455,6 +475,12 @@ public class ComponentResource extends AlpineResource {
                 component.setSha3_256(StringUtils.trimToNull(jsonComponent.getSha3_256()));
                 component.setSha3_384(StringUtils.trimToNull(jsonComponent.getSha3_384()));
                 component.setSha3_512(StringUtils.trimToNull(jsonComponent.getSha3_512()));
+                component.setBlake2b_256(StringUtils.trimToNull(jsonComponent.getBlake2b_256()));
+                component.setBlake2b_384(StringUtils.trimToNull(jsonComponent.getBlake2b_384()));
+                component.setBlake2b_512(StringUtils.trimToNull(jsonComponent.getBlake2b_512()));
+                component.setBlake3(StringUtils.trimToNull(jsonComponent.getBlake3()));
+                component.setStreebog_256(StringUtils.trimToNull(jsonComponent.getStreebog_256()));
+                component.setStreebog_512(StringUtils.trimToNull(jsonComponent.getStreebog_512()));
                 component.setExternalReferences(jsonComponent.getExternalReferences());
 
                 final License resolvedLicense = qm.getLicense(jsonComponent.getLicense());

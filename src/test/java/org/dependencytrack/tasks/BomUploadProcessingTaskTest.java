@@ -286,6 +286,73 @@ class BomUploadProcessingTaskTest extends PersistenceCapableTest {
     }
 
     @Test
+    void informWithCycloneDx17BomTest() {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.7",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib",
+                      "version": "1.0.0",
+                      "purl": "pkg:maven/com.acme/acme-lib@1.0.0",
+                      "hashes": [
+                        {
+                          "alg": "Streebog-256",
+                          "content": "3F539A213E97C802CC229D474C6AA32A825A360B2A933A949FD925208D9CE1BB"
+                        },
+                        {
+                          "alg": "Streebog-512",
+                          "content": "8e945da209aa869f0455928529bcae4679e9873ab707b55315f56ceb98bef0a7362f715528356ee83cda5f2aac4c6ad2ba3a715c1bcd81cb8e9f90bf4c1c1a8a"
+                        }
+                      ],
+                      "externalReferences": [
+                        {
+                          "type": "citation",
+                          "url": "https://example.com/citation"
+                        },
+                        {
+                          "type": "patent",
+                          "url": "https://example.com/patent"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes);
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+
+        qm.getPersistenceManager().refresh(project);
+        assertThat(project.getLastBomImport()).isNotNull();
+        assertThat(project.getLastBomImportFormat()).isEqualTo("CycloneDX 1.7");
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getName()).isEqualTo("acme-lib");
+
+            // NB: Hashes are expected to be normalized to lower case.
+            assertThat(component.getStreebog_256())
+                    .isEqualTo("3f539a213e97c802cc229d474c6aa32a825a360b2a933a949fd925208d9ce1bb");
+            assertThat(component.getStreebog_512())
+                    .isEqualTo("8e945da209aa869f0455928529bcae4679e9873ab707b55315f56ceb98bef0a7362f715528356ee83cda5f2aac4c6ad2ba3a715c1bcd81cb8e9f90bf4c1c1a8a");
+
+            // NB: patent and citation are external reference types introduced in CycloneDX 1.7.
+            assertThat(component.getExternalReferences()).satisfiesExactly(
+                    externalReference -> assertThat(externalReference.getType())
+                            .isEqualTo(org.cyclonedx.model.ExternalReference.Type.CITATION),
+                    externalReference -> assertThat(externalReference.getType())
+                            .isEqualTo(org.cyclonedx.model.ExternalReference.Type.PATENT));
+        });
+    }
+
+    @Test
     void informWithEmptyBomTest() throws Exception {
         Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, true, false);
 
@@ -577,6 +644,50 @@ class BomUploadProcessingTaskTest extends PersistenceCapableTest {
                       "licenses": [
                         {
                           "expression": "EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8);
+
+        final var bomUploadEvent = new BomUploadEvent(qm.detach(Project.class, project.getId()), bomBytes);
+        new BomUploadProcessingTask().inform(bomUploadEvent);
+        awaitBomProcessedNotification(bomUploadEvent);
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getLicense()).isNull();
+            assertThat(component.getLicenseExpression()).isEqualTo("EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0");
+            assertThat(component.getResolvedLicense()).isNull();
+        });
+    }
+
+    @Test
+    void informWithBomContainingDetailedLicenseExpressionTest() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final byte[] bomBytes = """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.7",
+                  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib",
+                      "version": "1.0.0",
+                      "licenses": [
+                        {
+                          "expression": "EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0",
+                          "expressionDetails": [
+                            {
+                              "licenseIdentifier": "EPL-2.0",
+                              "url": "https://www.eclipse.org/legal/epl-2.0/"
+                            }
+                          ]
                         }
                       ]
                     }

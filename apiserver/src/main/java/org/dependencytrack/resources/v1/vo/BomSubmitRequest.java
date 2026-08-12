@@ -165,6 +165,7 @@ public final class BomSubmitRequest {
     @Schema(
             description = "Base64 encoded BOM",
             requiredMode = Schema.RequiredMode.REQUIRED,
+            format = "bytes",
             example = """
                     ewogICJib21Gb3JtYXQiOiAiQ3ljbG9uZURYIiwKICAic3BlY1ZlcnNpb24iOiAi\
                     MS40IiwKICAiY29tcG9uZW50cyI6IFsKICAgIHsKICAgICAgInR5cGUiOiAibGli\

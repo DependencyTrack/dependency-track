@@ -23,7 +23,7 @@ import javax.sql.DataSource;
 public final class MigrationExecutor extends org.dependencytrack.support.flyway.MigrationExecutor {
 
     public MigrationExecutor(DataSource dataSource) {
-        super(dataSource, "0.0.0", "classpath:org/dependencytrack/dex/engine/migration", "dex_schema_history", null, false);
+        super(dataSource, "0.0.0", "classpath:org/dependencytrack/dex/engine/migration", "dex_schema_history", /* targetVersion */ null, /* outOfOrder */ false, /* skipRepeatable */ false);
     }
 
 }

@@ -45,7 +45,7 @@ public final class V5TargetContainer implements AutoCloseable {
 
     public V5TargetContainer start() {
         container.start();
-        new MigrationExecutor(dataSource(), Preflight.EXPECTED_FLYWAY_HEAD).execute();
+        new MigrationExecutor(dataSource(), Preflight.EXPECTED_FLYWAY_HEAD, /* skipRepeatable */ true).execute();
         // Mimic the bootstrap step. PermissionCatalog.seed is what the BootstrapCommand
         // invokes immediately after applying Flyway, so downstream phases see the full
         // v5 PERMISSION catalog.

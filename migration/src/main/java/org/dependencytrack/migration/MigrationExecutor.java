@@ -25,11 +25,18 @@ import javax.sql.DataSource;
 public final class MigrationExecutor extends org.dependencytrack.support.flyway.MigrationExecutor {
 
     public MigrationExecutor(DataSource dataSource) {
-        this(dataSource, null);
+        this(dataSource, /* targetVersion */ null, /* skipRepeatable */ false);
     }
 
-    public MigrationExecutor(DataSource dataSource, @Nullable String targetVersion) {
-        super(dataSource, "202605022031", "classpath:org/dependencytrack/migration", null, targetVersion, true);
+    public MigrationExecutor(DataSource dataSource, @Nullable String targetVersion, boolean skipRepeatable) {
+        super(
+                dataSource,
+                "202605022031",
+                "classpath:org/dependencytrack/migration",
+                /* schemaHistoryTable */ null,
+                targetVersion,
+                /* outOfOrder */ true,
+                skipRepeatable);
     }
 
 }

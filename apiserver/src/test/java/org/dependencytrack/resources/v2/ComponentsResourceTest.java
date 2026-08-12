@@ -902,6 +902,7 @@ public class ComponentsResourceTest extends ResourceTest {
             metrics.setHigh(2);
             metrics.setMedium(3);
             metrics.setLow(4);
+            metrics.setUnassigned(5);
             metrics.setKev(6);
             metrics.setVulnerabilities(10);
             metrics.setInheritedRiskScore(5.0);
@@ -924,7 +925,7 @@ public class ComponentsResourceTest extends ResourceTest {
                           "high": 2,
                           "medium": 3,
                           "low": 4,
-                          "unassigned": 0,
+                          "unassigned": 5,
                           "kev": 6,
                           "vulnerabilities": 10,
                           "suppressed": 0,

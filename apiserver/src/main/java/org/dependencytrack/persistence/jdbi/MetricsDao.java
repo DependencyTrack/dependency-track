@@ -219,7 +219,9 @@ public interface MetricsDao extends SqlObject {
     List<VulnerabilityMetrics> getVulnerabilityMetrics();
 
     @SqlQuery("""
-            SELECT *, "RISKSCORE" AS inherited_risk_score FROM "PROJECTMETRICS"
+            SELECT *, "RISKSCORE" AS inherited_risk_score
+                 , "UNASSIGNED_SEVERITY" AS unassigned
+              FROM "PROJECTMETRICS"
             WHERE "PROJECT_ID" = :projectId
             AND "LAST_OCCURRENCE" >= :since
             ORDER BY "LAST_OCCURRENCE" ASC
@@ -228,7 +230,9 @@ public interface MetricsDao extends SqlObject {
     List<ProjectMetrics> getProjectMetricsSince(@Bind long projectId, @Bind Instant since);
 
     @SqlQuery("""
-            SELECT *, "RISKSCORE" AS inherited_risk_score FROM "DEPENDENCYMETRICS"
+            SELECT *, "RISKSCORE" AS inherited_risk_score
+                 , "UNASSIGNED_SEVERITY" AS unassigned
+              FROM "DEPENDENCYMETRICS"
             WHERE "COMPONENT_ID" = :componentId
             AND "LAST_OCCURRENCE" >= :since
             ORDER BY "LAST_OCCURRENCE" ASC
@@ -244,6 +248,7 @@ public interface MetricsDao extends SqlObject {
 
     @SqlQuery("""
             SELECT *, "RISKSCORE" AS inherited_risk_score
+                 , "UNASSIGNED_SEVERITY" AS unassigned
             FROM "PROJECTMETRICS"
             WHERE "PROJECT_ID" = :projectId
             ORDER BY "LAST_OCCURRENCE" DESC
@@ -254,6 +259,7 @@ public interface MetricsDao extends SqlObject {
 
     @SqlQuery("""
             SELECT metrics.*, metrics."RISKSCORE" AS inherited_risk_score
+                 , metrics."UNASSIGNED_SEVERITY" AS unassigned
               FROM UNNEST(:projectIds) AS project(id)
              INNER JOIN LATERAL (
                SELECT *
@@ -540,6 +546,7 @@ public interface MetricsDao extends SqlObject {
 
     @SqlQuery("""
             SELECT *, "RISKSCORE" AS inherited_risk_score
+                 , "UNASSIGNED_SEVERITY" AS unassigned
             FROM "DEPENDENCYMETRICS"
             WHERE "COMPONENT_ID" = :componentId
             ORDER BY "LAST_OCCURRENCE" DESC
@@ -550,6 +557,7 @@ public interface MetricsDao extends SqlObject {
 
     @SqlQuery("""
             SELECT metrics.*, metrics."RISKSCORE" AS inherited_risk_score
+                 , metrics."UNASSIGNED_SEVERITY" AS unassigned
               FROM UNNEST(:componentIds) AS component(id)
              INNER JOIN LATERAL (
                SELECT *

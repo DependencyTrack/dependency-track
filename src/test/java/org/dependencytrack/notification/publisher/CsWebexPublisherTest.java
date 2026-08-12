@@ -20,51 +20,33 @@ package org.dependencytrack.notification.publisher;
 
 import alpine.notification.Notification;
 import alpine.notification.NotificationLevel;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import jakarta.json.JsonObject;
 import org.apache.http.HttpHeaders;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationScope;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.integration.ClientAndServer;
 
-import jakarta.json.JsonObject;
 import java.io.IOException;
 
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 
+@WireMockTest
 class CsWebexPublisherTest extends PersistenceCapableTest implements NotificationTestConfigProvider {
 
-    private static ClientAndServer mockServer;
-
-    @BeforeAll
-    public static void beforeClass() {
-        mockServer = startClientAndServer(1080);
-    }
-
-    @AfterAll
-    public static void afterClass() {
-        mockServer.stop();
-    }
-
     @Test
-    void testPublish() throws IOException {
-        new MockServerClient("localhost", 1080)
-                .when(
-                        request()
-                                .withMethod("POST")
-                                .withPath("/mychannel")
-                )
-                .respond(
-                        response()
-                                .withStatusCode(200)
-                                .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                );
-        JsonObject config = getConfig(DefaultNotificationPublishers.CS_WEBEX, "http://localhost:1080/mychannel");
+    void testPublish(final WireMockRuntimeInfo wmRuntimeInfo) throws IOException {
+        stubFor(post(urlPathEqualTo("/mychannel"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")));
+
+        JsonObject config = getConfig(DefaultNotificationPublishers.CS_WEBEX, wmRuntimeInfo.getHttpBaseUrl() + "/mychannel");
         Notification notification = new Notification();
         notification.setScope(NotificationScope.PORTFOLIO.name());
         notification.setGroup(NotificationGroup.NEW_VULNERABILITY.name());

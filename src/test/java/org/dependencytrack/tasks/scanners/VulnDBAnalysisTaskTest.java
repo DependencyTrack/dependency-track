@@ -23,6 +23,8 @@ import alpine.notification.NotificationService;
 import alpine.notification.Subscriber;
 import alpine.notification.Subscription;
 import alpine.security.crypto.DataEncryption;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.matching.RequestPatternBuilder;
 import jakarta.json.Json;
 import org.apache.http.HttpHeaders;
 import org.assertj.core.api.SoftAssertions;
@@ -39,33 +41,39 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockserver.integration.ClientAndServer;
-import org.mockserver.model.Header;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-import javax.jdo.Query;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.jdo.Query;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_ANALYSIS_CACHE_VALIDITY_PERIOD;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_ENABLED;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_OAUTH1_CONSUMER_KEY;
 import static org.dependencytrack.model.ConfigPropertyConstants.SCANNER_VULNDB_OAUTH1_CONSUMER_SECRET;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
 class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
 
-    private static ClientAndServer mockServer;
+    @RegisterExtension
+    static final WireMockExtension wm = WireMockExtension.newInstance()
+            .configureStaticDsl(true)
+            .build();
+
     private static final Subscription SUBSCRIPTION = new Subscription(NotificationSubscriber.class);
 
     @BeforeAll
     public static void beforeClass() {
         NotificationService.getInstance().subscribe(SUBSCRIPTION);
-        mockServer = ClientAndServer.startClientAndServer(1080);
     }
 
     @BeforeEach
@@ -98,13 +106,11 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
 
     @AfterEach
     public void tearDown() {
-        mockServer.reset();
         NOTIFICATIONS.clear();
     }
 
     @AfterAll
     public static void afterClass() {
-        mockServer.stop();
         NotificationService.getInstance().unsubscribe(SUBSCRIPTION);
     }
 
@@ -118,7 +124,7 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
         ).entrySet()) {
             final var component = new Component();
             component.setCpe(test.getKey());
-            asserts.assertThat(new VulnDbAnalysisTask("http://localhost:1080").isCapable(component)).isEqualTo(test.getValue());
+            asserts.assertThat(new VulnDbAnalysisTask(wm.baseUrl()).isCapable(component)).isEqualTo(test.getValue());
         }
 
         asserts.assertAll();
@@ -126,14 +132,11 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
     void testAnalyzeWithOneIssue() {
-        mockServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/api/v1/vulnerabilities/find_by_cpe")
-                        .withHeader(new Header("X-User-Agent", "Dependency Track (https://github.com/DependencyTrack/dependency-track)"))
-                        .withQueryStringParameter("cpe", "cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*"))
-                .respond(response()
-                        .withStatusCode(200)
+        stubFor(get(urlPathEqualTo("/api/v1/vulnerabilities/find_by_cpe"))
+                .withHeader("X-User-Agent", equalTo("Dependency Track (https://github.com/DependencyTrack/dependency-track)"))
+                .withQueryParam("cpe", equalTo("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*"))
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, "application/vnd.api+json")
                         .withBody("""                                
                                 {
@@ -216,7 +219,7 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
                                     }
                                   ]
                                 }
-                                """));
+                                """)));
 
         var project = new Project();
         project.setName("acme-app");
@@ -230,7 +233,7 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
         component.setCpe("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*");
         component = qm.createComponent(component, false);
 
-        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(
+        new VulnDbAnalysisTask(wm.baseUrl()).inform(new VulnDbAnalysisEvent(
                 List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
@@ -251,14 +254,11 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
 
     @Test
     void testAnalyzeWithNoIssue() {
-        mockServer
-                .when(request()
-                        .withMethod("GET")
-                        .withPath("/api/v1/vulnerabilities/find_by_cpe")
-                        .withHeader(new Header("X-User-Agent", "Dependency Track (https://github.com/DependencyTrack/dependency-track)"))
-                        .withQueryStringParameter("cpe", "cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*"))
-                .respond(response()
-                        .withStatusCode(404));
+        stubFor(get(urlPathEqualTo("/api/v1/vulnerabilities/find_by_cpe"))
+                .withHeader("X-User-Agent", equalTo("Dependency Track (https://github.com/DependencyTrack/dependency-track)"))
+                .withQueryParam("cpe", equalTo("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*"))
+                .willReturn(aResponse()
+                        .withStatus(404)));
 
         var project = new Project();
         project.setName("acme-app");
@@ -272,7 +272,7 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
         component.setCpe("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*");
         component = qm.createComponent(component, false);
 
-        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(
+        new VulnDbAnalysisTask(wm.baseUrl()).inform(new VulnDbAnalysisEvent(
                 List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
@@ -297,7 +297,7 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln, false);
 
-        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, "http://localhost:1080",
+        qm.updateComponentAnalysisCache(ComponentAnalysisCache.CacheType.VULNERABILITY, wm.baseUrl(),
                 Vulnerability.Source.VULNDB.name(), "cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*", new Date(),
                 Json.createObjectBuilder()
                         .add("vulnIds", Json.createArrayBuilder().add(vuln.getId()))
@@ -315,13 +315,13 @@ class VulnDBAnalysisTaskTest extends PersistenceCapableTest {
         component.setCpe("cpe:2.3:h:siemens:sppa-t3000_ses3000:-:*:*:*:*:*:*:*");
         component = qm.createComponent(component, false);
 
-        new VulnDbAnalysisTask("http://localhost:1080").inform(new VulnDbAnalysisEvent(
+        new VulnDbAnalysisTask(wm.baseUrl()).inform(new VulnDbAnalysisEvent(
                 List.of(component), VulnerabilityAnalysisLevel.BOM_UPLOAD_ANALYSIS));
 
         final List<Vulnerability> vulnerabilities = qm.getAllVulnerabilities(component);
         assertThat(vulnerabilities).hasSize(1);
 
-        mockServer.verifyZeroInteractions();
+        verify(0, RequestPatternBuilder.allRequests());
     }
 
     private static final ConcurrentLinkedQueue<Notification> NOTIFICATIONS = new ConcurrentLinkedQueue<>();

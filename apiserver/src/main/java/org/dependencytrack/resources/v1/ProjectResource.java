@@ -386,7 +386,7 @@ public class ProjectResource extends AbstractApiResource {
     public Response getProject(
             @Parameter(description = "The name of the project to query on", required = true)
             @QueryParam("name") String name,
-            @Parameter(description = "The version of the project to query on", required = true)
+            @Parameter(description = "The version of the project to query on", required = false)
             @QueryParam("version") String version) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = ProjectAccess.unrestricted(() -> qm.getProject(name, version));

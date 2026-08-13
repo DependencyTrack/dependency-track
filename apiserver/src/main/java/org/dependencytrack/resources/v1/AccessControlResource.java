@@ -33,6 +33,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Validator;
 import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PUT;
@@ -123,6 +124,7 @@ public class AccessControlResource extends AbstractApiResource {
     @PUT
     @Path("/mapping")
     @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Adds an ACL mapping",
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong></p>"

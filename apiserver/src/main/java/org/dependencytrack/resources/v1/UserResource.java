@@ -356,6 +356,7 @@ public class UserResource extends AbstractApiResource {
     @POST
     @Path("self")
     @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Updates information about the current logged in user."
     )

@@ -247,6 +247,7 @@ public class OidcResource extends AbstractApiResource {
     @PUT
     @Path("/mapping")
     @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Adds a mapping",
             description = "<p>Requires permission <strong>ACCESS_MANAGEMENT</strong> or <strong>ACCESS_MANAGEMENT_CREATE</strong></p>"

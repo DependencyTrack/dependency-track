@@ -59,13 +59,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_GENERIC;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
@@ -272,16 +274,17 @@ public final class BovModelConverter {
             return Collections.emptyList();
         }
 
-        final var componentByBomRef = new HashMap<String, Component>();
+        final Map<String, Component> componentByBomRef =
+                bov.getComponentsList().stream().collect(
+                        Collectors.toMap(
+                                Component::getBomRef,
+                                Function.identity(),
+                                (first, _) -> first));
+
         final var vsList = new ArrayList<VulnerableSoftware>();
 
         for (final VulnerabilityAffects bovVulnAffects : vuln.getAffectsList()) {
-            final Component component = componentByBomRef.computeIfAbsent(
-                    bovVulnAffects.getRef(),
-                    bomRef -> bov.getComponentsList().stream()
-                            .filter(c -> bomRef.equals(c.getBomRef()))
-                            .findAny()
-                            .orElse(null));
+            final Component component = componentByBomRef.get(bovVulnAffects.getRef());
             if (component == null) {
                 LOGGER.warn(
                         "No component in the BOV for {} is matching the BOM ref '{}' of the affects node; Skipping",

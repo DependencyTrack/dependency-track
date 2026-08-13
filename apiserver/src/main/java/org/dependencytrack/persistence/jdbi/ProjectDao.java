@@ -43,7 +43,6 @@ import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMap;
 import org.jdbi.v3.sqlobject.customizer.Define;
-import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jspecify.annotations.Nullable;
@@ -720,59 +719,51 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             """)
     int deleteProject(@Bind final UUID projectUuid);
 
-    @SqlUpdate("""
-            WITH cte_locked AS (
+    /**
+     * Deletes accessible projects and returns a row for each removed project,
+     * including descendants removed by {@code ON DELETE CASCADE}.
+     * {@code ancestorUuid} is {@code null} for explicitly requested projects;
+     * otherwise it is the closest requested ancestor.
+     */
+    @SqlQuery(/* language=InjectedFreeMarker */ """
+            <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
+            WITH
+            cte_locked AS (
               SELECT "ID"
                 FROM "PROJECT"
                WHERE ${apiProjectAclCondition}
                  AND "UUID" = ANY(:projectUuids)
                ORDER BY "ID"
                  FOR UPDATE
+            ),
+            cte_deleted AS (
+              DELETE
+                FROM "PROJECT"
+               WHERE "ID" IN (SELECT "ID" FROM cte_locked)
+              RETURNING "ID"
             )
-            DELETE
-              FROM "PROJECT"
-             WHERE "ID" IN (SELECT "ID" FROM cte_locked)
-            RETURNING "UUID"
-            """)
-    @GetGeneratedKeys
-    Set<UUID> deleteProjects(@Bind Collection<UUID> projectUuids);
-
-    /**
-     * Projects that will be removed by {@code ON DELETE CASCADE} when the given
-     * ancestors are deleted. When multiple requested ancestors are on the same
-     * path, each descendant is attributed to the closest one ({@code DEPTH} ascending).
-     */
-    @SqlQuery("""
-            SELECT DISTINCT ON (descendant."ID")
-                   descendant."UUID" AS "UUID"
-                 , descendant."NAME" AS "NAME"
-                 , descendant."VERSION" AS "VERSION"
-                 , ph."DEPTH" AS "DEPTH"
-                 , ancestor."UUID" AS "ANCESTOR_UUID"
-                 , ancestor."NAME" AS "ANCESTOR_NAME"
-                 , ancestor."VERSION" AS "ANCESTOR_VERSION"
+            SELECT DISTINCT ON (project."ID")
+                   project."UUID" AS "UUID"
+                 , project."NAME" AS "NAME"
+                 , project."VERSION" AS "VERSION"
+                 , CASE WHEN ph."DEPTH" = 0 THEN NULL ELSE ancestor."UUID" END AS "ANCESTOR_UUID"
               FROM "PROJECT_HIERARCHY" AS ph
              INNER JOIN "PROJECT" AS ancestor
                 ON ancestor."ID" = ph."PARENT_PROJECT_ID"
-             INNER JOIN "PROJECT" AS descendant
-                ON descendant."ID" = ph."CHILD_PROJECT_ID"
-             WHERE ancestor."UUID" = ANY(:ancestorUuids)
-               AND ph."DEPTH" > 0
-             ORDER BY descendant."ID"
+             INNER JOIN "PROJECT" AS project
+                ON project."ID" = ph."CHILD_PROJECT_ID"
+             WHERE ph."PARENT_PROJECT_ID" IN (SELECT "ID" FROM cte_deleted)
+             ORDER BY project."ID"
                     , ph."DEPTH"
-                    , ancestor."ID"
             """)
-    @RegisterConstructorMapper(ProjectDeletedAsDescendant.class)
-    List<ProjectDeletedAsDescendant> getProjectsDeletedAsDescendants(@Bind Collection<UUID> ancestorUuids);
+    @RegisterConstructorMapper(DeletedProjectRow.class)
+    List<DeletedProjectRow> deleteProjects(@Bind Collection<UUID> projectUuids);
 
-    record ProjectDeletedAsDescendant(
+    record DeletedProjectRow(
             @ColumnName("UUID") UUID uuid,
             @ColumnName("NAME") String name,
             @ColumnName("VERSION") String version,
-            @ColumnName("DEPTH") int depth,
-            @ColumnName("ANCESTOR_UUID") UUID ancestorUuid,
-            @ColumnName("ANCESTOR_NAME") String ancestorName,
-            @ColumnName("ANCESTOR_VERSION") String ancestorVersion) {
+            @ColumnName("ANCESTOR_UUID") @Nullable UUID ancestorUuid) {
     }
 
     @SqlQuery("""

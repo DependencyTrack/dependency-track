@@ -61,6 +61,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.openJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 public class ProjectDaoTest extends PersistenceCapableTest {
 
@@ -404,7 +405,7 @@ public class ProjectDaoTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testGetProjectsDeletedAsDescendants() {
+    public void testDeleteProjectsReturnsRequestedProjectsAndCascadeDeletedDescendants() {
         final var parent = new Project();
         parent.setName("acme-app-parent");
         parent.setVersion("1.0.0");
@@ -427,42 +428,70 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         unrelated.setVersion("1.0.0");
         qm.persist(unrelated);
 
-        assertThat(projectDao.getProjectsDeletedAsDescendants(List.of(parent.getUuid())))
-                .satisfiesExactlyInAnyOrder(
-                        descendant -> {
-                            assertThat(descendant.uuid()).isEqualTo(child.getUuid());
-                            assertThat(descendant.name()).isEqualTo("acme-app-child");
-                            assertThat(descendant.version()).isEqualTo("1.0.0");
-                            assertThat(descendant.depth()).isEqualTo(1);
-                            assertThat(descendant.ancestorUuid()).isEqualTo(parent.getUuid());
-                            assertThat(descendant.ancestorName()).isEqualTo("acme-app-parent");
-                            assertThat(descendant.ancestorVersion()).isEqualTo("1.0.0");
-                        },
-                        descendant -> {
-                            assertThat(descendant.uuid()).isEqualTo(grandChild.getUuid());
-                            assertThat(descendant.name()).isEqualTo("acme-app-grandchild");
-                            assertThat(descendant.version()).isEqualTo("1.0.0");
-                            assertThat(descendant.depth()).isEqualTo(2);
-                            assertThat(descendant.ancestorUuid()).isEqualTo(parent.getUuid());
-                            assertThat(descendant.ancestorName()).isEqualTo("acme-app-parent");
-                            assertThat(descendant.ancestorVersion()).isEqualTo("1.0.0");
-                        });
+        final List<ProjectDao.DeletedProjectRow> deleted = withJdbiHandle(handle ->
+                handle.attach(ProjectDao.class).deleteProjects(List.of(parent.getUuid())));
 
-        // When both parent and child are deleted, attribute grandchild to the closest ancestor.
-        assertThat(projectDao.getProjectsDeletedAsDescendants(List.of(parent.getUuid(), child.getUuid())))
-                .satisfiesExactlyInAnyOrder(
-                        descendant -> {
-                            assertThat(descendant.uuid()).isEqualTo(child.getUuid());
-                            assertThat(descendant.depth()).isEqualTo(1);
-                            assertThat(descendant.ancestorUuid()).isEqualTo(parent.getUuid());
-                        },
-                        descendant -> {
-                            assertThat(descendant.uuid()).isEqualTo(grandChild.getUuid());
-                            assertThat(descendant.depth()).isEqualTo(1);
-                            assertThat(descendant.ancestorUuid()).isEqualTo(child.getUuid());
-                        });
+        assertThat(deleted).satisfiesExactlyInAnyOrder(
+                row -> {
+                    assertThat(row.uuid()).isEqualTo(parent.getUuid());
+                    assertThat(row.name()).isEqualTo("acme-app-parent");
+                    assertThat(row.version()).isEqualTo("1.0.0");
+                    assertThat(row.ancestorUuid()).isNull();
+                },
+                row -> {
+                    assertThat(row.uuid()).isEqualTo(child.getUuid());
+                    assertThat(row.name()).isEqualTo("acme-app-child");
+                    assertThat(row.version()).isEqualTo("1.0.0");
+                    assertThat(row.ancestorUuid()).isEqualTo(parent.getUuid());
+                },
+                row -> {
+                    assertThat(row.uuid()).isEqualTo(grandChild.getUuid());
+                    assertThat(row.name()).isEqualTo("acme-app-grandchild");
+                    assertThat(row.version()).isEqualTo("1.0.0");
+                    assertThat(row.ancestorUuid()).isEqualTo(parent.getUuid());
+                });
 
-        assertThat(projectDao.getProjectsDeletedAsDescendants(List.of(unrelated.getUuid()))).isEmpty();
-        assertThat(projectDao.getProjectsDeletedAsDescendants(List.of(grandChild.getUuid()))).isEmpty();
+        assertThat(projectDao.getProjectId(parent.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(child.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(grandChild.getUuid())).isNull();
+        assertThat(projectDao.getProjectId(unrelated.getUuid())).isEqualTo(unrelated.getId());
+    }
+
+    @Test
+    public void testDeleteProjectsAttributesDescendantsToClosestRequestedAncestor() {
+        final var parent = new Project();
+        parent.setName("acme-app-parent");
+        parent.setVersion("1.0.0");
+        qm.persist(parent);
+
+        final var child = new Project();
+        child.setParent(parent);
+        child.setName("acme-app-child");
+        child.setVersion("1.0.0");
+        qm.persist(child);
+
+        final var grandChild = new Project();
+        grandChild.setParent(child);
+        grandChild.setName("acme-app-grandchild");
+        grandChild.setVersion("1.0.0");
+        qm.persist(grandChild);
+
+        // Child is explicitly requested, so it is a deletion root rather than a descendant of parent.
+        final List<ProjectDao.DeletedProjectRow> deleted = withJdbiHandle(handle ->
+                handle.attach(ProjectDao.class).deleteProjects(List.of(parent.getUuid(), child.getUuid())));
+
+        assertThat(deleted).satisfiesExactlyInAnyOrder(
+                row -> {
+                    assertThat(row.uuid()).isEqualTo(parent.getUuid());
+                    assertThat(row.ancestorUuid()).isNull();
+                },
+                row -> {
+                    assertThat(row.uuid()).isEqualTo(child.getUuid());
+                    assertThat(row.ancestorUuid()).isNull();
+                },
+                row -> {
+                    assertThat(row.uuid()).isEqualTo(grandChild.getUuid());
+                    assertThat(row.ancestorUuid()).isEqualTo(child.getUuid());
+                });
     }
 }

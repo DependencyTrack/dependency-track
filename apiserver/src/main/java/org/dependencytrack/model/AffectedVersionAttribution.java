@@ -71,7 +71,10 @@ public class AffectedVersionAttribution implements Serializable {
 
     @Persistent
     @Column(name = "LAST_SEEN", allowsNull = "false")
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            deprecated = true,
+            description = "Deprecated; always equal to firstSeen")
     private Date lastSeen;
 
     @Persistent
@@ -115,12 +118,15 @@ public class AffectedVersionAttribution implements Serializable {
 
     public void setFirstSeen(final Date firstSeen) {
         this.firstSeen = firstSeen;
+        this.lastSeen = firstSeen;
     }
 
+    @Deprecated(forRemoval = true, since = "5.1.0")
     public Date getLastSeen() {
         return lastSeen;
     }
 
+    @Deprecated(forRemoval = true, since = "5.1.0")
     public void setLastSeen(final Date lastSeen) {
         this.lastSeen = lastSeen;
     }

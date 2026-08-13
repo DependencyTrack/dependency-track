@@ -692,13 +692,6 @@ public class QueryManager extends AlpineQueryManager {
         getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability, vulnerableSoftwares, source);
     }
 
-    public boolean hasAffectedVersionAttribution(
-            final Vulnerability vulnerability,
-            final VulnerableSoftware vulnerableSoftware,
-            final Vulnerability.Source source) {
-        return getVulnerabilityQueryManager().hasAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
-    }
-
     public boolean hasVulnerabilities(final Project project) {
         return getVulnerabilityQueryManager().hasVulnerabilities(project);
     }

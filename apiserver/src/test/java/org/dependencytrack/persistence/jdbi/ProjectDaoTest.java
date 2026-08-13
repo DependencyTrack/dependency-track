@@ -402,4 +402,67 @@ public class ProjectDaoTest extends PersistenceCapableTest {
         qm.persist(project);
         assertThat(projectDao.getProjectId(project.getUuid())).isEqualTo(project.getId());
     }
+
+    @Test
+    public void testGetProjectsDeletedAsDescendants() {
+        final var parent = new Project();
+        parent.setName("acme-app-parent");
+        parent.setVersion("1.0.0");
+        qm.persist(parent);
+
+        final var child = new Project();
+        child.setParent(parent);
+        child.setName("acme-app-child");
+        child.setVersion("1.0.0");
+        qm.persist(child);
+
+        final var grandChild = new Project();
+        grandChild.setParent(child);
+        grandChild.setName("acme-app-grandchild");
+        grandChild.setVersion("1.0.0");
+        qm.persist(grandChild);
+
+        final var unrelated = new Project();
+        unrelated.setName("other-app");
+        unrelated.setVersion("1.0.0");
+        qm.persist(unrelated);
+
+        assertThat(projectDao.getProjectsDeletedAsDescendants(List.of(parent.getUuid())))
+                .satisfiesExactlyInAnyOrder(
+                        descendant -> {
+                            assertThat(descendant.uuid()).isEqualTo(child.getUuid());
+                            assertThat(descendant.name()).isEqualTo("acme-app-child");
+                            assertThat(descendant.version()).isEqualTo("1.0.0");
+                            assertThat(descendant.depth()).isEqualTo(1);
+                            assertThat(descendant.ancestorUuid()).isEqualTo(parent.getUuid());
+                            assertThat(descendant.ancestorName()).isEqualTo("acme-app-parent");
+                            assertThat(descendant.ancestorVersion()).isEqualTo("1.0.0");
+                        },
+                        descendant -> {
+                            assertThat(descendant.uuid()).isEqualTo(grandChild.getUuid());
+                            assertThat(descendant.name()).isEqualTo("acme-app-grandchild");
+                            assertThat(descendant.version()).isEqualTo("1.0.0");
+                            assertThat(descendant.depth()).isEqualTo(2);
+                            assertThat(descendant.ancestorUuid()).isEqualTo(parent.getUuid());
+                            assertThat(descendant.ancestorName()).isEqualTo("acme-app-parent");
+                            assertThat(descendant.ancestorVersion()).isEqualTo("1.0.0");
+                        });
+
+        // When both parent and child are deleted, attribute grandchild to the closest ancestor.
+        assertThat(projectDao.getProjectsDeletedAsDescendants(List.of(parent.getUuid(), child.getUuid())))
+                .satisfiesExactlyInAnyOrder(
+                        descendant -> {
+                            assertThat(descendant.uuid()).isEqualTo(child.getUuid());
+                            assertThat(descendant.depth()).isEqualTo(1);
+                            assertThat(descendant.ancestorUuid()).isEqualTo(parent.getUuid());
+                        },
+                        descendant -> {
+                            assertThat(descendant.uuid()).isEqualTo(grandChild.getUuid());
+                            assertThat(descendant.depth()).isEqualTo(1);
+                            assertThat(descendant.ancestorUuid()).isEqualTo(child.getUuid());
+                        });
+
+        assertThat(projectDao.getProjectsDeletedAsDescendants(List.of(unrelated.getUuid()))).isEmpty();
+        assertThat(projectDao.getProjectsDeletedAsDescendants(List.of(grandChild.getUuid()))).isEmpty();
+    }
 }

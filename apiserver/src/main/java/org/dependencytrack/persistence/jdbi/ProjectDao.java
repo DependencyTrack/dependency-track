@@ -737,6 +737,44 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
     @GetGeneratedKeys
     Set<UUID> deleteProjects(@Bind Collection<UUID> projectUuids);
 
+    /**
+     * Projects that will be removed by {@code ON DELETE CASCADE} when the given
+     * ancestors are deleted. When multiple requested ancestors are on the same
+     * path, each descendant is attributed to the closest one ({@code DEPTH} ascending).
+     */
+    @SqlQuery("""
+            SELECT DISTINCT ON (descendant."ID")
+                   descendant."UUID" AS "UUID"
+                 , descendant."NAME" AS "NAME"
+                 , descendant."VERSION" AS "VERSION"
+                 , ph."DEPTH" AS "DEPTH"
+                 , ancestor."UUID" AS "ANCESTOR_UUID"
+                 , ancestor."NAME" AS "ANCESTOR_NAME"
+                 , ancestor."VERSION" AS "ANCESTOR_VERSION"
+              FROM "PROJECT_HIERARCHY" AS ph
+             INNER JOIN "PROJECT" AS ancestor
+                ON ancestor."ID" = ph."PARENT_PROJECT_ID"
+             INNER JOIN "PROJECT" AS descendant
+                ON descendant."ID" = ph."CHILD_PROJECT_ID"
+             WHERE ancestor."UUID" = ANY(:ancestorUuids)
+               AND ph."DEPTH" > 0
+             ORDER BY descendant."ID"
+                    , ph."DEPTH"
+                    , ancestor."ID"
+            """)
+    @RegisterConstructorMapper(ProjectDeletedAsDescendant.class)
+    List<ProjectDeletedAsDescendant> getProjectsDeletedAsDescendants(@Bind Collection<UUID> ancestorUuids);
+
+    record ProjectDeletedAsDescendant(
+            @ColumnName("UUID") UUID uuid,
+            @ColumnName("NAME") String name,
+            @ColumnName("VERSION") String version,
+            @ColumnName("DEPTH") int depth,
+            @ColumnName("ANCESTOR_UUID") UUID ancestorUuid,
+            @ColumnName("ANCESTOR_NAME") String ancestorName,
+            @ColumnName("ANCESTOR_VERSION") String ancestorVersion) {
+    }
+
     @SqlQuery("""
              WITH "CTE" AS (
                SELECT "ID"

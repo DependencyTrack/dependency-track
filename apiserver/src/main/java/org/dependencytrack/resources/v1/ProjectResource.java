@@ -1040,11 +1040,18 @@ public class ProjectResource extends AbstractApiResource {
                 }
                 requireAccess(qm, project);
 
+                final List<ProjectDao.ProjectDeletedAsDescendant> deletedAsDescendants = withJdbiHandle(
+                        getAlpineRequest(),
+                        handle -> handle.attach(ProjectDao.class)
+                                .getProjectsDeletedAsDescendants(Set.of(project.getUuid())));
+
                 try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());
                      var _ = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
                      var _ = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
-                    LOGGER.info("Project {} deletion request by {}", project, super.getPrincipal().getName());
+                    LOGGER.info(SecurityMarkers.SECURITY_AUDIT,
+                            "Project {} deletion request by {}", project, super.getPrincipal().getName());
                 }
+                logProjectsDeletedAsDescendants(deletedAsDescendants);
 
                 qm.delete(project);
             });
@@ -1070,13 +1077,44 @@ public class ProjectResource extends AbstractApiResource {
             Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE
     })
     public Response deleteProjects(@Size(min = 1, max = 1000) final Set<UUID> uuids) {
-        final Set<UUID> deletedProjectUuids = inJdbiTransaction(
-                getAlpineRequest(),
-                handle -> handle.attach(ProjectDao.class).deleteProjects(uuids));
-        for (final UUID uuid : deletedProjectUuids) {
-            LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted project {}", uuid);
+        record BatchDeleteResult(
+                Set<UUID> deletedProjectUuids,
+                List<ProjectDao.ProjectDeletedAsDescendant> deletedAsDescendants) {
         }
+
+        final BatchDeleteResult result = inJdbiTransaction(getAlpineRequest(), handle -> {
+            final ProjectDao projectDao = handle.attach(ProjectDao.class);
+            final Set<UUID> accessibleProjectUuids = projectDao.getAccessibleProjectUuids(uuids);
+            final List<ProjectDao.ProjectDeletedAsDescendant> deletedAsDescendants = accessibleProjectUuids.isEmpty()
+                    ? List.of()
+                    : projectDao.getProjectsDeletedAsDescendants(accessibleProjectUuids).stream()
+                    // Skip projects that were explicitly requested for deletion;
+                    // those are covered by the direct "Deleted project" log below.
+                    .filter(descendant -> !accessibleProjectUuids.contains(descendant.uuid()))
+                    .toList();
+            return new BatchDeleteResult(projectDao.deleteProjects(uuids), deletedAsDescendants);
+        });
+        for (final UUID deletedUuid : result.deletedProjectUuids()) {
+            LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted project {}", deletedUuid);
+        }
+        logProjectsDeletedAsDescendants(result.deletedAsDescendants());
         return Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    private static void logProjectsDeletedAsDescendants(
+            final List<ProjectDao.ProjectDeletedAsDescendant> deletedAsDescendants) {
+        for (final ProjectDao.ProjectDeletedAsDescendant deletedAsDescendant : deletedAsDescendants) {
+            try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, deletedAsDescendant.uuid().toString());
+                 var _ = MDC.putCloseable(MDC_PROJECT_NAME, deletedAsDescendant.name());
+                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, deletedAsDescendant.version())) {
+                LOGGER.info(SecurityMarkers.SECURITY_AUDIT,
+                        "Project {} deleted as child of {}",
+                        deletedAsDescendant.version() == null
+                                ? deletedAsDescendant.name()
+                                : deletedAsDescendant.name() + " : " + deletedAsDescendant.version(),
+                        deletedAsDescendant.ancestorUuid());
+            }
+        }
     }
 
     @PUT

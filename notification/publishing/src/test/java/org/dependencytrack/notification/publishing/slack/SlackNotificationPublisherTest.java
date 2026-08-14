@@ -74,7 +74,112 @@ class SlackNotificationPublisherTest extends AbstractNotificationPublisherTest {
             case GROUP_BOM_VALIDATION_FAILED -> validateBomValidationFailedNotificationPublish();
             case GROUP_NEW_VULNERABILITY -> validateNewVulnerabilityNotificationPublish();
             case GROUP_NEW_VULNERABLE_DEPENDENCY -> validateNewVulnerableDependencyNotificationPublish();
+            case GROUP_POLICY_VIOLATION -> validatePolicyViolationNotificationPublish();
         }
+    }
+
+    private void validatePolicyViolationNotificationPublish() {
+        WIREMOCK.verify(postRequestedFor(urlPathEqualTo("/"))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalToJson(/* language=JSON */ """
+                        {
+                          "blocks": [
+                            {
+                              "type": "header",
+                              "text": {
+                                "type": "plain_text",
+                                "text": "Policy Violation"
+                              }
+                            },
+                            {
+                              "type": "context",
+                              "elements": [
+                                {
+                                  "text": "*LEVEL_INFORMATIONAL*  |  *SCOPE_PORTFOLIO* | *OPERATIONAL*",
+                                  "type": "mrkdwn"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "divider"
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "OWASP Dependency-Track detected a policy violation. Details of the violation follow.",
+                                "type": "plain_text"
+                              },
+                              "fields": [
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Subject*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "emoji": true,
+                                  "text": "PACKAGE_URL"
+                                },
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Operator*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "emoji": true,
+                                  "text": "IS"
+                                },
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Value*"
+                                },
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "`pkg:maven/foo/bar@1.2.3`"
+                                },
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Component*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "componentName : componentVersion"
+                                },
+                                {
+                                  "type": "mrkdwn",
+                                  "text": "*Project*"
+                                },
+                                {
+                                  "type": "plain_text",
+                                  "text": "uuid: \\"c9c9539a-e381-4b36-ac52-6a7ab83b2c95\\"\\nname: \\"projectName\\"\\nversion: \\"projectVersion\\"\\ndescription: \\"projectDescription\\"\\npurl: \\"pkg:maven/org.acme/projectName@projectVersion\\"\\ntags: \\"tag1\\"\\ntags: \\"tag2\\"\\nis_active: true\\n"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "actions",
+                              "elements": [
+                                {
+                                  "type": "button",
+                                  "text": {
+                                    "type": "plain_text",
+                                    "text": "View Project"
+                                  },
+                                  "action_id": "actionId-1",
+                                  "url": "https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95"
+                                },
+                                {
+                                  "type": "button",
+                                  "text": {
+                                    "type": "plain_text",
+                                    "text": "View Component"
+                                  },
+                                  "action_id": "actionId-2",
+                                  "url": "https://example.com/components/94f87321-a5d1-4c2f-b2fe-95165debebc6"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                        """)));
     }
 
     private void validateBomConsumedNotificationPublish() {

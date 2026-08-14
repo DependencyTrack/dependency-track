@@ -61,6 +61,7 @@ import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.jdbi.ComponentDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
@@ -577,9 +578,11 @@ public class ComponentResource extends AbstractApiResource {
                 final Component component = qm.getObjectByUuid(Component.class, uuid, Component.FetchGroup.ALL.name());
                 if (component != null) {
                     requireAccess(qm, component.getProject());
+                    final UUID projectUuid = component.getProject().getUuid();
                     try (final Handle jdbiHandle = openJdbiHandle()) {
                         final var componentDao = jdbiHandle.attach(ComponentDao.class);
                         componentDao.deleteComponent(component.getUuid());
+                        jdbiHandle.attach(ProjectDao.class).markComponentsChangedSinceAnalysis(projectUuid);
                     }
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {

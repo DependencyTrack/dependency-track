@@ -1022,34 +1022,21 @@ public class ProjectResource extends AbstractApiResource {
                     responseCode = "403",
                     description = "Access to the requested project is forbidden",
                     content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "The UUID of the project could not be found"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "The UUID of the project could not be found",
+                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
             @ApiResponse(responseCode = "500", description = "Unable to delete components of the project")
     })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE})
     public Response deleteProject(
             @Parameter(description = "The UUID of the project to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            qm.runInTransaction(() -> {
-                final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
-                if (project == null) {
-                    throw new ClientErrorException(Response
-                            .status(Response.Status.NOT_FOUND)
-                            .entity("The UUID of the project could not be found.")
-                            .build());
-                }
-                requireAccess(qm, project);
-
-                try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());
-                     var _ = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
-                     var _ = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
-                    LOGGER.info("Project {} deletion request by {}", project, super.getPrincipal().getName());
-                }
-
-                qm.delete(project);
-            });
-        }
-
+        final UUID projectUuid = UUID.fromString(uuid);
+        logDeletedProjects(inJdbiTransaction(getAlpineRequest(), handle -> {
+            requireProjectAccess(handle, projectUuid);
+            return handle.attach(ProjectDao.class).deleteProjects(Set.of(projectUuid));
+        }));
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
@@ -1070,13 +1057,32 @@ public class ProjectResource extends AbstractApiResource {
             Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE
     })
     public Response deleteProjects(@Size(min = 1, max = 1000) final Set<UUID> uuids) {
-        final Set<UUID> deletedProjectUuids = inJdbiTransaction(
-                getAlpineRequest(),
-                handle -> handle.attach(ProjectDao.class).deleteProjects(uuids));
-        for (final UUID uuid : deletedProjectUuids) {
-            LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted project {}", uuid);
-        }
+        logDeletedProjects(inJdbiTransaction(getAlpineRequest(), handle ->
+                handle.attach(ProjectDao.class).deleteProjects(uuids)));
         return Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    private static void logDeletedProjects(final List<ProjectDao.DeletedProjectRow> deletedProjects) {
+        for (final ProjectDao.DeletedProjectRow deletedProject : deletedProjects) {
+            try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, deletedProject.uuid().toString());
+                 var _ = MDC.putCloseable(MDC_PROJECT_NAME, deletedProject.name());
+                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, String.valueOf(deletedProject.version()))) {
+                if (deletedProject.ancestorUuid() == null) {
+                    LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted project {}",
+                            formatDeletedProject(deletedProject));
+                } else {
+                    LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted project {} as descendant of {}",
+                            formatDeletedProject(deletedProject),
+                            deletedProject.ancestorUuid());
+                }
+            }
+        }
+    }
+
+    private static String formatDeletedProject(final ProjectDao.DeletedProjectRow deletedProject) {
+        return deletedProject.version() == null
+                ? deletedProject.name()
+                : deletedProject.name() + " : " + deletedProject.version();
     }
 
     @PUT

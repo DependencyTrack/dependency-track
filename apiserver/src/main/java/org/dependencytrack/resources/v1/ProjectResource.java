@@ -1033,24 +1033,10 @@ public class ProjectResource extends AbstractApiResource {
             @Parameter(description = "The UUID of the project to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
         final UUID projectUuid = UUID.fromString(uuid);
-        final List<ProjectDao.DeletedProjectRow> deletedProjects = inJdbiTransaction(getAlpineRequest(), handle -> {
+        logDeletedProjects(inJdbiTransaction(getAlpineRequest(), handle -> {
             requireProjectAccess(handle, projectUuid);
             return handle.attach(ProjectDao.class).deleteProjects(Set.of(projectUuid));
-        });
-        for (final ProjectDao.DeletedProjectRow deletedProject : deletedProjects) {
-            if (deletedProject.ancestorUuid() != null) {
-                continue;
-            }
-            try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, deletedProject.uuid().toString());
-                 var _ = MDC.putCloseable(MDC_PROJECT_NAME, deletedProject.name());
-                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, String.valueOf(deletedProject.version()))) {
-                LOGGER.info(SecurityMarkers.SECURITY_AUDIT,
-                        "Project {} deletion request by {}",
-                        formatDeletedProject(deletedProject),
-                        super.getPrincipal().getName());
-            }
-        }
-        logProjectsDeletedAsDescendants(deletedProjects);
+        }));
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
@@ -1071,31 +1057,24 @@ public class ProjectResource extends AbstractApiResource {
             Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE
     })
     public Response deleteProjects(@Size(min = 1, max = 1000) final Set<UUID> uuids) {
-        final List<ProjectDao.DeletedProjectRow> deletedProjects = inJdbiTransaction(getAlpineRequest(), handle ->
-                handle.attach(ProjectDao.class).deleteProjects(uuids));
-        for (final ProjectDao.DeletedProjectRow deletedProject : deletedProjects) {
-            if (deletedProject.ancestorUuid() != null) {
-                continue;
-            }
-            LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted project {}", deletedProject.uuid());
-        }
-        logProjectsDeletedAsDescendants(deletedProjects);
+        logDeletedProjects(inJdbiTransaction(getAlpineRequest(), handle ->
+                handle.attach(ProjectDao.class).deleteProjects(uuids)));
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
-    private static void logProjectsDeletedAsDescendants(
-            final List<ProjectDao.DeletedProjectRow> deletedProjects) {
+    private static void logDeletedProjects(final List<ProjectDao.DeletedProjectRow> deletedProjects) {
         for (final ProjectDao.DeletedProjectRow deletedProject : deletedProjects) {
-            if (deletedProject.ancestorUuid() == null) {
-                continue;
-            }
             try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, deletedProject.uuid().toString());
                  var _ = MDC.putCloseable(MDC_PROJECT_NAME, deletedProject.name());
                  var _ = MDC.putCloseable(MDC_PROJECT_VERSION, String.valueOf(deletedProject.version()))) {
-                LOGGER.info(SecurityMarkers.SECURITY_AUDIT,
-                        "Project {} deleted as child of {}",
-                        formatDeletedProject(deletedProject),
-                        deletedProject.ancestorUuid());
+                if (deletedProject.ancestorUuid() == null) {
+                    LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted project {}",
+                            formatDeletedProject(deletedProject));
+                } else {
+                    LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted project {} as descendant of {}",
+                            formatDeletedProject(deletedProject),
+                            deletedProject.ancestorUuid());
+                }
             }
         }
     }

@@ -760,10 +760,10 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
     List<DeletedProjectRow> deleteProjects(@Bind Collection<UUID> projectUuids);
 
     record DeletedProjectRow(
-            @ColumnName("UUID") UUID uuid,
-            @ColumnName("NAME") String name,
-            @ColumnName("VERSION") String version,
-            @ColumnName("ANCESTOR_UUID") @Nullable UUID ancestorUuid) {
+            UUID uuid,
+            String name,
+            @Nullable String version,
+            @Nullable UUID ancestorUuid) {
     }
 
     @SqlQuery("""

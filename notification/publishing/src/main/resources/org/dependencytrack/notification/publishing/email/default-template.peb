@@ -40,9 +40,9 @@ Analysis Type:  Project Analysis
 Commenter:         {{ comment.commenter}}{% endif %}{% endfor %}
 Violation Analysis State:    {{ subject.violationAnalysis.state }}
 Suppressed:        {{ subject.violationAnalysis.suppressed }}
-Policy:            {{ subject.policyViolation.policyCondition.policy.name }}
-Policy Violation State: {{ subject.policyViolation.policyCondition.policy.violationState }}
-Policy Condition:  subject == {{ subject.policyViolation.policyCondition.subject }} && value {{ subject.policyViolation.policyCondition.operator }} {{ subject.policyViolation.policyCondition.value }}
+Policy:            {{ subject.policyViolation.condition.policy.name }}
+Policy Violation State: {{ subject.policyViolation.condition.policy.violationState }}
+Policy Condition:  subject == {{ subject.policyViolation.condition.subject }} && value {{ subject.policyViolation.condition.operator }} {{ subject.policyViolation.condition.value }}
 {% else %}{% for comment in subject.analysis.analysisComments %} {% if loop.last and comment.commenter is not null %}
 Commenter:         {{ comment.commenter}}{% endif %}{% endfor %}
 Analysis State:    {{ subject.analysis.state }}
@@ -109,7 +109,7 @@ Component:         {{ subject.component.name }}
 Component Version: {{ subject.component.version }}
 Component URL:     {{ baseUrl }}/components/{{ subject.component.uuid }}
 
-Violated Policy:   {{ subject.policyViolation.policyCondition.policy.name }}
+Violated Policy:   {{ subject.policyViolation.condition.policy.name }}
 {% elseif notification.group == "GROUP_NEW_VULNERABILITIES_SUMMARY" %}
 Overview:
 - New Vulnerabilities: {{ subject.overview.totalNewVulnerabilitiesCount }} (Suppressed: {{ subject.overview.suppressedNewVulnerabilitiesCount }})

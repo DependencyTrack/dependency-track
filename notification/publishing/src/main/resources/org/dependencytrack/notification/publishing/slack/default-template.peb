@@ -324,7 +324,7 @@
 		{
 		  "type": "plain_text",
 		  "emoji": true,
-		  "text": "{{ subject.policyViolation.policyCondition.subject | escape(strategy="json") }}"
+		  "text": "{{ subject.policyViolation.condition.subject | escape(strategy="json") }}"
 		},
 		{
 		  "type": "mrkdwn",
@@ -333,7 +333,7 @@
 		{
 		  "type": "plain_text",
 		  "emoji": true,
-		  "text": "{{ subject.policyViolation.policyCondition.operator | escape(strategy="json") }}"
+		  "text": "{{ subject.policyViolation.condition.operator | escape(strategy="json") }}"
 		},
 		{
 		  "type": "mrkdwn",
@@ -341,7 +341,7 @@
 		},
 		{
 		  "type": "mrkdwn",
-		  "text": "`{{ subject.policyViolation.policyCondition.value | escape(strategy="json") }}`"
+		  "text": "`{{ subject.policyViolation.condition.value | escape(strategy="json") }}`"
 		},
 		{
 		  "type": "mrkdwn",

@@ -47,6 +47,12 @@ public final class PebbleNotificationTemplateRendererFactory {
     private final Map<String, Supplier<Object>> contextVariableSuppliers;
 
     public PebbleNotificationTemplateRendererFactory(Map<String, Supplier<Object>> contextVariableSuppliers) {
+        this(contextVariableSuppliers, /* strictVariables */ false);
+    }
+
+    public PebbleNotificationTemplateRendererFactory(
+            Map<String, Supplier<Object>> contextVariableSuppliers,
+            boolean strictVariables) {
         this.pebbleEngine = new PebbleEngine.Builder()
                 .registerExtensionCustomizer(
                         new DisallowExtensionCustomizerBuilder()
@@ -54,6 +60,7 @@ public final class PebbleNotificationTemplateRendererFactory {
                                 .build())
                 .extension(new PebbleExtension())
                 .defaultEscapingStrategy("json")
+                .strictVariables(strictVariables)
                 .newLineTrimming(false)
                 .templateCache(new CaffeineTemplateCache())
                 .build();

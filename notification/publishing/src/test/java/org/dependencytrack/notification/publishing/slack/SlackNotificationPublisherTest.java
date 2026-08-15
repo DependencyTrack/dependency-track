@@ -280,7 +280,7 @@ class SlackNotificationPublisherTest extends AbstractNotificationPublisherTest {
                               "type": "header",
                               "text": {
                                 "type": "plain_text",
-                                "text": "GROUP_BOM_VALIDATION_FAILED"
+                                "text": "GROUP_BOM_VALIDATION_FAILED | projectName : projectVersion"
                               }
                             },
                             {
@@ -306,6 +306,13 @@ class SlackNotificationPublisherTest extends AbstractNotificationPublisherTest {
                               "type": "section",
                               "text": {
                                 "text": "An error occurred while validating a BOM",
+                                "type": "plain_text"
+                              }
+                            },
+                            {
+                              "type": "section",
+                              "text": {
+                                "text": "cause 1, cause 2",
                                 "type": "plain_text"
                               }
                             }

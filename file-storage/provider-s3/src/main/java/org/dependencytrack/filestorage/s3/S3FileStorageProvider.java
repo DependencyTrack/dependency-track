@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.ProxySelector;
 import java.time.Duration;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -104,27 +103,24 @@ public final class S3FileStorageProvider implements FileStorageProvider {
                 .getOptionalValue("dt.file-storage.s3.credentials-source", CredentialsSource.class)
                 .orElse(CredentialsSource.STATIC);
 
+        final var accessKey = config
+                .getOptionalValue("dt.file-storage.s3.access-key", String.class).orElse(null);
+        final var secretKey = config
+                .getOptionalValue("dt.file-storage.s3.secret-key", String.class).orElse(null);
+
         return switch (credentialsSource) {
             case STATIC -> {
-                final var accessKey = config
-                        .getOptionalValue("dt.file-storage.s3.access-key", String.class).orElse(null);
-                final var secretKey = config
-                        .getOptionalValue("dt.file-storage.s3.secret-key", String.class).orElse(null);
-                if (Objects.nonNull(accessKey) && Objects.nonNull(secretKey)) {
+                if (accessKey != null && secretKey != null) {
                     yield Optional.of(new StaticProvider(accessKey, secretKey, null));
                 }
-                if (Objects.nonNull(accessKey) || Objects.nonNull(secretKey)) {
+                if (accessKey != null || secretKey != null) {
                     throw new IllegalStateException(
                             "Both dt.file-storage.s3.access-key and dt.file-storage.s3.secret-key must be set when using static credentials");
                 }
                 yield Optional.empty();
             }
             case AWS -> {
-                final var accessKey = config
-                        .getOptionalValue("dt.file-storage.s3.access-key", String.class).orElse(null);
-                final var secretKey = config
-                        .getOptionalValue("dt.file-storage.s3.secret-key", String.class).orElse(null);
-                if (Objects.nonNull(accessKey) || Objects.nonNull(secretKey)) {
+                if (accessKey != null || secretKey != null) {
                     throw new IllegalStateException(
                             "Conflicting credentials configuration: dt.file-storage.s3.credentials-source is aws, "
                                     + "but dt.file-storage.s3.access-key or dt.file-storage.s3.secret-key is also configured");

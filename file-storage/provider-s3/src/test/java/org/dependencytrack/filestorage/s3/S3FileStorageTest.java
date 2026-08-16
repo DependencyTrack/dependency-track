@@ -53,7 +53,7 @@ class S3FileStorageTest {
     void shouldThrowWhenBucketDoesNotExist() {
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> {
-                    try (final FileStorage ignored = createStorage(Map.ofEntries(
+                    try (final FileStorage _ = createStorage(Map.ofEntries(
                             Map.entry("dt.file-storage.s3.endpoint", s3MockContainer.getHttpEndpoint()),
                             Map.entry("dt.file-storage.s3.access-key", "foo"),
                             Map.entry("dt.file-storage.s3.secret-key", "bar"),
@@ -66,7 +66,7 @@ class S3FileStorageTest {
     void shouldThrowWhenBucketExistenceCheckFailed() {
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> {
-                    try (final FileStorage ignored = createStorage(Map.ofEntries(
+                    try (final FileStorage _ = createStorage(Map.ofEntries(
                             Map.entry("dt.file-storage.s3.endpoint", "http://localhost:1"),
                             Map.entry("dt.file-storage.s3.access-key", "foo"),
                             Map.entry("dt.file-storage.s3.secret-key", "bar"),

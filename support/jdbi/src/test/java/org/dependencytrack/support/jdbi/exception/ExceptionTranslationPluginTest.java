@@ -91,4 +91,14 @@ class ExceptionTranslationPluginTest {
                 });
     }
 
+    @Test
+    void shouldTranslateQueryTimeout() {
+        assertThatExceptionOfType(QueryTimeoutException.class)
+                .isThrownBy(() -> jdbi.useHandle(handle -> {
+                    handle.execute("SET statement_timeout TO 100");
+                    handle.createQuery("SELECT pg_sleep(1)").mapTo(String.class).one();
+                }))
+                .satisfies(e -> assertThat(e.getSqlState()).isEqualTo("57014"));
+    }
+
 }

@@ -45,6 +45,7 @@ import org.dependencytrack.cache.CacheManagerInitializer;
 import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.LegacyConfigPropertyValidator;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
+import org.dependencytrack.common.datasource.QueryTimeout;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dev.DevServices;
 import org.dependencytrack.dex.DexEngineBinder;
@@ -169,7 +170,13 @@ public final class Application {
                 final var initTaskExecutor = new InitTaskExecutor(
                         config, dataSourceRegistry.get(dataSourceName),
                         initTasksHealthCheck);
-                initTaskExecutor.execute();
+
+                // NB: Init tasks include schema migrations, whose statements legitimately
+                // run longer than the default query timeout allows. Bypass the timeout for them.
+                QueryTimeout.bypassing(() -> {
+                    initTaskExecutor.execute();
+                    return null;
+                });
 
                 if (config.getValue(ConfigKeys.INIT_TASKS_DATASOURCE_CLOSE_AFTER_COMPLETION, boolean.class)) {
                     dataSourceRegistry.close(dataSourceName);

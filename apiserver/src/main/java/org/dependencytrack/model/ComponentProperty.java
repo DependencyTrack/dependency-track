@@ -31,6 +31,8 @@ import jakarta.validation.constraints.Size;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.jdo.annotations.Column;
+import javax.jdo.annotations.ForeignKey;
+import javax.jdo.annotations.ForeignKeyAction;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -62,6 +64,11 @@ public class ComponentProperty implements IConfigProperty, Serializable {
     private long id;
 
     @Persistent
+    @ForeignKey(
+            name = "COMPONENT_PROPERTY_COMPONENT_ID_FK",
+            deferred = "true",
+            deleteAction = ForeignKeyAction.CASCADE,
+            updateAction = ForeignKeyAction.NONE)
     @Column(name = "COMPONENT_ID", allowsNull = "false")
     @JsonIgnore
     private Component component;

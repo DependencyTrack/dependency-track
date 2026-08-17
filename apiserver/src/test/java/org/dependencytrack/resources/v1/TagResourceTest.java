@@ -406,6 +406,8 @@ class TagResourceTest extends ResourceTest {
 
         qm.getPersistenceManager().evictAll();
         assertThat(qm.getTagByName("foo")).isNull();
+        assertThat(qm.getTagByName("bar")).isNull();
+        assertThat(qm.getObjectById(Project.class, project.getId()).getTags()).isEmpty();
     }
 
     @Test

@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.tasks;
 
+import alpine.persistence.ScopedCustomization;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.cyclonedx.exception.ParseException;
@@ -85,6 +86,7 @@ import static org.apache.commons.lang3.StringUtils.trimToNull;
 import static org.apache.commons.lang3.time.DurationFormatUtils.formatDurationHMS;
 import static org.datanucleus.PropertyNames.PROPERTY_FLUSH_MODE;
 import static org.datanucleus.PropertyNames.PROPERTY_PERSISTENCE_BY_REACHABILITY_AT_COMMIT;
+import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
 import static org.dependencytrack.common.MdcKeys.MDC_BOM_FORMAT;
 import static org.dependencytrack.common.MdcKeys.MDC_BOM_SERIAL_NUMBER;
@@ -822,9 +824,21 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             return 0;
         }
 
-        final PersistenceManager pm = qm.getPersistenceManager();
         LOGGER.info("Deleting %d component(s) that are no longer part of the project".formatted(componentIds.size()));
-        return pm.newQuery(Component.class, ":ids.contains(id)").deletePersistentAll(componentIds);
+
+        final PersistenceManager pm = qm.getPersistenceManager();
+        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
+            final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
+                    DELETE
+                      FROM "COMPONENT"
+                     WHERE "ID" = ANY(:ids)
+                    """);
+            try {
+                return (Long) query.executeWithMap(Map.of("ids", componentIds.toArray(new Long[0])));
+            } finally {
+                query.closeAll();
+            }
+        }
     }
 
     private static long deleteServicesById(final QueryManager qm, final Collection<Long> serviceIds) {

@@ -1224,6 +1224,61 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         });
     }
 
+    @Test
+    void informWithExistingComponentNoLongerPartOfBomTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var removedComponent = new Component();
+        removedComponent.setProject(project);
+        removedComponent.setName("acme-lib-removed");
+        removedComponent.setClassifier(Classifier.LIBRARY);
+        qm.persist(removedComponent);
+
+        final var removedComponentProperty = new ComponentProperty();
+        removedComponentProperty.setComponent(removedComponent);
+        removedComponentProperty.setPropertyName("foo");
+        removedComponentProperty.setPropertyValue("bar");
+        removedComponentProperty.setPropertyType(PropertyType.STRING);
+        qm.persist(removedComponentProperty);
+
+        final var removedComponentOccurrence = new ComponentOccurrence();
+        removedComponentOccurrence.setComponent(removedComponent);
+        removedComponentOccurrence.setLocation("/foo/bar/baz");
+        qm.persist(removedComponentOccurrence);
+
+        final var retainedComponent = new Component();
+        retainedComponent.setProject(project);
+        retainedComponent.setName("acme-lib-retained");
+        retainedComponent.setClassifier(Classifier.LIBRARY);
+        qm.persist(retainedComponent);
+
+        final var bomFileMetadata = storeBomFile(/* language=JSON */ """
+                {
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.6",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib-retained"
+                    }
+                  ]
+                }
+                """.getBytes(StandardCharsets.UTF_8));
+        final var bomUploadToken = UUID.randomUUID();
+        activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
+        assertBomProcessedNotification();
+
+        qm.getPersistenceManager().evictAll();
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(
+                component -> assertThat(component.getName()).isEqualTo("acme-lib-retained"));
+        
+        assertThat(qm.getPersistenceManager().newQuery(ComponentProperty.class).executeList()).isEmpty();
+        assertThat(qm.getPersistenceManager().newQuery(ComponentOccurrence.class).executeList()).isEmpty();
+    }
+
     @Test // https://github.com/DependencyTrack/dependency-track/issues/3957
     void informIssue3957Test() throws Exception {
         final var licenseA = new License();

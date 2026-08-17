@@ -38,7 +38,7 @@ import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
-import org.dependencytrack.kevdatasource.MirrorKevDataSourceWorkflow;
+import org.dependencytrack.kevdatasource.KevDataSourceMirrorService;
 import org.dependencytrack.kevdatasource.api.KevDataSource;
 import org.dependencytrack.kevdatasource.api.KevDataSourceFactory;
 import org.dependencytrack.metrics.UpdatePortfolioMetricsWorkflow;
@@ -49,7 +49,6 @@ import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.policy.vulnerability.SyncVulnPolicyBundleWorkflow;
-import org.dependencytrack.proto.internal.workflow.v1.MirrorKevDataSourceArg;
 import org.dependencytrack.proto.internal.workflow.v1.ProcessScheduledNotificationsWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.secret.management.SecretManager;
@@ -180,6 +179,7 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
             DexEngine dexEngine,
             PluginManager pluginManager,
             SecretManager secretManager) {
+        final var kevDataSourceMirrorService = new KevDataSourceMirrorService(pluginManager, dexEngine);
         final var vulnDataSourceMirrorService = new VulnDataSourceMirrorService(pluginManager, dexEngine);
 
         return List.of(
@@ -202,17 +202,7 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                             final Collection<KevDataSourceFactory> factories =
                                     pluginManager.getFactories(KevDataSource.class);
                             for (final KevDataSourceFactory factory : factories) {
-                                final String name = factory.extensionName();
-                                if (!factory.isEnabled()) {
-                                    continue;
-                                }
-
-                                dexEngine.createRun(
-                                        new CreateWorkflowRunRequest<>(MirrorKevDataSourceWorkflow.class)
-                                                .withWorkflowInstanceId("mirror-kev-data-source:" + name)
-                                                .withArgument(MirrorKevDataSourceArg.newBuilder()
-                                                        .setDataSourceName(name)
-                                                        .build()));
+                                kevDataSourceMirrorService.trigger(factory.extensionName(), null);
                             }
                         }),
                 recurringTask(

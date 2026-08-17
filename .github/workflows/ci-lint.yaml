@@ -158,3 +158,19 @@ jobs:
           #   * All actions/checkout steps set persist-credentials to false.
           #   * Our multi-file setup requires resolving of external (file) references.
           allow-external-refs: true
+
+  lint-gha:
+    name: Lint GitHub Actions
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2

@@ -2093,6 +2093,51 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void getProjectByUuidWithAccessTeamsTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.addAccessTeam(team);
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_PROJECT + "/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .withMatcher("teamUuid", equalTo(team.getUuid().toString()))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "version": "1.0.0",
+                          "uuid": "${json-unit.matches:projectUuid}",
+                          "children": [],
+                          "tags": [],
+                          "accessTeams": [
+                            {
+                              "uuid": "${json-unit.matches:teamUuid}",
+                              "name": "Test Users"
+                            }
+                          ],
+                          "isLatest": false,
+                          "active":true,
+                          "versions": [
+                            {
+                              "uuid": "${json-unit.matches:projectUuid}",
+                              "version": "1.0.0",
+                              "isLatest": false,
+                              "active": true
+                            }
+                          ]
+                        }
+                        """);
+    }
+
+    @Test
     void getProjectByUuidNotPermittedTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
         enablePortfolioAccessControl();
@@ -4488,6 +4533,7 @@ class ProjectResourceTest extends ResourceTest {
                         """.formatted(team.getUuid())));
         assertThat(response.getStatus()).isEqualTo(201);
         assertThatJson(getPlainTextBody(response))
+                .withMatcher("teamUuid", equalTo(team.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
                           "uuid": "${json-unit.any-string}",
@@ -4495,6 +4541,12 @@ class ProjectResourceTest extends ResourceTest {
                           "classifier": "APPLICATION",
                           "children": [],
                           "tags": [],
+                          "accessTeams": [
+                            {
+                              "uuid": "${json-unit.matches:teamUuid}",
+                              "name": "Test Users"
+                            }
+                          ],
                           "active": true,
                           "isLatest": false
                         }
@@ -4529,6 +4581,7 @@ class ProjectResourceTest extends ResourceTest {
                         """.formatted(team.getName())));
         assertThat(response.getStatus()).isEqualTo(201);
         assertThatJson(getPlainTextBody(response))
+                .withMatcher("teamUuid", equalTo(team.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
                           "uuid": "${json-unit.any-string}",
@@ -4536,6 +4589,12 @@ class ProjectResourceTest extends ResourceTest {
                           "classifier": "APPLICATION",
                           "children": [],
                           "tags": [],
+                          "accessTeams": [
+                            {
+                              "uuid": "${json-unit.matches:teamUuid}",
+                              "name": "Test Users"
+                            }
+                          ],
                           "isLatest":false,
                           "active": true
                         }
@@ -4677,6 +4736,7 @@ class ProjectResourceTest extends ResourceTest {
                         """.formatted(otherTeam.getUuid())));
         assertThat(response.getStatus()).isEqualTo(201);
         assertThatJson(getPlainTextBody(response))
+                .withMatcher("teamUuid", equalTo(otherTeam.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
                           "uuid": "${json-unit.any-string}",
@@ -4684,6 +4744,12 @@ class ProjectResourceTest extends ResourceTest {
                           "classifier": "APPLICATION",
                           "children": [],
                           "tags": [],
+                          "accessTeams": [
+                            {
+                              "uuid": "${json-unit.matches:teamUuid}",
+                              "name": "otherTeam"
+                            }
+                          ],
                           "isLatest":false,
                           "active":true
                         }
@@ -4772,6 +4838,7 @@ class ProjectResourceTest extends ResourceTest {
                         """.formatted(team.getUuid())));
         assertThat(response.getStatus()).isEqualTo(201);
         assertThatJson(getPlainTextBody(response))
+                .withMatcher("teamUuid", equalTo(team.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
                           "uuid": "${json-unit.any-string}",
@@ -4779,6 +4846,12 @@ class ProjectResourceTest extends ResourceTest {
                           "classifier": "APPLICATION",
                           "children": [],
                           "tags": [],
+                          "accessTeams": [
+                            {
+                              "uuid": "${json-unit.matches:teamUuid}",
+                              "name": "Test Users"
+                            }
+                          ],
                           "isLatest":false,
                           "active":true
                         }

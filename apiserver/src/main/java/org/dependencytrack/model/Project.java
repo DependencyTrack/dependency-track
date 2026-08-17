@@ -305,6 +305,8 @@ public class Project implements Serializable {
     @Persistent(table = "PROJECT_ACCESS_TEAMS")
     @Join(column = "PROJECT_ID", primaryKey = "PROJECT_ACCESS_TEAMS_PK")
     @Element(column = "TEAM_ID")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIncludeProperties({"uuid", "name"})
     private Set<Team> accessTeams;
 
     @Persistent(defaultFetchGroup = "true")
@@ -592,7 +594,6 @@ public class Project implements Serializable {
         this.versions = versions;
     }
 
-    @JsonIgnore
     public Set<Team> getAccessTeams() {
         return accessTeams;
     }

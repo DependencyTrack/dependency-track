@@ -64,6 +64,12 @@ final class DataSourceConfig {
         return config.getOptionalValue(PREFIX + "%s.connection-timeout-ms".formatted(name), long.class);
     }
 
+    long getQueryTimeoutMillis() {
+        return config
+                .getOptionalValue(PREFIX + "%s.query-timeout-ms".formatted(name), long.class)
+                .orElse(60_000L);
+    }
+
     boolean isPoolEnabled() {
         return config.getOptionalValue(PREFIX + "%s.pool.enabled".formatted(name), boolean.class).orElse(false);
     }

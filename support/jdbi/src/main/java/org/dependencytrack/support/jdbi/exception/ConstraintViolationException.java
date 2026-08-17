@@ -50,7 +50,7 @@ public sealed class ConstraintViolationException extends RuntimeException
     }
 
     public static @Nullable ConstraintViolationException of(Throwable throwable) {
-        final PSQLException psqlException = findPSQLException(throwable);
+        final PSQLException psqlException = PSQLExceptions.find(throwable);
         if (psqlException == null) {
             return null;
         }
@@ -97,17 +97,6 @@ public sealed class ConstraintViolationException extends RuntimeException
 
     public String getSqlState() {
         return sqlState;
-    }
-
-    private static @Nullable PSQLException findPSQLException(Throwable throwable) {
-        Throwable current = throwable;
-        while (current != null) {
-            if (current instanceof PSQLException psql) {
-                return psql;
-            }
-            current = current.getCause();
-        }
-        return null;
     }
 
 }

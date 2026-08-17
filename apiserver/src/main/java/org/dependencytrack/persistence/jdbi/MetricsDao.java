@@ -22,9 +22,11 @@ import org.dependencytrack.model.DependencyMetrics;
 import org.dependencytrack.model.PortfolioMetrics;
 import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.VulnerabilityMetrics;
+import org.jdbi.v3.core.statement.SqlStatements;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.QueryTimeOut;
 import org.jdbi.v3.sqlobject.statement.SqlCall;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -188,6 +190,7 @@ public interface MetricsDao extends SqlObject {
     @SqlUpdate("""
             REFRESH MATERIALIZED VIEW CONCURRENTLY "PORTFOLIOMETRICS_GLOBAL"
             """)
+    @QueryTimeOut(0) // Exempt from global query timeout b/c refreshes may legitimately run longer.
     void refreshGlobalPortfolioMetrics();
 
     default void refreshVulnerabilityMetrics() {
@@ -203,8 +206,14 @@ public interface MetricsDao extends SqlObject {
         // via schema migration. If the view ever needs updating for unrelated
         // reasons, this workaround could be removed.
         getHandle().execute("SET LOCAL TIME ZONE 'UTC'");
-        getHandle().execute("REFRESH MATERIALIZED VIEW CONCURRENTLY \"VULNERABILITYMETRICS\"");
+        refreshVulnerabilityMetricsView();
     }
+
+    @SqlUpdate("""
+            REFRESH MATERIALIZED VIEW CONCURRENTLY "VULNERABILITYMETRICS"
+            """)
+    @QueryTimeOut(0) // Exempt from global query timeout b/c refreshes may legitimately run longer.
+    void refreshVulnerabilityMetricsView();
 
     @SqlQuery("""
             SELECT "YEAR" AS "year"
@@ -665,7 +674,12 @@ public interface MetricsDao extends SqlObject {
                     trx.execute("ALTER TABLE %s DETACH PARTITION %s FINALIZE".formatted(parentTable, partition));
                 });
             } else {
-                getHandle().execute("ALTER TABLE %s DETACH PARTITION %s CONCURRENTLY".formatted(parentTable, partition));
+                getHandle()
+                        .createUpdate("ALTER TABLE %s DETACH PARTITION %s CONCURRENTLY".formatted(parentTable, partition))
+                        // Exempt from global query timeout b/c detachment has to wait for all
+                        // transactions accessing the partition to complete.
+                        .configure(SqlStatements.class, cfg -> cfg.setQueryTimeout(0))
+                        .execute();
             }
             getHandle().execute("DROP TABLE IF EXISTS %s".formatted(partition));
             deletedCount++;

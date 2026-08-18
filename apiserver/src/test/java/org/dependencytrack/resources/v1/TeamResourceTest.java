@@ -594,6 +594,86 @@ public class TeamResourceTest extends ResourceTest {
     }
 
     @Test
+    public void getVisibleAdminTeamsPaginationTest() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_READ);
+
+        for (int i = 0; i < 100; i++) {
+            qm.createTeam("Extra Team " + i);
+        }
+
+        Response response = jersey.target(V1_TEAM + "/visible")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonArray teams = parseJsonArray(response);
+        // ResourceTest creates one built-in team, plus 100 extras. Default page size is 100.
+        org.junit.jupiter.api.Assertions.assertEquals(100, teams.size());
+        org.junit.jupiter.api.Assertions.assertEquals("101", response.getHeaderString(TOTAL_COUNT_HEADER));
+
+        response = jersey.target(V1_TEAM + "/visible")
+                .queryParam("pageNumber", "2")
+                .queryParam("pageSize", "10")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
+        teams = parseJsonArray(response);
+        org.junit.jupiter.api.Assertions.assertEquals(10, teams.size());
+        org.junit.jupiter.api.Assertions.assertEquals("101", response.getHeaderString(TOTAL_COUNT_HEADER));
+    }
+
+    @Test
+    public void getVisibleAdminTeamsFilterByNameTest() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_READ);
+
+        qm.createTeam("Alpha Team");
+        qm.createTeam("Beta Team");
+        qm.createTeam("Alphabet Soup");
+
+        Response response = jersey.target(V1_TEAM + "/visible")
+                .queryParam("searchText", "alpha")
+                .queryParam("pageSize", "10")
+                .queryParam("pageNumber", "1")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonArray teams = parseJsonArray(response);
+        org.junit.jupiter.api.Assertions.assertEquals(2, teams.size());
+        org.junit.jupiter.api.Assertions.assertEquals("2", response.getHeaderString(TOTAL_COUNT_HEADER));
+        org.junit.jupiter.api.Assertions.assertEquals("Alpha Team", teams.getJsonObject(0).getString("name"));
+        org.junit.jupiter.api.Assertions.assertEquals("Alphabet Soup", teams.getJsonObject(1).getString("name"));
+    }
+
+    @Test
+    public void getVisibleNotAdminTeamsFilterByNameTest() {
+        setUpUser(false);
+        qm.createTeam("Unrelated Team");
+
+        Response response = jersey.target(V1_TEAM + "/visible")
+                .queryParam("searchText", "test")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .get();
+        org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
+        JsonArray teams = parseJsonArray(response);
+        org.junit.jupiter.api.Assertions.assertEquals(1, teams.size());
+        org.junit.jupiter.api.Assertions.assertEquals("1", response.getHeaderString(TOTAL_COUNT_HEADER));
+        org.junit.jupiter.api.Assertions.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+
+        response = jersey.target(V1_TEAM + "/visible")
+                .queryParam("searchText", "unrelated")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .get();
+        org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
+        teams = parseJsonArray(response);
+        org.junit.jupiter.api.Assertions.assertEquals(0, teams.size());
+        org.junit.jupiter.api.Assertions.assertEquals("0", response.getHeaderString(TOTAL_COUNT_HEADER));
+    }
+
+    @Test
     public void getVisibleNotAdminTeams() {
         setUpUser(false);
         Response response = jersey.target(V1_TEAM + "/visible")

@@ -4694,6 +4694,43 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void createProjectAsUserWithAclEnabledAndTeamBeyondDefaultPageSizeAdminTest() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT, Permissions.PORTFOLIO_MANAGEMENT_CREATE);
+        enablePortfolioAccessControl();
+
+        final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        qm.addUserToTeam(testUser, team);
+
+        final String userSessionToken = new SessionTokenService().createSession(testUser.getId());
+
+        // getTeams() is ordered by name and defaults to page size 100.
+        // Names starting with "Z" sort after the built-in "Test Users" team.
+        Team lastTeam = null;
+        for (int i = 0; i < 100; i++) {
+            lastTeam = qm.createTeam("ZTeam " + String.format("%03d", i));
+        }
+        final Team assignedTeam = lastTeam;
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header("Authorization", "Bearer " + userSessionToken)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "accessTeams": [
+                            {
+                              "uuid": "%s"
+                            }
+                          ]
+                        }
+                        """.formatted(assignedTeam.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
+                assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(assignedTeam.getName()));
+    }
+
+    @Test
     void createProjectAsUserWithAclEnabledAndTeamNotExistingNoAdminTest() {
         enablePortfolioAccessControl();
 

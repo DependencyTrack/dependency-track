@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dependencytrack.org/schemas/vulncheck-kev-data-source-config-v1.schema.json",
+  "type": "object",
+  "description": "[VulnCheck KEV](https://docs.vulncheck.com/community/vulncheck-kev/introduction) is a community catalog of vulnerabilities known to be exploited in the wild. It covers substantially more vulnerabilities than the CISA KEV catalog, and often records exploitation earlier.  \n\nUsing it requires a VulnCheck API token. A free community token is sufficient.",
+  "javaInterfaces": [
+    "org.dependencytrack.plugin.api.config.RuntimeConfig"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enabled",
+      "description": "Whether the VulnCheck KEV data source should be enabled.",
+      "existingJavaType": "boolean"
+    },
+    "apiUrl": {
+      "type": "string",
+      "title": "API URL",
+      "description": "Base URL of the VulnCheck API.",
+      "minLength": 1,
+      "format": "uri"
+    },
+    "apiToken": {
+      "type": "string",
+      "title": "API Token",
+      "description": "Token to authenticate with the VulnCheck API.  \nCreate one at [vulncheck.com](https://vulncheck.com/token/newtoken).",
+      "minLength": 1,
+      "x-secret-ref": true
+    }
+  },
+  "required": [
+    "enabled"
+  ]
+}

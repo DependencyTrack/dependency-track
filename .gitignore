@@ -22,3 +22,7 @@ target/
 .idea/*
 !.idea/icon.svg
 !.idea/runConfigurations/
+
+# Claude Code
+.claude/worktrees/
+.claude/settings.local.json

@@ -47,6 +47,11 @@ public final class CisaKevDataSourceFactory implements KevDataSourceFactory, Run
     }
 
     @Override
+    public String displayName() {
+        return "CISA KEV";
+    }
+
+    @Override
     public Class<? extends KevDataSource> extensionClass() {
         return CisaKevDataSource.class;
     }

@@ -47,6 +47,11 @@ public final class EnisaKevDataSourceFactory implements KevDataSourceFactory, Ru
     }
 
     @Override
+    public String displayName() {
+        return "ENISA EU KEV";
+    }
+
+    @Override
     public Class<? extends KevDataSource> extensionClass() {
         return EnisaKevDataSource.class;
     }

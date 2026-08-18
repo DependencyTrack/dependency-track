@@ -127,7 +127,7 @@ class ExtensionsResourceTest extends ResourceTest {
     @Test
     void listExtensionsShouldListAllExtensions() {
         pluginManager.loadPlugins(List.of(
-                () -> List.of(new DummyExtensionFactory())));
+                () -> List.of(new DummyExtensionFactory(), new NonConfigurableExtensionFactory())));
 
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
@@ -139,15 +139,22 @@ class ExtensionsResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
-                  "items":[
+                  "items": [
                     {
                       "name": "dummy-extension",
+                      "display_name": "Dummy Extension",
                       "configurable": true,
+                      "testable": false
+                    },
+                    {
+                      "name": "non-configurable-extension",
+                      "display_name": "non-configurable-extension",
+                      "configurable": false,
                       "testable": false
                     }
                   ],
                   "total": {
-                    "count": 1,
+                    "count": 2,
                     "type": "EXACT"
                   }
                 }
@@ -598,6 +605,11 @@ class ExtensionsResourceTest extends ResourceTest {
         @Override
         public @NonNull String extensionName() {
             return "dummy-extension";
+        }
+
+        @Override
+        public @NonNull String displayName() {
+            return "Dummy Extension";
         }
 
         @Override

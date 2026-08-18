@@ -222,6 +222,7 @@ public class ComponentsResourceTest extends ResourceTest {
                         },
                         "internal": false,
                         "last_inherited_risk_score": 2.3,
+                        "license": "Public Domain",
                         "uuid": "${json-unit.any-string}",
                         "project": {
                             "name": "projectB",
@@ -263,6 +264,7 @@ public class ComponentsResourceTest extends ResourceTest {
                         },
                         "internal": false,
                         "last_inherited_risk_score": 2.3,
+                        "license": "Public Domain",
                         "uuid": "${json-unit.any-string}",
                         "project": {
                             "name": "projectB",
@@ -499,6 +501,7 @@ public class ComponentsResourceTest extends ResourceTest {
                         },
                         "internal": false,
                         "last_inherited_risk_score": 2.3,
+                        "license": "Public Domain",
                         "uuid": "${json-unit.any-string}",
                         "project": {
                             "name": "projectB",
@@ -887,6 +890,7 @@ public class ComponentsResourceTest extends ResourceTest {
         componentC.setPurl("pkg:maven/groupC/nameC@versionC?baz=qux");
         componentC.setSha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
         componentC.setLastInheritedRiskScore(2.3);
+        componentC.setLicense("Public Domain");
         qm.createComponent(componentC, false);
     }
 }

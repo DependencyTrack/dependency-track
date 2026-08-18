@@ -236,7 +236,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                  , "C"."GROUP"
                  , "C"."INTERNAL"
                  , "C"."LAST_RISKSCORE"
-                 , "C"."LICENSE" AS "componentLicenseName"
+                 , "C"."LICENSE" AS "license"
                  , "C"."LICENSE_EXPRESSION" AS "licenseExpression"
                  , "C"."LICENSE_URL" AS "licenseUrl"
                  , "C"."TEXT"
@@ -517,7 +517,7 @@ public interface ComponentDao extends SqlObject, PaginationSupport {
                         "C"."GROUP",
                         "C"."INTERNAL",
                         "C"."LAST_RISKSCORE",
-                        "C"."LICENSE" AS "componentLicenseName",
+                        "C"."LICENSE" AS "license",
                         "C"."LICENSE_EXPRESSION" AS "licenseExpression",
                         "C"."LICENSE_URL" AS "licenseUrl",
                         "C"."TEXT",

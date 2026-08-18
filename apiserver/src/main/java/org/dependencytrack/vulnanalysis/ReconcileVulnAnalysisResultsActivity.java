@@ -96,6 +96,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
     private static final String INTERNAL_VULN_ID_PROPERTY = "dependencytrack:internal:vulnerability-id";
     private static final String REFERENCE_URL_PROPERTY = "dependency-track:vuln:reference-url";
+    private static final String MATCHING_PERCENTAGE_PROPERTY = "dependency-track:vuln:matching-percentage";
     private static final int SYNC_BATCH_SIZE = 100;
 
     private final FileStorage fileStorage;
@@ -211,7 +212,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             long componentId,
             VulnerabilityKey vulnKey,
             String analyzerName,
-            @Nullable String referenceUrl) {
+            @Nullable String referenceUrl,
+            @Nullable Short matchingPercentage) {
     }
 
     private static void collectFindingsFromVdr(
@@ -231,6 +233,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
             final Long internalVulnId = extractInternalVulnId(vdrVuln);
             final String referenceUrl = extractReferenceUrl(vdrVuln);
+            final Short matchingPercentage = extractMatchingPercentage(vdrVuln);
 
             if (internalVulnId == null && source != Vulnerability.Source.UNKNOWN) {
                 // Ensure that each vulnerability reported by an analyzer has alias assertions,
@@ -277,7 +280,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             for (final VulnerabilityAffects affects : vdrVuln.getAffectsList()) {
                 try {
                     final long componentId = Long.parseLong(affects.getRef());
-                    findings.add(new ReportedFinding(componentId, vulnKey, analyzerName, referenceUrl));
+                    findings.add(new ReportedFinding(
+                            componentId, vulnKey, analyzerName, referenceUrl, matchingPercentage));
                 } catch (NumberFormatException e) {
                     LOGGER.warn(
                             "Encountered invalid BOM ref '{}' for vulnerability '{}'",
@@ -308,6 +312,20 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             if (REFERENCE_URL_PROPERTY.equals(prop.getName())
                     && (prop.getValue().startsWith("http://") || prop.getValue().startsWith("https://"))) {
                 return prop.getValue();
+            }
+        }
+
+        return null;
+    }
+
+    private static @Nullable Short extractMatchingPercentage(org.cyclonedx.proto.v1_7.Vulnerability vuln) {
+        for (final Property prop : vuln.getPropertiesList()) {
+            if (MATCHING_PERCENTAGE_PROPERTY.equals(prop.getName())) {
+                try {
+                    return Short.parseShort(prop.getValue());
+                } catch (NumberFormatException e) {
+                    LOGGER.warn("Invalid matching percentage: {}", prop.getValue());
+                }
             }
         }
 
@@ -463,7 +481,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
                                 reportedFinding.componentId(),
                                 projectId,
                                 reportedFinding.analyzerName(),
-                                reportedFinding.referenceUrl()));
+                                reportedFinding.referenceUrl(),
+                                reportedFinding.matchingPercentage()));
             }
         }
 

@@ -18,6 +18,13 @@
       "description": "Whether to include alias information in vulnerability data.",
       "existingJavaType": "boolean"
     },
+    "checksumMatchingEnabled": {
+      "type": "boolean",
+      "title": "Checksum Matching Enabled",
+      "description": "When enabled, send checksum qualifiers from Maven component PURLs to Snyk and interpret meta.packages match results (full / partial / none). Preconditions: (1) component PURLs must already include a checksum qualifier (commonly produced by Snyk SBOM tooling such as `snyk sbom --include-provenance`; most other generators do not emit this qualifier); (2) checksum-qualified matching is currently limited to pkg:maven because that is the ecosystem Snyk supports for checksum PURL qualifiers — other ecosystems remain coordinates-only even when a checksum qualifier is present. Partial matches (name/version matched, checksum did not) still attach findings from the API response. None matches attach no findings.",
+      "existingJavaType": "boolean"
+    },
+
     "apiBaseUrl": {
       "type": "string",
       "title": "API Base URL",

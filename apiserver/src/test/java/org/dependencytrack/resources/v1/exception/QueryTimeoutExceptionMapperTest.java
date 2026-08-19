@@ -53,7 +53,7 @@ class QueryTimeoutExceptionMapperTest extends ResourceTest {
                   "type": "/problems/timeout",
                   "status": 504,
                   "title": "Request timed out",
-                  "detail": "The request was aborted because it took too long to complete."
+                  "detail": "The request was aborted because it took too long to complete. If an exact total count was requested, retry with a bounded one (totalCount=BOUNDED) where the endpoint supports it."
                 }
                 """);
     }

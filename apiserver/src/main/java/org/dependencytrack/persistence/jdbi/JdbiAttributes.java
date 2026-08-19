@@ -27,6 +27,7 @@ public final class JdbiAttributes {
 
     static final String ATTRIBUTE_API_FILTER_PARAMETER = "apiFilterParameter";
     static final String ATTRIBUTE_API_OFFSET_LIMIT_CLAUSE = "apiOffsetLimitClause";
+    static final String ATTRIBUTE_API_PAGINATE = "apiPaginate";
     static final String ATTRIBUTE_API_ORDER_BY_CLAUSE = "apiOrderByClause";
     static final String ATTRIBUTE_API_PROJECT_ACL_CONDITION = "apiProjectAclCondition";
     public static final String ATTRIBUTE_QUERY_NAME = "queryName";

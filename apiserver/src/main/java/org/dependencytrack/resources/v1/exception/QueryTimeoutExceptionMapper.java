@@ -36,7 +36,10 @@ public final class QueryTimeoutExceptionMapper implements ExceptionMapper<QueryT
         final var problemDetails = new ProblemDetails(
                 ProblemType.TIMEOUT.status(),
                 ProblemType.TIMEOUT.title(),
-                "The request was aborted because it took too long to complete.");
+                """
+                        The request was aborted because it took too long to complete. \
+                        If an exact total count was requested, retry with a bounded one \
+                        (totalCount=BOUNDED) where the endpoint supports it.""");
         problemDetails.setType(URI.create(ProblemType.TIMEOUT.type()));
         return problemDetails.toResponse();
     }

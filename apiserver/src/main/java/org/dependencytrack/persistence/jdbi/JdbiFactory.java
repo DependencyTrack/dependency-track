@@ -98,7 +98,11 @@ public class JdbiFactory {
     }
 
     private static Handle forApiRequest(final Handle handle, final AlpineRequest apiRequest) {
-        return handle.addCustomizer(new ApiRequestStatementCustomizer(apiRequest));
+        if (apiRequest != null) {
+            handle.getConfig(ApiRequestConfig.class).setApiRequest(apiRequest);
+        }
+
+        return handle.addCustomizer(new ApiRequestStatementCustomizer());
     }
 
     /**

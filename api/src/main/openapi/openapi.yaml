@@ -92,6 +92,10 @@ info:
     }
     ```
 
+    A request that takes too long to complete is aborted and rejected
+    with `504 Gateway Timeout`. Any operation can time out, so operations
+    do not document it individually.
+
     ## Authentication
 
     Two credential types are accepted:

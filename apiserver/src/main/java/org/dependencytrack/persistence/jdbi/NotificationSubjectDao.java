@@ -154,7 +154,7 @@ public interface NotificationSubjectDao extends SqlObject {
                  , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"
                  , STRING_TO_ARRAY(v."CWES", ',') AS "vulnCwes"
                  , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
-                 , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
+                 , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
               FROM UNNEST(:componentIds, :vulnerabilityIds)
                 AS req(component_id, vulnerability_id)
              INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
@@ -269,7 +269,7 @@ public interface NotificationSubjectDao extends SqlObject {
                              , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"
                              , STRING_TO_ARRAY(v."CWES", ',') AS "vulnCwes"
                              , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
-                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
+                             , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
                           FROM "COMPONENT" AS c
                          INNER JOIN "PROJECT" AS p
                             ON p."ID" = c."PROJECT_ID"
@@ -416,7 +416,7 @@ public interface NotificationSubjectDao extends SqlObject {
                              , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"
                              , STRING_TO_ARRAY(v."CWES", ',') AS "vulnCwes"
                              , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
-                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
+                             , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
                              , req.analysis_state AS "vulnAnalysisState"
                              , req.suppressed AS "isVulnAnalysisSuppressed"
                              , format('/api/v1/vulnerability/source/%s/vuln/%s/projects', v."SOURCE", v."VULNID") AS "affectedProjectsApiUrl"
@@ -607,7 +607,7 @@ public interface NotificationSubjectDao extends SqlObject {
                              , COALESCE(a."SEVERITY", v."SEVERITY") AS "vulnSeverity"
                              , STRING_TO_ARRAY(v."CWES", ',') AS "vulnCwes"
                              , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
-                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
+                             , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
                           FROM UNNEST(:componentIds, :vulnDbIds)
                             AS t(component_id, vuln_db_id)
                          INNER JOIN "VULNERABILITY" AS v

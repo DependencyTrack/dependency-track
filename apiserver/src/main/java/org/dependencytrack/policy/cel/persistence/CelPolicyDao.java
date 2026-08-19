@@ -319,7 +319,7 @@ public final class CelPolicyDao {
                         <#-- @ftlvariable name="shouldFetchIsKev" type="boolean" -->
                         SELECT ${fetchColumns?join(", ")}
                         <#if shouldFetchIsKev>
-                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS is_kev
+                             , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS is_kev
                         </#if>
                           FROM "VULNERABILITY" AS v
                         <#if shouldFetchEpss!false>
@@ -748,7 +748,7 @@ public final class CelPolicyDao {
                              , ${fetchColumns?join(", ")}
                         </#if>
                         <#if shouldFetchIsKev>
-                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS is_kev
+                             , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS is_kev
                         </#if>
                           FROM "VULNERABILITY" AS v
                         <#if needsEpss!false>

@@ -33,6 +33,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -58,20 +59,20 @@ public record FindingResponse(
 
         return new FindingResponse(
                 new Component(
-                        value(component, "uuid", UUID.class),
+                        requiredValue(component, "uuid", UUID.class),
                         value(component, "name", String.class),
                         value(component, "group", String.class),
                         value(component, "version", String.class),
                         value(component, "purl", String.class),
                         value(component, "cpe", String.class),
-                        value(component, "project", UUID.class),
+                        requiredValue(component, "project", UUID.class),
                         Boolean.TRUE.equals(component.get("hasOccurrences")),
                         enumValue(component, "scope", Scope.class),
                         value(component, "projectName", String.class),
                         value(component, "projectVersion", String.class),
                         value(component, "latestVersion", String.class)),
                 new VulnerabilityDetails(
-                        value(vulnerability, "uuid", UUID.class),
+                        requiredValue(vulnerability, "uuid", UUID.class),
                         enumValue(vulnerability, "source", Source.class),
                         value(vulnerability, "vulnId", String.class),
                         value(vulnerability, "title", String.class),
@@ -109,6 +110,10 @@ public record FindingResponse(
 
     private static <T> @Nullable T value(final Map<String, Object> values, final String key, final Class<T> type) {
         return type.cast(values.get(key));
+    }
+
+    private static <T> T requiredValue(final Map<String, Object> values, final String key, final Class<T> type) {
+        return Objects.requireNonNull(value(values, key, type), "Missing required finding field: " + key);
     }
 
     private static <E extends Enum<E>> @Nullable E enumValue(

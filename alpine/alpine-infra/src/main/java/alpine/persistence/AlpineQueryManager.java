@@ -566,6 +566,7 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
         if (filter != null) {
             query.setFilter("name.toLowerCase().matches(:filter)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
+            query.setOrdering("name asc");
             return execute(query, filterString);
         }
         query.setOrdering("name asc");

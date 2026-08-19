@@ -81,7 +81,7 @@ import javax.jdo.FetchGroup;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -98,7 +98,6 @@ import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
-import static org.dependencytrack.util.PersistenceUtil.isPersistent;
 import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 /**
@@ -596,23 +595,30 @@ public class ProjectResource extends AbstractApiResource {
                     } else {
                         userTeams = List.of();
                     }
+                    if (userTeams == null) {
+                        userTeams = List.of();
+                    }
 
                     boolean canSeeAllTeams =
                             super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
                                     || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
-                    List<Team> visibleTeams = canSeeAllTeams ? qm.getTeams().getList(Team.class) : userTeams;
-                    final var visibleTeamByUuid = new HashMap<UUID, Team>(visibleTeams.size());
-                    final var visibleTeamByName = new HashMap<String, Team>(visibleTeams.size());
-                    for (final Team visibleTeam : visibleTeams) {
-                        visibleTeamByUuid.put(visibleTeam.getUuid(), visibleTeam);
-                        visibleTeamByName.put(visibleTeam.getName(), visibleTeam);
+                    final Set<UUID> memberTeamUuids = new HashSet<>();
+                    if (!canSeeAllTeams) {
+                        for (final Team userTeam : userTeams) {
+                            memberTeamUuids.add(userTeam.getUuid());
+                        }
                     }
 
                     for (Team chosenTeam : chosenTeams) {
-                        Team visibleTeam = visibleTeamByUuid.getOrDefault(
-                                chosenTeam.getUuid(),
-                                visibleTeamByName.get(chosenTeam.getName()));
-                        if (visibleTeam == null) {
+                        Team visibleTeam = null;
+                        if (chosenTeam.getUuid() != null) {
+                            visibleTeam = qm.getObjectByUuid(Team.class, chosenTeam.getUuid());
+                        }
+                        if (visibleTeam == null && chosenTeam.getName() != null) {
+                            visibleTeam = qm.getTeam(chosenTeam.getName());
+                        }
+                        if (visibleTeam == null
+                                || (!canSeeAllTeams && !memberTeamUuids.contains(visibleTeam.getUuid()))) {
                             throw new ClientErrorException(Response
                                     .status(Response.Status.BAD_REQUEST)
                                     .entity("""
@@ -622,11 +628,6 @@ public class ProjectResource extends AbstractApiResource {
                                             ? "UUID " + chosenTeam.getUuid()
                                             : "name " + chosenTeam.getName()))
                                     .build());
-                        }
-                        if (!isPersistent(visibleTeam)) {
-                            // Teams sourced from the principal will not be in persistent state
-                            // and need to be attached to the persistence context.
-                            visibleTeam = qm.getObjectById(Team.class, visibleTeam.getId());
                         }
                         jsonProject.addAccessTeam(visibleTeam);
                     }

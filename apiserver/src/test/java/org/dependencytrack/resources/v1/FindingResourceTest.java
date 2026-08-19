@@ -50,10 +50,12 @@ import org.dependencytrack.model.PackageMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
+import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -78,6 +80,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -1174,6 +1177,80 @@ public class FindingResourceTest extends ResourceTest {
         final String nonKevBody = getPlainTextBody(response);
         assertThatJson(nonKevBody).isArray().hasSize(1);
         assertThatJson(nonKevBody).node("[0].vulnerability.vulnId").isEqualTo("Vuln-NON-KEV");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"portfolio", "grouped", "project"})
+    void shouldFilterByKevAssertedOnAnAlias(String endpoint) {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final Component component = createComponent(project, "Component A", "1.0");
+        qm.addVulnerability(createVulnerability("INT-ALIASED", Severity.CRITICAL), component, "none");
+        qm.addVulnerability(createVulnerability("INT-UNRELATED", Severity.HIGH), component, "none");
+
+        useJdbiTransaction(handle -> {
+            new VulnerabilityAliasDao(handle).syncAssertions(
+                    "NVD",
+                    new VulnerabilityKey("CVE-2021-9999", Vulnerability.Source.NVD),
+                    Set.of(new VulnerabilityKey("INT-ALIASED", Vulnerability.Source.INTERNAL)));
+            handle.attach(KevDao.class).upsertBatch("cisa", List.of(
+                    new KevAssertion(
+                            "NVD",
+                            "CVE-2021-9999",
+                            null,
+                            null,
+                            null,
+                            null,
+                            JsonNodeFactory.instance.objectNode())));
+        });
+
+        final String target = switch (endpoint) {
+            case "grouped" -> V1_FINDING + "/grouped";
+            case "project" -> V1_FINDING + "/project/" + project.getUuid();
+            default -> V1_FINDING;
+        };
+
+        final Response response = jersey
+                .target(target)
+                .queryParam("isKev", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String body = getPlainTextBody(response);
+        assertThatJson(body).isArray().hasSize(1);
+        assertThatJson(body).node("[0].vulnerability.vulnId").isEqualTo("INT-ALIASED");
+    }
+
+    @Test
+    void shouldFilterByEpssScoreResolvedThroughAlias() {
+        initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
+
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final Component component = createComponent(project, "Component A", "1.0");
+        qm.addVulnerability(createVulnerability("INT-ALIASED", Severity.CRITICAL), component, "none");
+        qm.addVulnerability(createVulnerability("INT-UNRELATED", Severity.HIGH), component, "none");
+
+        useJdbiTransaction(handle -> {
+            new VulnerabilityAliasDao(handle).syncAssertions(
+                    "NVD",
+                    new VulnerabilityKey("CVE-2021-9998", Vulnerability.Source.NVD),
+                    Set.of(new VulnerabilityKey("INT-ALIASED", Vulnerability.Source.INTERNAL)));
+            handle.attach(EpssDao.class).createOrUpdateAll(
+                    List.of(new Epss("CVE-2021-9998", new BigDecimal("0.95"), null)));
+        });
+
+        final Response response = jersey
+                .target(V1_FINDING)
+                .queryParam("epssFrom", "0.9")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        final String body = getPlainTextBody(response);
+        assertThatJson(body).isArray().hasSize(1);
+        assertThatJson(body).node("[0].vulnerability.vulnId").isEqualTo("INT-ALIASED");
     }
 
     @Test

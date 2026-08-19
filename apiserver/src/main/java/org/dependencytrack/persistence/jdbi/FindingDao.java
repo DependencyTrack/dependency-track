@@ -204,7 +204,7 @@ public interface FindingDao extends PaginationSupport {
                  , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
                  , e."SCORE" AS "epssScore"
                  , e."PERCENTILE" AS "epssPercentile"
-                 , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
+                 , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
                  , fa."ANALYZERIDENTITY"
                  , fa."ATTRIBUTED_ON"
                  , fa."ALT_ID"
@@ -254,7 +254,7 @@ public interface FindingDao extends PaginationSupport {
                AND e."SCORE" <= :epssTo
             </#if>
             <#if isKev>
-               AND <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> = :isKev
+               AND <@sql.isKevFilter vulnIdColumn='cv."VULNERABILITY_ID"'/> = :isKev
             </#if>
             <#if searchText>
                AND (
@@ -366,7 +366,7 @@ public interface FindingDao extends PaginationSupport {
                    AND e."SCORE" <= :epssTo
             </#if>
             <#if isKev>
-                   AND <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> = :isKev
+                   AND <@sql.isKevFilter vulnIdColumn='cv."VULNERABILITY_ID"'/> = :isKev
             </#if>
             <#if searchText>
                    AND (
@@ -600,7 +600,7 @@ public interface FindingDao extends PaginationSupport {
                  ${queryFilter}
             </#if>
             <#if isKev>
-                 AND <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> = :isKev
+                 AND <@sql.isKevFilter vulnIdColumn='cv."VULNERABILITY_ID"'/> = :isKev
             </#if>
             <#if apiOrderByClause??>
                ${apiOrderByClause}
@@ -691,7 +691,7 @@ public interface FindingDao extends PaginationSupport {
                  , ep."SCORE" AS "epssScore"
                  , ep."PERCENTILE" AS "epssPercentile"
             </#if>
-                 , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
+                 , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
                  , fa."ANALYZERIDENTITY"
                  , fa."ATTRIBUTED_ON"
                  , fa."ALT_ID"
@@ -853,7 +853,7 @@ public interface FindingDao extends PaginationSupport {
                    ${queryFilter}
             </#if>
             <#if isKev>
-                   AND <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> = :isKev
+                   AND <@sql.isKevFilter vulnIdColumn='cv."VULNERABILITY_ID"'/> = :isKev
             </#if>
             <#if threshold>
                  LIMIT (:threshold + 1)
@@ -979,7 +979,7 @@ public interface FindingDao extends PaginationSupport {
                    END AS "cvssV4Score"
                  , ed."SCORE" AS "epssScore"
                  , ed."PERCENTILE" AS "epssPercentile"
-                 , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
+                 , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "kev"
                  , v."PUBLISHED" AS "vulnPublished"
                  , CAST(STRING_TO_ARRAY(v."CWES", ',') AS INT[]) AS "CWES"
                  , fa."ANALYZERIDENTITY"
@@ -1018,7 +1018,7 @@ public interface FindingDao extends PaginationSupport {
                 ${queryFilter}
             </#if>
             <#if isKev>
-                AND <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> = :isKev
+                AND <@sql.isKevFilter vulnIdColumn='cv."VULNERABILITY_ID"'/> = :isKev
             </#if>
             GROUP BY v."ID"
                   , v."SOURCE"
@@ -1161,7 +1161,7 @@ public interface FindingDao extends PaginationSupport {
                 case "epssPercentileTo" ->
                         processRangeFilter(queryFilter, params, filter, filters.get(filter), "ed.\"PERCENTILE\"", false, false, false);
                 // NB: isKev is applied directly in the query templates via the shared
-                // <@sql.isKev/> macro, not as a queryFilter fragment.
+                // <@sql.isKevFilter/> macro, not as a queryFilter fragment.
             }
         }
     }

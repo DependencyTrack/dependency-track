@@ -30,7 +30,7 @@ as does access control that grants a user only a few projects.
 In their current shape, with arbitrary sorts, filters, and aggregations over the entire portfolio,
 these endpoints are an analytical workload. Our schema is built for transactional processing,
 which is a poor fit for this kind of workload once the data gets large.
-None of the solutions below removes this mismatch.
+None of the proposed solutions removes this mismatch.
 
 ### Constraints
 
@@ -130,6 +130,7 @@ and pay for that with staleness, write amplification, or new infrastructure.
 We keep the cost on the read path instead, where only the queries that need it pay for it.
 
 * The default view stays live and fast at any size: default order, combined with the bounded count from [ADR 036].
+  A filter that matches few or no rows is the exception, see [Consequences > Filters](#filters).
 * Expensive operations are bounded by the platform's global query timeout
   (`dt.datasource.query-timeout-ms`, 60 seconds per default).
   Requests that exceed it fail with `504` instead of hanging.
@@ -162,7 +163,9 @@ without changing what the result means.
 * Small and medium portfolios are unaffected. The page, every sort, and the exact count keep working,
   with no added infrastructure, storage, or staleness.
 * Very large portfolios keep the same page and a fast default view. Expensive sorts hit the timeout,
-  whether filtered or not. No feature is removed, and there is no separate product for large tenants.
+  whether filtered or not. We ship the same features to every deployment, and there is no separate
+  product for large tenants. For the user this is worse than removing the sort would be, because they
+  wait a minute for a `504` instead of seeing that the sort is unavailable.
 * The boundary is a timeout, so it is not a sharp line. The same query can pass with a warm cache and fail under load,
   and portfolios near the limit will see intermittent `504` responses.
   A deterministic guard, e.g. rejecting a sort when the estimated result is too large, would draw a sharper line.
@@ -170,6 +173,26 @@ without changing what the result means.
   it can predict. We accept the fuzziness, in exchange for a bound that catches every expensive request.
 * The frontend must opt into the bounded count, as otherwise the default view still requests an exact count,
   which times out on the portfolios this ADR is about. The frontend change is part of this work.
+
+### Filters
+
+For some filters the exact count is the faster option, which inverts the premise of [ADR 036].
+The exact count runs inside the page query and forces the database to build the whole result set.
+The bounded count runs separately, so the page query can walk an index and stop at the requested page.
+That walk makes the default view fast. For a filter the database cannot estimate,
+it reads far more rows than the page returns. This affects only correlated subquery filters.
+
+The fix is to resolve the filter's set once, which works only where a small table supplies that set.
+The KEV filter now does this, because the catalog of known exploited vulnerabilities stays
+small at any portfolio size. The EPSS score filter cannot, because one EPSS record per
+vulnerability means building the set reads the whole portfolio. On the 100 million finding
+dataset that costs more than the filter saves, so it keeps the timeout as its boundary.
+
+A filter that matches few or no rows breaks the default view for a different reason.
+The page walks an index until it has enough rows to return, so such a filter makes it walk the whole table.
+On the 100 million finding dataset, an EPSS score filter matching nothing reads every finding and times out,
+even in the default order with the bounded count. We have no fix, because the database cannot know how many
+rows a filter matches without looking.
 
 ### Hardware Considerations
 

@@ -26,6 +26,7 @@ import org.dependencytrack.dex.api.WorkflowSpec;
 import org.dependencytrack.dex.api.payload.PayloadConverter;
 import org.dependencytrack.dex.engine.api.event.DexEngineEvent;
 import org.dependencytrack.dex.engine.api.event.DexEngineEventListener;
+import org.dependencytrack.dex.engine.api.request.CountWorkflowRunsRequest;
 import org.dependencytrack.dex.engine.api.request.CreateTaskQueueRequest;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
@@ -199,6 +200,14 @@ public interface DexEngine extends Closeable {
      * @return {@code true} when a matching run exists, {@code false} otherwise.
      */
     boolean existsRun(ExistsWorkflowRunRequest request);
+
+    /**
+     * Count workflow runs matching the given criteria.
+     *
+     * @param request Filter criteria for the lookup.
+     * @return The number of matching runs, at most {@link CountWorkflowRunsRequest#limit()}.
+     */
+    long countRuns(CountWorkflowRunsRequest request);
 
     /**
      * Request the cancellation of a workflow run.

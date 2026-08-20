@@ -16,20 +16,10 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.dex;
+package org.dependencytrack.analysis;
 
-/**
- * @since 5.0.0
- */
-public final class DexWorkflowLabels {
+import java.util.UUID;
 
-    public static final String WF_LABEL_ANALYSIS_TRIGGER = "analysis_trigger";
-    public static final String WF_LABEL_BOM_UPLOAD_TOKEN = "bom_upload_token";
-    public static final String WF_LABEL_PROJECT_UUID = "project_uuid";
-    public static final String WF_LABEL_TRIGGERED_BY = "triggered_by";
-    public static final String WF_LABEL_VEX_UPLOAD_TOKEN = "vex_upload_token";
-
-    private DexWorkflowLabels() {
-    }
-
+/// @since 5.1.0
+public record ProjectDueForAnalysis(long id, UUID uuid) {
 }

@@ -21,6 +21,7 @@ package org.dependencytrack.dex.engine;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.resilience4j.core.IntervalFunction;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.SortDirection;
 import org.dependencytrack.dex.api.Activity;
@@ -45,6 +46,7 @@ import org.dependencytrack.dex.engine.api.WorkflowRunHistoryEntry;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
 import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
 import org.dependencytrack.dex.engine.api.event.WorkflowRunsCompletedEventListener;
+import org.dependencytrack.dex.engine.api.request.CountWorkflowRunsRequest;
 import org.dependencytrack.dex.engine.api.request.CreateTaskQueueRequest;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
@@ -101,6 +103,7 @@ class DexEngineImplTest {
     private static final String ACTIVITY_TASK_QUEUE = "default";
 
     private HikariDataSource dataSource;
+    private MeterRegistry meterRegistry;
     private DexEngineImpl engine;
 
     @BeforeEach
@@ -117,6 +120,7 @@ class DexEngineImplTest {
         dataSource = new HikariDataSource(hikariConfig);
 
         final var config = new DexEngineConfig(dataSource);
+        meterRegistry = config.metrics().meterRegistry();
         config.setActivityHeartbeatInterval(Duration.ofMillis(250));
         config.activityTaskScheduler().setPollInterval(Duration.ofMillis(10));
         config.activityTaskScheduler().setPollBackoffFunction(IntervalFunction.of(10));
@@ -724,6 +728,24 @@ class DexEngineImplTest {
                     },
                     entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
                     entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        }
+
+        @Test
+        void shouldCountOnlyRunsThatWereActuallyCreated() {
+            registerWorkflow("test", stringConverter(), voidConverter(), (_, _) -> null);
+
+            engine.createRuns(List.of(
+                    new CreateWorkflowRunRequest<>("test", 1)
+                            .withWorkflowInstanceId("instanceId"),
+                    new CreateWorkflowRunRequest<>("test", 1)
+                            .withWorkflowInstanceId("instanceId"),
+                    new CreateWorkflowRunRequest<>("test", 1)
+                            .withWorkflowInstanceId("instanceId")));
+
+            assertThat(meterRegistry.get("dt.dex.engine.runs.created")
+                    .tags("workflowName", "test", "workflowVersion", "1")
+                    .counter()
+                    .count()).isEqualTo(1);
         }
 
     }
@@ -1532,12 +1554,12 @@ class DexEngineImplTest {
 
         registerWorkflow("test", (ctx, _) -> {
             ctx.callActivity(
-                    "test",
-                    ACTIVITY_TASK_QUEUE,
-                    null,
-                    voidConverter(),
-                    voidConverter(),
-                    retryPolicy)
+                            "test",
+                            ACTIVITY_TASK_QUEUE,
+                            null,
+                            voidConverter(),
+                            voidConverter(),
+                            retryPolicy)
                     .await();
             return null;
         });
@@ -2176,6 +2198,74 @@ class DexEngineImplTest {
 
             assertThat(engine.existsRun(new ExistsWorkflowRunRequest(
                     Set.of(WorkflowRunStatus.CREATED), Map.of("foo", "baz")))).isFalse();
+        }
+
+    }
+
+    @Nested
+    class CountRunsTest {
+
+        @Test
+        void shouldCountRunsMatchingWorkflowName() {
+            registerWorkflow("test", (_, _) -> null);
+            registerWorkflow("other", (_, _) -> null);
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+            engine.createRun(new CreateWorkflowRunRequest<>("other", 1));
+
+            assertThat(engine.countRuns(
+                    new CountWorkflowRunsRequest("test", null, 10))).isEqualTo(2);
+        }
+
+        @Test
+        void shouldCountRunsWithoutConcurrencyKey() {
+            registerWorkflow("test", (_, _) -> null);
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
+                    .withConcurrencyKey("test:a"));
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+
+            assertThat(engine.countRuns(
+                    new CountWorkflowRunsRequest(
+                            "test", null, 10))).isEqualTo(2);
+        }
+
+        @Test
+        void shouldCountRunsMatchingWorkflowNameAndStatuses() {
+            registerWorkflow("test", (_, _) -> null);
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+
+            assertThat(engine.countRuns(
+                    new CountWorkflowRunsRequest(
+                            "test", WorkflowRunStatus.NON_TERMINAL_STATUSES, 10))).isEqualTo(1);
+            assertThat(engine.countRuns(
+                    new CountWorkflowRunsRequest(
+                            "test", Set.of(WorkflowRunStatus.COMPLETED), 10))).isZero();
+        }
+
+        @Test
+        void shouldCountRunsMatchingLabels() {
+            registerWorkflow("test", (_, _) -> null);
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
+                    .withLabels(Map.of("trigger", "schedule")));
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
+                    .withLabels(Map.of("trigger", "upload")));
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+
+            assertThat(engine.countRuns(
+                    new CountWorkflowRunsRequest(
+                            "test", null, Map.of("trigger", "schedule"), 10))).isEqualTo(1);
+        }
+
+        @Test
+        void shouldNotCountMoreRunsThanTheLimitAllows() {
+            registerWorkflow("test", (_, _) -> null);
+            for (int i = 0; i < 5; i++) {
+                engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
+            }
+
+            assertThat(engine.countRuns(
+                    new CountWorkflowRunsRequest(
+                            "test", null, 3))).isEqualTo(3);
         }
 
     }

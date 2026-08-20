@@ -57,7 +57,8 @@ public final class ConfigKeys {
     public static final String TASK_METRICS_MAINTENANCE_CRON = "dt.task.metrics-maintenance.cron";
     public static final String TASK_NVD_VULN_DATA_SOURCE_MIRROR_CRON = "dt.task.nvd-vuln-data-source-mirror.cron";
     public static final String TASK_OSV_VULN_DATA_SOURCE_MIRROR_CRON = "dt.task.osv-vuln-data-source-mirror.cron";
-    public static final String TASK_PORTFOLIO_ANALYSIS_CRON = "dt.task.portfolio-analysis.cron";
+    public static final String TASK_PORTFOLIO_ANALYSIS_MAX_IN_FLIGHT_ANALYSES = "dt.task.portfolio-analysis.max-in-flight-analyses";
+    public static final String TASK_PORTFOLIO_ANALYSIS_MAX_ANALYSIS_AGE_MS = "dt.task.portfolio-analysis.max-analysis-age-ms";
     public static final String TASK_PORTFOLIO_METRICS_UPDATE_CRON = "dt.task.portfolio-metrics-update.cron";
     public static final String TASK_PROJECT_MAINTENANCE_CRON = "dt.task.project-maintenance.cron";
     public static final String TASK_TAG_MAINTENANCE_CRON = "dt.task.tag-maintenance.cron";

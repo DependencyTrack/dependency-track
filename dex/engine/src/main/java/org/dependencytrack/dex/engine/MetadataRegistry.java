@@ -22,6 +22,7 @@ import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivitySpec;
 import org.dependencytrack.dex.api.Workflow;
 import org.dependencytrack.dex.api.WorkflowSpec;
+import org.dependencytrack.dex.api.WorkflowSpecs;
 import org.dependencytrack.dex.api.payload.PayloadConverter;
 import org.jspecify.annotations.Nullable;
 
@@ -72,7 +73,7 @@ final class MetadataRegistry {
             Duration lockTimeout) {
         requireNonNull(workflow, "workflow must not be null");
 
-        final WorkflowSpec workflowSpec = requireWorkflowSpec(workflow.getClass());
+        final WorkflowSpec workflowSpec = WorkflowSpecs.of(workflow.getClass());
 
         registerWorkflow(
                 workflowSpec.name(),
@@ -244,7 +245,9 @@ final class MetadataRegistry {
 
     @SuppressWarnings("rawtypes")
     private String getWorkflowName(Class<? extends Workflow> workflowClass) {
-        return workflowNameByExecutorClass.computeIfAbsent(workflowClass, clazz -> requireWorkflowSpec(clazz).name());
+        return workflowNameByExecutorClass.computeIfAbsent(
+                workflowClass,
+                clazz -> WorkflowSpecs.of(clazz).name());
     }
 
     @SuppressWarnings("rawtypes")
@@ -257,16 +260,6 @@ final class MetadataRegistry {
         final ActivitySpec spec = activityClass.getAnnotation(ActivitySpec.class);
         if (spec == null) {
             throw new IllegalArgumentException("Activity class must be annotated with @" + ActivitySpec.class.getSimpleName());
-        }
-
-        return spec;
-    }
-
-    @SuppressWarnings("rawtypes")
-    private static WorkflowSpec requireWorkflowSpec(Class<? extends Workflow> activityClass) {
-        final WorkflowSpec spec = activityClass.getAnnotation(WorkflowSpec.class);
-        if (spec == null) {
-            throw new IllegalArgumentException("Workflow class must be annotated with @" + WorkflowSpec.class.getSimpleName());
         }
 
         return spec;

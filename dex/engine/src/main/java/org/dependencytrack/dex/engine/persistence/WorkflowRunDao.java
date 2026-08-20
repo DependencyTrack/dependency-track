@@ -25,6 +25,7 @@ import org.dependencytrack.common.pagination.SortDirection;
 import org.dependencytrack.dex.engine.api.WorkflowRunHistoryEntry;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
 import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
+import org.dependencytrack.dex.engine.api.request.CountWorkflowRunsRequest;
 import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
 import org.dependencytrack.dex.engine.api.request.ListWorkflowRunHistoryRequest;
 import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
@@ -97,6 +98,57 @@ public final class WorkflowRunDao extends AbstractDao {
         return query
                 .defineNamedBindings()
                 .mapTo(boolean.class)
+                .one();
+    }
+
+    public long countRuns(CountWorkflowRunsRequest request) {
+        requireNonNull(request, "request must not be null");
+
+        final Query query = jdbiHandle.createQuery(/* language=InjectedFreeMarker */ """
+                <#-- @ftlvariable name="workflowName" type="boolean" -->
+                <#-- @ftlvariable name="statuses" type="boolean" -->
+                <#-- @ftlvariable name="labels" type="boolean" -->
+                select count(*)
+                  from (
+                    select 1
+                      from dex_workflow_run
+                     where true
+                    <#if workflowName!false>
+                       and workflow_name = :workflowName
+                    </#if>
+                    <#if statuses!false>
+                       and status = ANY(:statuses)
+                    </#if>
+                    <#if labels!false>
+                       and labels @> cast(:labels as jsonb)
+                    </#if>
+                     limit :limit
+                  ) as matching_run
+                """);
+
+        if (request.workflowName() != null && !request.workflowName().isEmpty()) {
+            query.bind("workflowName", request.workflowName());
+        }
+        if (request.statuses() != null && !request.statuses().isEmpty()) {
+            query.bind(
+                    "statuses",
+                    request.statuses().stream()
+                            .map(WorkflowRunStatus::name)
+                            .toArray(String[]::new));
+        }
+        if (request.labels() != null && !request.labels().isEmpty()) {
+            final JsonMapper.TypedJsonMapper jsonMapper = jdbiHandle
+                    .getConfig(JsonConfig.class).getJsonMapper()
+                    .forType(new GenericType<Map<String, String>>() {
+                    }.getType(), jdbiHandle.getConfig());
+            query.bind("labels", jsonMapper.toJson(
+                    request.labels(), jdbiHandle.getConfig()));
+        }
+
+        return query
+                .bind("limit", request.limit())
+                .defineNamedBindings()
+                .mapTo(long.class)
                 .one();
     }
 

@@ -428,7 +428,8 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
         // If the component also has a PURL, use that to derive the versioning scheme.
         final String versioningScheme = Optional
                 .ofNullable(component.parsedPurl())
-                .flatMap(KnownVersioningSchemes::fromPurl)
+                .map(PackageURL::getType)
+                .flatMap(KnownVersioningSchemes::fromPurlType)
                 .orElse(SCHEME_GENERIC);
 
         return compareWithVers(criteria, targetVersion, versioningScheme);
@@ -446,9 +447,9 @@ final class InternalVulnAnalyzer implements VulnAnalyzer {
             return false;
         }
 
-        final String versioningScheme =
-                KnownVersioningSchemes.fromPurl(componentPurl)
-                        .orElse(SCHEME_GENERIC);
+        final String versioningScheme = KnownVersioningSchemes
+                .fromPurlType(componentPurl.getType())
+                .orElse(SCHEME_GENERIC);
 
         return compareWithVers(criteria, effectiveVersionOf(componentPurl), versioningScheme);
     }

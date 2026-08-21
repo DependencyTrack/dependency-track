@@ -55,11 +55,10 @@ class NixpkgsPackageMetadataResolverTest {
     @BeforeEach
     void beforeEach() {
         resolverFactory = new NixpkgsPackageMetadataResolverFactory();
-        resolverFactory.init(
-                new MutableServiceRegistry()
-                        .register(CacheManager.class, new NoopCacheManager())
-                        .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        resolverFactory.init(new MutableServiceRegistry()
+                .register(CacheManager.class, new NoopCacheManager())
+                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
         resolver = resolverFactory.create();
     }
 
@@ -73,9 +72,7 @@ class NixpkgsPackageMetadataResolverTest {
     @Test
     void shouldResolveLatestVersion(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/packages.json.br"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("nixpkgs/packages.json.br")));
+                .willReturn(aResponse().withStatus(200).withBodyFile("nixpkgs/packages.json.br")));
 
         final var purl = PackageURLBuilder.aPackageURL()
                 .withType("nixpkgs")
@@ -83,8 +80,8 @@ class NixpkgsPackageMetadataResolverTest {
                 .withVersion("8.5.0")
                 .build();
 
-        final var repo = new PackageRepository("nixpkgs",
-                wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
+        final var repo =
+                new PackageRepository("nixpkgs", wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
         final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNotNull();
@@ -95,9 +92,7 @@ class NixpkgsPackageMetadataResolverTest {
     @Test
     void shouldReturnNullWhenPackageNotFound(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/packages.json.br"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("nixpkgs/packages.json.br")));
+                .willReturn(aResponse().withStatus(200).withBodyFile("nixpkgs/packages.json.br")));
 
         final var purl = PackageURLBuilder.aPackageURL()
                 .withType("nixpkgs")
@@ -105,8 +100,8 @@ class NixpkgsPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        final var repo = new PackageRepository("nixpkgs",
-                wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
+        final var repo =
+                new PackageRepository("nixpkgs", wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
         final PackageMetadata result = resolver.resolve(purl, repo, null);
 
         assertThat(result).isNull();
@@ -115,9 +110,7 @@ class NixpkgsPackageMetadataResolverTest {
     @Test
     void shouldNotRedownloadWithinRefreshInterval(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/packages.json.br"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("nixpkgs/packages.json.br")));
+                .willReturn(aResponse().withStatus(200).withBodyFile("nixpkgs/packages.json.br")));
 
         final var purl = PackageURLBuilder.aPackageURL()
                 .withType("nixpkgs")
@@ -125,8 +118,8 @@ class NixpkgsPackageMetadataResolverTest {
                 .withVersion("8.5.0")
                 .build();
 
-        final var repo = new PackageRepository("nixpkgs",
-                wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
+        final var repo =
+                new PackageRepository("nixpkgs", wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
 
         resolver.resolve(purl, repo, null);
 
@@ -151,8 +144,7 @@ class NixpkgsPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -166,8 +158,8 @@ class NixpkgsPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        final var repo = new PackageRepository("nixpkgs",
-                wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
+        final var repo =
+                new PackageRepository("nixpkgs", wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
                 .isThrownBy(() -> resolver.resolve(purl, repo, null))
                 .satisfies(e -> assertThat(e.retryAfter()).hasSeconds(30));
@@ -176,13 +168,9 @@ class NixpkgsPackageMetadataResolverTest {
     @Test
     void shouldDownloadSeparatelyForDifferentRepoUrls(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/channel-a/packages.json.br"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("nixpkgs/packages.json.br")));
+                .willReturn(aResponse().withStatus(200).withBodyFile("nixpkgs/packages.json.br")));
         stubFor(get(urlPathEqualTo("/channel-b/packages.json.br"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBodyFile("nixpkgs/packages.json.br")));
+                .willReturn(aResponse().withStatus(200).withBodyFile("nixpkgs/packages.json.br")));
 
         final var purl = PackageURLBuilder.aPackageURL()
                 .withType("nixpkgs")
@@ -190,10 +178,10 @@ class NixpkgsPackageMetadataResolverTest {
                 .withVersion("8.5.0")
                 .build();
 
-        final var repoA = new PackageRepository("nixpkgs",
-                wmRuntimeInfo.getHttpBaseUrl() + "/channel-a/packages.json.br", null, null);
-        final var repoB = new PackageRepository("nixpkgs",
-                wmRuntimeInfo.getHttpBaseUrl() + "/channel-b/packages.json.br", null, null);
+        final var repoA = new PackageRepository(
+                "nixpkgs", wmRuntimeInfo.getHttpBaseUrl() + "/channel-a/packages.json.br", null, null);
+        final var repoB = new PackageRepository(
+                "nixpkgs", wmRuntimeInfo.getHttpBaseUrl() + "/channel-b/packages.json.br", null, null);
 
         final PackageMetadata resultA = resolver.resolve(purl, repoA, null);
         assertThat(resultA).isNotNull();
@@ -209,8 +197,7 @@ class NixpkgsPackageMetadataResolverTest {
 
     @Test
     void shouldThrowRetryableExceptionOnServerError(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo("/packages.json.br"))
-                .willReturn(aResponse().withStatus(503)));
+        stubFor(get(urlPathEqualTo("/packages.json.br")).willReturn(aResponse().withStatus(503)));
 
         final var purl = PackageURLBuilder.aPackageURL()
                 .withType("nixpkgs")
@@ -218,10 +205,9 @@ class NixpkgsPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        final var repo = new PackageRepository("nixpkgs",
-                wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
+        final var repo =
+                new PackageRepository("nixpkgs", wmRuntimeInfo.getHttpBaseUrl() + "/packages.json.br", null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
                 .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
-
 }

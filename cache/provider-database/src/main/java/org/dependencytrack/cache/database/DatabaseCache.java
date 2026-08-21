@@ -47,10 +47,7 @@ final class DatabaseCache implements Cache {
     private final AtomicLong evictionCount = new AtomicLong();
     private final AtomicLong cachedSize = new AtomicLong(-1L);
 
-    DatabaseCache(
-            String name,
-            Duration ttl,
-            DataSource dataSource) {
+    DatabaseCache(String name, Duration ttl, DataSource dataSource) {
         this.name = name;
         this.ttl = ttl;
         this.dataSource = dataSource;
@@ -63,7 +60,7 @@ final class DatabaseCache implements Cache {
         // We can't risk a DB connection being blocked for this long.
 
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      SELECT "VALUE"
                        FROM "CACHE_ENTRY"
                       WHERE "CACHE_NAME" = ?
@@ -95,7 +92,7 @@ final class DatabaseCache implements Cache {
         final var result = new HashMap<String, byte @Nullable []>();
 
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      SELECT "KEY"
                           , "VALUE"
                        FROM "CACHE_ENTRY"
@@ -122,7 +119,7 @@ final class DatabaseCache implements Cache {
     @Override
     public void put(String key, byte @Nullable [] value) {
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      INSERT INTO "CACHE_ENTRY" ("CACHE_NAME", "KEY", "VALUE", "EXPIRES_AT")
                      VALUES (?, ?, ?, NOW() + (INTERVAL '1 millisecond' * ?))
                      ON CONFLICT ("CACHE_NAME", "KEY") DO UPDATE
@@ -155,7 +152,7 @@ final class DatabaseCache implements Cache {
         }
 
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      INSERT INTO "CACHE_ENTRY" ("CACHE_NAME", "KEY", "VALUE", "EXPIRES_AT")
                      SELECT cache_name
                           , key
@@ -181,7 +178,7 @@ final class DatabaseCache implements Cache {
     @Override
     public void invalidateMany(Set<String> keys) {
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      DELETE
                        FROM "CACHE_ENTRY"
                       WHERE "CACHE_NAME" = ?
@@ -199,7 +196,7 @@ final class DatabaseCache implements Cache {
     @Override
     public void invalidateAll() {
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement ps = connection.prepareStatement("""
+                final PreparedStatement ps = connection.prepareStatement("""
                      DELETE
                        FROM "CACHE_ENTRY"
                       WHERE "CACHE_NAME" = ?
@@ -240,9 +237,9 @@ final class DatabaseCache implements Cache {
         cachedSize.set(size);
     }
 
-    @Nullable Long size() {
+    @Nullable
+    Long size() {
         final long size = cachedSize.get();
         return size < 0 ? null : size;
     }
-
 }

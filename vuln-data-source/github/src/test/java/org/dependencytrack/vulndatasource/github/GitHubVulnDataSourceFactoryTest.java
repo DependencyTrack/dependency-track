@@ -38,7 +38,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-class GitHubVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull VulnDataSource, @NonNull GitHubVulnDataSourceFactory> {
+class GitHubVulnDataSourceFactoryTest
+        extends AbstractExtensionFactoryTest<@NonNull VulnDataSource, @NonNull GitHubVulnDataSourceFactory> {
 
     protected GitHubVulnDataSourceFactoryTest() {
         super(GitHubVulnDataSourceFactory.class);
@@ -57,40 +58,40 @@ class GitHubVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonN
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void isDataSourceEnabledShouldReturnTrueWhenEnabledAndFalseOtherwise(final boolean isEnabled) {
-        final var config = (GithubVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
+        final var config =
+                (GithubVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
         config.setEnabled(isEnabled);
         config.setApiToken("dummy");
 
         final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, configRegistry)
+                .register(HttpClient.class, HttpClient.newHttpClient())
+                .register(KeyValueStore.class, new MockKeyValueStore()));
         assertThat(factory.isDataSourceEnabled()).isEqualTo(isEnabled);
     }
 
     @Test
     void createShouldThrowWhenDisabled() {
-        final var config = (GithubVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
+        final var config =
+                (GithubVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
         config.setEnabled(false);
 
         final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, configRegistry)
+                .register(HttpClient.class, HttpClient.newHttpClient())
+                .register(KeyValueStore.class, new MockKeyValueStore()));
 
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(factory::create);
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
     }
 
     @SuppressWarnings("unchecked")
     private void validate(final GithubVulnDataSourceConfigV1 config) {
-        ((RuntimeConfigValidator<GithubVulnDataSourceConfigV1>) factory.runtimeConfigSpec().validator())
+        ((RuntimeConfigValidator<GithubVulnDataSourceConfigV1>)
+                        factory.runtimeConfigSpec().validator())
                 .validate(config);
     }
 
@@ -151,21 +152,20 @@ class GitHubVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonN
 
     @Test
     void createShouldReturnDataSource() {
-        final var config = (GithubVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
+        final var config =
+                (GithubVulnDataSourceConfigV1) factory.runtimeConfigSpec().defaultConfig();
         config.setEnabled(true);
         config.setApiToken("dummy");
 
         final var configRegistry = new MockConfigRegistry(factory.runtimeConfigSpec(), config);
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, configRegistry)
+                .register(HttpClient.class, HttpClient.newHttpClient())
+                .register(KeyValueStore.class, new MockKeyValueStore()));
 
         final VulnDataSource dataSource = factory.create();
         assertThat(dataSource).isNotNull();
         dataSource.close();
     }
-
 }

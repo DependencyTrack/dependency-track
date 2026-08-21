@@ -51,8 +51,7 @@ class LegacyConfigPropertyValidatorTest {
                 .withDefaultValue("dt.ldap.bind-password", "secret")
                 .build();
 
-        assertThatCode(() -> LegacyConfigPropertyValidator.validate(config))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> LegacyConfigPropertyValidator.validate(config)).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
@@ -100,9 +99,8 @@ class LegacyConfigPropertyValidatorTest {
     @ParameterizedTest
     @MethodSource("legacyV5Rc1Renames")
     void shouldFailWhenLegacyV5Rc1PropertyIsPresent(final String oldName, final String newName) {
-        final Config config = new SmallRyeConfigBuilder()
-                .withDefaultValue(oldName, "value")
-                .build();
+        final Config config =
+                new SmallRyeConfigBuilder().withDefaultValue(oldName, "value").build();
 
         assertThatThrownBy(() -> LegacyConfigPropertyValidator.validate(config))
                 .isInstanceOf(IllegalStateException.class)
@@ -127,21 +125,23 @@ class LegacyConfigPropertyValidatorTest {
         assertThatThrownBy(() -> LegacyConfigPropertyValidator.validate(config))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("dt.cors.allow.origin -> dt.cors.allowed-origins")
-                .hasMessageContaining("dt.http.timeout.connection -> dt.http.connect-timeout-ms (now milliseconds, was seconds)")
+                .hasMessageContaining(
+                        "dt.http.timeout.connection -> dt.http.connect-timeout-ms (now milliseconds, was seconds)")
                 .hasMessageContaining("dt.init.and.exit -> dt.init-tasks.exit-after-completion");
     }
 
     @Test
     void shouldNotFailWhenCanonicalDtPropertyIsSetViaEnvVar() {
         final Config config = new SmallRyeConfigBuilder()
-                .withSources(new EnvConfigSource(Map.of(
-                        "DT_TASK_TAG_MAINTENANCE_CRON", "1 * * * *",
-                        "DT_LDAP_BIND_PASSWORD", "secret",
-                        "DT_CORS_ALLOW_CREDENTIALS", "true"), 300))
+                .withSources(new EnvConfigSource(
+                        Map.of(
+                                "DT_TASK_TAG_MAINTENANCE_CRON", "1 * * * *",
+                                "DT_LDAP_BIND_PASSWORD", "secret",
+                                "DT_CORS_ALLOW_CREDENTIALS", "true"),
+                        300))
                 .build();
 
-        assertThatCode(() -> LegacyConfigPropertyValidator.validate(config))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> LegacyConfigPropertyValidator.validate(config)).doesNotThrowAnyException();
     }
 
     @Test
@@ -170,8 +170,7 @@ class LegacyConfigPropertyValidatorTest {
     void shouldFailWhenUnprefixedLegacyV5Rc1PropertyIsSetViaEnvVar() {
         final Config config = new SmallRyeConfigBuilder()
                 .withSources(new EnvConfigSource(
-                        Map.of("VULNERABILITY_POLICY_BUNDLE_URL", "https://example.com/bundle.zip"),
-                        300))
+                        Map.of("VULNERABILITY_POLICY_BUNDLE_URL", "https://example.com/bundle.zip"), 300))
                 .build();
 
         assertThatThrownBy(() -> LegacyConfigPropertyValidator.validate(config))
@@ -207,8 +206,7 @@ class LegacyConfigPropertyValidatorTest {
                 .withSources(new EnvConfigSource(Map.of("NO_PROXY", "localhost,127.0.0.1"), 300))
                 .build();
 
-        assertThatCode(() -> LegacyConfigPropertyValidator.validate(config))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> LegacyConfigPropertyValidator.validate(config)).doesNotThrowAnyException();
     }
 
     @Test
@@ -224,11 +222,9 @@ class LegacyConfigPropertyValidatorTest {
 
     @Test
     void shouldKeepEveryRenameEntryPointingAtDtPrefixedOldName() {
-        assertThat(LegacyConfigPropertyValidator.LEGACY_V5_RC1_PROPERTY_RENAMES)
-                .allSatisfy((oldName, newName) -> {
-                    assertThat(oldName).startsWith("dt.");
-                    assertThat(newName).isNotBlank();
-                });
+        assertThat(LegacyConfigPropertyValidator.LEGACY_V5_RC1_PROPERTY_RENAMES).allSatisfy((oldName, newName) -> {
+            assertThat(oldName).startsWith("dt.");
+            assertThat(newName).isNotBlank();
+        });
     }
-
 }

@@ -84,9 +84,7 @@ public interface DexEngine extends Closeable {
      * @throws IllegalStateException When the engine was already started.
      */
     default <A, R> void registerActivity(
-            Activity<A, R> executor,
-            PayloadConverter<A> argumentConverter,
-            PayloadConverter<R> resultConverter) {
+            Activity<A, R> executor, PayloadConverter<A> argumentConverter, PayloadConverter<R> resultConverter) {
         registerActivity(executor, argumentConverter, resultConverter, null, null);
     }
 
@@ -292,5 +290,4 @@ public interface DexEngine extends Closeable {
      * @return A {@link Page} containing {@link TaskQueue}s.
      */
     Page<TaskQueue> listTaskQueues(ListTaskQueuesRequest request);
-
 }

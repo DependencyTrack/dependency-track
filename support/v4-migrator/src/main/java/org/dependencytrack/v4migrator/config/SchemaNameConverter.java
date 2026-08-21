@@ -42,8 +42,7 @@ public final class SchemaNameConverter implements ITypeConverter<String> {
     public String convert(final String value) {
         if (value == null || !PATTERN.matcher(value).matches()) {
             throw new TypeConversionException(
-                "must be 1-63 characters and contain no quote or control characters; got '"
-                    + value + "'");
+                    "must be 1-63 characters and contain no quote or control characters; got '" + value + "'");
         }
         return value;
     }

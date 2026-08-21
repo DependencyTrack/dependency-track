@@ -44,9 +44,7 @@ public record PackageMetadata(
         if (purl.getVersion() != null
                 || (purl.getQualifiers() != null && !purl.getQualifiers().isEmpty())
                 || purl.getSubpath() != null) {
-            throw new IllegalArgumentException(
-                    "purl must not contain version, qualifiers, or subpath: " + purl);
+            throw new IllegalArgumentException("purl must not contain version, qualifiers, or subpath: " + purl);
         }
     }
-
 }

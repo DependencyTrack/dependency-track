@@ -61,5 +61,4 @@ public interface ProjectLastAnalysisDao {
              )
             """)
     int recordAttempt(@Bind UUID projectUuid, @Bind Instant attemptedAt);
-
 }

@@ -52,16 +52,14 @@ class MetadataRegistryTest {
     void shouldApplyDefaultLockTimeoutWhenNoneIsProvided() {
         registerActivity("test", /* lockTimeout */ null, /* executionTimeout */ null);
 
-        assertThat(metadataRegistry.getActivityMetadata("test").lockTimeout())
-                .isEqualTo(DEFAULT_LOCK_TIMEOUT);
+        assertThat(metadataRegistry.getActivityMetadata("test").lockTimeout()).isEqualTo(DEFAULT_LOCK_TIMEOUT);
     }
 
     @Test
     void shouldPreferProvidedLockTimeoutOverDefault() {
         registerActivity("test", Duration.ofMinutes(15), /* executionTimeout */ null);
 
-        assertThat(metadataRegistry.getActivityMetadata("test").lockTimeout())
-                .isEqualTo(Duration.ofMinutes(15));
+        assertThat(metadataRegistry.getActivityMetadata("test").lockTimeout()).isEqualTo(Duration.ofMinutes(15));
     }
 
     @Test
@@ -79,18 +77,8 @@ class MetadataRegistryTest {
                 .withMessageContaining("executionTimeout must be positive");
     }
 
-    private void registerActivity(
-            String name,
-            @Nullable Duration lockTimeout,
-            @Nullable Duration executionTimeout) {
+    private void registerActivity(String name, @Nullable Duration lockTimeout, @Nullable Duration executionTimeout) {
         metadataRegistry.registerActivity(
-                name,
-                voidConverter(),
-                voidConverter(),
-                "default",
-                lockTimeout,
-                executionTimeout,
-                (_, _) -> null);
+                name, voidConverter(), voidConverter(), "default", lockTimeout, executionTimeout, (_, _) -> null);
     }
-
 }

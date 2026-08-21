@@ -31,8 +31,7 @@ class DatabaseSecretManagerConfigTest {
 
     @Test
     void shouldReturnNullWhenKekNotConfigured() {
-        final var config = new DatabaseSecretManagerConfig(
-                new SmallRyeConfigBuilder().build());
+        final var config = new DatabaseSecretManagerConfig(new SmallRyeConfigBuilder().build());
 
         assertThat(config.getKek()).isNull();
     }
@@ -44,23 +43,19 @@ class DatabaseSecretManagerConfigTest {
             expectedBytes[i] = (byte) i;
         }
 
-        final var config = new DatabaseSecretManagerConfig(
-                new SmallRyeConfigBuilder()
-                        .withDefaultValues(Map.of(
-                                "dt.secret-management.database.kek",
-                                Base64.getEncoder().encodeToString(expectedBytes)))
-                        .build());
+        final var config = new DatabaseSecretManagerConfig(new SmallRyeConfigBuilder()
+                .withDefaultValues(Map.of(
+                        "dt.secret-management.database.kek", Base64.getEncoder().encodeToString(expectedBytes)))
+                .build());
 
         assertThat(config.getKek()).isEqualTo(expectedBytes);
     }
 
     @Test
     void shouldThrowWhenKekNotBase64() {
-        final var config = new DatabaseSecretManagerConfig(
-                new SmallRyeConfigBuilder()
-                        .withDefaultValues(Map.of(
-                                "dt.secret-management.database.kek", "invalid-base64"))
-                        .build());
+        final var config = new DatabaseSecretManagerConfig(new SmallRyeConfigBuilder()
+                .withDefaultValues(Map.of("dt.secret-management.database.kek", "invalid-base64"))
+                .build());
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(config::getKek)
@@ -70,16 +65,13 @@ class DatabaseSecretManagerConfigTest {
     @Test
     void shouldThrowWhenKekWrongLength() {
         final byte[] shortKey = new byte[16];
-        final var config = new DatabaseSecretManagerConfig(
-                new SmallRyeConfigBuilder()
-                        .withDefaultValues(Map.of(
-                                "dt.secret-management.database.kek",
-                                Base64.getEncoder().encodeToString(shortKey)))
-                        .build());
+        final var config = new DatabaseSecretManagerConfig(new SmallRyeConfigBuilder()
+                .withDefaultValues(Map.of(
+                        "dt.secret-management.database.kek", Base64.getEncoder().encodeToString(shortKey)))
+                .build());
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(config::getKek)
                 .withMessageContaining("must be 32 bytes, but is 16");
     }
-
 }

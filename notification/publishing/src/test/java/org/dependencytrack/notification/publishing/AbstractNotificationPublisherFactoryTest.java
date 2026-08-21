@@ -59,10 +59,8 @@ public abstract class AbstractNotificationPublisherFactoryTest<T extends Notific
             assertThat(defaultConfig).isNotNull();
 
             assertThatNoException()
-                    .isThrownBy(() -> RuntimeConfigMapper.getInstance().validate(
-                            defaultConfig, factory.ruleConfigSpec()));
+                    .isThrownBy(
+                            () -> RuntimeConfigMapper.getInstance().validate(defaultConfig, factory.ruleConfigSpec()));
         }
-
     }
-
 }

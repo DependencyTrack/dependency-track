@@ -75,8 +75,9 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
     @SuppressWarnings({"rawtypes", "unchecked"})
     void process(final WorkflowTask task) {
         try (var _ = MDC.putCloseable(MDC_WORKFLOW_NAME, task.workflowName());
-             var _ = MDC.putCloseable(MDC_WORKFLOW_INSTANCE_ID, task.workflowInstanceId());
-             var _ = MDC.putCloseable(MDC_WORKFLOW_RUN_ID, task.workflowRunId().toString())) {
+                var _ = MDC.putCloseable(MDC_WORKFLOW_INSTANCE_ID, task.workflowInstanceId());
+                var _ = MDC.putCloseable(
+                        MDC_WORKFLOW_RUN_ID, task.workflowRunId().toString())) {
             final WorkflowMetadata workflowMetadata;
             try {
                 workflowMetadata = metadataRegistry.getWorkflowMetadata(task.workflowName());
@@ -101,12 +102,11 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
 
             // Inject a WorkflowTaskStarted event.
             // Its timestamp will be used as deterministic "now" timestamp while processing new events.
-            workflowRunState.applyEvent(
-                    WorkflowEvent.newBuilder()
-                            .setId(-1)
-                            .setTimestamp(Timestamps.now())
-                            .setWorkflowTaskStarted(WorkflowTaskStarted.getDefaultInstance())
-                            .build());
+            workflowRunState.applyEvent(WorkflowEvent.newBuilder()
+                    .setId(-1)
+                    .setTimestamp(Timestamps.now())
+                    .setWorkflowTaskStarted(WorkflowTaskStarted.getDefaultInstance())
+                    .build());
 
             int eventsAdded = 0;
             for (final WorkflowEvent newEvent : task.inbox()) {
@@ -118,12 +118,11 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
                 // so we can differentiate between when a run was created vs.
                 // when it was eventually picked up.
                 if (newEvent.hasRunCreated()) {
-                    workflowRunState.applyEvent(
-                            WorkflowEvent.newBuilder()
-                                    .setId(-1)
-                                    .setTimestamp(Timestamps.now())
-                                    .setRunStarted(RunStarted.getDefaultInstance())
-                                    .build());
+                    workflowRunState.applyEvent(WorkflowEvent.newBuilder()
+                            .setId(-1)
+                            .setTimestamp(Timestamps.now())
+                            .setRunStarted(RunStarted.getDefaultInstance())
+                            .build());
                     eventsAdded++;
                 }
             }
@@ -165,12 +164,11 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
                 // When continued as new, any pending events have already been deleted,
                 // and existing history will be truncated. Adding a WorkflowTaskCompleted
                 // event would add no value then.
-                workflowRunState.applyEvent(
-                        WorkflowEvent.newBuilder()
-                                .setId(-1)
-                                .setTimestamp(Timestamps.now())
-                                .setWorkflowTaskCompleted(WorkflowTaskCompleted.getDefaultInstance())
-                                .build());
+                workflowRunState.applyEvent(WorkflowEvent.newBuilder()
+                        .setId(-1)
+                        .setTimestamp(Timestamps.now())
+                        .setWorkflowTaskCompleted(WorkflowTaskCompleted.getDefaultInstance())
+                        .build());
             }
 
             engine.onTaskEvent(new WorkflowTaskCompletedEvent(task, workflowRunState));
@@ -181,5 +179,4 @@ final class WorkflowTaskWorker extends AbstractTaskWorker<WorkflowTask> {
     void abandon(final WorkflowTask task) {
         engine.onTaskEvent(new WorkflowTaskAbandonedEvent(task));
     }
-
 }

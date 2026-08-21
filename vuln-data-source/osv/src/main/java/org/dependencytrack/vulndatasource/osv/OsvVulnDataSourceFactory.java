@@ -66,8 +66,7 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
         this.kvStore = serviceRegistry.require(KeyValueStore.class);
         this.httpClient = serviceRegistry.require(HttpClient.class);
-        this.objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule());
+        this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     @Override
@@ -110,9 +109,8 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
             throw new IllegalStateException("Vulnerability data source is disabled and cannot be created");
         }
 
-        final WatermarkManager watermarkManager = config.isIncrementalMirroringEnabled()
-                ? new WatermarkManager(config.getEcosystems(), kvStore)
-                : null;
+        final WatermarkManager watermarkManager =
+                config.isIncrementalMirroringEnabled() ? new WatermarkManager(config.getEcosystems(), kvStore) : null;
 
         return new OsvVulnDataSource(
                 watermarkManager,
@@ -122,5 +120,4 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
                 httpClient,
                 config.getAliasSyncEnabled());
     }
-
 }

@@ -19,9 +19,6 @@
 package org.dependencytrack.resources.v2.exception;
 
 import alpine.server.auth.AuthenticationNotRequired;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.resources.v2.ResourceConfig;
 import org.dependencytrack.support.jdbi.exception.QueryTimeoutException;
@@ -29,6 +26,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Response;
 
 import static java.util.Objects.requireNonNull;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -38,8 +39,7 @@ import static org.dependencytrack.resources.v2.OpenApiValidationClientResponseFi
 public class QueryTimeoutExceptionMapperTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig().register(TestResource.class));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(TestResource.class));
 
     @Test
     public void shouldMapToTimeoutProblem() {
@@ -67,11 +67,7 @@ public class QueryTimeoutExceptionMapperTest {
         @AuthenticationNotRequired
         public Response get() {
             throw requireNonNull(QueryTimeoutException.of(
-                    new PSQLException(
-                            "canceling statement due to statement timeout",
-                            PSQLState.QUERY_CANCELED)));
+                    new PSQLException("canceling statement due to statement timeout", PSQLState.QUERY_CANCELED)));
         }
-
     }
-
 }

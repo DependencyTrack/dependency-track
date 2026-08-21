@@ -45,10 +45,7 @@ public interface NotificationOutboxDao extends SqlObject {
                 RETURNING "PAYLOAD"
                 """);
 
-        return query
-                .bind("limit", limit)
-                .mapTo(byte[].class)
-                .stream()
+        return query.bind("limit", limit).mapTo(byte[].class).stream()
                 .map(NotificationOutboxDao::deserialize)
                 .toList();
     }
@@ -60,5 +57,4 @@ public interface NotificationOutboxDao extends SqlObject {
             throw new UncheckedIOException(e);
         }
     }
-
 }

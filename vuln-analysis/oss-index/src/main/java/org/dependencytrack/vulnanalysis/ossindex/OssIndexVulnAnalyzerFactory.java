@@ -79,8 +79,7 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
         configRegistry = serviceRegistry.require(ConfigRegistry.class);
         cacheManager = serviceRegistry.require(CacheManager.class);
         httpClient = serviceRegistry.require(HttpClient.class);
-        objectMapper = new ObjectMapper()
-                .disable(FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES);
         localConnectionsAllowed = configRegistry
                 .getDeploymentConfig()
                 .getOptionalValue("allow-local-connections", boolean.class)
@@ -121,7 +120,9 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
     @Override
     public boolean isEnabled() {
         requireNonNull(configRegistry);
-        return configRegistry.getRuntimeConfig(OssIndexVulnAnalyzerConfigV1.class).isEnabled();
+        return configRegistry
+                .getRuntimeConfig(OssIndexVulnAnalyzerConfigV1.class)
+                .isEnabled();
     }
 
     @Override
@@ -179,14 +180,14 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
 
         final String authHeader;
         if (config.getUsername() != null && config.getApiToken() != null) {
-            final String basicAuthCredentials = Base64.getEncoder().encodeToString(
-                    "%s:%s".formatted(config.getUsername(), config.getApiToken())
+            final String basicAuthCredentials = Base64.getEncoder()
+                    .encodeToString("%s:%s"
+                            .formatted(config.getUsername(), config.getApiToken())
                             .getBytes(StandardCharsets.UTF_8));
             authHeader = "Basic " + basicAuthCredentials;
         } else {
             authHeader = "Bearer " + config.getApiToken();
         }
-
 
         final var request = HttpRequest.newBuilder()
                 .uri(config.getApiUrl().resolve("/api/v3/component-report"))
@@ -200,8 +201,7 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
 
         final int statusCode;
         try {
-            final HttpResponse<Void> response = httpClient.send(
-                    request, HttpResponse.BodyHandlers.discarding());
+            final HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
             statusCode = response.statusCode();
         } catch (IOException e) {
             LOGGER.error("Failed to connect to OSS Index at {}", request.uri(), e);
@@ -235,5 +235,4 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
             return false;
         }
     }
-
 }

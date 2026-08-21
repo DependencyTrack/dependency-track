@@ -30,16 +30,10 @@ public interface TestDatabaseEventListener {
     /// @param jdbcUrl  The JDBC URL of the test database.
     /// @param username The username of the test database.
     /// @param password The password of the test database.
-    default void onDatabaseInitialized(
-            String jdbcUrl,
-            @Nullable String username,
-            @Nullable String password) {
-    }
+    default void onDatabaseInitialized(String jdbcUrl, @Nullable String username, @Nullable String password) {}
 
     /// Invoked after the test database's tables have been truncated
     /// (i.e. before each test for consumers using [TestDatabaseExtension]).
     /// Use this to reset state that the generic truncation does not cover.
-    default void onTablesTruncated() {
-    }
-
+    default void onTablesTruncated() {}
 }

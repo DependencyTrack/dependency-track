@@ -90,85 +90,75 @@ import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_SYSTEM;
  */
 public final class TestNotificationFactory {
 
-    private record SupplierMatrixKey(
-            Scope scope,
-            Group group,
-            Level level) {
+    private record SupplierMatrixKey(Scope scope, Group group, Level level) {
 
         private SupplierMatrixKey {
             requireNonNull(level, "level must not be null");
             requireNonNull(scope, "scope must not be null");
             requireNonNull(group, "group must not be null");
         }
-
     }
 
-    private static final Map<SupplierMatrixKey, Supplier<Notification>> SUPPLIER_MATRIX =
-            Map.ofEntries(
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_VULNERABILITY_RETRACTED, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createVulnerabilityRetractedTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_BOM_CONSUMED, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createBomConsumedTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_BOM_PROCESSED, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createBomProcessedTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_BOM_PROCESSING_FAILED, LEVEL_ERROR),
-                            TestNotificationFactory::createBomProcessingFailedTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_BOM_VALIDATION_FAILED, LEVEL_ERROR),
-                            TestNotificationFactory::createBomValidationFailedTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_NEW_VULNERABILITY, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createNewVulnerabilityTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_NEW_VULNERABLE_DEPENDENCY, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createNewVulnerableDependencyTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_POLICY_VIOLATION, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createPolicyViolationTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_PROJECT_AUDIT_CHANGE, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createProjectAuditChangeTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_PROJECT_CREATED, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createProjectCreatedTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_VEX_CONSUMED, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createVexConsumedTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_VEX_PROCESSED, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createVexProcessedTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_ANALYZER, LEVEL_ERROR),
-                            TestNotificationFactory::createAnalyzerErrorTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_INTEGRATION, LEVEL_ERROR),
-                            TestNotificationFactory::createIntegrationErrorTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_USER_CREATED, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createUserCreatedTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_USER_DELETED, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createUserDeletedTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_NEW_VULNERABILITIES_SUMMARY, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createNewVulnerabilitiesSummaryTestNotification),
-                    Map.entry(
-                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_NEW_POLICY_VIOLATIONS_SUMMARY, LEVEL_INFORMATIONAL),
-                            TestNotificationFactory::createNewPolicyViolationsSummaryTestNotification));
+    private static final Map<SupplierMatrixKey, Supplier<Notification>> SUPPLIER_MATRIX = Map.ofEntries(
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_VULNERABILITY_RETRACTED, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createVulnerabilityRetractedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_BOM_CONSUMED, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createBomConsumedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_BOM_PROCESSED, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createBomProcessedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_BOM_PROCESSING_FAILED, LEVEL_ERROR),
+                    TestNotificationFactory::createBomProcessingFailedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_BOM_VALIDATION_FAILED, LEVEL_ERROR),
+                    TestNotificationFactory::createBomValidationFailedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_NEW_VULNERABILITY, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createNewVulnerabilityTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_NEW_VULNERABLE_DEPENDENCY, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createNewVulnerableDependencyTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_POLICY_VIOLATION, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createPolicyViolationTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_PROJECT_AUDIT_CHANGE, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createProjectAuditChangeTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_PROJECT_CREATED, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createProjectCreatedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_VEX_CONSUMED, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createVexConsumedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_VEX_PROCESSED, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createVexProcessedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_ANALYZER, LEVEL_ERROR),
+                    TestNotificationFactory::createAnalyzerErrorTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_INTEGRATION, LEVEL_ERROR),
+                    TestNotificationFactory::createIntegrationErrorTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_USER_CREATED, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createUserCreatedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_SYSTEM, GROUP_USER_DELETED, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createUserDeletedTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_NEW_VULNERABILITIES_SUMMARY, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createNewVulnerabilitiesSummaryTestNotification),
+            Map.entry(
+                    new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_NEW_POLICY_VIOLATIONS_SUMMARY, LEVEL_INFORMATIONAL),
+                    TestNotificationFactory::createNewPolicyViolationsSummaryTestNotification));
 
-    private TestNotificationFactory() {
-    }
+    private TestNotificationFactory() {}
 
-    public static @Nullable Notification createTestNotification(
-            Scope scope,
-            Group group,
-            Level level) {
-        final Supplier<Notification> supplier =
-                SUPPLIER_MATRIX.get(new SupplierMatrixKey(scope, group, level));
+    public static @Nullable Notification createTestNotification(Scope scope, Group group, Level level) {
+        final Supplier<Notification> supplier = SUPPLIER_MATRIX.get(new SupplierMatrixKey(scope, group, level));
         if (supplier != null) {
             return supplier.get();
         }
@@ -181,38 +171,24 @@ public final class TestNotificationFactory {
     }
 
     public static Notification createVulnerabilityRetractedTestNotification() {
-        return createVulnerabilityRetractedNotification(
-                createProject(),
-                createComponent(),
-                createVulnerability());
+        return createVulnerabilityRetractedNotification(createProject(), createComponent(), createVulnerability());
     }
 
     public static Notification createBomConsumedTestNotification() {
-        return createBomConsumedNotification(
-                createProject(),
-                createBom(),
-                "eef2f6df-f03d-4cd4-954b-6ca1d73538e2");
+        return createBomConsumedNotification(createProject(), createBom(), "eef2f6df-f03d-4cd4-954b-6ca1d73538e2");
     }
 
     public static Notification createBomProcessedTestNotification() {
-        return createBomProcessedNotification(
-                createProject(),
-                createBom(),
-                "eef2f6df-f03d-4cd4-954b-6ca1d73538e2");
+        return createBomProcessedNotification(createProject(), createBom(), "eef2f6df-f03d-4cd4-954b-6ca1d73538e2");
     }
 
     public static Notification createBomProcessingFailedTestNotification() {
         return createBomProcessingFailedNotification(
-                createProject(),
-                createBom(),
-                "eef2f6df-f03d-4cd4-954b-6ca1d73538e2",
-                "cause");
+                createProject(), createBom(), "eef2f6df-f03d-4cd4-954b-6ca1d73538e2", "cause");
     }
 
     public static Notification createBomValidationFailedTestNotification() {
-        return createBomValidationFailedNotification(
-                createProject(),
-                List.of("cause 1", "cause 2"));
+        return createBomValidationFailedNotification(createProject(), List.of("cause 1", "cause 2"));
     }
 
     public static Notification createIntegrationErrorTestNotification() {
@@ -221,26 +197,17 @@ public final class TestNotificationFactory {
 
     public static Notification createNewVulnerabilityTestNotification() {
         return createNewVulnerabilityNotification(
-                createProject(),
-                createComponent(),
-                createVulnerability(),
-                ANALYSIS_TRIGGER_BOM_UPLOAD);
+                createProject(), createComponent(), createVulnerability(), ANALYSIS_TRIGGER_BOM_UPLOAD);
     }
 
     public static Notification createNewVulnerableDependencyTestNotification() {
         return createNewVulnerableDependencyNotification(
-                createProject(),
-                createComponent(),
-                List.of(createVulnerability()));
+                createProject(), createComponent(), List.of(createVulnerability()));
     }
 
     public static Notification createPolicyViolationTestNotification() {
         return createPolicyViolationNotification(
-                createProject(),
-                createComponent(),
-                createPolicyViolation(
-                        createPolicyCondition(
-                                createPolicy())));
+                createProject(), createComponent(), createPolicyViolation(createPolicyCondition(createPolicy())));
     }
 
     public static Notification createProjectAuditChangeTestNotification() {
@@ -248,10 +215,7 @@ public final class TestNotificationFactory {
                 createProject(),
                 createComponent(),
                 createVulnerability(),
-                createVulnerabilityAnalysis(
-                        createProject(),
-                        createComponent(),
-                        createVulnerability()),
+                createVulnerabilityAnalysis(createProject(), createComponent(), createVulnerability()),
                 true,
                 false);
     }
@@ -458,17 +422,13 @@ public final class TestNotificationFactory {
                 .addCwes(Vulnerability.Cwe.newBuilder()
                         .setCweId(666)
                         .setName("Operation on Resource in Wrong Phase of Lifetime"))
-                .addCwes(Vulnerability.Cwe.newBuilder()
-                        .setCweId(777)
-                        .setName("Regular Expression without Anchors"))
+                .addCwes(Vulnerability.Cwe.newBuilder().setCweId(777).setName("Regular Expression without Anchors"))
                 .setIsKev(false)
                 .build();
     }
 
     private static PolicyViolationAnalysis createPolicyViolationAnalysis(
-            Project project,
-            Component component,
-            PolicyViolation violation) {
+            Project project, Component component, PolicyViolation violation) {
         return PolicyViolationAnalysis.newBuilder()
                 .setProject(project)
                 .setComponent(component)
@@ -479,9 +439,7 @@ public final class TestNotificationFactory {
     }
 
     private static VulnerabilityAnalysis createVulnerabilityAnalysis(
-            Project project,
-            Component component,
-            Vulnerability vulnerability) {
+            Project project, Component component, Vulnerability vulnerability) {
         return VulnerabilityAnalysis.newBuilder()
                 .setProject(project)
                 .setComponent(component)
@@ -490,5 +448,4 @@ public final class TestNotificationFactory {
                 .setSuppressed(true)
                 .build();
     }
-
 }

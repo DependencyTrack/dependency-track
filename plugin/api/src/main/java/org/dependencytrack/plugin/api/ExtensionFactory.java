@@ -78,5 +78,4 @@ public interface ExtensionFactory<T extends ExtensionPoint> extends Closeable {
     default void close() {
         // Default no-op to remove checked exception from method signature.
     }
-
 }

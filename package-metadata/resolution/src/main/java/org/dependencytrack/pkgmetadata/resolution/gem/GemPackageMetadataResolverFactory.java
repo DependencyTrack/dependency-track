@@ -76,8 +76,7 @@ public final class GemPackageMetadataResolverFactory implements PackageMetadataR
 
     @Override
     public void init(ServiceRegistry serviceRegistry) {
-        objectMapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
                 serviceRegistry.require(CacheManager.class).getCache("responses"));
@@ -87,5 +86,4 @@ public final class GemPackageMetadataResolverFactory implements PackageMetadataR
     public PackageMetadataResolver create() {
         return new GemPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

@@ -88,34 +88,32 @@ class OrphanedVulnerableSoftwareIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> map = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> map =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT orig_id, canonical_id
                       FROM dt_v4_migration.vulnerablesoftware_canonical_id_map
                      ORDER BY orig_id
                     """).mapToMap().list());
         assertThat(map)
-            .as("orphan VS (id=11) must be excluded from the canonical map")
-            .extracting("orig_id", "canonical_id")
-            .containsExactly(tuple(10L, 10L));
+                .as("orphan VS (id=11) must be excluded from the canonical map")
+                .extracting("orig_id", "canonical_id")
+                .containsExactly(tuple(10L, 10L));
 
-        final List<Long> vsIds = target.jdbi().withHandle(h ->
-            h.createQuery("SELECT \"ID\" FROM \"VULNERABLESOFTWARE\" ORDER BY \"ID\"")
-                .mapTo(Long.class)
-                .list());
-        assertThat(vsIds)
-            .as("orphan VS (id=11) must not be loaded into v5")
-            .containsExactly(10L);
+        final List<Long> vsIds = target.jdbi()
+                .withHandle(h -> h.createQuery("SELECT \"ID\" FROM \"VULNERABLESOFTWARE\" ORDER BY \"ID\"")
+                        .mapTo(Long.class)
+                        .list());
+        assertThat(vsIds).as("orphan VS (id=11) must not be loaded into v5").containsExactly(10L);
 
-        final List<Map<String, Object>> joins = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> joins =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"
                       FROM "VULNERABLESOFTWARE_VULNERABILITIES"
                      ORDER BY "VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"
                     """).mapToMap().list());
         assertThat(joins)
-            .extracting("vulnerability_id", "vulnerablesoftware_id")
-            .containsExactly(tuple(1L, 10L));
+                .extracting("vulnerability_id", "vulnerablesoftware_id")
+                .containsExactly(tuple(1L, 10L));
     }
 
     private void runPipeline() throws Exception {

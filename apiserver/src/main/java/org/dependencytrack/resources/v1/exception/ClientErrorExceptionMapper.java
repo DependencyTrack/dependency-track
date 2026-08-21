@@ -38,5 +38,4 @@ public class ClientErrorExceptionMapper implements ExceptionMapper<ClientErrorEx
     public Response toResponse(ClientErrorException exception) {
         return exception.getResponse();
     }
-
 }

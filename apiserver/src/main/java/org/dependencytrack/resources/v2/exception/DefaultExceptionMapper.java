@@ -26,5 +26,4 @@ import jakarta.ws.rs.ext.Provider;
  * @since 5.0.0
  */
 @Provider
-public final class DefaultExceptionMapper extends LoggingProblemDetailsExceptionMapper<Exception, ProblemDetails> {
-}
+public final class DefaultExceptionMapper extends LoggingProblemDetailsExceptionMapper<Exception, ProblemDetails> {}

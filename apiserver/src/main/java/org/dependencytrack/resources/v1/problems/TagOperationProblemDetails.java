@@ -37,5 +37,4 @@ public class TagOperationProblemDetails extends ProblemDetails {
     public void setErrors(final Map<String, String> errors) {
         this.errors = errors;
     }
-
 }

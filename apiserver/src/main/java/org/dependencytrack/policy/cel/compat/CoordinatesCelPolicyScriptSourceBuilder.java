@@ -53,9 +53,12 @@ public class CoordinatesCelPolicyScriptSourceBuilder implements CelPolicyScriptS
             throw new UncheckedIOException(e);
         }
 
-        final String group = Optional.ofNullable(valueNode.path("group").asText(null)).orElse("");
-        final String name = Optional.ofNullable(valueNode.path("name").asText(null)).orElse("");
-        final String version = Optional.ofNullable(valueNode.path("version").asText("")).orElse("");
+        final String group =
+                Optional.ofNullable(valueNode.path("group").asText(null)).orElse("");
+        final String name =
+                Optional.ofNullable(valueNode.path("name").asText(null)).orElse("");
+        final String version =
+                Optional.ofNullable(valueNode.path("version").asText("")).orElse("");
 
         final var scriptSrc = evaluateScript(group, name, version);
         if (condition.getOperator() == PolicyCondition.Operator.MATCHES) {
@@ -67,12 +70,13 @@ public class CoordinatesCelPolicyScriptSourceBuilder implements CelPolicyScriptS
         return null;
     }
 
-    private static String evaluateScript(final String conditionGroupPart, final String conditionNamePart, final String conditionVersionPart) {
+    private static String evaluateScript(
+            final String conditionGroupPart, final String conditionNamePart, final String conditionVersionPart) {
         final String group = replace(conditionGroupPart);
         final String name = replace(conditionNamePart);
 
         final Matcher versionOperatorMatcher = VERSION_OPERATOR_PATTERN.matcher(conditionVersionPart);
-        //Do an exact match if no operator found
+        // Do an exact match if no operator found
         if (!versionOperatorMatcher.find()) {
 
             Vers conditionVers = Vers.builder(SCHEME_GENERIC)
@@ -83,15 +87,16 @@ public class CoordinatesCelPolicyScriptSourceBuilder implements CelPolicyScriptS
                 """.formatted(escapeQuotes(group), escapeQuotes(name), conditionVers.toString());
         }
 
-        io.github.nscuro.versatile.Comparator versionComparator = switch (versionOperatorMatcher.group(1)) {
-            case "==" -> Comparator.EQUAL;
-            case "!=" -> Comparator.NOT_EQUAL;
-            case "<" -> Comparator.LESS_THAN;
-            case "<=" -> Comparator.LESS_THAN_OR_EQUAL;
-            case ">" -> Comparator.GREATER_THAN;
-            case ">=" -> Comparator.GREATER_THAN_OR_EQUAL;
-            default -> null;
-        };
+        io.github.nscuro.versatile.Comparator versionComparator =
+                switch (versionOperatorMatcher.group(1)) {
+                    case "==" -> Comparator.EQUAL;
+                    case "!=" -> Comparator.NOT_EQUAL;
+                    case "<" -> Comparator.LESS_THAN;
+                    case "<=" -> Comparator.LESS_THAN_OR_EQUAL;
+                    case ">" -> Comparator.GREATER_THAN;
+                    case ">=" -> Comparator.GREATER_THAN_OR_EQUAL;
+                    default -> null;
+                };
         if (versionComparator == null) {
             // Shouldn't ever happen because the regex won't match anything else
             LOGGER.error("Failed to infer version operator from {}", versionOperatorMatcher.group(1));

@@ -37,14 +37,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 @WireMockTest
 class EnisaKevDataSourceTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Test
     void shouldParseEnisaEuKevFeed(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlEqualTo("/eukev.json")).willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBody(/* language=JSON */ """
+        stubFor(get(urlEqualTo("/eukev.json"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(/* language=JSON */ """
                         [
                           {
                             "cveID": "CVE-2026-41940",
@@ -62,22 +62,21 @@ class EnisaKevDataSourceTest {
                         """)));
 
         final var dataSource = new EnisaKevDataSource(
-                HttpClient.newHttpClient(),
-                objectMapper,
-                URI.create(wmRuntimeInfo.getHttpBaseUrl() + "/eukev.json"));
+                HttpClient.newHttpClient(), objectMapper, URI.create(wmRuntimeInfo.getHttpBaseUrl() + "/eukev.json"));
 
-        assertThat(dataSource).toIterable().satisfiesExactly(
-                first -> {
-                    assertThat(first.vulnSource()).isEqualTo("NVD");
-                    assertThat(first.vulnId()).isEqualTo("CVE-2026-41940");
-                    assertThat(first.publishedAt()).isEqualTo(Instant.parse("2026-05-08T00:00:00Z"));
-                    assertThat(first.knownRansomware()).isTrue();
-                    assertThat(first.description()).isEqualTo("Auth bypass");
-                },
-                second -> {
-                    assertThat(second.vulnId()).isEqualTo("CVE-2026-1731");
-                    assertThat(second.knownRansomware()).isNull();
-                });
+        assertThat(dataSource)
+                .toIterable()
+                .satisfiesExactly(
+                        first -> {
+                            assertThat(first.vulnSource()).isEqualTo("NVD");
+                            assertThat(first.vulnId()).isEqualTo("CVE-2026-41940");
+                            assertThat(first.publishedAt()).isEqualTo(Instant.parse("2026-05-08T00:00:00Z"));
+                            assertThat(first.knownRansomware()).isTrue();
+                            assertThat(first.description()).isEqualTo("Auth bypass");
+                        },
+                        second -> {
+                            assertThat(second.vulnId()).isEqualTo("CVE-2026-1731");
+                            assertThat(second.knownRansomware()).isNull();
+                        });
     }
-
 }

@@ -39,15 +39,13 @@ public class HealthCheckResponseBuilderTest {
         assertThat(response.getName()).isEqualTo("foobar");
         assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.UP);
         assertThat(response.getData()).isPresent();
-        assertThat(response.getData().get()).containsAllEntriesOf(Map.of(
-                "foo", "bar",
-                "baz", 666L
-        ));
+        assertThat(response.getData().get()).containsAllEntriesOf(Map.of("foo", "bar", "baz", 666L));
     }
 
     @Test
     public void testDefaults() {
-        final HealthCheckResponse response = new HealthCheckResponseBuilder().name("foobar").build();
+        final HealthCheckResponse response =
+                new HealthCheckResponseBuilder().name("foobar").build();
         assertThat(response.getName()).isEqualTo("foobar");
         assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.DOWN);
         assertThat(response.getData()).isNotPresent();
@@ -58,5 +56,4 @@ public class HealthCheckResponseBuilderTest {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> new HealthCheckResponseBuilder().build());
     }
-
 }

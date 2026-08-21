@@ -27,7 +27,6 @@ import org.jspecify.annotations.Nullable;
  * @since 4.9.0
  */
 public enum SpdxExpressionOperator {
-
     OR("OR"),
     AND("AND"),
     WITH("WITH"),
@@ -56,5 +55,4 @@ public enum SpdxExpressionOperator {
     public String toString() {
         return this.token;
     }
-
 }

@@ -59,13 +59,14 @@ final class SnykModelConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(SnykModelConverter.class);
     private static final Pattern VULN_ID_PATTERN = Pattern.compile("^SNYK-.+$");
     private static final Pattern CWE_PATTERN = Pattern.compile("(CWE-)?(\\d+)", Pattern.CASE_INSENSITIVE);
-    private static final Source SOURCE_SNYK = Source.newBuilder().setName("SNYK").build();
+    private static final Source SOURCE_SNYK =
+            Source.newBuilder().setName("SNYK").build();
     private static final Source SOURCE_NVD = Source.newBuilder().setName("NVD").build();
-    private static final Source SOURCE_GITHUB = Source.newBuilder().setName("GITHUB").build();
+    private static final Source SOURCE_GITHUB =
+            Source.newBuilder().setName("GITHUB").build();
     private static final List<String> SEVERITY_SOURCE_PRIORITY = List.of("NVD", "Snyk", "Red Hat", "SUSE");
 
-    private SnykModelConverter() {
-    }
+    private SnykModelConverter() {}
 
     static Vulnerability.Builder convert(SnykIssue issue, boolean includeAliases) {
         final var vulnBuilder = Vulnerability.newBuilder();
@@ -77,18 +78,16 @@ final class SnykModelConverter {
         final SnykIssue.Attributes attrs = issue.attributes();
 
         if (attrs.title() != null) {
-            vulnBuilder.addProperties(
-                    Property.newBuilder()
-                            .setName("dependency-track:vuln:title")
-                            .setValue(attrs.title())
-                            .build());
+            vulnBuilder.addProperties(Property.newBuilder()
+                    .setName("dependency-track:vuln:title")
+                    .setValue(attrs.title())
+                    .build());
         }
 
-        vulnBuilder.addProperties(
-                Property.newBuilder()
-                        .setName("dependency-track:vuln:reference-url")
-                        .setValue("https://security.snyk.io/vuln/" + vulnId)
-                        .build());
+        vulnBuilder.addProperties(Property.newBuilder()
+                .setName("dependency-track:vuln:reference-url")
+                .setValue("https://security.snyk.io/vuln/" + vulnId)
+                .build());
 
         if (attrs.description() != null) {
             vulnBuilder.setDescription(attrs.description());
@@ -169,7 +168,8 @@ final class SnykModelConverter {
             return null;
         }
 
-        final SnykIssue.Representation representation = coordinate.representations().get(1);
+        final SnykIssue.Representation representation =
+                coordinate.representations().get(1);
         if (representation.pkg() == null) {
             return null;
         }
@@ -207,14 +207,16 @@ final class SnykModelConverter {
 
     private static @Nullable VulnerabilityReference convertToReference(SnykIssue.Problem problem) {
         return switch (problem.source()) {
-            case "CVE" -> VulnerabilityReference.newBuilder()
-                    .setId(problem.id())
-                    .setSource(SOURCE_NVD)
-                    .build();
-            case "GHSA" -> VulnerabilityReference.newBuilder()
-                    .setId(problem.id())
-                    .setSource(SOURCE_GITHUB)
-                    .build();
+            case "CVE" ->
+                VulnerabilityReference.newBuilder()
+                        .setId(problem.id())
+                        .setSource(SOURCE_NVD)
+                        .build();
+            case "GHSA" ->
+                VulnerabilityReference.newBuilder()
+                        .setId(problem.id())
+                        .setSource(SOURCE_GITHUB)
+                        .build();
             default -> null;
         };
     }
@@ -236,9 +238,8 @@ final class SnykModelConverter {
         }
 
         final ScoreMethod scoreMethod = determineScoreMethod(severity.vector());
-        final var ratingBuilder = VulnerabilityRating.newBuilder()
-                .setMethod(scoreMethod)
-                .setVector(severity.vector());
+        final var ratingBuilder =
+                VulnerabilityRating.newBuilder().setMethod(scoreMethod).setVector(severity.vector());
 
         if (severity.score() != null) {
             ratingBuilder.setScore(severity.score());
@@ -323,5 +324,4 @@ final class SnykModelConverter {
             return Optional.empty();
         }
     }
-
 }

@@ -37,8 +37,7 @@ class PageTest {
 
     @Test
     void withTotalCountShouldPopulateTotalCountField() {
-        final var page = new Page<>(List.of("foo"))
-                .withTotalCount(1, Page.TotalCount.Type.EXACT);
+        final var page = new Page<>(List.of("foo")).withTotalCount(1, Page.TotalCount.Type.EXACT);
 
         assertThat(page.items()).containsOnly("foo");
         assertThat(page.totalCount()).isNotNull();
@@ -65,10 +64,8 @@ class PageTest {
 
         @Test
         void boundedShouldBeExactUpToThresholdAndAtLeastAbove() {
-            assertThat(Page.TotalCount.bounded(9, 10))
-                    .isEqualTo(new Page.TotalCount(9, Page.TotalCount.Type.EXACT));
-            assertThat(Page.TotalCount.bounded(10, 10))
-                    .isEqualTo(new Page.TotalCount(10, Page.TotalCount.Type.EXACT));
+            assertThat(Page.TotalCount.bounded(9, 10)).isEqualTo(new Page.TotalCount(9, Page.TotalCount.Type.EXACT));
+            assertThat(Page.TotalCount.bounded(10, 10)).isEqualTo(new Page.TotalCount(10, Page.TotalCount.Type.EXACT));
             assertThat(Page.TotalCount.bounded(11, 10))
                     .isEqualTo(new Page.TotalCount(10, Page.TotalCount.Type.AT_LEAST));
         }
@@ -79,7 +76,5 @@ class PageTest {
                     .isThrownBy(() -> Page.TotalCount.bounded(1, 0))
                     .withMessage("threshold must not be less than 1");
         }
-
     }
-
 }

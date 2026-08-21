@@ -158,5 +158,4 @@ class WatermarkManagerTest {
         assertThat(kvStore.get("feed-digest:2024").value()).isEqualTo("abc123");
         assertThat(kvStore.get("watermark")).isNull();
     }
-
 }

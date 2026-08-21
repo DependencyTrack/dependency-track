@@ -37,37 +37,93 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class PackageUrlConditionTest extends PersistenceCapableTest {
 
     private static Object[] parameters() {
-        return new Object[]{
-                //Matches with exact match
-                new Object[]{PolicyCondition.Operator.MATCHES, "pkg:generic/acme/example-component@1.0", "pkg:generic/acme/example-component@1.0", true},
-                //matching on null purl - invalid. We cannot pass null for purl
-                //new Object[]{PolicyCondition.Operator.NO_MATCH, ".+", "", true},
-                //No Match exact
-                new Object[]{PolicyCondition.Operator.NO_MATCH, "pkg:generic/acme/example-component@1.0", "pkg:generic/acme/web-component@6.9", true},
-                //Wrong operator
-                new Object[]{PolicyCondition.Operator.IS, "pkg:generic/acme/example-component@1.0", "pkg:generic/acme/example-component@1.0", false},
-                //Exact match
-                new Object[]{PolicyCondition.Operator.MATCHES, "pkg:generic/acme/example-component@1.0", "pkg:generic/acme/example-component@1.0", true},
-                //Matches with qualifier also
-                new Object[]{PolicyCondition.Operator.MATCHES, "pkg:generic/acme/example-component@1.0", "pkg:generic/acme/example-component@1.0?type=jar", true},
-                //Partial match
-                new Object[]{PolicyCondition.Operator.MATCHES, "/com/acme/", "pkg:generic/com/acme/example-component@1.0?type=jar", true},
-                //Partial match
-                new Object[]{PolicyCondition.Operator.MATCHES, "/com.acme/", "pkg:generic/com/acme/example-component@1.0?type=jar", true},
-                //Matches on wild card
-                new Object[]{PolicyCondition.Operator.MATCHES, ".*com.acme.*", "pkg:generic/com/acme/example-component@1.0?type=jar", true},
-                //Matches on wild card
-                new Object[]{PolicyCondition.Operator.MATCHES, ".*acme.*myCompany.*", "pkg:generic/com/acme/example-component@1.0-myCompanyFix-1?type=jar", true},
-                //Matches on wild card
-                new Object[]{PolicyCondition.Operator.MATCHES, ".*(a|b|c)cme.*", "pkg:generic/com/acme/example-component@1.0?type=jar", true},
+        return new Object[] {
+            // Matches with exact match
+            new Object[] {
+                PolicyCondition.Operator.MATCHES,
+                "pkg:generic/acme/example-component@1.0",
+                "pkg:generic/acme/example-component@1.0",
+                true
+            },
+            // matching on null purl - invalid. We cannot pass null for purl
+            // new Object[]{PolicyCondition.Operator.NO_MATCH, ".+", "", true},
+            // No Match exact
+            new Object[] {
+                PolicyCondition.Operator.NO_MATCH,
+                "pkg:generic/acme/example-component@1.0",
+                "pkg:generic/acme/web-component@6.9",
+                true
+            },
+            // Wrong operator
+            new Object[] {
+                PolicyCondition.Operator.IS,
+                "pkg:generic/acme/example-component@1.0",
+                "pkg:generic/acme/example-component@1.0",
+                false
+            },
+            // Exact match
+            new Object[] {
+                PolicyCondition.Operator.MATCHES,
+                "pkg:generic/acme/example-component@1.0",
+                "pkg:generic/acme/example-component@1.0",
+                true
+            },
+            // Matches with qualifier also
+            new Object[] {
+                PolicyCondition.Operator.MATCHES,
+                "pkg:generic/acme/example-component@1.0",
+                "pkg:generic/acme/example-component@1.0?type=jar",
+                true
+            },
+            // Partial match
+            new Object[] {
+                PolicyCondition.Operator.MATCHES,
+                "/com/acme/",
+                "pkg:generic/com/acme/example-component@1.0?type=jar",
+                true
+            },
+            // Partial match
+            new Object[] {
+                PolicyCondition.Operator.MATCHES,
+                "/com.acme/",
+                "pkg:generic/com/acme/example-component@1.0?type=jar",
+                true
+            },
+            // Matches on wild card
+            new Object[] {
+                PolicyCondition.Operator.MATCHES,
+                ".*com.acme.*",
+                "pkg:generic/com/acme/example-component@1.0?type=jar",
+                true
+            },
+            // Matches on wild card
+            new Object[] {
+                PolicyCondition.Operator.MATCHES,
+                ".*acme.*myCompany.*",
+                "pkg:generic/com/acme/example-component@1.0-myCompanyFix-1?type=jar",
+                true
+            },
+            // Matches on wild card
+            new Object[] {
+                PolicyCondition.Operator.MATCHES,
+                ".*(a|b|c)cme.*",
+                "pkg:generic/com/acme/example-component@1.0?type=jar",
+                true
+            },
         };
     }
 
     @ParameterizedTest
     @MethodSource("parameters")
-    public void testCondition(final PolicyCondition.Operator operator, final String conditionPurl, final String componentPurl, final boolean expectViolation) throws Exception{
+    public void testCondition(
+            final PolicyCondition.Operator operator,
+            final String conditionPurl,
+            final String componentPurl,
+            final boolean expectViolation)
+            throws Exception {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
-        PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, operator, conditionPurl);
+        PolicyCondition condition =
+                qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, operator, conditionPurl);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -90,5 +146,4 @@ public class PackageUrlConditionTest extends PersistenceCapableTest {
             assertThat(qm.getAllPolicyViolations(component)).isEmpty();
         }
     }
-
 }

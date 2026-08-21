@@ -34,5 +34,4 @@ public final class UniqueConstraintViolationException extends ConstraintViolatio
             String sqlState) {
         super(message, cause, constraintName, tableName, columnName, sqlState);
     }
-
 }

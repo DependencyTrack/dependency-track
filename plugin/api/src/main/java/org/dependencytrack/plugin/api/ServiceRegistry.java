@@ -42,8 +42,7 @@ public interface ServiceRegistry {
      * @throws NoSuchElementException If no service is registered for the given type.
      */
     default <T> T require(Class<T> type) {
-        return get(type).orElseThrow(() -> new NoSuchElementException(
-                "No service registered for type: " + type.getName()));
+        return get(type)
+                .orElseThrow(() -> new NoSuchElementException("No service registered for type: " + type.getName()));
     }
-
 }

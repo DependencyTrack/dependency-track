@@ -18,12 +18,13 @@
  */
 package org.dependencytrack.plugin;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import jakarta.servlet.ServletContext;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.ServletContext;
 
 import static java.util.Objects.requireNonNull;
 
@@ -34,9 +35,7 @@ public final class PluginManagerBinder extends AbstractBinder {
 
     @Override
     protected void configure() {
-        bindFactory(PluginManagerFactory.class)
-                .to(PluginManager.class)
-                .in(Singleton.class);
+        bindFactory(PluginManagerFactory.class).to(PluginManager.class).in(Singleton.class);
     }
 
     private static final class PluginManagerFactory implements Factory<PluginManager> {
@@ -58,7 +57,5 @@ public final class PluginManagerBinder extends AbstractBinder {
         public void dispose(PluginManager instance) {
             // Lifecycle is managed by PluginInitializer.
         }
-
     }
-
 }

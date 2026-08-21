@@ -166,8 +166,7 @@ final class OsvVulnDataSource implements VulnDataSource {
 
         if (bov.getVulnerabilitiesCount() != 1) {
             throw new IllegalArgumentException(
-                    "BOV must have exactly one vulnerability, but has "
-                            + bov.getVulnerabilitiesCount());
+                    "BOV must have exactly one vulnerability, but has " + bov.getVulnerabilitiesCount());
         }
 
         final Vulnerability vuln = bov.getVulnerabilities(0);
@@ -177,9 +176,8 @@ final class OsvVulnDataSource implements VulnDataSource {
             throw new IllegalArgumentException();
         }
 
-        final Instant updatedAt = vuln.hasUpdated()
-                ? Instant.ofEpochMilli(Timestamps.toMillis(vuln.getUpdated()))
-                : null;
+        final Instant updatedAt =
+                vuln.hasUpdated() ? Instant.ofEpochMilli(Timestamps.toMillis(vuln.getUpdated())) : null;
         if (updatedAt == null) {
             LOGGER.warn("Vulnerability {} has no updated timestamp; Cannot advance watermark", vuln.getId());
             return;
@@ -206,9 +204,7 @@ final class OsvVulnDataSource implements VulnDataSource {
         final Osv osv = currentAdvisorySource.next();
         currentEcosystemAdvisoriesProcessed++;
         return modelConverter.convert(
-                osv,
-                isAliasSyncEnabled,
-                requireNonNull(currentEcosystem, "currentEcosystem must not be null"));
+                osv, isAliasSyncEnabled, requireNonNull(currentEcosystem, "currentEcosystem must not be null"));
     }
 
     private void logCurrentEcosystemSummary() {
@@ -252,20 +248,18 @@ final class OsvVulnDataSource implements VulnDataSource {
         if (modifiedAdvisoryIds.size() > MAX_INCREMENTAL_ADVISORY_DOWNLOADS) {
             LOGGER.info("""
                             Number of new or updated advisories for ecosystem {} exceeds the incremental \
-                            download threshold of {}; downloading the full advisory archive instead""",
-                    ecosystem, MAX_INCREMENTAL_ADVISORY_DOWNLOADS);
+                            download threshold of {}; downloading the full advisory archive instead""", ecosystem, MAX_INCREMENTAL_ADVISORY_DOWNLOADS);
             return downloadFullArchive(ecosystem, modifiedAdvisoryIds);
         }
 
         LOGGER.info(
                 "Incrementally mirroring {} new or updated advisories for ecosystem {}",
-                modifiedAdvisoryIds.size(), ecosystem);
+                modifiedAdvisoryIds.size(),
+                ecosystem);
         return new IncrementalOsvAdvisorySource(httpClient, objectMapper, dataUrl, ecosystem, modifiedAdvisoryIds);
     }
 
-    private ZipOsvAdvisorySource downloadFullArchive(
-            String ecosystem,
-            @Nullable Set<String> modifiedAdvisoryIds) {
+    private ZipOsvAdvisorySource downloadFullArchive(String ecosystem, @Nullable Set<String> modifiedAdvisoryIds) {
         LOGGER.info("Downloading all advisories for ecosystem {} from upstream", ecosystem);
 
         final Path tempZipPath;
@@ -330,8 +324,7 @@ final class OsvVulnDataSource implements VulnDataSource {
 
         final HttpResponse<InputStream> response;
         try {
-            response = httpClient.send(request, BodyHandlers.buffering(
-                    BodyHandlers.ofInputStream(), 1024));
+            response = httpClient.send(request, BodyHandlers.buffering(BodyHandlers.ofInputStream(), 1024));
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to download modified IDs", e);
         } catch (InterruptedException e) {
@@ -344,8 +337,8 @@ final class OsvVulnDataSource implements VulnDataSource {
 
         final var modifiedIds = new HashSet<String>();
         try (final InputStream inputStream = response.body();
-             final var inputStreamReader = new InputStreamReader(inputStream);
-             final var bufferedReader = new BufferedReader(inputStreamReader)) {
+                final var inputStreamReader = new InputStreamReader(inputStream);
+                final var bufferedReader = new BufferedReader(inputStreamReader)) {
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 final String[] parts = line.split(",", 2);
@@ -379,8 +372,8 @@ final class OsvVulnDataSource implements VulnDataSource {
         return null;
     }
 
-    @Nullable WatermarkManager getWatermarkManager() {
+    @Nullable
+    WatermarkManager getWatermarkManager() {
         return watermarkManager;
     }
-
 }

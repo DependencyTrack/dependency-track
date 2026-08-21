@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+
 import java.io.Serializable;
 
 /**
@@ -48,7 +49,9 @@ public class ExternalReference implements Serializable {
     private String url;
 
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The comment may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The comment may only contain printable characters")
     @JsonView(JsonViews.MetadataTools.class)
     private String comment;
 

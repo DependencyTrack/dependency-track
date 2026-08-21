@@ -35,5 +35,4 @@ class ContinueAsNewOptionsTest {
         final var options = new ContinueAsNewOptions<>().withArgument("foo");
         assertThat(options.argument()).isEqualTo("foo");
     }
-
 }

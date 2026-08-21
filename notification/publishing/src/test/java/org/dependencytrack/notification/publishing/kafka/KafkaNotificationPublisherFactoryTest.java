@@ -23,7 +23,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class KafkaNotificationPublisherFactoryTest extends AbstractNotificationPublisherFactoryTest<KafkaNotificationPublisherFactory> {
+class KafkaNotificationPublisherFactoryTest
+        extends AbstractNotificationPublisherFactoryTest<KafkaNotificationPublisherFactory> {
 
     protected KafkaNotificationPublisherFactoryTest() {
         super(KafkaNotificationPublisherFactory.class);
@@ -35,5 +36,4 @@ class KafkaNotificationPublisherFactoryTest extends AbstractNotificationPublishe
             assertThat(publisherFactory.defaultTemplate()).isNull();
         }
     }
-
 }

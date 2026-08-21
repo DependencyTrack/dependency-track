@@ -65,16 +65,14 @@ public final class VulnCheckKevDataSourceFactory implements KevDataSourceFactory
     public void init(ServiceRegistry serviceRegistry) {
         this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
         this.httpClient = serviceRegistry.require(HttpClient.class);
-        this.objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule());
+        this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
-        final var defaultConfig =
-                new VulncheckKevDataSourceConfigV1()
-                        .withEnabled(false)
-                        .withApiUrl(URI.create("https://api.vulncheck.com"));
+        final var defaultConfig = new VulncheckKevDataSourceConfigV1()
+                .withEnabled(false)
+                .withApiUrl(URI.create("https://api.vulncheck.com"));
 
         return RuntimeConfigSpec.of(defaultConfig, config -> {
             if (!config.isEnabled()) {
@@ -98,8 +96,7 @@ public final class VulnCheckKevDataSourceFactory implements KevDataSourceFactory
 
     @Override
     public KevDataSource create() {
-        final var config = requireNonNull(configRegistry)
-                .getRuntimeConfig(VulncheckKevDataSourceConfigV1.class);
+        final var config = requireNonNull(configRegistry).getRuntimeConfig(VulncheckKevDataSourceConfigV1.class);
         if (!config.isEnabled()) {
             throw new IllegalStateException("KEV data source is disabled and cannot be created");
         }
@@ -110,5 +107,4 @@ public final class VulnCheckKevDataSourceFactory implements KevDataSourceFactory
                 requireNonNull(config.getApiUrl()),
                 requireNonNull(config.getApiToken()));
     }
-
 }

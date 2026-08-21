@@ -25,75 +25,60 @@
         <version>5.1.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
-
     <artifactId>v4-migrator</artifactId>
     <packaging>jar</packaging>
-
     <name>Support :: v4 Migrator</name>
-
     <properties>
         <project.parentBaseDir>${project.basedir}/../..</project.parentBaseDir>
-
         <lib.mssql-jdbc.version>13.4.0.jre11</lib.mssql-jdbc.version>
         <lib.picocli.version>4.7.7</lib.picocli.version>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.dependencytrack</groupId>
             <artifactId>migration</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.jdbi</groupId>
             <artifactId>jdbi3-core</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
             <version>${lib.mssql-jdbc.version}</version>
         </dependency>
-
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
             <version>${lib.picocli.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-junit-jupiter</artifactId>
@@ -110,7 +95,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
     <build>
         <finalName>v4-migrator</finalName>
         <plugins>
@@ -127,10 +111,10 @@
                 <version>3.6.2</version>
                 <executions>
                     <execution>
-                        <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <phase>package</phase>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <filters>
@@ -148,7 +132,7 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>org.dependencytrack.v4migrator.V4Migrator</mainClass>
                                 </transformer>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                         </configuration>
                     </execution>
@@ -156,7 +140,6 @@
             </plugin>
         </plugins>
     </build>
-
     <profiles>
         <profile>
             <id>e2e-tests</id>
@@ -165,7 +148,7 @@
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <excludes combine.self="override" />
+                            <excludes combine.self="override"/>
                             <includes>
                                 <include>**/*Test.java</include>
                                 <include>**/*IT.java</include>
@@ -176,5 +159,4 @@
             </build>
         </profile>
     </profiles>
-
 </project>

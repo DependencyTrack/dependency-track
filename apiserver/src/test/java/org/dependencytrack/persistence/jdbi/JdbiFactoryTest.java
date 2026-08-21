@@ -36,8 +36,8 @@ public class JdbiFactoryTest extends PersistenceCapableTest {
         final Jdbi jdbi = JdbiFactory.createJdbi();
 
         // Issue a test query to ensure the JDBI instance is functional.
-        final Integer queryResult = jdbi.withHandle(handle ->
-                handle.createQuery("SELECT 666").mapTo(Integer.class).one());
+        final Integer queryResult = jdbi.withHandle(
+                handle -> handle.createQuery("SELECT 666").mapTo(Integer.class).one());
         assertThat(queryResult).isEqualTo(666);
 
         // Ensure that the same JDBI instance is returned.
@@ -57,8 +57,10 @@ public class JdbiFactoryTest extends PersistenceCapableTest {
             // Query for the created project, despite its creation not having been committed yet.
             // Because the global JDBI instance uses a different connection than the QueryManager,
             // it won't be able to see the yet-uncommitted change.
-            final Optional<String> projectName = JdbiFactory.createJdbi().withHandle(handle ->
-                    handle.createQuery("SELECT \"NAME\" FROM \"PROJECT\"").mapTo(String.class).findFirst());
+            final Optional<String> projectName = JdbiFactory.createJdbi()
+                    .withHandle(handle -> handle.createQuery("SELECT \"NAME\" FROM \"PROJECT\"")
+                            .mapTo(String.class)
+                            .findFirst());
             assertThat(projectName).isNotPresent();
         });
     }
@@ -73,5 +75,4 @@ public class JdbiFactoryTest extends PersistenceCapableTest {
 
         assertThat(queryTimeout).isEqualTo(60);
     }
-
 }

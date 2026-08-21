@@ -43,5 +43,4 @@ public interface NotificationEmitter {
     default void emit(Notification notification) {
         emitAll(List.of(notification));
     }
-
 }

@@ -24,19 +24,14 @@
         <artifactId>dependency-track-parent</artifactId>
         <version>5.1.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>kev-data-source-parent</artifactId>
     <packaging>pom</packaging>
-
     <name>KEV Data Source :: Parent</name>
-
     <modules>
         <module>api</module>
         <module>builtin</module>
     </modules>
-
     <properties>
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
     </properties>
-
 </project>

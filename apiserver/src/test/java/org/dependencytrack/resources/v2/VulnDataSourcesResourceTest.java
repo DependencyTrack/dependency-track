@@ -19,7 +19,6 @@
 package org.dependencytrack.resources.v2;
 
 import io.smallrye.config.SmallRyeConfigBuilder;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -49,6 +48,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentMatchers;
 
+import jakarta.ws.rs.core.Response;
+
 import java.net.http.HttpClient;
 import java.time.Instant;
 import java.util.List;
@@ -69,14 +70,12 @@ class VulnDataSourcesResourceTest extends ResourceTest {
     private static VulnDataSourceMirrorService mirrorService;
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig()
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bindFactory(() -> mirrorService).to(VulnDataSourceMirrorService.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig().register(new AbstractBinder() {
+        @Override
+        protected void configure() {
+            bindFactory(() -> mirrorService).to(VulnDataSourceMirrorService.class);
+        }
+    }));
 
     @BeforeAll
     static void beforeAll() {
@@ -111,8 +110,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         when(DEX_ENGINE_MOCK.createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any()))
                 .thenReturn(UUID.fromString("00000000-0000-0000-0000-000000000001"));
 
-        final Response response = jersey
-                .target("/vuln-data-sources/osv/mirror-runs")
+        final Response response = jersey.target("/vuln-data-sources/osv/mirror-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -130,8 +128,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         when(DEX_ENGINE_MOCK.createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any()))
                 .thenReturn(null);
 
-        final Response response = jersey
-                .target("/vuln-data-sources/osv/mirror-runs")
+        final Response response = jersey.target("/vuln-data-sources/osv/mirror-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -152,8 +149,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         loadFactory(new DummyVulnDataSourceFactory("osv", false));
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        final Response response = jersey
-                .target("/vuln-data-sources/osv/mirror-runs")
+        final Response response = jersey.target("/vuln-data-sources/osv/mirror-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -173,8 +169,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
     void shouldReturnNotFoundWhenTriggeringUnknownDataSource() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_UPDATE);
 
-        final Response response = jersey
-                .target("/vuln-data-sources/does-not-exist/mirror-runs")
+        final Response response = jersey.target("/vuln-data-sources/does-not-exist/mirror-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -187,8 +182,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         loadFactory(new DummyVulnDataSourceFactory("osv", true));
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        final Response response = jersey
-                .target("/vuln-data-sources/osv/mirror-runs")
+        final Response response = jersey.target("/vuln-data-sources/osv/mirror-runs")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(null);
@@ -204,8 +198,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         when(DEX_ENGINE_MOCK.listRuns(any(ListWorkflowRunsRequest.class)))
                 .thenReturn(new Page<>(List.of(), null, null));
 
-        final Response response = jersey
-                .target("/vuln-data-sources/osv/mirror-runs/latest")
+        final Response response = jersey.target("/vuln-data-sources/osv/mirror-runs/latest")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -217,8 +210,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
     void shouldReturnNotFoundWhenGettingStatusOfUnknownDataSource() {
         initializeWithPermissions(Permissions.SYSTEM_CONFIGURATION_READ);
 
-        final Response response = jersey
-                .target("/vuln-data-sources/does-not-exist/mirror-runs/latest")
+        final Response response = jersey.target("/vuln-data-sources/does-not-exist/mirror-runs/latest")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -235,20 +227,34 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         final var startedAt = Instant.parse("2026-04-15T10:00:00Z");
 
         when(DEX_ENGINE_MOCK.listRuns(any(ListWorkflowRunsRequest.class)))
-                .thenReturn(new Page<>(List.of(new WorkflowRunMetadata(
-                        runId, null, "MirrorVulnDataSourceWorkflow", 1,
-                        "mirror-vuln-data-source:osv",
-                        "default", WorkflowRunStatus.RUNNING, null, 0, null, null,
-                        startedAt, startedAt, startedAt, null)), null, null));
+                .thenReturn(new Page<>(
+                        List.of(new WorkflowRunMetadata(
+                                runId,
+                                null,
+                                "MirrorVulnDataSourceWorkflow",
+                                1,
+                                "mirror-vuln-data-source:osv",
+                                "default",
+                                WorkflowRunStatus.RUNNING,
+                                null,
+                                0,
+                                null,
+                                null,
+                                startedAt,
+                                startedAt,
+                                startedAt,
+                                null)),
+                        null,
+                        null));
 
-        final Response response = jersey
-                .target("/vuln-data-sources/osv/mirror-runs/latest")
+        final Response response = jersey.target("/vuln-data-sources/osv/mirror-runs/latest")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
                 {
                   "status": "RUNNING",
                   "started_at": %d
@@ -266,40 +272,62 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         final var completedAt = Instant.parse("2026-04-15T10:01:00Z");
 
         final var runMetadata = new WorkflowRunMetadata(
-                runId, null, "MirrorVulnDataSourceWorkflow", 1,
+                runId,
+                null,
+                "MirrorVulnDataSourceWorkflow",
+                1,
                 "mirror-vuln-data-source:osv",
-                "default", WorkflowRunStatus.FAILED, null, 0, null, null,
-                startedAt, completedAt, startedAt, completedAt);
+                "default",
+                WorkflowRunStatus.FAILED,
+                null,
+                0,
+                null,
+                null,
+                startedAt,
+                completedAt,
+                startedAt,
+                completedAt);
 
         final var failure = Failure.newBuilder()
                 .setMessage("activity failed")
                 .setActivityFailureDetails(ActivityFailureDetails.newBuilder()
                         .setActivityName("MirrorVulnDataSourceActivity")
                         .build())
-                .setCause(Failure.newBuilder()
-                        .setMessage("connection refused")
-                        .build())
+                .setCause(Failure.newBuilder().setMessage("connection refused").build())
                 .build();
 
         final var run = new WorkflowRun(
-                runId, null, "MirrorVulnDataSourceWorkflow", 1,
+                runId,
+                null,
+                "MirrorVulnDataSourceWorkflow",
+                1,
                 "mirror-vuln-data-source:osv",
-                WorkflowRunStatus.FAILED, null, 0, null, null,
-                startedAt, completedAt, startedAt, completedAt,
-                null, null, failure, List.of());
+                WorkflowRunStatus.FAILED,
+                null,
+                0,
+                null,
+                null,
+                startedAt,
+                completedAt,
+                startedAt,
+                completedAt,
+                null,
+                null,
+                failure,
+                List.of());
 
         when(DEX_ENGINE_MOCK.listRuns(any(ListWorkflowRunsRequest.class)))
                 .thenReturn(new Page<>(List.of(runMetadata), null, null));
         when(DEX_ENGINE_MOCK.getRunById(runId)).thenReturn(run);
 
-        final Response response = jersey
-                .target("/vuln-data-sources/osv/mirror-runs/latest")
+        final Response response = jersey.target("/vuln-data-sources/osv/mirror-runs/latest")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
                 {
                   "status": "FAILED",
                   "started_at": %d,
@@ -319,10 +347,21 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         final var completedAt = Instant.parse("2026-04-15T10:01:00Z");
 
         final var runMetadata = new WorkflowRunMetadata(
-                runId, null, "MirrorVulnDataSourceWorkflow", 1,
+                runId,
+                null,
+                "MirrorVulnDataSourceWorkflow",
+                1,
                 "mirror-vuln-data-source:osv",
-                "default", WorkflowRunStatus.FAILED, null, 0, null, null,
-                startedAt, completedAt, startedAt, completedAt);
+                "default",
+                WorkflowRunStatus.FAILED,
+                null,
+                0,
+                null,
+                null,
+                startedAt,
+                completedAt,
+                startedAt,
+                completedAt);
 
         final var failure = Failure.newBuilder()
                 .setMessage("activity failed")
@@ -332,24 +371,37 @@ class VulnDataSourcesResourceTest extends ResourceTest {
                 .build();
 
         final var run = new WorkflowRun(
-                runId, null, "MirrorVulnDataSourceWorkflow", 1,
+                runId,
+                null,
+                "MirrorVulnDataSourceWorkflow",
+                1,
                 "mirror-vuln-data-source:osv",
-                WorkflowRunStatus.FAILED, null, 0, null, null,
-                startedAt, completedAt, startedAt, completedAt,
-                null, null, failure, List.of());
+                WorkflowRunStatus.FAILED,
+                null,
+                0,
+                null,
+                null,
+                startedAt,
+                completedAt,
+                startedAt,
+                completedAt,
+                null,
+                null,
+                failure,
+                List.of());
 
         when(DEX_ENGINE_MOCK.listRuns(any(ListWorkflowRunsRequest.class)))
                 .thenReturn(new Page<>(List.of(runMetadata), null, null));
         when(DEX_ENGINE_MOCK.getRunById(runId)).thenReturn(run);
 
-        final Response response = jersey
-                .target("/vuln-data-sources/osv/mirror-runs/latest")
+        final Response response = jersey.target("/vuln-data-sources/osv/mirror-runs/latest")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
 
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
                 {
                   "status": "FAILED",
                   "started_at": %d,
@@ -401,8 +453,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(final ServiceRegistry serviceRegistry) {
-        }
+        public void init(final ServiceRegistry serviceRegistry) {}
 
         @Override
         public boolean isDataSourceEnabled() {
@@ -413,7 +464,5 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         public VulnDataSource create() {
             throw new UnsupportedOperationException();
         }
-
     }
-
 }

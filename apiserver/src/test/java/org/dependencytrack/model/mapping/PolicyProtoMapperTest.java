@@ -124,7 +124,8 @@ public class PolicyProtoMapperTest extends PersistenceCapableTest {
 
     @Test
     public void testMapVulnerabilityWithNoFieldsSet() throws Exception {
-        assertThatJson(JsonFormat.printer().print(PolicyProtoMapper.mapToProto(new Vulnerability()))).isEqualTo("{}");
+        assertThatJson(JsonFormat.printer().print(PolicyProtoMapper.mapToProto(new Vulnerability())))
+                .isEqualTo("{}");
     }
 
     @Test
@@ -144,5 +145,4 @@ public class PolicyProtoMapperTest extends PersistenceCapableTest {
                 .isThrownBy(() -> PolicyProtoMapper.mapToProto(vuln))
                 .withMessage("vuln must not be persistent");
     }
-
 }

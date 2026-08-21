@@ -37,12 +37,16 @@ import jakarta.validation.constraints.Pattern;
 public class CloneProjectRequest {
 
     @NotNull
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
+    @Pattern(
+            regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            message = "The project must be a valid 36 character UUID")
     private final String project;
 
     @NotBlank
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The version may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS,
+            message = "The version may only contain printable characters")
     private final String version;
 
     private final boolean includeTags;
@@ -64,17 +68,18 @@ public class CloneProjectRequest {
     private final boolean makeCloneLatest;
 
     @JsonCreator
-    public CloneProjectRequest(@JsonProperty(value = "project", required = true) String project,
-                               @JsonProperty(value = "version", required = true) String version,
-                               @JsonProperty(value = "includeTags") boolean includeTags,
-                               @JsonProperty(value = "includeProperties") boolean includeProperties,
-                               @JsonProperty(value = "includeDependencies") boolean includeDependencies,
-                               @JsonProperty(value = "includeComponents") boolean includeComponents,
-                               @JsonProperty(value = "includeServices") boolean includeServices,
-                               @JsonProperty(value = "includeAuditHistory") boolean includeAuditHistory,
-                               @JsonProperty(value = "includeACL") boolean includeACL,
-                               @JsonProperty(value = "includePolicyViolations") boolean includePolicyViolations,
-                               @JsonProperty(value = "makeCloneLatest", defaultValue = "false") boolean makeCloneLatest) {
+    public CloneProjectRequest(
+            @JsonProperty(value = "project", required = true) String project,
+            @JsonProperty(value = "version", required = true) String version,
+            @JsonProperty(value = "includeTags") boolean includeTags,
+            @JsonProperty(value = "includeProperties") boolean includeProperties,
+            @JsonProperty(value = "includeDependencies") boolean includeDependencies,
+            @JsonProperty(value = "includeComponents") boolean includeComponents,
+            @JsonProperty(value = "includeServices") boolean includeServices,
+            @JsonProperty(value = "includeAuditHistory") boolean includeAuditHistory,
+            @JsonProperty(value = "includeACL") boolean includeACL,
+            @JsonProperty(value = "includePolicyViolations") boolean includePolicyViolations,
+            @JsonProperty(value = "makeCloneLatest", defaultValue = "false") boolean makeCloneLatest) {
 
         if (includeDependencies) { // For backward compatibility
             includeComponents = true;

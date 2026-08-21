@@ -39,8 +39,7 @@ public final class OpenApiSpecEnricher {
 
     private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
 
-    private OpenApiSpecEnricher() {
-    }
+    private OpenApiSpecEnricher() {}
 
     /**
      * Enriches the {@code info} block of the given spec with the server version.

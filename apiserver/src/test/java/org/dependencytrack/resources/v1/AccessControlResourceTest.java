@@ -21,8 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -32,16 +30,18 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AccessControlResourceTest extends ResourceTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(AccessControlResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(AccessControlResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class));
 
     @Test
     public void addMappingTest() {
@@ -63,8 +63,8 @@ public class AccessControlResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
 
         qm.getPersistenceManager().evictAll();
-        assertThat(project.getAccessTeams()).satisfiesExactly(team ->
-            assertThat(team.getId()).isEqualTo(super.team.getId()));
+        assertThat(project.getAccessTeams())
+                .satisfiesExactly(team -> assertThat(team.getId()).isEqualTo(super.team.getId()));
     }
 
     @Test
@@ -159,8 +159,8 @@ public class AccessControlResourceTest extends ResourceTest {
         project.addAccessTeam(otherTeam);
         qm.persist(project);
 
-        final Response response = jersey
-                .target(V1_ACL + "/mapping/team/" + otherTeam.getUuid() + "/project/" + project.getUuid())
+        final Response response = jersey.target(
+                        V1_ACL + "/mapping/team/" + otherTeam.getUuid() + "/project/" + project.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -181,8 +181,8 @@ public class AccessControlResourceTest extends ResourceTest {
         project.addAccessTeam(super.team);
         qm.persist(project);
 
-        final Response response = jersey
-                .target(V1_ACL + "/mapping/team/c4e2c34b-38c5-4b47-991f-b207ff71bfeb/project/" + project.getUuid())
+        final Response response = jersey.target(
+                        V1_ACL + "/mapping/team/c4e2c34b-38c5-4b47-991f-b207ff71bfeb/project/" + project.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
@@ -205,8 +205,7 @@ public class AccessControlResourceTest extends ResourceTest {
         project.addAccessTeam(super.team);
         qm.persist(project);
 
-        final Response response = jersey
-                .target(V1_ACL + "/mapping/team/" + super.team.getUuid()
+        final Response response = jersey.target(V1_ACL + "/mapping/team/" + super.team.getUuid()
                         + "/project/c4e2c34b-38c5-4b47-991f-b207ff71bfeb")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -250,5 +249,4 @@ public class AccessControlResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(200);
         Assertions.assertEquals(String.valueOf(1), response.getHeaderString(TOTAL_COUNT_HEADER));
     }
-
 }

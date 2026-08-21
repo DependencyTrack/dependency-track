@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ This file is part of Dependency-Track.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  ~ SPDX-License-Identifier: Apache-2.0
+  ~ Copyright (c) OWASP Foundation. All Rights Reserved.
+  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
@@ -6,45 +24,37 @@
         <artifactId>dependency-track-parent</artifactId>
         <version>5.1.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>apiserver</artifactId>
     <packaging>jar</packaging>
-
     <name>API Server</name>
     <description>The Dependency-Track API Server</description>
-
     <properties>
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
         <maven.install.skip>true</maven.install.skip>
-
         <!-- Dependency Versions -->
         <lib.cloud-sql-postgres-socket-factory.version>1.29.0</lib.cloud-sql-postgres-socket-factory.version>
-        <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
+        <lib.javacron.version>1.4.0</lib.javacron.version>
         <lib.micrometer-jvm-extras.version>0.3.0</lib.micrometer-jvm-extras.version>
+        <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.swagger-parser.version>2.1.46</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
         <lib.woodstox.version>7.2.2</lib.woodstox.version>
-        <lib.javacron.version>1.4.0</lib.javacron.version>
-
         <!-- CycloneDX CLI -->
         <cyclonedx-cli.path>cyclonedx</cyclonedx-cli.path>
         <services.bom.merge.skip>true</services.bom.merge.skip>
-
         <unitTestForkCount>0.5C</unitTestForkCount>
     </properties>
-
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.dependencytrack</groupId>
                 <artifactId>alpine-parent</artifactId>
                 <version>${project.version}</version>
-                <scope>import</scope>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>org.dependencytrack</groupId>
@@ -172,7 +182,6 @@
             <artifactId>vuln-analyzer-vuln-db</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.dependencytrack</groupId>
             <artifactId>dex-engine</artifactId>
@@ -184,7 +193,6 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.dependencytrack</groupId>
             <artifactId>file-storage-api</artifactId>
@@ -205,7 +213,6 @@
             <artifactId>file-storage-provider-s3</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.dependencytrack</groupId>
             <artifactId>kev-data-source-api</artifactId>
@@ -216,7 +223,6 @@
             <artifactId>kev-data-source-builtin</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.dependencytrack</groupId>
             <artifactId>vuln-data-source-api</artifactId>
@@ -237,7 +243,6 @@
             <artifactId>vuln-data-source-osv</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <!-- Alpine -->
         <dependency>
             <groupId>org.dependencytrack</groupId>
@@ -329,7 +334,6 @@
             <groupId>org.cyclonedx</groupId>
             <artifactId>cyclonedx-core-java</artifactId>
         </dependency>
-
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
@@ -368,18 +372,15 @@
             <version>${lib.swagger-parser.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
-
         <!-- Package URL -->
         <dependency>
             <groupId>com.github.package-url</groupId>
             <artifactId>packageurl-java</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.asahaf.javacron</groupId>
             <artifactId>javacron</artifactId>
@@ -419,7 +420,6 @@
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
@@ -429,13 +429,11 @@
             <groupId>io.github.nscuro</groupId>
             <artifactId>versatile-core</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.wiremock</groupId>
             <artifactId>wiremock-standalone</artifactId>
             <scope>test</scope>
         </dependency>
-
         <!-- Bundle JDBC drivers -->
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -446,7 +444,6 @@
             <artifactId>postgres-socket-factory</artifactId>
             <version>${lib.cloud-sql-postgres-socket-factory.version}</version>
         </dependency>
-
         <!-- Resilience4J -->
         <dependency>
             <groupId>io.github.resilience4j</groupId>
@@ -457,7 +454,6 @@
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
         </dependency>
-
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
@@ -512,19 +508,17 @@
             <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
-
     <build>
         <finalName>dependency-track-apiserver</finalName>
         <resources>
             <resource>
-                <directory>src/main/resources</directory>
                 <filtering>false</filtering>
+                <directory>src/main/resources</directory>
             </resource>
             <resource>
-                <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <directory>src/main/resources</directory>
                 <includes>
                     <include>META-INF/MANIFEST.MF</include>
                     <include>application.version</include>
@@ -533,11 +527,10 @@
         </resources>
         <testResources>
             <testResource>
-                <directory>src/test/resources</directory>
                 <filtering>false</filtering>
+                <directory>src/test/resources</directory>
             </testResource>
         </testResources>
-
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -545,29 +538,25 @@
                 <executions>
                     <execution>
                         <id>generate-build-uuid</id>
-                        <phase>initialize</phase>
                         <goals>
                             <goal>bsh-property</goal>
                         </goals>
+                        <phase>initialize</phase>
                         <configuration>
-                            <source>
-                                project.getProperties().setProperty(
+                            <source>project.getProperties().setProperty(
                                     "project.build.uuid",
-                                    java.util.UUID.randomUUID().toString());
-                            </source>
+                                    java.util.UUID.randomUUID().toString());</source>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <!-- Do not fail the build if -Dtest specifies tests that don't match any classes -->
                     <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-                    <argLine>
-                        @{argLine}
+                    <argLine>@{argLine}
                         -Xmx512m
                         --add-opens java.base/java.net=ALL-UNNAMED
                         --add-opens java.base/java.lang=ALL-UNNAMED
@@ -575,15 +564,13 @@
                         --add-opens java.base/java.util.concurrent=ALL-UNNAMED
                         -javaagent:${settings.localRepository}/org/mockito/mockito-core/${lib.mockito.version}/mockito-core-${lib.mockito.version}.jar
                         -Xshare:off
-                        -Djdk.http.auth.tunneling.disabledSchemes=
-                    </argLine>
+                        -Djdk.http.auth.tunneling.disabledSchemes=</argLine>
                     <systemPropertyVariables>
                         <unitTestLogLevel>${unitTestLogLevel}</unitTestLogLevel>
                         <java.util.logging.config.file>${project.basedir}/src/test/resources/logging.properties</java.util.logging.config.file>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-maven-plugin-jakarta</artifactId>
@@ -598,10 +585,10 @@
                 <executions>
                     <execution>
                         <id>resolve-openapi</id>
-                        <phase>process-classes</phase>
                         <goals>
                             <goal>resolve</goal>
                         </goals>
+                        <phase>process-classes</phase>
                         <configuration>
                             <configurationFilePath>${project.build.outputDirectory}/openapi-configuration.yaml</configurationFilePath>
                             <outputFileName>openapi</outputFileName>
@@ -612,7 +599,6 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.datanucleus</groupId>
                 <artifactId>datanucleus-maven-plugin</artifactId>
@@ -624,27 +610,17 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <phase>process-classes</phase>
                         <goals>
                             <goal>enhance</goal>
                         </goals>
+                        <phase>process-classes</phase>
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.cyclonedx</groupId>
                 <artifactId>cyclonedx-maven-plugin</artifactId>
                 <version>2.9.3</version>
-                <executions>
-                    <execution>
-                        <id>cyclonedx-aggregate</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>makeBom</goal>
-                        </goals>
-                    </execution>
-                </executions>
                 <configuration>
                     <projectType>application</projectType>
                     <schemaVersion>1.4</schemaVersion>
@@ -657,8 +633,16 @@
                     <outputReactorProjects>false</outputReactorProjects>
                     <outputFormat>json</outputFormat>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>cyclonedx-aggregate</id>
+                        <goals>
+                            <goal>makeBom</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                    </execution>
+                </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -666,10 +650,10 @@
                 <executions>
                     <execution>
                         <id>merge-services-bom</id>
-                        <phase>prepare-package</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
+                        <phase>prepare-package</phase>
                         <configuration>
                             <executable>${cyclonedx-cli.path}</executable>
                             <arguments>
@@ -685,27 +669,25 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.2.0</version>
                 <executions>
                     <execution>
                         <id>deploy-bom</id>
-                        <phase>prepare-package</phase>
-                        <configuration>
-                            <target>
-                                <copy file="${project.build.directory}/bom.json" tofile="${project.build.outputDirectory}/static/.well-known/sbom" />
-                            </target>
-                            <skip>${cyclonedx.skip}</skip>
-                        </configuration>
                         <goals>
                             <goal>run</goal>
                         </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <target>
+                                <copy file="${project.build.directory}/bom.json" tofile="${project.build.outputDirectory}/static/.well-known/sbom"/>
+                            </target>
+                            <skip>${cyclonedx.skip}</skip>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -719,17 +701,16 @@
                     </archive>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
                         <id>copy-dependencies</id>
-                        <phase>package</phase>
                         <goals>
                             <goal>copy-dependencies</goal>
                         </goals>
+                        <phase>package</phase>
                         <configuration>
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>
                             <includeScope>runtime</includeScope>
@@ -739,7 +720,6 @@
             </plugin>
         </plugins>
     </build>
-
     <profiles>
         <profile>
             <id>dist</id>
@@ -751,10 +731,10 @@
                         <executions>
                             <execution>
                                 <id>dist</id>
-                                <phase>package</phase>
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
+                                <phase>package</phase>
                                 <configuration>
                                     <tarlongfilemode>posix</tarlongfilemode>
                                     <descriptors>
@@ -770,12 +750,12 @@
         <profile>
             <id>dev-services</id>
             <properties>
-                <spotless.check.skip>true</spotless.check.skip>
                 <cyclonedx.skip>true</cyclonedx.skip>
                 <enforcer.skip>true</enforcer.skip>
                 <jacoco.skip>true</jacoco.skip>
                 <maven.test.skip>true</maven.test.skip>
                 <resolve.skip>true</resolve.skip>
+                <spotless.check.skip>true</spotless.check.skip>
             </properties>
             <dependencies>
                 <dependency>
@@ -797,10 +777,10 @@
                         <artifactId>exec-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <phase>verify</phase>
                                 <goals>
                                     <goal>java</goal>
                                 </goals>
+                                <phase>verify</phase>
                                 <configuration>
                                     <mainClass>org.dependencytrack.Application</mainClass>
                                     <systemProperties>
@@ -821,5 +801,4 @@
             </build>
         </profile>
     </profiles>
-
 </project>

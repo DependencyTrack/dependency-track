@@ -82,11 +82,10 @@ class NpmPackageMetadataResolverTest {
     @BeforeEach
     void beforeEach() {
         factory = new NpmPackageMetadataResolverFactory();
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(CacheManager.class, new NoopCacheManager())
-                        .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new MutableServiceRegistry()
+                .register(CacheManager.class, new NoopCacheManager())
+                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
         resolver = (NpmPackageMetadataResolver) factory.create();
     }
 
@@ -121,8 +120,7 @@ class NpmPackageMetadataResolverTest {
 
     @Test
     void shouldReturnNullWhenPackageNotFound(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo("/nonexistent"))
-                .willReturn(aResponse().withStatus(404)));
+        stubFor(get(urlPathEqualTo("/nonexistent")).willReturn(aResponse().withStatus(404)));
 
         final var purl = PackageURLBuilder.aPackageURL()
                 .withType("npm")
@@ -144,8 +142,7 @@ class NpmPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -267,8 +264,7 @@ class NpmPackageMetadataResolverTest {
 
     @Test
     void shouldThrowRetryableExceptionOnServerError(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo("/mypackage"))
-                .willReturn(aResponse().withStatus(503)));
+        stubFor(get(urlPathEqualTo("/mypackage")).willReturn(aResponse().withStatus(503)));
 
         final var purl = PackageURLBuilder.aPackageURL()
                 .withType("npm")
@@ -295,8 +291,6 @@ class NpmPackageMetadataResolverTest {
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, "my-token");
         resolver.resolve(purl, repo, null);
 
-        verify(getRequestedFor(urlPathEqualTo("/mypackage"))
-                .withHeader("Authorization", equalTo("Bearer my-token")));
+        verify(getRequestedFor(urlPathEqualTo("/mypackage")).withHeader("Authorization", equalTo("Bearer my-token")));
     }
-
 }

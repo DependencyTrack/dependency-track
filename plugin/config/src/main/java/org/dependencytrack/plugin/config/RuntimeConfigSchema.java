@@ -25,7 +25,4 @@ import java.util.Set;
 /**
  * @since 5.0.0
  */
-record RuntimeConfigSchema(
-        Schema jsonSchema,
-        Set<String> secretRefPaths) {
-}
+record RuntimeConfigSchema(Schema jsonSchema, Set<String> secretRefPaths) {}

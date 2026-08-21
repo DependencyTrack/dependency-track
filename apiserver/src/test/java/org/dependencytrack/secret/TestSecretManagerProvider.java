@@ -34,5 +34,4 @@ public final class TestSecretManagerProvider implements SecretManagerProvider {
     public SecretManager create(Config config, PageTokenEncoder pageTokenEncoder) {
         return new TestSecretManager();
     }
-
 }

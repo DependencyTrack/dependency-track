@@ -21,19 +21,16 @@ package org.dependencytrack.dex.api;
 /// @since 5.1.0
 public final class WorkflowSpecs {
 
-    private WorkflowSpecs() {
-    }
+    private WorkflowSpecs() {}
 
     @SuppressWarnings("rawtypes")
     public static WorkflowSpec of(Class<? extends Workflow> workflowClass) {
         final var spec = workflowClass.getAnnotation(WorkflowSpec.class);
         if (spec == null) {
-            throw new IllegalArgumentException(
-                    "Class %s is not annotated with @%s".formatted(
-                            workflowClass.getName(), WorkflowSpec.class.getName()));
+            throw new IllegalArgumentException("Class %s is not annotated with @%s"
+                    .formatted(workflowClass.getName(), WorkflowSpec.class.getName()));
         }
 
         return spec;
     }
-
 }

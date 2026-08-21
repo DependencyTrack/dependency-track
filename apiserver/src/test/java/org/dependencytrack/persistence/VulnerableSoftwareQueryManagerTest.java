@@ -54,16 +54,15 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         qm.synchronizeVulnerableSoftware(vulnerability, List.of(vs), Vulnerability.Source.NVD);
 
         // Verify the VulnerableSoftware was created and linked
-        final Vulnerability persistedVuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
+        final Vulnerability persistedVuln =
+                qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         assertThat(persistedVuln.getVulnerableSoftware()).hasSize(1);
-        assertThat(persistedVuln.getVulnerableSoftware().get(0).getCpe23()).isEqualTo("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
+        assertThat(persistedVuln.getVulnerableSoftware().get(0).getCpe23())
+                .isEqualTo("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
 
         // Verify attribution was created
         final AffectedVersionAttribution attribution = qm.getAffectedVersionAttribution(
-                persistedVuln,
-                persistedVuln.getVulnerableSoftware().get(0),
-                Vulnerability.Source.NVD
-        );
+                persistedVuln, persistedVuln.getVulnerableSoftware().get(0), Vulnerability.Source.NVD);
         assertThat(attribution).isNotNull();
         assertThat(attribution.getSource()).isEqualTo(Vulnerability.Source.NVD);
     }
@@ -93,13 +92,12 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         });
 
         // Verify only one attribution exists
-        final Vulnerability persistedVuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
+        final Vulnerability persistedVuln =
+                qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         assertThat(persistedVuln.getVulnerableSoftware()).hasSize(1);
 
-        final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(
-                persistedVuln,
-                persistedVuln.getVulnerableSoftware()
-        );
+        final List<AffectedVersionAttribution> attributions =
+                qm.getAffectedVersionAttributions(persistedVuln, persistedVuln.getVulnerableSoftware());
         assertThat(attributions).hasSize(1);
         assertThat(attributions.get(0).getSource()).isEqualTo(Vulnerability.Source.NVD);
     }
@@ -113,12 +111,10 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         // First synchronization
         qm.synchronizeVulnerableSoftware(vulnerability, List.of(vs), Vulnerability.Source.NVD);
 
-        final Vulnerability persistedVuln1 = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
+        final Vulnerability persistedVuln1 =
+                qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         final AffectedVersionAttribution attribution1 = qm.getAffectedVersionAttribution(
-                persistedVuln1,
-                persistedVuln1.getVulnerableSoftware().get(0),
-                Vulnerability.Source.NVD
-        );
+                persistedVuln1, persistedVuln1.getVulnerableSoftware().get(0), Vulnerability.Source.NVD);
         final Date firstLastSeen = attribution1.getLastSeen();
 
         // Wait to ensure different timestamp
@@ -133,12 +129,10 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         vs2.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
         qm.synchronizeVulnerableSoftware(vulnerability, List.of(vs2), Vulnerability.Source.NVD);
 
-        final Vulnerability persistedVuln2 = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
+        final Vulnerability persistedVuln2 =
+                qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         final AffectedVersionAttribution attribution2 = qm.getAffectedVersionAttribution(
-                persistedVuln2,
-                persistedVuln2.getVulnerableSoftware().get(0),
-                Vulnerability.Source.NVD
-        );
+                persistedVuln2, persistedVuln2.getVulnerableSoftware().get(0), Vulnerability.Source.NVD);
 
         // Re-reporting the same affected version must not write to the attribution at all.
         assertThat(attribution2.getLastSeen()).isEqualTo(firstLastSeen);
@@ -176,7 +170,8 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         // Synchronize - should reuse existing VulnerableSoftware
         qm.synchronizeVulnerableSoftware(vulnerability, List.of(vs), Vulnerability.Source.NVD);
 
-        final Vulnerability persistedVuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
+        final Vulnerability persistedVuln =
+                qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         assertThat(persistedVuln.getVulnerableSoftware()).hasSize(1);
         // Verify it's the same instance (same ID)
         assertThat(persistedVuln.getVulnerableSoftware().get(0).getId()).isEqualTo(existingVs.getId());
@@ -196,15 +191,15 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         vs2.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
         qm.synchronizeVulnerableSoftware(vulnerability, List.of(vs2), Vulnerability.Source.OSV);
 
-        final Vulnerability persistedVuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
+        final Vulnerability persistedVuln =
+                qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         assertThat(persistedVuln.getVulnerableSoftware()).hasSize(1);
 
-        final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(
-                persistedVuln,
-                persistedVuln.getVulnerableSoftware()
-        );
+        final List<AffectedVersionAttribution> attributions =
+                qm.getAffectedVersionAttributions(persistedVuln, persistedVuln.getVulnerableSoftware());
         assertThat(attributions).hasSize(2);
-        assertThat(attributions).extracting(AffectedVersionAttribution::getSource)
+        assertThat(attributions)
+                .extracting(AffectedVersionAttribution::getSource)
                 .containsExactlyInAnyOrder(Vulnerability.Source.NVD, Vulnerability.Source.OSV);
     }
 
@@ -227,7 +222,8 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         // Verify old one is removed and new one is added
         persistedVuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         assertThat(persistedVuln.getVulnerableSoftware()).hasSize(1);
-        assertThat(persistedVuln.getVulnerableSoftware().get(0).getCpe23()).isEqualTo("cpe:2.3:a:acme:product:2.0.0:*:*:*:*:*:*:*");
+        assertThat(persistedVuln.getVulnerableSoftware().get(0).getCpe23())
+                .isEqualTo("cpe:2.3:a:acme:product:2.0.0:*:*:*:*:*:*:*");
     }
 
     @Test
@@ -241,9 +237,11 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
 
         qm.synchronizeVulnerableSoftware(vulnerability, List.of(vs), Vulnerability.Source.OSV);
 
-        final Vulnerability persistedVuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
+        final Vulnerability persistedVuln =
+                qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         assertThat(persistedVuln.getVulnerableSoftware()).hasSize(1);
-        assertThat(persistedVuln.getVulnerableSoftware().get(0).getPurl()).isEqualTo("pkg:maven/org.acme/product@1.0.0");
+        assertThat(persistedVuln.getVulnerableSoftware().get(0).getPurl())
+                .isEqualTo("pkg:maven/org.acme/product@1.0.0");
     }
 
     @Test
@@ -254,12 +252,7 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         qm.persist(vs);
 
         final VulnerableSoftware found = qm.getVulnerableSoftwareByCpe23(
-                "cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*",
-                "1.1.0",
-                null,
-                null,
-                null
-        );
+                "cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*", "1.1.0", null, null, null);
 
         assertThat(found).isNotNull();
         assertThat(found.getCpe23()).isEqualTo("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
@@ -272,13 +265,8 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         vs.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
         qm.persist(vs);
 
-        final VulnerableSoftware found = qm.getVulnerableSoftwareByCpe23(
-                "cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*",
-                null,
-                null,
-                null,
-                null
-        );
+        final VulnerableSoftware found =
+                qm.getVulnerableSoftwareByCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*", null, null, null, null);
 
         assertThat(found).isNotNull();
         assertThat(found.getCpe23()).isEqualTo("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
@@ -295,16 +283,8 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         vs.setVersionEndExcluding("1.1.0");
         qm.persist(vs);
 
-        final VulnerableSoftware found = qm.getVulnerableSoftwareByPurl(
-                "maven",
-                "org.acme",
-                "product",
-                "1.0.0",
-                "1.1.0",
-                null,
-                null,
-                null
-        );
+        final VulnerableSoftware found =
+                qm.getVulnerableSoftwareByPurl("maven", "org.acme", "product", "1.0.0", "1.1.0", null, null, null);
 
         assertThat(found).isNotNull();
         assertThat(found.getPurl()).isEqualTo("pkg:maven/org.acme/product@1.0.0");
@@ -323,16 +303,8 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         vs.setVersion("1.0.0");
         qm.persist(vs);
 
-        final VulnerableSoftware found = qm.getVulnerableSoftwareByPurl(
-                "npm",
-                null,
-                "product",
-                "1.0.0",
-                null,
-                null,
-                null,
-                null
-        );
+        final VulnerableSoftware found =
+                qm.getVulnerableSoftwareByPurl("npm", null, "product", "1.0.0", null, null, null, null);
 
         assertThat(found).isNotNull();
         assertThat(found.getPurlType()).isEqualTo("npm");
@@ -369,26 +341,22 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         qm.persist(vsNoQualifiers);
 
         final VulnerableSoftware foundBullseye = qm.getVulnerableSoftwareByPurl(
-                "deb", "debian", "sudo", "{\"distro\":\"debian-11\"}", null,
-                "1.9.5", null, null, null, null);
+                "deb", "debian", "sudo", "{\"distro\":\"debian-11\"}", null, "1.9.5", null, null, null, null);
         assertThat(foundBullseye).isNotNull();
         assertThat(foundBullseye.getId()).isEqualTo(vsBullseye.getId());
 
         final VulnerableSoftware foundBookworm = qm.getVulnerableSoftwareByPurl(
-                "deb", "debian", "sudo", "{\"distro\":\"debian-12\"}", null,
-                "1.9.5", null, null, null, null);
+                "deb", "debian", "sudo", "{\"distro\":\"debian-12\"}", null, "1.9.5", null, null, null, null);
         assertThat(foundBookworm).isNotNull();
         assertThat(foundBookworm.getId()).isEqualTo(vsBookworm.getId());
 
-        final VulnerableSoftware foundNone = qm.getVulnerableSoftwareByPurl(
-                "deb", "debian", "sudo", null, null,
-                "1.9.5", null, null, null, null);
+        final VulnerableSoftware foundNone =
+                qm.getVulnerableSoftwareByPurl("deb", "debian", "sudo", null, null, "1.9.5", null, null, null, null);
         assertThat(foundNone).isNotNull();
         assertThat(foundNone.getId()).isEqualTo(vsNoQualifiers.getId());
 
         final VulnerableSoftware foundUnknown = qm.getVulnerableSoftwareByPurl(
-                "deb", "debian", "sudo", "{\"distro\":\"debian-13\"}", null,
-                "1.9.5", null, null, null, null);
+                "deb", "debian", "sudo", "{\"distro\":\"debian-13\"}", null, "1.9.5", null, null, null, null);
         assertThat(foundUnknown).isNull();
     }
 
@@ -410,16 +378,13 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         vsBookworm.setPurlQualifiers("{\"distro\":\"debian-12\"}");
         vsBookworm.setVersion("1.9.5");
 
-        qm.synchronizeVulnerableSoftware(
-                vulnerability, List.of(vsBullseye, vsBookworm), Vulnerability.Source.NVD);
+        qm.synchronizeVulnerableSoftware(vulnerability, List.of(vsBullseye, vsBookworm), Vulnerability.Source.NVD);
 
         final Vulnerability persistedVuln =
                 qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         assertThat(persistedVuln.getVulnerableSoftware())
                 .extracting(VulnerableSoftware::getPurlQualifiers)
-                .containsExactlyInAnyOrder(
-                        "{\"distro\":\"debian-11\"}",
-                        "{\"distro\":\"debian-12\"}");
+                .containsExactlyInAnyOrder("{\"distro\":\"debian-11\"}", "{\"distro\":\"debian-12\"}");
     }
 
     @Test
@@ -450,17 +415,16 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         reported.setPurlQualifiers("{\"distro\":\"debian-11\"}");
         reported.setVersion("1.9.5");
 
-        qm.synchronizeVulnerableSoftware(
-                vulnerability, List.of(reported), Vulnerability.Source.NVD);
+        qm.synchronizeVulnerableSoftware(vulnerability, List.of(reported), Vulnerability.Source.NVD);
 
         final Vulnerability persistedVuln =
                 qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         assertThat(persistedVuln.getVulnerableSoftware()).satisfiesExactly(vs -> {
-                    assertThat(vs.getId()).isEqualTo(preExisting.getId());
-                    final AffectedVersionAttribution attribution = qm.getAffectedVersionAttribution(
-                            persistedVuln, vs, Vulnerability.Source.NVD);
-                    assertThat(attribution).isNotNull();
-                });
+            assertThat(vs.getId()).isEqualTo(preExisting.getId());
+            final AffectedVersionAttribution attribution =
+                    qm.getAffectedVersionAttribution(persistedVuln, vs, Vulnerability.Source.NVD);
+            assertThat(attribution).isNotNull();
+        });
     }
 
     @Test
@@ -492,26 +456,22 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         qm.persist(vsNoSubpath);
 
         final VulnerableSoftware foundA = qm.getVulnerableSoftwareByPurl(
-                "generic", "acme", "product", null, "a",
-                "1.0.0", null, null, null, null);
+                "generic", "acme", "product", null, "a", "1.0.0", null, null, null, null);
         assertThat(foundA).isNotNull();
         assertThat(foundA.getId()).isEqualTo(vsSubA.getId());
 
         final VulnerableSoftware foundB = qm.getVulnerableSoftwareByPurl(
-                "generic", "acme", "product", null, "b",
-                "1.0.0", null, null, null, null);
+                "generic", "acme", "product", null, "b", "1.0.0", null, null, null, null);
         assertThat(foundB).isNotNull();
         assertThat(foundB.getId()).isEqualTo(vsSubB.getId());
 
         final VulnerableSoftware foundNone = qm.getVulnerableSoftwareByPurl(
-                "generic", "acme", "product", null, null,
-                "1.0.0", null, null, null, null);
+                "generic", "acme", "product", null, null, "1.0.0", null, null, null, null);
         assertThat(foundNone).isNotNull();
         assertThat(foundNone.getId()).isEqualTo(vsNoSubpath.getId());
 
         final VulnerableSoftware foundUnknown = qm.getVulnerableSoftwareByPurl(
-                "generic", "acme", "product", null, "c",
-                "1.0.0", null, null, null, null);
+                "generic", "acme", "product", null, "c", "1.0.0", null, null, null, null);
         assertThat(foundUnknown).isNull();
     }
 
@@ -533,8 +493,7 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         vsSubB.setPurlSubpath("b");
         vsSubB.setVersion("1.0.0");
 
-        qm.synchronizeVulnerableSoftware(
-                vulnerability, List.of(vsSubA, vsSubB), Vulnerability.Source.NVD);
+        qm.synchronizeVulnerableSoftware(vulnerability, List.of(vsSubA, vsSubB), Vulnerability.Source.NVD);
 
         final Vulnerability persistedVuln =
                 qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
@@ -571,17 +530,16 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         reported.setPurlSubpath("a");
         reported.setVersion("1.0.0");
 
-        qm.synchronizeVulnerableSoftware(
-                vulnerability, List.of(reported), Vulnerability.Source.NVD);
+        qm.synchronizeVulnerableSoftware(vulnerability, List.of(reported), Vulnerability.Source.NVD);
 
         final Vulnerability persistedVuln =
                 qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         assertThat(persistedVuln.getVulnerableSoftware()).satisfiesExactly(vs -> {
-                    assertThat(vs.getId()).isEqualTo(preExisting.getId());
-                    final AffectedVersionAttribution attribution = qm.getAffectedVersionAttribution(
-                            persistedVuln, vs, Vulnerability.Source.NVD);
-                    assertThat(attribution).isNotNull();
-                });
+            assertThat(vs.getId()).isEqualTo(preExisting.getId());
+            final AffectedVersionAttribution attribution =
+                    qm.getAffectedVersionAttribution(persistedVuln, vs, Vulnerability.Source.NVD);
+            assertThat(attribution).isNotNull();
+        });
     }
 
     @Test
@@ -595,8 +553,10 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         vsTransient.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
         qm.synchronizeVulnerableSoftware(vulnerability, List.of(vsTransient), Vulnerability.Source.NVD);
 
-        assertThat(qm.getAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.NVD)).isNotNull();
-        assertThat(qm.getAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.OSV)).isNull();
+        assertThat(qm.getAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.NVD))
+                .isNotNull();
+        assertThat(qm.getAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.OSV))
+                .isNull();
     }
 
     @Test
@@ -606,7 +566,8 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         qm.persist(vs);
 
         // Initially, no attribution exists
-        assertThat(qm.getAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.NVD)).isNull();
+        assertThat(qm.getAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.NVD))
+                .isNull();
 
         // Create attribution using a new transient object
         final VulnerableSoftware vsTransient = new VulnerableSoftware();
@@ -614,7 +575,8 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         qm.synchronizeVulnerableSoftware(vulnerability, List.of(vsTransient), Vulnerability.Source.NVD);
 
         // Retrieve attribution using the persisted VS
-        final AffectedVersionAttribution attribution = qm.getAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.NVD);
+        final AffectedVersionAttribution attribution =
+                qm.getAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.NVD);
         assertThat(attribution).isNotNull();
         assertThat(attribution.getSource()).isEqualTo(Vulnerability.Source.NVD);
         assertThat(attribution.getVulnerability()).isEqualTo(vulnerability);
@@ -652,15 +614,15 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         vs2.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
         qm.synchronizeVulnerableSoftware(vulnerability, List.of(vs2), Vulnerability.Source.NVD);
 
-        final Vulnerability persistedVuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
-        final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(
-                persistedVuln,
-                persistedVuln.getVulnerableSoftware()
-        );
+        final Vulnerability persistedVuln =
+                qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
+        final List<AffectedVersionAttribution> attributions =
+                qm.getAffectedVersionAttributions(persistedVuln, persistedVuln.getVulnerableSoftware());
 
         // Both attributions should exist
         assertThat(attributions).hasSize(2);
-        assertThat(attributions).extracting(AffectedVersionAttribution::getSource)
+        assertThat(attributions)
+                .extracting(AffectedVersionAttribution::getSource)
                 .containsExactlyInAnyOrder(Vulnerability.Source.OSV, Vulnerability.Source.NVD);
     }
 
@@ -673,9 +635,11 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
 
         qm.synchronizeVulnerableSoftware(vulnerability, List.of(vs), Vulnerability.Source.NVD);
 
-        final Vulnerability persistedVuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
+        final Vulnerability persistedVuln =
+                qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         assertThat(persistedVuln.getVulnerableSoftware()).hasSize(1);
-        final VulnerableSoftware persistedVs = persistedVuln.getVulnerableSoftware().get(0);
+        final VulnerableSoftware persistedVs =
+                persistedVuln.getVulnerableSoftware().get(0);
         assertThat(persistedVs.getVersionStartIncluding()).isEqualTo("1.0.0");
         assertThat(persistedVs.getVersionEndExcluding()).isEqualTo("2.0.0");
     }
@@ -706,16 +670,15 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         }
 
         // Verify only 2 attributions exist (one per VulnerableSoftware)
-        final Vulnerability persistedVuln = qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
+        final Vulnerability persistedVuln =
+                qm.getVulnerabilityByVulnId(Vulnerability.Source.NVD, "CVE-2024-0001", true);
         assertThat(persistedVuln.getVulnerableSoftware()).hasSize(2);
 
-        final List<AffectedVersionAttribution> attributions = qm.getAffectedVersionAttributions(
-                persistedVuln,
-                persistedVuln.getVulnerableSoftware()
-        );
+        final List<AffectedVersionAttribution> attributions =
+                qm.getAffectedVersionAttributions(persistedVuln, persistedVuln.getVulnerableSoftware());
         assertThat(attributions).hasSize(2);
-        assertThat(attributions).extracting(AffectedVersionAttribution::getSource)
+        assertThat(attributions)
+                .extracting(AffectedVersionAttribution::getSource)
                 .containsOnly(Vulnerability.Source.NVD);
     }
 }
-

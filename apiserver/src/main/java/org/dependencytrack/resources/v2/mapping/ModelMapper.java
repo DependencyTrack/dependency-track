@@ -34,7 +34,8 @@ import java.util.List;
 
 public class ModelMapper {
 
-    public static List<org.dependencytrack.model.OrganizationalContact> mapOrganizationalContacts(final List<OrganizationalContact> contacts) {
+    public static List<org.dependencytrack.model.OrganizationalContact> mapOrganizationalContacts(
+            final List<OrganizationalContact> contacts) {
         return contacts.stream()
                 .map(contact -> {
                     var mappedContact = new org.dependencytrack.model.OrganizationalContact();
@@ -42,7 +43,8 @@ public class ModelMapper {
                     mappedContact.setEmail(contact.getEmail());
                     mappedContact.setPhone(contact.getPhone());
                     return mappedContact;
-                }).toList();
+                })
+                .toList();
     }
 
     public static License mapLicense(org.dependencytrack.model.License license) {
@@ -170,9 +172,10 @@ public class ModelMapper {
 
         return PackageMetadata.builder()
                 .latestVersion(pm.latestVersion())
-                .latestVersionPublishedAt(pm.latestVersionPublishedAt() != null
-                        ? pm.latestVersionPublishedAt().toEpochMilli()
-                        : null)
+                .latestVersionPublishedAt(
+                        pm.latestVersionPublishedAt() != null
+                                ? pm.latestVersionPublishedAt().toEpochMilli()
+                                : null)
                 .resolvedAt(pm.resolvedAt().toEpochMilli())
                 .build();
     }
@@ -184,21 +187,14 @@ public class ModelMapper {
 
         return PackageArtifactMetadata.builder()
                 .hashes(mapHashes(pam))
-                .publishedAt(pam.publishedAt() != null
-                        ? pam.publishedAt().toEpochMilli()
-                        : null)
+                .publishedAt(pam.publishedAt() != null ? pam.publishedAt().toEpochMilli() : null)
                 .resolvedFrom(pam.resolvedFrom())
-                .resolvedAt(pam.resolvedAt() != null
-                        ? pam.resolvedAt().toEpochMilli()
-                        : null)
+                .resolvedAt(pam.resolvedAt() != null ? pam.resolvedAt().toEpochMilli() : null)
                 .build();
     }
 
     private static Hashes mapHashes(org.dependencytrack.model.PackageArtifactMetadata pam) {
-        if (pam.md5() == null
-                && pam.sha1() == null
-                && pam.sha256() == null
-                && pam.sha512() == null) {
+        if (pam.md5() == null && pam.sha1() == null && pam.sha256() == null && pam.sha512() == null) {
             return null;
         }
 
@@ -209,5 +205,4 @@ public class ModelMapper {
                 .sha512(pam.sha512())
                 .build();
     }
-
 }

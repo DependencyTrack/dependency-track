@@ -34,22 +34,17 @@ import java.util.Base64;
 public final class SimplePageTokenEncoder implements PageTokenEncoder {
 
     private static final int MAX_ENCODED_LENGTH = 8192;
-    private static final ObjectMapper OBJECT_MAPPER = new CBORMapper(
-            CBORFactory
-                    .builder()
-                    .streamReadConstraints(
-                            StreamReadConstraints.builder()
-                                    .maxStringLength(1024)
-                                    .maxNumberLength(20)
-                                    .maxNestingDepth(4)
-                                    .maxDocumentLength(4096)
-                                    .build())
+    private static final ObjectMapper OBJECT_MAPPER = new CBORMapper(CBORFactory.builder()
+                    .streamReadConstraints(StreamReadConstraints.builder()
+                            .maxStringLength(1024)
+                            .maxNumberLength(20)
+                            .maxNestingDepth(4)
+                            .maxDocumentLength(4096)
+                            .build())
                     .build())
             .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
-    public SimplePageTokenEncoder() {
-
-    }
+    public SimplePageTokenEncoder() {}
 
     @Override
     public @Nullable String encode(@Nullable PageToken pageToken) {
@@ -61,9 +56,8 @@ public final class SimplePageTokenEncoder implements PageTokenEncoder {
             final byte[] pageTokenBytes = OBJECT_MAPPER.writeValueAsBytes(pageToken);
             final String encoded = Base64.getUrlEncoder().encodeToString(pageTokenBytes);
             if (encoded.length() > MAX_ENCODED_LENGTH) {
-                throw new IllegalStateException(
-                        "Encoded token of size %d exceeds maximum size %d".formatted(
-                                encoded.length(), MAX_ENCODED_LENGTH));
+                throw new IllegalStateException("Encoded token of size %d exceeds maximum size %d"
+                        .formatted(encoded.length(), MAX_ENCODED_LENGTH));
             }
             return encoded;
         } catch (IOException e) {
@@ -78,8 +72,7 @@ public final class SimplePageTokenEncoder implements PageTokenEncoder {
         }
         if (encoded.length() > MAX_ENCODED_LENGTH) {
             throw new InvalidPageTokenException(
-                    "Token of size %d exceeds maximum size %d".formatted(
-                            encoded.length(), MAX_ENCODED_LENGTH));
+                    "Token of size %d exceeds maximum size %d".formatted(encoded.length(), MAX_ENCODED_LENGTH));
         }
 
         try {
@@ -89,5 +82,4 @@ public final class SimplePageTokenEncoder implements PageTokenEncoder {
             throw new InvalidPageTokenException(e);
         }
     }
-
 }

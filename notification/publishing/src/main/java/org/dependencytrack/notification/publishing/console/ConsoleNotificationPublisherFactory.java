@@ -55,8 +55,7 @@ public final class ConsoleNotificationPublisherFactory implements NotificationPu
     }
 
     @Override
-    public void init(ServiceRegistry serviceRegistry) {
-    }
+    public void init(ServiceRegistry serviceRegistry) {}
 
     @Override
     public NotificationPublisher create() {
@@ -72,5 +71,4 @@ public final class ConsoleNotificationPublisherFactory implements NotificationPu
     public NotificationTemplate defaultTemplate() {
         return new NotificationTemplate(loadDefaultTemplate(extensionClass()), "text/plain");
     }
-
 }

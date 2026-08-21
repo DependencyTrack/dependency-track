@@ -26,11 +26,11 @@ import org.jspecify.annotations.Nullable;
  * Errors of this type <strong>must not</strong> be caught,
  * as they are expected to be handled by the engine.
  */
-public abstract sealed class WorkflowRunError extends Error permits
-        WorkflowRunBlockedError,
-        WorkflowRunCanceledError,
-        WorkflowRunContinuedAsNewError,
-        WorkflowRunDeterminismError {
+public abstract sealed class WorkflowRunError extends Error
+        permits WorkflowRunBlockedError,
+                WorkflowRunCanceledError,
+                WorkflowRunContinuedAsNewError,
+                WorkflowRunDeterminismError {
 
     WorkflowRunError(final @Nullable String message) {
         super(message);
@@ -43,5 +43,4 @@ public abstract sealed class WorkflowRunError extends Error permits
             final boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
-
 }

@@ -19,6 +19,7 @@ If Maven needs to be invoked directly, only do so from the repository root.
 * Format (Java): `make format-java`
 * Lint (OpenAPI): `make lint-openapi`
 * Lint (Protobuf): `make lint-proto`
+* Format (Protobuf): `make format-proto`
 * Lint (Flyway migrations): `make lint-migrations`
 
 > [!NOTE]

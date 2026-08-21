@@ -24,12 +24,9 @@
         <artifactId>dependency-track-parent</artifactId>
         <version>5.1.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>common-parent</artifactId>
     <packaging>pom</packaging>
-
     <name>Common :: Parent</name>
-
     <modules>
         <module>config</module>
         <module>datasource</module>
@@ -37,9 +34,7 @@
         <module>init</module>
         <module>pagination</module>
     </modules>
-
     <properties>
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
     </properties>
-
 </project>

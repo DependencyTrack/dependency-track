@@ -65,16 +65,16 @@ public class CycloneDXExporter {
     public Bom create(final Project project, final Version version) {
         final List<Component> components;
         final List<ServiceComponent> services;
-        try (var _ = new ScopedCustomization(qm.getPersistenceManager())
-                .withFetchGroup(FetchGroup.ALL)) {
+        try (var _ = new ScopedCustomization(qm.getPersistenceManager()).withFetchGroup(FetchGroup.ALL)) {
             components = qm.getAllComponents(project);
             services = qm.getAllServiceComponents(project);
         }
-        final List<Finding> findings = switch (variant) {
-            case INVENTORY_WITH_VULNERABILITIES, VDR, VEX -> withJdbiHandle(handle ->
-                    handle.attach(FindingDao.class).getFindings(project.getId(), true));
-            default -> null;
-        };
+        final List<Finding> findings =
+                switch (variant) {
+                    case INVENTORY_WITH_VULNERABILITIES, VDR, VEX ->
+                        withJdbiHandle(handle -> handle.attach(FindingDao.class).getFindings(project.getId(), true));
+                    default -> null;
+                };
         return create(components, services, findings, project, version);
     }
 
@@ -98,8 +98,16 @@ public class CycloneDXExporter {
                     .filter(component -> vulnerableComponentUuids.contains(component.getUuid()))
                     .toList();
         }
-        final List<org.cyclonedx.model.Component> cycloneComponents = (Variant.VEX != variant && components != null) ? components.stream().map(component -> ModelConverter.convert(component)).collect(Collectors.toList()) : null;
-        final List<org.cyclonedx.model.Service> cycloneServices = (Variant.VEX != variant && services != null) ? services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList()) : null;
+        final List<org.cyclonedx.model.Component> cycloneComponents = (Variant.VEX != variant && components != null)
+                ? components.stream()
+                        .map(component -> ModelConverter.convert(component))
+                        .collect(Collectors.toList())
+                : null;
+        final List<org.cyclonedx.model.Service> cycloneServices = (Variant.VEX != variant && services != null)
+                ? services.stream()
+                        .map(service -> ModelConverter.convert(qm, service))
+                        .collect(Collectors.toList())
+                : null;
         final Bom bom = new Bom();
         bom.setSerialNumber("urn:uuid:" + UUID.randomUUID());
         bom.setVersion(1);
@@ -120,5 +128,4 @@ public class CycloneDXExporter {
 
         return BomGeneratorFactory.createXml(version, bom).toXmlString();
     }
-
 }

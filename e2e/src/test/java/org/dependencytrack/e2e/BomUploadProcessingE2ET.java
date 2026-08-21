@@ -21,7 +21,6 @@ package org.dependencytrack.e2e;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetup;
-import jakarta.mail.internet.MimeMessage;
 import org.dependencytrack.e2e.api.model.BomUploadRequest;
 import org.dependencytrack.e2e.api.model.CreateNotificationRuleRequest;
 import org.dependencytrack.e2e.api.model.CreateNotificationRuleRequest.Publisher;
@@ -40,6 +39,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.Testcontainers;
 import org.testcontainers.containers.GenericContainer;
+
+import jakarta.mail.internet.MimeMessage;
 
 import java.time.Duration;
 import java.util.Base64;
@@ -70,8 +71,10 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
     @BeforeEach
     void beforeEach() throws Exception {
         // host.docker.internal may not always be available, so use testcontainer's
-        // solution for host port exposure instead: https://www.testcontainers.org/features/networking/#exposing-host-ports-to-the-container
-        Testcontainers.exposeHostPorts(greenMail.getSmtp().getPort(), wireMock.getRuntimeInfo().getHttpPort());
+        // solution for host port exposure instead:
+        // https://www.testcontainers.org/features/networking/#exposing-host-ports-to-the-container
+        Testcontainers.exposeHostPorts(
+                greenMail.getSmtp().getPort(), wireMock.getRuntimeInfo().getHttpPort());
 
         // Users must be created before the notification-publisher container is started.
         greenMail.getUserManager().createUser("from@localhost", "from", "fromPass");
@@ -93,14 +96,13 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
         apiClient.updateExtensionConfig(
                 "notification-publisher",
                 "email",
-                new UpdateExtensionConfigRequest(
-                        Map.ofEntries(
-                                Map.entry("enabled", true),
-                                Map.entry("host", "host.testcontainers.internal"),
-                                Map.entry("port", greenMail.getSmtp().getPort()),
-                                Map.entry("username", "from"),
-                                Map.entry("password", "EMAIL_PASSWORD"),
-                                Map.entry("senderAddress", "from@localhost"))));
+                new UpdateExtensionConfigRequest(Map.ofEntries(
+                        Map.entry("enabled", true),
+                        Map.entry("host", "host.testcontainers.internal"),
+                        Map.entry("port", greenMail.getSmtp().getPort()),
+                        Map.entry("username", "from"),
+                        Map.entry("password", "EMAIL_PASSWORD"),
+                        Map.entry("senderAddress", "from@localhost"))));
 
         final List<NotificationPublisher> publishers = apiClient.getAllNotificationPublishers();
 
@@ -119,8 +121,14 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
         // Create an email alert for NEW_VULNERABILITY notifications and point it to GreenMail.
         final NotificationRule emailRule = apiClient.createNotificationRule(new CreateNotificationRuleRequest(
                 "email", "PORTFOLIO", "INFORMATIONAL", new Publisher(emailPublisher.uuid())));
-        apiClient.updateNotificationRule(new UpdateNotificationRuleRequest(emailRule.uuid(), emailRule.name(), true, "PORTFOLIO",
-                "INFORMATIONAL", Set.of("NEW_VULNERABILITY"), /* language=JSON */ """
+        apiClient.updateNotificationRule(new UpdateNotificationRuleRequest(
+                emailRule.uuid(),
+                emailRule.name(),
+                true,
+                "PORTFOLIO",
+                "INFORMATIONAL",
+                Set.of("NEW_VULNERABILITY"), /* language=JSON */
+                """
                 {
                   "recipientAddresses": [
                     "to@localhost"
@@ -131,25 +139,35 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
         // Create a webhook alert for NEW_VULNERABILITY notifications and point it to WireMock.
         final NotificationRule webhookRule = apiClient.createNotificationRule(new CreateNotificationRuleRequest(
                 "foo", "PORTFOLIO", "INFORMATIONAL", new Publisher(webhookPublisher.uuid())));
-        apiClient.updateNotificationRule(new UpdateNotificationRuleRequest(webhookRule.uuid(), webhookRule.name(), true, "PORTFOLIO",
-                "INFORMATIONAL", Set.of("NEW_VULNERABILITY"), /* language=JSON */ """
+        apiClient.updateNotificationRule(new UpdateNotificationRuleRequest(
+                webhookRule.uuid(),
+                webhookRule.name(),
+                true,
+                "PORTFOLIO",
+                "INFORMATIONAL",
+                Set.of("NEW_VULNERABILITY"), /* language=JSON */
+                """
                 {
                   "destinationUrl": "http://host.testcontainers.internal:%d/notification"
                 }
                 """.formatted(wireMock.getPort())));
 
         // Ensure notifications will be acknowledged by WireMock.
-        wireMock.stubFor(post(urlPathEqualTo("/notification"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
+        wireMock.stubFor(
+                post(urlPathEqualTo("/notification")).willReturn(aResponse().withStatus(200)));
 
         // Create a new internal vulnerability for jackson-databind.
-        apiClient.createVulnerability(new CreateVulnerabilityRequest("INT-123", "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H", List.of(917, 502), List.of(
-                new AffectedComponent("PURL", "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.2.2", "EXACT")
-        )));
+        apiClient.createVulnerability(new CreateVulnerabilityRequest(
+                "INT-123",
+                "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
+                List.of(917, 502),
+                List.of(new AffectedComponent(
+                        "PURL", "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.2.2", "EXACT"))));
 
         // Parse and base64 encode a BOM.
-        final byte[] bomBytes = getClass().getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json").readAllBytes();
+        final byte[] bomBytes = getClass()
+                .getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json")
+                .readAllBytes();
         final String bomBase64 = Base64.getEncoder().encodeToString(bomBytes);
 
         // Upload the BOM
@@ -161,7 +179,8 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
                 .atMost(Duration.ofSeconds(15))
                 .pollDelay(Duration.ofMillis(250))
                 .untilAsserted(() -> {
-                    final EventProcessingResponse processingResponse = apiClient.isEventBeingProcessed(response.token());
+                    final EventProcessingResponse processingResponse =
+                            apiClient.isEventBeingProcessed(response.token());
                     assertThat(processingResponse.processing()).isFalse();
                 });
 
@@ -170,14 +189,12 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
 
         // Ensure the internal vulnerability has been flagged.
         final List<Finding> findings = apiClient.getFindings(project.uuid(), false);
-        assertThat(findings).satisfiesExactly(
-                finding -> {
-                    assertThat(finding.component().name()).isEqualTo("jackson-databind");
-                    assertThat(finding.vulnerability().vulnId()).isEqualTo("INT-123");
-                    assertThat(finding.attribution().analyzerIdentity()).isEqualTo("internal");
-                    assertThat(finding.attribution().attributedOn()).isNotBlank();
-                }
-        );
+        assertThat(findings).satisfiesExactly(finding -> {
+            assertThat(finding.component().name()).isEqualTo("jackson-databind");
+            assertThat(finding.vulnerability().vulnId()).isEqualTo("INT-123");
+            assertThat(finding.attribution().analyzerIdentity()).isEqualTo("internal");
+            assertThat(finding.attribution().attributedOn()).isNotBlank();
+        });
 
         // Verify that we received alerts about jackson-databind being vulnerable
         // via both email and webhook notifications.
@@ -192,7 +209,8 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
     private void verifyEmailNotification() {
         assertThat(greenMail.getReceivedMessages()).hasSize(1);
         final MimeMessage email = greenMail.getReceivedMessages()[0];
-        // assertThat(email.getSubject()).isEqualTo("[Dependency-Track] New Vulnerability Identified on Project: [foo : bar]"); // TODO
+        // assertThat(email.getSubject()).isEqualTo("[Dependency-Track] New Vulnerability Identified on Project: [foo :
+        // bar]"); // TODO
         // assertThat(email.getContent()).asString().matches(""); // TODO
     }
 
@@ -203,8 +221,7 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
         //   instead of 10.0. Debugging this shows that the notification has the correct format.
         //   The same thing is also tested in `WebhookPublisherTest#testPublishNewVulnerabilityNotification`,
         //   where the comparison works just fine... Using `${json-unit.any-number}` here until the comparison is fixed.
-        wireMock.verify(postRequestedFor(urlPathEqualTo("/notification"))
-                .withRequestBody(equalToJson("""
+        wireMock.verify(postRequestedFor(urlPathEqualTo("/notification")).withRequestBody(equalToJson("""
                         {
                           "notification": {
                             "id" : "${json-unit.any-string}",
@@ -260,8 +277,6 @@ class BomUploadProcessingE2ET extends AbstractE2ET {
                             }
                           }
                         }
-                        """)
-                )
-        );
+                        """)));
     }
 }

@@ -49,7 +49,9 @@ class DummyTestExtensionFactory implements ExtensionFactory<@NonNull TestExtensi
 
     @Override
     public DummyTestExtension create() {
-        return new DummyTestExtension(configRegistry.getDeploymentConfig().getOptionalValue("bar", String.class).orElse(null));
+        return new DummyTestExtension(configRegistry
+                .getDeploymentConfig()
+                .getOptionalValue("bar", String.class)
+                .orElse(null));
     }
-
 }

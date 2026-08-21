@@ -24,8 +24,4 @@ import org.dependencytrack.model.AnalysisState;
  * @since 5.0.0
  */
 public record GetProjectAuditChangeNotificationSubjectQuery(
-        long componentId,
-        long vulnId,
-        AnalysisState analysisState,
-        boolean suppressed) {
-}
+        long componentId, long vulnId, AnalysisState analysisState, boolean suppressed) {}

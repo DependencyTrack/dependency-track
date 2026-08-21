@@ -37,5 +37,4 @@ public final class RefreshGlobalPortfolioMetricsActivity implements Activity<Voi
         useJdbiTransaction(handle -> handle.attach(MetricsDao.class).refreshGlobalPortfolioMetrics());
         return null;
     }
-
 }

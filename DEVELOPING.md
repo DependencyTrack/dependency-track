@@ -122,9 +122,10 @@ This produces the image `ghcr.io/dependencytrack/apiserver:local`.
 
 ## Code Style
 
-Java sources are checked with [Spotless](https://github.com/diffplug/spotless), which enforces the
-license header, removal of unused imports, and rejection of wildcard imports. The check runs as part
-of the build and in CI. Run it locally with:
+Java sources are formatted with [palantir-java-format](https://github.com/palantir/palantir-java-format)
+and checked with [Spotless](https://github.com/diffplug/spotless), which also enforces the license header,
+import order, and removal of unused imports. POMs are formatted with [SortPom](https://github.com/Ekryd/sortpom).
+Both run in Maven's `validate` phase, so `make lint-java` and CI cover them:
 
 ```shell
 make lint-java

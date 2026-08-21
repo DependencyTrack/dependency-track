@@ -91,14 +91,14 @@ public final class CelPolicyCompiler {
         }
 
         LOGGER.debug("Compiling expression: %s".formatted(normalizedSrc));
-        final CelAbstractSyntaxTree ast = policyType.compiler().compile(normalizedSrc).getAst();
+        final CelAbstractSyntaxTree ast =
+                policyType.compiler().compile(normalizedSrc).getAst();
 
         final CelRuntime.Program celProgram;
         try {
             celProgram = policyType.runtime().createProgram(ast);
         } catch (CelEvaluationException e) {
-            throw new CelValidationException(ast.getSource(),
-                    List.of(CelIssue.formatError(0, 0, e.getMessage())));
+            throw new CelValidationException(ast.getSource(), List.of(CelIssue.formatError(0, 0, e.getMessage())));
         }
 
         final var analysis = analyze(ast);
@@ -110,12 +110,11 @@ public final class CelPolicyCompiler {
         if (cacheMode == CacheMode.CACHE) {
             cache.put(scriptDigest, program);
         }
-        
+
         return program;
     }
 
-    private record AnalysisResult(MultiValuedMap<CelType, String> requirements, Set<String> usedFunctions) {
-    }
+    private record AnalysisResult(MultiValuedMap<CelType, String> requirements, Set<String> usedFunctions) {}
 
     private static AnalysisResult analyze(CelAbstractSyntaxTree ast) {
         final var visitor = new CelPolicyAstAnalyzer(ast);
@@ -150,16 +149,14 @@ public final class CelPolicyCompiler {
             }
         }
 
-        final Set<String> usedFunctions = functionSignatures.stream()
-                .map(FunctionSignature::function)
-                .collect(Collectors.toSet());
+        final Set<String> usedFunctions =
+                functionSignatures.stream().map(FunctionSignature::function).collect(Collectors.toSet());
 
         return new AnalysisResult(requirements, usedFunctions);
     }
 
-    private static void validateVersRanges(
-            CelAbstractSyntaxTree ast,
-            Set<String> usedFunctions) throws CelValidationException {
+    private static void validateVersRanges(CelAbstractSyntaxTree ast, Set<String> usedFunctions)
+            throws CelValidationException {
         final var visitor = new CelPolicyVersValidator(ast, usedFunctions);
         visitor.validate();
 
@@ -183,9 +180,8 @@ public final class CelPolicyCompiler {
         throw new CelValidationException(source, issues);
     }
 
-    private static void validateSpdxExpressions(
-            CelAbstractSyntaxTree ast,
-            Set<String> usedFunctions) throws CelValidationException {
+    private static void validateSpdxExpressions(CelAbstractSyntaxTree ast, Set<String> usedFunctions)
+            throws CelValidationException {
         final var visitor = new CelPolicySpdxExpressionValidator(ast, usedFunctions);
         visitor.validate();
 
@@ -208,5 +204,4 @@ public final class CelPolicyCompiler {
 
         throw new CelValidationException(source, issues);
     }
-
 }

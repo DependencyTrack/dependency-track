@@ -35,5 +35,4 @@ public record PolledActivityTask(
         RetryPolicy retryPolicy,
         int attempt,
         Instant lockedUntil,
-        int lockVersion) {
-}
+        int lockVersion) {}

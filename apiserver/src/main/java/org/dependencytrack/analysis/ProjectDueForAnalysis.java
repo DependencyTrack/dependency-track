@@ -21,5 +21,4 @@ package org.dependencytrack.analysis;
 import java.util.UUID;
 
 /// @since 5.1.0
-public record ProjectDueForAnalysis(long id, UUID uuid) {
-}
+public record ProjectDueForAnalysis(long id, UUID uuid) {}

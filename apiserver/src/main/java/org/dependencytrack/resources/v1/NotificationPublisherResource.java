@@ -429,23 +429,15 @@ public class NotificationPublisherResource extends AbstractApiResource {
     }
 
     private @Nullable Notification buildTestNotification(Scope scope, Group group, Level ruleLevel) {
-        final List<Level> levelsToTry = switch (ruleLevel) {
-            case LEVEL_INFORMATIONAL -> List.of(Level.LEVEL_INFORMATIONAL, Level.LEVEL_WARNING, Level.LEVEL_ERROR);
-            case LEVEL_WARNING -> List.of(Level.LEVEL_WARNING, Level.LEVEL_ERROR);
-            case LEVEL_ERROR -> List.of(Level.LEVEL_ERROR);
-            default -> List.of();
-        };
-
-        for (final Level level : levelsToTry) {
-            final Notification notification = createTestNotification(scope, group, level);
-            if (notification != null) {
-                return notification.toBuilder()
-                        .setTitle("[TEST] " + notification.getTitle())
-                        .build();
-            }
+        final Notification notification = createTestNotification(scope, group);
+        if (notification == null) {
+            return null;
         }
 
-        return null;
+        return notification.toBuilder()
+                .setLevel(ruleLevel)
+                .setTitle("[TEST] " + notification.getTitle())
+                .build();
     }
 
 }

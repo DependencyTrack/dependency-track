@@ -210,7 +210,8 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
             }
         }
 
-        final String versioningScheme = KnownVersioningSchemes.fromPurl(componentPurl)
+        final String versioningScheme = KnownVersioningSchemes
+                .fromPurlType(componentPurl.getType())
                 .orElse(KnownVersioningSchemes.SCHEME_GENERIC);
 
         return compareWithVers(vs, componentVersion, versioningScheme);
@@ -263,7 +264,8 @@ public abstract class AbstractVulnerableSoftwareAnalysisTask extends BaseCompone
         // If the component has a PURL, we can deduce the applicable versioning scheme from it.
         final String versioningScheme = Optional
                 .ofNullable(component.getPurl())
-                .flatMap(KnownVersioningSchemes::fromPurl)
+                .map(PackageURL::getType)
+                .flatMap(KnownVersioningSchemes::fromPurlType)
                 .orElse(KnownVersioningSchemes.SCHEME_GENERIC);
 
         return compareWithVers(vs, targetCpe.getVersion(), versioningScheme);

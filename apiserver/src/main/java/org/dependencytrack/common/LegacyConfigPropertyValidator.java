@@ -112,6 +112,16 @@ public final class LegacyConfigPropertyValidator {
             "alpine.worker.threads");
 
     static final Map<String, String> LEGACY_V5_RC1_PROPERTY_RENAMES = buildLegacyV5Rc1Renames();
+
+    /// Properties that no longer exist, and whose value cannot be carried over to their replacement.
+    /// A rename entry would be misleading, since the operator has to decide on a new value rather
+    /// than move the old one.
+    static final Map<String, String> REMOVED_PROPERTY_REPLACEMENTS = Map.of(
+            "dt.task.portfolio-analysis.cron",
+            """
+                    The portfolio analysis no longer starts at a fixed time. \
+                    Use dt.task.portfolio-analysis.max-analysis-age-ms to say how long an analysis stays valid.""");
+
     private static final Set<String> STANDARD_SYSTEM_ENV_VARS = Set.of("NO_PROXY");
 
     private LegacyConfigPropertyValidator() {
@@ -123,6 +133,28 @@ public final class LegacyConfigPropertyValidator {
         throwOnLegacyFileSecretProperties(smallRyeConfig);
         throwOnLegacyV4Properties(smallRyeConfig);
         throwOnLegacyV5Rc1Properties(smallRyeConfig);
+        throwOnRemovedProperties(smallRyeConfig);
+    }
+
+    private static void throwOnRemovedProperties(SmallRyeConfig config) {
+        final var present = new LinkedHashMap<String, String>();
+        REMOVED_PROPERTY_REPLACEMENTS.forEach((name, replacement) -> {
+            if (config.getConfigValue(name).getValue() != null) {
+                present.put(name, replacement);
+            }
+        });
+        if (present.isEmpty()) {
+            return;
+        }
+
+        final var explanations = new StringBuilder();
+        present.forEach((name, replacement) ->
+                explanations.append("\n  ").append(name).append(": ").append(replacement));
+
+        throw new IllegalStateException("""
+                The following configuration properties are no longer supported. \
+                Remove them, and configure the replacement named for each:%s\
+                """.formatted(explanations));
     }
 
     private static void throwOnLegacyFileSecretProperties(SmallRyeConfig config) {
@@ -170,7 +202,7 @@ public final class LegacyConfigPropertyValidator {
             final ConfigValue configValue = config.getConfigValue(oldName);
             if (configValue.getValue() != null
                     && (!configValue.getSourceName().startsWith(EnvConfigSource.NAME)
-                            || !envForm(oldName).equals(envForm(newName)))) {
+                    || !envForm(oldName).equals(envForm(newName)))) {
                 present.put(oldName, newName);
             }
 
@@ -179,7 +211,7 @@ public final class LegacyConfigPropertyValidator {
             final ConfigValue bareValue = config.getConfigValue(bareName);
             if (bareValue.getValue() != null
                     && (!bareValue.getSourceName().startsWith(EnvConfigSource.NAME)
-                            || !STANDARD_SYSTEM_ENV_VARS.contains(envForm(bareName)))) {
+                    || !STANDARD_SYSTEM_ENV_VARS.contains(envForm(bareName)))) {
                 present.put(bareName, newName);
             }
         });
@@ -276,7 +308,7 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.task.project.maintenance.cron", "dt.task.project-maintenance.cron");
         renames.put("dt.task.tag.maintenance.cron", "dt.task.tag-maintenance.cron");
         renames.put("dt.task.vulnerability-policy-bundle-sync.cron", "dt.task.vuln-policy-bundle-sync.cron");
-        renames.put("dt.task.vulnerability.analysis.cron", "dt.task.portfolio-analysis.cron");
+        renames.put("dt.task.vulnerability.analysis.cron", "(removed; the portfolio analysis no longer starts at a fixed time, see dt.task.portfolio-analysis.max-analysis-age-ms)");
         renames.put("dt.task.vulnerability.database.maintenance.cron", "dt.task.vuln-database-maintenance.cron");
         renames.put("dt.task.vulnerability.metrics.update.cron", "dt.task.vuln-metrics-update.cron");
         renames.put("dt.telemetry.submission.enabled.default", "dt.telemetry.submission.default-enabled");

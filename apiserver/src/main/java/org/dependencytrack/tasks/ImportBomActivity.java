@@ -44,6 +44,7 @@ import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
+import org.dependencytrack.analysis.ProjectLastAnalysisDao;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
@@ -71,6 +72,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
@@ -96,6 +98,7 @@ import static org.dependencytrack.common.MdcKeys.MDC_BOM_VERSION;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_NAME;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_UUID;
 import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
+import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_ANALYSIS_TRIGGER;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_BOM_UPLOAD_TOKEN;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_PROJECT_UUID;
 import static org.dependencytrack.notification.api.NotificationFactory.createBomConsumedNotification;
@@ -107,6 +110,7 @@ import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertSe
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProject;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertToProjectMetadata;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.flatten;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD;
 import static org.dependencytrack.util.PersistenceUtil.applyIfChanged;
 import static org.dependencytrack.util.PersistenceUtil.assertPersistent;
@@ -248,15 +252,23 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             }
         }
 
-        dexEngine.createRun(
+        final UUID analysisRunId = dexEngine.createRun(
                 new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
-                        .withWorkflowInstanceId("analyze-project:bom-upload:" + ctx.token)
+                        .withWorkflowInstanceId(AnalyzeProjectWorkflow.instanceIdForBomUpload(ctx.token))
                         .withLabels(Map.ofEntries(
+                                Map.entry(
+                                        WF_LABEL_ANALYSIS_TRIGGER,
+                                        AnalyzeProjectWorkflow.triggerLabelValue(ANALYSIS_TRIGGER_BOM_UPLOAD)),
                                 Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, ctx.token.toString()),
                                 Map.entry(WF_LABEL_PROJECT_UUID, ctx.project.getUuid().toString())))
-                        .withConcurrencyKey("analyze-project:" + ctx.project.getUuid())
+                        .withConcurrencyKey(AnalyzeProjectWorkflow.concurrencyKeyForProject(ctx.project.getUuid()))
                         .withPriority(50)
                         .withArgument(workflowArgBuilder.build()));
+        if (analysisRunId != null) {
+            useJdbiTransaction(handle -> handle
+                    .attach(ProjectLastAnalysisDao.class)
+                    .recordAttempt(ctx.project.getUuid(), Instant.now()));
+        }
 
         if (!processedBom.components().isEmpty()) {
             dexEngine.createRun(

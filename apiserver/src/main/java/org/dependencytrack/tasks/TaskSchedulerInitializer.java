@@ -27,11 +27,13 @@ import com.github.kagkarlsson.scheduler.stats.StatsRegistryAdapter;
 import com.github.kagkarlsson.scheduler.task.ExecutionComplete;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.kagkarlsson.scheduler.task.helper.Tasks;
+import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
 import com.github.kagkarlsson.scheduler.task.schedule.Schedule;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
+import org.dependencytrack.analysis.PortfolioAnalysisTask;
 import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.HttpClient;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
@@ -243,8 +245,13 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                                         .withWorkflowInstanceId(UpdatePortfolioMetricsWorkflow.INSTANCE_ID))),
                 recurringTask(
                         "Portfolio Vulnerability Analysis",
-                        getCronScheduleFromConfig(config, ConfigKeys.TASK_PORTFOLIO_ANALYSIS_CRON),
-                        new PortfolioAnalysisTask(dexEngine)),
+                        FixedDelay.of(Duration.ofSeconds(60)),
+                        new PortfolioAnalysisTask(
+                                dexEngine,
+                                config.getValue(ConfigKeys.TASK_PORTFOLIO_ANALYSIS_MAX_IN_FLIGHT_ANALYSES, int.class),
+                                Duration.ofMillis(config.getValue(
+                                        ConfigKeys.TASK_PORTFOLIO_ANALYSIS_MAX_ANALYSIS_AGE_MS,
+                                        long.class)))),
                 recurringTask(
                         "Project Maintenance",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_PROJECT_MAINTENANCE_CRON),

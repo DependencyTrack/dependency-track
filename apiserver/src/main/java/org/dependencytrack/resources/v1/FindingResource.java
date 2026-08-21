@@ -47,6 +47,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.dependencytrack.analysis.AnalyzeProjectWorkflow;
+import org.dependencytrack.analysis.ProjectLastAnalysisDao;
 import org.dependencytrack.auth.Permissions;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.dex.engine.api.DexEngine;
@@ -78,6 +79,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,9 +87,11 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_ANALYSIS_TRIGGER;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_PROJECT_UUID;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_TRIGGERED_BY;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger.ANALYSIS_TRIGGER_MANUAL;
 
@@ -303,13 +307,17 @@ public class FindingResource extends AbstractV1ApiResource {
     public Response analyzeProject(
             @Parameter(description = "The UUID of the project to analyze", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        useJdbiHandle(handle -> requireProjectAccess(handle, UUID.fromString(uuid)));
+        final var projectUuid = UUID.fromString(uuid);
+        useJdbiHandle(handle -> requireProjectAccess(handle, projectUuid));
 
         final UUID runId = dexEngine.createRun(
                 new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
-                        .withWorkflowInstanceId("analyze-project-manual:" + uuid)
-                        .withConcurrencyKey("analyze-project:" + uuid)
+                        .withWorkflowInstanceId(AnalyzeProjectWorkflow.instanceIdForManual(projectUuid))
+                        .withConcurrencyKey(AnalyzeProjectWorkflow.concurrencyKeyForProject(projectUuid))
                         .withLabels(Map.ofEntries(
+                                Map.entry(
+                                        WF_LABEL_ANALYSIS_TRIGGER,
+                                        AnalyzeProjectWorkflow.triggerLabelValue(ANALYSIS_TRIGGER_MANUAL)),
                                 Map.entry(WF_LABEL_PROJECT_UUID, uuid),
                                 Map.entry(WF_LABEL_TRIGGERED_BY, getPrincipal().getName())))
                         .withPriority(75)
@@ -321,6 +329,10 @@ public class FindingResource extends AbstractV1ApiResource {
         if (runId == null) {
             return Response.status(Response.Status.CONFLICT).build();
         }
+
+        useJdbiTransaction(handle -> handle
+                .attach(ProjectLastAnalysisDao.class)
+                .recordAttempt(projectUuid, Instant.now()));
 
         dexEngine.createRun(
                 new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class)

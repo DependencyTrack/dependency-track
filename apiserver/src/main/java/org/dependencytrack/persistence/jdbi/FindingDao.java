@@ -312,7 +312,8 @@ public interface FindingDao extends PaginationSupport {
     /// * The `FROM` / `WHERE` clauses **must** stay in sync with {@link #selectFindingsByProject},
     ///   or the count will drift from the list.
     ///
-    /// @return The total count of findings for the project, capped at `threshold + 1`, or exact when `threshold` is `null`.
+    /// @return The total count of findings for the project, capped at `threshold + 1`,
+    ///         or exact when `threshold` is `null`.
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="threshold" type="boolean" -->
             <#-- @ftlvariable name="epssFrom" type="boolean" -->
@@ -492,7 +493,8 @@ public interface FindingDao extends PaginationSupport {
     /// Queries all findings across the entire portfolio.
     ///
     /// The query is split into:
-    /// * an inner `page` CTE that resolves only the row identity, plus the columns needed for filtering and ordering
+    /// * an inner `page` CTE that resolves only the row identity, plus the columns needed
+    ///   for filtering and ordering
     /// * an outer `SELECT` that enriches just the paginated rows with the expensive columns (e.g. aliases, EPSS)
     ///
     /// This keeps `COUNT(*) OVER()` and all enrichment off the full, pre-pagination row set.

@@ -19,7 +19,13 @@ If Maven needs to be invoked directly, only do so from the repository root.
 * Format (Java): `make format-java`
 * Lint (OpenAPI): `make lint-openapi`
 * Lint (Protobuf): `make lint-proto`
+* Format (Protobuf): `make format-proto`
 * Lint (Flyway migrations): `make lint-migrations`
+
+> [!IMPORTANT]
+> Run `make format-java` before considering a change done, plus `make format-proto` when `.proto` files changed.
+> `make build`, `make test`, and `make test-single` all skip the Java formatting check, and no build target runs
+> `buf`, so a green build is not evidence that formatting is correct. CI fails on violations.
 
 > [!NOTE]
 > When running Maven via `make … AGENT=1`, Maven is invoked in quiet mode (`-q`), so successful test runs may produce little or no output.

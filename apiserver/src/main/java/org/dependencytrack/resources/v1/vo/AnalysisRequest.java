@@ -66,7 +66,9 @@ public class AnalysisRequest {
 
     private final AnalysisResponse analysisResponse;
 
-    private final Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
+    // Optional. If not specified, we do not want to set value to false,
+    // thus using Boolean object rather than primitive.
+    private final Boolean suppressed;
 
     @JsonCreator
     public AnalysisRequest(@JsonProperty(value = "project") String project,

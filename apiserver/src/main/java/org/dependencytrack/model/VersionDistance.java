@@ -78,9 +78,14 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
     // Semver-like version:any numbers parts without characters appended, with optial leading v.
     // Optionally appended with label and/or build metadata
     protected static final Pattern VERSION_PATTERN = Pattern.compile(
-            "^(?:(?<" + GROUP_EPOCH + ">.*):)?" + // Optional epoch part: number before the first : sign. Match any characters here so we can fail on incorrect values
-                    "v?(?<" + GROUP_MAJOR + ">\\d+[a-z]*)?(?:\\.(?<" + GROUP_MINOR + ">\\d+[a-z]*))?(?:\\.(?<" + GROUP_PATCH + ">\\d+[a-z]*))?" + // version part, at least major version (numeric), optinali minor (numeric) or patch (numeric) version. Ignore the rest
-                    ".*$", // build numbers, labels and build metadata
+            // Optional epoch part: number before the first : sign.
+            // Match any characters here so we can fail on incorrect values.
+            "^(?:(?<" + GROUP_EPOCH + ">.*):)?"
+                    // Version part: at least major version (numeric), optionally minor (numeric)
+                    // or patch (numeric) version. Ignore the rest.
+                    + "v?(?<" + GROUP_MAJOR + ">\\d+[a-z]*)?(?:\\.(?<" + GROUP_MINOR + ">\\d+[a-z]*))?(?:\\.(?<" + GROUP_PATCH + ">\\d+[a-z]*))?"
+                    // Build numbers, labels and build metadata.
+                    + ".*$",
             Pattern.CASE_INSENSITIVE
     );
 

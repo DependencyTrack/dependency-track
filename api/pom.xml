@@ -32,8 +32,6 @@
 
     <properties>
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
-        <spotless.check.skip>true</spotless.check.skip>
-        <spotless.apply.skip>true</spotless.apply.skip>
     </properties>
 
     <dependencies>

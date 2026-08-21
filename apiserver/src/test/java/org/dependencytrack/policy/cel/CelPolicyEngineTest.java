@@ -116,7 +116,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         toolComponent.setVersion("toolComponentVersion");
         toolComponent.setClassifier(Classifier.APPLICATION);
         toolComponent.setCpe("toolComponentCpe");
-        toolComponent.setPurl("pkg:maven/toolComponentGroup/toolComponentName@toolComponentVersion"); // NB: Must be valid PURL, otherwise it's being JSON serialized as null
+        // NB: Must be valid PURL, otherwise it's being JSON serialized as null
+        toolComponent.setPurl("pkg:maven/toolComponentGroup/toolComponentName@toolComponentVersion");
         toolComponent.setSwidTagId("toolComponentSwidTagId");
         toolComponent.setInternal(true); // NB: Currently ignored for tool components.
         toolComponent.setMd5("toolComponentMd5");

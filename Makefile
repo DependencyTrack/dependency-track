@@ -16,6 +16,7 @@
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 
 BASE_REF ?= origin/main
+BUF_FORMAT_FLAGS := --exclude-path support/cyclonedx-proto/src/main/proto/org/cyclonedx/v1_7/cyclonedx.proto
 MIGRATION_DIR := migration/src/main/resources/org/dependencytrack/migration
 DEX_MIGRATION_DIR := dex/engine-migration/src/main/resources/org/dependencytrack/dex/engine/migration
 SQUAWK_IMAGE := ghcr.io/sbdchd/squawk:2.58.0
@@ -126,7 +127,12 @@ lint-openapi:
 
 lint-proto:
 	buf lint
+	buf format --diff --exit-code $(BUF_FORMAT_FLAGS)
 .PHONY: lint-proto
+
+format-proto:
+	buf format --write $(BUF_FORMAT_FLAGS)
+.PHONY: format-proto
 
 lint: lint-java lint-migrations lint-dex-migration lint-openapi lint-proto
 .PHONY: lint

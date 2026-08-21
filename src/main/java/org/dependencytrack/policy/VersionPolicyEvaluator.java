@@ -19,6 +19,7 @@
 package org.dependencytrack.policy;
 
 import alpine.common.logging.Logger;
+import com.github.packageurl.PackageURL;
 import io.github.nscuro.versatile.VersionFactory;
 import io.github.nscuro.versatile.spi.InvalidVersionException;
 import io.github.nscuro.versatile.spi.Version;
@@ -60,7 +61,8 @@ public class VersionPolicyEvaluator extends AbstractPolicyEvaluator {
         final String componentVersion = component.getVersion();
         final String scheme = Optional
                 .ofNullable(component.getPurl())
-                .flatMap(KnownVersioningSchemes::fromPurl)
+                .map(PackageURL::getType)
+                .flatMap(KnownVersioningSchemes::fromPurlType)
                 .orElse(SCHEME_GENERIC);
         final Version componentVersionObj;
 

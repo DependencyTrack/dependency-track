@@ -98,7 +98,7 @@ public class CycloneDXExporter {
         final Bom bom = new Bom();
         bom.setSerialNumber("urn:uuid:" + UUID.randomUUID());
         bom.setVersion(1);
-        bom.setMetadata(ModelConverter.createMetadata(project));
+        bom.setMetadata(ModelConverter.createMetadata(project, qm));
         bom.setComponents(cycloneComponents);
         bom.setServices(cycloneServices);
         bom.setVulnerabilities(ModelConverter.generateVulnerabilities(qm, variant, findings));

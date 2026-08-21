@@ -1437,6 +1437,30 @@ class ImportBomActivityTest extends PersistenceCapableTest {
     }
 
     @Test
+    void informIssue3935ManufacturerTest() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var bomFileMetadata = storeBomFile("bom-issue3935-manufacturer.json");
+        final var bomUploadToken = UUID.randomUUID();
+        activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
+        assertBomProcessedNotification();
+        qm.getPersistenceManager().refresh(project);
+
+        assertThat(project.getMetadata()).isNotNull();
+        assertThat(project.getMetadata().getManufacturer()).satisfies(manufacturer -> {
+            assertThat(manufacturer.getName()).isEqualTo("Acme, Inc.");
+            assertThat(manufacturer.getUrls()).containsOnly("https://acme.example.com");
+            assertThat(manufacturer.getContacts()).satisfiesExactly(contact -> {
+                assertThat(contact.getName()).isEqualTo("Acme BOM Team");
+                assertThat(contact.getEmail()).isEqualTo("bom-team@acme.example.com");
+            });
+        });
+    }
+
+    @Test
     void informIssue4455Test() throws Exception {
         final var project = new Project();
         project.setName("acme-app");

@@ -113,6 +113,8 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_MODE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_EXCLUSIVE;
 import static org.dependencytrack.model.ConfigPropertyConstants.BOM_VALIDATION_TAGS_INCLUSIVE;
+import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_MANUFACTURER_NAME;
+import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_MANUFACTURER_URL;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_VALIDATION_FAILED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
@@ -518,6 +520,117 @@ class BomResourceTest extends ResourceTest {
         assertThat(componentWithoutVuln.getDirectDependencies()).isNotNull();
         assertThat(componentWithVuln.getDirectDependencies()).isNotNull();
         assertThat(componentWithVulnAndAnalysis.getDirectDependencies()).isNotNull();
+    }
+
+    @Test
+    void exportProjectAsCycloneDx16ManufacturerFromProjectMetadataTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        // A global default is configured, but the project-specific manufacturer
+        // captured from a previously imported BOM must take precedence over it.
+        qm.createConfigProperty(
+                GENERAL_MANUFACTURER_NAME.getGroupName(), GENERAL_MANUFACTURER_NAME.getPropertyName(),
+                "Global Corp", GENERAL_MANUFACTURER_NAME.getPropertyType(), GENERAL_MANUFACTURER_NAME.getDescription());
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var manufacturer = new OrganizationalEntity();
+        manufacturer.setName("Project-Specific Manufacturer");
+        final var projectMetadata = new ProjectMetadata();
+        projectMetadata.setProject(project);
+        projectMetadata.setManufacturer(manufacturer);
+        qm.persist(projectMetadata);
+
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .queryParam("version", "1.6")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatJson(jsonResponse).node("metadata.manufacturer.name").isEqualTo("Project-Specific Manufacturer");
+    }
+
+    @Test
+    void exportProjectAsCycloneDx16ManufacturerFromGlobalConfigTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        qm.createConfigProperty(
+                GENERAL_MANUFACTURER_NAME.getGroupName(), GENERAL_MANUFACTURER_NAME.getPropertyName(),
+                "Global Corp", GENERAL_MANUFACTURER_NAME.getPropertyType(), GENERAL_MANUFACTURER_NAME.getDescription());
+        qm.createConfigProperty(
+                GENERAL_MANUFACTURER_URL.getGroupName(), GENERAL_MANUFACTURER_URL.getPropertyName(),
+                "https://global.example.com", GENERAL_MANUFACTURER_URL.getPropertyType(), GENERAL_MANUFACTURER_URL.getDescription());
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .queryParam("version", "1.6")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatJson(jsonResponse).node("metadata.manufacturer.name").isEqualTo("Global Corp");
+        assertThatJson(jsonResponse).node("metadata.manufacturer.url").isArray().containsExactly("https://global.example.com");
+    }
+
+    @Test
+    void exportProjectAsCycloneDx15OmitsManufacturerTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        qm.createConfigProperty(
+                GENERAL_MANUFACTURER_NAME.getGroupName(), GENERAL_MANUFACTURER_NAME.getPropertyName(),
+                "Global Corp", GENERAL_MANUFACTURER_NAME.getPropertyType(), GENERAL_MANUFACTURER_NAME.getDescription());
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        // metadata.manufacturer was introduced in CycloneDX 1.6, so it must not
+        // appear in exports using the default (1.5) or any earlier format.
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatJson(jsonResponse).node("specVersion").isEqualTo("\"1.5\"");
+        assertThatJson(jsonResponse).node("metadata.manufacturer").isAbsent();
+    }
+
+    @Test
+    void exportProjectAsCycloneDx16ManufacturerAbsentTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final Response response = jersey.target(V1_BOM + "/cyclonedx/project/" + project.getUuid())
+                .queryParam("version", "1.6")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+
+        final String jsonResponse = getPlainTextBody(response);
+        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatJson(jsonResponse).node("metadata.manufacturer").isAbsent();
     }
 
     @Test

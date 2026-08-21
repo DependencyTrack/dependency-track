@@ -1,0 +1,27 @@
+{
+    "bomFormat": "CycloneDX",
+    "specVersion": "1.6",
+    "serialNumber": "urn:uuid:9b6c1c2e-9f2b-4b8a-8c9b-1e6a2f9c3d4e",
+    "version": 1,
+    "metadata": {
+        "timestamp": "2023-12-13T13:21:58+01:00",
+        "component": {
+            "type": "application",
+            "name": "acme-app",
+            "version": "1.0.0"
+        },
+        "manufacturer": {
+            "name": "Acme, Inc.",
+            "url": [
+                "https://acme.example.com"
+            ],
+            "contact": [
+                {
+                    "name": "Acme BOM Team",
+                    "email": "bom-team@acme.example.com"
+                }
+            ]
+        }
+    },
+    "components": []
+}

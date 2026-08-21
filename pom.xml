@@ -125,9 +125,12 @@
         <lib.archunit.version>1.5.0</lib.archunit.version>
         <lib.assertj.version>3.27.7</lib.assertj.version>
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
+        <lib.byte-buddy.version>1.18.3</lib.byte-buddy.version>
         <lib.caffeine.version>3.2.4</lib.caffeine.version>
         <lib.cel-java.version>0.13.1</lib.cel-java.version>
+        <lib.commons-codec.version>1.22.1</lib.commons-codec.version>
         <lib.commons-lang3.version>3.20.0</lib.commons-lang3.version>
+        <lib.commons-logging.version>1.4.0</lib.commons-logging.version>
         <lib.cpe-parser.version>3.0.1</lib.cpe-parser.version>
         <lib.cyclonedx-java.version>13.1.0</lib.cyclonedx-java.version>
         <lib.datanucleus-api-jdo.version>6.0.5</lib.datanucleus-api-jdo.version>
@@ -138,18 +141,24 @@
         <lib.errorprone.version>2.50.0</lib.errorprone.version>
         <lib.flyway.version>13.2.0</lib.flyway.version>
         <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
+        <lib.google-http-client.version>2.2.0</lib.google-http-client.version>
         <lib.greenmail.version>2.1.12</lib.greenmail.version>
+        <lib.guava.version>33.6.0-jre</lib.guava.version>
+        <lib.hamcrest.version>3.0</lib.hamcrest.version>
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
         <lib.httpclient5.version>5.6.4</lib.httpclient5.version>
+        <lib.jakarta-activation.version>2.1.4</lib.jakarta-activation.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
+        <lib.jakarta-mail.version>2.1.5</lib.jakarta-mail.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
         <lib.jackson2.version>2.22.1</lib.jackson2.version>
         <lib.jackson3.version>3.2.1</lib.jackson3.version>
+        <lib.jboss-logging.version>3.6.3.Final</lib.jboss-logging.version>
         <lib.jdbi.version>3.54.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
         <lib.jetty.version>12.1.12</lib.jetty.version>
         <lib.jimfs.version>1.3.1</lib.jimfs.version>
-        <lib.json-schema-validator.version>2.0.3</lib.json-schema-validator.version>
+        <lib.json-schema-validator.version>2.0.4</lib.json-schema-validator.version>
         <lib.json-unit.version>6.2.0</lib.json-unit.version>
         <lib.jspecify.version>1.0.1</lib.jspecify.version>
         <lib.junit-jupiter.version>6.1.3</lib.junit-jupiter.version>
@@ -169,7 +178,7 @@
         <lib.pebble.version>4.1.2</lib.pebble.version>
         <lib.postgresql.version>42.7.13</lib.postgresql.version>
         <lib.prometheus.version>1.8.0</lib.prometheus.version>
-        <lib.protobuf-java.version>4.35.1</lib.protobuf-java.version>
+        <lib.protobuf-java.version>4.36.0</lib.protobuf-java.version>
         <lib.resilience4j.version>2.4.0</lib.resilience4j.version>
         <lib.s3mock.version>5.1.0</lib.s3mock.version>
         <lib.slf4j.version>2.0.18</lib.slf4j.version>
@@ -223,6 +232,17 @@
             </dependency>
 
             <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${lib.byte-buddy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>${lib.byte-buddy.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>
                 <version>${lib.caffeine.version}</version>
@@ -239,10 +259,23 @@
                 <artifactId>cel</artifactId>
                 <version>${lib.cel-java.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${lib.commons-codec.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${lib.commons-lang3.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>${lib.commons-logging.version}</version>
             </dependency>
 
             <dependency>
@@ -295,9 +328,38 @@
             </dependency>
 
             <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>${lib.errorprone.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.http-client</groupId>
+                <artifactId>google-http-client</artifactId>
+                <version>${lib.google-http-client.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.icegreen</groupId>
                 <artifactId>greenmail-junit5</artifactId>
                 <version>${lib.greenmail.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${lib.guava.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest</artifactId>
+                <version>${lib.hamcrest.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-core</artifactId>
+                <version>${lib.hamcrest.version}</version>
             </dependency>
 
             <dependency>
@@ -312,6 +374,16 @@
                 <version>${lib.httpclient5.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>jakarta.activation</groupId>
+                <artifactId>jakarta.activation-api</artifactId>
+                <version>${lib.jakarta-activation.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.mail</groupId>
+                <artifactId>jakarta.mail-api</artifactId>
+                <version>${lib.jakarta-mail.version}</version>
+            </dependency>
             <dependency>
                 <groupId>jakarta.platform</groupId>
                 <artifactId>jakarta.jakartaee-bom</artifactId>
@@ -339,6 +411,12 @@
                 <version>${lib.jackson3.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging</artifactId>
+                <version>${lib.jboss-logging.version}</version>
             </dependency>
 
             <dependency>
@@ -629,6 +707,53 @@
                     <version>3.6.1</version>
                 </plugin>
 
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.5.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>3.11.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.1.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>3.6.3</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>3.1.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.5.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.5.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.22.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>3.9.0</version>
+                </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -792,9 +917,36 @@
 
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <banDuplicatePomDependencyVersions/>
+                                <reactorModuleConvergence/>
+                                <requireJavaVersion>
+                                    <version>[25,)</version>
+                                </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>[3.9,)</version>
+                                </requireMavenVersion>
+                                <requireNoRepositories/>
+                                <requirePluginVersions/>
+                                <requireUpperBoundDeps/>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.9.0</version>
                 <configuration>
                     <java>
                         <licenseHeader>
@@ -839,6 +991,7 @@
             </activation>
             <properties>
                 <spotless.check.skip>true</spotless.check.skip>
+                <enforcer.skip>true</enforcer.skip>
                 <jacoco.skip>true</jacoco.skip>
                 <maven.test.skip>true</maven.test.skip>
             </properties>

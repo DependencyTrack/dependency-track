@@ -40,11 +40,9 @@ import static javax.jdo.ObjectState.PERSISTENT_NONTRANSACTIONAL_DIRTY;
 
 public final class PersistenceUtil {
 
-    private PersistenceUtil() {
-    }
+    private PersistenceUtil() {}
 
-    public record Diff(Object before, Object after) {
-    }
+    public record Diff(Object before, Object after) {}
 
     public static final class Differ<T> {
 
@@ -58,7 +56,8 @@ public final class PersistenceUtil {
             this.diffs = new HashMap<>();
         }
 
-        public <V> boolean applyIfChanged(final String fieldName, final Function<T, V> getter, final Consumer<V> setter) {
+        public <V> boolean applyIfChanged(
+                final String fieldName, final Function<T, V> getter, final Consumer<V> setter) {
             final V existingValue = getter.apply(existingObject);
             final V newValue = getter.apply(newObject);
 
@@ -74,11 +73,10 @@ public final class PersistenceUtil {
         public Map<String, Diff> getDiffs() {
             return unmodifiableMap(diffs);
         }
-
     }
 
-    public static <T, V> boolean applyIfChanged(final T existingObject, final T newObject,
-                                                final Function<T, V> getter, final Consumer<V> setter) {
+    public static <T, V> boolean applyIfChanged(
+            final T existingObject, final T newObject, final Function<T, V> getter, final Consumer<V> setter) {
         final V existingValue = getter.apply(existingObject);
         final V newValue = getter.apply(newObject);
 
@@ -172,10 +170,6 @@ public final class PersistenceUtil {
     }
 
     public static String escapeLikePattern(String input) {
-        return input
-                .replace("!", "!!")
-                .replace("%", "!%")
-                .replace("_", "!_");
+        return input.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
-
 }

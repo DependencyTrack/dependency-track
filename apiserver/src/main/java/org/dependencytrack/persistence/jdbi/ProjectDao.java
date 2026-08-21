@@ -288,17 +288,19 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             </#if>
             ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "\"PROJECT\".\"ID\""), by = {
-            @AllowApiOrdering.Column(name = "group"),
-            @AllowApiOrdering.Column(name = "name"),
-            @AllowApiOrdering.Column(name = "version"),
-            @AllowApiOrdering.Column(name = "classifier"),
-            @AllowApiOrdering.Column(name = "inactiveSince"),
-            @AllowApiOrdering.Column(name = "isLatest"),
-            @AllowApiOrdering.Column(name = "lastBomImport"),
-            @AllowApiOrdering.Column(name = "lastBomImportFormat"),
-            @AllowApiOrdering.Column(name = "lastRiskScore")
-    })
+    @AllowApiOrdering(
+            alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "\"PROJECT\".\"ID\""),
+            by = {
+                @AllowApiOrdering.Column(name = "group"),
+                @AllowApiOrdering.Column(name = "name"),
+                @AllowApiOrdering.Column(name = "version"),
+                @AllowApiOrdering.Column(name = "classifier"),
+                @AllowApiOrdering.Column(name = "inactiveSince"),
+                @AllowApiOrdering.Column(name = "isLatest"),
+                @AllowApiOrdering.Column(name = "lastBomImport"),
+                @AllowApiOrdering.Column(name = "lastBomImportFormat"),
+                @AllowApiOrdering.Column(name = "lastRiskScore")
+            })
     @AllowUnusedBindings
     List<ConciseProjectListRow> queryPageConcise(
             @Define ArrayList<String> whereConditions,
@@ -308,8 +310,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Define String leafMetricsSubquery);
 
     default Page<ConciseProjectListRow> getPageConcise(ListProjectsConciseQuery query) {
-        if (query.parentUuidFilter() != null
-                && !Boolean.TRUE.equals(isAccessible(query.parentUuidFilter()))) {
+        if (query.parentUuidFilter() != null && !Boolean.TRUE.equals(isAccessible(query.parentUuidFilter()))) {
             return Page.empty();
         }
 
@@ -427,8 +428,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Nullable String lastBomImportFormat,
             @Nullable Double lastRiskScore,
             boolean hasChildren,
-            @Nullable @Json ConciseProjectMetricsRow metrics) {
-    }
+            @Nullable @Json ConciseProjectMetricsRow metrics) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     record ConciseProjectMetricsRow(
@@ -447,8 +447,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             int policyViolationsWarn,
             double inheritedRiskScore,
             int unassigned,
-            int vulnerabilities) {
-    }
+            int vulnerabilities) {}
 
     record ListProjectsRow(
             UUID uuid,
@@ -480,8 +479,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             @Nullable UUID parentUuid,
             @Nullable String parentName,
             @Nullable String parentVersion,
-            boolean hasChildren) {
-    }
+            boolean hasChildren) {}
 
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="includeMetrics" type="boolean" -->
@@ -574,17 +572,19 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             </#if>
             ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "\"PROJECT\".\"ID\""), by = {
-            @AllowApiOrdering.Column(name = "group"),
-            @AllowApiOrdering.Column(name = "name"),
-            @AllowApiOrdering.Column(name = "version"),
-            @AllowApiOrdering.Column(name = "classifier"),
-            @AllowApiOrdering.Column(name = "inactiveSince"),
-            @AllowApiOrdering.Column(name = "isLatest"),
-            @AllowApiOrdering.Column(name = "lastBomImport"),
-            @AllowApiOrdering.Column(name = "lastBomImportFormat"),
-            @AllowApiOrdering.Column(name = "lastInheritedRiskScore")
-    })
+    @AllowApiOrdering(
+            alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "\"PROJECT\".\"ID\""),
+            by = {
+                @AllowApiOrdering.Column(name = "group"),
+                @AllowApiOrdering.Column(name = "name"),
+                @AllowApiOrdering.Column(name = "version"),
+                @AllowApiOrdering.Column(name = "classifier"),
+                @AllowApiOrdering.Column(name = "inactiveSince"),
+                @AllowApiOrdering.Column(name = "isLatest"),
+                @AllowApiOrdering.Column(name = "lastBomImport"),
+                @AllowApiOrdering.Column(name = "lastBomImportFormat"),
+                @AllowApiOrdering.Column(name = "lastInheritedRiskScore")
+            })
     @RegisterConstructorMapper(ListProjectsRow.class)
     @AllowUnusedBindings
     List<ListProjectsRow> getProjects(
@@ -706,9 +706,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                     LEAF_METRICS_SUBQUERY);
 
             return new Page<>(
-                    rows,
-                    /* nextPageToken */ null,
-                    new TotalCount(totalCount.value(), TotalCount.Type.EXACT));
+                    rows, /* nextPageToken */ null, new TotalCount(totalCount.value(), TotalCount.Type.EXACT));
         });
     }
 
@@ -763,8 +761,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             UUID uuid,
             String name,
             @Nullable String version,
-            @Nullable UUID ancestorUuid) {
-    }
+            @Nullable UUID ancestorUuid) {}
 
     @SqlQuery("""
              WITH "CTE" AS (
@@ -780,13 +777,14 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
               RETURNING "NAME", "VERSION", "INACTIVE_SINCE", "UUID"
             """)
     @RegisterConstructorMapper(DeletedProject.class)
-    List<DeletedProject> deleteInactiveProjectsForRetentionDuration(@Bind final Instant retentionCutOff, @Bind final int batchSize);
+    List<DeletedProject> deleteInactiveProjectsForRetentionDuration(
+            @Bind final Instant retentionCutOff, @Bind final int batchSize);
 
-    record DeletedProject(@ColumnName("NAME") String name,
-                          @ColumnName("VERSION") String version,
-                          @ColumnName("INACTIVE_SINCE") Instant inactiveSince,
-                          @ColumnName("UUID") UUID uuid) {
-    }
+    record DeletedProject(
+            @ColumnName("NAME") String name,
+            @ColumnName("VERSION") String version,
+            @ColumnName("INACTIVE_SINCE") Instant inactiveSince,
+            @ColumnName("UUID") UUID uuid) {}
 
     @SqlQuery("""
             WITH cte_candidates AS (
@@ -811,8 +809,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
     @RegisterConstructorMapper(DeletedProject.class)
     List<DeletedProject> deleteExcessProjectVersions(@Bind int versionCountThreshold, @Bind int batchSize);
 
-    record ProjectInfoRow(long id, boolean isCollection) {
-    }
+    record ProjectInfoRow(long id, boolean isCollection) {}
 
     @SqlQuery("""
             SELECT "ID"
@@ -872,17 +869,16 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                 """);
 
         try {
-            return query
-                    .bindMethods(command)
-                    .mapTo(UUID.class)
-                    .one();
+            return query.bindMethods(command).mapTo(UUID.class).one();
         } catch (UnableToExecuteStatementException e) {
             if (e.getCause() instanceof final PSQLException pe
                     && pe.getServerErrorMessage() != null
                     && pe.getServerErrorMessage().getMessage() != null) {
                 if (pe.getServerErrorMessage().getMessage().startsWith("Source project does not exist")) {
                     throw new NoSuchElementException(pe.getServerErrorMessage().getMessage(), pe);
-                } else if (pe.getServerErrorMessage().getMessage().startsWith("Target project version already exists")) {
+                } else if (pe.getServerErrorMessage()
+                        .getMessage()
+                        .startsWith("Target project version already exists")) {
                     throw new AlreadyExistsException(pe.getServerErrorMessage().getMessage(), pe);
                 }
             }
@@ -900,5 +896,4 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
              WHERE "UUID" = :uuid
             """)
     void updateLastVulnAnalysis(@Bind UUID uuid);
-
 }

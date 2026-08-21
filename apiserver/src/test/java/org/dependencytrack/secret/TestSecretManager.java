@@ -51,18 +51,12 @@ public final class TestSecretManager implements SecretManager {
     }
 
     @Override
-    public void createSecret(
-            String name,
-            @Nullable String description,
-            String value) {
+    public void createSecret(String name, @Nullable String description, String value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean updateSecret(
-            String name,
-            @Nullable String description,
-            String value) {
+    public boolean updateSecret(String name, @Nullable String description, String value) {
         throw new UnsupportedOperationException();
     }
 
@@ -88,5 +82,4 @@ public final class TestSecretManager implements SecretManager {
     public Page<SecretMetadata> listSecretMetadata(ListSecretsRequest request) {
         throw new UnsupportedOperationException();
     }
-
 }

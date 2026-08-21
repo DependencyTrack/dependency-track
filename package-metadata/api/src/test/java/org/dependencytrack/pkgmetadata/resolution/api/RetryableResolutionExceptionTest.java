@@ -33,8 +33,7 @@ class RetryableResolutionExceptionTest {
     @SuppressWarnings("ThrowableNotThrown")
     void shouldRejectNonPositiveRetryAfter(long seconds) {
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> new RetryableResolutionException(
-                        null, null, Duration.of(seconds, ChronoUnit.SECONDS)));
+                .isThrownBy(
+                        () -> new RetryableResolutionException(null, null, Duration.of(seconds, ChronoUnit.SECONDS)));
     }
-
 }

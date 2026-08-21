@@ -39,7 +39,6 @@ sealed interface Coordinate {
             requireNonNull(vendor, "vendor must not be null");
             requireNonNull(product, "product must not be null");
         }
-
     }
 
     record PurlCoordinate(String type, @Nullable String namespace, String name) implements Coordinate {
@@ -48,7 +47,6 @@ sealed interface Coordinate {
             requireNonNull(type, "type must not be null");
             requireNonNull(name, "name must not be null");
         }
-
     }
 
     static Set<Coordinate> of(CandidateComponent component) {
@@ -64,13 +62,9 @@ sealed interface Coordinate {
 
         final PackageURL purl = component.parsedPurl();
         if (purl != null) {
-            coordinates.add(new Coordinate.PurlCoordinate(
-                    purl.getType(),
-                    purl.getNamespace(),
-                    purl.getName()));
+            coordinates.add(new Coordinate.PurlCoordinate(purl.getType(), purl.getNamespace(), purl.getName()));
         }
 
         return coordinates;
     }
-
 }

@@ -64,5 +64,4 @@ public final class MemoryConfigSource implements ConfigSource {
     public String getName() {
         return MemoryConfigSource.class.getSimpleName();
     }
-
 }

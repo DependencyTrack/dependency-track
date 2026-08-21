@@ -74,9 +74,9 @@ public final class ImportVexActivity implements Activity<ImportVexArg, Void> {
         }
 
         try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, arg.getProjectUuid());
-             var _ = MDC.putCloseable(MDC_PROJECT_NAME, arg.getProjectName());
-             var _ = MDC.putCloseable(MDC_PROJECT_VERSION, arg.getProjectVersion());
-             var _ = MDC.putCloseable(MDC_VEX_UPLOAD_TOKEN, arg.getVexUploadToken())) {
+                var _ = MDC.putCloseable(MDC_PROJECT_NAME, arg.getProjectName());
+                var _ = MDC.putCloseable(MDC_PROJECT_VERSION, arg.getProjectVersion());
+                var _ = MDC.putCloseable(MDC_VEX_UPLOAD_TOKEN, arg.getVexUploadToken())) {
             final byte[] vexBytes;
             try (final InputStream vexStream = fileStorage.get(arg.getVexFileMetadata())) {
                 vexBytes = vexStream.readAllBytes();
@@ -94,8 +94,7 @@ public final class ImportVexActivity implements Activity<ImportVexArg, Void> {
         try (final QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             if (project == null) {
-                throw new TerminalApplicationFailureException(
-                        "Project %s does not exist".formatted(projectUuid));
+                throw new TerminalApplicationFailureException("Project %s does not exist".formatted(projectUuid));
             }
 
             LOGGER.info("Processing CycloneDX VEX uploaded.");
@@ -121,17 +120,12 @@ public final class ImportVexActivity implements Activity<ImportVexArg, Void> {
 
             final var notificationEmitter = new JdoNotificationEmitter(qm);
 
-            notificationEmitter.emit(
-                    createVexConsumedNotification(
-                            NotificationModelConverter.convert(project),
-                            NotificationModelConverter.convert(vex)));
+            notificationEmitter.emit(createVexConsumedNotification(
+                    NotificationModelConverter.convert(project), NotificationModelConverter.convert(vex)));
             qm.persist(vex);
 
-            notificationEmitter.emit(
-                    createVexProcessedNotification(
-                            NotificationModelConverter.convert(project),
-                            NotificationModelConverter.convert(vex)));
+            notificationEmitter.emit(createVexProcessedNotification(
+                    NotificationModelConverter.convert(project), NotificationModelConverter.convert(vex)));
         }
     }
-
 }

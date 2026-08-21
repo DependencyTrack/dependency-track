@@ -98,10 +98,7 @@ public abstract class AbstractExtensionFactoryTest<T extends ExtensionPoint, U e
             assertThat(defaultConfig).isNotNull();
 
             assertThatNoException()
-                    .isThrownBy(() -> RuntimeConfigMapper.getInstance().validate(
-                            defaultConfig, runtimeConfigSpec));
+                    .isThrownBy(() -> RuntimeConfigMapper.getInstance().validate(defaultConfig, runtimeConfigSpec));
         }
-
     }
-
 }

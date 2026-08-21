@@ -46,5 +46,4 @@ public record WorkflowRun(
         @Nullable Payload argument,
         @Nullable Payload result,
         @Nullable Failure failure,
-        List<WorkflowEvent> eventHistory) {
-}
+        List<WorkflowEvent> eventHistory) {}

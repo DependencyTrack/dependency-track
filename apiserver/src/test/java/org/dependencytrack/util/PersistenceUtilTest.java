@@ -54,8 +54,7 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
             project.setName("foo");
             pm.makePersistent(project);
 
-            assertThatNoException()
-                    .isThrownBy(() -> assertPersistent(project, null));
+            assertThatNoException().isThrownBy(() -> assertPersistent(project, null));
         } finally {
             trx.rollback();
         }
@@ -67,15 +66,13 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
         project.setName("foo");
         pm.makePersistent(project);
 
-        assertThatNoException()
-                .isThrownBy(() -> assertPersistent(project, null));
+        assertThatNoException().isThrownBy(() -> assertPersistent(project, null));
     }
 
     @Test
     public void testAssertPersistentWhenTransient() {
         final var project = new Project();
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> assertPersistent(project, null));
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> assertPersistent(project, null));
     }
 
     @Test
@@ -98,8 +95,7 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
             project.setName("foo");
             pm.makePersistent(project);
 
-            assertThatExceptionOfType(IllegalStateException.class)
-                    .isThrownBy(() -> assertNonPersistent(project, null));
+            assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> assertNonPersistent(project, null));
         } finally {
             trx.rollback();
         }
@@ -111,15 +107,13 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
         project.setName("foo");
         pm.makePersistent(project);
 
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> assertNonPersistent(project, null));
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> assertNonPersistent(project, null));
     }
 
     @Test
     public void testAssertNonPersistentWhenTransient() {
         final var project = new Project();
-        assertThatNoException()
-                .isThrownBy(() -> assertNonPersistent(project, null));
+        assertThatNoException().isThrownBy(() -> assertNonPersistent(project, null));
     }
 
     @Test
@@ -128,8 +122,7 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
         project.setName("foo");
         pm.makePersistent(project);
 
-        assertThatNoException()
-                .isThrownBy(() -> assertNonPersistent(pm.detachCopy(project), null));
+        assertThatNoException().isThrownBy(() -> assertNonPersistent(pm.detachCopy(project), null));
     }
 
     @Test
@@ -145,14 +138,17 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
         projectB.setDescription("identicalDescription");
 
         final var differ = new Differ<>(projectA, projectB);
-        assertThat(differ.applyIfChanged("name", Project::getName, projectB::setName)).isTrue();
-        assertThat(differ.applyIfChanged("version", Project::getVersion, projectB::setVersion)).isTrue();
-        assertThat(differ.applyIfChanged("description", Project::getDescription, projectB::setDescription)).isFalse();
+        assertThat(differ.applyIfChanged("name", Project::getName, projectB::setName))
+                .isTrue();
+        assertThat(differ.applyIfChanged("version", Project::getVersion, projectB::setVersion))
+                .isTrue();
+        assertThat(differ.applyIfChanged("description", Project::getDescription, projectB::setDescription))
+                .isFalse();
 
-        assertThat(differ.getDiffs()).containsOnly(
-                Map.entry("name", new Diff("acme-app-a", "acme-app-b")),
-                Map.entry("version", new Diff("1.0.0", "2.0.0"))
-        );
+        assertThat(differ.getDiffs())
+                .containsOnly(
+                        Map.entry("name", new Diff("acme-app-a", "acme-app-b")),
+                        Map.entry("version", new Diff("1.0.0", "2.0.0")));
     }
 
     @Test
@@ -168,11 +164,13 @@ public class PersistenceUtilTest extends PersistenceCapableTest {
         projectB.setDescription("identicalDescription");
 
         final var differ = new Differ<>(projectA, projectB);
-        assertThat(differ.applyIfChanged("name", Project::getName, projectB::setName)).isFalse();
-        assertThat(differ.applyIfChanged("version", Project::getVersion, projectB::setVersion)).isFalse();
-        assertThat(differ.applyIfChanged("description", Project::getDescription, projectB::setDescription)).isFalse();
+        assertThat(differ.applyIfChanged("name", Project::getName, projectB::setName))
+                .isFalse();
+        assertThat(differ.applyIfChanged("version", Project::getVersion, projectB::setVersion))
+                .isFalse();
+        assertThat(differ.applyIfChanged("description", Project::getDescription, projectB::setDescription))
+                .isFalse();
 
         assertThat(differ.getDiffs()).isEmpty();
     }
-
 }

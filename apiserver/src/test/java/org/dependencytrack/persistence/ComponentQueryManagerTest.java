@@ -65,14 +65,16 @@ public class ComponentQueryManagerTest extends PersistenceCapableTest {
         List<Component> components = qm.getComponentsByPurl("pkg:maven/foo/bar@1.2.3");
         assertThat(components).isNotNull();
         assertThat(components).hasSize(2);
-        assertThat(components).satisfiesExactlyInAnyOrder(component -> {
-                    assertThat(component.getMd5()).isEqualTo("098f6bcd4621d373cade4e832627b4f6");
-                    assertThat(component.getSha1()).isEqualTo("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3");
-                },
-                component -> {
-                    assertThat(component.getMd5()).isEqualTo("098f6bcd4621d373cade4e832627b4f6");
-                    assertThat(component.getSha1()).isEqualTo("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3");
-                });
+        assertThat(components)
+                .satisfiesExactlyInAnyOrder(
+                        component -> {
+                            assertThat(component.getMd5()).isEqualTo("098f6bcd4621d373cade4e832627b4f6");
+                            assertThat(component.getSha1()).isEqualTo("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3");
+                        },
+                        component -> {
+                            assertThat(component.getMd5()).isEqualTo("098f6bcd4621d373cade4e832627b4f6");
+                            assertThat(component.getSha1()).isEqualTo("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3");
+                        });
     }
 
     @Test
@@ -81,9 +83,8 @@ public class ComponentQueryManagerTest extends PersistenceCapableTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        useJdbiHandle(
-                handle -> new PackageMetadataResolutionDao(handle).upsertAll(
-                        Map.of("pkg:maven/com.acme/resolved@1.0.0", PackageMetadataResolutionStatus.RESOLVED)));
+        useJdbiHandle(handle -> new PackageMetadataResolutionDao(handle)
+                .upsertAll(Map.of("pkg:maven/com.acme/resolved@1.0.0", PackageMetadataResolutionStatus.RESOLVED)));
 
         final var componentResolved = new Component();
         componentResolved.setProject(project);
@@ -105,15 +106,16 @@ public class ComponentQueryManagerTest extends PersistenceCapableTest {
         componentNoPurl.setVersion("1.0.0");
         qm.createComponent(componentNoPurl, false);
 
-        assertThat(packageMetadataResolutionRows()).satisfiesExactly(
-                row -> {
-                    assertThat(row).containsEntry("purl", "pkg:maven/com.acme/malformed%ZZ@1.0.0");
-                    assertThat(row).containsEntry("status", "PENDING");
-                },
-                row -> {
-                    assertThat(row).containsEntry("purl", "pkg:maven/com.acme/resolved@1.0.0");
-                    assertThat(row).containsEntry("status", "RESOLVED");
-                });
+        assertThat(packageMetadataResolutionRows())
+                .satisfiesExactly(
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/com.acme/malformed%ZZ@1.0.0");
+                            assertThat(row).containsEntry("status", "PENDING");
+                        },
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/com.acme/resolved@1.0.0");
+                            assertThat(row).containsEntry("status", "RESOLVED");
+                        });
     }
 
     @Test
@@ -146,27 +148,24 @@ public class ComponentQueryManagerTest extends PersistenceCapableTest {
 
         qm.seedPackageMetadataResolution(project);
 
-        assertThat(packageMetadataResolutionRows()).satisfiesExactly(
-                row -> {
-                    assertThat(row).containsEntry("purl", "pkg:maven/com.acme/malformed%ZZ@1.0.0");
-                    assertThat(row).containsEntry("status", "PENDING");
-                },
-                row -> {
-                    assertThat(row).containsEntry("purl", "pkg:maven/com.acme/resolved@1.0.0");
-                    assertThat(row).containsEntry("status", "PENDING");
-                });
+        assertThat(packageMetadataResolutionRows())
+                .satisfiesExactly(
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/com.acme/malformed%ZZ@1.0.0");
+                            assertThat(row).containsEntry("status", "PENDING");
+                        },
+                        row -> {
+                            assertThat(row).containsEntry("purl", "pkg:maven/com.acme/resolved@1.0.0");
+                            assertThat(row).containsEntry("status", "PENDING");
+                        });
     }
 
     private static List<Map<String, Object>> packageMetadataResolutionRows() {
-        return withJdbiHandle(handle -> handle
-                .createQuery("""
+        return withJdbiHandle(handle -> handle.createQuery("""
                         SELECT "PURL"
                              , "STATUS"
                           FROM "PACKAGE_METADATA_RESOLUTION"
                          ORDER BY "PURL"
-                        """)
-                .mapToMap()
-                .list());
+                        """).mapToMap().list());
     }
-
 }

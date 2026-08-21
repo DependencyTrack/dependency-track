@@ -62,14 +62,12 @@ public final class WebexNotificationPublisherFactory implements NotificationPubl
 
     @Override
     public RuntimeConfigSpec ruleConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new HttpNotificationPublisherRuleConfigV1()
-                        .withDestinationUrl(URI.create("https://webex.example.com")));
+        return RuntimeConfigSpec.of(new HttpNotificationPublisherRuleConfigV1()
+                .withDestinationUrl(URI.create("https://webex.example.com")));
     }
 
     @Override
     public NotificationTemplate defaultTemplate() {
         return new NotificationTemplate(loadDefaultTemplate(extensionClass()), "application/json");
     }
-
 }

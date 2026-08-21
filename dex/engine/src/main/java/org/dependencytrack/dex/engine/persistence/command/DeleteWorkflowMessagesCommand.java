@@ -23,5 +23,5 @@ import org.jspecify.annotations.Nullable;
 import java.util.Collection;
 import java.util.UUID;
 
-public record DeleteWorkflowMessagesCommand(UUID workflowRunId, @Nullable Collection<Long> messageIds) {
-}
+public record DeleteWorkflowMessagesCommand(
+        UUID workflowRunId, @Nullable Collection<Long> messageIds) {}

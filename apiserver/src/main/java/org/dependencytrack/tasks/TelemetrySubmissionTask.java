@@ -96,7 +96,8 @@ public final class TelemetrySubmissionTask implements Runnable {
         return withJdbiHandle(handle -> {
             final var dao = handle.attach(ConfigPropertyDao.class);
 
-            if (!dao.getOptionalValue(TELEMETRY_SUBMISSION_ENABLED, Boolean.class).orElse(true)) {
+            if (!dao.getOptionalValue(TELEMETRY_SUBMISSION_ENABLED, Boolean.class)
+                    .orElse(true)) {
                 LOGGER.debug("Telemetry submission is disabled");
                 return null;
             }
@@ -124,8 +125,8 @@ public final class TelemetrySubmissionTask implements Runnable {
     }
 
     private static boolean isSubmissionDue(ConfigPropertyDao dao) {
-        final Optional<Long> lastSubmissionEpochSeconds = dao.getOptionalValue(
-                TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS, Long.class);
+        final Optional<Long> lastSubmissionEpochSeconds =
+                dao.getOptionalValue(TELEMETRY_LAST_SUBMISSION_EPOCH_SECONDS, Long.class);
         if (lastSubmissionEpochSeconds.isEmpty()) {
             return true;
         }
@@ -136,8 +137,7 @@ public final class TelemetrySubmissionTask implements Runnable {
 
     private TelemetryData collectTelemetryData(DatabaseMetaData dbMetaData) throws SQLException {
         final String systemId = ClusterInfo.getClusterId();
-        final String applicationVersion = config
-                .getOptionalValue("alpine.build-info.application.version", String.class)
+        final String applicationVersion = config.getOptionalValue("alpine.build-info.application.version", String.class)
                 .orElse("Unknown");
         final String dbType = dbMetaData.getDatabaseProductName();
         final String dbVersion = dbMetaData.getDatabaseProductVersion();
@@ -181,7 +181,5 @@ public final class TelemetrySubmissionTask implements Runnable {
             @JsonProperty("system_id") String systemId,
             @JsonProperty("dt_version") String applicationVersion,
             @JsonProperty("db_type") String databaseType,
-            @JsonProperty("db_version") String databaseVersion) {
-    }
-
+            @JsonProperty("db_version") String databaseVersion) {}
 }

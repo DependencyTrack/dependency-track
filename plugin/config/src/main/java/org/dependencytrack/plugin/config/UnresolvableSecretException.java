@@ -28,5 +28,4 @@ public class UnresolvableSecretException extends IllegalStateException {
     public UnresolvableSecretException(String secretName, String path) {
         super("Secret '%s' referenced at path '%s' does not exist".formatted(secretName, path));
     }
-
 }

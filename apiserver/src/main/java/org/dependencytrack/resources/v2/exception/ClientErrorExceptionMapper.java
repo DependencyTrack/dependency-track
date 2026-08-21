@@ -22,13 +22,15 @@ import org.dependencytrack.api.v2.model.ProblemDetails;
 
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.ext.Provider;
+
 import java.util.Map;
 
 /**
  * @since 5.0.0
  */
 @Provider
-public final class ClientErrorExceptionMapper extends ProblemDetailsExceptionMapper<ClientErrorException, ProblemDetails> {
+public final class ClientErrorExceptionMapper
+        extends ProblemDetailsExceptionMapper<ClientErrorException, ProblemDetails> {
 
     private static final Map<Integer, String> DETAIL_BY_STATUS = Map.ofEntries(
             Map.entry(401, "Not authorized to access the requested resource."),
@@ -41,10 +43,7 @@ public final class ClientErrorExceptionMapper extends ProblemDetailsExceptionMap
         return ProblemDetails.builder()
                 .status(exception.getResponse().getStatus())
                 .title(exception.getResponse().getStatusInfo().getReasonPhrase())
-                .detail(DETAIL_BY_STATUS.getOrDefault(
-                        exception.getResponse().getStatus(),
-                        exception.getMessage()))
+                .detail(DETAIL_BY_STATUS.getOrDefault(exception.getResponse().getStatus(), exception.getMessage()))
                 .build();
     }
-
 }

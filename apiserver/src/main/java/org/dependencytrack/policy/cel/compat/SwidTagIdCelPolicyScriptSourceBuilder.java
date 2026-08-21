@@ -38,5 +38,4 @@ public class SwidTagIdCelPolicyScriptSourceBuilder implements CelPolicyScriptSou
 
         return null;
     }
-
 }

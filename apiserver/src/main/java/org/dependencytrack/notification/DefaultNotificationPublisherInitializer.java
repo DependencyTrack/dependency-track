@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.notification;
 
-import jakarta.servlet.ServletContextEvent;
-import jakarta.servlet.ServletContextListener;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
@@ -28,6 +26,9 @@ import org.dependencytrack.plugin.runtime.PluginManager;
 import org.jdbi.v3.core.statement.PreparedBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +59,8 @@ public final class DefaultNotificationPublisherInitializer implements ServletCon
             return;
         }
 
-        final var publishers = new ArrayList<org.dependencytrack.model.NotificationPublisher>(extensionFactories.size());
+        final var publishers =
+                new ArrayList<org.dependencytrack.model.NotificationPublisher>(extensionFactories.size());
         for (final var extensionFactory : extensionFactories) {
             final var publisher = new org.dependencytrack.model.NotificationPublisher();
             publisher.setName(StringUtils.capitalize(extensionFactory.extensionName()));
@@ -112,14 +114,12 @@ public final class DefaultNotificationPublisherInitializer implements ServletCon
                     """);
 
             for (final var publisher : publishers) {
-                preparedBatch
-                        .bindBean(publisher)
-                        .add();
+                preparedBatch.bindBean(publisher).add();
             }
 
-            final int publishersCreatedOrUpdated = Arrays.stream(preparedBatch.execute()).sum();
+            final int publishersCreatedOrUpdated =
+                    Arrays.stream(preparedBatch.execute()).sum();
             LOGGER.debug("Created or updated {} publishers", publishersCreatedOrUpdated);
         });
     }
-
 }

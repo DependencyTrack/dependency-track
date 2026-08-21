@@ -160,8 +160,7 @@ public class BadgerTest {
     }
 
     private static String strip(String svg) {
-        return svg
-                .trim()
+        return svg.trim()
                 .replaceAll(" {2}", "")
                 .replaceAll("\r\n", "\n")
                 .replaceAll(">\\s+<", "><")

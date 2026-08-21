@@ -27,20 +27,23 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class HexPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest<PackageMetadataResolver, HexPackageMetadataResolverFactory> {
+class HexPackageMetadataResolverFactoryTest
+        extends AbstractExtensionFactoryTest<PackageMetadataResolver, HexPackageMetadataResolverFactory> {
 
     protected HexPackageMetadataResolverFactoryTest() {
         super(HexPackageMetadataResolverFactory.class);
     }
 
     @ParameterizedTest
-    @CsvSource(nullValues = "", value = {
-            "pkg:hex/foo@1.0, pkg:hex/foo@1.0",
-            "pkg:hex/ns/foo@1.0, pkg:hex/ns/foo@1.0",
-            "pkg:npm/foo@1.0, ",
-            "pkg:hex/foo, ",
-            "pkg:hex/ns/foo@1.0?key=value#sub/path, pkg:hex/ns/foo@1.0",
-    })
+    @CsvSource(
+            nullValues = "",
+            value = {
+                "pkg:hex/foo@1.0, pkg:hex/foo@1.0",
+                "pkg:hex/ns/foo@1.0, pkg:hex/ns/foo@1.0",
+                "pkg:npm/foo@1.0, ",
+                "pkg:hex/foo, ",
+                "pkg:hex/ns/foo@1.0?key=value#sub/path, pkg:hex/ns/foo@1.0",
+            })
     void shouldNormalize(String input, String expected) throws Exception {
         assertThat(factory.normalize(new PackageURL(input)))
                 .isEqualTo(expected != null ? new PackageURL(expected) : null);
@@ -50,5 +53,4 @@ class HexPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest
     void shouldRequireRepository() {
         assertThat(factory.requiresRepository()).isTrue();
     }
-
 }

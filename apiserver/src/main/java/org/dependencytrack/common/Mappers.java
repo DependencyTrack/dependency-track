@@ -29,8 +29,7 @@ public final class Mappers {
 
     private static final ObjectMapper JSON_MAPPER = createJsonMapper();
 
-    private Mappers() {
-    }
+    private Mappers() {}
 
     public static ObjectMapper jsonMapper() {
         return JSON_MAPPER;
@@ -41,5 +40,4 @@ public final class Mappers {
                 .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
                 .registerModule(new Jdk8Module());
     }
-
 }

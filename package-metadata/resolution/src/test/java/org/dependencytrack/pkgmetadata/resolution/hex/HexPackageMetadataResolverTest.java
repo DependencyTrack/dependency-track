@@ -92,15 +92,14 @@ class HexPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.7.14");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-08-01T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-08-01T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-05-01T10:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-05-01T10:00:00Z"));
     }
 
     @Test
-    void shouldResolveLatestVersionWithoutArtifactMetadataWhenVersionNotFound(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldResolveLatestVersionWithoutArtifactMetadataWhenVersionNotFound(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         stubFor(get(urlPathEqualTo("/api/packages/phoenix"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                 {
@@ -121,8 +120,7 @@ class HexPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.7.14");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-08-01T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-08-01T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 
@@ -151,8 +149,7 @@ class HexPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -187,5 +184,4 @@ class HexPackageMetadataResolverTest {
         assertThatExceptionOfType(RetryableResolutionException.class)
                 .isThrownBy(() -> resolver.resolve(purl, repo, null));
     }
-
 }

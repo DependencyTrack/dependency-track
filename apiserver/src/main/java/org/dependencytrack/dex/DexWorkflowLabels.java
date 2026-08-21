@@ -29,7 +29,5 @@ public final class DexWorkflowLabels {
     public static final String WF_LABEL_TRIGGERED_BY = "triggered_by";
     public static final String WF_LABEL_VEX_UPLOAD_TOKEN = "vex_upload_token";
 
-    private DexWorkflowLabels() {
-    }
-
+    private DexWorkflowLabels() {}
 }

@@ -56,5 +56,4 @@ abstract class AbstractBatchingMaintenanceTask implements Runnable {
 
         return totalProcessed;
     }
-
 }

@@ -99,8 +99,8 @@ class ProjectValueRemapsIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "NAME", "CLASSIFIER", "COLLECTION_LOGIC",
                            "COLLECTION_TAG_ID", "DIRECT_DEPENDENCIES"::text AS dd_text
                       FROM "PROJECT"
@@ -110,41 +110,36 @@ class ProjectValueRemapsIT {
         assertThat(rows).hasSize(4);
 
         assertThat(rows.get(0))
-            .containsEntry("name", "P-Lib")
-            .containsEntry("classifier", "LIBRARY")
-            .containsEntry("collection_logic", null)
-            .containsEntry("collection_tag_id", null);
+                .containsEntry("name", "P-Lib")
+                .containsEntry("classifier", "LIBRARY")
+                .containsEntry("collection_logic", null)
+                .containsEntry("collection_tag_id", null);
         assertThat(rows.get(0).get("dd_text")).asString().contains("\"ref\"").contains("abc");
 
         assertThat(rows.get(1))
-            .containsEntry("name", "P-None")
-            .containsEntry("classifier", null)
-            .containsEntry("dd_text", null);
+                .containsEntry("name", "P-None")
+                .containsEntry("classifier", null)
+                .containsEntry("dd_text", null);
 
         assertThat(rows.get(2))
-            .containsEntry("name", "P-Both")
-            .containsEntry("classifier", null)
-            .containsEntry("collection_logic", "AGGREGATE_DIRECT_CHILDREN_WITH_TAG")
-            .containsEntry("collection_tag_id", 42L);
+                .containsEntry("name", "P-Both")
+                .containsEntry("classifier", null)
+                .containsEntry("collection_logic", "AGGREGATE_DIRECT_CHILDREN_WITH_TAG")
+                .containsEntry("collection_tag_id", 42L);
 
-        assertThat(rows.get(3))
-            .containsEntry("name", "P-LogicNone")
-            .containsEntry("collection_logic", null);
+        assertThat(rows.get(3)).containsEntry("name", "P-LogicNone").containsEntry("collection_logic", null);
 
         // Sanity check the canonical_id_map exists with one entry per orig (all unique
         // (NAME, VERSION) here, so each row maps to itself).
-        final List<Map<String, Object>> map = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> map =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT orig_id, canonical_id
                       FROM dt_v4_migration.project_canonical_id_map
                      ORDER BY orig_id
                     """).mapToMap().list());
-        assertThat(map).extracting("orig_id", "canonical_id").containsExactly(
-            tuple(1L, 1L),
-            tuple(2L, 2L),
-            tuple(4L, 4L),
-            tuple(5L, 5L)
-        );
+        assertThat(map)
+                .extracting("orig_id", "canonical_id")
+                .containsExactly(tuple(1L, 1L), tuple(2L, 2L), tuple(4L, 4L), tuple(5L, 5L));
     }
 
     private void runPipeline() throws Exception {

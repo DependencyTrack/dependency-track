@@ -73,12 +73,7 @@ final class EpssQueryManager extends QueryManager {
     }
 
     public record EffectiveEpssRow(
-            String vulnSource,
-            String vulnId,
-            String cve,
-            BigDecimal score,
-            BigDecimal percentile) {
-    }
+            String vulnSource, String vulnId, String cve, BigDecimal score, BigDecimal percentile) {}
 
     public Map<VulnerabilityKey, Epss> getEffectiveEpssForVulns(Collection<VulnerabilityKey> keys) {
         if (keys.isEmpty()) {
@@ -140,13 +135,10 @@ final class EpssQueryManager extends QueryManager {
 
         final var result = new HashMap<VulnerabilityKey, Epss>(rows.size());
         for (final EffectiveEpssRow row : rows) {
-            final var key = new VulnerabilityKey(
-                    row.vulnId(),
-                    Vulnerability.Source.valueOf(row.vulnSource()));
+            final var key = new VulnerabilityKey(row.vulnId(), Vulnerability.Source.valueOf(row.vulnSource()));
             result.put(key, new Epss(row.cve(), row.score(), row.percentile()));
         }
 
         return result;
     }
-
 }

@@ -65,7 +65,8 @@ class NugetPackageMetadataResolverTest {
             .configureStaticDsl(true)
             .build();
 
-    private static final String ARTIFACTORY_REG_PATH = "/artifactory/api/nuget/v3/nuget-repo/registration-semver2/microsoft.data.sqlclient";
+    private static final String ARTIFACTORY_REG_PATH =
+            "/artifactory/api/nuget/v3/nuget-repo/registration-semver2/microsoft.data.sqlclient";
     private static final String ARTIFACTORY_PAGE1 = "page/1.0.19123.2-preview/5.1.0";
     private static final String ARTIFACTORY_PAGE2 = "page/5.1.1/6.1.0";
 
@@ -75,11 +76,10 @@ class NugetPackageMetadataResolverTest {
     @BeforeEach
     void beforeEach() {
         factory = new NugetPackageMetadataResolverFactory();
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(CacheManager.class, new NoopCacheManager())
-                        .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new MutableServiceRegistry()
+                .register(CacheManager.class, new NoopCacheManager())
+                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
         resolver = (NugetPackageMetadataResolver) factory.create();
     }
 
@@ -95,11 +95,14 @@ class NugetPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/v3/index.json"))
                 .willReturn(aResponse().withStatus(200).withBodyFile("nuget/https---nuget.org.v3-index.json")));
         stubFor(get(urlPathEqualTo("/v3/registration5-gz-semver2/microsoft.data.sqlclient/index.json"))
-                .willReturn(aResponse().withStatus(200).withBodyFile(
-                        "nuget/https---nuget.org.registration-semver2.mds.index-inline-pages.json")));
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("nuget/https---nuget.org.registration-semver2.mds.index-inline-pages.json")));
 
-        final PackageMetadata result = resolver.resolve(nugetPurl("Microsoft.Data.SqlClient", "5.0.1"),
-                new PackageRepository("test", wm.baseUrl(), null, null), null);
+        final PackageMetadata result = resolver.resolve(
+                nugetPurl("Microsoft.Data.SqlClient", "5.0.1"),
+                new PackageRepository("test", wm.baseUrl(), null, null),
+                null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("6.0.2");
@@ -111,8 +114,8 @@ class NugetPackageMetadataResolverTest {
         stubArtifactoryPage(ARTIFACTORY_PAGE1, "page1");
         stubArtifactoryPage(ARTIFACTORY_PAGE2, "page2");
 
-        final PackageMetadata result = resolver.resolve(
-                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
+        final PackageMetadata result =
+                resolver.resolve(nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("6.0.2");
@@ -124,8 +127,8 @@ class NugetPackageMetadataResolverTest {
         stubArtifactoryServiceAndIndex();
         stubArtifactoryPage(ARTIFACTORY_PAGE2, "page2-check-pre-release");
 
-        final PackageMetadata result = resolver.resolve(
-                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
+        final PackageMetadata result =
+                resolver.resolve(nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("5.1.2");
@@ -137,8 +140,8 @@ class NugetPackageMetadataResolverTest {
         stubArtifactoryPage(ARTIFACTORY_PAGE2, "page2-all-unlisted");
         stubArtifactoryPage(ARTIFACTORY_PAGE1, "page1");
 
-        final PackageMetadata result = resolver.resolve(
-                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
+        final PackageMetadata result =
+                resolver.resolve(nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("5.1.0");
@@ -150,8 +153,8 @@ class NugetPackageMetadataResolverTest {
         stubArtifactoryPage(ARTIFACTORY_PAGE2, "page2-all-pre-release");
         stubArtifactoryPage(ARTIFACTORY_PAGE1, "page1");
 
-        final PackageMetadata result = resolver.resolve(
-                nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
+        final PackageMetadata result =
+                resolver.resolve(nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("5.1.0");
@@ -161,13 +164,18 @@ class NugetPackageMetadataResolverTest {
     void shouldReturnLatestPreReleaseWhenNoStableExists() throws Exception {
         stubFor(get(urlPathEqualTo("/v3/index.json"))
                 .willReturn(aResponse().withStatus(200).withBodyFile("nuget/https---nuget.org.v3-index.json")));
-        stubFor(get(urlPathEqualTo("/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"))
-                .willReturn(aResponse().withStatus(200).withBodyFile(
-                        "nuget/https---nuget.org.registration-semver2.beta-releases-only.index-inline-pages.json")));
+        stubFor(
+                get(urlPathEqualTo("/v3/registration5-gz-semver2/opentelemetry.instrumentation.sqlclient/index.json"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withBodyFile(
+                                                "nuget/https---nuget.org.registration-semver2.beta-releases-only.index-inline-pages.json")));
 
         final PackageMetadata result = resolver.resolve(
                 nugetPurl("OpenTelemetry.Instrumentation.SqlClient", "1.12.0-beta.2"),
-                new PackageRepository("test", wm.baseUrl(), null, null), null);
+                new PackageRepository("test", wm.baseUrl(), null, null),
+                null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.12.0-beta.2");
@@ -180,8 +188,9 @@ class NugetPackageMetadataResolverTest {
                 .willReturn(aResponse().withStatus(401)));
         stubArtifactoryPage(ARTIFACTORY_PAGE1, "page1");
 
-        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() ->
-                resolver.resolve(nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null));
+        assertThatExceptionOfType(RuntimeException.class)
+                .isThrownBy(() ->
+                        resolver.resolve(nugetPurl("Microsoft.Data.SqlClient", "5.1.0"), artifactoryRepo(), null));
     }
 
     @Test
@@ -210,8 +219,8 @@ class NugetPackageMetadataResolverTest {
                         }
                         """)));
 
-        final PackageMetadata result = resolver.resolve(nugetPurl("MyPackage", "1.0.0"),
-                new PackageRepository("test", wm.baseUrl(), null, null), null);
+        final PackageMetadata result = resolver.resolve(
+                nugetPurl("MyPackage", "1.0.0"), new PackageRepository("test", wm.baseUrl(), null, null), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.0");
@@ -234,8 +243,8 @@ class NugetPackageMetadataResolverTest {
                         {"items":[{"upper":"1.0.0","items":[{"catalogEntry":{"version":"1.0.0","listed":true}}]}]}
                         """)));
 
-        final PackageMetadata result = resolver.resolve(nugetPurl("MyPackage", "1.0.0"),
-                new PackageRepository("test", wm.baseUrl(), null, null), null);
+        final PackageMetadata result = resolver.resolve(
+                nugetPurl("MyPackage", "1.0.0"), new PackageRepository("test", wm.baseUrl(), null, null), null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.0");
@@ -253,8 +262,10 @@ class NugetPackageMetadataResolverTest {
                         {"items":[{"upper":"1.0.0","items":[{"catalogEntry":{"version":"1.0.0","listed":true}}]}]}
                         """)));
 
-        final PackageMetadata result = resolver.resolve(nugetPurl("MyPackage", "1.0.0"),
-                new PackageRepository("test", wm.baseUrl() + "/custom/v3/index.json", null, null), null);
+        final PackageMetadata result = resolver.resolve(
+                nugetPurl("MyPackage", "1.0.0"),
+                new PackageRepository("test", wm.baseUrl() + "/custom/v3/index.json", null, null),
+                null);
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.0");
@@ -267,8 +278,8 @@ class NugetPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/v3/registration5-gz-semver2/nonexistent/index.json"))
                 .willReturn(aResponse().withStatus(404)));
 
-        final PackageMetadata result = resolver.resolve(nugetPurl("nonexistent", "1.0.0"),
-                new PackageRepository("test", wm.baseUrl(), null, null), null);
+        final PackageMetadata result = resolver.resolve(
+                nugetPurl("nonexistent", "1.0.0"), new PackageRepository("test", wm.baseUrl(), null, null), null);
 
         assertThat(result).isNull();
     }
@@ -278,8 +289,8 @@ class NugetPackageMetadataResolverTest {
         stubFor(get(urlPathEqualTo("/v3/index.json"))
                 .willReturn(aResponse().withStatus(200).withBody("{\"resources\":[]}")));
 
-        final PackageMetadata result = resolver.resolve(nugetPurl("MyPackage", "1.0.0"),
-                new PackageRepository("test", wm.baseUrl(), null, null), null);
+        final PackageMetadata result = resolver.resolve(
+                nugetPurl("MyPackage", "1.0.0"), new PackageRepository("test", wm.baseUrl(), null, null), null);
 
         assertThat(result).isNull();
     }
@@ -303,8 +314,7 @@ class NugetPackageMetadataResolverTest {
 
     @Test
     void shouldThrowRetryableExceptionOnServerError() {
-        stubFor(get(urlPathEqualTo("/v3/index.json"))
-                .willReturn(aResponse().withStatus(504)));
+        stubFor(get(urlPathEqualTo("/v3/index.json")).willReturn(aResponse().withStatus(504)));
 
         final PackageRepository repo = new PackageRepository("test", wm.baseUrl(), null, null);
         assertThatExceptionOfType(RetryableResolutionException.class)
@@ -323,10 +333,9 @@ class NugetPackageMetadataResolverTest {
         final PackageRepository repo = new PackageRepository("test", wm.baseUrl(), "user", "pass");
         resolver.resolve(nugetPurl("MyPackage", "1.0.0"), repo, null);
 
-        final String expected = "Basic " + Base64.getEncoder()
-                .encodeToString("user:pass".getBytes(StandardCharsets.UTF_8));
-        verify(getRequestedFor(urlPathEqualTo("/v3/index.json"))
-                .withHeader("Authorization", equalTo(expected)));
+        final String expected =
+                "Basic " + Base64.getEncoder().encodeToString("user:pass".getBytes(StandardCharsets.UTF_8));
+        verify(getRequestedFor(urlPathEqualTo("/v3/index.json")).withHeader("Authorization", equalTo(expected)));
         verify(getRequestedFor(urlPathEqualTo("/v3/registration5-gz-semver2/mypackage/index.json"))
                 .withHeader("Authorization", equalTo(expected)));
     }
@@ -376,23 +385,24 @@ class NugetPackageMetadataResolverTest {
                     .withHeader("Authorization", equalTo("Bearer tkn")));
 
             // Cross-origin registration call must NOT carry the bearer token.
-            foreignWm.verify(getRequestedFor(urlPathEqualTo("/reg/mypackage/index.json"))
-                    .withoutHeader("Authorization"));
+            foreignWm.verify(
+                    getRequestedFor(urlPathEqualTo("/reg/mypackage/index.json")).withoutHeader("Authorization"));
         } finally {
             foreignWm.stop();
         }
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "1900-01-01T00:00:00+00:00",
-            "2025-08-13T23:22:21.20+01:00",
-            "2025-08-13T23:22:21Z",
-            "2020-08-04T10:39:03.7136823",
-            "2025-08-13T23:22:21",
-            "2023-03-28T22:26:40.43+00:00",
-            "2025-08-14T08:12:23.8207879Z"
-    })
+    @ValueSource(
+            strings = {
+                "1900-01-01T00:00:00+00:00",
+                "2025-08-13T23:22:21.20+01:00",
+                "2025-08-13T23:22:21Z",
+                "2020-08-04T10:39:03.7136823",
+                "2025-08-13T23:22:21",
+                "2023-03-28T22:26:40.43+00:00",
+                "2025-08-14T08:12:23.8207879Z"
+            })
     void shouldParseValidPublishedDateFormats(String input) {
         assertThat(NugetPackageMetadataResolver.parsePublished(input)).isNotNull();
     }
@@ -420,19 +430,14 @@ class NugetPackageMetadataResolverTest {
         // Prior carries a different publishedAt to prove the resolver uses it instead of
         // re-reading the value from the registration response.
         final var prior = new PackageArtifactMetadata(
-                Instant.parse("2024-01-01T00:00:00Z"),
-                Instant.parse("2024-06-15T12:00:00Z"),
-                Map.of());
+                Instant.parse("2024-01-01T00:00:00Z"), Instant.parse("2024-06-15T12:00:00Z"), Map.of());
 
         final PackageMetadata result = resolver.resolve(
-                nugetPurl("MyPackage", "1.0.0"),
-                new PackageRepository("test", wm.baseUrl(), null, null),
-                prior);
+                nugetPurl("MyPackage", "1.0.0"), new PackageRepository("test", wm.baseUrl(), null, null), prior);
 
         assertThat(result).isNotNull();
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-06-15T12:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-06-15T12:00:00Z"));
     }
 
     @Test
@@ -449,19 +454,14 @@ class NugetPackageMetadataResolverTest {
                         """)));
 
         final var prior = new PackageArtifactMetadata(
-                Instant.parse("2024-01-01T00:00:00Z"),
-                Instant.parse("2024-06-15T12:00:00Z"),
-                Map.of());
+                Instant.parse("2024-01-01T00:00:00Z"), Instant.parse("2024-06-15T12:00:00Z"), Map.of());
 
         final PackageMetadata result = resolver.resolve(
-                nugetPurl("MyPackage", "1.0.0-alpha"),
-                new PackageRepository("test", wm.baseUrl(), null, null),
-                prior);
+                nugetPurl("MyPackage", "1.0.0-alpha"), new PackageRepository("test", wm.baseUrl(), null, null), prior);
 
         assertThat(result).isNotNull();
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2020-01-01T00:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2020-01-01T00:00:00Z"));
     }
 
     private static PackageURL nugetPurl(String name, String version) throws Exception {
@@ -473,22 +473,27 @@ class NugetPackageMetadataResolverTest {
     }
 
     private static PackageRepository artifactoryRepo() {
-        return new PackageRepository("test", wm.baseUrl() + "/artifactory/api/nuget/v3/nuget-repo/index.json", null, null);
+        return new PackageRepository(
+                "test", wm.baseUrl() + "/artifactory/api/nuget/v3/nuget-repo/index.json", null, null);
     }
 
     private static void stubArtifactoryServiceAndIndex() {
         stubFor(get(urlPathEqualTo("/artifactory/api/nuget/v3/nuget-repo/index.json"))
-                .willReturn(aResponse().withStatus(200).withBodyFile(
-                        "nuget/https---localhost-nuget-artifactory.v3-index.json")));
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("nuget/https---localhost-nuget-artifactory.v3-index.json")));
         stubFor(get(urlPathEqualTo(ARTIFACTORY_REG_PATH + "/index.json"))
-                .willReturn(aResponse().withStatus(200).withBodyFile(
-                        "nuget/https---localhost-nuget-artifactory.registration-semver2.mds.index.json")));
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile(
+                                "nuget/https---localhost-nuget-artifactory.registration-semver2.mds.index.json")));
     }
 
     private static void stubArtifactoryPage(String pageRange, String fixtureSuffix) {
         stubFor(get(urlPathEqualTo(ARTIFACTORY_REG_PATH + "/" + pageRange + ".json"))
-                .willReturn(aResponse().withStatus(200).withBodyFile(
-                        "nuget/https---localhost-nuget-artifactory.registration-semver2.mds." + fixtureSuffix + ".json")));
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("nuget/https---localhost-nuget-artifactory.registration-semver2.mds."
+                                + fixtureSuffix + ".json")));
     }
-
 }

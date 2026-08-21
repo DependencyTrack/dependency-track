@@ -22,5 +22,4 @@ import org.dependencytrack.dex.proto.event.v1.WorkflowEvent;
 
 import java.util.List;
 
-record CachedWorkflowRunHistory(List<WorkflowEvent> events, int maxSequenceNumber) {
-}
+record CachedWorkflowRunHistory(List<WorkflowEvent> events, int maxSequenceNumber) {}

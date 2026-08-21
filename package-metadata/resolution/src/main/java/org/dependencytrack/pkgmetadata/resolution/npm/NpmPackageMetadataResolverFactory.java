@@ -98,5 +98,4 @@ public final class NpmPackageMetadataResolverFactory implements PackageMetadataR
     public PackageMetadataResolver create() {
         return new NpmPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

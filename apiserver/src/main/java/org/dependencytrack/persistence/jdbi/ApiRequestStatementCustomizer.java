@@ -41,8 +41,8 @@ import java.util.Map;
 import static org.dependencytrack.model.ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED;
 import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_FILTER_PARAMETER;
 import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_OFFSET_LIMIT_CLAUSE;
-import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_PAGINATE;
 import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_ORDER_BY_CLAUSE;
+import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_PAGINATE;
 import static org.dependencytrack.persistence.jdbi.JdbiAttributes.ATTRIBUTE_API_PROJECT_ACL_CONDITION;
 
 /**
@@ -125,8 +125,7 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
             if (config.orderingAllowedColumns().isEmpty()) {
                 throw new InvalidSortFieldException(apiRequest.getOrderBy());
             }
-            final OrderingColumn orderingColumn = config
-                    .orderingAllowedColumn(ordering.by())
+            final OrderingColumn orderingColumn = config.orderingAllowedColumn(ordering.by())
                     .orElseThrow(() -> new InvalidSortFieldException(
                             ordering.by(),
                             config.orderingAllowedColumns().stream()
@@ -134,16 +133,12 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
                                     .toList()));
 
             final String orderByColumnSql =
-                    orderingColumn.queryName() != null
-                            ? orderingColumn.queryName()
-                            : "\"" + ordering.by() + "\"";
+                    orderingColumn.queryName() != null ? orderingColumn.queryName() : "\"" + ordering.by() + "\"";
 
             orderingBuilder.append("ORDER BY ").append(orderByColumnSql);
 
             if (ordering.direction() != null && ordering.direction() != OrderDirection.UNSPECIFIED) {
-                orderingBuilder
-                        .append(" ")
-                        .append(ordering.direction() == OrderDirection.ASCENDING ? "ASC" : "DESC");
+                orderingBuilder.append(" ").append(ordering.direction() == OrderDirection.ASCENDING ? "ASC" : "DESC");
             }
 
             final AlwaysByOrdering alwaysBy = config.orderingAlwaysBy();
@@ -171,18 +166,25 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
         if (apiRequest != null
                 && apiRequest.getPagination() != null
                 && apiRequest.getPagination().isPaginated()) {
-            ctx.define(ATTRIBUTE_API_OFFSET_LIMIT_CLAUSE, "OFFSET :paginationOffset FETCH NEXT :paginationLimit ROWS ONLY");
-            ctx.getBinding().addNamed("paginationOffset", apiRequest.getPagination().getOffset());
-            ctx.getBinding().addNamed("paginationLimit", apiRequest.getPagination().getLimit());
+            ctx.define(
+                    ATTRIBUTE_API_OFFSET_LIMIT_CLAUSE,
+                    "OFFSET :paginationOffset FETCH NEXT :paginationLimit ROWS ONLY");
+            ctx.getBinding()
+                    .addNamed("paginationOffset", apiRequest.getPagination().getOffset());
+            ctx.getBinding()
+                    .addNamed("paginationLimit", apiRequest.getPagination().getLimit());
         }
     }
 
-    private void defineProjectAclCondition(final StatementContext ctx, final AlpineRequest apiRequest) throws SQLException {
+    private void defineProjectAclCondition(final StatementContext ctx, final AlpineRequest apiRequest)
+            throws SQLException {
         if (apiRequest == null
                 || apiRequest.getPrincipal() == null
                 || ProjectAccess.isUnrestricted()
                 || !isAclEnabled(ctx)
-                || apiRequest.getEffectivePermissions().contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)) {
+                || apiRequest
+                        .getEffectivePermissions()
+                        .contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS)) {
             ctx.define(ATTRIBUTE_API_PROJECT_ACL_CONDITION, "TRUE");
             return;
         }
@@ -192,14 +194,17 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
 
         switch (principal) {
             case User user -> {
-                ctx.define(ATTRIBUTE_API_PROJECT_ACL_CONDITION,
+                ctx.define(
+                        ATTRIBUTE_API_PROJECT_ACL_CONDITION,
                         TEMPLATE_USER_PROJECT_ACL_CONDITION.formatted(config.projectAclProjectIdColumn()));
                 ctx.getBinding().addNamed(PARAMETER_PROJECT_ACL_USER_ID, user.getId(), QualifiedType.of(Long.class));
             }
             case ApiKey apiKey -> {
-                ctx.define(ATTRIBUTE_API_PROJECT_ACL_CONDITION,
+                ctx.define(
+                        ATTRIBUTE_API_PROJECT_ACL_CONDITION,
                         TEMPLATE_API_KEY_PROJECT_ACL_CONDITION.formatted(config.projectAclProjectIdColumn()));
-                ctx.getBinding().addNamed(PARAMETER_PROJECT_ACL_API_KEY_ID, apiKey.getId(), QualifiedType.of(Long.class));
+                ctx.getBinding()
+                        .addNamed(PARAMETER_PROJECT_ACL_API_KEY_ID, apiKey.getId(), QualifiedType.of(Long.class));
             }
             default -> {
                 ctx.define(ATTRIBUTE_API_PROJECT_ACL_CONDITION, "FALSE");
@@ -220,5 +225,4 @@ class ApiRequestStatementCustomizer implements StatementCustomizer {
             return ps.executeQuery().next();
         }
     }
-
 }

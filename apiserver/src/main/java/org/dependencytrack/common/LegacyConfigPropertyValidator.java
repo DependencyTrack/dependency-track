@@ -116,16 +116,13 @@ public final class LegacyConfigPropertyValidator {
     /// Properties that no longer exist, and whose value cannot be carried over to their replacement.
     /// A rename entry would be misleading, since the operator has to decide on a new value rather
     /// than move the old one.
-    static final Map<String, String> REMOVED_PROPERTY_REPLACEMENTS = Map.of(
-            "dt.task.portfolio-analysis.cron",
-            """
+    static final Map<String, String> REMOVED_PROPERTY_REPLACEMENTS = Map.of("dt.task.portfolio-analysis.cron", """
                     The portfolio analysis no longer starts at a fixed time. \
                     Use dt.task.portfolio-analysis.max-analysis-age-ms to say how long an analysis stays valid.""");
 
     private static final Set<String> STANDARD_SYSTEM_ENV_VARS = Set.of("NO_PROXY");
 
-    private LegacyConfigPropertyValidator() {
-    }
+    private LegacyConfigPropertyValidator() {}
 
     public static void validate(Config config) {
         final SmallRyeConfig smallRyeConfig = config.unwrap(SmallRyeConfig.class);
@@ -202,7 +199,7 @@ public final class LegacyConfigPropertyValidator {
             final ConfigValue configValue = config.getConfigValue(oldName);
             if (configValue.getValue() != null
                     && (!configValue.getSourceName().startsWith(EnvConfigSource.NAME)
-                    || !envForm(oldName).equals(envForm(newName)))) {
+                            || !envForm(oldName).equals(envForm(newName)))) {
                 present.put(oldName, newName);
             }
 
@@ -211,7 +208,7 @@ public final class LegacyConfigPropertyValidator {
             final ConfigValue bareValue = config.getConfigValue(bareName);
             if (bareValue.getValue() != null
                     && (!bareValue.getSourceName().startsWith(EnvConfigSource.NAME)
-                    || !STANDARD_SYSTEM_ENV_VARS.contains(envForm(bareName)))) {
+                            || !STANDARD_SYSTEM_ENV_VARS.contains(envForm(bareName)))) {
                 present.put(bareName, newName);
             }
         });
@@ -249,13 +246,20 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.dev.services.image.frontend", "dt.dev-services.frontend-image");
         renames.put("dt.dev.services.image.postgres", "dt.dev-services.postgres-image");
         renames.put("dt.dev.services.port.frontend", "dt.dev-services.frontend-port");
-        renames.put("dt.dex-engine.maintenance-worker.initial-delay-ms", "dt.dex-engine.maintenance.worker-initial-delay-ms");
+        renames.put(
+                "dt.dex-engine.maintenance-worker.initial-delay-ms",
+                "dt.dex-engine.maintenance.worker-initial-delay-ms");
         renames.put("dt.dex-engine.maintenance-worker.interval-ms", "dt.dex-engine.maintenance.worker-interval-ms");
-        renames.put("dt.dex-engine.maintenance.run-retention-duration", "dt.dex-engine.maintenance.run-retention-ms (now a long in milliseconds, was an ISO-8601 Duration)");
-        renames.put("dt.dex-engine.maintenance.worker.initial-delay-ms", "dt.dex-engine.maintenance.worker-initial-delay-ms");
+        renames.put(
+                "dt.dex-engine.maintenance.run-retention-duration",
+                "dt.dex-engine.maintenance.run-retention-ms (now a long in milliseconds, was an ISO-8601 Duration)");
+        renames.put(
+                "dt.dex-engine.maintenance.worker.initial-delay-ms",
+                "dt.dex-engine.maintenance.worker-initial-delay-ms");
         renames.put("dt.dex-engine.maintenance.worker.interval-ms", "dt.dex-engine.maintenance.worker-interval-ms");
         renames.put("dt.dex-engine.metrics.collector.enabled", "dt.dex-engine.metrics-collector.enabled");
-        renames.put("dt.dex-engine.metrics.collector.initial-delay-ms", "dt.dex-engine.metrics-collector.initial-delay-ms");
+        renames.put(
+                "dt.dex-engine.metrics.collector.initial-delay-ms", "dt.dex-engine.metrics-collector.initial-delay-ms");
         renames.put("dt.dex-engine.metrics.collector.interval-ms", "dt.dex-engine.metrics-collector.interval-ms");
         renames.put("dt.file-storage.local.compression.level", "dt.file-storage.local.compression-level");
         renames.put("dt.file-storage.s3.access.key", "dt.file-storage.s3.access-key");
@@ -267,9 +271,13 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.http.timeout.connection", "dt.http.connect-timeout-ms (now milliseconds, was seconds)");
         renames.put("dt.init.and.exit", "dt.init-tasks.exit-after-completion");
         renames.put("dt.init.task.database.migration.enabled", "dt.init-task.database-migration.enabled");
-        renames.put("dt.init.task.database.partition.maintenance.enabled", "dt.init-task.database-partition-maintenance.enabled");
+        renames.put(
+                "dt.init.task.database.partition.maintenance.enabled",
+                "dt.init-task.database-partition-maintenance.enabled");
         renames.put("dt.init.task.database.seeding.enabled", "dt.init-task.database-seeding.enabled");
-        renames.put("dt.init.task.dex.engine.database.migration.enabled", "dt.init-task.dex-engine-database-migration.enabled");
+        renames.put(
+                "dt.init.task.dex.engine.database.migration.enabled",
+                "dt.init-task.dex-engine-database-migration.enabled");
         renames.put("dt.init.task.key.generation.enabled", "(removed; key generation no longer runs as an init task)");
         renames.put("dt.init.tasks.datasource.close-after-use", "dt.init-tasks.datasource.close-after-completion");
         renames.put("dt.init.tasks.datasource.name", "dt.init-tasks.datasource.name");
@@ -308,7 +316,9 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.task.project.maintenance.cron", "dt.task.project-maintenance.cron");
         renames.put("dt.task.tag.maintenance.cron", "dt.task.tag-maintenance.cron");
         renames.put("dt.task.vulnerability-policy-bundle-sync.cron", "dt.task.vuln-policy-bundle-sync.cron");
-        renames.put("dt.task.vulnerability.analysis.cron", "(removed; the portfolio analysis no longer starts at a fixed time, see dt.task.portfolio-analysis.max-analysis-age-ms)");
+        renames.put(
+                "dt.task.vulnerability.analysis.cron",
+                "(removed; the portfolio analysis no longer starts at a fixed time, see dt.task.portfolio-analysis.max-analysis-age-ms)");
         renames.put("dt.task.vulnerability.database.maintenance.cron", "dt.task.vuln-database-maintenance.cron");
         renames.put("dt.task.vulnerability.metrics.update.cron", "dt.task.vuln-metrics-update.cron");
         renames.put("dt.telemetry.submission.enabled.default", "dt.telemetry.submission.default-enabled");
@@ -319,5 +329,4 @@ public final class LegacyConfigPropertyValidator {
         renames.put("dt.vulnerability.policy.bundle.url", "dt.vuln-policy-bundle.url");
         return renames;
     }
-
 }

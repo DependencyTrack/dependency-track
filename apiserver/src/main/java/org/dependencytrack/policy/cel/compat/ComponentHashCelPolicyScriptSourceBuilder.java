@@ -37,7 +37,10 @@ public class ComponentHashCelPolicyScriptSourceBuilder implements CelPolicyScrip
     @Override
     public String apply(final PolicyCondition policyCondition) {
         final Hash hash = extractHashValues(policyCondition);
-        if (hash.getAlgorithm() == null || hash.getValue() == null || hash.getAlgorithm().isEmpty() || hash.getValue().isEmpty()) {
+        if (hash.getAlgorithm() == null
+                || hash.getValue() == null
+                || hash.getAlgorithm().isEmpty()
+                || hash.getValue().isEmpty()) {
             return null;
         }
 
@@ -54,7 +57,8 @@ public class ComponentHashCelPolicyScriptSourceBuilder implements CelPolicyScrip
                     component.%s != "%s"
                     """.formatted(fieldName, escapeQuotes(hash.getValue()));
             default -> {
-                LOGGER.warn("Policy operator %s is not supported for this subject".formatted(policyCondition.getOperator()));
+                LOGGER.warn("Policy operator %s is not supported for this subject"
+                        .formatted(policyCondition.getOperator()));
                 yield null;
             }
         };
@@ -70,8 +74,6 @@ public class ComponentHashCelPolicyScriptSourceBuilder implements CelPolicyScrip
 
         return new Hash(
                 valueNode.path("algorithm").asText(null),
-                valueNode.path("value").asText(null)
-        );
+                valueNode.path("value").asText(null));
     }
-
 }

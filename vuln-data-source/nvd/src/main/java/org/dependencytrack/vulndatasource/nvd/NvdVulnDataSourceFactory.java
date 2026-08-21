@@ -126,8 +126,7 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
             throw new IllegalStateException("Vulnerability data source is disabled and cannot be created");
         }
 
-        final List<NvdDataFeed> feeds = IntStream
-                .range(2002, LocalDate.now().getYear() + 1)
+        final List<NvdDataFeed> feeds = IntStream.range(2002, LocalDate.now().getYear() + 1)
                 .boxed()
                 .sorted(Comparator.reverseOrder())
                 .map(NvdDataFeed.YearDataFeed::new)
@@ -137,7 +136,12 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         final List<String> feedNames = feeds.stream().map(NvdDataFeed::name).toList();
         final var watermarkManager = new WatermarkManager(kvStore, feedNames);
 
-        return new NvdVulnDataSource(watermarkManager, objectMapper, httpClient, config.getCveFeedsUrl().toString(), feeds);
+        return new NvdVulnDataSource(
+                watermarkManager,
+                objectMapper,
+                httpClient,
+                config.getCveFeedsUrl().toString(),
+                feeds);
     }
 
     @Override
@@ -210,5 +214,4 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
 
         return testResult;
     }
-
 }

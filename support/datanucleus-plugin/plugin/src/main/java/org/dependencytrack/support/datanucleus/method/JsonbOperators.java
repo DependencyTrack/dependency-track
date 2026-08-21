@@ -28,7 +28,5 @@ final class JsonbOperators {
     // '{"a":1, "b":2}'::jsonb @> '{"b":2}'::jsonb
     static final DyadicOperator JSONB_CONTAINS_JSONB = new DyadicOperator("@>", 1, false);
 
-    private JsonbOperators() {
-    }
-
+    private JsonbOperators() {}
 }

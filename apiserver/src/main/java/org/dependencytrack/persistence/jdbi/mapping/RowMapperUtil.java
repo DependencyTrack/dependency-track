@@ -41,8 +41,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class RowMapperUtil {
 
-    private RowMapperUtil() {
-    }
+    private RowMapperUtil() {}
 
     public interface ThrowingBiFunction<V> {
         V apply(final ResultSet rs, final String key) throws SQLException;
@@ -63,14 +62,17 @@ public class RowMapperUtil {
      * @param <V>        The value type
      * @throws SQLException When accessing the {@link ResultSet} failed
      */
-    public static <V> void maybeSet(final ResultSet rs, final String columnName, final ThrowingBiFunction<V> getter, final Consumer<V> setter) throws SQLException {
+    public static <V> void maybeSet(
+            final ResultSet rs, final String columnName, final ThrowingBiFunction<V> getter, final Consumer<V> setter)
+            throws SQLException {
         final V value = maybeGet(rs, columnName, getter);
         if (value != null) {
             setter.accept(value);
         }
     }
 
-    public static <V> V maybeGet(final ResultSet rs, final String columnName, final ThrowingBiFunction<V> getter) throws SQLException {
+    public static <V> V maybeGet(final ResultSet rs, final String columnName, final ThrowingBiFunction<V> getter)
+            throws SQLException {
         if (!hasColumn(rs, columnName)) {
             return null;
         }
@@ -111,7 +113,8 @@ public class RowMapperUtil {
             return Collections.emptyList();
         }
         if (array.getBaseType() != Types.VARCHAR) {
-            throw new IllegalArgumentException("Expected array with base type VARCHAR, but got %s".formatted(array.getBaseTypeName()));
+            throw new IllegalArgumentException(
+                    "Expected array with base type VARCHAR, but got %s".formatted(array.getBaseTypeName()));
         }
 
         return Arrays.asList((String[]) array.getArray());
@@ -123,12 +126,14 @@ public class RowMapperUtil {
             return Collections.emptyList();
         }
         if (array.getBaseType() != Types.BIGINT) {
-            throw new IllegalArgumentException("Expected array with base type BIGINT, but got %s".formatted(array.getBaseTypeName()));
+            throw new IllegalArgumentException(
+                    "Expected array with base type BIGINT, but got %s".formatted(array.getBaseTypeName()));
         }
         return Arrays.asList((Long[]) array.getArray());
     }
 
-    public static <T> T deserializeJson(final ResultSet rs, final String columnName, final TypeReference<T> typeReference) throws SQLException {
+    public static <T> T deserializeJson(
+            final ResultSet rs, final String columnName, final TypeReference<T> typeReference) throws SQLException {
         final String jsonString = rs.getString(columnName);
         if (isBlank(jsonString)) {
             return null;
@@ -140,5 +145,4 @@ public class RowMapperUtil {
             throw new UnableToProduceResultException(e);
         }
     }
-
 }

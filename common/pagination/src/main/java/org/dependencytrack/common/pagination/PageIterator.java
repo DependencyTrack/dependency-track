@@ -50,8 +50,7 @@ public final class PageIterator<T> implements Iterator<T> {
     @Override
     public boolean hasNext() {
         maybeLoadNextPage();
-        return currentPageIterator != null
-                && currentPageIterator.hasNext();
+        return currentPageIterator != null && currentPageIterator.hasNext();
     }
 
     @Override
@@ -66,9 +65,8 @@ public final class PageIterator<T> implements Iterator<T> {
 
     private void maybeLoadNextPage() {
         final boolean shouldLoadInitialPage = !hasCalledNext;
-        final boolean shouldLoadNextPage = currentPageIterator != null
-                && !currentPageIterator.hasNext()
-                && nextPageToken != null;
+        final boolean shouldLoadNextPage =
+                currentPageIterator != null && !currentPageIterator.hasNext() && nextPageToken != null;
 
         if (shouldLoadInitialPage || shouldLoadNextPage) {
             final Page<T> page = pageFunction.apply(nextPageToken);
@@ -77,5 +75,4 @@ public final class PageIterator<T> implements Iterator<T> {
             hasCalledNext = true;
         }
     }
-
 }

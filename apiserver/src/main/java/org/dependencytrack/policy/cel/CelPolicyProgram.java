@@ -44,5 +44,4 @@ public final class CelPolicyProgram {
     boolean execute(final Map<String, Object> arguments) throws CelEvaluationException {
         return (Boolean) program.eval(arguments);
     }
-
 }

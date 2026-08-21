@@ -106,14 +106,12 @@ class CargoPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.200");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(result.artifactMetadata().hashes())
-                .containsOnly(Map.entry(HashAlgorithm.SHA256,
-                        "0e0580d37234d8aeb18c8d2ce6b5e093366c3a52fb7eb5a2f7d2100635122b07"));
+                .containsOnly(Map.entry(
+                        HashAlgorithm.SHA256, "0e0580d37234d8aeb18c8d2ce6b5e093366c3a52fb7eb5a2f7d2100635122b07"));
     }
 
     @Test
@@ -148,14 +146,12 @@ class CargoPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.200");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2023-06-01T12:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2023-06-01T12:00:00Z"));
         assertThat(result.artifactMetadata().hashes())
-                .containsOnly(Map.entry(HashAlgorithm.SHA256,
-                        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+                .containsOnly(Map.entry(
+                        HashAlgorithm.SHA256, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
     }
 
     @Test
@@ -181,17 +177,14 @@ class CargoPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.200");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
 
     @Test
     void shouldPreferMaxStableVersionOverNewestVersion(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/crates/bevy"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody(/* language=JSON */ """
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                                 {
                                   "crate": {
                                     "newest_version": "0.19.0-rc.2",
@@ -214,16 +207,13 @@ class CargoPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("0.18.1");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2025-01-10T10:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2025-01-10T10:00:00Z"));
     }
 
     @Test
     void shouldFallBackToNewestVersionWhenNoStableExists(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/api/v1/crates/early-bird"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody(/* language=JSON */ """
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                                 {
                                   "crate": { "newest_version": "0.1.0-alpha", "max_stable_version": null },
                                   "versions": []
@@ -268,8 +258,7 @@ class CargoPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -295,8 +284,7 @@ class CargoPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(result.artifactMetadata().hashes()).isEmpty();
     }
 
@@ -324,8 +312,7 @@ class CargoPackageMetadataResolverTest {
         assertThat(result).isNotNull();
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().hashes()).isEmpty();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
     }
 
     @Test
@@ -391,15 +378,17 @@ class CargoPackageMetadataResolverTest {
                         """)));
 
         final var purl = aPackageURL()
-                .withType("cargo").withName("serde").withVersion("1.0.0").build();
+                .withType("cargo")
+                .withName("serde")
+                .withVersion("1.0.0")
+                .build();
 
         final var repo = new PackageRepository("crates", wmRuntimeInfo.getHttpBaseUrl(), "user", "secret");
         assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
-        final String expected = "Basic " + Base64.getEncoder().encodeToString(
-                "user:secret".getBytes(StandardCharsets.UTF_8));
-        verify(getRequestedFor(urlPathEqualTo("/api/v1/crates/serde"))
-                .withHeader("Authorization", equalTo(expected)));
+        final String expected =
+                "Basic " + Base64.getEncoder().encodeToString("user:secret".getBytes(StandardCharsets.UTF_8));
+        verify(getRequestedFor(urlPathEqualTo("/api/v1/crates/serde")).withHeader("Authorization", equalTo(expected)));
     }
 
     @Test
@@ -410,7 +399,10 @@ class CargoPackageMetadataResolverTest {
                         """)));
 
         final var purl = aPackageURL()
-                .withType("cargo").withName("serde").withVersion("1.0.0").build();
+                .withType("cargo")
+                .withName("serde")
+                .withVersion("1.0.0")
+                .build();
 
         final var repo = new PackageRepository("crates", wmRuntimeInfo.getHttpBaseUrl(), null, "token");
         assertThat(resolver.resolve(purl, repo, null)).isNotNull();
@@ -418,5 +410,4 @@ class CargoPackageMetadataResolverTest {
         verify(getRequestedFor(urlPathEqualTo("/api/v1/crates/serde"))
                 .withHeader("Authorization", equalTo("Bearer token")));
     }
-
 }

@@ -20,8 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -31,6 +29,9 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,9 +40,7 @@ class ServiceResourceTest extends ResourceTest {
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(ServiceResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+            new ResourceConfig(ServiceResource.class).register(ApiFilter.class).register(AuthFeature.class));
 
     @Test
     void shouldRejectServiceCreationForCollectionProject() {
@@ -52,7 +51,8 @@ class ServiceResourceTest extends ResourceTest {
         project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
         qm.createProject(project, List.of(), false);
 
-        final Response response = jersey.target("/v1/service/project/" + project.getUuid()).request()
+        final Response response = jersey.target("/v1/service/project/" + project.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {

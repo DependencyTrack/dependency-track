@@ -102,7 +102,7 @@ public class ComponentTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testSha256()  {
+    public void testSha256() {
         Component component = new Component();
         String hash = "cfb16d5a50169bac7699d6fc1ad4f8f2559d09e3fa580003b149ae0134e16d05";
         component.setSha256(hash);
@@ -112,7 +112,8 @@ public class ComponentTest extends PersistenceCapableTest {
     @Test
     public void testSha512() {
         Component component = new Component();
-        String hash = "d52e762d8e1b8a33c7f7b4b2ab356a02d43e6bf51d273a5809a3478dc47f17b6df350890d06bb0240a7d3f51f49dde564a32f569952c8b02f54242cc3f92d277";
+        String hash =
+                "d52e762d8e1b8a33c7f7b4b2ab356a02d43e6bf51d273a5809a3478dc47f17b6df350890d06bb0240a7d3f51f49dde564a32f569952c8b02f54242cc3f92d277";
         component.setSha512(hash);
         Assertions.assertEquals(hash, component.getSha512());
     }
@@ -128,7 +129,8 @@ public class ComponentTest extends PersistenceCapableTest {
     @Test
     public void testSha3_512() {
         Component component = new Component();
-        String hash = "40c72266a83cb97e6c5dbe628d3efb7fe564739e7d4c016d282c59ae14054ccd74142defa2d5d0295c7bdff0d1ea045364a595438263dd8ffd13623a685034e1";
+        String hash =
+                "40c72266a83cb97e6c5dbe628d3efb7fe564739e7d4c016d282c59ae14054ccd74142defa2d5d0295c7bdff0d1ea045364a595438263dd8ffd13623a685034e1";
         component.setSha3_512(hash);
         Assertions.assertEquals(hash, component.getSha3_512());
     }
@@ -145,7 +147,11 @@ public class ComponentTest extends PersistenceCapableTest {
     public void testPurl() throws Exception {
         Component component = new Component();
         PackageURL purl = PackageURLBuilder.aPackageURL()
-                .withType("maven").withNamespace("acme").withName("product").withVersion("1.0").build();
+                .withType("maven")
+                .withNamespace("acme")
+                .withName("product")
+                .withVersion("1.0")
+                .build();
         component.setPurl(purl);
         Assertions.assertEquals(purl.toString(), component.getPurl().toString());
     }
@@ -221,7 +227,11 @@ public class ComponentTest extends PersistenceCapableTest {
     public void testToStringWithPurl() throws Exception {
         Component component = new Component();
         PackageURL purl = PackageURLBuilder.aPackageURL()
-                .withType("maven").withNamespace("acme").withName("product").withVersion("1.0").build();
+                .withType("maven")
+                .withNamespace("acme")
+                .withName("product")
+                .withVersion("1.0")
+                .build();
         component.setPurl(purl);
         Assertions.assertEquals(component.getPurl().toString(), component.toString());
     }
@@ -283,5 +293,4 @@ public class ComponentTest extends PersistenceCapableTest {
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
                 .isThrownBy(() -> qm.getObjectById(Component.class, childComponent.getId()));
     }
-
 }

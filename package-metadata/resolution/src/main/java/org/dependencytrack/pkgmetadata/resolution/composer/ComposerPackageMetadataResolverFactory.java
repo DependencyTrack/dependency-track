@@ -77,8 +77,7 @@ public final class ComposerPackageMetadataResolverFactory implements PackageMeta
 
     @Override
     public void init(ServiceRegistry serviceRegistry) {
-        objectMapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
                 serviceRegistry.require(CacheManager.class).getCache("responses"));
@@ -88,5 +87,4 @@ public final class ComposerPackageMetadataResolverFactory implements PackageMeta
     public PackageMetadataResolver create() {
         return new ComposerPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

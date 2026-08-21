@@ -45,7 +45,6 @@ public class QueryTimingSqlLoggerTest extends PersistenceCapableTest {
                 SELECT COUNT(*) FROM "CONFIGPROPERTY"
                 """)
         long getConfigPropertyCount();
-
     }
 
     private DataSource dataSource;
@@ -61,8 +60,7 @@ public class QueryTimingSqlLoggerTest extends PersistenceCapableTest {
     public void shouldCaptureQueryNameForSqlObject() {
         final var meterRegistry = new SimpleMeterRegistry();
 
-        final var jdbi = Jdbi
-                .create(dataSource)
+        final var jdbi = Jdbi.create(dataSource)
                 .installPlugin(new SqlObjectPlugin())
                 .setSqlLogger(new QueryTimingSqlLogger(meterRegistry));
 
@@ -81,8 +79,7 @@ public class QueryTimingSqlLoggerTest extends PersistenceCapableTest {
     public void shouldCaptureExplicitQueryName() {
         final var meterRegistry = new SimpleMeterRegistry();
 
-        final var jdbi = Jdbi
-                .create(dataSource)
+        final var jdbi = Jdbi.create(dataSource)
                 .installPlugin(new SqlObjectPlugin())
                 .setSqlLogger(new QueryTimingSqlLogger(meterRegistry));
 
@@ -106,16 +103,14 @@ public class QueryTimingSqlLoggerTest extends PersistenceCapableTest {
     public void shouldNotCaptureUnnamedQueries() {
         final var meterRegistry = new SimpleMeterRegistry();
 
-        final var jdbi = Jdbi
-                .create(dataSource)
+        final var jdbi = Jdbi.create(dataSource)
                 .installPlugin(new SqlObjectPlugin())
                 .setSqlLogger(new QueryTimingSqlLogger(meterRegistry));
 
-        final long configPropertyCount = jdbi.withHandle(handle -> handle.createQuery("""
+        final long configPropertyCount = jdbi.withHandle(
+                handle -> handle.createQuery("""
                         SELECT COUNT(*) FROM "CONFIGPROPERTY"
-                        """)
-                .mapTo(Long.class)
-                .one());
+                        """).mapTo(Long.class).one());
         assertThat(configPropertyCount).isZero();
 
         assertThatExceptionOfType(MeterNotFoundException.class)
@@ -126,8 +121,7 @@ public class QueryTimingSqlLoggerTest extends PersistenceCapableTest {
     public void shouldCaptureQueryNameForFailure() {
         final var meterRegistry = new SimpleMeterRegistry();
 
-        final var jdbi = Jdbi
-                .create(dataSource)
+        final var jdbi = Jdbi.create(dataSource)
                 .installPlugin(new SqlObjectPlugin())
                 .setSqlLogger(new QueryTimingSqlLogger(meterRegistry));
 
@@ -146,5 +140,4 @@ public class QueryTimingSqlLoggerTest extends PersistenceCapableTest {
         assertThat(latencyTimerId.getTag("query")).isEqualTo("someQueryName");
         assertThat(latencyTimerId.getTag("outcome")).isEqualTo("failure");
     }
-
 }

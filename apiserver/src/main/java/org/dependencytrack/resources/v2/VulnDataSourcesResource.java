@@ -19,10 +19,6 @@
 package org.dependencytrack.resources.v2;
 
 import alpine.server.auth.PermissionRequired;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.VulnDataSourcesApi;
 import org.dependencytrack.api.v2.model.VulnDataSourceMirrorStatus;
 import org.dependencytrack.auth.Permissions;
@@ -35,6 +31,11 @@ import org.dependencytrack.vulndatasource.VulnDataSourceMirrorService.TriggerRes
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @since 5.0.0
@@ -52,59 +53,51 @@ public final class VulnDataSourcesResource extends AbstractApiResource implement
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response getLatestVulnDataSourceMirrorRun(String name) {
         final MirrorStatus status = mirrorService.getLatestStatus(name);
         if (status == null) {
             throw new NotFoundException();
         }
 
-        return Response
-                .ok(VulnDataSourceMirrorStatus.builder()
+        return Response.ok(VulnDataSourceMirrorStatus.builder()
                         .status(convert(status.status()))
-                        .startedAt(status.startedAt() != null
-                                ? status.startedAt().toEpochMilli()
-                                : null)
-                        .completedAt(status.completedAt() != null
-                                ? status.completedAt().toEpochMilli()
-                                : null)
+                        .startedAt(
+                                status.startedAt() != null ? status.startedAt().toEpochMilli() : null)
+                        .completedAt(
+                                status.completedAt() != null
+                                        ? status.completedAt().toEpochMilli()
+                                        : null)
                         .failureReason(status.failureReason())
                         .build())
                 .build();
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE})
     public Response triggerVulnDataSourceMirrorRun(String name) {
         final TriggerResult result = mirrorService.trigger(name, getPrincipal().getName());
 
         return switch (result) {
             case TriggerResult.Triggered _ -> {
-                LOGGER.info(
-                        SecurityMarkers.SECURITY_AUDIT,
-                        "Triggered vulnerability data source mirror for {}",
-                        name);
-                yield Response
-                        .accepted()
-                        .header("Location", getUriInfo()
-                                .getBaseUriBuilder()
-                                .path("/vuln-data-sources/{name}/mirror-runs/latest")
-                                .resolveTemplate("name", name)
-                                .build())
+                LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Triggered vulnerability data source mirror for {}", name);
+                yield Response.accepted()
+                        .header(
+                                "Location",
+                                getUriInfo()
+                                        .getBaseUriBuilder()
+                                        .path("/vuln-data-sources/{name}/mirror-runs/latest")
+                                        .resolveTemplate("name", name)
+                                        .build())
                         .build();
             }
-            case TriggerResult.AlreadyRunning _ -> throw ProblemDetailsException.of(
-                    ProblemType.VULN_DATA_SOURCE_MIRROR_ALREADY_RUNNING,
-                    "A mirror run for this data source is already in progress");
-            case TriggerResult.NotEnabled _ -> throw ProblemDetailsException.of(
-                    ProblemType.VULN_DATA_SOURCE_NOT_ENABLED,
-                    "The vulnerability data source is not enabled");
+            case TriggerResult.AlreadyRunning _ ->
+                throw ProblemDetailsException.of(
+                        ProblemType.VULN_DATA_SOURCE_MIRROR_ALREADY_RUNNING,
+                        "A mirror run for this data source is already in progress");
+            case TriggerResult.NotEnabled _ ->
+                throw ProblemDetailsException.of(
+                        ProblemType.VULN_DATA_SOURCE_NOT_ENABLED, "The vulnerability data source is not enabled");
             case TriggerResult.NotFound _ -> throw new NotFoundException();
         };
     }
@@ -117,5 +110,4 @@ public final class VulnDataSourcesResource extends AbstractApiResource implement
             case FAILED -> VulnDataSourceMirrorStatus.StatusEnum.FAILED;
         };
     }
-
 }

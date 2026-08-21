@@ -57,5 +57,4 @@ public final class DefaultPackageMetadataResolutionPlugin implements Plugin {
                 new NugetPackageMetadataResolverFactory(),
                 new PypiPackageMetadataResolverFactory());
     }
-
 }

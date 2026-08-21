@@ -21,5 +21,4 @@ package org.dependencytrack.dex.engine.persistence.command;
 import java.time.Duration;
 import java.util.UUID;
 
-public record UnlockWorkflowMessagesCommand(UUID workflowRunId, Duration visibilityDelay) {
-}
+public record UnlockWorkflowMessagesCommand(UUID workflowRunId, Duration visibilityDelay) {}

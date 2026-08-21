@@ -18,13 +18,15 @@
  */
 package org.dependencytrack.resources.v2.exception;
 
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.model.ProblemDetails;
 import org.dependencytrack.support.jdbi.exception.QueryTimeoutException;
 
+import jakarta.ws.rs.ext.Provider;
+
 /// @since 5.1.0
 @Provider
-public final class QueryTimeoutExceptionMapper extends ProblemDetailsExceptionMapper<QueryTimeoutException, ProblemDetails> {
+public final class QueryTimeoutExceptionMapper
+        extends ProblemDetailsExceptionMapper<QueryTimeoutException, ProblemDetails> {
 
     @Override
     ProblemDetails map(QueryTimeoutException exception) {
@@ -35,5 +37,4 @@ public final class QueryTimeoutExceptionMapper extends ProblemDetailsExceptionMa
                 .detail("The request was aborted because it took too long to complete.")
                 .build();
     }
-
 }

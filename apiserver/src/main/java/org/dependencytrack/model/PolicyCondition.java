@@ -22,6 +22,7 @@ import alpine.common.validation.RegexSequence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -66,11 +67,11 @@ public class PolicyCondition implements Serializable {
 
     public enum Subject {
         AGE(PolicyViolation.Type.OPERATIONAL),
-        //ANALYZER,
-        //BOM,
+        // ANALYZER,
+        // BOM,
         COORDINATES(PolicyViolation.Type.OPERATIONAL),
         CPE(PolicyViolation.Type.OPERATIONAL),
-        //INHERITED_RISK_SCORE,
+        // INHERITED_RISK_SCORE,
         EXPRESSION(null),
         LICENSE(PolicyViolation.Type.LICENSE),
         LICENSE_GROUP(PolicyViolation.Type.LICENSE),
@@ -98,7 +99,11 @@ public class PolicyCondition implements Serializable {
     private long id;
 
     @Persistent
-    @ForeignKey(name = "POLICYCONDITION_POLICY_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "POLICYCONDITION_POLICY_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "POLICY_ID", allowsNull = "false")
     private Policy policy;
 
@@ -106,27 +111,35 @@ public class PolicyCondition implements Serializable {
     @Column(name = "OPERATOR", allowsNull = "false")
     @NotBlank
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The operator may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The operator may only contain printable characters")
     private Operator operator;
 
     @Persistent
     @Column(name = "SUBJECT", allowsNull = "false")
     @NotBlank
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The subject may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The subject may only contain printable characters")
     private Subject subject;
 
     @Persistent
     @Column(name = "VALUE", allowsNull = "false", jdbcType = "CLOB")
     @NotBlank
     @Size(min = 1)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The value may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The value may only contain printable characters")
     private String value;
 
     @Persistent
     @Column(name = "VIOLATIONTYPE", allowsNull = "true")
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The violation type may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The violation type may only contain printable characters")
     private PolicyViolation.Type violationType;
 
     /**

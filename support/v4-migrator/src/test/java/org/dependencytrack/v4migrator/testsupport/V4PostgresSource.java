@@ -33,10 +33,10 @@ public final class V4PostgresSource implements AutoCloseable {
 
     public V4PostgresSource() {
         this.container = new PostgreSQLContainer<>(IMAGE)
-            .withDatabaseName("dtrackv4")
-            .withUsername("dt")
-            .withPassword("dt")
-            .withInitScript("v4-schema.postgresql.sql");
+                .withDatabaseName("dtrackv4")
+                .withUsername("dt")
+                .withPassword("dt")
+                .withInitScript("v4-schema.postgresql.sql");
     }
 
     public V4PostgresSource start() {

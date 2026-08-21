@@ -73,12 +73,11 @@ class MavenPackageMetadataResolverTest {
         cacheManager = cacheProvider.create();
 
         factory = new MavenPackageMetadataResolverFactory();
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                        .register(CacheManager.class, cacheManager)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
+                .register(CacheManager.class, cacheManager)
+                .register(HttpClient.class, HttpClient.newHttpClient())
+                .register(KeyValueStore.class, new MockKeyValueStore()));
         resolver = factory.create();
     }
 
@@ -106,11 +105,9 @@ class MavenPackageMetadataResolverTest {
                         </metadata>
                         """)));
         stubFor(head(urlPathEqualTo("/com/example/mylib/2.0.0/mylib-2.0.0.jar"))
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")));
+                .willReturn(aResponse().withStatus(200).withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")));
         stubFor(get(urlPathEqualTo("/com/example/mylib/2.0.0/mylib-2.0.0.jar.sha1"))
-                .willReturn(aResponse().withStatus(200)
-                        .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
+                .willReturn(aResponse().withStatus(200).withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
         final var purl = aPackageURL()
                 .withType("maven")
@@ -124,11 +121,9 @@ class MavenPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2023-11-04T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2023-11-04T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2023-11-04T12:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2023-11-04T12:00:00Z"));
         assertThat(result.artifactMetadata().hashes())
                 .containsOnly(Map.entry(HashAlgorithm.SHA1, "da39a3ee5e6b4b0d3255bfef95601890afd80709"));
     }
@@ -149,8 +144,7 @@ class MavenPackageMetadataResolverTest {
         stubFor(head(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar"))
                 .willReturn(aResponse().withStatus(404)));
         stubFor(get(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar.sha1"))
-                .willReturn(aResponse().withStatus(200)
-                        .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
+                .willReturn(aResponse().withStatus(200).withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
         final var purl = aPackageURL()
                 .withType("maven")
@@ -188,14 +182,11 @@ class MavenPackageMetadataResolverTest {
                         </metadata>
                         """)));
         stubFor(head(urlPathEqualTo("/com/example/mylib/1.5.0/mylib-1.5.0.jar"))
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("Last-Modified", "Wed, 01 Mar 2023 10:00:00 GMT")));
+                .willReturn(aResponse().withStatus(200).withHeader("Last-Modified", "Wed, 01 Mar 2023 10:00:00 GMT")));
         stubFor(get(urlPathEqualTo("/com/example/mylib/1.5.0/mylib-1.5.0.jar.sha1"))
-                .willReturn(aResponse().withStatus(200)
-                        .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
+                .willReturn(aResponse().withStatus(200).withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
         stubFor(head(urlPathEqualTo("/com/example/mylib/3.0.0/mylib-3.0.0.jar"))
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("Last-Modified", "Thu, 02 Mar 2023 10:00:00 GMT")));
+                .willReturn(aResponse().withStatus(200).withHeader("Last-Modified", "Thu, 02 Mar 2023 10:00:00 GMT")));
 
         final var purl = aPackageURL()
                 .withType("maven")
@@ -209,11 +200,9 @@ class MavenPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("3.0.0");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2023-03-02T10:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2023-03-02T10:00:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2023-03-01T10:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2023-03-01T10:00:00Z"));
         assertThat(result.artifactMetadata().hashes())
                 .containsEntry(HashAlgorithm.SHA1, "da39a3ee5e6b4b0d3255bfef95601890afd80709");
     }
@@ -235,11 +224,9 @@ class MavenPackageMetadataResolverTest {
                         </metadata>
                         """)));
         stubFor(head(urlPathEqualTo("/com/example/mylib/2.0.0/mylib-2.0.0.jar"))
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("Last-Modified", "Wed, 01 Mar 2023 10:00:00 GMT")));
+                .willReturn(aResponse().withStatus(200).withHeader("Last-Modified", "Wed, 01 Mar 2023 10:00:00 GMT")));
         stubFor(get(urlPathEqualTo("/com/example/mylib/2.0.0/mylib-2.0.0.jar.sha1"))
-                .willReturn(aResponse().withStatus(200)
-                        .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
+                .willReturn(aResponse().withStatus(200).withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
         final var purl = aPackageURL()
                 .withType("maven")
@@ -253,16 +240,13 @@ class MavenPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("2.0.0");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2023-03-01T10:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2023-03-01T10:00:00Z"));
     }
 
     @Test
     void shouldPreferHighestStableVersionOverUnstableLatest(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/io/micrometer/micrometer-observation/maven-metadata.xml"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody(/* language=XML */ """
+                .willReturn(aResponse().withStatus(200).withBody(/* language=XML */ """
                                 <?xml version="1.0" encoding="UTF-8"?>
                                 <metadata>
                                   <groupId>io.micrometer</groupId>
@@ -281,8 +265,7 @@ class MavenPackageMetadataResolverTest {
                                 </metadata>
                                 """)));
         stubFor(head(urlPathEqualTo("/io/micrometer/micrometer-observation/1.16.5/micrometer-observation-1.16.5.jar"))
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("Last-Modified", "Mon, 14 Apr 2025 09:00:00 GMT")));
+                .willReturn(aResponse().withStatus(200).withHeader("Last-Modified", "Mon, 14 Apr 2025 09:00:00 GMT")));
 
         final var purl = aPackageURL()
                 .withType("maven")
@@ -295,8 +278,7 @@ class MavenPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.16.5");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2025-04-14T09:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2025-04-14T09:00:00Z"));
     }
 
     @Test
@@ -359,8 +341,7 @@ class MavenPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -379,7 +360,8 @@ class MavenPackageMetadataResolverTest {
         stubFor(head(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar"))
                 .willReturn(aResponse().withStatus(200)));
         stubFor(get(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar.sha1"))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709  mylib-1.0.0.jar")));
 
         final var purl = aPackageURL()
@@ -445,11 +427,9 @@ class MavenPackageMetadataResolverTest {
                         </metadata>
                         """)));
         stubFor(head(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0-sources.jar"))
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")));
+                .willReturn(aResponse().withStatus(200).withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")));
         stubFor(get(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0-sources.jar.sha1"))
-                .willReturn(aResponse().withStatus(200)
-                        .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
+                .willReturn(aResponse().withStatus(200).withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
         final var purl = aPackageURL()
                 .withType("maven")
@@ -464,11 +444,9 @@ class MavenPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.latestVersion()).isEqualTo("1.0.0");
-        assertThat(result.latestVersionPublishedAt())
-                .isEqualTo(Instant.parse("2023-11-04T12:00:00Z"));
+        assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2023-11-04T12:00:00Z"));
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2023-11-04T12:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2023-11-04T12:00:00Z"));
         assertThat(result.artifactMetadata().hashes())
                 .containsEntry(HashAlgorithm.SHA1, "da39a3ee5e6b4b0d3255bfef95601890afd80709");
     }
@@ -522,11 +500,9 @@ class MavenPackageMetadataResolverTest {
                         </metadata>
                         """)));
         stubFor(head(urlPathEqualTo("/com/example/mylib/2.0.0/mylib-2.0.0.jar"))
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")));
+                .willReturn(aResponse().withStatus(200).withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")));
         stubFor(get(urlPathEqualTo("/com/example/mylib/2.0.0/mylib-2.0.0.jar.sha1"))
-                .willReturn(aResponse().withStatus(200)
-                        .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
+                .willReturn(aResponse().withStatus(200).withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
         final var purl = aPackageURL()
                 .withType("maven")
@@ -541,8 +517,7 @@ class MavenPackageMetadataResolverTest {
 
         assertThat(firstResult).isNotNull();
         assertThat(firstResult.latestVersion()).isEqualTo("2.0.0");
-        assertThat(firstResult.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2023-11-04T12:00:00Z"));
+        assertThat(firstResult.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2023-11-04T12:00:00Z"));
         assertThat(secondResult).isNotNull();
         assertThat(secondResult.latestVersion()).isEqualTo("2.0.0");
 
@@ -604,8 +579,8 @@ class MavenPackageMetadataResolverTest {
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), "user", "secret");
         assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
-        final String expected = "Basic " + Base64.getEncoder().encodeToString(
-                "user:secret".getBytes(StandardCharsets.UTF_8));
+        final String expected =
+                "Basic " + Base64.getEncoder().encodeToString("user:secret".getBytes(StandardCharsets.UTF_8));
         verify(getRequestedFor(urlPathEqualTo("/com/example/mylib/maven-metadata.xml"))
                 .withHeader("Authorization", equalTo(expected)));
     }
@@ -664,8 +639,7 @@ class MavenPackageMetadataResolverTest {
 
         assertThat(result).isNotNull();
         assertThat(result.artifactMetadata()).isNotNull();
-        assertThat(result.artifactMetadata().publishedAt())
-                .isEqualTo(Instant.parse("2023-06-15T12:00:00Z"));
+        assertThat(result.artifactMetadata().publishedAt()).isEqualTo(Instant.parse("2023-06-15T12:00:00Z"));
         assertThat(result.artifactMetadata().hashes())
                 .containsEntry(HashAlgorithm.SHA1, "da39a3ee5e6b4b0d3255bfef95601890afd80709");
 
@@ -683,11 +657,9 @@ class MavenPackageMetadataResolverTest {
                         </metadata>
                         """)));
         stubFor(head(urlPathEqualTo("/com/example/mylib/1.0-SNAPSHOT/mylib-1.0-SNAPSHOT.jar"))
-                .willReturn(aResponse().withStatus(200)
-                        .withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")));
+                .willReturn(aResponse().withStatus(200).withHeader("Last-Modified", "Sat, 04 Nov 2023 12:00:00 GMT")));
         stubFor(get(urlPathEqualTo("/com/example/mylib/1.0-SNAPSHOT/mylib-1.0-SNAPSHOT.jar.sha1"))
-                .willReturn(aResponse().withStatus(200)
-                        .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
+                .willReturn(aResponse().withStatus(200).withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
         final var purl = aPackageURL()
                 .withType("maven")
@@ -717,8 +689,7 @@ class MavenPackageMetadataResolverTest {
                         </metadata>
                         """)));
         stubFor(get(urlPathEqualTo("/com/example/mylib/1.0.0/mylib-1.0.0.jar.sha1"))
-                .willReturn(aResponse().withStatus(200)
-                        .withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
+                .willReturn(aResponse().withStatus(200).withBody("da39a3ee5e6b4b0d3255bfef95601890afd80709")));
 
         final var purl = aPackageURL()
                 .withType("maven")
@@ -727,9 +698,7 @@ class MavenPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
         final var prior = new PackageArtifactMetadata(
-                Instant.parse("2023-01-01T00:00:00Z"),
-                Instant.parse("2023-06-15T12:00:00Z"),
-                Map.of() /* no SHA1 */);
+                Instant.parse("2023-01-01T00:00:00Z"), Instant.parse("2023-06-15T12:00:00Z"), Map.of() /* no SHA1 */);
 
         final var repo = new PackageRepository("test", wmRuntimeInfo.getHttpBaseUrl(), null, null);
         resolver.resolve(purl, repo, prior);
@@ -739,29 +708,24 @@ class MavenPackageMetadataResolverTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "1.0-SNAPSHOT",
-            "1.2.3-SNAPSHOT",
-            "1.0-snapshot",
-            "1.0-Snapshot"
-    })
+    @ValueSource(strings = {"1.0-SNAPSHOT", "1.2.3-SNAPSHOT", "1.0-snapshot", "1.0-Snapshot"})
     void shouldClassifySnapshotVersions(String version) {
         assertThat(isSnapshotVersion(version)).isTrue();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "1.0",
-            "1.2.3",
-            "5.7.0",
-            "1.0-1",
-            "1.0-alpha",
-            "2.0.0-rc1",
-            "1.0.0.Final",
-            "1.0-20231215.123456-1"
-    })
+    @ValueSource(
+            strings = {
+                "1.0",
+                "1.2.3",
+                "5.7.0",
+                "1.0-1",
+                "1.0-alpha",
+                "2.0.0-rc1",
+                "1.0.0.Final",
+                "1.0-20231215.123456-1"
+            })
     void shouldClassifyNonSnapshotVersions(String version) {
         assertThat(isSnapshotVersion(version)).isFalse();
     }
-
 }

@@ -29,12 +29,12 @@ import jakarta.ws.rs.ext.Provider;
  * @since 5.0.0
  */
 @Provider
-public class JsonProcessingExceptionMapper extends LoggingProblemDetailsExceptionMapper<JsonProcessingException, ProblemDetails> {
+public class JsonProcessingExceptionMapper
+        extends LoggingProblemDetailsExceptionMapper<JsonProcessingException, ProblemDetails> {
 
     @Override
     ProblemDetails map(final JsonProcessingException exception) {
-        if (exception instanceof InvalidDefinitionException
-            || exception instanceof JsonGenerationException) {
+        if (exception instanceof InvalidDefinitionException || exception instanceof JsonGenerationException) {
             return super.map(exception);
         }
 
@@ -44,5 +44,4 @@ public class JsonProcessingExceptionMapper extends LoggingProblemDetailsExceptio
                 .detail("The provided JSON could not be processed.")
                 .build();
     }
-
 }

@@ -31,5 +31,4 @@ abstract class AbstractJsonbMethod implements SQLMethod {
         final var stringTypeMapping = stmt.getSQLExpressionFactory().getMappingForType(String.class);
         return new StringExpression(stmt, stringTypeMapping, "CAST", List.of(expression), List.of("JSONB"));
     }
-
 }

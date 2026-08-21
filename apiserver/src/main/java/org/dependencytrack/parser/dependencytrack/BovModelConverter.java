@@ -83,13 +83,10 @@ public final class BovModelConverter {
     private static final Pattern EFFECTIVELY_ZERO_PATTERN = Pattern.compile("^0(\\.0)*$");
     static final String TITLE_PROPERTY_NAME = "dependency-track:vuln:title";
 
-    private BovModelConverter() {
-    }
+    private BovModelConverter() {}
 
     public static Vulnerability convert(
-            final Bom bov,
-            final org.cyclonedx.proto.v1_7.Vulnerability cdxVuln,
-            final boolean isAliasSyncEnabled) {
+            final Bom bov, final org.cyclonedx.proto.v1_7.Vulnerability cdxVuln, final boolean isAliasSyncEnabled) {
         if (cdxVuln == null) {
             return null;
         }
@@ -133,8 +130,8 @@ public final class BovModelConverter {
         // External links: collect from both BOM-level external references and the
         // vulnerability's advisories so neither source is silently dropped.
         final StringBuilder sb = new StringBuilder();
-        final Consumer<String> appendLink = url ->
-                sb.append("* [").append(url).append("](").append(url).append(")\n");
+        final Consumer<String> appendLink =
+                url -> sb.append("* [").append(url).append("](").append(url).append(")\n");
         bov.getExternalReferencesList().forEach(ref -> appendLink.accept(ref.getUrl()));
         cdxVuln.getAdvisoriesList().forEach(advisory -> appendLink.accept(advisory.getUrl()));
         if (!sb.isEmpty()) {
@@ -160,24 +157,28 @@ public final class BovModelConverter {
                 continue;
             }
 
-            if (!appliedMethods.contains(SCORE_METHOD_CVSSV4) && (rating.getMethod().equals(SCORE_METHOD_CVSSV4))) {
+            if (!appliedMethods.contains(SCORE_METHOD_CVSSV4)
+                    && (rating.getMethod().equals(SCORE_METHOD_CVSSV4))) {
                 vuln.setCvssV4Vector(trimToNull(rating.getVector()));
                 vuln.setCvssV4Score(BigDecimal.valueOf(rating.getScore()));
                 if (rating.hasVector()) {
                     final CvssVector cvss = CvssVector.parseVector(rating.getVector(), true);
                     if (cvss != null && cvss.isBaseFullyDefined()) {
                         if (rating.getScore() == 0.0) {
-                            vuln.setCvssV4Score(BigDecimal.valueOf(cvss.getBakedScores().getBaseScore()));
+                            vuln.setCvssV4Score(
+                                    BigDecimal.valueOf(cvss.getBakedScores().getBaseScore()));
                         }
                     } else {
-                        LOGGER.debug("Skipping CVSSv4 score derivation: vector '{}' could not be parsed or has incomplete base metrics", rating.getVector());
+                        LOGGER.debug(
+                                "Skipping CVSSv4 score derivation: vector '{}' could not be parsed or has incomplete base metrics",
+                                rating.getVector());
                     }
                 }
                 appliedMethods.add(SCORE_METHOD_CVSSV4);
             }
             if (!appliedMethods.contains(SCORE_METHOD_CVSSV3)
                     && (rating.getMethod().equals(SCORE_METHOD_CVSSV3)
-                    || rating.getMethod().equals(SCORE_METHOD_CVSSV31))) {
+                            || rating.getMethod().equals(SCORE_METHOD_CVSSV31))) {
                 vuln.setCvssV3Vector(trimToNull(rating.getVector()));
                 vuln.setCvssV3BaseScore(BigDecimal.valueOf(rating.getScore()));
                 if (rating.hasVector()) {
@@ -190,12 +191,15 @@ public final class BovModelConverter {
                             vuln.setCvssV3BaseScore(BigDecimal.valueOf(scores.getBaseScore()));
                         }
                     } else {
-                        LOGGER.debug("Skipping CVSSv3 sub-score derivation: vector '{}' could not be parsed or has incomplete base metrics", rating.getVector());
+                        LOGGER.debug(
+                                "Skipping CVSSv3 sub-score derivation: vector '{}' could not be parsed or has incomplete base metrics",
+                                rating.getVector());
                     }
                 }
                 appliedMethods.add(SCORE_METHOD_CVSSV3);
             }
-            if (!appliedMethods.contains(SCORE_METHOD_CVSSV2) && rating.getMethod().equals(SCORE_METHOD_CVSSV2)) {
+            if (!appliedMethods.contains(SCORE_METHOD_CVSSV2)
+                    && rating.getMethod().equals(SCORE_METHOD_CVSSV2)) {
                 vuln.setCvssV2Vector(trimToNull(rating.getVector()));
                 vuln.setCvssV2BaseScore(BigDecimal.valueOf(rating.getScore()));
                 if (rating.hasVector()) {
@@ -208,12 +212,15 @@ public final class BovModelConverter {
                             vuln.setCvssV2BaseScore(BigDecimal.valueOf(scores.getBaseScore()));
                         }
                     } else {
-                        LOGGER.debug("Skipping CVSSv2 sub-score derivation: vector '{}' could not be parsed or has incomplete base metrics", rating.getVector());
+                        LOGGER.debug(
+                                "Skipping CVSSv2 sub-score derivation: vector '{}' could not be parsed or has incomplete base metrics",
+                                rating.getVector());
                     }
                 }
                 appliedMethods.add(SCORE_METHOD_CVSSV2);
             }
-            if (!appliedMethods.contains(SCORE_METHOD_OWASP) && rating.getMethod().equals(ScoreMethod.SCORE_METHOD_OWASP)) {
+            if (!appliedMethods.contains(SCORE_METHOD_OWASP)
+                    && rating.getMethod().equals(ScoreMethod.SCORE_METHOD_OWASP)) {
                 try {
                     final OwaspRiskRating orr = OwaspRiskRating.fromVector(rating.getVector());
                     final us.springett.owasp.riskrating.Score orrScore = orr.calculateScore();
@@ -234,8 +241,7 @@ public final class BovModelConverter {
                 vuln.getCvssV4Score(),
                 vuln.getOwaspRRLikelihoodScore(),
                 vuln.getOwaspRRTechnicalImpactScore(),
-                vuln.getOwaspRRBusinessImpactScore()
-        ));
+                vuln.getOwaspRRBusinessImpactScore()));
 
         // There can be cases where ratings do not have a known method, and the source only assigned
         // a severity. Such ratings are inferior to those with proper method and vector, but we'll use
@@ -274,12 +280,8 @@ public final class BovModelConverter {
             return Collections.emptyList();
         }
 
-        final Map<String, Component> componentByBomRef =
-                bov.getComponentsList().stream().collect(
-                        Collectors.toMap(
-                                Component::getBomRef,
-                                Function.identity(),
-                                (first, _) -> first));
+        final Map<String, Component> componentByBomRef = bov.getComponentsList().stream()
+                .collect(Collectors.toMap(Component::getBomRef, Function.identity(), (first, _) -> first));
 
         final var vsList = new ArrayList<VulnerableSoftware>();
 
@@ -288,7 +290,8 @@ public final class BovModelConverter {
             if (component == null) {
                 LOGGER.warn(
                         "No component in the BOV for {} is matching the BOM ref '{}' of the affects node; Skipping",
-                        vuln.getId(), bovVulnAffects.getRef());
+                        vuln.getId(),
+                        bovVulnAffects.getRef());
                 continue;
             }
 
@@ -302,20 +305,19 @@ public final class BovModelConverter {
             }
         }
 
-        return vsList.stream()
-                .filter(distinctIgnoringDatastoreIdentity())
-                .toList();
+        return vsList.stream().filter(distinctIgnoringDatastoreIdentity()).toList();
     }
 
     private static @Nullable VulnerabilityAlias convert(
-            org.cyclonedx.proto.v1_7.Vulnerability cycloneVuln,
-            VulnerabilityReference cycloneAlias) {
-        final var vulnSource = Vulnerability.Source.ofName(cycloneVuln.getSource().getName());
+            org.cyclonedx.proto.v1_7.Vulnerability cycloneVuln, VulnerabilityReference cycloneAlias) {
+        final var vulnSource =
+                Vulnerability.Source.ofName(cycloneVuln.getSource().getName());
         if (vulnSource == null || vulnSource == Vulnerability.Source.UNKNOWN) {
             return null;
         }
 
-        final var aliasSource = Vulnerability.Source.ofName(cycloneAlias.getSource().getName());
+        final var aliasSource =
+                Vulnerability.Source.ofName(cycloneAlias.getSource().getName());
         if (aliasSource == null || aliasSource == Vulnerability.Source.UNKNOWN) {
             return null;
         }
@@ -333,8 +335,7 @@ public final class BovModelConverter {
             // Source of the vulnerability itself has been validated before,
             // so this scenario is highly unlikely to ever happen. Including
             // it here to make linters happy.
-            default -> throw new IllegalArgumentException(
-                    "Invalid vulnerability source %s".formatted(vulnSource));
+            default -> throw new IllegalArgumentException("Invalid vulnerability source %s".formatted(vulnSource));
         }
 
         switch (aliasSource) {
@@ -346,8 +347,9 @@ public final class BovModelConverter {
             case SNYK -> alias.setSnykId(cycloneAlias.getId());
             case VULNDB -> alias.setVulnDbId(cycloneAlias.getId());
             case CX -> alias.setCxId(cycloneAlias.getId());
-            default -> throw new IllegalArgumentException(
-                    "Invalid source %s for alias %s".formatted(aliasSource, cycloneAlias.getId()));
+            default ->
+                throw new IllegalArgumentException(
+                        "Invalid source %s for alias %s".formatted(aliasSource, cycloneAlias.getId()));
         }
 
         return alias;
@@ -392,9 +394,11 @@ public final class BovModelConverter {
     private static Comparator<VulnerabilityRating> compareRatings(final Source vulnSource) {
         return (left, right) -> {
             // Prefer ratings from the vulnerability's authoritative source.
-            if (left.getSource().getName().equals(vulnSource.getName()) && !right.getSource().getName().equals(vulnSource.getName())) {
+            if (left.getSource().getName().equals(vulnSource.getName())
+                    && !right.getSource().getName().equals(vulnSource.getName())) {
                 return -1; // left wins
-            } else if (!left.getSource().getName().equals(vulnSource.getName()) && right.getSource().getName().equals(vulnSource.getName())) {
+            } else if (!left.getSource().getName().equals(vulnSource.getName())
+                    && right.getSource().getName().equals(vulnSource.getName())) {
                 return 1; // right wins
             }
 
@@ -413,32 +417,23 @@ public final class BovModelConverter {
             }
 
             // Leave the final decision up to the respective method's priorities.
-            return Integer.compare(
-                    scoreMethodPriority(left.getMethod()),
-                    scoreMethodPriority(right.getMethod())
-            );
+            return Integer.compare(scoreMethodPriority(left.getMethod()), scoreMethodPriority(right.getMethod()));
         };
     }
 
     private static List<VulnerableSoftware> convertAffectedVersion(
-            String vulnId,
-            String affectedVersion,
-            Component affectedComponent) {
+            String vulnId, String affectedVersion, Component affectedComponent) {
         return createVulnerableSoftware(vulnId, affectedComponent, affectedVersion, null, null, null, null);
     }
 
     private static List<VulnerableSoftware> convertAffectedVersionRange(
-            String vulnId,
-            String affectedVersionRange,
-            Component affectedComponent) {
+            String vulnId, String affectedVersionRange, Component affectedComponent) {
         final List<VulnerableSoftware> vsList = new ArrayList<>();
         final List<Vers> versList;
         try {
             versList = convertRangeToVersList(affectedVersionRange);
         } catch (VersException e) {
-            LOGGER.warn(
-                    "Failed to parse vers range from '{}' for {}",
-                    affectedVersionRange, vulnId, e);
+            LOGGER.warn("Failed to parse vers range from '{}' for {}", affectedVersionRange, vulnId, e);
             return vsList;
         }
 
@@ -446,24 +441,24 @@ public final class BovModelConverter {
             if (vers.constraints().isEmpty()) {
                 LOGGER.debug(
                         "Vers range '{}' (parsed: {}) for {} does not contain any constraints; Skipping",
-                        affectedVersionRange, vers, vulnId);
+                        affectedVersionRange,
+                        vers,
+                        vulnId);
                 continue;
             } else if (vers.constraints().size() == 1) {
                 final var versConstraint = vers.constraints().getFirst();
                 if (versConstraint.comparator() == io.github.nscuro.versatile.Comparator.WILDCARD
                         || (versConstraint.comparator() == io.github.nscuro.versatile.Comparator.GREATER_THAN_OR_EQUAL
-                        && isEffectivelyZero(versConstraint.version()))) {
+                                && isEffectivelyZero(versConstraint.version()))) {
                     // Wildcards and ">=0" mean "all versions".
                     // Represent as versionStartIncluding=0 to use the range matching logic.
-                    vsList.addAll(createVulnerableSoftware(
-                            vulnId, affectedComponent, null, "0", null, null, null));
+                    vsList.addAll(createVulnerableSoftware(vulnId, affectedComponent, null, "0", null, null, null));
                     continue;
                 }
                 if (versConstraint.comparator() == io.github.nscuro.versatile.Comparator.GREATER_THAN
                         && isEffectivelyZero(versConstraint.version())) {
                     // ">0" means all versions except version 0.
-                    vsList.addAll(createVulnerableSoftware(
-                            vulnId, affectedComponent, null, null, "0", null, null));
+                    vsList.addAll(createVulnerableSoftware(vulnId, affectedComponent, null, null, "0", null, null));
                     continue;
                 }
                 if (versConstraint.comparator() == io.github.nscuro.versatile.Comparator.EQUAL) {
@@ -500,9 +495,7 @@ public final class BovModelConverter {
     }
 
     private static List<VulnerableSoftware> convertVersToVulnerableSoftware(
-            Vers vers,
-            String vulnId,
-            Component affectedComponent) {
+            Vers vers, String vulnId, Component affectedComponent) {
         final var vsList = new ArrayList<VulnerableSoftware>();
         final var exactVersions = new ArrayList<String>();
 
@@ -527,21 +520,31 @@ public final class BovModelConverter {
                 case LESS_THAN_OR_EQUAL -> versionEndIncluding = versionStr;
                 case LESS_THAN -> versionEndExcluding = versionStr;
                 case EQUAL -> exactVersions.add(versionStr);
-                default -> LOGGER.warn(
-                        "Encountered unexpected comparator {} in '{}' for {}; Skipping",
-                        constraint.comparator(), vers, vulnId);
+                default ->
+                    LOGGER.warn(
+                            "Encountered unexpected comparator {} in '{}' for {}; Skipping",
+                            constraint.comparator(),
+                            vers,
+                            vulnId);
             }
         }
 
         for (final String exactVersion : exactVersions) {
-            vsList.addAll(createVulnerableSoftware(
-                    vulnId, affectedComponent, exactVersion, null, null, null, null));
+            vsList.addAll(createVulnerableSoftware(vulnId, affectedComponent, exactVersion, null, null, null, null));
         }
 
-        if (versionStartIncluding != null || versionStartExcluding != null
-                || versionEndIncluding != null || versionEndExcluding != null) {
-            vsList.addAll(createVulnerableSoftware(vulnId, affectedComponent, null,
-                    versionStartIncluding, versionStartExcluding, versionEndIncluding, versionEndExcluding));
+        if (versionStartIncluding != null
+                || versionStartExcluding != null
+                || versionEndIncluding != null
+                || versionEndExcluding != null) {
+            vsList.addAll(createVulnerableSoftware(
+                    vulnId,
+                    affectedComponent,
+                    null,
+                    versionStartIncluding,
+                    versionStartExcluding,
+                    versionEndIncluding,
+                    versionEndExcluding));
         }
 
         if (vsList.isEmpty()) {
@@ -586,8 +589,7 @@ public final class BovModelConverter {
                     // that *should* never happen, unless the upstream reports bad data.
                     LOGGER.warn("""
                                     BOV for {} reports CPE '{}' (version: '{}') alongside a diverging
-                                    exact version '{}'; using the CPE's version.""",
-                            vulnId, affectedComponent.getCpe(), cpeVersion, version);
+                                    exact version '{}'; using the CPE's version.""", vulnId, affectedComponent.getCpe(), cpeVersion, version);
                 }
                 vs.setVersion(cpeVersion);
                 vs.setUpdate(cpe.getUpdate());
@@ -605,13 +607,9 @@ public final class BovModelConverter {
 
                 vsList.add(vs);
             } catch (CpeParsingException e) {
-                LOGGER.warn(
-                        "Failed to parse CPE '{}' of {}; Skipping",
-                        affectedComponent.getCpe(), vulnId, e);
+                LOGGER.warn("Failed to parse CPE '{}' of {}; Skipping", affectedComponent.getCpe(), vulnId, e);
             } catch (CpeEncodingException e) {
-                LOGGER.warn(
-                        "Failed to encode CPE '{}' of {}; Skipping",
-                        affectedComponent.getCpe(), vulnId, e);
+                LOGGER.warn("Failed to encode CPE '{}' of {}; Skipping", affectedComponent.getCpe(), vulnId, e);
             }
         }
 
@@ -636,9 +634,7 @@ public final class BovModelConverter {
 
                 vsList.add(vs);
             } catch (MalformedPackageURLException e) {
-                LOGGER.warn(
-                        "Failed to parse PURL from '{}' for {}; Skipping",
-                        affectedComponent.getPurl(), vulnId, e);
+                LOGGER.warn("Failed to parse PURL from '{}' for {}; Skipping", affectedComponent.getPurl(), vulnId, e);
             }
         }
 
@@ -649,5 +645,4 @@ public final class BovModelConverter {
         final var seen = new HashSet<Integer>();
         return vs -> seen.add(vs.hashCodeWithoutDatastoreIdentity());
     }
-
 }

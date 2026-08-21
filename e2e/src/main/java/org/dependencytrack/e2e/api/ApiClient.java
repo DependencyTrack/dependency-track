@@ -18,16 +18,6 @@
  */
 package org.dependencytrack.e2e.api;
 
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.FormParam;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
 import org.dependencytrack.e2e.api.model.Analysis;
 import org.dependencytrack.e2e.api.model.ApiKey;
 import org.dependencytrack.e2e.api.model.BomUploadRequest;
@@ -47,6 +37,17 @@ import org.dependencytrack.e2e.api.model.UpdateNotificationRuleRequest;
 import org.dependencytrack.e2e.api.model.VexSubmitRequest;
 import org.dependencytrack.e2e.api.model.VulnPolicyBundleSyncStatus;
 import org.dependencytrack.e2e.api.model.VulnerabilityPolicy;
+
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
 
 import java.util.List;
 import java.util.UUID;
@@ -68,9 +69,7 @@ public interface ApiClient {
     @Path("/v1/user/login")
     @Produces(MediaType.WILDCARD)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    String login(
-            @FormParam("username") String username,
-            @FormParam("password") String password);
+    String login(@FormParam("username") String username, @FormParam("password") String password);
 
     @PUT
     @Path("/v1/team")
@@ -88,9 +87,7 @@ public interface ApiClient {
     @Path("/v1/permission/{permission}/team/{uuid}")
     @Produces(MediaType.WILDCARD)
     @Consumes(MediaType.APPLICATION_JSON)
-    Team addPermissionToTeam(
-            @PathParam("uuid") UUID teamUuid,
-            @PathParam("permission") String permission);
+    Team addPermissionToTeam(@PathParam("uuid") UUID teamUuid, @PathParam("permission") String permission);
 
     @PUT
     @Path("/v1/bom")
@@ -120,17 +117,13 @@ public interface ApiClient {
     @Path("/v1/finding/project/{uuid}")
     @Produces(MediaType.WILDCARD)
     @Consumes(MediaType.APPLICATION_JSON)
-    List<Finding> getFindings(
-            @PathParam("uuid") UUID projectUuid,
-            @QueryParam("suppressed") boolean includeSuppressed);
+    List<Finding> getFindings(@PathParam("uuid") UUID projectUuid, @QueryParam("suppressed") boolean includeSuppressed);
 
     @GET
     @Path("/v1/project/lookup")
     @Produces(MediaType.WILDCARD)
     @Consumes(MediaType.APPLICATION_JSON)
-    Project lookupProject(
-            @QueryParam("name") String name,
-            @QueryParam("version") String version);
+    Project lookupProject(@QueryParam("name") String name, @QueryParam("version") String version);
 
     @GET
     @Path("/v1/notification/publisher")
@@ -189,5 +182,4 @@ public interface ApiClient {
             @PathParam("extensionPoint") String extensionPoint,
             @PathParam("extension") String extension,
             UpdateExtensionConfigRequest request);
-
 }

@@ -29,5 +29,4 @@ public interface ActivityContext {
      * @return ID of the workflow run that this activity execution is part of.
      */
     UUID workflowRunId();
-
 }

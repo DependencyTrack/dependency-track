@@ -22,6 +22,7 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -45,7 +46,9 @@ import java.util.UUID;
  */
 @PersistenceCapable
 @FetchGroups({
-        @FetchGroup(name = "ALL", members = {
+    @FetchGroup(
+            name = "ALL",
+            members = {
                 @Persistent(name = "name"),
                 @Persistent(name = "description"),
                 @Persistent(name = "extensionName"),
@@ -53,7 +56,7 @@ import java.util.UUID;
                 @Persistent(name = "templateMimeType"),
                 @Persistent(name = "defaultPublisher"),
                 @Persistent(name = "uuid"),
-        })
+            })
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class NotificationPublisher implements Serializable {

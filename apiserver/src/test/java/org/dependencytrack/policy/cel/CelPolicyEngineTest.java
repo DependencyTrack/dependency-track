@@ -116,7 +116,10 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         toolComponent.setVersion("toolComponentVersion");
         toolComponent.setClassifier(Classifier.APPLICATION);
         toolComponent.setCpe("toolComponentCpe");
-        toolComponent.setPurl("pkg:maven/toolComponentGroup/toolComponentName@toolComponentVersion"); // NB: Must be valid PURL, otherwise it's being JSON serialized as null
+        toolComponent.setPurl(
+                "pkg:maven/toolComponentGroup/toolComponentName@toolComponentVersion"); // NB: Must be valid PURL,
+        // otherwise it's being JSON
+        // serialized as null
         toolComponent.setSwidTagId("toolComponentSwidTagId");
         toolComponent.setInternal(true); // NB: Currently ignored for tool components.
         toolComponent.setMd5("toolComponentMd5");
@@ -143,12 +146,10 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         projectMetadata.setTools(new Tools(List.of(toolComponent), null));
         qm.persist(projectMetadata);
 
-        qm.createProjectProperty(project, "propertyGroup", "propertyName", "propertyValue", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "propertyGroup", "propertyName", "propertyValue", IConfigProperty.PropertyType.STRING, null);
 
-        qm.bind(project, List.of(
-                qm.createTag("projectTagA"),
-                qm.createTag("projectTagB")
-        ));
+        qm.bind(project, List.of(qm.createTag("projectTagA"), qm.createTag("projectTagB")));
 
         final var licenseGroup = new LicenseGroup();
         licenseGroup.setUuid(UUID.fromString("bbdb62f8-d854-4e43-a9ed-36481545c201"));
@@ -205,8 +206,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                 null);
 
         useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
                             new PackageURL("pkg:maven/componentGroup/componentName"),
                             /* latestVersion */ "1.0.0",
                             /* latestVersionPublishedAt */ Instant.ofEpochMilli(666),
@@ -214,8 +215,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                             null,
                             null)));
 
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
                             new PackageURL("pkg:maven/componentGroup/componentName@componentVersion"),
                             new PackageURL("pkg:maven/componentGroup/componentName"),
                             "acbd18db4cc2f85cedef654fccc4a4d8",
@@ -265,26 +266,19 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                                     new VulnerabilityKey("SNYK-001", Vulnerability.Source.SNYK),
                                     new VulnerabilityKey("SONATYPE-001", Vulnerability.Source.OSSINDEX),
                                     new VulnerabilityKey("VULNDB-001", Vulnerability.Source.VULNDB)));
-            handle
-                    .attach(KevDao.class)
-                    .upsertBatch("cisa", List.of(
-                            new KevAssertion(
-                                    "NVD",
-                                    "CVE-001",
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null
-                            )));
+            handle.attach(KevDao.class)
+                    .upsertBatch("cisa", List.of(new KevAssertion("NVD", "CVE-001", null, null, null, null, null)));
         });
 
         useJdbiHandle(handle -> handle.attach(EpssDao.class)
-                .createOrUpdateAll(List.of(new Epss(
-                        "CVE-001", BigDecimal.valueOf(0.6), BigDecimal.valueOf(0.2)))));
+                .createOrUpdateAll(List.of(new Epss("CVE-001", BigDecimal.valueOf(0.6), BigDecimal.valueOf(0.2)))));
 
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ALL, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.uuid == "__COMPONENT_UUID__"
                   && component.group == "componentGroup"
                   && component.name == "componentName"
@@ -414,12 +408,13 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                          && vuln.epss_percentile == 0.2
                          && vuln.is_kev
                      )
-                """
-                .replace("__COMPONENT_UUID__", component.getUuid().toString())
-                .replace("__PROJECT_UUID__", project.getUuid().toString())
-                .replace("__RESOLVED_LICENSE_UUID__", license.getUuid().toString())
-                .replace("__LICENSE_GROUP_UUID__", licenseGroup.getUuid().toString())
-                .replace("__VULN_UUID__", vuln.getUuid().toString()), PolicyViolation.Type.OPERATIONAL);
+                """.replace("__COMPONENT_UUID__", component.getUuid().toString())
+                        .replace("__PROJECT_UUID__", project.getUuid().toString())
+                        .replace("__RESOLVED_LICENSE_UUID__", license.getUuid().toString())
+                        .replace(
+                                "__LICENSE_GROUP_UUID__", licenseGroup.getUuid().toString())
+                        .replace("__VULN_UUID__", vuln.getUuid().toString()),
+                PolicyViolation.Type.OPERATIONAL);
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(project)).hasSize(1);
@@ -428,12 +423,22 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPolicyOperatorAnyAndAllConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.name == "acme-app"
-                """, PolicyViolation.Type.OPERATIONAL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name == "acme-lib"
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -451,9 +456,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPolicyOperatorForComponentAgeLessThan() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.compare_age("NUMERIC_LESS_THAN", "P666D")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -466,8 +476,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(component);
 
         useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
                             null,
@@ -476,19 +486,27 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                             null)));
 
             final Instant publishedDate = Instant.now();
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
-                            null, null, null, null,
+                            null,
+                            null,
+                            null,
+                            null,
                             publishedDate,
-                            null, null,
+                            null,
+                            null,
                             Instant.now())));
         });
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
-        assertThat(qm.getAllPolicyViolations(component).get(0).getPolicyCondition().getValue()).isEqualTo("""
+        assertThat(qm.getAllPolicyViolations(component)
+                        .get(0)
+                        .getPolicyCondition()
+                        .getValue())
+                .isEqualTo("""
                 component.compare_age("NUMERIC_LESS_THAN", "P666D")
                 """);
     }
@@ -496,31 +514,35 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPolicyOperatorForVersionDistance() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.version_distance(">=", v1.VersionDistance{ major: \"0\", minor: \"1\", patch: \"?\" })
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("name");
         project.setInactiveSince(null);
 
         useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
-                            new PackageURL("pkg:maven/foo/bar"),
-                            "1.3.1",
-                            null,
-                            Instant.now(),
-                            null,
-                            null)));
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
+                            new PackageURL("pkg:maven/foo/bar"), "1.3.1", null, Instant.now(), null, null)));
 
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
                             new PackageURL("pkg:maven/foo/bar@1.0.0"),
                             new PackageURL("pkg:maven/foo/bar"),
-                            null, null, null, null,
                             null,
-                            null, null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
                             Instant.now())));
         });
 
@@ -537,7 +559,11 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
-        assertThat(qm.getAllPolicyViolations(component).get(0).getPolicyCondition().getValue()).isEqualTo("""
+        assertThat(qm.getAllPolicyViolations(component)
+                        .get(0)
+                        .getPolicyCondition()
+                        .getValue())
+                .isEqualTo("""
                 component.version_distance(">=", v1.VersionDistance{ major: \"0\", minor: \"1\", patch: \"?\" })
                 """);
     }
@@ -545,9 +571,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPolicyOperatorForComponentAgeGreaterThan() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.compare_age("<", "P666D")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -560,8 +591,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(component);
 
         useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
                             null,
@@ -570,19 +601,27 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                             null)));
 
             final Instant publishedDate = Instant.now();
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
-                            null, null, null, null,
+                            null,
+                            null,
+                            null,
+                            null,
                             publishedDate,
-                            null, null,
+                            null,
+                            null,
                             Instant.now())));
         });
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
-        assertThat(qm.getAllPolicyViolations(component).get(0).getPolicyCondition().getValue()).isEqualTo("""
+        assertThat(qm.getAllPolicyViolations(component)
+                        .get(0)
+                        .getPolicyCondition()
+                        .getValue())
+                .isEqualTo("""
                 component.compare_age("<", "P666D")
                 """);
     }
@@ -590,9 +629,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPublishedAtComparisonGreaterThan() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 (now - component.published_at) > duration("365d")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -605,8 +649,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(component);
 
         useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
                             null,
@@ -614,13 +658,17 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                             null,
                             null)));
 
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
-                            null, null, null, null,
+                            null,
+                            null,
+                            null,
+                            null,
                             Instant.EPOCH,
-                            null, null,
+                            null,
+                            null,
                             Instant.now())));
         });
 
@@ -632,9 +680,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPublishedAtComparisonLessThan() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 (now - component.published_at) < duration("365d")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -647,8 +700,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(component);
 
         useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
                             null,
@@ -656,13 +709,17 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                             null,
                             null)));
 
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
-                            null, null, null, null,
+                            null,
+                            null,
+                            null,
+                            null,
                             Instant.EPOCH,
-                            null, null,
+                            null,
+                            null,
                             Instant.now())));
         });
 
@@ -674,9 +731,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPublishedAtComparisonUnknown() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 (now - component.published_at) > duration("365d")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -689,8 +751,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(component);
 
         useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
                             null,
@@ -699,13 +761,17 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                             null)));
 
             // Omitted; Publish date is unknown.
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
-                            null, null, null, null,
                             null,
-                            null, null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
                             Instant.now())));
         });
 
@@ -719,9 +785,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPublishedAtComparisonUnknownAndHasCheck() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 has(component.published_at) && (now - component.published_at) > duration("365d")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -734,8 +805,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(component);
 
         useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             "1.0.0",
                             null,
@@ -744,13 +815,17 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
                             null)));
 
             // Omitted; Publish date is unknown.
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
                             new PackageURL("pkg:maven/org.http4s/blaze-core_2.12"),
-                            null, null, null, null,
                             null,
-                            null, null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
                             Instant.now())));
         });
 
@@ -763,49 +838,59 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         return Stream.of(
                 Arguments.of(
                         "sha256 differs",
-                        (Consumer<Component>) c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-                        new String[]{null, null, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", null},
+                        (Consumer<Component>)
+                                c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                        new String[] {
+                            null, null, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", null
+                        },
                         true),
                 Arguments.of(
                         "sha256 matches case-insensitively",
-                        (Consumer<Component>) c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-                        new String[]{null, null, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", null},
+                        (Consumer<Component>)
+                                c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                        new String[] {
+                            null, null, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", null
+                        },
                         false),
                 Arguments.of(
                         "no overlapping algorithm",
-                        (Consumer<Component>) c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-                        new String[]{null, "0123456789abcdef0123456789abcdef01234567", null, null},
+                        (Consumer<Component>)
+                                c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                        new String[] {null, "0123456789abcdef0123456789abcdef01234567", null, null},
                         false),
                 Arguments.of(
                         "component has no comparable hash",
-                        (Consumer<Component>) _ -> {
+                        (Consumer<Component>) _ -> {},
+                        new String[] {
+                            null, null, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", null
                         },
-                        new String[]{null, null, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", null},
                         false),
                 Arguments.of(
                         "component only has non-comparable algorithm",
                         (Consumer<Component>) c -> c.setSha3_512("c" + "0".repeat(127)),
-                        new String[]{null, null, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", null},
+                        new String[] {
+                            null, null, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", null
+                        },
                         false),
                 Arguments.of(
                         "no package artifact metadata",
-                        (Consumer<Component>) c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                        (Consumer<Component>)
+                                c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
                         null,
                         false),
                 Arguments.of(
                         "package artifact metadata exists but all hash columns null",
-                        (Consumer<Component>) c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-                        new String[]{null, null, null, null},
+                        (Consumer<Component>)
+                                c -> c.setSha256("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                        new String[] {null, null, null, null},
                         false));
     }
 
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource
     void shouldEvaluateHasPackageArtifactHashMismatch(
-            String displayName,
-            Consumer<Component> componentSetup,
-            String[] pkgArtifactHashes,
-            boolean expectViolation) throws Exception {
+            String displayName, Consumer<Component> componentSetup, String[] pkgArtifactHashes, boolean expectViolation)
+            throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(
                 policy,
@@ -828,16 +913,21 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         if (pkgArtifactHashes != null) {
             useJdbiHandle(handle -> {
                 try {
-                    new PackageMetadataDao(handle).upsertAll(List.of(
-                            new PackageMetadata(
-                                    new PackageURL("pkg:maven/acme/lib"),
-                                    "1.0", null, Instant.now(), null, null)));
-                    new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                            new PackageArtifactMetadata(
+                    new PackageMetadataDao(handle)
+                            .upsertAll(List.of(new PackageMetadata(
+                                    new PackageURL("pkg:maven/acme/lib"), "1.0", null, Instant.now(), null, null)));
+                    new PackageArtifactMetadataDao(handle)
+                            .upsertAll(List.of(new PackageArtifactMetadata(
                                     new PackageURL("pkg:maven/acme/lib@1.0"),
                                     new PackageURL("pkg:maven/acme/lib"),
-                                    pkgArtifactHashes[0], pkgArtifactHashes[1], pkgArtifactHashes[2], pkgArtifactHashes[3],
-                                    null, null, "central", Instant.now())));
+                                    pkgArtifactHashes[0],
+                                    pkgArtifactHashes[1],
+                                    pkgArtifactHashes[2],
+                                    pkgArtifactHashes[3],
+                                    null,
+                                    null,
+                                    "central",
+                                    Instant.now())));
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -856,12 +946,22 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPolicyOperatorAnyAndNotAllConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.name == "acme-app"
-                """, PolicyViolation.Type.OPERATIONAL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name == "someOtherComponentThatIsNotAcmeLib"
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -879,12 +979,22 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPolicyOperatorAnyAndNoConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.name == "someOtherProjectThatIsNotAcmeApp"
-                """, PolicyViolation.Type.OPERATIONAL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name == "someOtherComponentThatIsNotAcmeLib"
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -902,12 +1012,22 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPolicyOperatorAllAndAllConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.name == "acme-app"
-                """, PolicyViolation.Type.OPERATIONAL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name == "acme-lib"
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -925,12 +1045,22 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPolicyOperatorAllAndNotAllConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.name == "acme-app"
-                """, PolicyViolation.Type.OPERATIONAL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name == "someOtherComponentThatIsNotAcmeLib"
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -948,12 +1078,22 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPolicyOperatorAllAndNoConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.name == "someOtherProjectThatIsNotAcmeApp"
-                """, PolicyViolation.Type.OPERATIONAL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name == "someOtherComponentThatIsNotAcmeLib"
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -971,13 +1111,23 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPolicyAssignedToProject() throws Exception {
         final var policyA = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policyA, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policyA,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name.startsWith("acme-lib")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
         final var policyB = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policyB, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policyB,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name.startsWith("acme-lib")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var projectA = new Project();
         projectA.setName("acme-app-a");
@@ -1008,13 +1158,23 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithPolicyAssignedToProjectParent() throws Exception {
         final var policyA = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policyA, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policyA,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name.startsWith("acme-lib")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
         final var policyB = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policyB, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policyB,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name.startsWith("acme-lib")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var projectA = new Project();
         projectA.setName("acme-app-a");
@@ -1053,13 +1213,23 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final Tag tag = qm.createTag("foo");
 
         final var policyA = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policyA, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policyA,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name.startsWith("acme-lib")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
         final var policyB = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policyB, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policyB,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.name.startsWith("acme-lib")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
         qm.persist(policyB);
         qm.bind(policyB, List.of(tag));
 
@@ -1091,13 +1261,22 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithInvalidScript() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.doesNotExist == "foo"
-                """, PolicyViolation.Type.OPERATIONAL);
-        final PolicyCondition validCondition = qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION,
-                PolicyCondition.Operator.MATCHES, """
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+        final PolicyCondition validCondition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                         project.name == "acme-app"
-                        """, PolicyViolation.Type.OPERATIONAL);
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1109,21 +1288,30 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(component);
 
         assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid()));
-        assertThat(qm.getAllPolicyViolations(component)).satisfiesExactly(violation ->
-                assertThat(violation.getPolicyCondition()).isEqualTo(validCondition)
-        );
+        assertThat(qm.getAllPolicyViolations(component))
+                .satisfiesExactly(
+                        violation -> assertThat(violation.getPolicyCondition()).isEqualTo(validCondition));
     }
 
     @Test
     void testEvaluateProjectWithScriptExecutionException() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.last_bom_import == timestamp("invalid")
-                """, PolicyViolation.Type.OPERATIONAL);
-        final PolicyCondition validCondition = qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION,
-                PolicyCondition.Operator.MATCHES, """
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+        final PolicyCondition validCondition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                         project.name == "acme-app"
-                        """, PolicyViolation.Type.OPERATIONAL);
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1135,17 +1323,22 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(component);
 
         assertThatNoException().isThrownBy(() -> new CelPolicyEngine().evaluateProject(project.getUuid()));
-        assertThat(qm.getAllPolicyViolations(component)).satisfiesExactly(violation ->
-                assertThat(violation.getPolicyCondition()).isEqualTo(validCondition)
-        );
+        assertThat(qm.getAllPolicyViolations(component))
+                .satisfiesExactly(
+                        violation -> assertThat(violation.getPolicyCondition()).isEqualTo(validCondition));
     }
 
     @Test
     void testEvaluateProjectWithFuncProjectDependsOnComponent() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.depends_on(v1.Component{name: "acme-lib-a"})
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1176,9 +1369,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithFuncProjectDependsOnComponentWithRegexAndVers() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.depends_on(v1.Component{name: "re:^acme-lib-.*$", version: "vers:generic/>1|<2.0"})
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1211,9 +1409,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithFuncComponentIsDependencyOfComponent() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.is_dependency_of(v1.Component{name: "acme-lib-a"})
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1243,9 +1446,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithFuncComponentIsDependencyOfComponentWithRegex() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.is_dependency_of(v1.Component{name: "re:.*-lib-.*"})
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1275,12 +1483,17 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithFuncComponentIsDependencyOfComponentWithVersRange() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.is_dependency_of(v1.Component{
                   name: "re:.*-lib-*",
                   version: "vers:maven/>=2.1.2|<2.2"
                 })
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1337,10 +1550,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         //  /-> A -> C
         // *
         //  \-> B -> D
-        project.setDirectDependencies("[%s, %s]".formatted(
-                new ComponentIdentity(componentA).toJSON(),
-                new ComponentIdentity(componentB).toJSON())
-        );
+        project.setDirectDependencies("[%s, %s]"
+                .formatted(new ComponentIdentity(componentA).toJSON(), new ComponentIdentity(componentB).toJSON()));
         componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentC).toJSON()));
         componentB.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentD).toJSON()));
         qm.persist(project);
@@ -1351,10 +1562,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
 
         // Is component introduced exclusively through A?
-        PolicyCondition condition = qm.createPolicyCondition(policy,
-                PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                         component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-a"})
-                        """, PolicyViolation.Type.OPERATIONAL);
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
         policyEngine.evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
@@ -1421,10 +1636,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         //  /-> A -------\
         // *              > C
         //  \-> B -> D --/
-        project.setDirectDependencies("[%s, %s]".formatted(
-                new ComponentIdentity(componentA).toJSON(),
-                new ComponentIdentity(componentB).toJSON())
-        );
+        project.setDirectDependencies("[%s, %s]"
+                .formatted(new ComponentIdentity(componentA).toJSON(), new ComponentIdentity(componentB).toJSON()));
         componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentC).toJSON()));
         componentB.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentD).toJSON()));
         componentD.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentC).toJSON()));
@@ -1437,10 +1650,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
 
         // Is component introduced exclusively through A?
-        PolicyCondition condition = qm.createPolicyCondition(policy,
-                PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                         component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-a"})
-                        """, PolicyViolation.Type.OPERATIONAL);
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
         policyEngine.evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
@@ -1507,10 +1724,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         //  /-> A --\
         // *         > C -> D
         //  \-> B --/
-        project.setDirectDependencies("[%s, %s]".formatted(
-                new ComponentIdentity(componentA).toJSON(),
-                new ComponentIdentity(componentB).toJSON())
-        );
+        project.setDirectDependencies("[%s, %s]"
+                .formatted(new ComponentIdentity(componentA).toJSON(), new ComponentIdentity(componentB).toJSON()));
         componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentC).toJSON()));
         componentB.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentC).toJSON()));
         componentC.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentD).toJSON()));
@@ -1523,10 +1738,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
 
         // Is component introduced exclusively through A?
-        PolicyCondition condition = qm.createPolicyCondition(policy,
-                PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                         component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-a"})
-                        """, PolicyViolation.Type.OPERATIONAL);
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
         policyEngine.evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
@@ -1585,13 +1804,15 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         //  /-> spring-boot-starter -> spring-core -> snakeyaml
         // *                                             ^
         //  \-> jackson-dataformat-yaml ----------------/
-        project.setDirectDependencies("[%s, %s]".formatted(
-                new ComponentIdentity(componentSpringBootStarter).toJSON(),
-                new ComponentIdentity(componentSnakeYaml).toJSON())
-        );
-        componentSpringBootStarter.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentSpringCore).toJSON()));
+        project.setDirectDependencies("[%s, %s]"
+                .formatted(
+                        new ComponentIdentity(componentSpringBootStarter).toJSON(),
+                        new ComponentIdentity(componentSnakeYaml).toJSON()));
+        componentSpringBootStarter.setDirectDependencies(
+                "[%s]".formatted(new ComponentIdentity(componentSpringCore).toJSON()));
         componentSpringCore.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentSnakeYaml).toJSON()));
-        componentJacksonDataformatYaml.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentSnakeYaml).toJSON()));
+        componentJacksonDataformatYaml.setDirectDependencies(
+                "[%s]".formatted(new ComponentIdentity(componentSnakeYaml).toJSON()));
         qm.persist(project);
         qm.persist(componentSpringBootStarter);
         qm.persist(componentSpringCore);
@@ -1601,10 +1822,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
 
         // Is component introduced exclusively through spring-boot-starter?
-        PolicyCondition condition = qm.createPolicyCondition(policy,
-                PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                         component.is_exclusive_dependency_of(v1.Component{name: "spring-boot-starter"})
-                        """, PolicyViolation.Type.OPERATIONAL);
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
         policyEngine.evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringCore)).hasSize(1);
@@ -1692,22 +1917,25 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         //                                     \                                                            ^
         //                                      \----------------------------------------------------------/
         project.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentSpringBootStarter).toJSON()));
-        componentSpringBootStarter.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentSpringBoot).toJSON()));
-        componentSpringBoot.setDirectDependencies("[%s, %s]".formatted(
-                new ComponentIdentity(componentSpringCore).toJSON(),
-                new ComponentIdentity(componentSpringContext).toJSON())
-        );
-        componentSpringContext.setDirectDependencies("[%s, %s, %s]".formatted(
-                new ComponentIdentity(componentSpringAop).toJSON(),
-                new ComponentIdentity(componentSpringExpression).toJSON(),
-                new ComponentIdentity(componentSpringCore).toJSON()
-        ));
-        componentSpringAop.setDirectDependencies("[%s, %s]".formatted(
-                new ComponentIdentity(componentSpringCore).toJSON(),
-                new ComponentIdentity(componentSpringBeans).toJSON()
-        ));
-        componentSpringBeans.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentSpringCore).toJSON()));
-        componentSpringExpression.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentSpringCore).toJSON()));
+        componentSpringBootStarter.setDirectDependencies(
+                "[%s]".formatted(new ComponentIdentity(componentSpringBoot).toJSON()));
+        componentSpringBoot.setDirectDependencies("[%s, %s]"
+                .formatted(
+                        new ComponentIdentity(componentSpringCore).toJSON(),
+                        new ComponentIdentity(componentSpringContext).toJSON()));
+        componentSpringContext.setDirectDependencies("[%s, %s, %s]"
+                .formatted(
+                        new ComponentIdentity(componentSpringAop).toJSON(),
+                        new ComponentIdentity(componentSpringExpression).toJSON(),
+                        new ComponentIdentity(componentSpringCore).toJSON()));
+        componentSpringAop.setDirectDependencies("[%s, %s]"
+                .formatted(
+                        new ComponentIdentity(componentSpringCore).toJSON(),
+                        new ComponentIdentity(componentSpringBeans).toJSON()));
+        componentSpringBeans.setDirectDependencies(
+                "[%s]".formatted(new ComponentIdentity(componentSpringCore).toJSON()));
+        componentSpringExpression.setDirectDependencies(
+                "[%s]".formatted(new ComponentIdentity(componentSpringCore).toJSON()));
         qm.persist(project);
         qm.persist(componentSpringBootStarter);
         qm.persist(componentSpringBoot);
@@ -1720,10 +1948,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
 
         // Is component introduced exclusively through spring-boot-starter?
-        PolicyCondition condition = qm.createPolicyCondition(policy,
-                PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                         component.is_exclusive_dependency_of(v1.Component{name: "spring-boot-starter"})
-                        """, PolicyViolation.Type.OPERATIONAL);
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
         policyEngine.evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(componentSpringBootStarter)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentSpringBoot)).hasSize(1);
@@ -1844,10 +2076,8 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         //  /-> A -> B
         // *         ^
         //  \-------/
-        project.setDirectDependencies("[%s, %s]".formatted(
-                new ComponentIdentity(componentA).toJSON(),
-                new ComponentIdentity(componentB).toJSON()
-        ));
+        project.setDirectDependencies("[%s, %s]"
+                .formatted(new ComponentIdentity(componentA).toJSON(), new ComponentIdentity(componentB).toJSON()));
         componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentB).toJSON()));
         qm.persist(project);
         qm.persist(componentA);
@@ -1856,10 +2086,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
 
         // Is component introduced exclusively through acme-lib-a?
-        PolicyCondition condition = qm.createPolicyCondition(policy,
-                PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                         component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-a"})
-                        """, PolicyViolation.Type.OPERATIONAL);
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
         policyEngine.evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
@@ -1876,10 +2110,15 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithFuncMatchesRange() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.matches_range("vers:generic/<1")
                     && component.matches_range("vers:golang/>0|<v2.0.0")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1906,10 +2145,15 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithFuncMatchesRangeWithInvalidRange() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.matches_range("foo")
                     && component.matches_range("bar")
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1936,10 +2180,15 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void testEvaluateProjectWithToolMetadata() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.metadata.tools.components.exists(tool,
                   tool.name == "toolName" && tool.matches_range("vers:generic/>=1.2.3|<3"))
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1978,8 +2227,10 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void issue1924() throws Exception {
         Policy policy = qm.createPolicy("Policy 1924", Policy.Operator.ALL, Policy.ViolationState.INFO);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.NO_MATCH, "pkg:deb");
+        qm.createPolicyCondition(
+                policy, PolicyCondition.Subject.SEVERITY, PolicyCondition.Operator.IS, Severity.CRITICAL.name());
+        qm.createPolicyCondition(
+                policy, PolicyCondition.Subject.PACKAGE_URL, PolicyCondition.Operator.NO_MATCH, "pkg:deb");
         Project project = qm.createProject("My Project", null, "1", null, null, null, null, false);
         qm.persist(project);
         ArrayList<Component> components = new ArrayList<>();
@@ -2027,26 +2278,31 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         // NOTE: This behavior changed in CelPolicyEngine over the legacy PolicyEngine.
         // A matched PolicyCondition can now only yield a single PolicyViolation, whereas
         // with the legacy PolicyEngine, multiple PolicyViolations could be raised.
-//        Assert.assertEquals(3, violations.size());
-//        PolicyViolation policyViolation = violations.get(0);
-//        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
-//        Assert.assertEquals(PolicyCondition.Subject.SEVERITY, policyViolation.getPolicyCondition().getSubject());
-//        policyViolation = violations.get(1);
-//        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
-//        Assert.assertEquals(PolicyCondition.Subject.SEVERITY, policyViolation.getPolicyCondition().getSubject());
-//        policyViolation = violations.get(2);
-//        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
-//        Assert.assertEquals(PolicyCondition.Subject.PACKAGE_URL, policyViolation.getPolicyCondition().getSubject());
-        assertThat(violations).satisfiesExactlyInAnyOrder(
-                violation -> {
-                    assertThat(violation.getComponent().getName()).isEqualTo("Log4J");
-                    assertThat(violation.getPolicyCondition().getSubject()).isEqualTo(PolicyCondition.Subject.SEVERITY);
-                },
-                violation -> {
-                    assertThat(violation.getComponent().getName()).isEqualTo("Log4J");
-                    assertThat(violation.getPolicyCondition().getSubject()).isEqualTo(PolicyCondition.Subject.PACKAGE_URL);
-                }
-        );
+        //        Assert.assertEquals(3, violations.size());
+        //        PolicyViolation policyViolation = violations.get(0);
+        //        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
+        //        Assert.assertEquals(PolicyCondition.Subject.SEVERITY,
+        // policyViolation.getPolicyCondition().getSubject());
+        //        policyViolation = violations.get(1);
+        //        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
+        //        Assert.assertEquals(PolicyCondition.Subject.SEVERITY,
+        // policyViolation.getPolicyCondition().getSubject());
+        //        policyViolation = violations.get(2);
+        //        Assert.assertEquals("Log4J", policyViolation.getComponent().getName());
+        //        Assert.assertEquals(PolicyCondition.Subject.PACKAGE_URL,
+        // policyViolation.getPolicyCondition().getSubject());
+        assertThat(violations)
+                .satisfiesExactlyInAnyOrder(
+                        violation -> {
+                            assertThat(violation.getComponent().getName()).isEqualTo("Log4J");
+                            assertThat(violation.getPolicyCondition().getSubject())
+                                    .isEqualTo(PolicyCondition.Subject.SEVERITY);
+                        },
+                        violation -> {
+                            assertThat(violation.getComponent().getName()).isEqualTo("Log4J");
+                            assertThat(violation.getPolicyCondition().getSubject())
+                                    .isEqualTo(PolicyCondition.Subject.PACKAGE_URL);
+                        });
     }
 
     @Test
@@ -2063,7 +2319,11 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
         lg = qm.detach(LicenseGroup.class, lg.getId());
         license = qm.detach(License.class, license.getId());
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS_NOT, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS_NOT,
+                lg.getUuid().toString());
 
         license = new License();
         license.setName("MIT");
@@ -2075,7 +2335,11 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         lg = qm.persist(lg);
         lg = qm.detach(LicenseGroup.class, lg.getId());
         license = qm.detach(License.class, license.getId());
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.LICENSE_GROUP, PolicyCondition.Operator.IS_NOT, lg.getUuid().toString());
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.LICENSE_GROUP,
+                PolicyCondition.Operator.IS_NOT,
+                lg.getUuid().toString());
 
         Project project = qm.createProject("My Project", null, "1", null, null, null, null, false);
         qm.persist(project);
@@ -2100,10 +2364,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         Assertions.assertEquals(2, violations.size());
         PolicyViolation policyViolation = violations.get(0);
         Assertions.assertEquals("Log4J", policyViolation.getComponent().getName());
-        Assertions.assertEquals(PolicyCondition.Subject.LICENSE_GROUP, policyViolation.getPolicyCondition().getSubject());
+        Assertions.assertEquals(
+                PolicyCondition.Subject.LICENSE_GROUP,
+                policyViolation.getPolicyCondition().getSubject());
         policyViolation = violations.get(1);
         Assertions.assertEquals("Log4J", policyViolation.getComponent().getName());
-        Assertions.assertEquals(PolicyCondition.Subject.LICENSE_GROUP, policyViolation.getPolicyCondition().getSubject());
+        Assertions.assertEquals(
+                PolicyCondition.Subject.LICENSE_GROUP,
+                policyViolation.getPolicyCondition().getSubject());
     }
 
     @Test
@@ -2129,23 +2397,24 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         // The violation has both an analysis (REJECTED), and a comment added to it.
         // As it is checking for component version == 1.5.0, it should no longer violate and be cleaned up.
         final Policy policyB = qm.createPolicy("Policy B", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        final PolicyCondition conditionB = qm.createPolicyCondition(policyB,
-                PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.5.0");
+        final PolicyCondition conditionB = qm.createPolicyCondition(
+                policyB, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.5.0");
         final var violationB = new PolicyViolation();
         violationB.setComponent(component);
         violationB.setPolicyCondition(conditionB);
         violationB.setTimestamp(Date.from(Instant.EPOCH));
         violationB.setType(PolicyViolation.Type.OPERATIONAL);
         qm.persist(violationB);
-        qm.makeViolationAnalysis(
-                new MakeViolationAnalysisCommand(component, violationB)
-                        .withState(ViolationAnalysisState.REJECTED)
-                        .withCommenter("commenter")
-                        .withComment("comment"));
+        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(component, violationB)
+                .withState(ViolationAnalysisState.REJECTED)
+                .withCommenter("commenter")
+                .withComment("comment"));
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
-        assertThat(qm.getAllPolicyViolations(project)).satisfiesExactly(violation ->
-                assertThat(violation.getPolicyCondition().getPolicy().getName()).isEqualTo("Policy A"));
+        assertThat(qm.getAllPolicyViolations(project))
+                .satisfiesExactly(violation -> assertThat(
+                                violation.getPolicyCondition().getPolicy().getName())
+                        .isEqualTo("Policy A"));
     }
 
     @Test
@@ -2170,9 +2439,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(componentC);
 
         //  /-> A -> B -> C
-        project.setDirectDependencies("[%s]".formatted(
-                new ComponentIdentity(componentA).toJSON())
-        );
+        project.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentA).toJSON()));
         componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentB).toJSON()));
         componentB.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentC).toJSON()));
         qm.persist(project);
@@ -2183,10 +2450,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
 
         // Is component introduced strictly directly through A?
-        qm.createPolicyCondition(policy,
-                PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                         component.is_direct_dependency_of(v1.Component{name: "acme-lib-a"})
-                        """, PolicyViolation.Type.OPERATIONAL);
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
         policyEngine.evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).hasSize(1);
@@ -2224,18 +2495,15 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         componentE.setName("acme-lib-e");
         qm.persist(componentE);
 
-
         //  /-> A -> B -> C
         // *         ^
         //  \------> D -> E
-        project.setDirectDependencies("[%s, %s]".formatted(
-                new ComponentIdentity(componentA).toJSON(),
-                new ComponentIdentity(componentD).toJSON())
-        );
+        project.setDirectDependencies("[%s, %s]"
+                .formatted(new ComponentIdentity(componentA).toJSON(), new ComponentIdentity(componentD).toJSON()));
         componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentB).toJSON()));
         componentB.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentC).toJSON()));
-        componentD.setDirectDependencies("[%s, %s]".formatted(new ComponentIdentity(componentE).toJSON(),
-                new ComponentIdentity(componentB).toJSON()));
+        componentD.setDirectDependencies("[%s, %s]"
+                .formatted(new ComponentIdentity(componentE).toJSON(), new ComponentIdentity(componentB).toJSON()));
         qm.persist(project);
         qm.persist(componentA);
         qm.persist(componentB);
@@ -2245,11 +2513,15 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
 
         // Is component introduced exclusively and directly through A?
-        PolicyCondition condition = qm.createPolicyCondition(policy,
-                PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                         component.is_direct_dependency_of(v1.Component{name: "acme-lib-a"})
                         && component.is_exclusive_dependency_of(v1.Component{name: "acme-lib-a"})
-                        """, PolicyViolation.Type.OPERATIONAL);
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
         policyEngine.evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
@@ -2284,9 +2556,7 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(componentB);
 
         //  /-> A -> B
-        project.setDirectDependencies("[%s]".formatted(
-                new ComponentIdentity(componentA).toJSON())
-        );
+        project.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentA).toJSON()));
         componentA.setDirectDependencies("[%s]".formatted(new ComponentIdentity(componentB).toJSON()));
         qm.persist(project);
         qm.persist(componentA);
@@ -2295,13 +2565,17 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
 
         // Is component introduced directly through A with in-memory filter of vers range?
-        PolicyCondition condition = qm.createPolicyCondition(policy,
-                PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        PolicyCondition condition = qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                         component.is_direct_dependency_of(v1.Component{
                             name: "acme-lib-a",
                             version: "vers:golang/>=v2.0.0"
                         })
-                        """, PolicyViolation.Type.OPERATIONAL);
+                        """,
+                PolicyViolation.Type.OPERATIONAL);
         policyEngine.evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(componentA)).isEmpty();
         assertThat(qm.getAllPolicyViolations(componentB)).isEmpty();
@@ -2332,9 +2606,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(component);
 
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 project.properties.size() == 2
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -2351,18 +2630,23 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        qm.createComponentProperty(component, "propertyGroup", "propertyName",
-                "propertyValue", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(
+                component, "propertyGroup", "propertyName", "propertyValue", IConfigProperty.PropertyType.STRING, null);
 
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.properties.exists(property,
                   property.group == "propertyGroup"
                     && property.name == "propertyName"
                     && property.value == "propertyValue"
                     && property.type == "STRING"
                 )
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -2379,15 +2663,18 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        qm.createComponentProperty(component, "groupA", "nameA",
-                "valueA", IConfigProperty.PropertyType.STRING, null);
-        qm.createComponentProperty(component, "groupB", "nameB",
-                "valueB", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "groupA", "nameA", "valueA", IConfigProperty.PropertyType.STRING, null);
+        qm.createComponentProperty(component, "groupB", "nameB", "valueB", IConfigProperty.PropertyType.STRING, null);
 
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.properties.size() == 2
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -2420,9 +2707,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.persist(component);
 
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 component.resolved_license.groups.size() == 2
-                """, PolicyViolation.Type.OPERATIONAL);
+                """,
+                PolicyViolation.Type.OPERATIONAL);
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
         assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
@@ -2430,23 +2722,36 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
     private static Stream<Arguments> shouldEvaluateSpdxExprFunctionOnLicenseExpressionArgs() {
         return Stream.of(
-                Arguments.of("spdx_expr_allows(component.license_expression, ['MIT', 'Apache-2.0'])", "MIT OR Apache-2.0", true),
+                Arguments.of(
+                        "spdx_expr_allows(component.license_expression, ['MIT', 'Apache-2.0'])",
+                        "MIT OR Apache-2.0",
+                        true),
                 Arguments.of("spdx_expr_allows(component.license_expression, ['MIT'])", "MIT AND Apache-2.0", false),
-                Arguments.of("spdx_expr_requires_any(component.license_expression, ['MIT'])", "MIT AND Apache-2.0", true),
-                Arguments.of("spdx_expr_requires_any(component.license_expression, ['MIT'])", "MIT OR Apache-2.0", false),
-                Arguments.of("spdx_expr_requires_any(component.license_expression, ['MIT', 'BSD'])", "MIT AND Apache-2.0", true),
-                Arguments.of("spdx_expr_requires_any(component.license_expression, ['MIT', 'BSD'])", "Apache-2.0 OR GPL-3.0", false));
+                Arguments.of(
+                        "spdx_expr_requires_any(component.license_expression, ['MIT'])", "MIT AND Apache-2.0", true),
+                Arguments.of(
+                        "spdx_expr_requires_any(component.license_expression, ['MIT'])", "MIT OR Apache-2.0", false),
+                Arguments.of(
+                        "spdx_expr_requires_any(component.license_expression, ['MIT', 'BSD'])",
+                        "MIT AND Apache-2.0",
+                        true),
+                Arguments.of(
+                        "spdx_expr_requires_any(component.license_expression, ['MIT', 'BSD'])",
+                        "Apache-2.0 OR GPL-3.0",
+                        false));
     }
 
     @ParameterizedTest
     @MethodSource("shouldEvaluateSpdxExprFunctionOnLicenseExpressionArgs")
     void shouldEvaluateSpdxExprFunctionOnLicenseExpression(
-            String celExpression,
-            String licenseExpression,
-            boolean expectViolation) throws Exception {
+            String celExpression, String licenseExpression, boolean expectViolation) throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION,
-                PolicyCondition.Operator.MATCHES, celExpression, PolicyViolation.Type.LICENSE);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                celExpression,
+                PolicyViolation.Type.LICENSE);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -2469,10 +2774,15 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void shouldEvaluateSpdxExprFunctionOnResolvedLicenseId() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 has(component.resolved_license)
                     && spdx_expr_allows(component.resolved_license.id, ["MIT"])
-                """, PolicyViolation.Type.LICENSE);
+                """,
+                PolicyViolation.Type.LICENSE);
 
         final var license = new License();
         license.setUuid(UUID.randomUUID());
@@ -2497,9 +2807,14 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     @Test
     void shouldNotEvaluateSuppressedVulnerabilities() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
-        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
                 vulns.exists(v, v.id == "CVE-001")
-                """, PolicyViolation.Type.SECURITY);
+                """,
+                PolicyViolation.Type.SECURITY);
 
         final var project = new Project();
         project.setName("acme-app");
@@ -2524,15 +2839,13 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, componentUnsuppressed, "internal");
         qm.addVulnerability(vuln, componentSuppressed, "internal");
 
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentSuppressed, vuln)
-                        .withState(AnalysisState.FALSE_POSITIVE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentSuppressed, vuln)
+                .withState(AnalysisState.FALSE_POSITIVE)
+                .withSuppress(true));
 
         new CelPolicyEngine().evaluateProject(project.getUuid());
 
         assertThat(qm.getAllPolicyViolations(componentUnsuppressed)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentSuppressed)).isEmpty();
     }
-
 }

@@ -61,27 +61,55 @@ class PackageMetadataResolverIT {
     static Stream<Arguments> shouldResolveFromPublicRegistry() {
         return Stream.of(
                 Arguments.of(new CargoPackageMetadataResolverFactory(), "https://crates.io", "pkg:cargo/serde@1.0.200"),
-                Arguments.of(new ComposerPackageMetadataResolverFactory(), "https://packagist.org", "pkg:composer/monolog/monolog@3.5.0"),
-                Arguments.of(new CpanPackageMetadataResolverFactory(), "https://fastapi.metacpan.org", "pkg:cpan/Moose@2.2206"),
+                Arguments.of(
+                        new ComposerPackageMetadataResolverFactory(),
+                        "https://packagist.org",
+                        "pkg:composer/monolog/monolog@3.5.0"),
+                Arguments.of(
+                        new CpanPackageMetadataResolverFactory(),
+                        "https://fastapi.metacpan.org",
+                        "pkg:cpan/Moose@2.2206"),
                 Arguments.of(new GemPackageMetadataResolverFactory(), "https://rubygems.org", "pkg:gem/rails@7.1.3"),
-                Arguments.of(new GoModulesPackageMetadataResolverFactory(), "https://proxy.golang.org", "pkg:golang/golang.org/x/text@v0.14.0"),
-                Arguments.of(new HackagePackageMetadataResolverFactory(), "https://hackage.haskell.org", "pkg:hackage/aeson@2.2.1.0"),
+                Arguments.of(
+                        new GoModulesPackageMetadataResolverFactory(),
+                        "https://proxy.golang.org",
+                        "pkg:golang/golang.org/x/text@v0.14.0"),
+                Arguments.of(
+                        new HackagePackageMetadataResolverFactory(),
+                        "https://hackage.haskell.org",
+                        "pkg:hackage/aeson@2.2.1.0"),
                 Arguments.of(new HexPackageMetadataResolverFactory(), "https://hex.pm", "pkg:hex/phoenix@1.7.10"),
-                Arguments.of(new NixpkgsPackageMetadataResolverFactory(), "https://channels.nixos.org/nixpkgs-unstable/packages.json.br", "pkg:nixpkgs/curl@8.5.0"),
-                Arguments.of(new MavenPackageMetadataResolverFactory(), "https://repo1.maven.org/maven2", "pkg:maven/org.apache.commons/commons-lang3@3.14.0"),
-                Arguments.of(new MavenPackageMetadataResolverFactory(), "https://repo1.maven.org/maven2", "pkg:maven/org.apache.commons/commons-lang3@3.14.0?classifier=sources"),
-                Arguments.of(new NpmPackageMetadataResolverFactory(), "https://registry.npmjs.org", "pkg:npm/lodash@4.17.21"),
-                Arguments.of(new NugetPackageMetadataResolverFactory(), "https://api.nuget.org", "pkg:nuget/Newtonsoft.Json@13.0.3"),
+                Arguments.of(
+                        new NixpkgsPackageMetadataResolverFactory(),
+                        "https://channels.nixos.org/nixpkgs-unstable/packages.json.br",
+                        "pkg:nixpkgs/curl@8.5.0"),
+                Arguments.of(
+                        new MavenPackageMetadataResolverFactory(),
+                        "https://repo1.maven.org/maven2",
+                        "pkg:maven/org.apache.commons/commons-lang3@3.14.0"),
+                Arguments.of(
+                        new MavenPackageMetadataResolverFactory(),
+                        "https://repo1.maven.org/maven2",
+                        "pkg:maven/org.apache.commons/commons-lang3@3.14.0?classifier=sources"),
+                Arguments.of(
+                        new NpmPackageMetadataResolverFactory(),
+                        "https://registry.npmjs.org",
+                        "pkg:npm/lodash@4.17.21"),
+                Arguments.of(
+                        new NugetPackageMetadataResolverFactory(),
+                        "https://api.nuget.org",
+                        "pkg:nuget/Newtonsoft.Json@13.0.3"),
                 Arguments.of(new PypiPackageMetadataResolverFactory(), "https://pypi.org", "pkg:pypi/requests@2.31.0"),
-                Arguments.of(new PypiPackageMetadataResolverFactory(), "https://pypi.org", "pkg:pypi/requests@2.31.0?file_name=requests-2.31.0.tar.gz"));
+                Arguments.of(
+                        new PypiPackageMetadataResolverFactory(),
+                        "https://pypi.org",
+                        "pkg:pypi/requests@2.31.0?file_name=requests-2.31.0.tar.gz"));
     }
 
     @ParameterizedTest(name = "{1}: {2}")
     @MethodSource
-    void shouldResolveFromPublicRegistry(
-            PackageMetadataResolverFactory factory,
-            String repoUrl,
-            String purlString) throws Exception {
+    void shouldResolveFromPublicRegistry(PackageMetadataResolverFactory factory, String repoUrl, String purlString)
+            throws Exception {
         factory.init(createServiceRegistry());
 
         try (factory) {
@@ -90,14 +118,13 @@ class PackageMetadataResolverIT {
             final var repo = new PackageRepository(factory.extensionName(), repoUrl, null, null);
             final PackageMetadata result = resolver.resolve(purl, repo, null);
 
-            assertThat(result)
-                    .as("%s: %s", factory.extensionName(), purl)
-                    .isNotNull();
+            assertThat(result).as("%s: %s", factory.extensionName(), purl).isNotNull();
             assertThat(result.latestVersion())
                     .as("%s: latestVersion", factory.extensionName())
                     .isNotBlank();
 
-            System.out.printf("[%s] %s -> latest=%s, artifactMeta=%s%n",
+            System.out.printf(
+                    "[%s] %s -> latest=%s, artifactMeta=%s%n",
                     factory.extensionName(), purl, result.latestVersion(), result.artifactMetadata());
         }
     }
@@ -117,5 +144,4 @@ class PackageMetadataResolverIT {
                 .register(HttpClient.class, httpClient)
                 .register(ProxySelector.class, ProxySelector.getDefault());
     }
-
 }

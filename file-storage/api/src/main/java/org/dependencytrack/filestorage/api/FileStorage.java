@@ -94,17 +94,14 @@ public interface FileStorage extends Closeable {
     //  https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjects.html
 
     @Override
-    default void close() throws IOException {
-    }
+    default void close() throws IOException {}
 
     static void requireValidFileName(String fileName) {
         requireNonNull(fileName, "fileName must not be null");
 
         if (!VALID_NAME_PATTERN.matcher(fileName).matches()) {
             throw new IllegalArgumentException(
-                    "fileName '%s' does not match pattern: %s".formatted(
-                            fileName, VALID_NAME_PATTERN.pattern()));
+                    "fileName '%s' does not match pattern: %s".formatted(fileName, VALID_NAME_PATTERN.pattern()));
         }
     }
-
 }

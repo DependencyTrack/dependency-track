@@ -54,10 +54,7 @@ public final class PortfolioAnalysisTask implements Runnable {
     private final int maxRunsInFlight;
     private final Duration maxAnalysisAge;
 
-    public PortfolioAnalysisTask(
-            DexEngine dexEngine,
-            int maxRunsInFlight,
-            Duration maxAnalysisAge) {
+    public PortfolioAnalysisTask(DexEngine dexEngine, int maxRunsInFlight, Duration maxAnalysisAge) {
         if (maxRunsInFlight < 1) {
             throw new IllegalArgumentException("maxRunsInFlight must be positive");
         }
@@ -72,12 +69,11 @@ public final class PortfolioAnalysisTask implements Runnable {
 
     @Override
     public void run() {
-        final long runsInFlight = dexEngine.countRuns(
-                new CountWorkflowRunsRequest(
-                        AnalyzeProjectWorkflow.class,
-                        WorkflowRunStatus.NON_TERMINAL_STATUSES,
-                        Map.of(WF_LABEL_ANALYSIS_TRIGGER, TRIGGER_LABEL_VALUE),
-                        /* limit */ maxRunsInFlight));
+        final long runsInFlight = dexEngine.countRuns(new CountWorkflowRunsRequest(
+                AnalyzeProjectWorkflow.class,
+                WorkflowRunStatus.NON_TERMINAL_STATUSES,
+                Map.of(WF_LABEL_ANALYSIS_TRIGGER, TRIGGER_LABEL_VALUE),
+                /* limit */ maxRunsInFlight));
 
         final int capacity = Math.toIntExact(maxRunsInFlight - runsInFlight);
         if (capacity < 1) {
@@ -86,10 +82,8 @@ public final class PortfolioAnalysisTask implements Runnable {
         }
 
         final Instant now = Instant.now();
-        final List<ProjectDueForAnalysis> projects = withJdbiHandle(
-                handle -> handle
-                        .attach(ProjectLastAnalysisDao.class)
-                        .getProjectsDue(now.minus(maxAnalysisAge), capacity));
+        final List<ProjectDueForAnalysis> projects = withJdbiHandle(handle ->
+                handle.attach(ProjectLastAnalysisDao.class).getProjectsDue(now.minus(maxAnalysisAge), capacity));
         if (projects.isEmpty()) {
             LOGGER.debug("No projects due for analysis");
             return;
@@ -104,11 +98,10 @@ public final class PortfolioAnalysisTask implements Runnable {
                     .withLabels(Map.ofEntries(
                             Map.entry(WF_LABEL_PROJECT_UUID, project.uuid().toString()),
                             Map.entry(WF_LABEL_ANALYSIS_TRIGGER, TRIGGER_LABEL_VALUE)))
-                    .withArgument(
-                            AnalyzeProjectWorkflowArg.newBuilder()
-                                    .setProjectUuid(project.uuid().toString())
-                                    .setTrigger(ANALYSIS_TRIGGER_SCHEDULE)
-                                    .build());
+                    .withArgument(AnalyzeProjectWorkflowArg.newBuilder()
+                            .setProjectUuid(project.uuid().toString())
+                            .setTrigger(ANALYSIS_TRIGGER_SCHEDULE)
+                            .build());
 
             projectIdByRequestId.put(request.requestId(), project.id());
             requests.add(request);
@@ -125,13 +118,12 @@ public final class PortfolioAnalysisTask implements Runnable {
                 .mapToLong(Long::longValue)
                 .toArray();
 
-        inJdbiTransaction(handle -> handle
-                .attach(ProjectLastAnalysisDao.class)
-                .recordAttempt(analyzedProjectIds, now));
+        inJdbiTransaction(handle -> handle.attach(ProjectLastAnalysisDao.class).recordAttempt(analyzedProjectIds, now));
 
         LOGGER.info(
                 "Started analysis for {} of {} offered projects; {} were already in flight",
-                analyzedProjectIds.length, projects.size(), runsInFlight);
+                analyzedProjectIds.length,
+                projects.size(),
+                runsInFlight);
     }
-
 }

@@ -39,21 +39,18 @@ public class ProjectIsAccessibleByMethod implements SQLMethod {
     private static final String PROJECT_CLASS_NAME = "org.dependencytrack.model.Project";
 
     @Override
-    public SQLExpression getExpression(
-            SQLStatement stmt,
-            SQLExpression expr,
-            List<SQLExpression> args) {
+    public SQLExpression getExpression(SQLStatement stmt, SQLExpression expr, List<SQLExpression> args) {
         if (!(expr instanceof final ObjectExpression objectExpr))
             // DataNucleus should prevent this from ever happening since
             // the method is explicitly registered for java.lang.Object.
-            throw new IllegalStateException("Expected expression to be of type %s, but got: %s".formatted(
-                    ObjectExpression.class.getName(), expr.getClass().getName()));
+            throw new IllegalStateException("Expected expression to be of type %s, but got: %s"
+                    .formatted(ObjectExpression.class.getName(), expr.getClass().getName()));
 
         final String objectTypeName = objectExpr.getJavaTypeMapping().getType();
         if (!PROJECT_CLASS_NAME.equals(objectTypeName))
             throw new IllegalStateException(
-                    "isAccessibleBy is only allowed for objects of type %s, but was called on %s".formatted(
-                            PROJECT_CLASS_NAME, objectTypeName));
+                    "isAccessibleBy is only allowed for objects of type %s, but was called on %s"
+                            .formatted(PROJECT_CLASS_NAME, objectTypeName));
 
         if (args == null) {
             throw new IllegalArgumentException();
@@ -67,26 +64,26 @@ public class ProjectIsAccessibleByMethod implements SQLMethod {
         return switch (args.getFirst()) {
             case IntegerLiteral userIdArg -> getUserExpression(stmt, objectExpr, userIdArg);
             case ArrayLiteral arrayLiteralArg -> getApiKeyExpression(stmt, objectExpr, arrayLiteralArg);
-            default -> throw new IllegalArgumentException(
-                    "Expected argument to be of type %s or %s, but got %s".formatted(
-                            ArrayLiteral.class.getName(),
-                            IntegerLiteral.class.getName(),
-                            args.getFirst().getClass().getName()));
+            default ->
+                throw new IllegalArgumentException("Expected argument to be of type %s or %s, but got %s"
+                        .formatted(
+                                ArrayLiteral.class.getName(),
+                                IntegerLiteral.class.getName(),
+                                args.getFirst().getClass().getName()));
         };
     }
 
     private SQLExpression getApiKeyExpression(
-            SQLStatement stmt,
-            ObjectExpression objectExpr,
-            ArrayLiteral arrayLiteralArg) {
+            SQLStatement stmt, ObjectExpression objectExpr, ArrayLiteral arrayLiteralArg) {
         if (!(arrayLiteralArg.getValue() instanceof final Long[] teamIds)) {
-            throw new IllegalArgumentException(
-                    "Expected array argument to be of type %s, but got %s".formatted(
+            throw new IllegalArgumentException("Expected array argument to be of type %s, but got %s"
+                    .formatted(
                             Long[].class.getName(),
                             arrayLiteralArg.getValue().getClass().getName()));
         }
 
-        final JavaTypeMapping booleanTypeMapping = stmt.getSQLExpressionFactory().getMappingForType(Boolean.class);
+        final JavaTypeMapping booleanTypeMapping =
+                stmt.getSQLExpressionFactory().getMappingForType(Boolean.class);
 
         // Inline the team IDs as a Postgres bigint[] literal so the planner sees
         // concrete values instead of an opaque parameter or function call.
@@ -96,7 +93,8 @@ public class ProjectIsAccessibleByMethod implements SQLMethod {
         }
         final String teamIdsLiteralSql = "cast('" + joiner + "' as bigint[])";
 
-        final String sql = /* language=SQL */ """
+        final String sql = /* language=SQL */
+                """
                 EXISTS (\
                 SELECT 1 \
                 FROM "PROJECT_ACCESS_TEAMS" pat \
@@ -117,20 +115,19 @@ public class ProjectIsAccessibleByMethod implements SQLMethod {
         return new BooleanExpression(stmt, booleanTypeMapping, sql);
     }
 
-    private SQLExpression getUserExpression(
-            SQLStatement stmt,
-            ObjectExpression objectExpr,
-            IntegerLiteral userIdArg) {
+    private SQLExpression getUserExpression(SQLStatement stmt, ObjectExpression objectExpr, IntegerLiteral userIdArg) {
         if (!(userIdArg.getValue() instanceof final Long userId)) {
-            throw new IllegalArgumentException(
-                    "Expected user ID argument to be of type %s, but got %s".formatted(
+            throw new IllegalArgumentException("Expected user ID argument to be of type %s, but got %s"
+                    .formatted(
                             Long.class.getName(),
                             userIdArg.getValue().getClass().getName()));
         }
 
-        final JavaTypeMapping booleanTypeMapping = stmt.getSQLExpressionFactory().getMappingForType(Boolean.class);
+        final JavaTypeMapping booleanTypeMapping =
+                stmt.getSQLExpressionFactory().getMappingForType(Boolean.class);
 
-        final String sql = /* language=SQL */ """
+        final String sql = /* language=SQL */
+                """
                 EXISTS (\
                 SELECT 1 \
                 FROM "PROJECT_ACCESS_USERS" pau \
@@ -150,5 +147,4 @@ public class ProjectIsAccessibleByMethod implements SQLMethod {
 
         return new BooleanExpression(stmt, booleanTypeMapping, sql);
     }
-
 }

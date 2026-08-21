@@ -37,27 +37,36 @@ import jakarta.validation.constraints.Pattern;
 public class ViolationAnalysisRequest {
 
     @NotNull
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The component must be a valid 36 character UUID")
+    @Pattern(
+            regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            message = "The component must be a valid 36 character UUID")
     private final String component;
 
     @NotNull
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The policy violation must be a valid 36 character UUID")
+    @Pattern(
+            regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            message = "The policy violation must be a valid 36 character UUID")
     private final String policyViolation;
 
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The comment may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS,
+            message = "The comment may only contain printable characters")
     private final String comment;
 
     private final ViolationAnalysisState analysisState;
 
-    private final Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
+    private final Boolean
+            suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object
+    // rather than primitive.
 
     @JsonCreator
-    public ViolationAnalysisRequest(@JsonProperty(value = "component", required = true) String component,
-                           @JsonProperty(value = "policyViolation", required = true) String policyViolation,
-                           @JsonProperty(value = "analysisState") ViolationAnalysisState analysisState,
-                           @JsonProperty(value = "comment") String comment,
-                           @JsonProperty(value = "isSuppressed") Boolean suppressed) {
+    public ViolationAnalysisRequest(
+            @JsonProperty(value = "component", required = true) String component,
+            @JsonProperty(value = "policyViolation", required = true) String policyViolation,
+            @JsonProperty(value = "analysisState") ViolationAnalysisState analysisState,
+            @JsonProperty(value = "comment") String comment,
+            @JsonProperty(value = "isSuppressed") Boolean suppressed) {
         this.component = component;
         this.policyViolation = policyViolation;
         this.analysisState = analysisState;

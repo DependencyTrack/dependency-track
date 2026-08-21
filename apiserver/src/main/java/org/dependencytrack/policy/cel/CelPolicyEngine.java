@@ -120,64 +120,56 @@ public final class CelPolicyEngine {
         //   Would be better for atomicity, but could block DB connections for prolonged
         //   period of time for larger projects with many violations.
 
-        final Long projectId = withJdbiHandle(
-                handle -> handle.attach(ProjectDao.class).getProjectId(uuid));
+        final Long projectId =
+                withJdbiHandle(handle -> handle.attach(ProjectDao.class).getProjectId(uuid));
         if (projectId == null) {
             LOGGER.warn("Project does not exist; Skipping");
             return;
         }
 
         LOGGER.debug("Fetching applicable policies");
-        final List<Policy> applicablePolicies = withJdbiHandle(
-                handle -> new CelPolicyDao(handle).getApplicablePolicies(projectId));
+        final List<Policy> applicablePolicies =
+                withJdbiHandle(handle -> new CelPolicyDao(handle).getApplicablePolicies(projectId));
         if (applicablePolicies.isEmpty()) {
             LOGGER.info("No applicable policies found");
-            inJdbiTransaction(handle ->
-                    new CelPolicyDao(handle).reconcileViolations(
-                            projectId, emptyMultiValuedMap()));
+            inJdbiTransaction(handle -> new CelPolicyDao(handle).reconcileViolations(projectId, emptyMultiValuedMap()));
             return;
         }
 
         LOGGER.debug("Compiling policy scripts");
-        final List<PolicyWithScripts> policiesWithScripts =
-                compilePoliciesScripts(applicablePolicies);
+        final List<PolicyWithScripts> policiesWithScripts = compilePoliciesScripts(applicablePolicies);
         if (policiesWithScripts.isEmpty()) {
             LOGGER.info("No compilable policy conditions found");
-            inJdbiTransaction(handle ->
-                    new CelPolicyDao(handle).reconcileViolations(
-                            projectId, emptyMultiValuedMap()));
+            inJdbiTransaction(handle -> new CelPolicyDao(handle).reconcileViolations(projectId, emptyMultiValuedMap()));
             return;
         }
 
         final MultiValuedMap<CelType, String> requirements = determineScriptRequirements(policiesWithScripts);
-        final long conditionCount = policiesWithScripts.stream().mapToLong(pws -> pws.conditionScripts().size()).sum();
+        final long conditionCount = policiesWithScripts.stream()
+                .mapToLong(pws -> pws.conditionScripts().size())
+                .sum();
         LOGGER.debug("Requirements for {} policy conditions: {}", conditionCount, requirements);
 
         final Project protoProject;
         if (requirements.containsKey(TYPE_PROJECT)) {
-            protoProject = withJdbiHandle(handle ->
-                    new CelPolicyDao(handle)
-                            .loadRequiredFields(projectId, requirements));
+            protoProject =
+                    withJdbiHandle(handle -> new CelPolicyDao(handle).loadRequiredFields(projectId, requirements));
         } else {
             protoProject = Project.getDefaultInstance();
         }
 
         // Preload components for the entire project, to avoid excessive queries.
         final Map<Long, ComponentWithLicenseId> componentsWithLicense = withJdbiHandle(
-                handle -> new CelPolicyDao(handle)
-                        .fetchAllComponents(projectId, requirements.get(TYPE_COMPONENT)));
+                handle -> new CelPolicyDao(handle).fetchAllComponents(projectId, requirements.get(TYPE_COMPONENT)));
 
         // Preload licenses for the entire project, as chances are high that
         // they will be used by multiple components.
         final Map<Long, License> licenseById;
         if (requirements.containsKey(TYPE_LICENSE)
-                || (requirements.containsKey(TYPE_COMPONENT) && requirements.get(TYPE_COMPONENT).contains("resolved_license"))) {
-            licenseById = withJdbiHandle(
-                    handle -> new CelPolicyDao(handle)
-                            .fetchAllLicenses(
-                                    projectId,
-                                    requirements.get(TYPE_LICENSE),
-                                    requirements.get(TYPE_LICENSE_GROUP)));
+                || (requirements.containsKey(TYPE_COMPONENT)
+                        && requirements.get(TYPE_COMPONENT).contains("resolved_license"))) {
+            licenseById = withJdbiHandle(handle -> new CelPolicyDao(handle)
+                    .fetchAllLicenses(projectId, requirements.get(TYPE_LICENSE), requirements.get(TYPE_LICENSE_GROUP)));
         } else {
             licenseById = Collections.emptyMap();
         }
@@ -186,11 +178,8 @@ public final class CelPolicyEngine {
         final Map<Long, List<Component.Property>> componentPropertiesById;
         if (requirements.containsKey(TYPE_COMPONENT)
                 && requirements.get(TYPE_COMPONENT).contains("properties")) {
-            componentPropertiesById = withJdbiHandle(
-                    handle -> new CelPolicyDao(handle)
-                            .fetchAllComponentProperties(
-                                    projectId,
-                                    requirements.get(TYPE_COMPONENT_PROPERTY)));
+            componentPropertiesById = withJdbiHandle(handle -> new CelPolicyDao(handle)
+                    .fetchAllComponentProperties(projectId, requirements.get(TYPE_COMPONENT_PROPERTY)));
         } else {
             componentPropertiesById = Collections.emptyMap();
         }
@@ -227,18 +216,16 @@ public final class CelPolicyEngine {
         final Map<Long, Vulnerability> protoVulnById;
         final Map<Long, Set<Long>> vulnIdsByComponentId;
         if (requirements.containsKey(TYPE_VULNERABILITY)) {
-            vulnIdsByComponentId = withJdbiHandle(handle ->
-                    new CelPolicyDao(handle)
-                            .fetchAllComponentsVulnerabilities(projectId));
+            vulnIdsByComponentId =
+                    withJdbiHandle(handle -> new CelPolicyDao(handle).fetchAllComponentsVulnerabilities(projectId));
 
             if (!vulnIdsByComponentId.isEmpty()) {
-                protoVulnById = withJdbiHandle(handle ->
-                        new CelPolicyDao(handle)
-                                .fetchAllVulnerabilities(
-                                        vulnIdsByComponentId.values().stream()
-                                                .flatMap(Set::stream)
-                                                .collect(Collectors.toSet()),
-                                        requirements.get(TYPE_VULNERABILITY)));
+                protoVulnById = withJdbiHandle(handle -> new CelPolicyDao(handle)
+                        .fetchAllVulnerabilities(
+                                vulnIdsByComponentId.values().stream()
+                                        .flatMap(Set::stream)
+                                        .collect(Collectors.toSet()),
+                                requirements.get(TYPE_VULNERABILITY)));
             } else {
                 protoVulnById = Map.of();
             }
@@ -279,9 +266,8 @@ public final class CelPolicyEngine {
                     violationsByComponentId);
         }
 
-        final Set<Long> newViolationIds = inJdbiTransaction(handle ->
-                new CelPolicyDao(handle).reconcileViolations(
-                        projectId, violationsByComponentId));
+        final Set<Long> newViolationIds = inJdbiTransaction(
+                handle -> new CelPolicyDao(handle).reconcileViolations(projectId, violationsByComponentId));
         LOGGER.info("Identified {} new violations", newViolationIds.size());
 
         if (!newViolationIds.isEmpty()) {
@@ -296,10 +282,8 @@ public final class CelPolicyEngine {
                     return;
                 }
 
-                new JdbiNotificationEmitter(handle).emitAll(
-                        notificationSubjectDao
-                                .getForNewPolicyViolations(newViolationIds)
-                                .stream()
+                new JdbiNotificationEmitter(handle)
+                        .emitAll(notificationSubjectDao.getForNewPolicyViolations(newViolationIds).stream()
                                 .map(subject -> createPolicyViolationNotification(
                                         subject.getProject(), subject.getComponent(), subject.getPolicyViolation()))
                                 .toList());
@@ -307,11 +291,9 @@ public final class CelPolicyEngine {
         }
     }
 
-    record ConditionScript(PolicyCondition condition, CelPolicyProgram script) {
-    }
+    record ConditionScript(PolicyCondition condition, CelPolicyProgram script) {}
 
-    record PolicyWithScripts(Policy policy, List<ConditionScript> conditionScripts) {
-    }
+    record PolicyWithScripts(Policy policy, List<ConditionScript> conditionScripts) {}
 
     private List<PolicyWithScripts> compilePoliciesScripts(List<Policy> policies) {
         final var result = new ArrayList<PolicyWithScripts>();
@@ -368,7 +350,8 @@ public final class CelPolicyEngine {
         } catch (CelValidationException e) {
             LOGGER.warn(
                     "Failed to compile script for condition {}; Condition will be skipped",
-                    policyCondition.getUuid(), e);
+                    policyCondition.getUuid(),
+                    e);
             return null;
         }
     }
@@ -388,14 +371,20 @@ public final class CelPolicyEngine {
                         violatedConditions.add(cs.condition());
                     }
                 } catch (CelEvaluationException e) {
-                    LOGGER.warn("Failed to execute script for condition {}", cs.condition().getUuid(), e);
+                    LOGGER.warn(
+                            "Failed to execute script for condition {}",
+                            cs.condition().getUuid(),
+                            e);
                 }
             }
 
-            final boolean policyViolated = switch (policy.getOperator()) {
-                case ANY -> !violatedConditions.isEmpty();
-                case ALL -> violatedConditions.size() == policy.getPolicyConditions().size();
-            };
+            final boolean policyViolated =
+                    switch (policy.getOperator()) {
+                        case ANY -> !violatedConditions.isEmpty();
+                        case ALL ->
+                            violatedConditions.size()
+                                    == policy.getPolicyConditions().size();
+                    };
 
             if (policyViolated) {
                 for (final PolicyCondition condition : violatedConditions) {
@@ -408,5 +397,4 @@ public final class CelPolicyEngine {
             }
         }
     }
-
 }

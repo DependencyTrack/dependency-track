@@ -54,8 +54,8 @@ import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 
 public class TagQueryManager extends QueryManager {
 
-    private static final Comparator<Tag> TAG_COMPARATOR = Comparator.comparingInt(
-            (Tag tag) -> tag.getProjects().size()).reversed();
+    private static final Comparator<Tag> TAG_COMPARATOR =
+            Comparator.comparingInt((Tag tag) -> tag.getProjects().size()).reversed();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectQueryManager.class);
 
@@ -86,9 +86,7 @@ public class TagQueryManager extends QueryManager {
             long policyCount,
             long notificationRuleCount,
             long vulnerabilityCount,
-            long totalCount
-    ) {
-    }
+            long totalCount) {}
 
     /**
      * @since 4.12.0
@@ -140,12 +138,18 @@ public class TagQueryManager extends QueryManager {
                 || "policyCount".equals(orderBy)
                 || "notificationRuleCount".equals(orderBy)
                 || "vulnerabilityCount".equals(orderBy)) {
-            sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
-                    orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
+            sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC"
+                    .formatted(orderBy, orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
-            throw new InvalidSortFieldException(orderBy, List.of(
-                    "name", "projectCount", "collectionProjectCount",
-                    "policyCount", "notificationRuleCount", "vulnerabilityCount"));
+            throw new InvalidSortFieldException(
+                    orderBy,
+                    List.of(
+                            "name",
+                            "projectCount",
+                            "collectionProjectCount",
+                            "policyCount",
+                            "notificationRuleCount",
+                            "vulnerabilityCount"));
         }
 
         sqlQuery += " " + getOffsetLimitSqlClause();
@@ -158,8 +162,7 @@ public class TagQueryManager extends QueryManager {
     /**
      * @since 4.12.0
      */
-    public record TaggedProjectRow(UUID uuid, String name, String version, long totalCount) {
-    }
+    public record TaggedProjectRow(UUID uuid, String name, String version, long totalCount) {}
 
     /**
      * @since 4.12.0
@@ -172,9 +175,7 @@ public class TagQueryManager extends QueryManager {
             long collectionProjectCount,
             long policyCount,
             long notificationRuleCount,
-            long vulnerabilityCount
-    ) {
-    }
+            long vulnerabilityCount) {}
 
     /**
      * @since 4.12.0
@@ -230,7 +231,8 @@ public class TagQueryManager extends QueryManager {
                              WHERE "VULNERABILITIES_TAGS"."TAG_ID" = "TAG"."ID") AS "vulnerabilityCount"
                       FROM "TAG"
                      WHERE %2$s
-                    """.formatted(projectAclCondition, String.join(" OR ", tagNameFilters)));
+                    """.formatted(
+                            projectAclCondition, String.join(" OR ", tagNameFilters)));
             candidateQuery.setNamedParameters(params);
             final List<TagDeletionCandidateRow> candidateRows =
                     executeAndCloseResultList(candidateQuery, TagDeletionCandidateRow.class);
@@ -279,13 +281,14 @@ public class TagQueryManager extends QueryManager {
                 if (row.projectCount() > 0 && !hasPortfolioManagementUpdatePermission) {
                     errorByTagName.put(row.name(), """
                             The tag is assigned to %d project(s), but the authenticated principal \
-                            is missing the %s or %s permission.""".formatted(row.projectCount(),
-                            Permissions.PORTFOLIO_MANAGEMENT, Permissions.PORTFOLIO_MANAGEMENT_UPDATE));
+                            is missing the %s or %s permission.""".formatted(
+                                    row.projectCount(),
+                                    Permissions.PORTFOLIO_MANAGEMENT,
+                                    Permissions.PORTFOLIO_MANAGEMENT_UPDATE));
                     continue;
                 }
 
-                final long inaccessibleProjectAssignmentCount =
-                        row.projectCount() - row.accessibleProjectCount();
+                final long inaccessibleProjectAssignmentCount = row.projectCount() - row.accessibleProjectCount();
                 if (inaccessibleProjectAssignmentCount > 0) {
                     errorByTagName.put(row.name(), """
                             The tag is assigned to %d project(s) that are not accessible \
@@ -294,39 +297,44 @@ public class TagQueryManager extends QueryManager {
                 }
 
                 if (row.collectionProjectCount() > 0) {
-                    errorByTagName.put(row.name(), "The tag is used by %d collection project(s)".formatted(row.collectionProjectCount()));
+                    errorByTagName.put(
+                            row.name(),
+                            "The tag is used by %d collection project(s)".formatted(row.collectionProjectCount()));
                     continue;
                 }
 
                 if (row.policyCount() > 0 && !hasPolicyManagementUpdatePermission) {
                     errorByTagName.put(row.name(), """
                             The tag is assigned to %d policies, but the authenticated principal \
-                            is missing the %s or %s permission.""".formatted(row.policyCount(),
-                            Permissions.POLICY_MANAGEMENT, Permissions.POLICY_MANAGEMENT_UPDATE));
+                            is missing the %s or %s permission.""".formatted(
+                            row.policyCount(), Permissions.POLICY_MANAGEMENT, Permissions.POLICY_MANAGEMENT_UPDATE));
                 }
 
                 if (row.notificationRuleCount() > 0 && !hasSystemConfigurationUpdatePermission) {
                     errorByTagName.put(row.name(), """
                             The tag is assigned to %d notification rules, but the authenticated principal \
-                            is missing the %s or %s permission.""".formatted(row.notificationRuleCount(),
-                            Permissions.SYSTEM_CONFIGURATION, Permissions.SYSTEM_CONFIGURATION_UPDATE));
+                            is missing the %s or %s permission.""".formatted(
+                                    row.notificationRuleCount(),
+                                    Permissions.SYSTEM_CONFIGURATION,
+                                    Permissions.SYSTEM_CONFIGURATION_UPDATE));
                 }
 
                 if (row.vulnerabilityCount() > 0 && !hasVulnerabilityManagementUpdatePermission) {
                     errorByTagName.put(row.name(), """
                             The tag is assigned to %d vulnerabilities, but the authenticated principal \
-                            is missing the %s or %s permission.""".formatted(row.vulnerabilityCount(),
-                            Permissions.VULNERABILITY_MANAGEMENT, Permissions.VULNERABILITY_MANAGEMENT_UPDATE));
+                            is missing the %s or %s permission.""".formatted(
+                                    row.vulnerabilityCount(),
+                                    Permissions.VULNERABILITY_MANAGEMENT,
+                                    Permissions.VULNERABILITY_MANAGEMENT_UPDATE));
                 }
             }
 
             if (!errorByTagName.isEmpty()) {
                 throw TagOperationFailedException.forDeletion(errorByTagName);
             }
-            
-            final Long[] tagIds = candidateRows.stream()
-                    .map(TagDeletionCandidateRow::id)
-                    .toArray(Long[]::new);
+
+            final Long[] tagIds =
+                    candidateRows.stream().map(TagDeletionCandidateRow::id).toArray(Long[]::new);
 
             try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
                 final Query<?> deletionQuery = pm.newQuery(Query.SQL, /* language=SQL */ """
@@ -374,8 +382,8 @@ public class TagQueryManager extends QueryManager {
         if (orderBy == null) {
             sqlQuery += " ORDER BY \"name\" ASC, \"version\" DESC";
         } else if ("name".equals(orderBy) || "version".equals(orderBy)) {
-            sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
-                    orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
+            sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC"
+                    .formatted(orderBy, orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
             throw new InvalidSortFieldException(orderBy, List.of("name", "version"));
         }
@@ -440,8 +448,7 @@ public class TagQueryManager extends QueryManager {
     /**
      * @since 4.13.1
      */
-    public record TaggedCollectionProjectRow(UUID uuid, String name, String version, long totalCount) {
-    }
+    public record TaggedCollectionProjectRow(UUID uuid, String name, String version, long totalCount) {}
 
     /**
      * @since 4.13.1
@@ -476,8 +483,8 @@ public class TagQueryManager extends QueryManager {
         if (orderBy == null) {
             sqlQuery += " ORDER BY \"name\" ASC, \"version\" DESC";
         } else if ("name".equals(orderBy) || "version".equals(orderBy)) {
-            sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC".formatted(orderBy,
-                    orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
+            sqlQuery += " ORDER BY \"%s\" %s, \"ID\" ASC"
+                    .formatted(orderBy, orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
             throw new InvalidSortFieldException(orderBy, List.of("name", "version"));
         }
@@ -492,8 +499,7 @@ public class TagQueryManager extends QueryManager {
     /**
      * @since 4.12.0
      */
-    public record TaggedPolicyRow(UUID uuid, String name, long totalCount) {
-    }
+    public record TaggedPolicyRow(UUID uuid, String name, long totalCount) {}
 
     /**
      * @since 4.12.0
@@ -524,8 +530,8 @@ public class TagQueryManager extends QueryManager {
         if (orderBy == null) {
             sqlQuery += " ORDER BY \"name\" ASC";
         } else if ("name".equals(orderBy)) {
-            sqlQuery += " ORDER BY \"%s\" %s".formatted(orderBy,
-                    orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
+            sqlQuery += " ORDER BY \"%s\" %s"
+                    .formatted(orderBy, orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
             throw new InvalidSortFieldException(orderBy, List.of("name"));
         }
@@ -589,8 +595,9 @@ public class TagQueryManager extends QueryManager {
     public PaginatedResult getTagsForPolicy(String policyUuid) {
         LOGGER.debug("Retrieving tags under policy {}", policyUuid);
         final var policy = getObjectByUuid(Policy.class, policyUuid);
-        final var tags = Optional.ofNullable(policy.getTags())
-                .orElse(Collections.emptySet()).stream().sorted(TAG_COMPARATOR).toList();
+        final var tags = Optional.ofNullable(policy.getTags()).orElse(Collections.emptySet()).stream()
+                .sorted(TAG_COMPARATOR)
+                .toList();
         return (new PaginatedResult()).objects(tags).total(tags.size());
     }
 
@@ -607,8 +614,8 @@ public class TagQueryManager extends QueryManager {
         if (tags == null) {
             return new HashSet<>();
         }
-         List<String> tagNames = tags.stream().map(Tag::getName).toList();
-         return resolveTagsByName(tagNames);
+        List<String> tagNames = tags.stream().map(Tag::getName).toList();
+        return resolveTagsByName(tagNames);
     }
 
     public synchronized Set<Tag> resolveTagsByName(final Collection<String> tags) {
@@ -687,8 +694,7 @@ public class TagQueryManager extends QueryManager {
     /**
      * @since 4.12.0
      */
-    public record TaggedNotificationRuleRow(UUID uuid, String name, long totalCount) {
-    }
+    public record TaggedNotificationRuleRow(UUID uuid, String name, long totalCount) {}
 
     /**
      * @since 4.12.0
@@ -719,8 +725,8 @@ public class TagQueryManager extends QueryManager {
         if (orderBy == null) {
             sqlQuery += " ORDER BY \"name\" ASC";
         } else if ("name".equals(orderBy)) {
-            sqlQuery += " ORDER BY \"%s\" %s".formatted(orderBy,
-                    orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
+            sqlQuery += " ORDER BY \"%s\" %s"
+                    .formatted(orderBy, orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
             throw new InvalidSortFieldException(orderBy, List.of("name"));
         }
@@ -771,7 +777,8 @@ public class TagQueryManager extends QueryManager {
             final List<NotificationRule> notificationRules = executeAndCloseList(notificationRulesQuery);
 
             for (final NotificationRule notificationRule : notificationRules) {
-                if (notificationRule.getTags() == null || notificationRule.getTags().isEmpty()) {
+                if (notificationRule.getTags() == null
+                        || notificationRule.getTags().isEmpty()) {
                     continue;
                 }
 
@@ -780,8 +787,7 @@ public class TagQueryManager extends QueryManager {
         });
     }
 
-    public record TaggedVulnerabilityRow(UUID uuid, String vulnId, String source, long totalCount) {
-    }
+    public record TaggedVulnerabilityRow(UUID uuid, String vulnId, String source, long totalCount) {}
 
     @Override
     public List<TaggedVulnerabilityRow> getTaggedVulnerabilities(final String tagName) {
@@ -810,8 +816,8 @@ public class TagQueryManager extends QueryManager {
         if (orderBy == null) {
             sqlQuery += " ORDER BY \"vulnId\" ASC";
         } else if ("vulnId".equals(orderBy)) {
-            sqlQuery += " ORDER BY \"%s\" %s".formatted(orderBy,
-                    orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
+            sqlQuery += " ORDER BY \"%s\" %s"
+                    .formatted(orderBy, orderDirection == OrderDirection.DESCENDING ? "DESC" : "ASC");
         } else {
             throw new InvalidSortFieldException(orderBy, List.of("vulnId"));
         }

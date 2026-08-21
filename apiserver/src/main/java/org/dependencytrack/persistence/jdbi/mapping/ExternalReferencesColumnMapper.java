@@ -33,12 +33,12 @@ import java.util.List;
 public final class ExternalReferencesColumnMapper implements ColumnMapper<List<ExternalReference>> {
 
     @Override
-    public @Nullable List<ExternalReference> map(ResultSet r, int columnNumber, StatementContext ctx) throws SQLException {
+    public @Nullable List<ExternalReference> map(ResultSet r, int columnNumber, StatementContext ctx)
+            throws SQLException {
         if (r.getBytes(columnNumber) == null) {
             return null;
         }
 
         return SerializationUtils.deserialize(r.getBytes(columnNumber));
     }
-
 }

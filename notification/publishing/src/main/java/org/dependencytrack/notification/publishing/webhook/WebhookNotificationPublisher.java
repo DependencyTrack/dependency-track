@@ -59,7 +59,8 @@ final class WebhookNotificationPublisher implements NotificationPublisher {
             mimeType = "application/protobuf";
             body = BodyPublishers.ofByteArray(notification.toByteArray());
         } else {
-            final RenderedNotificationTemplate renderedTemplate = ctx.templateRenderer().render(notification);
+            final RenderedNotificationTemplate renderedTemplate =
+                    ctx.templateRenderer().render(notification);
             if (renderedTemplate == null) {
                 throw new IllegalStateException("No template configured");
             }
@@ -68,8 +69,7 @@ final class WebhookNotificationPublisher implements NotificationPublisher {
             body = BodyPublishers.ofString(renderedTemplate.content());
         }
 
-        final var requestBuilder = HttpRequest
-                .newBuilder(ruleConfig.getDestinationUrl())
+        final var requestBuilder = HttpRequest.newBuilder(ruleConfig.getDestinationUrl())
                 .header("Content-Type", mimeType)
                 .POST(body)
                 .timeout(Duration.ofSeconds(10));
@@ -81,7 +81,8 @@ final class WebhookNotificationPublisher implements NotificationPublisher {
         }
 
         try {
-            final HttpResponse<InputStream> response = httpClient.send(requestBuilder.build(), BodyHandlers.ofInputStream());
+            final HttpResponse<InputStream> response =
+                    httpClient.send(requestBuilder.build(), BodyHandlers.ofInputStream());
             ensureSuccessful2xxResponse(response);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -91,5 +92,4 @@ final class WebhookNotificationPublisher implements NotificationPublisher {
             throw e;
         }
     }
-
 }

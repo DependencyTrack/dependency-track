@@ -76,25 +76,15 @@ final class WorkflowTaskScheduler implements Closeable {
         this.pollIntervalMillis = pollInterval.toMillis();
         this.pollBackoffFunction = pollBackoffFunction;
         this.onTasksScheduled = onTasksScheduled;
-        this.concurrencyKeyMaintenanceWorker =
-                new ConcurrencyKeyMaintenanceWorker(
-                        jdbi,
-                        leadershipSupplier,
-                        meterRegistry,
-                        concurrencyKeyWakeupRepairInterval,
-                        this::nudge);
-        this.pollThread = Thread.ofPlatform()
-                .name(getClass().getSimpleName())
-                .unstarted(this::pollLoop);
-        this.pollsCounter = Counter
-                .builder("dt.dex.engine.workflow.task.scheduler.polls")
-                .register(meterRegistry);
-        this.taskSchedulingLatencyTimer = Timer
-                .builder("dt.dex.engine.workflow.task.scheduling.latency")
-                .withRegistry(meterRegistry);
-        this.tasksScheduledCounter = Counter
-                .builder("dt.dex.engine.workflow.tasks.scheduled")
-                .withRegistry(meterRegistry);
+        this.concurrencyKeyMaintenanceWorker = new ConcurrencyKeyMaintenanceWorker(
+                jdbi, leadershipSupplier, meterRegistry, concurrencyKeyWakeupRepairInterval, this::nudge);
+        this.pollThread = Thread.ofPlatform().name(getClass().getSimpleName()).unstarted(this::pollLoop);
+        this.pollsCounter =
+                Counter.builder("dt.dex.engine.workflow.task.scheduler.polls").register(meterRegistry);
+        this.taskSchedulingLatencyTimer =
+                Timer.builder("dt.dex.engine.workflow.task.scheduling.latency").withRegistry(meterRegistry);
+        this.tasksScheduledCounter =
+                Counter.builder("dt.dex.engine.workflow.tasks.scheduled").withRegistry(meterRegistry);
     }
 
     void start() {
@@ -147,14 +137,10 @@ final class WorkflowTaskScheduler implements Closeable {
             if (pollsWithoutSchedules < 3 && consecutiveErrors == 0) {
                 nowMillis = System.currentTimeMillis();
                 nextPollAtMillis = lastPolledAtMillis + pollIntervalMillis;
-                nextPollDueInMillis = nextPollAtMillis > nowMillis
-                        ? nextPollAtMillis - nowMillis
-                        : 0;
+                nextPollDueInMillis = nextPollAtMillis > nowMillis ? nextPollAtMillis - nowMillis : 0;
             } else {
                 final int backoffAttempts = Math.max(pollsWithoutSchedules - 2, consecutiveErrors);
-                nextPollDueInMillis = Math.max(
-                        pollBackoffFunction.apply(backoffAttempts),
-                        pollIntervalMillis);
+                nextPollDueInMillis = Math.max(pollBackoffFunction.apply(backoffAttempts), pollIntervalMillis);
                 LOGGER.debug(
                         "Backing off for {}ms (attempt={}, pollsWithoutSchedules={}, consecutiveErrors={})",
                         nextPollDueInMillis,
@@ -225,15 +211,11 @@ final class WorkflowTaskScheduler implements Closeable {
             try (var _ = MDC.putCloseable(MDC_QUEUE_NAME, queue.name())) {
                 madeProgress |= jdbi.inTransaction(handle -> processQueue(handle, queue));
             } finally {
-                latencySample.stop(
-                        taskSchedulingLatencyTimer
-                                .withTag("queueName", queue.name()));
+                latencySample.stop(taskSchedulingLatencyTimer.withTag("queueName", queue.name()));
             }
         }
 
-        return madeProgress
-                ? PollResult.TASKS_SCHEDULED
-                : PollResult.NO_TASKS_SCHEDULED;
+        return madeProgress ? PollResult.TASKS_SCHEDULED : PollResult.NO_TASKS_SCHEDULED;
     }
 
     private record Queue(String name, int remainingCapacity) {
@@ -244,9 +226,7 @@ final class WorkflowTaskScheduler implements Closeable {
             public Queue map(ResultSet rs, StatementContext ctx) throws SQLException {
                 return new Queue(rs.getString("name"), rs.getInt("remaining_capacity"));
             }
-
         }
-
     }
 
     private List<Queue> getActiveQueuesWithCapacity(Handle handle) {
@@ -270,15 +250,10 @@ final class WorkflowTaskScheduler implements Closeable {
                  where remaining_capacity > 0
                 """);
 
-        return query
-                .map(new Queue.RowMapper())
-                .list();
+        return query.map(new Queue.RowMapper()).list();
     }
 
-    private record SchedulingResult(
-            List<String> workflowNames,
-            int consumedConcurrencyKeyHints) {
-    }
+    private record SchedulingResult(List<String> workflowNames, int consumedConcurrencyKeyHints) {}
 
     private boolean processQueue(Handle handle, Queue queue) {
         final SchedulingResult result = scheduleEligibleRuns(handle, queue);
@@ -287,9 +262,7 @@ final class WorkflowTaskScheduler implements Closeable {
         final boolean didSchedule = !scheduledWorkflowNames.isEmpty();
         handle.afterCommit(() -> {
             for (final String workflowName : scheduledWorkflowNames) {
-                tasksScheduledCounter
-                        .withTag("workflowName", workflowName)
-                        .increment();
+                tasksScheduledCounter.withTag("workflowName", workflowName).increment();
             }
 
             if (didSchedule) {
@@ -556,9 +529,8 @@ final class WorkflowTaskScheduler implements Closeable {
                     on true
                 """);
 
-        final var consumedConcurrencyKeyHints = new long[]{0};
-        final List<String> workflowNames = query
-                .bind("queueName", queue.name())
+        final var consumedConcurrencyKeyHints = new long[] {0};
+        final List<String> workflowNames = query.bind("queueName", queue.name())
                 .bind("limit", queue.remainingCapacity())
                 .bind("concurrencyKeyHintBudget", queue.remainingCapacity() * CONCURRENCY_KEY_HINT_BUDGET_FACTOR)
                 .map((rs, _) -> {
@@ -571,5 +543,4 @@ final class WorkflowTaskScheduler implements Closeable {
 
         return new SchedulingResult(workflowNames, Math.toIntExact(consumedConcurrencyKeyHints[0]));
     }
-
 }

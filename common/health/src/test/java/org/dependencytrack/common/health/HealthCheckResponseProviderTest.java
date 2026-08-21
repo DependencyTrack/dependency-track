@@ -29,5 +29,4 @@ public class HealthCheckResponseProviderTest {
         assertThat(new HealthCheckResponseProvider().createResponseBuilder())
                 .isInstanceOf(HealthCheckResponseBuilder.class);
     }
-
 }

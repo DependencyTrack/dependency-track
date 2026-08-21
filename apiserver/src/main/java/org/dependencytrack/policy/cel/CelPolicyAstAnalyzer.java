@@ -32,8 +32,7 @@ import java.util.Set;
 
 final class CelPolicyAstAnalyzer {
 
-    record FunctionSignature(String function, @Nullable CelType targetType, List<@Nullable CelType> argumentTypes) {
-    }
+    record FunctionSignature(String function, @Nullable CelType targetType, List<@Nullable CelType> argumentTypes) {}
 
     private final CelAbstractSyntaxTree ast;
     private final MultiValuedMap<CelType, String> accessedFieldsByType;
@@ -46,21 +45,20 @@ final class CelPolicyAstAnalyzer {
     }
 
     void analyze() {
-        CelNavigableAst.fromAst(ast).getRoot().allNodes()
-                .forEach(node -> {
-                    final CelExpr expr = node.expr();
-                    switch (expr.exprKind().getKind()) {
-                        case SELECT -> visitSelect(expr);
-                        case CALL -> visitCall(expr);
-                        default -> {
-                        }
-                    }
-                });
+        CelNavigableAst.fromAst(ast).getRoot().allNodes().forEach(node -> {
+            final CelExpr expr = node.expr();
+            switch (expr.exprKind().getKind()) {
+                case SELECT -> visitSelect(expr);
+                case CALL -> visitCall(expr);
+                default -> {}
+            }
+        });
     }
 
     private void visitSelect(CelExpr expr) {
         final CelExpr.CelSelect selectExpr = expr.select();
-        final @Nullable CelType operandType = ast.getType(selectExpr.operand().id()).orElse(null);
+        final @Nullable CelType operandType =
+                ast.getType(selectExpr.operand().id()).orElse(null);
         if (operandType != null) {
             accessedFieldsByType.put(operandType, selectExpr.field());
         }
@@ -69,9 +67,8 @@ final class CelPolicyAstAnalyzer {
     private void visitCall(CelExpr expr) {
         final CelExpr.CelCall callExpr = expr.call();
 
-        final @Nullable CelType targetType = callExpr.target()
-                .flatMap(target -> ast.getType(target.id()))
-                .orElse(null);
+        final @Nullable CelType targetType =
+                callExpr.target().flatMap(target -> ast.getType(target.id())).orElse(null);
 
         final List<@Nullable CelType> argumentTypes = callExpr.args().stream()
                 .map(arg -> ast.getType(arg.id()).orElse(null))
@@ -87,5 +84,4 @@ final class CelPolicyAstAnalyzer {
     Set<FunctionSignature> getUsedFunctionSignatures() {
         return this.usedFunctionSignatures;
     }
-
 }

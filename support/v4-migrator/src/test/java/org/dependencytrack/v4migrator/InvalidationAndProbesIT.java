@@ -83,17 +83,17 @@ class InvalidationAndProbesIT {
         new TransformPhase(global, target.jdbi()).run();
 
         // After transform, probe_skipped_users records the LDAP NULL-USERNAME row.
-        final List<Map<String, Object>> skipped = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> skipped =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT table_name, orig_id, reason
                       FROM "dt_v4_migration".probe_skipped_users
                      ORDER BY table_name, orig_id
                     """).mapToMap().list());
         assertThat(skipped).hasSize(1);
         assertThat(skipped.get(0))
-            .containsEntry("table_name", "LDAPUSER")
-            .containsEntry("orig_id", 2L)
-            .containsEntry("reason", "USERNAME IS NULL");
+                .containsEntry("table_name", "LDAPUSER")
+                .containsEntry("orig_id", 2L)
+                .containsEntry("reason", "USERNAME IS NULL");
 
         // Add some fake LOAD state so we can confirm extract re-run wipes it.
         target.jdbi().useHandle(h -> h.execute("""
@@ -105,25 +105,26 @@ class InvalidationAndProbesIT {
         // Re-running extract must drop tgt_* tables and clear TRANSFORM / LOAD state.
         new ExtractPhase(global, src, target.jdbi(), 90).run();
 
-        final List<String> tgtTables = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<String> tgtTables = target.jdbi()
+                .withHandle(h -> h.createQuery("""
                     SELECT table_name FROM information_schema.tables
                      WHERE table_schema = 'dt_v4_migration'
                        AND table_name LIKE 'tgt\\_%' ESCAPE '\\'
                     """).mapTo(String.class).list());
         assertThat(tgtTables).isEmpty();
 
-        final Long downstreamRows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final Long downstreamRows = target.jdbi()
+                .withHandle(h -> h.createQuery("""
                     SELECT count(*) FROM "dt_v4_migration".migration_state
                      WHERE phase IN ('TRANSFORM', 'LOAD')
                     """).mapTo(Long.class).one());
         assertThat(downstreamRows).isZero();
 
         // Probe table is truncated on re-extract; transform will repopulate it.
-        final Long probeRowsAfterReExtract = target.jdbi().withHandle(h ->
-            h.createQuery("SELECT count(*) FROM \"dt_v4_migration\".probe_skipped_users")
-                .mapTo(Long.class).one());
+        final Long probeRowsAfterReExtract = target.jdbi()
+                .withHandle(h -> h.createQuery("SELECT count(*) FROM \"dt_v4_migration\".probe_skipped_users")
+                        .mapTo(Long.class)
+                        .one());
         assertThat(probeRowsAfterReExtract).isZero();
     }
 

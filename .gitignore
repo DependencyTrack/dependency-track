@@ -21,6 +21,7 @@ target/
 # IntelliJ
 .idea/*
 !.idea/icon.svg
+!.idea/codeStyles/
 !.idea/runConfigurations/
 
 # Claude Code

@@ -46,7 +46,10 @@ public class MigrationExecutor {
     /// Repeatable migrations always run last, irrespective of `targetVersion`, and thus assume that
     /// all versioned migrations were applied. Enable this when migrating to a `targetVersion` older
     /// than the latest, where repeatable migrations may depend on DDL that does not exist yet.
-    /// @see [How to fix or avoid ignored migrations in Flyway](https://www.red-gate.com/hub/product-learning/flyway/how-to-fix-or-avoid-ignored-migrations-in-flyway/).
+    /// @see [How to fix or avoid ignored migrations in Flyway]
+    ///
+    /// [How to fix or avoid ignored migrations in Flyway]:
+    /// https://www.red-gate.com/hub/product-learning/flyway/how-to-fix-or-avoid-ignored-migrations-in-flyway/
     public MigrationExecutor(
             DataSource dataSource,
             String baselineVersion,

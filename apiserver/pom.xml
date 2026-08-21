@@ -19,12 +19,12 @@
 
         <!-- Dependency Versions -->
         <lib.cloud-sql-postgres-socket-factory.version>1.29.0</lib.cloud-sql-postgres-socket-factory.version>
-        <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
+        <lib.javacron.version>1.4.0</lib.javacron.version>
         <lib.micrometer-jvm-extras.version>0.3.0</lib.micrometer-jvm-extras.version>
+        <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.swagger-parser.version>2.1.46</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
         <lib.woodstox.version>7.2.2</lib.woodstox.version>
-        <lib.javacron.version>1.4.0</lib.javacron.version>
 
         <!-- CycloneDX CLI -->
         <cyclonedx-cli.path>cyclonedx</cyclonedx-cli.path>
@@ -770,12 +770,12 @@
         <profile>
             <id>dev-services</id>
             <properties>
-                <spotless.check.skip>true</spotless.check.skip>
                 <cyclonedx.skip>true</cyclonedx.skip>
                 <enforcer.skip>true</enforcer.skip>
                 <jacoco.skip>true</jacoco.skip>
                 <maven.test.skip>true</maven.test.skip>
                 <resolve.skip>true</resolve.skip>
+                <spotless.check.skip>true</spotless.check.skip>
             </properties>
             <dependencies>
                 <dependency>

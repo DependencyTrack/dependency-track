@@ -14,20 +14,21 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) OWASP Foundation. All Rights Reserved.
-version: v2
-modules:
-- path: dex/api/src/main/proto
-  name: github.com/DependencyTrack/dex
-- path: file-storage/api/src/main/proto
-  name: github.com/DependencyTrack/file-storage
-- path: notification/api/src/main/proto
-  name: github.com/DependencyTrack/notification
-- path: package-metadata/resolution/src/main/proto
-  name: github.com/DependencyTrack/package-metadata-resolution
-- path: support/cyclonedx-proto/src/main/proto
-  name: github.com/DependencyTrack/cyclonedx
-- path: proto/src/main/proto
-  name: github.com/DependencyTrack/core
-lint:
-  ignore:
-  - support/cyclonedx-proto/src/main/proto/org/cyclonedx/v1_7/cyclonedx.proto
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{json,proto,yaml,yml}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+[*.md]
+trim_trailing_whitespace = false

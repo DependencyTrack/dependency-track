@@ -138,21 +138,21 @@
         <lib.datanucleus-javax-jdo.version>3.2.1</lib.datanucleus-javax-jdo.version>
         <lib.datanucleus-rdbms.version>6.0.11</lib.datanucleus-rdbms.version>
         <lib.db-scheduler.version>16.12.0</lib.db-scheduler.version>
+        <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.errorprone.version>2.50.0</lib.errorprone.version>
         <lib.flyway.version>13.2.0</lib.flyway.version>
-        <lib.eclipse-angus.version>2.0.5</lib.eclipse-angus.version>
         <lib.google-http-client.version>2.2.0</lib.google-http-client.version>
         <lib.greenmail.version>2.1.12</lib.greenmail.version>
         <lib.guava.version>33.6.0-jre</lib.guava.version>
         <lib.hamcrest.version>3.0</lib.hamcrest.version>
         <lib.hikaricp.version>7.1.0</lib.hikaricp.version>
         <lib.httpclient5.version>5.6.4</lib.httpclient5.version>
+        <lib.jackson2.version>2.22.1</lib.jackson2.version>
+        <lib.jackson3.version>3.2.1</lib.jackson3.version>
         <lib.jakarta-activation.version>2.1.4</lib.jakarta-activation.version>
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
         <lib.jakarta-mail.version>2.1.5</lib.jakarta-mail.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
-        <lib.jackson2.version>2.22.1</lib.jackson2.version>
-        <lib.jackson3.version>3.2.1</lib.jackson3.version>
         <lib.jboss-logging.version>3.6.3.Final</lib.jboss-logging.version>
         <lib.jdbi.version>3.54.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>
@@ -751,7 +751,7 @@
                 <plugin>
                     <groupId>com.diffplug.spotless</groupId>
                     <artifactId>spotless-maven-plugin</artifactId>
-                    <version>3.9.0</version>
+                    <version>3.10.0</version>
                 </plugin>
 
                 <plugin>
@@ -952,9 +952,36 @@
                         <licenseHeader>
                             <file>${project.parentBaseDir}/.mvn/spotless/license-header.txt</file>
                         </licenseHeader>
+                        <palantirJavaFormat>
+                            <version>2.97.0</version>
+                        </palantirJavaFormat>
+                        <importOrder>
+                            <order>,jakarta,javax|java,\#</order>
+                        </importOrder>
                         <removeUnusedImports/>
                         <forbidWildcardImports/>
+                        <forbidModuleImports/>
                     </java>
+                    <pom>
+                        <licenseHeader>
+                            <file>${project.parentBaseDir}/.mvn/spotless/license-header-xml.txt</file>
+                            <delimiter>&lt;project</delimiter>
+                        </licenseHeader>
+                        <sortPom>
+                            <nrOfIndentSpace>4</nrOfIndentSpace>
+                            <expandEmptyElements>false</expandEmptyElements>
+                            <keepBlankLines>false</keepBlankLines>
+                            <!--
+                              NB: Ordering of dependencies and plugins influences resolution
+                              and execution. Sorting them can alter behavior in unintended ways.
+                            -->
+                            <sortDependencies>none</sortDependencies>
+                            <sortPlugins>none</sortPlugins>
+                            <sortProperties>false</sortProperties>
+                            <sortModules>false</sortModules>
+                            <sortExecutions>false</sortExecutions>
+                        </sortPom>
+                    </pom>
                 </configuration>
                 <executions>
                     <execution>
@@ -990,10 +1017,10 @@
                 </property>
             </activation>
             <properties>
-                <spotless.check.skip>true</spotless.check.skip>
                 <enforcer.skip>true</enforcer.skip>
                 <jacoco.skip>true</jacoco.skip>
                 <maven.test.skip>true</maven.test.skip>
+                <spotless.check.skip>true</spotless.check.skip>
             </properties>
         </profile>
 

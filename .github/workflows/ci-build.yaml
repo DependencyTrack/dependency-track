@@ -83,6 +83,9 @@ jobs:
       publish-container: ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'feature-') }}
       ref-name: ${{ github.ref_name }}
     permissions:
+      artifact-metadata: write # Required to create the artifact storage record.
+      attestations: write # Required to generate SLSA build provenance.
+      id-token: write # Required for keyless signing of SLSA build provenance.
       packages: write # Required to push images to ghcr.io
     secrets:
       registry-0-usr: ${{ github.repository_owner }}

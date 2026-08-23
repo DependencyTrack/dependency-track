@@ -77,15 +77,15 @@
       "facts": [
         {
           "name": "Subject",
-          "value": "{{ subject.policyViolation.policyCondition.subject | escape(strategy="json") }}"
+          "value": "{{ subject.policyViolation.condition.subject | escape(strategy="json") }}"
         },
         {
           "name": "Operator",
-          "value": "{{ subject.policyViolation.policyCondition.operator | escape(strategy="json") }}"
+          "value": "{{ subject.policyViolation.condition.operator | escape(strategy="json") }}"
         },
         {
           "name": "Value",
-          "value": "{{ subject.policyViolation.policyCondition.value | escape(strategy="json") }}"
+          "value": "{{ subject.policyViolation.condition.value | escape(strategy="json") }}"
         },
         {
           "name": "Component",

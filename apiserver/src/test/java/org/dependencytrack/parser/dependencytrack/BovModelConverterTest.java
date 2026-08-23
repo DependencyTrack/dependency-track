@@ -263,6 +263,17 @@ class BovModelConverterTest {
     }
 
     @Test
+    void shouldSplitDisjointIntervalsByBoundDirection() {
+        // Pairing constraints positionally yields "<1.11.27|>=2.2", which matches every version above 2.2.
+        // See https://github.com/DependencyTrack/dependency-track/issues/6989.
+        final List<Vers> versList = BovModelConverter.convertRangeToVersList("vers:pypi/<1.11.27|>=2.2|<2.2.9");
+
+        assertThat(versList).extracting(Vers::toString).containsExactly(
+                "vers:pypi/<1.11.27",
+                "vers:pypi/>=2.2|<2.2.9");
+    }
+
+    @Test
     public void testConvertWithRatingsWithCvssV4() {
         final Bom bovInput = Bom.newBuilder().addVulnerabilities(
                 org.cyclonedx.proto.v1_7.Vulnerability.newBuilder()
@@ -460,6 +471,28 @@ class BovModelConverterTest {
                         assertThat(vs.getVersionStartExcluding()).isNull();
                         assertThat(vs.getVersionEndIncluding()).isNull();
                         assertThat(vs.getVersionEndExcluding()).isNull();
+                    });
+        }
+
+        @Test
+        void shouldNotWidenRangeWithDisjointIntervals() {
+            final Bom bov = createBovWithVersionRange("vers:pypi/<1.11.27|>=2.2|<2.2.9");
+            final List<VulnerableSoftware> vsList = BovModelConverter.extractVulnerableSoftware(bov);
+
+            assertThat(vsList).satisfiesExactlyInAnyOrder(
+                    vs -> {
+                        assertThat(vs.getVersion()).isNull();
+                        assertThat(vs.getVersionStartIncluding()).isNull();
+                        assertThat(vs.getVersionStartExcluding()).isNull();
+                        assertThat(vs.getVersionEndIncluding()).isNull();
+                        assertThat(vs.getVersionEndExcluding()).isEqualTo("1.11.27");
+                    },
+                    vs -> {
+                        assertThat(vs.getVersion()).isNull();
+                        assertThat(vs.getVersionStartIncluding()).isEqualTo("2.2");
+                        assertThat(vs.getVersionStartExcluding()).isNull();
+                        assertThat(vs.getVersionEndIncluding()).isNull();
+                        assertThat(vs.getVersionEndExcluding()).isEqualTo("2.2.9");
                     });
         }
 

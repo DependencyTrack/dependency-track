@@ -580,25 +580,25 @@ final class ModelConverter {
             rangeEvents.add(objectMapper.convertValue(event, RANGE_EVENT_TYPE_REF));
         }
 
-        final boolean lastIsUpperBound = isUpperBound(rangeEvents.getLast().getKey());
-        final Map<String, Object> dbProps = !lastIsUpperBound && databaseSpecific != null
-                ? databaseSpecific.getAdditionalProperties()
-                : null;
+        final Map<String, Object> dbProps =
+                databaseSpecific != null ? databaseSpecific.getAdditionalProperties() : null;
 
+        final List<Vers> verses;
         try {
-            final Vers vers = versFromOsvRange(rangeType.value(), ecosystem, rangeEvents, dbProps);
-            return List.of(
-                    VulnerabilityAffectedVersions.newBuilder()
-                            .setRange(vers.toString())
-                            .build());
+            verses = versFromOsvRange(rangeType.value(), ecosystem, rangeEvents, dbProps);
         } catch (Exception e) {
-            LOGGER.debug("Exception while parsing OSV version range.", e);
+            LOGGER.debug("Failed to convert OSV version range to vers intervals", e);
             return List.of();
         }
-    }
 
-    private static boolean isUpperBound(String eventKey) {
-        return "fixed".equals(eventKey) || "limit".equals(eventKey) || "last_affected".equals(eventKey);
+        final var affectedVersions = new ArrayList<VulnerabilityAffectedVersions>(verses.size());
+        for (final Vers vers : verses) {
+            affectedVersions.add(VulnerabilityAffectedVersions.newBuilder()
+                    .setRange(vers.toString())
+                    .build());
+        }
+
+        return affectedVersions;
     }
 
     private static @Nullable VulnerabilityCredits convertCredits(@Nullable List<Credit> credits) {

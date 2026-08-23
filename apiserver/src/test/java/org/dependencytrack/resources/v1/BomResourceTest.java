@@ -121,6 +121,7 @@ import static org.dependencytrack.notification.NotificationTestUtil.createCatchA
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_BOM_VALIDATION_FAILED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
+import static org.dependencytrack.parser.cyclonedx.CycloneDxBomAssert.assertThatBom;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
@@ -492,7 +493,9 @@ class BomResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
 
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatBom(jsonResponse)
+                .isValid()
+                .hasUniqueBomRefs();
         assertThatJson(jsonResponse)
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
@@ -634,7 +637,9 @@ class BomResourceTest extends ResourceTest {
                 .get(Response.class);
 
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatBom(jsonResponse)
+                .isValid()
+                .hasUniqueBomRefs();
         assertThatJson(jsonResponse)
                 .withMatcher("component", equalTo(component.getUuid().toString()))
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
@@ -766,10 +771,11 @@ class BomResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
 
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatBom(jsonResponse)
+                .isValid()
+                .hasUniqueBomRefs();
         assertThatJson(jsonResponse)
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
-                .withMatcher("vulnUuid", equalTo(vulnerability.getUuid().toString()))
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .withMatcher("componentWithoutVulnUuid", equalTo(componentWithoutVuln.getUuid().toString()))
                 .withMatcher("componentWithVulnUuid", equalTo(componentWithVuln.getUuid().toString()))
@@ -846,7 +852,6 @@ class BomResourceTest extends ResourceTest {
                             ],
                             "vulnerabilities": [
                                 {
-                                    "bom-ref": "${json-unit.matches:vulnUuid}",
                                     "id": "INT-001",
                                     "source": {
                                         "name": "INTERNAL"
@@ -863,25 +868,7 @@ class BomResourceTest extends ResourceTest {
                                     "affects": [
                                         {
                                             "ref": "${json-unit.matches:componentWithVulnUuid}"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "bom-ref": "${json-unit.matches:vulnUuid}",
-                                    "id": "INT-001",
-                                    "source": {
-                                        "name": "INTERNAL"
-                                    },
-                                    "ratings": [
-                                        {
-                                            "source": {
-                                                "name": "INTERNAL"
-                                            },
-                                            "severity": "high",
-                                            "method": "other"
-                                        }
-                                    ],
-                                    "affects": [
+                                        },
                                         {
                                             "ref": "${json-unit.matches:componentWithVulnAndAnalysisUuid}"
                                         }
@@ -989,10 +976,11 @@ class BomResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
 
         final String jsonResponse = getPlainTextBody(response);
-        assertThatNoException().isThrownBy(() -> CycloneDxValidator.getInstance().validate(jsonResponse.getBytes()));
+        assertThatBom(jsonResponse)
+                .isValid()
+                .hasUniqueBomRefs();
         assertThatJson(jsonResponse)
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
-                .withMatcher("vulnUuid", equalTo(vulnerability.getUuid().toString()))
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
                 .withMatcher("componentWithoutVulnUuid", equalTo(componentWithoutVuln.getUuid().toString()))
                 .withMatcher("componentWithVulnUuid", equalTo(componentWithVuln.getUuid().toString()))
@@ -1056,7 +1044,6 @@ class BomResourceTest extends ResourceTest {
                             ],
                             "vulnerabilities": [
                                 {
-                                    "bom-ref": "${json-unit.matches:vulnUuid}",
                                     "id": "INT-001",
                                     "source": {
                                         "name": "INTERNAL"
@@ -1077,7 +1064,6 @@ class BomResourceTest extends ResourceTest {
                                     ]
                                 },
                                 {
-                                    "bom-ref": "${json-unit.matches:vulnUuid}",
                                     "id": "INT-001",
                                     "source": {
                                         "name": "INTERNAL"

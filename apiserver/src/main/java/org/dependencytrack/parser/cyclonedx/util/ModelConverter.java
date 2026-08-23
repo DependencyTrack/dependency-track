@@ -80,11 +80,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -185,12 +188,12 @@ public class ModelConverter {
         project.setExternalReferences(convertExternalReferences(cdxComponent.getExternalReferences()));
 
         List<OrganizationalContact> contacts = new ArrayList<>();
-        if(cdxComponent.getAuthor()!=null){
+        if (cdxComponent.getAuthor() != null) {
             contacts.add(new OrganizationalContact() {{
                 setName(cdxComponent.getAuthor());
             }});
         }
-        if(cdxComponent.getAuthors()!=null){
+        if (cdxComponent.getAuthors() != null) {
             contacts.addAll(convertCdxContacts(cdxComponent.getAuthors()));
         }
         project.setAuthors(contacts);
@@ -236,12 +239,12 @@ public class ModelConverter {
         component.setProperties(convertToComponentProperties(cdxComponent.getProperties()));
 
         List<OrganizationalContact> contacts = new ArrayList<>();
-        if(cdxComponent.getAuthor()!=null){
+        if (cdxComponent.getAuthor() != null) {
             contacts.add(new OrganizationalContact() {{
                 setName(cdxComponent.getAuthor());
             }});
         }
-        if(cdxComponent.getAuthors()!=null){
+        if (cdxComponent.getAuthors() != null) {
             contacts.addAll(convertCdxContacts(cdxComponent.getAuthors()));
         }
         component.setAuthors(contacts);
@@ -652,23 +655,19 @@ public class ModelConverter {
         return result;
     }
 
-    public static org.cyclonedx.model.Component convert(final Component component) {
-        final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
+    public static org.cyclonedx.model.Component convertIdentity(Component component) {
+        final var cycloneComponent = new org.cyclonedx.model.Component();
         cycloneComponent.setBomRef(component.getUuid().toString());
         cycloneComponent.setGroup(StringUtils.trimToNull(component.getGroup()));
         cycloneComponent.setName(StringUtils.trimToNull(component.getName()));
         cycloneComponent.setVersion(StringUtils.trimToNull(component.getVersion()));
-        cycloneComponent.setDescription(StringUtils.trimToNull(component.getDescription()));
-        cycloneComponent.setCopyright(StringUtils.trimToNull(component.getCopyright()));
         cycloneComponent.setCpe(StringUtils.trimToNull(component.getCpe()));
-        cycloneComponent.setScope(mapCdxScope(component.getScope()));
-        cycloneComponent.setAuthor(StringUtils.trimToNull(convertContactsToString(component.getAuthors())));
-        cycloneComponent.setSupplier(convert(component.getSupplier()));
-        cycloneComponent.setProperties(convert(component.getProperties()));
 
         if (component.getSwidTagId() != null) {
             final Swid swid = new Swid();
             swid.setTagId(component.getSwidTagId());
+            swid.setName(StringUtils.trimToNull(component.getName()));
+            swid.setVersion(StringUtils.trimToNull(component.getVersion()));
             cycloneComponent.setSwid(swid);
         }
 
@@ -688,6 +687,18 @@ public class ModelConverter {
                 cycloneComponent.addHash(new Hash(algorithm, hashValue));
             }
         });
+
+        return cycloneComponent;
+    }
+
+    public static org.cyclonedx.model.Component convert(Component component) {
+        final org.cyclonedx.model.Component cycloneComponent = convertIdentity(component);
+        cycloneComponent.setDescription(StringUtils.trimToNull(component.getDescription()));
+        cycloneComponent.setCopyright(StringUtils.trimToNull(component.getCopyright()));
+        cycloneComponent.setScope(mapCdxScope(component.getScope()));
+        cycloneComponent.setAuthor(StringUtils.trimToNull(convertContactsToString(component.getAuthors())));
+        cycloneComponent.setSupplier(convert(component.getSupplier()));
+        cycloneComponent.setProperties(convert(component.getProperties()));
 
         final LicenseChoice licenses = new LicenseChoice();
         if (component.getResolvedLicense() != null) {
@@ -964,28 +975,19 @@ public class ModelConverter {
         return cycloneService;
     }
 
-    public static org.cyclonedx.model.vulnerability.Vulnerability convert(final QueryManager qm, final CycloneDXExporter.Variant variant,
-                                                                          final Finding finding) {
-        final Component component = qm.getObjectByUuid(Component.class, finding.getComponent().get("uuid").toString());
-        if (component == null) {
-            return null;
-        }
-        final Project project = component.getProject();
-        final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, finding.getVulnerability().get("uuid").toString());
-        if (vulnerability == null) {
-            return null;
-        }
-
-        final org.cyclonedx.model.vulnerability.Vulnerability cdxVulnerability = new org.cyclonedx.model.vulnerability.Vulnerability();
-        cdxVulnerability.setBomRef(vulnerability.getUuid().toString());
+    private static org.cyclonedx.model.vulnerability.Vulnerability convert(
+            Vulnerability vulnerability,
+            Analysis analysis,
+            SortedSet<String> affectedComponentUuids) {
+        // NB: No bom-ref. It is optional, nothing references a vulnerability entry,
+        // and one vulnerability may yield several entries, which historically made the vulnerability
+        // UUID a source of duplicate bom-refs. CycloneDX requires every bom-ref to be unique within the BOM.
+        final var cdxVulnerability = new org.cyclonedx.model.vulnerability.Vulnerability();
         cdxVulnerability.setId(vulnerability.getVulnId());
-        // Add the vulnerability source
-        org.cyclonedx.model.vulnerability.Vulnerability.Source cdxSource = new org.cyclonedx.model.vulnerability.Vulnerability.Source();
-        cdxSource.setName(vulnerability.getSource());
         cdxVulnerability.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
 
         if (vulnerability.getCvssV2BaseScore() != null) {
-            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            final var rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
             rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.CVSSV2);
             rating.setScore(vulnerability.getCvssV2BaseScore().doubleValue());
@@ -1000,7 +1002,7 @@ public class ModelConverter {
             cdxVulnerability.addRating(rating);
         }
         if (vulnerability.getCvssV3BaseScore() != null) {
-            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            final var rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
             if (vulnerability.getCvssV3Vector() != null && vulnerability.getCvssV3Vector().contains("CVSS:3.0")) {
                 rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.CVSSV3);
@@ -1021,7 +1023,7 @@ public class ModelConverter {
             cdxVulnerability.addRating(rating);
         }
         if (vulnerability.getCvssV4Score() != null) {
-            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            final var rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
             rating.setScore(vulnerability.getCvssV4Score().doubleValue());
             rating.setVector(vulnerability.getCvssV4Vector());
@@ -1037,7 +1039,7 @@ public class ModelConverter {
             cdxVulnerability.addRating(rating);
         }
         if (vulnerability.getOwaspRRLikelihoodScore() != null && vulnerability.getOwaspRRTechnicalImpactScore() != null && vulnerability.getOwaspRRBusinessImpactScore() != null) {
-            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            final var rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSeverity(convertDtSeverityToCdxSeverity(VulnerabilityUtil.normalizedOwaspRRScore(vulnerability.getOwaspRRLikelihoodScore().doubleValue(), vulnerability.getOwaspRRTechnicalImpactScore().doubleValue(), vulnerability.getOwaspRRBusinessImpactScore().doubleValue())));
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
             rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.OWASP);
@@ -1045,7 +1047,7 @@ public class ModelConverter {
             cdxVulnerability.addRating(rating);
         }
         if (vulnerability.getCvssV2BaseScore() == null && vulnerability.getCvssV3BaseScore() == null && vulnerability.getCvssV4Score() == null && vulnerability.getOwaspRRLikelihoodScore() == null) {
-            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            final var rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSeverity(convertDtSeverityToCdxSeverity(vulnerability.getSeverity()));
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
             rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.OTHER);
@@ -1065,41 +1067,34 @@ public class ModelConverter {
         cdxVulnerability.setPublished(vulnerability.getPublished());
         cdxVulnerability.setUpdated(vulnerability.getUpdated());
 
-        if (CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES == variant || CycloneDXExporter.Variant.VDR == variant) {
-            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
-            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
-            affect.setRef(component.getUuid().toString());
+        // The affected components are VEX "subcomponents", i.e. the elements of the product
+        // in which the vulnerability originates. The product itself is identified by metadata.component.
+        final var affects = new ArrayList<org.cyclonedx.model.vulnerability.Vulnerability.Affect>(
+                affectedComponentUuids.size());
+        for (final String componentUuid : affectedComponentUuids) {
+            final var affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
+            affect.setRef(componentUuid);
             affects.add(affect);
-            cdxVulnerability.setAffects(affects);
-        } else if (CycloneDXExporter.Variant.VEX == variant && project != null) {
-            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
-            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
-            affect.setRef(project.getUuid().toString());
-            affects.add(affect);
-            cdxVulnerability.setAffects(affects);
         }
+        cdxVulnerability.setAffects(affects);
 
-        if (CycloneDXExporter.Variant.VEX == variant || CycloneDXExporter.Variant.VDR == variant) {
-            final Analysis analysis = qm.getAnalysis(component, vulnerability);
-            if (analysis != null) {
-                final org.cyclonedx.model.vulnerability.Vulnerability.Analysis cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
-                if (analysis.getAnalysisResponse() != null) {
-                    final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response response = convertDtVulnAnalysisResponseToCdxAnalysisResponse(analysis.getAnalysisResponse());
-                    if (response != null) {
-                        List<org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response> responses = new ArrayList<>();
-                        responses.add(response);
-                        cdxAnalysis.setResponses(responses);
-                    }
+        if (analysis != null) {
+            final var cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
+            if (analysis.getAnalysisResponse() != null) {
+                final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response response =
+                        convertDtVulnAnalysisResponseToCdxAnalysisResponse(analysis.getAnalysisResponse());
+                if (response != null) {
+                    cdxAnalysis.setResponses(new ArrayList<>(List.of(response)));
                 }
-                if (analysis.getAnalysisState() != null) {
-                    cdxAnalysis.setState(convertDtVulnAnalysisStateToCdxAnalysisState(analysis.getAnalysisState()));
-                }
-                if (analysis.getAnalysisJustification() != null) {
-                    cdxAnalysis.setJustification(convertDtVulnAnalysisJustificationToCdxAnalysisJustification(analysis.getAnalysisJustification()));
-                }
-                cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
-                cdxVulnerability.setAnalysis(cdxAnalysis);
             }
+            if (analysis.getAnalysisState() != null) {
+                cdxAnalysis.setState(convertDtVulnAnalysisStateToCdxAnalysisState(analysis.getAnalysisState()));
+            }
+            if (analysis.getAnalysisJustification() != null) {
+                cdxAnalysis.setJustification(convertDtVulnAnalysisJustificationToCdxAnalysisJustification(analysis.getAnalysisJustification()));
+            }
+            cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
+            cdxVulnerability.setAnalysis(cdxAnalysis);
         }
 
         return cdxVulnerability;
@@ -1321,19 +1316,80 @@ public class ModelConverter {
     }
 
     public static List<org.cyclonedx.model.vulnerability.Vulnerability> generateVulnerabilities(
-            final QueryManager qm,
-            final CycloneDXExporter.Variant variant,
-            final List<Finding> findings
-    ) {
+            QueryManager qm,
+            CycloneDXExporter.Variant variant,
+            List<Finding> findings) {
         if (findings == null) {
-            return Collections.emptyList();
+            return List.of();
         }
-        final var vulnerabilitiesSeen = new HashSet<org.cyclonedx.model.vulnerability.Vulnerability>();
-        return findings.stream()
-                .map(finding -> convert(qm, variant, finding))
-                .filter(Objects::nonNull)
-                .filter(vulnerabilitiesSeen::add)
+
+        // CISA's VEX minimum requirements allow one statement to cover multiple affected elements,
+        // but only while the status holds for all of them:
+        //
+        //   "If status or other VEX information changes for a subset of products,
+        //   additional VEX statements MUST be created for the respective subset."
+        //
+        // Hence, we group by vulnerability and analysis.
+        final var groups = new LinkedHashMap<VulnerabilityGroupKey, VulnerabilityGroup>();
+        for (final Finding finding : findings) {
+            final Component component = qm.getObjectByUuid(
+                    Component.class,
+                    finding.getComponent().get("uuid").toString());
+            if (component == null) {
+                continue;
+            }
+
+            final Vulnerability vulnerability = qm.getObjectByUuid(
+                    Vulnerability.class,
+                    finding.getVulnerability().get("uuid").toString());
+            if (vulnerability == null) {
+                continue;
+            }
+
+            final Analysis analysis = variant.hasCapability(CycloneDXExporter.Capability.EMITS_ANALYSIS)
+                    ? qm.getAnalysis(component, vulnerability)
+                    : null;
+
+            groups.computeIfAbsent(
+                            VulnerabilityGroupKey.of(vulnerability, analysis),
+                            ignored -> new VulnerabilityGroup(vulnerability, analysis, new TreeSet<>()))
+                    .affectedComponentUuids()
+                    .add(component.getUuid().toString());
+        }
+
+        return groups.values().stream()
+                .map(group -> convert(group.vulnerability(), group.analysis(), group.affectedComponentUuids()))
                 .toList();
+    }
+
+    private record VulnerabilityGroup(
+            Vulnerability vulnerability,
+            Analysis analysis,
+            SortedSet<String> affectedComponentUuids) {
+    }
+
+    private record VulnerabilityGroupKey(
+            UUID vulnerabilityUuid,
+            boolean analyzed,
+            AnalysisState analysisState,
+            AnalysisJustification analysisJustification,
+            AnalysisResponse analysisResponse,
+            String analysisDetails) {
+
+        private static VulnerabilityGroupKey of(Vulnerability vulnerability, Analysis analysis) {
+            if (analysis == null) {
+                return new VulnerabilityGroupKey(vulnerability.getUuid(), false, null, null, null, null);
+            }
+
+            return new VulnerabilityGroupKey(
+                    vulnerability.getUuid(),
+                    true,
+                    analysis.getAnalysisState(),
+                    analysis.getAnalysisJustification(),
+                    analysis.getAnalysisResponse(),
+                    StringUtils.trimToNull(analysis.getAnalysisDetails()));
+        }
+
     }
 
     public static org.cyclonedx.model.Component.Scope mapCdxScope(Scope scope) {

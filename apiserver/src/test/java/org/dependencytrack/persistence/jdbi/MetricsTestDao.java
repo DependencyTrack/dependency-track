@@ -105,9 +105,9 @@ public interface MetricsTestDao extends SqlObject {
     @SqlQuery("""
             INSERT INTO "DEPENDENCYMETRICS"(
                 "COMPONENT_ID", "PROJECT_ID", "FIRST_OCCURRENCE", "LAST_OCCURRENCE", "CRITICAL", "HIGH", "MEDIUM", "LOW", "RISKSCORE",
-                "SUPPRESSED", "VULNERABILITIES")
+                "SUPPRESSED", "UNASSIGNED_SEVERITY", "VULNERABILITIES")
             VALUES (:componentId, :projectId, :firstOccurrence, :lastOccurrence, :critical, :high, :medium, :low, :inheritedRiskScore,
-                 :suppressed, :vulnerabilities)
+                 :suppressed, :unassigned, :vulnerabilities)
             RETURNING *
             """)
     @RegisterBeanMapper(DependencyMetrics.class)

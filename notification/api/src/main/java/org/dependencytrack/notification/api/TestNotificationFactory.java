@@ -29,6 +29,7 @@ import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.Policy;
 import org.dependencytrack.notification.proto.v1.PolicyCondition;
 import org.dependencytrack.notification.proto.v1.PolicyViolation;
+import org.dependencytrack.notification.proto.v1.PolicyViolationAnalysis;
 import org.dependencytrack.notification.proto.v1.Project;
 import org.dependencytrack.notification.proto.v1.Scope;
 import org.dependencytrack.notification.proto.v1.UserSubject;
@@ -49,6 +50,7 @@ import static org.dependencytrack.notification.api.NotificationFactory.createBom
 import static org.dependencytrack.notification.api.NotificationFactory.createIntegrationErrorNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createNewVulnerabilityNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createNewVulnerableDependencyNotification;
+import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationAnalysisDecisionChangeNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createUserCreatedNotification;
@@ -254,6 +256,19 @@ public final class TestNotificationFactory {
                 false);
     }
 
+    public static Notification createPolicyViolationAuditChangeTestNotification() {
+        return createPolicyViolationAnalysisDecisionChangeNotification(
+                createProject(),
+                createComponent(),
+                createPolicyViolation(createPolicyCondition(createPolicy())),
+                createPolicyViolationAnalysis(
+                        createProject(),
+                        createComponent(),
+                        createPolicyViolation(createPolicyCondition(createPolicy()))),
+                true,
+                false);
+    }
+
     public static Notification createProjectCreatedTestNotification() {
         return createProjectCreatedNotification(createProject());
     }
@@ -446,6 +461,19 @@ public final class TestNotificationFactory {
                 .addCwes(Vulnerability.Cwe.newBuilder()
                         .setCweId(777)
                         .setName("Regular Expression without Anchors"))
+                .build();
+    }
+
+    private static PolicyViolationAnalysis createPolicyViolationAnalysis(
+            Project project,
+            Component component,
+            PolicyViolation violation) {
+        return PolicyViolationAnalysis.newBuilder()
+                .setProject(project)
+                .setComponent(component)
+                .setPolicyViolation(violation)
+                .setState("REJECTED")
+                .setSuppressed(true)
                 .build();
     }
 

@@ -36,15 +36,13 @@ Description:
 {% endfor %}
 {% elseif notification.group == "GROUP_PROJECT_AUDIT_CHANGE" %}
 Analysis Type:  Project Analysis
-{% if subject.analysis is null %}{% for comment in subject.violationAnalysis.analysisComments %} {% if loop.last and comment.commenter is not null  %}
-Commenter:         {{ comment.commenter}}{% endif %}{% endfor %}
-Violation Analysis State:    {{ subject.violationAnalysis.state }}
-Suppressed:        {{ subject.violationAnalysis.suppressed }}
+{% if subject.policyViolation is defined %}
+Violation Analysis State:    {{ subject.analysis.state }}
+Suppressed:        {{ subject.analysis.suppressed }}
 Policy:            {{ subject.policyViolation.condition.policy.name }}
 Policy Violation State: {{ subject.policyViolation.condition.policy.violationState }}
 Policy Condition:  subject == {{ subject.policyViolation.condition.subject }} && value {{ subject.policyViolation.condition.operator }} {{ subject.policyViolation.condition.value }}
-{% else %}{% for comment in subject.analysis.analysisComments %} {% if loop.last and comment.commenter is not null %}
-Commenter:         {{ comment.commenter}}{% endif %}{% endfor %}
+{% else %}
 Analysis State:    {{ subject.analysis.state }}
 Suppressed:        {{ subject.analysis.suppressed }}
 Vulnerability ID:  {{ subject.vulnerability.vulnId }}

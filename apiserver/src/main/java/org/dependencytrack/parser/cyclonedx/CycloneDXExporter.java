@@ -49,7 +49,8 @@ public class CycloneDXExporter {
     }
 
     public enum Capability {
-        EMITS_COMPONENTS,
+        EMITS_ANALYSIS,
+        EMITS_COMPONENT_DETAILS,
         EMITS_DEPENDENCY_GRAPH,
         EMITS_FINDINGS,
         EMITS_SERVICES,
@@ -59,22 +60,25 @@ public class CycloneDXExporter {
     public enum Variant {
 
         INVENTORY(
-                Capability.EMITS_COMPONENTS,
+                Capability.EMITS_COMPONENT_DETAILS,
                 Capability.EMITS_SERVICES,
                 Capability.EMITS_DEPENDENCY_GRAPH),
         INVENTORY_WITH_VULNERABILITIES(
                 Capability.EMITS_FINDINGS,
-                Capability.EMITS_COMPONENTS,
+                Capability.EMITS_COMPONENT_DETAILS,
                 Capability.EMITS_SERVICES,
                 Capability.EMITS_DEPENDENCY_GRAPH),
         VDR(
                 Capability.FILTERS_TO_VULNERABLE_COMPONENTS,
                 Capability.EMITS_FINDINGS,
-                Capability.EMITS_COMPONENTS,
+                Capability.EMITS_ANALYSIS,
+                Capability.EMITS_COMPONENT_DETAILS,
                 Capability.EMITS_SERVICES,
                 Capability.EMITS_DEPENDENCY_GRAPH),
         VEX(
-                Capability.EMITS_FINDINGS);
+                Capability.FILTERS_TO_VULNERABLE_COMPONENTS,
+                Capability.EMITS_FINDINGS,
+                Capability.EMITS_ANALYSIS);
 
         private final Set<Capability> capabilities;
 
@@ -132,10 +136,13 @@ public class CycloneDXExporter {
                     .filter(component -> vulnerableComponentUuids.contains(component.getUuid()))
                     .toList();
         }
-        final List<org.cyclonedx.model.Component> cycloneComponents =
-                (variant.hasCapability(Capability.EMITS_COMPONENTS) && components != null)
-                        ? components.stream().map(ModelConverter::convert).collect(Collectors.toList())
-                        : null;
+        final List<org.cyclonedx.model.Component> cycloneComponents = components != null
+                ? components.stream()
+                        .map(variant.hasCapability(Capability.EMITS_COMPONENT_DETAILS)
+                                ? ModelConverter::convert
+                                : ModelConverter::convertIdentity)
+                        .collect(Collectors.toList())
+                : null;
         final List<org.cyclonedx.model.Service> cycloneServices =
                 (variant.hasCapability(Capability.EMITS_SERVICES) && services != null)
                         ? services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList())

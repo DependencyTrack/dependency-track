@@ -31,6 +31,7 @@ import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.parser.cyclonedx.util.ModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.trimToNull;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertCdxVulnAnalysisJustificationToDtAnalysisJustification;
 import static org.dependencytrack.parser.cyclonedx.util.ModelConverter.convertCdxVulnAnalysisStateToDtAnalysisState;
 
@@ -70,12 +72,8 @@ public class CycloneDXVexImporter {
         final Map<String, List<Component>> componentsByBomRef = new HashMap<>();
 
         for (final org.cyclonedx.model.vulnerability.Vulnerability vexVuln : vexVulns) {
-            final Vulnerability dtVuln = qm.getVulnerabilityByVulnId(vexVuln.getSource().getName(), vexVuln.getId());
+            final Vulnerability dtVuln = resolveVulnerability(qm, vexVuln);
             if (dtVuln == null) {
-                LOGGER.warn("""
-                        VEX contains analysis for vulnerability {}/{}, but the project is not affected by it. \
-                        Analyses can currently only be applied to existing findings.\
-                        """, vexVuln.getSource().getName(), vexVuln.getId());
                 continue;
             }
 
@@ -111,10 +109,51 @@ public class CycloneDXVexImporter {
                             Unable to locate affected element (metadata.component or components[].component) \
                             based on the BOM reference {}. The vulnerability.affects[].ref \
                             node of {}/{} is not resolvable; Skipping it\
-                            """, affectedBomRef, vexVuln.getSource().getName(), vexVuln.getId());
+                            """, affectedBomRef, sourceNameOf(vexVuln), vexVuln.getId());
                 }
             }
         }
+    }
+
+    private static @Nullable String sourceNameOf(final org.cyclonedx.model.vulnerability.Vulnerability vexVuln) {
+        if (vexVuln.getSource() == null) {
+            return null;
+        }
+
+        return trimToNull(vexVuln.getSource().getName());
+    }
+
+    private static @Nullable Vulnerability resolveVulnerability(
+            final QueryManager qm,
+            final org.cyclonedx.model.vulnerability.Vulnerability vexVuln) {
+        final String vexVulnId = vexVuln.getId();
+        final String vexVulnSource = sourceNameOf(vexVuln);
+
+        if (vexVulnSource != null && Vulnerability.Source.isKnownSource(vexVulnSource)) {
+            final Vulnerability dtVuln = qm.getVulnerabilityByVulnId(vexVulnSource, vexVulnId);
+            if (dtVuln != null) {
+                return dtVuln;
+            }
+        }
+
+        final List<Vulnerability> candidates = qm.getVulnerabilitiesByVulnId(vexVulnId);
+        if (candidates.isEmpty()) {
+            LOGGER.warn("""
+                    VEX contains analysis for vulnerability {}, but the project is not affected by it. \
+                    Analyses can currently only be applied to existing findings.\
+                    """, vexVulnId);
+            return null;
+        }
+        if (candidates.size() > 1) {
+            LOGGER.warn("""
+                    VEX contains analysis for vulnerability {} from source {}, which does not identify \
+                    a vulnerability in Dependency-Track. The ID alone matches vulnerabilities from \
+                    multiple sources ({}); Skipping it\
+                    """, vexVulnId, vexVulnSource, candidates.stream().map(Vulnerability::getSource).toList());
+            return null;
+        }
+
+        return candidates.getFirst();
     }
 
     private static List<org.cyclonedx.model.vulnerability.Vulnerability> getApplicableVexVulnerabilities(
@@ -122,21 +161,15 @@ public class CycloneDXVexImporter {
         final var applicableVulns = new ArrayList<org.cyclonedx.model.vulnerability.Vulnerability>();
         for (int vexVulnPos = 0; vexVulnPos < vexVulns.size(); vexVulnPos++) {
             final var vexVuln = vexVulns.get(vexVulnPos);
-            if (isBlank(vexVuln.getId()) || vexVuln.getSource() == null || isBlank(vexVuln.getSource().getName())) {
+            if (isBlank(vexVuln.getId())) {
                 LOGGER.warn(
-                        "VEX vulnerability at position #{} does not have an ID and / or source; Skipping it",
+                        "VEX vulnerability at position #{} does not have an ID; Skipping it",
                         vexVulnPos);
                 continue;
             }
 
             final String vexVulnId = vexVuln.getId();
-            final String vexVulnSource = vexVuln.getSource().getName();
-            if (!Vulnerability.Source.isKnownSource(vexVulnSource)) {
-                LOGGER.warn(
-                        "VEX vulnerability {}/{} at position #{} is from an unsupported source; Skipping it",
-                        vexVulnSource, vexVulnId, vexVulnPos);
-                continue;
-            }
+            final String vexVulnSource = sourceNameOf(vexVuln);
             if (CollectionUtils.isEmpty(vexVuln.getAffects())) {
                 LOGGER.debug(
                         "VEX vulnerability {}/{} at position #{} does not have an affects node; Skipping it",

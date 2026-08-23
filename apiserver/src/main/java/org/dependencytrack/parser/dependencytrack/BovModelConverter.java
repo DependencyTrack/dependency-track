@@ -477,7 +477,8 @@ public final class BovModelConverter {
             return Vers.parseLenient(range).validate().split();
         } catch (InvalidVersionException e) {
             String[] rangeParts = range.split(":", 2);
-            if (SCHEME_GENERIC.equals(rangeParts[0])) {
+            String[] versions = rangeParts[1].split("/", 2);
+            if (SCHEME_GENERIC.equals(versions[0])) {
                 LOGGER.warn("""
                         Range '{}' could not be parsed because one or more versions \
                         do not comply with the versioning scheme's rules; Skipping""", range, e);
@@ -488,7 +489,6 @@ public final class BovModelConverter {
                     Range '{}' could not be parsed because one or more versions \
                     do not comply with the versioning scheme's rules; \
                     Falling back to versioning scheme 'generic' instead""", range, e);
-            String[] versions = rangeParts[1].split("/", 2);
             var genericRange = rangeParts[0] + ":" + SCHEME_GENERIC + "/" + versions[1];
             return convertRangeToVersList(genericRange);
         }

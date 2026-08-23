@@ -75,12 +75,16 @@ public class CoordinatesCelPolicyScriptSourceBuilder implements CelPolicyScriptS
         //Do an exact match if no operator found
         if (!versionOperatorMatcher.find()) {
 
-            Vers conditionVers = Vers.builder(SCHEME_GENERIC)
+            Vers conditionVers = "*".equals(conditionVersionPart)
+                    ? Vers.builder(SCHEME_GENERIC)
+                    .withConstraint(Comparator.WILDCARD, null)
+                    .build()
+                    : Vers.builder(SCHEME_GENERIC)
                     .withConstraint(Comparator.EQUAL, conditionVersionPart)
                     .build();
             return """
-                component.group.matches("%s") && component.name.matches("%s") && component.matches_range("%s")
-                """.formatted(escapeQuotes(group), escapeQuotes(name), conditionVers.toString());
+                    component.group.matches("%s") && component.name.matches("%s") && component.matches_range("%s")
+                    """.formatted(escapeQuotes(group), escapeQuotes(name), conditionVers.toString());
         }
 
         io.github.nscuro.versatile.Comparator versionComparator = switch (versionOperatorMatcher.group(1)) {

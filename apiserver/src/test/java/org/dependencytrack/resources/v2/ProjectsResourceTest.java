@@ -124,6 +124,7 @@ public class ProjectsResourceTest extends ResourceTest {
                        "group" : "component-group",
                        "purl" : "pkg:maven/foo/bar@3.0",
                        "internal" : false,
+                       "license" : "Public Domain",
                        "uuid" : "${json-unit.any-string}"
                       }
                   ],
@@ -745,6 +746,7 @@ public class ProjectsResourceTest extends ResourceTest {
         component.setName("component-name");
         component.setVersion("3.0");
         component.setPurl("pkg:maven/foo/bar@3.0");
+        component.setLicense("Public Domain");
         qm.createComponent(component, false);
 
         return project;

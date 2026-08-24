@@ -24,6 +24,8 @@ import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
+import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
+import org.datanucleus.management.FactoryStatistics;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.dex.api.failure.TerminalApplicationFailureException;
 import org.dependencytrack.dex.engine.api.DexEngine;
@@ -430,7 +432,24 @@ class ImportBomActivityTest extends PersistenceCapableTest {
 
         final var bomFileMetadata = storeBomFile("bom-bloated.json");
         final var bomUploadToken = UUID.randomUUID();
+
+        final FactoryStatistics pmfStatistics =
+                ((JDOPersistenceManagerFactory) qm.getPersistenceManager().getPersistenceManagerFactory())
+                        .getNucleusContext()
+                        .getStatistics();
+        final int objectUpdatesBefore = pmfStatistics.getNumberOfObjectUpdates();
+
         activity.execute(null, buildArg(project, bomFileMetadata, bomUploadToken));
+
+        // Components must be inserted with their direct dependencies already assigned.
+        // Flushing before the dependency graph is resolved turns every component that has
+        // dependencies into an insert *and* an update, which leads to thousands of additional
+        // database round trips on a BOM this size. Only the project row should be updated.
+        // If this assertion fails, something in the import logic is causing premature flushes.
+        assertThat(pmfStatistics.getNumberOfObjectUpdates() - objectUpdatesBefore)
+                .as("BOM import must not update components after inserting them")
+                .isLessThan(100);
+
         assertBomProcessedNotification();
 
         assertThat(qm.getNotificationOutbox())

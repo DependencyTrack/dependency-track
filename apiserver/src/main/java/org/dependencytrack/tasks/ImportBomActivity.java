@@ -401,6 +401,11 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 processDependencyGraph(qm, persistentProject, bom.dependencyGraph(), persistentComponentsByIdentity,
                         bom.identitiesByBomRef(), bom.bomRefsByIdentity());
 
+                // NB: This is supposed to be the *only* flush for the *entire* BOM.
+                // The logic leading up to this intentionally doesn't trigger flushes to prevent
+                // excessive DB round-trips and table bloat.
+                qm.getPersistenceManager().flush();
+
                 recordBomImport(ctx, qm, persistentProject);
 
                 qm.seedPackageMetadataResolution(persistentProject);
@@ -593,12 +598,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             return idsOfComponentsToDelete.contains(component.getId());
         });
 
-        qm.getPersistenceManager().flush();
-
-        final long componentsDeleted = deleteComponentsById(qm, idsOfComponentsToDelete);
-        if (componentsDeleted > 0) {
-            qm.getPersistenceManager().flush();
-        }
+        deleteComponentsById(qm, idsOfComponentsToDelete);
 
         return persistentComponentByIdentity;
     }
@@ -621,7 +621,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 .collect(Collectors.toMap(
                         service -> new ComponentIdentity(service, /* excludeUuid */ true),
                         Function.identity(),
-                        (previous, duplicate) -> {
+                        (previous, _) -> {
                             LOGGER.warn("""
                                     More than one existing service matches the identity %s; \
                                     Proceeding with first match, others will be deleted\
@@ -681,12 +681,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             return idsOfServicesToDelete.contains(service.getId());
         });
 
-        qm.getPersistenceManager().flush();
-
-        final long servicesDeleted = deleteServicesById(qm, idsOfServicesToDelete);
-        if (servicesDeleted > 0) {
-            qm.getPersistenceManager().flush();
-        }
+        deleteServicesById(qm, idsOfServicesToDelete);
 
         return persistentServiceByIdentity;
     }
@@ -715,13 +710,11 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                     identitiesByBomRef);
             if (!Objects.equals(directDependenciesJson, project.getDirectDependencies())) {
                 project.setDirectDependencies(directDependenciesJson);
-                qm.getPersistenceManager().flush();
             }
         } else {
             // Make sure we don't retain stale data from previous BOM uploads.
             if (project.getDirectDependencies() != null) {
                 project.setDirectDependencies(null);
-                qm.getPersistenceManager().flush();
             }
         }
 
@@ -738,8 +731,6 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 component.setDirectDependencies(mergedDirectDependenciesJson);
             }
         }
-
-        qm.getPersistenceManager().flush();
     }
 
     private static void recordBomImport(final ProcessingContext ctx, final QueryManager qm, final Project project) {

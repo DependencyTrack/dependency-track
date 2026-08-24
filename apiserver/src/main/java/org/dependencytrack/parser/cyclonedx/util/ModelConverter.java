@@ -187,11 +187,11 @@ public class ModelConverter {
         project.setCpe(trimToNull(cdxComponent.getCpe()));
         project.setExternalReferences(convertExternalReferences(cdxComponent.getExternalReferences()));
 
-        List<OrganizationalContact> contacts = new ArrayList<>();
+        final List<OrganizationalContact> contacts = new ArrayList<>();
         if (cdxComponent.getAuthor() != null) {
-            contacts.add(new OrganizationalContact() {{
-                setName(cdxComponent.getAuthor());
-            }});
+            final var author = new OrganizationalContact();
+            author.setName(cdxComponent.getAuthor());
+            contacts.add(author);
         }
         if (cdxComponent.getAuthors() != null) {
             contacts.addAll(convertCdxContacts(cdxComponent.getAuthors()));
@@ -238,11 +238,11 @@ public class ModelConverter {
         component.setExternalReferences(convertExternalReferences(cdxComponent.getExternalReferences()));
         component.setProperties(convertToComponentProperties(cdxComponent.getProperties()));
 
-        List<OrganizationalContact> contacts = new ArrayList<>();
+        final List<OrganizationalContact> contacts = new ArrayList<>();
         if (cdxComponent.getAuthor() != null) {
-            contacts.add(new OrganizationalContact() {{
-                setName(cdxComponent.getAuthor());
-            }});
+            final var author = new OrganizationalContact();
+            author.setName(cdxComponent.getAuthor());
+            contacts.add(author);
         }
         if (cdxComponent.getAuthors() != null) {
             contacts.addAll(convertCdxContacts(cdxComponent.getAuthors()));

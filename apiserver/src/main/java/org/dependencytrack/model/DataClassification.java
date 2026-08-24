@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import java.io.Serializable;
+import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * Model class for tracking data classification
@@ -34,21 +36,11 @@ public class DataClassification implements Serializable {
 
     private static final long serialVersionUID = -1969199685989611696L;
 
-    public static enum Direction {
-        INBOUND("inbound"),
-        OUTBOUND("outbound"),
-        BI_DIRECTIONAL("bi-directional"),
-        UNKNOWN("unknown");
-
-        private final String name;
-
-        public String getDirectionName() {
-            return this.name;
-        }
-
-        private Direction(String name) {
-            this.name = name;
-        }
+    public enum Direction {
+        INBOUND,
+        OUTBOUND,
+        BI_DIRECTIONAL,
+        UNKNOWN;
     }
 
     @JsonView(JsonViews.MetadataTools.class)
@@ -56,6 +48,14 @@ public class DataClassification implements Serializable {
 
     @JsonView(JsonViews.MetadataTools.class)
     private String name;
+
+    public DataClassification() {
+    }
+
+    public DataClassification(Direction direction, String name) {
+        this.direction = direction;
+        this.name = name;
+    }
 
     public Direction getDirection() {
         return direction;
@@ -72,4 +72,28 @@ public class DataClassification implements Serializable {
     public void setName(String name) {
         this.name = name;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof final DataClassification that)) {
+            return false;
+        }
+
+        return direction == that.direction
+                && Objects.equals(name, that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(direction, name);
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", DataClassification.class.getSimpleName() + "[", "]")
+                .add("direction=" + direction)
+                .add("name='" + name + "'")
+                .toString();
+    }
+
 }

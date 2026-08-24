@@ -102,3 +102,11 @@ jobs:
             --draft \
             --generate-notes \
             ${PRERELEASE_FLAG}
+
+          NOTES=$(gh release view "${RELEASE_VERSION}" --json body --jq '.body')
+
+          gh release edit "${RELEASE_VERSION}" \
+            --notes "> [!IMPORTANT]
+          > Please read the [upgrade notes](https://dependencytrack.github.io/docs/next/guides/upgrading/) before upgrading your instance.
+
+          ${NOTES}"

@@ -21,23 +21,25 @@ package org.dependencytrack.policy.cel;
 import dev.cel.common.types.CelType;
 import dev.cel.runtime.CelEvaluationException;
 import dev.cel.runtime.CelRuntime;
-import org.apache.commons.collections4.MultiValuedMap;
 
 import java.util.Map;
-
-import static org.apache.commons.collections4.MultiMapUtils.unmodifiableMultiValuedMap;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class CelPolicyProgram {
 
     private final CelRuntime.Program program;
-    private final MultiValuedMap<CelType, String> requirements;
+    private final Map<CelType, Set<String>> requirements;
 
-    CelPolicyProgram(final CelRuntime.Program program, final MultiValuedMap<CelType, String> requirements) {
+    CelPolicyProgram(final CelRuntime.Program program, final Map<CelType, Set<String>> requirements) {
         this.program = program;
-        this.requirements = unmodifiableMultiValuedMap(requirements);
+        this.requirements = requirements.entrySet().stream()
+                .collect(Collectors.toUnmodifiableMap(
+                        Map.Entry::getKey,
+                        entry -> Set.copyOf(entry.getValue())));
     }
 
-    MultiValuedMap<CelType, String> getRequirements() {
+    Map<CelType, Set<String>> getRequirements() {
         return requirements;
     }
 

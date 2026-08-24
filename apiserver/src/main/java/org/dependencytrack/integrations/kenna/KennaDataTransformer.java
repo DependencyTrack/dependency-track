@@ -20,7 +20,6 @@ package org.dependencytrack.integrations.kenna;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.commons.collections4.CollectionUtils;
 import org.dependencytrack.common.Mappers;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Finding;
@@ -118,7 +117,7 @@ public class KennaDataTransformer {
         asset.put("external_id", externalId);
         // If the project has tags, add them to the KDI
         final Set<Tag> tags = project.getTags();
-        if (CollectionUtils.isNotEmpty(tags)) {
+        if (tags != null && !tags.isEmpty()) {
             final ArrayNode tagsNode = asset.putArray("tags");
             for (final Tag tag: tags) {
                 tagsNode.add(tag.getName());

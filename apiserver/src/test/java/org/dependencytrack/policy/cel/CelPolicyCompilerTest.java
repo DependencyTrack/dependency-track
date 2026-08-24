@@ -23,8 +23,8 @@ import dev.cel.common.types.CelType;
 import org.dependencytrack.policy.cel.CelPolicyCompiler.CacheMode;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.policy.cel.CelPolicyTypes.TYPE_COMPONENT;
@@ -64,6 +64,16 @@ class CelPolicyCompilerTest {
     }
 
     @Test
+    void shouldReturnDeeplyImmutableRequirements() throws Exception {
+        final CelPolicyProgram compiledProgram = CelPolicyCompiler.getInstance(CelPolicyType.COMPONENT).compile("""
+                component.name == "foo"
+                """, CacheMode.NO_CACHE);
+
+        assertThrows(UnsupportedOperationException.class,
+                () -> compiledProgram.getRequirements().get(TYPE_COMPONENT).add("version"));
+    }
+
+    @Test
     void testRequirementsAnalysis() throws Exception {
         final CelPolicyProgram compiledProgram = CelPolicyCompiler.getInstance(CelPolicyType.COMPONENT).compile("""
                 component.resolved_license.groups.exists(licenseGroup, licenseGroup.name == "Permissive")
@@ -71,7 +81,7 @@ class CelPolicyCompilerTest {
                   && project.depends_on(v1.Component{name: "foo"})
                 """, CacheMode.NO_CACHE);
 
-        final Map<CelType, Collection<String>> requirements = compiledProgram.getRequirements().asMap();
+        final Map<CelType, Set<String>> requirements = compiledProgram.getRequirements();
         assertThat(requirements).containsOnlyKeys(TYPE_COMPONENT, TYPE_LICENSE, TYPE_LICENSE_GROUP, TYPE_PROJECT, TYPE_VULNERABILITY);
 
         assertThat(requirements.get(TYPE_COMPONENT)).containsOnly("resolved_license");
@@ -96,7 +106,7 @@ class CelPolicyCompilerTest {
                 [component.name, project.name].exists(name, name == "foo")
                 """, CacheMode.NO_CACHE);
 
-        final Map<CelType, Collection<String>> requirements = compiledProgram.getRequirements().asMap();
+        final Map<CelType, Set<String>> requirements = compiledProgram.getRequirements();
         assertThat(requirements).containsOnlyKeys(TYPE_COMPONENT, TYPE_PROJECT);
         assertThat(requirements.get(TYPE_COMPONENT)).containsOnly("name");
         assertThat(requirements.get(TYPE_PROJECT)).containsOnly("name");
@@ -108,7 +118,7 @@ class CelPolicyCompilerTest {
                 project.depends_on(v1.Component{name: component.name})
                 """, CacheMode.NO_CACHE);
 
-        final Map<CelType, Collection<String>> requirements = compiledProgram.getRequirements().asMap();
+        final Map<CelType, Set<String>> requirements = compiledProgram.getRequirements();
         assertThat(requirements).containsOnlyKeys(TYPE_COMPONENT, TYPE_PROJECT);
         assertThat(requirements.get(TYPE_COMPONENT)).containsOnly("name");
         assertThat(requirements.get(TYPE_PROJECT)).containsOnly("uuid");
@@ -120,7 +130,7 @@ class CelPolicyCompilerTest {
                 {component.name: project.name}.size() > 0
                 """, CacheMode.NO_CACHE);
 
-        final Map<CelType, Collection<String>> requirements = compiledProgram.getRequirements().asMap();
+        final Map<CelType, Set<String>> requirements = compiledProgram.getRequirements();
         assertThat(requirements).containsOnlyKeys(TYPE_COMPONENT, TYPE_PROJECT);
         assertThat(requirements.get(TYPE_COMPONENT)).containsOnly("name");
         assertThat(requirements.get(TYPE_PROJECT)).containsOnly("name");

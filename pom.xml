@@ -132,7 +132,7 @@
         <lib.commons-lang3.version>3.20.0</lib.commons-lang3.version>
         <lib.commons-logging.version>1.4.0</lib.commons-logging.version>
         <lib.cpe-parser.version>3.0.1</lib.cpe-parser.version>
-        <lib.cyclonedx-java.version>13.1.0</lib.cyclonedx-java.version>
+        <lib.cyclonedx-java.version>13.2.0</lib.cyclonedx-java.version>
         <lib.datanucleus-api-jdo.version>6.0.5</lib.datanucleus-api-jdo.version>
         <lib.datanucleus-core.version>6.0.11</lib.datanucleus-core.version>
         <lib.datanucleus-javax-jdo.version>3.2.1</lib.datanucleus-javax-jdo.version>
@@ -151,7 +151,7 @@
         <lib.jakarta-ee.version>11.0.0</lib.jakarta-ee.version>
         <lib.jakarta-mail.version>2.1.5</lib.jakarta-mail.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
-        <lib.jackson2.version>2.22.1</lib.jackson2.version>
+        <lib.jackson2.version>2.22.2</lib.jackson2.version>
         <lib.jackson3.version>3.2.2</lib.jackson3.version>
         <lib.jboss-logging.version>3.6.3.Final</lib.jboss-logging.version>
         <lib.jdbi.version>3.54.0</lib.jdbi.version>

@@ -18,7 +18,6 @@
  */
 package org.dependencytrack.parser.cyclonedx;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.util.BomLink;
 import org.dependencytrack.model.AnalysisJustification;
@@ -170,7 +169,7 @@ public class CycloneDXVexImporter {
 
             final String vexVulnId = vexVuln.getId();
             final String vexVulnSource = sourceNameOf(vexVuln);
-            if (CollectionUtils.isEmpty(vexVuln.getAffects())) {
+            if (vexVuln.getAffects() == null || vexVuln.getAffects().isEmpty()) {
                 LOGGER.debug(
                         "VEX vulnerability {}/{} at position #{} does not have an affects node; Skipping it",
                         vexVulnSource, vexVulnId, vexVulnPos);

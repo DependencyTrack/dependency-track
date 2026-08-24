@@ -312,6 +312,9 @@ public class ProjectResource extends AbstractApiResource {
                             && qm.hasAccess(getPrincipal(), project.getParent());
 
             qm.makeTransient(project);
+            if (project.getAccessTeams() != null) {
+                qm.makeTransientAll(project.getAccessTeams());
+            }
             if (!isParentAccessible) {
                 project.setParent(null);
             }

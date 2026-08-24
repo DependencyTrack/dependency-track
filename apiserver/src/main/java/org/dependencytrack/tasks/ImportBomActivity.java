@@ -19,6 +19,8 @@
 package org.dependencytrack.tasks;
 
 import alpine.persistence.ScopedCustomization;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.cyclonedx.exception.ParseException;
@@ -70,7 +72,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.time.Instant;
 import java.util.UUID;
@@ -425,7 +426,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             final Project project,
             final ProjectMetadata projectMetadata
     ) {
-        final Query<Project> query = qm.getPersistenceManager().newQuery(Project.class);
+        final Query<@Nullable Project> query = qm.getPersistenceManager().newQuery(Project.class);
         query.setFilter("uuid == :uuid");
         query.setParameters(ctx.project.getUuid());
 
@@ -508,7 +509,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 .collect(Collectors.toMap(
                         component -> new ComponentIdentity(component, /* excludeUuid */ true),
                         Function.identity(),
-                        (previous, duplicate) -> {
+                        (previous, _) -> {
                             LOGGER.warn("""
                                     More than one existing component matches the identity %s; \
                                     Proceeding with first match, others will be deleted\
@@ -704,12 +705,12 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                         is not one of them; Graph will be incomplete because it is not possible to determine its root\
                         """.formatted(dependencyGraph.size()));
             }
-            final String directDependenciesJson = resolveDependenciesJson(
+            final ArrayNode directDependencies = resolveDependencies(
                     List.of(project.getBomRef()),
                     sourceBomRef -> sourceBomRef.equals(project.getBomRef()) ? directDependencyBomRefs : null,
                     identitiesByBomRef);
-            if (!Objects.equals(directDependenciesJson, project.getDirectDependencies())) {
-                project.setDirectDependencies(directDependenciesJson);
+            if (!matchesPersistedJson(project.getDirectDependencies(), directDependencies)) {
+                project.setDirectDependencies(directDependencies != null ? directDependencies.toString() : null);
             }
         } else {
             // Make sure we don't retain stale data from previous BOM uploads.
@@ -725,10 +726,11 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             }
 
             assertPersistent(component, "Component must be persistent");
-            final String mergedDirectDependenciesJson = resolveMergedDirectDependenciesJson(
+            final ArrayNode mergedDirectDependencies = resolveMergedDirectDependencies(
                     component, dependencyGraph, identitiesByBomRef, bomRefsByIdentity);
-            if (!Objects.equals(mergedDirectDependenciesJson, component.getDirectDependencies())) {
-                component.setDirectDependencies(mergedDirectDependenciesJson);
+            if (!matchesPersistedJson(component.getDirectDependencies(), mergedDirectDependencies)) {
+                component.setDirectDependencies(
+                        mergedDirectDependencies != null ? mergedDirectDependencies.toString() : null);
             }
         }
     }
@@ -761,26 +763,24 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
      * look up with {@code new ComponentIdentity(component, true)} — same structural key as at consumption, same pattern
      * as matching existing rows in {@link #processComponents}.
      */
-    private @Nullable String resolveMergedDirectDependenciesJson(
-            final Component component,
-            final MultiValuedMap<String, String> dependencyGraph,
-            final Map<String, ComponentIdentity> identitiesByBomRef,
-            final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity
-    ) {
+    private @Nullable ArrayNode resolveMergedDirectDependencies(
+            Component component,
+            MultiValuedMap<String, String> dependencyGraph,
+            Map<String, ComponentIdentity> identitiesByBomRef,
+            MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity) {
         final Collection<String> sourceBomRefs = bomRefsByIdentity.get(
                 new ComponentIdentity(component, /* excludeUuid */ true));
         if (sourceBomRefs == null || sourceBomRefs.isEmpty()) {
             return null;
         }
 
-        return resolveDependenciesJson(sourceBomRefs, dependencyGraph::get, identitiesByBomRef);
+        return resolveDependencies(sourceBomRefs, dependencyGraph::get, identitiesByBomRef);
     }
 
-    private @Nullable String resolveDependenciesJson(
-            final Collection<String> sourceBomRefs,
-            final Function<String, Collection<String>> directDependencyBomRefsProvider,
-            final Map<String, ComponentIdentity> identitiesByBomRef
-    ) {
+    private @Nullable ArrayNode resolveDependencies(
+            @Nullable Collection<String> sourceBomRefs,
+            Function<String, @Nullable Collection<String>> directDependencyBomRefsProvider,
+            Map<String, ComponentIdentity> identitiesByBomRef) {
         if (sourceBomRefs == null || sourceBomRefs.isEmpty()) {
             return null;
         }
@@ -819,7 +819,25 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             }
         }
 
-        return jsonDependencies.isEmpty() ? null : jsonDependencies.toString();
+        return jsonDependencies.isEmpty() ? null : jsonDependencies;
+    }
+
+    private static boolean matchesPersistedJson(
+            @Nullable String persistedJson,
+            @Nullable ArrayNode resolved) {
+        if (persistedJson == null || resolved == null) {
+            return persistedJson == null && resolved == null;
+        }
+
+        // NB: String equality is not sufficient here, because persistedJson is retrieved
+        // from a JSONB column, which normalizes whitespace and key order.
+        // Such values would never match the ones we resolved for the new BOM.
+        try {
+            return Mappers.jsonMapper().readTree(persistedJson).equals(resolved);
+        } catch (JsonProcessingException e) {
+            LOGGER.warn("Failed to parse persisted direct dependencies; Assuming they changed", e);
+            return false;
+        }
     }
 
     private static long deleteComponentsById(final QueryManager qm, final Collection<Long> componentIds) {

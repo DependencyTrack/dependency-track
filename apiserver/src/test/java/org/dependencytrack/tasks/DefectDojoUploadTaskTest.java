@@ -144,7 +144,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                         .withName("file")
                         .withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",
@@ -283,7 +283,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                         .withName("file")
                         .withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",
@@ -539,7 +539,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                         .withName("file")
                         .withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",
@@ -693,7 +693,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                         .withName("file")
                         .withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",
@@ -823,7 +823,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                         .withName("file")
                         .withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",
@@ -918,7 +918,7 @@ class DefectDojoUploadTaskTest extends PersistenceCapableTest {
                         .withName("file")
                         .withBody(equalToJson("""
                                 {
-                                  "version": "1.5",
+                                  "version": "1.6",
                                   "meta": {
                                     "application": "Dependency-Track",
                                     "version": "${json-unit.any-string}",

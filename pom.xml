@@ -125,7 +125,7 @@
         <lib.archunit.version>1.5.0</lib.archunit.version>
         <lib.assertj.version>3.27.7</lib.assertj.version>
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
-        <lib.byte-buddy.version>1.18.3</lib.byte-buddy.version>
+        <lib.byte-buddy.version>1.18.12</lib.byte-buddy.version>
         <lib.caffeine.version>3.2.4</lib.caffeine.version>
         <lib.cel-java.version>0.13.1</lib.cel-java.version>
         <lib.commons-codec.version>1.22.1</lib.commons-codec.version>

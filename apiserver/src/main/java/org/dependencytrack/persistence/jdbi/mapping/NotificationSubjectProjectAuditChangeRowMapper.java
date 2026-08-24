@@ -39,17 +39,17 @@ public class NotificationSubjectProjectAuditChangeRowMapper implements RowMapper
         final RowMapper<Project> projectRowMapper = ctx.findRowMapperFor(Project.class).orElseThrow();
         final RowMapper<Vulnerability> vulnRowMapper = ctx.findRowMapperFor(Vulnerability.class).orElseThrow();
         final VulnerabilityAnalysis.Builder vulnAnalysisBuilder = VulnerabilityAnalysis.newBuilder()
-                .setComponent(componentRowMapper.map(rs, ctx))
-                .setProject(projectRowMapper.map(rs, ctx))
-                .setVulnerability(vulnRowMapper.map(rs, ctx));
+                 .setComponent(componentRowMapper.map(rs, ctx))
+                 .setProject(projectRowMapper.map(rs, ctx))
+                 .setVulnerability(vulnRowMapper.map(rs, ctx));
         maybeSet(rs, "vulnAnalysisState", ResultSet::getString, vulnAnalysisBuilder::setState);
         maybeSet(rs, "isVulnAnalysisSuppressed", ResultSet::getBoolean, vulnAnalysisBuilder::setSuppressed);
         final VulnerabilityAnalysisDecisionChangeSubject.Builder builder = VulnerabilityAnalysisDecisionChangeSubject.newBuilder()
-                .setComponent(componentRowMapper.map(rs, ctx))
-                .setProject(projectRowMapper.map(rs, ctx))
-                .setVulnerability(vulnRowMapper.map(rs, ctx))
-                .setAnalysis(vulnAnalysisBuilder);
+                 .setComponent(componentRowMapper.map(rs, ctx))
+                 .setProject(projectRowMapper.map(rs, ctx))
+                 .setVulnerability(vulnRowMapper.map(rs, ctx))
+                 .setAnalysis(vulnAnalysisBuilder);
         return builder.build();
-    }
+     }
 
 }

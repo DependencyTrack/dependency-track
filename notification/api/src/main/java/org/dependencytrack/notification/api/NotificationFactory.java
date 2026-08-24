@@ -72,6 +72,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_USER_CREATED
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_USER_DELETED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_VEX_CONSUMED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_VEX_PROCESSED;
+import static org.dependencytrack.notification.proto.v1.Group.GROUP_VULNERABILITY_ANALYSIS_COMMENT;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_VULNERABILITY_RETRACTED;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_ERROR;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
@@ -488,7 +489,8 @@ public final class NotificationFactory {
             Vulnerability vulnerability,
             VulnerabilityAnalysis analysis,
             boolean analysisStateChanged,
-            boolean suppressionChanged) {
+            boolean suppressionChanged,
+            boolean detailsChanged) {
         requireNonNull(project, "project must not be null");
         requireNonNull(component, "component must not be null");
         requireNonNull(vulnerability, "vulnerability must not be null");
@@ -497,14 +499,16 @@ public final class NotificationFactory {
         final String title;
         if (analysisStateChanged) {
             title = "Analysis Decision: " + analysis.getState();
-        } else if (suppressionChanged) {
+         } else if (suppressionChanged) {
             title = "Analysis Decision: Violation "
-                    + (analysis.getSuppressed() ? "Suppressed" : "Unsuppressed");
-        } else {
+                     + (analysis.getSuppressed() ? "Suppressed" : "Unsuppressed");
+         } else if (detailsChanged) {
+            title = "Analysis Decision: Details Changed";
+         } else {
             throw new IllegalArgumentException("""
-                    Neither analysis state nor suppression have changed. \
+                    Neither analysis state, suppression, nor details have changed. \
                     The notification appears to have been created by mistake.""");
-        }
+         }
 
         return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_PROJECT_AUDIT_CHANGE, LEVEL_INFORMATIONAL)
                 .setTitle(title)
@@ -515,6 +519,32 @@ public final class NotificationFactory {
                                 .setComponent(component)
                                 .setVulnerability(vulnerability)
                                 .setAnalysis(analysis)
+                                .build()))
+                .build();
+    }
+
+    public static Notification createVulnerabilityAnalysisCommentNotification(
+            Project project,
+            Component component,
+            Vulnerability vulnerability,
+            VulnerabilityAnalysis analysis,
+            org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisComment comment) {
+        requireNonNull(project, "project must not be null");
+        requireNonNull(component, "component must not be null");
+        requireNonNull(vulnerability, "vulnerability must not be null");
+        requireNonNull(analysis, "analysis must not be null");
+        requireNonNull(comment, "comment must not be null");
+
+        return newNotificationBuilder(SCOPE_PORTFOLIO, GROUP_VULNERABILITY_ANALYSIS_COMMENT, LEVEL_INFORMATIONAL)
+                .setTitle("Analysis Decision: Comment Added")
+                .setContent("An analysis decision comment was added to a finding affecting a project")
+                .setSubject(Any.pack(
+                        VulnerabilityAnalysisDecisionChangeSubject.newBuilder()
+                                .setProject(project)
+                                .setComponent(component)
+                                .setVulnerability(vulnerability)
+                                .setAnalysis(analysis)
+                                .setVulnerabilityAnalysisComment(comment)
                                 .build()))
                 .build();
     }

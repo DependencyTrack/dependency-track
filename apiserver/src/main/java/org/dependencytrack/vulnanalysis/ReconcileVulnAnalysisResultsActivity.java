@@ -774,21 +774,38 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         final int commentsCreated = analysisDao.createComments(createCommentCommands);
         LOGGER.debug("Created {} analysis comment(s)", commentsCreated);
 
-        if (!subscribedGroups.contains(NotificationGroup.PROJECT_AUDIT_CHANGE.name())) {
+        final boolean auditChangeSubscribed = subscribedGroups.contains(NotificationGroup.PROJECT_AUDIT_CHANGE.name());
+        final boolean commentSubscribed = subscribedGroups.contains(NotificationGroup.VULNERABILITY_ANALYSIS_COMMENT.name());
+
+        if (!auditChangeSubscribed && !commentSubscribed) {
             return List.of();
         }
 
-        // Build notifications for analyses where state or suppression changed.
-        final List<AnalysisReconciler.Result> auditChangeResults =
-                reconcileResults.stream()
-                        .filter(result -> result.analysisStateChanged() || result.suppressionChanged())
-                        .toList();
-        if (auditChangeResults.isEmpty()) {
+         // Build notifications for analyses where state, suppression, or details changed.
+         final List<AnalysisReconciler.Result> auditChangeResults = auditChangeSubscribed ?
+                 reconcileResults.stream()
+                          .filter(result ->
+                                 result.analysisStateChanged()
+                                      || result.suppressionChanged()
+                                      || result.detailsChanged())
+                          .toList() : List.of();
+
+         final List<AnalysisReconciler.Result> commentResults = commentSubscribed ?
+                 reconcileResults.stream()
+                         .filter(result -> !result.comments().isEmpty())
+                         .toList() : List.of();
+
+        if (auditChangeResults.isEmpty() && commentResults.isEmpty()) {
             return List.of();
         }
+
+        // Combine distinct results to query subjects
+        final List<AnalysisReconciler.Result> combinedResults = Stream.concat(auditChangeResults.stream(), commentResults.stream())
+                .distinct()
+                .toList();
 
         final List<GetProjectAuditChangeNotificationSubjectQuery> notificationSubjectQueries =
-                auditChangeResults.stream()
+                combinedResults.stream()
                         .map(result -> new GetProjectAuditChangeNotificationSubjectQuery(
                                 result.findingKey().componentId(),
                                 result.findingKey().vulnDbId(),
@@ -800,18 +817,42 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         final List<VulnerabilityAnalysisDecisionChangeSubject> subjects =
                 notificationSubjectDao.getForProjectAuditChanges(notificationSubjectQueries);
 
-        final var notifications = new ArrayList<Notification>(subjects.size());
+        final var notifications = new ArrayList<Notification>(subjects.size() * 2);
         for (int i = 0; i < subjects.size(); i++) {
-            final AnalysisReconciler.Result result = auditChangeResults.get(i);
+            final AnalysisReconciler.Result result = combinedResults.get(i);
             final VulnerabilityAnalysisDecisionChangeSubject subject = subjects.get(i);
-            notifications.add(
-                    createVulnerabilityAnalysisDecisionChangeNotification(
-                            subject.getProject(),
-                            subject.getComponent(),
-                            subject.getVulnerability(),
-                            subject.getAnalysis(),
-                            result.analysisStateChanged(),
-                            result.suppressionChanged()));
+
+            if (auditChangeSubscribed && auditChangeResults.contains(result)) {
+                notifications.add(
+                        createVulnerabilityAnalysisDecisionChangeNotification(
+                                subject.getProject(),
+                                subject.getComponent(),
+                                subject.getVulnerability(),
+                                subject.getAnalysis(),
+                                result.analysisStateChanged(),
+                                result.suppressionChanged(),
+                                result.detailsChanged()));
+            }
+
+            if (commentSubscribed && commentResults.contains(result)) {
+                final var commentBuilder = org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisComment.newBuilder();
+                commentBuilder.setContent(String.join("\n", result.comments()));
+                if (result.commenter() != null) {
+                    commentBuilder.setCommenter(result.commenter());
+                }
+                final long now = System.currentTimeMillis();
+                commentBuilder.setTimestamp(com.google.protobuf.Timestamp.newBuilder()
+                        .setSeconds(now / 1000)
+                        .setNanos((int) ((now % 1000) * 1000000))
+                        .build());
+                notifications.add(
+                        org.dependencytrack.notification.api.NotificationFactory.createVulnerabilityAnalysisCommentNotification(
+                                subject.getProject(),
+                                subject.getComponent(),
+                                subject.getVulnerability(),
+                                subject.getAnalysis(),
+                                commentBuilder.build()));
+            }
         }
 
         return notifications;

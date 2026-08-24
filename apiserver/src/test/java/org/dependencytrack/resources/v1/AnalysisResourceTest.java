@@ -59,6 +59,7 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.notification.NotificationTestUtil.createCatchAllNotificationRule;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
+import static org.dependencytrack.notification.proto.v1.Group.GROUP_VULNERABILITY_ANALYSIS_COMMENT;
 import static org.dependencytrack.notification.proto.v1.Level.LEVEL_INFORMATIONAL;
 import static org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
@@ -405,12 +406,19 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(qm.getNotificationOutbox()).satisfiesExactlyInAnyOrder(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
             assertThat(notification.getTitle()).isEqualTo("Analysis Decision: NOT_AFFECTED");
             assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+        },
+        notification -> {
+            assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
+            assertThat(notification.getGroup()).isEqualTo(GROUP_VULNERABILITY_ANALYSIS_COMMENT);
+            assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
+            assertThat(notification.getTitle()).isEqualTo("Analysis Decision: Comment Added");
+            assertThat(notification.getContent()).isEqualTo("An analysis decision comment was added to a finding affecting a project");
         });
     }
 
@@ -477,12 +485,19 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("testuser"));
         assertThat(responseJson.getBoolean("isSuppressed")).isTrue();
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(qm.getNotificationOutbox()).satisfiesExactlyInAnyOrder(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
             assertThat(notification.getTitle()).isEqualTo("Analysis Decision: NOT_AFFECTED");
             assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+        },
+        notification -> {
+            assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
+            assertThat(notification.getGroup()).isEqualTo(GROUP_VULNERABILITY_ANALYSIS_COMMENT);
+            assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
+            assertThat(notification.getTitle()).isEqualTo("Analysis Decision: Comment Added");
+            assertThat(notification.getContent()).isEqualTo("An analysis decision comment was added to a finding affecting a project");
         });
     }
 
@@ -604,12 +619,19 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(responseJson.getBoolean("isSuppressed")).isFalse();
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(qm.getNotificationOutbox()).satisfiesExactlyInAnyOrder(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
             assertThat(notification.getTitle()).isEqualTo("Analysis Decision: EXPLOITABLE");
             assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+        },
+        notification -> {
+            assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
+            assertThat(notification.getGroup()).isEqualTo(GROUP_VULNERABILITY_ANALYSIS_COMMENT);
+            assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
+            assertThat(notification.getTitle()).isEqualTo("Analysis Decision: Comment Added");
+            assertThat(notification.getContent()).isEqualTo("An analysis decision comment was added to a finding affecting a project");
         });
     }
 
@@ -738,12 +760,19 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("comment", Json.createValue("Vendor Response: WILL_NOT_FIX → NOT_SET"))
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(qm.getNotificationOutbox()).satisfiesExactlyInAnyOrder(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
             assertThat(notification.getTitle()).isEqualTo("Analysis Decision: NOT_SET");
             assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+        },
+        notification -> {
+            assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
+            assertThat(notification.getGroup()).isEqualTo(GROUP_VULNERABILITY_ANALYSIS_COMMENT);
+            assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
+            assertThat(notification.getTitle()).isEqualTo("Analysis Decision: Comment Added");
+            assertThat(notification.getContent()).isEqualTo("An analysis decision comment was added to a finding affecting a project");
         });
     }
 
@@ -880,12 +909,19 @@ class AnalysisResourceTest extends ResourceTest {
                 .hasFieldOrPropertyWithValue("commenter", Json.createValue("Test Users"));
         assertThat(responseJson.getBoolean("isSuppressed")).isFalse();
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
+        assertThat(qm.getNotificationOutbox()).satisfiesExactlyInAnyOrder(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
             assertThat(notification.getTitle()).isEqualTo("Analysis Decision: NOT_AFFECTED");
             assertThat(notification.getContent()).isEqualTo("An analysis decision was made to a finding affecting a project");
+        },
+        notification -> {
+            assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
+            assertThat(notification.getGroup()).isEqualTo(GROUP_VULNERABILITY_ANALYSIS_COMMENT);
+            assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
+            assertThat(notification.getTitle()).isEqualTo("Analysis Decision: Comment Added");
+            assertThat(notification.getContent()).isEqualTo("An analysis decision comment was added to a finding affecting a project");
         });
     }
 

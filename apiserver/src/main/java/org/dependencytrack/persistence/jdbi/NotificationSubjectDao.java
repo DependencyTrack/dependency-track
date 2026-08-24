@@ -417,9 +417,9 @@ public interface NotificationSubjectDao extends SqlObject {
                              , STRING_TO_ARRAY(v."CWES", ',') AS "vulnCwes"
                              , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
                              , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
-                             , req.analysis_state AS "vulnAnalysisState"
-                             , req.suppressed AS "isVulnAnalysisSuppressed"
-                             , format('/api/v1/vulnerability/source/%s/vuln/%s/projects', v."SOURCE", v."VULNID") AS "affectedProjectsApiUrl"
+                               , req.analysis_state AS "vulnAnalysisState"
+                               , req.suppressed AS "isVulnAnalysisSuppressed"
+                               , format('/api/v1/vulnerability/source/%s/vuln/%s/projects', v."SOURCE", v."VULNID") AS "affectedProjectsApiUrl"
                              , format('/vulnerabilities/%s/%s/affectedProjects', v."SOURCE", v."VULNID") AS "affectedProjectsFrontendUrl"
                           FROM UNNEST(:componentIds, :vulnDbIds, :analysisStates, :suppressions) WITH ORDINALITY
                             AS req(component_id, vuln_db_id, analysis_state, suppressed, ord)

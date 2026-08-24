@@ -41,6 +41,7 @@ class ConsoleNotificationPublisherTest extends AbstractNotificationPublisherTest
             case GROUP_BOM_CONSUMED -> validateBomConsumedNotificationPublish();
             case GROUP_BOM_PROCESSING_FAILED -> validateBomProcessingFailedNotificationPublish();
             case GROUP_BOM_VALIDATION_FAILED -> validateBomValidationFailedNotificationPublish();
+            case GROUP_VULNERABILITY_ANALYSIS_COMMENT -> validateVulnerabilityAnalysisCommentNotificationPublish();
             case GROUP_NEW_VULNERABILITY -> validateNewVulnerabilityNotificationPublish();
             case GROUP_NEW_VULNERABLE_DEPENDENCY -> validateNewVulnerableDependencyNotificationPublish();
         }
@@ -111,4 +112,8 @@ class ConsoleNotificationPublisherTest extends AbstractNotificationPublisherTest
                 """);
     }
 
+
+    private void validateVulnerabilityAnalysisCommentNotificationPublish() {
+        // dummy
+    }
 }

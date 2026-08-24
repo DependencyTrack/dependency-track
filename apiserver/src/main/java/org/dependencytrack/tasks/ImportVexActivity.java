@@ -32,6 +32,13 @@ import org.dependencytrack.model.Vex;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.parser.cyclonedx.CycloneDXVexImporter;
+import org.dependencytrack.parser.openvex.OpenVexDocument;
+import org.dependencytrack.parser.openvex.OpenVexImporter;
+import org.dependencytrack.parser.openvex.OpenVexParseException;
+import org.dependencytrack.parser.openvex.OpenVexParser;
+import org.dependencytrack.parser.vex.UnknownVexFormatException;
+import org.dependencytrack.parser.vex.VexFormat;
+import org.dependencytrack.parser.vex.VexFormatDetector;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.proto.internal.workflow.v1.ImportVexArg;
 import org.jspecify.annotations.NullMarked;
@@ -98,26 +105,17 @@ public final class ImportVexActivity implements Activity<ImportVexArg, Void> {
                         "Project %s does not exist".formatted(projectUuid));
             }
 
-            LOGGER.info("Processing CycloneDX VEX uploaded.");
+            final VexFormat vexFormat = detectFormat(vexBytes);
+            LOGGER.info("Processing {} VEX upload", vexFormat);
+
             final Vex vex = new Vex();
             vex.setProject(project);
             vex.setImported(new Date());
-            vex.setVexFormat(Vex.Format.CYCLONEDX);
 
-            final Bom bom;
-            try {
-                final Parser parser = BomParserFactory.createParser(vexBytes);
-                bom = parser.parse(vexBytes);
-            } catch (ParseException e) {
-                throw new TerminalApplicationFailureException("Failed to parse VEX", e);
+            switch (vexFormat) {
+                case CYCLONEDX -> importCycloneDx(qm, vex, project, vexBytes);
+                case OPENVEX -> importOpenVex(qm, vex, project, vexBytes);
             }
-            vex.setSpecVersion(bom.getSpecVersion());
-            vex.setVexVersion(bom.getVersion());
-            vex.setSerialNumber(bom.getSerialNumber());
-
-            final CycloneDXVexImporter vexImporter = new CycloneDXVexImporter();
-            qm.runInTransaction(() -> vexImporter.applyVex(qm, bom, project));
-            LOGGER.info("Completed processing of CycloneDX VEX");
 
             final var notificationEmitter = new JdoNotificationEmitter(qm);
 
@@ -132,6 +130,49 @@ public final class ImportVexActivity implements Activity<ImportVexArg, Void> {
                             NotificationModelConverter.convert(project),
                             NotificationModelConverter.convert(vex)));
         }
+    }
+
+    private static VexFormat detectFormat(final byte[] vexBytes) {
+        try {
+            return VexFormatDetector.detect(vexBytes);
+        } catch (UnknownVexFormatException e) {
+            throw new TerminalApplicationFailureException(e.getMessage(), e);
+        }
+    }
+
+    private static void importCycloneDx(final QueryManager qm, final Vex vex, final Project project, final byte[] vexBytes) {
+        final Bom bom;
+        try {
+            final Parser parser = BomParserFactory.createParser(vexBytes);
+            bom = parser.parse(vexBytes);
+        } catch (ParseException e) {
+            throw new TerminalApplicationFailureException("Failed to parse VEX", e);
+        }
+        vex.setVexFormat(Vex.Format.CYCLONEDX);
+        vex.setSpecVersion(bom.getSpecVersion());
+        vex.setVexVersion(bom.getVersion());
+        vex.setSerialNumber(bom.getSerialNumber());
+
+        qm.runInTransaction(() -> new CycloneDXVexImporter().applyVex(qm, bom, project));
+        LOGGER.info("Completed processing of CycloneDX VEX");
+    }
+
+    private static void importOpenVex(final QueryManager qm, final Vex vex, final Project project, final byte[] vexBytes) {
+        final OpenVexDocument document;
+        try {
+            document = OpenVexParser.parse(vexBytes);
+        } catch (OpenVexParseException e) {
+            throw new TerminalApplicationFailureException("Failed to parse VEX", e);
+        }
+        vex.setVexFormat(Vex.Format.OPENVEX);
+        vex.setSpecVersion(document.specVersion());
+        vex.setVexVersion(document.version());
+
+        // OpenVEX documents have no serial number; their identity is conveyed by the "@id" IRI instead.
+        vex.setSerialNumber(null);
+
+        qm.runInTransaction(() -> new OpenVexImporter().applyVex(qm, document, project));
+        LOGGER.info("Completed processing of OpenVEX document {}", document.id());
     }
 
 }

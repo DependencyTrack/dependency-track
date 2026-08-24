@@ -41,10 +41,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -126,6 +129,106 @@ class ImportVexWorkflowTest extends PersistenceCapableTest {
     }
 
     @Test
+    void shouldProcessOpenVexSuccessfully() throws Exception {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+
+        final var component = new org.dependencytrack.model.Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        component.setPurl("pkg:maven/com.acme/acme-lib@1.0.0");
+        qm.createComponent(component, false);
+
+        var vulnerability = new org.dependencytrack.model.Vulnerability();
+        vulnerability.setVulnId("CVE-2099-0001");
+        vulnerability.setSource(org.dependencytrack.model.Vulnerability.Source.NVD);
+        vulnerability.setSeverity(org.dependencytrack.model.Severity.HIGH);
+        vulnerability = qm.createVulnerability(vulnerability);
+        qm.addVulnerability(vulnerability, component, "none");
+
+        final var vexFileMetadata = fileStorage.store(
+                "test/%s-%s".formatted(ImportVexWorkflowTest.class.getSimpleName(), UUID.randomUUID()),
+                new ByteArrayInputStream(/* language=JSON */ """
+                        {
+                          "@context": "https://openvex.dev/ns/v0.2.0",
+                          "@id": "https://openvex.dev/docs/example/vex-9fb3463de1b57",
+                          "author": "Wolfi J Inkinson",
+                          "timestamp": "2023-01-08T18:02:03-06:00",
+                          "version": 1,
+                          "statements": [
+                            {
+                              "vulnerability": { "name": "CVE-2099-0001" },
+                              "products": [{ "@id": "pkg:maven/com.acme/acme-lib@1.0.0" }],
+                              "status": "not_affected",
+                              "justification": "vulnerable_code_not_in_execute_path"
+                            }
+                          ]
+                        }
+                        """.getBytes()));
+
+        final var runId = startWorkflow(project, vexFileMetadata);
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
+
+        assertThat(qm.getNotificationOutbox())
+                .anySatisfy(notification -> {
+                    assertThat(notification.getGroup()).isEqualTo(GROUP_VEX_CONSUMED);
+                    assertThat(unpackVexSubject(notification).getFormat()).isEqualTo("OpenVEX");
+                })
+                .anySatisfy(notification -> {
+                    assertThat(notification.getGroup()).isEqualTo(GROUP_VEX_PROCESSED);
+                    assertThat(unpackVexSubject(notification).getFormat()).isEqualTo("OpenVEX");
+                });
+
+        final javax.jdo.Query<org.dependencytrack.model.Vex> vexQuery =
+                qm.getPersistenceManager().newQuery(org.dependencytrack.model.Vex.class);
+        final List<org.dependencytrack.model.Vex> vexes = vexQuery.executeList();
+        assertThat(vexes).hasSize(1);
+        assertThat(vexes.getFirst().getVexFormat()).isEqualTo("OpenVEX");
+        assertThat(vexes.getFirst().getSpecVersion()).isEqualTo("0.2.0");
+        assertThat(vexes.getFirst().getVexVersion()).isEqualTo(1);
+        assertThat(vexes.getFirst().getSerialNumber()).isNull();
+
+        final org.dependencytrack.model.Analysis analysis =
+                qm.getAnalysis(component, vulnerability);
+        assertThat(analysis)
+                .extracting(org.dependencytrack.model.Analysis::getAnalysisState,
+                        org.dependencytrack.model.Analysis::isSuppressed)
+                .containsExactly(org.dependencytrack.model.AnalysisState.NOT_AFFECTED, true);
+
+        assertThatThrownBy(() -> fileStorage.get(vexFileMetadata))
+                .isInstanceOf(NoSuchFileException.class);
+    }
+
+    @Test
+    void shouldFailWhenOpenVexCannotBeParsed() throws Exception {
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
+        final var vexFileMetadata = fileStorage.store(
+                "test/%s-%s".formatted(ImportVexWorkflowTest.class.getSimpleName(), UUID.randomUUID()),
+                new ByteArrayInputStream(/* language=JSON */ """
+                        {
+                          "@context": "https://openvex.dev/ns/v0.2.0",
+                          "@id": "https://openvex.dev/docs/example/vex-9fb3463de1b57",
+                          "timestamp": "2023-01-08T18:02:03-06:00",
+                          "version": 1,
+                          "statements": [
+                            {
+                              "vulnerability": { "name": "CVE-2099-0001" },
+                              "products": [{ "@id": "pkg:maven/com.acme/acme-lib@1.0.0" }],
+                              "status": "fixed"
+                            }
+                          ]
+                        }
+                        """.getBytes()));
+
+        final var runId = startWorkflow(project, vexFileMetadata);
+        workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
+
+        assertThat(qm.getNotificationOutbox()).isEmpty();
+        assertThatThrownBy(() -> fileStorage.get(vexFileMetadata))
+                .isInstanceOf(NoSuchFileException.class);
+    }
+
+    @Test
     void shouldFailWhenVexCannotBeParsed() throws Exception {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         final var vexFileMetadata = fileStorage.store(
@@ -177,6 +280,15 @@ class ImportVexWorkflowTest extends PersistenceCapableTest {
                                 .setVexUploadToken(UUID.randomUUID().toString())
                                 .setVexFileMetadata(vexFileMetadata)
                                 .build()));
+    }
+
+    private static org.dependencytrack.notification.proto.v1.VexConsumedOrProcessedSubject unpackVexSubject(
+            final org.dependencytrack.notification.proto.v1.Notification notification) {
+        try {
+            return notification.getSubject().unpack(org.dependencytrack.notification.proto.v1.VexConsumedOrProcessedSubject.class);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private FileMetadata storeVexFile(String testFileName) throws Exception {

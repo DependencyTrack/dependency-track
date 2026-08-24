@@ -48,7 +48,8 @@ public class Vex implements Serializable {
     private static final long serialVersionUID = -4378439983100141050L;
 
     public enum Format {
-        CYCLONEDX("CycloneDX", "CycloneDX BOM Standard");
+        CYCLONEDX("CycloneDX", "CycloneDX BOM Standard"),
+        OPENVEX("OpenVEX", "OpenVEX");
 
         private final String formatShortName;
         private final String formatLongName;

@@ -39,6 +39,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.io.IOUtils;
@@ -56,6 +57,11 @@ import org.dependencytrack.filestorage.proto.v1.FileMetadata;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.parser.cyclonedx.CycloneDXExporter;
+import org.dependencytrack.parser.openvex.OpenVexParseException;
+import org.dependencytrack.parser.openvex.OpenVexParser;
+import org.dependencytrack.parser.vex.UnknownVexFormatException;
+import org.dependencytrack.parser.vex.VexFormat;
+import org.dependencytrack.parser.vex.VexFormatDetector;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.proto.internal.workflow.v1.ImportVexArg;
 import org.dependencytrack.resources.AbstractApiResource;
@@ -183,11 +189,12 @@ public class VexResource extends AbstractApiResource {
             summary = "Upload a supported VEX document",
             description = """
                     <p>
-                      Expects CycloneDX and a valid project UUID. If a UUID is not specified,
+                      Expects a CycloneDX or OpenVEX document, and a valid project UUID. If a UUID is not specified,
                       then the <code>projectName</code> and <code>projectVersion</code> must be specified.
                     </p>
                     <p>
-                      The VEX will be validated against the CycloneDX schema. If schema validation fails,
+                      CycloneDX VEX documents will be validated against the CycloneDX schema. OpenVEX documents
+                      will be validated against the OpenVEX specification. If validation fails,
                       a response with problem details in RFC 9457 format will be returned. In this case,
                       the response's content type will be <code>application/problem+json</code>.
                     </p>
@@ -255,11 +262,12 @@ public class VexResource extends AbstractApiResource {
             summary = "Upload a supported VEX document",
             description = """
                     <p>
-                      Expects CycloneDX and a valid project UUID. If a UUID is not specified,
+                      Expects a CycloneDX or OpenVEX document, and a valid project UUID. If a UUID is not specified,
                       then the <code>projectName</code> and <code>projectVersion</code> must be specified.
                     </p>
                     <p>
-                      The VEX will be validated against the CycloneDX schema. If schema validation fails,
+                      CycloneDX VEX documents will be validated against the CycloneDX schema. OpenVEX documents
+                      will be validated against the OpenVEX specification. If validation fails,
                       a response with problem details in RFC 9457 format will be returned. In this case,
                       the response's content type will be <code>application/problem+json</code>.
                     </p>
@@ -323,7 +331,7 @@ public class VexResource extends AbstractApiResource {
                         .build();
             }
             final byte[] decoded = Base64.getDecoder().decode(encodedVexData);
-            BomResource.validate(decoded, project);
+            validateVex(decoded, project);
             return startVexImport(project, decoded);
         } else {
             return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
@@ -346,7 +354,7 @@ public class VexResource extends AbstractApiResource {
                 }
                 try (InputStream in = bodyPartEntity.getInputStream()) {
                     final byte[] content = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(in).get());
-                    BomResource.validate(content, project);
+                    validateVex(content, project);
                     return startVexImport(project, content);
                 } catch (IOException e) {
                     return Response.status(Response.Status.BAD_REQUEST).build();
@@ -356,6 +364,48 @@ public class VexResource extends AbstractApiResource {
             }
         }
         return Response.ok().build();
+    }
+
+    /**
+     * Validates a VEX document using the validation logic appropriate for its format.
+     *
+     * <p>CycloneDX documents are validated against the CycloneDX schema, subject to the
+     * {@code bom-validation-mode} configuration. OpenVEX documents are always checked for
+     * conformance with the OpenVEX specification, as a conforming document is required to
+     * interpret its statements safely. Documents of no known VEX format are rejected.
+     */
+    private static void validateVex(final byte[] vexBytes, final Project project) {
+        switch (detectVexFormat(vexBytes)) {
+            case CYCLONEDX -> BomResource.validate(vexBytes, project);
+            case OPENVEX -> validateOpenVex(vexBytes);
+        }
+    }
+
+    private static VexFormat detectVexFormat(final byte[] vexBytes) {
+        try {
+            return VexFormatDetector.detect(vexBytes);
+        } catch (UnknownVexFormatException e) {
+            final var problemDetails = new InvalidBomProblemDetails();
+            problemDetails.setStatus(400);
+            problemDetails.setTitle("Unsupported VEX document format");
+            problemDetails.setDetail(e.getMessage());
+            throw new WebApplicationException(problemDetails.toResponse());
+        }
+    }
+
+    private static void validateOpenVex(final byte[] vexBytes) {
+        try {
+            OpenVexParser.parse(vexBytes);
+        } catch (OpenVexParseException e) {
+            final var problemDetails = new InvalidBomProblemDetails();
+            problemDetails.setStatus(400);
+            problemDetails.setTitle("The uploaded VEX is invalid");
+            problemDetails.setDetail(e.getMessage());
+            if (!e.getValidationErrors().isEmpty()) {
+                problemDetails.setErrors(e.getValidationErrors());
+            }
+            throw new WebApplicationException(problemDetails.toResponse());
+        }
     }
 
     private Response startVexImport(Project project, byte[] vexBytes) {

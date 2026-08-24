@@ -22,7 +22,9 @@ import alpine.model.IConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import com.fasterxml.jackson.core.StreamReadConstraints;
+import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import net.javacrumbs.jsonunit.core.Option;
 import org.dependencytrack.JerseyTestExtension;
@@ -43,7 +45,10 @@ import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.HttpUrlConnectorProvider;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.AfterEach;
@@ -1118,5 +1123,324 @@ public class VexResourceTest extends ResourceTest {
                         """.formatted(encodedVex)));
         assertThat(response.getStatus()).isEqualTo(400);
         assertThat(getPlainTextBody(response)).isEqualTo("VEX cannot be uploaded to a collection project.");
+    }
+
+    private static final String VALID_OPENVEX = /* language=JSON */ """
+            {
+              "@context": "https://openvex.dev/ns/v0.2.0",
+              "@id": "https://openvex.dev/docs/example/vex-9fb3463de1b57",
+              "author": "Wolfi J Inkinson",
+              "timestamp": "2023-01-08T18:02:03-06:00",
+              "version": 1,
+              "statements": [
+                {
+                  "vulnerability": { "name": "CVE-2023-12345" },
+                  "products": [{ "@id": "pkg:apk/wolfi/git@2.39.0-r1" }],
+                  "status": "fixed"
+                }
+              ]
+            }
+            """;
+
+    @Test
+    void uploadOpenVexTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final String encodedVex = Base64.getEncoder().encodeToString(VALID_OPENVEX.getBytes());
+
+        final Response response = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedVex)));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .withMatcher("runId", equalTo(stubbedRunId.toString()))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "token": "${json-unit.matches:runId}",
+                          "projectUuid": "${json-unit.matches:projectUuid}"
+                        }
+                        """);
+    }
+
+    @Test
+    void uploadOpenVexMultipartTest() throws Exception {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final var multiPart = new FormDataMultiPart()
+                .field("vex", VALID_OPENVEX, MediaType.APPLICATION_JSON_TYPE)
+                .field("projectName", "acme-app")
+                .field("projectVersion", "1.0.0");
+
+        // NB: The GrizzlyConnectorProvider doesn't work with MultiPart requests.
+        // https://github.com/eclipse-ee4j/jersey/issues/5094
+        final var client = ClientBuilder.newClient(new ClientConfig()
+                .register(MultiPartFeature.class)
+                .connectorProvider(new HttpUrlConnectorProvider()));
+
+        final Response response = client.target(jersey.target(V1_VEX).getUri()).request()
+                .header(X_API_KEY, apiKey)
+                .post(Entity.entity(multiPart, multiPart.getMediaType()));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThatJson(getPlainTextBody(response))
+                .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
+                .withMatcher("runId", equalTo(stubbedRunId.toString()))
+                .isEqualTo(/* language=JSON */ """
+                        {
+                          "token": "${json-unit.matches:runId}",
+                          "projectUuid": "${json-unit.matches:projectUuid}"
+                        }
+                        """);
+    }
+
+    @Test
+    void uploadInvalidOpenVexTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final String encodedVex = Base64.getEncoder().encodeToString(/* language=JSON */ """
+                {
+                  "@context": "https://openvex.dev/ns/v0.2.0",
+                  "@id": "https://openvex.dev/docs/example/vex-9fb3463de1b57",
+                  "timestamp": "2023-01-08T18:02:03-06:00",
+                  "version": 1,
+                  "statements": [
+                    {
+                      "vulnerability": { "name": "CVE-2023-12345" },
+                      "products": [{ "@id": "pkg:apk/wolfi/git@2.39.0-r1" }],
+                      "status": "resolved"
+                    }
+                  ]
+                }
+                """.getBytes());
+
+        final Response response = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedVex)));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 400,
+                  "title": "The uploaded VEX is invalid",
+                  "detail": "The uploaded VEX is not a valid OpenVEX document",
+                  "errors": [
+                    "/author: Required field is missing",
+                    "/statements/0/status: Unsupported status \\"resolved\\"; Supported values are [not_affected, affected, fixed, under_investigation]"
+                  ]
+                }
+                """);
+    }
+
+    @Test
+    void uploadOpenVexWithUnknownStatusTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final String encodedVex = Base64.getEncoder().encodeToString(VALID_OPENVEX
+                .replace("\"status\": \"fixed\"", "\"status\": \"not set\"")
+                .getBytes());
+
+        final Response response = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedVex)));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 400,
+                  "title": "The uploaded VEX is invalid",
+                  "detail": "The uploaded VEX is not a valid OpenVEX document",
+                  "errors": [
+                    "/statements/0/status: Unsupported status \\"not set\\"; Supported values are [not_affected, affected, fixed, under_investigation]"
+                  ]
+                }
+                """);
+    }
+
+    @Test
+    void uploadVexOfUnknownFormatTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final String encodedVex = Base64.getEncoder().encodeToString(/* language=JSON */ """
+                {
+                  "format": "Some Other VEX Format",
+                  "version": 1
+                }
+                """.getBytes());
+
+        final Response response = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedVex)));
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeaderString("Content-Type")).isEqualTo("application/problem+json");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 400,
+                  "title": "Unsupported VEX document format",
+                  "detail": "Unable to identify the uploaded document as either CycloneDX or OpenVEX. CycloneDX documents must declare \\"bomFormat\\": \\"CycloneDX\\", and OpenVEX documents must declare an \\"@context\\" pointing to openvex.dev/ns"
+                }
+                """);
+    }
+
+    @Test
+    void uploadOpenVexAclTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
+        enablePortfolioAccessControl();
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        final String encodedVex = Base64.getEncoder().encodeToString(VALID_OPENVEX.getBytes());
+        final Supplier<Response> responseSupplier = () -> jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedVex)));
+
+        Response response = responseSupplier.get();
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "status": 403,
+                  "title": "Project access denied",
+                  "detail": "Access to the requested project is forbidden"
+                }
+                """);
+
+        project.addAccessTeam(super.team);
+
+        response = responseSupplier.get();
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void shouldRejectOpenVexUploadForCollectionProject() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        project.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
+        qm.persist(project);
+
+        final String encodedVex = Base64.getEncoder().encodeToString(VALID_OPENVEX.getBytes());
+
+        final Response response = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedVex)));
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(getPlainTextBody(response)).isEqualTo("VEX cannot be uploaded to a collection project.");
+    }
+
+    @Test
+    void uploadOpenVexIsNotAffectedByBomValidationModeTest() {
+        initializeWithPermissions(Permissions.VULNERABILITY_ANALYSIS_UPDATE);
+
+        qm.createConfigProperty(
+                BOM_VALIDATION_MODE.getGroupName(),
+                BOM_VALIDATION_MODE.getPropertyName(),
+                BomValidationMode.DISABLED.name(),
+                BOM_VALIDATION_MODE.getPropertyType(),
+                BOM_VALIDATION_MODE.getDescription()
+        );
+
+        final var project = new Project();
+        project.setName("acme-app");
+        project.setVersion("1.0.0");
+        qm.persist(project);
+
+        // The validation mode governs CycloneDX schema validation. Conformance with the
+        // OpenVEX specification is always verified, as it is required to safely interpret
+        // the document's statements.
+        final String encodedInvalidVex = Base64.getEncoder().encodeToString(VALID_OPENVEX
+                .replace("\"status\": \"fixed\"", "\"status\": \"bogus\"")
+                .getBytes());
+        final Response invalidResponse = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedInvalidVex)));
+        assertThat(invalidResponse.getStatus()).isEqualTo(400);
+
+        // Valid OpenVEX continues to be accepted.
+        final String encodedValidVex = Base64.getEncoder().encodeToString(VALID_OPENVEX.getBytes());
+        final Response validResponse = jersey.target(V1_VEX).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "projectName": "acme-app",
+                          "projectVersion": "1.0.0",
+                          "vex": "%s"
+                        }
+                        """.formatted(encodedValidVex)));
+        assertThat(validResponse.getStatus()).isEqualTo(200);
     }
 }

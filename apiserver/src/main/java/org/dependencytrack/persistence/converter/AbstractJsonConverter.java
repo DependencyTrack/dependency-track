@@ -83,8 +83,7 @@ abstract class AbstractJsonConverter<T> implements AttributeConverter<T, String>
             objectReader = JSON_MAPPER.readerWithView(jsonView);
         }
 
-        try {
-            final JsonParser jsonParser = objectReader.createParser(datastoreValue);
+        try (final JsonParser jsonParser = objectReader.createParser(datastoreValue)) {
             return objectReader.readValue(jsonParser, typeReference);
         } catch (IOException e) {
             throw new RuntimeException(e);

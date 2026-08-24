@@ -26,8 +26,6 @@ import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.Version;
 import org.cyclonedx.model.BomReference;
@@ -79,6 +77,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -527,8 +526,8 @@ public class ModelConverter {
         return service;
     }
 
-    public static MultiValuedMap<String, String> convertDependencyGraph(final List<Dependency> cdxDependencies) {
-        final var dependencyGraph = new HashSetValuedHashMap<String, String>();
+    public static Map<String, Set<String>> convertDependencyGraph(final List<Dependency> cdxDependencies) {
+        final var dependencyGraph = new HashMap<String, Set<String>>();
         if (cdxDependencies == null || cdxDependencies.isEmpty()) {
             return dependencyGraph;
         }
@@ -540,7 +539,9 @@ public class ModelConverter {
 
             final List<String> directDependencies = cdxDependency.getDependencies().stream()
                     .map(BomReference::getRef).toList();
-            dependencyGraph.putAll(cdxDependency.getRef(), directDependencies);
+            dependencyGraph
+                    .computeIfAbsent(cdxDependency.getRef(), _ -> new HashSet<>())
+                    .addAll(directDependencies);
         }
 
         return dependencyGraph;

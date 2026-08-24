@@ -426,6 +426,30 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
     }
 
     @Test
+    void testEvaluateProjectWithMultipleConditionsOnSameSubjectType() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+                component.name == "acme-lib"
+                """, PolicyViolation.Type.OPERATIONAL);
+        qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """
+                component.version == "1.0.0"
+                """, PolicyViolation.Type.OPERATIONAL);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        component.setVersion("1.0.0");
+        qm.persist(component);
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+        assertThat(qm.getAllPolicyViolations(component)).hasSize(2);
+    }
+
+    @Test
     void testEvaluateProjectWithPolicyOperatorAnyAndAllConditionsMatching() throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.EXPRESSION, PolicyCondition.Operator.MATCHES, """

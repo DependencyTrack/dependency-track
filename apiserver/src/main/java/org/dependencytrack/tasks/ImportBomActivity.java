@@ -21,13 +21,12 @@ package org.dependencytrack.tasks;
 import alpine.persistence.ScopedCustomization;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.cyclonedx.exception.ParseException;
 import org.cyclonedx.parsers.BomParserFactory;
 import org.cyclonedx.parsers.Parser;
 import org.datanucleus.flush.FlushMode;
 import org.dependencytrack.analysis.AnalyzeProjectWorkflow;
+import org.dependencytrack.analysis.ProjectLastAnalysisDao;
 import org.dependencytrack.common.Mappers;
 import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivityContext;
@@ -46,7 +45,6 @@ import org.dependencytrack.model.ProjectMetadata;
 import org.dependencytrack.model.ServiceComponent;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
-import org.dependencytrack.analysis.ProjectLastAnalysisDao;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
@@ -65,6 +63,7 @@ import javax.jdo.Query;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -73,7 +72,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
@@ -284,9 +282,9 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             ProjectMetadata projectMetadata,
             List<Component> components,
             List<ServiceComponent> services,
-            MultiValuedMap<String, String> dependencyGraph,
+            Map<String, Set<String>> dependencyGraph,
             Map<String, ComponentIdentity> identitiesByBomRef,
-            MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity
+            Map<ComponentIdentity, Set<String>> bomRefsByIdentity
     ) {
     }
 
@@ -302,7 +300,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         // We avoid having to iterate over, and compare, all values of "identitiesByBomRef"
         // by keeping a secondary index on identities to BOM refs.
         // Note: One identity can point to multiple BOM refs, due to component and service de-duplication.
-        final var bomRefsByIdentity = new HashSetValuedHashMap<ComponentIdentity, String>();
+        final var bomRefsByIdentity = new HashMap<ComponentIdentity, Set<String>>();
 
         final ProjectMetadata projectMetadata = convertToProjectMetadata(cdxBom.getMetadata());
         final Project project = convertToProject(cdxBom.getMetadata());
@@ -319,8 +317,8 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         services = flatten(services, ServiceComponent::getChildren, ServiceComponent::setChildren);
         final int numServicesTotal = services.size();
 
-        final MultiValuedMap<String, String> dependencyGraph = convertDependencyGraph(cdxBom.getDependencies());
-        final int numDependencyGraphEntries = dependencyGraph.asMap().size();
+        final Map<String, Set<String>> dependencyGraph = convertDependencyGraph(cdxBom.getDependencies());
+        final int numDependencyGraphEntries = dependencyGraph.size();
 
         components = components.stream().filter(distinctComponentsByIdentity(identitiesByBomRef, bomRefsByIdentity)).toList();
         services = services.stream().filter(distinctServicesByIdentity(identitiesByBomRef, bomRefsByIdentity)).toList();
@@ -398,7 +396,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 final Map<ComponentIdentity, ServiceComponent> persistentServicesByIdentity =
                         processServices(qm, persistentProject, bom.services(), bom.identitiesByBomRef(), bom.bomRefsByIdentity());
 
-                LOGGER.info("Processing {} dependency graph entries", bom.dependencyGraph().asMap().size());
+                LOGGER.info("Processing {} dependency graph entries", bom.dependencyGraph().size());
                 processDependencyGraph(qm, persistentProject, bom.dependencyGraph(), persistentComponentsByIdentity,
                         bom.identitiesByBomRef(), bom.bomRefsByIdentity());
 
@@ -485,7 +483,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             final Project project,
             final List<Component> components,
             final Map<String, ComponentIdentity> identitiesByBomRef,
-            final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity
+            final Map<ComponentIdentity, Set<String>> bomRefsByIdentity
     ) {
         assertPersistent(project, "Project must be persistent");
 
@@ -580,7 +578,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             // as after persisting the components, their identities now include UUIDs.
             final var newIdentity = new ComponentIdentity(persistentComponent);
             final ComponentIdentity oldIdentity = identitiesByBomRef.put(persistentComponent.getBomRef(), newIdentity);
-            for (final String bomRef : bomRefsByIdentity.get(oldIdentity)) {
+            for (final String bomRef : bomRefsByIdentity.getOrDefault(oldIdentity, Set.of())) {
                 identitiesByBomRef.put(bomRef, newIdentity);
             }
 
@@ -609,7 +607,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             final Project project,
             final List<ServiceComponent> services,
             final Map<String, ComponentIdentity> identitiesByBomRef,
-            final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity
+            final Map<ComponentIdentity, Set<String>> bomRefsByIdentity
     ) {
         assertPersistent(project, "Project must be persistent");
 
@@ -663,7 +661,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
             // as after persisting the services, their identities now include UUIDs.
             final var newIdentity = new ComponentIdentity(persistentService);
             final ComponentIdentity oldIdentity = identitiesByBomRef.put(service.getBomRef(), newIdentity);
-            for (final String bomRef : bomRefsByIdentity.get(oldIdentity)) {
+            for (final String bomRef : bomRefsByIdentity.getOrDefault(oldIdentity, Set.of())) {
                 identitiesByBomRef.put(bomRef, newIdentity);
             }
 
@@ -690,10 +688,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
     private void processDependencyGraph(
             final QueryManager qm,
             final Project project,
-            final MultiValuedMap<String, String> dependencyGraph,
+            final Map<String, Set<String>> dependencyGraph,
             final Map<ComponentIdentity, Component> componentsByIdentity,
             final Map<String, ComponentIdentity> identitiesByBomRef,
-            final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity
+            final Map<ComponentIdentity, Set<String>> bomRefsByIdentity
     ) {
         assertPersistent(project, "Project must be persistent");
 
@@ -765,9 +763,9 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
      */
     private @Nullable ArrayNode resolveMergedDirectDependencies(
             Component component,
-            MultiValuedMap<String, String> dependencyGraph,
+            Map<String, Set<String>> dependencyGraph,
             Map<String, ComponentIdentity> identitiesByBomRef,
-            MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity) {
+            Map<ComponentIdentity, Set<String>> bomRefsByIdentity) {
         final Collection<String> sourceBomRefs = bomRefsByIdentity.get(
                 new ComponentIdentity(component, /* excludeUuid */ true));
         if (sourceBomRefs == null || sourceBomRefs.isEmpty()) {
@@ -986,7 +984,7 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
     private static Predicate<Component> distinctComponentsByIdentity(
             final Map<String, ComponentIdentity> identitiesByBomRef,
-            final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity
+            final Map<ComponentIdentity, Set<String>> bomRefsByIdentity
     ) {
         final var identitiesSeen = new HashSet<ComponentIdentity>();
         return component -> {
@@ -1000,7 +998,9 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                         of the tool that generated the BOM""".formatted(component.getBomRef()));
             }
 
-            bomRefsByIdentity.put(componentIdentity, component.getBomRef());
+            bomRefsByIdentity
+                    .computeIfAbsent(componentIdentity, _ -> new HashSet<>())
+                    .add(component.getBomRef());
 
             final boolean isSeenBefore = !identitiesSeen.add(componentIdentity);
             if (LOGGER.isDebugEnabled() && isSeenBefore) {
@@ -1014,13 +1014,15 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
 
     private static Predicate<ServiceComponent> distinctServicesByIdentity(
             final Map<String, ComponentIdentity> identitiesByBomRef,
-            final MultiValuedMap<ComponentIdentity, String> bomRefsByIdentity
+            final Map<ComponentIdentity, Set<String>> bomRefsByIdentity
     ) {
         final var identitiesSeen = new HashSet<ComponentIdentity>();
         return service -> {
             final var componentIdentity = new ComponentIdentity(service);
             identitiesByBomRef.putIfAbsent(service.getBomRef(), componentIdentity);
-            bomRefsByIdentity.put(componentIdentity, service.getBomRef());
+            bomRefsByIdentity
+                    .computeIfAbsent(componentIdentity, _ -> new HashSet<>())
+                    .add(service.getBomRef());
             final boolean isSeenBefore = !identitiesSeen.add(componentIdentity);
             if (LOGGER.isDebugEnabled() && isSeenBefore) {
                 LOGGER.debug("Filtering service with BOM ref %s and identity %s due to duplicate identity"

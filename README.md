@@ -11,8 +11,8 @@ capabilities of Software Bill of Materials (SBOM).
 [![Docker Pulls](https://img.shields.io/docker/pulls/dependencytrack/apiserver?logo=docker&logoColor=white&label=docker%20pulls&color=2496ED)](https://hub.docker.com/r/dependencytrack/apiserver)
 [![License](https://img.shields.io/badge/license-Apache--2.0-4c1?logo=apache&logoColor=white)](LICENSE.txt)
 
-[![Build](https://img.shields.io/github/actions/workflow/status/DependencyTrack/dependency-track/ci-build.yaml?branch=master&logo=githubactions&logoColor=white&label=build)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-build.yaml)
-[![Tests](https://img.shields.io/github/actions/workflow/status/DependencyTrack/dependency-track/ci-test.yaml?branch=master&logo=githubactions&logoColor=white&label=tests)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-test.yaml)
+[![Build](https://img.shields.io/github/actions/workflow/status/DependencyTrack/dependency-track/ci-build.yaml?branch=main&logo=githubactions&logoColor=white&label=build)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-build.yaml)
+[![Tests](https://img.shields.io/github/actions/workflow/status/DependencyTrack/dependency-track/ci-test.yaml?branch=main&logo=githubactions&logoColor=white&label=tests)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-test.yaml)
 [![E2E Tests](https://img.shields.io/github/actions/workflow/status/DependencyTrack/dependency-track/ci-test-e2e.yaml?logo=githubactions&logoColor=white&label=e2e%20tests)](https://github.com/DependencyTrack/dependency-track/actions/workflows/ci-test-e2e.yaml)
 [![Coverage](https://img.shields.io/codacy/coverage/b2ecd06dab57438a9a55bc4a71c5a8ce?logo=codacy&logoColor=white&label=coverage)](https://app.codacy.com/gh/DependencyTrack/dependency-track/dashboard)
 

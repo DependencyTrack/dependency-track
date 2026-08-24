@@ -152,7 +152,7 @@
         <lib.jakarta-mail.version>2.1.5</lib.jakarta-mail.version>
         <lib.java-uuid-generator.version>5.2.0</lib.java-uuid-generator.version>
         <lib.jackson2.version>2.22.1</lib.jackson2.version>
-        <lib.jackson3.version>3.2.1</lib.jackson3.version>
+        <lib.jackson3.version>3.2.2</lib.jackson3.version>
         <lib.jboss-logging.version>3.6.3.Final</lib.jboss-logging.version>
         <lib.jdbi.version>3.54.0</lib.jdbi.version>
         <lib.jersey.version>4.0.2</lib.jersey.version>

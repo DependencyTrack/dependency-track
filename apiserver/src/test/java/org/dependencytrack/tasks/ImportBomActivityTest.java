@@ -1989,6 +1989,90 @@ class ImportBomActivityTest extends PersistenceCapableTest {
         }
     }
 
+
+    @Test
+    void informShouldKeepManuallyCreatedComponents() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var manualComponent = new Component();
+        manualComponent.setProject(project);
+        manualComponent.setName("acme-internal-lib");
+        manualComponent.setVersion("2.0.0");
+        manualComponent.setClassifier(Classifier.LIBRARY);
+        manualComponent.setManuallyCreated(true);
+        qm.persist(manualComponent);
+
+        final var bomFileMetadata = storeBomFile("""
+                {
+                  "$schema": "http://cyclonedx.org/schema/bom-1.4.schema.json",
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib",
+                      "version": "1.0.0"
+                    }
+                  ]
+                }
+                """.getBytes());
+        activity.execute(null, buildArg(project, bomFileMetadata, UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        assertThat(qm.getAllComponents(project)).satisfiesExactlyInAnyOrder(
+                component -> {
+                    assertThat(component.getName()).isEqualTo("acme-internal-lib");
+                    assertThat(component.isManuallyCreated()).isTrue();
+                },
+                component -> {
+                    assertThat(component.getName()).isEqualTo("acme-lib");
+                    assertThat(component.isManuallyCreated()).isFalse();
+                });
+    }
+
+    @Test
+    void informShouldTakeOverManuallyCreatedComponentMatchingBomComponent() throws Exception {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var manualComponent = new Component();
+        manualComponent.setProject(project);
+        manualComponent.setName("acme-lib");
+        manualComponent.setVersion("1.0.0");
+        manualComponent.setClassifier(Classifier.LIBRARY);
+        manualComponent.setManuallyCreated(true);
+        qm.persist(manualComponent);
+        final UUID manualComponentUuid = manualComponent.getUuid();
+
+        final var bomFileMetadata = storeBomFile("""
+                {
+                  "$schema": "http://cyclonedx.org/schema/bom-1.4.schema.json",
+                  "bomFormat": "CycloneDX",
+                  "specVersion": "1.4",
+                  "version": 1,
+                  "components": [
+                    {
+                      "type": "library",
+                      "name": "acme-lib",
+                      "version": "1.0.0"
+                    }
+                  ]
+                }
+                """.getBytes());
+        activity.execute(null, buildArg(project, bomFileMetadata, UUID.randomUUID()));
+        assertBomProcessedNotification();
+
+        qm.getPersistenceManager().refresh(manualComponent);
+        assertThat(qm.getAllComponents(project)).satisfiesExactly(component -> {
+            assertThat(component.getUuid()).isEqualTo(manualComponentUuid);
+            assertThat(component.isManuallyCreated()).isFalse();
+        });
+    }
+
     private FileMetadata storeBomFile(final String testFileName) throws Exception {
         final Path bomFilePath = Paths.get(resourceToURL("/unit/" + testFileName).toURI());
 

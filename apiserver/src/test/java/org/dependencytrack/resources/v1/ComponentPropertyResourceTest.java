@@ -181,6 +181,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         final var component = new Component();
         component.setProject(project);
         component.setName("acme-lib");
+        component.setManuallyCreated(true);
         qm.persist(component);
 
         final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
@@ -220,6 +221,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         final var component = new Component();
         component.setProject(project);
         component.setName("acme-lib");
+        component.setManuallyCreated(true);
         qm.persist(component);
 
         final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
@@ -257,6 +259,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         final var component = new Component();
         component.setProject(project);
         component.setName("acme-lib");
+        component.setManuallyCreated(true);
         qm.persist(component);
 
         final var property = new ComponentProperty();
@@ -327,6 +330,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         final var component = new Component();
         component.setProject(project);
         component.setName("acme-lib");
+        component.setManuallyCreated(true);
         qm.persist(component);
 
         final Supplier<Response> responseSupplier = () -> jersey
@@ -369,6 +373,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         final var component = new Component();
         component.setProject(project);
         component.setName("acme-lib");
+        component.setManuallyCreated(true);
         qm.persist(component);
 
         final var property = new ComponentProperty();
@@ -399,6 +404,7 @@ public class ComponentPropertyResourceTest extends ResourceTest {
         final var component = new Component();
         component.setProject(project);
         component.setName("acme-lib");
+        component.setManuallyCreated(true);
         qm.persist(component);
 
         final var property = new ComponentProperty();
@@ -428,6 +434,66 @@ public class ComponentPropertyResourceTest extends ResourceTest {
 
         response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(204);
+    }
+
+    @Test
+    public void createPropertyOnImportedComponentTest() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_CREATE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        final Response response = jersey.target("%s/%s/property".formatted(V1_COMPONENT, component.getUuid())).request()
+                .header(X_API_KEY, apiKey)
+                .put(Entity.entity("""
+                        {
+                          "groupName": "foo",
+                          "propertyName": "bar",
+                          "propertyValue": "baz",
+                          "propertyType": "STRING",
+                          "description": "qux"
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        assertThat(response.getStatus()).isEqualTo(405);
+        assertThat(response.readEntity(String.class)).isEqualTo(
+                "Imported components are read-only: they are managed by SBOM uploads and curated via component analyses or component policies. Only manually created components can be modified.");
+    }
+
+    @Test
+    public void deletePropertyOnImportedComponentTest() {
+        initializeWithPermissions(Permissions.PORTFOLIO_MANAGEMENT_DELETE);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib");
+        qm.persist(component);
+
+        final var property = new ComponentProperty();
+        property.setComponent(component);
+        property.setGroupName("foo");
+        property.setPropertyName("bar");
+        property.setPropertyValue("baz");
+        property.setPropertyType(PropertyType.STRING);
+        qm.persist(property);
+
+        final Response response = jersey.target("%s/%s/property/%s".formatted(V1_COMPONENT, component.getUuid(), property.getUuid())).request()
+                .header(X_API_KEY, apiKey)
+                .delete();
+
+        assertThat(response.getStatus()).isEqualTo(405);
+        assertThat(response.readEntity(String.class)).isEqualTo(
+                "Imported components are read-only: they are managed by SBOM uploads and curated via component analyses or component policies. Only manually created components can be modified.");
     }
 
 }

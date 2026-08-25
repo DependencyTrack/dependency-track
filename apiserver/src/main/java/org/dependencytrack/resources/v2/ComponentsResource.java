@@ -364,6 +364,7 @@ public class ComponentsResource extends AbstractApiResource implements Component
             component.setResolvedLicense(null);
         }
         component.setNotes(StringUtils.trimToNull(request.getNotes()));
+        component.setManuallyCreated(true);
 
         qm.createComponent(component, true);
 

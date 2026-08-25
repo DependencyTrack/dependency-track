@@ -28,6 +28,8 @@ import org.datanucleus.flush.FlushMode;
 import org.dependencytrack.analysis.AnalyzeProjectWorkflow;
 import org.dependencytrack.analysis.ProjectLastAnalysisDao;
 import org.dependencytrack.common.Mappers;
+import org.dependencytrack.componentanalysis.ComponentAnalysisApplier;
+import org.dependencytrack.policy.cel.CelComponentPolicyApplier;
 import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivityContext;
 import org.dependencytrack.dex.api.ActivitySpec;
@@ -515,7 +517,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                             return previous;
                         }));
 
+        // Manually created components are not part of any BOM and must
+        // survive synchronization.
         final Set<Long> idsOfComponentsToDelete = persistentComponents.stream()
+                .filter(component -> !component.isManuallyCreated())
                 .map(Component::getId)
                 .collect(Collectors.toSet());
 
@@ -566,6 +571,10 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
                 applyIfChanged(persistentComponent, component, Component::getLicenseUrl, persistentComponent::setLicenseUrl);
                 applyIfChanged(persistentComponent, component, Component::getLicenseExpression, persistentComponent::setLicenseExpression);
                 applyIfChanged(persistentComponent, component, Component::isInternal, persistentComponent::setInternal);
+                // A BOM component matching the identity of a manually created
+                // component takes it over: the flag clears and the component
+                // becomes read-only like any other imported component.
+                applyIfChanged(persistentComponent, component, Component::isManuallyCreated, persistentComponent::setManuallyCreated);
                 applyIfChanged(persistentComponent, component, Component::getExternalReferences, persistentComponent::setExternalReferences);
                 applyIfChanged(persistentComponent, component, Component::getScope, persistentComponent::setScope);
 
@@ -598,6 +607,16 @@ public final class ImportBomActivity implements Activity<ImportBomArg, Void> {
         });
 
         deleteComponentsById(qm, idsOfComponentsToDelete);
+
+        // Durable license curation, applied AFTER BOM field synchronization
+        // (overrides win over BOM-declared licenses) and before policy
+        // evaluation (LICENSE violations see the curated license): component
+        // policies maintain their analyses first, then all analyses are
+        // re-applied onto the synchronized components.
+        CelComponentPolicyApplier.applyPolicies(project, persistentComponentByIdentity.values());
+        final var componentAnalysisApplier = ComponentAnalysisApplier.forProject(qm, project.getId());
+        persistentComponentByIdentity.values().forEach(componentAnalysisApplier::apply);
+        qm.getPersistenceManager().flush();
 
         return persistentComponentByIdentity;
     }

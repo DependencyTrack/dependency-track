@@ -336,6 +336,15 @@ public class Component implements Serializable {
     @JsonProperty("isInternal")
     private Boolean internal;
 
+    // True only for components created by hand through the REST API; BOM
+    // imports leave it false. Manual components stay editable and are never
+    // deleted by BOM synchronization. When a BOM component matches a manual
+    // component's identity, the BOM takes ownership: the flag clears and the
+    // component becomes read-only.
+    @Persistent
+    @Column(name = "MANUALLY_CREATED", allowsNull = "true")
+    private Boolean manuallyCreated;
+
     @Persistent
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR", length = 1024)
     @Size(max = 1024)
@@ -736,6 +745,17 @@ public class Component implements Serializable {
 
     public void setInternal(boolean internal) {
         this.internal = internal;
+    }
+
+    public boolean isManuallyCreated() {
+        if (manuallyCreated == null) {
+            return false;
+        }
+        return manuallyCreated;
+    }
+
+    public void setManuallyCreated(boolean manuallyCreated) {
+        this.manuallyCreated = manuallyCreated;
     }
 
     public String getDescription() {

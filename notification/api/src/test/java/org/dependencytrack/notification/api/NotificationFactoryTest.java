@@ -157,4 +157,40 @@ class NotificationFactoryTest {
                         "CVE-123"));
     }
 
+    @Test
+    public void testCreateVulnerabilityAnalysisCommentNotification() throws Exception {
+        final var project = org.dependencytrack.notification.proto.v1.Project.newBuilder().setUuid(java.util.UUID.randomUUID().toString()).setName("acme-app").build();
+        final var component = org.dependencytrack.notification.proto.v1.Component.newBuilder().setUuid(java.util.UUID.randomUUID().toString()).setName("acme-lib").build();
+        final var vuln = org.dependencytrack.notification.proto.v1.Vulnerability.newBuilder().setVulnId("INT-123").setSource("INTERNAL").build();
+        final var analysis = org.dependencytrack.notification.proto.v1.VulnerabilityAnalysis.newBuilder().setState("NOT_AFFECTED").build();
+
+        final long nowSeconds = 1700000000L;
+        final var commentBuilder = org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisComment.newBuilder();
+        commentBuilder.setContent("This is a test comment");
+        commentBuilder.setCommenter("test-user");
+        commentBuilder.setCommenterId("test-uuid");
+        commentBuilder.setTimestamp(com.google.protobuf.Timestamp.newBuilder()
+                .setSeconds(nowSeconds)
+                .build());
+
+        final org.dependencytrack.notification.proto.v1.Notification notification = NotificationFactory.createVulnerabilityAnalysisCommentNotification(
+                project, component, vuln, analysis, commentBuilder.build());
+
+        assertThat(notification).isNotNull();
+        assertThat(notification.getScope()).isEqualTo(org.dependencytrack.notification.proto.v1.Scope.SCOPE_PORTFOLIO);
+        assertThat(notification.getGroup()).isEqualTo(org.dependencytrack.notification.proto.v1.Group.GROUP_VULNERABILITY_ANALYSIS_COMMENT);
+        assertThat(notification.getTitle()).isEqualTo("Analysis Decision: Comment Added");
+
+        final var subject = notification.getSubject().unpack(org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject.class);
+        assertThat(subject.getProject()).isEqualTo(project);
+        assertThat(subject.getComponent()).isEqualTo(component);
+        assertThat(subject.getVulnerability()).isEqualTo(vuln);
+        assertThat(subject.getAnalysis()).isEqualTo(analysis);
+        
+        final var extractedComment = subject.getVulnerabilityAnalysisComment();
+        assertThat(extractedComment.getContent()).isEqualTo("This is a test comment");
+        assertThat(extractedComment.getCommenter()).isEqualTo("test-user");
+        assertThat(extractedComment.getCommenterId()).isEqualTo("test-uuid");
+        assertThat(extractedComment.getTimestamp().getSeconds()).isEqualTo(nowSeconds);
+    }
 }

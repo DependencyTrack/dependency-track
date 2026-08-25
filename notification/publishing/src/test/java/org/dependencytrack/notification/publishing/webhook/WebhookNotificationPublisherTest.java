@@ -92,6 +92,7 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
             case GROUP_BOM_VALIDATION_FAILED -> validateBomValidationFailedNotificationPublish();
             case GROUP_NEW_VULNERABILITY -> validateNewVulnerabilityNotificationPublish();
             case GROUP_NEW_VULNERABLE_DEPENDENCY -> validateNewVulnerableDependencyNotificationPublish();
+            case GROUP_VULNERABILITY_ANALYSIS_COMMENT -> validateVulnerabilityAnalysisCommentNotificationPublish();
         }
     }
 
@@ -478,5 +479,9 @@ class WebhookNotificationPublisherTest extends AbstractNotificationPublisherTest
                         .withRequestBody(binaryEqualTo(expectedProtobuf)));
             }
         }
+    }
+
+    private void validateVulnerabilityAnalysisCommentNotificationPublish() {
+        // dummy
     }
 }

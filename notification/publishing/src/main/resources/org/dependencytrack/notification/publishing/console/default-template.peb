@@ -7,4 +7,6 @@ Notification
   -- scope:     {{ notification.scope }}
   -- group:     {{ notification.group }}
   -- title:     {{ notification.title }}
-  -- content:   {{ notification.content }}
+  -- content:   {{ notification.content }}{% if notification.group == "GROUP_VULNERABILITY_ANALYSIS_COMMENT" %}
+  -- commenter: {% if subject.vulnerabilityAnalysisComment.commenter is not empty %}{{ subject.vulnerabilityAnalysisComment.commenter }}{% else %}System{% endif %} {% if subject.vulnerabilityAnalysisComment.commenterId is not empty %}({{ subject.vulnerabilityAnalysisComment.commenterId }}){% endif %}
+  -- comment:   {{ subject.vulnerabilityAnalysisComment.content }}{% endif %}

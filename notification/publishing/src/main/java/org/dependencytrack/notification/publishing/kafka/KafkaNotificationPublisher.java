@@ -168,6 +168,11 @@ final class KafkaNotificationPublisher implements NotificationPublisher {
                     yield subject.getProject().getUuid();
                 }
             }
+            case GROUP_VULNERABILITY_ANALYSIS_COMMENT -> {
+                requireSubjectOfTypeAnyOf(notification, List.of(VulnerabilityAnalysisDecisionChangeSubject.class));
+                final var subject = notification.getSubject().unpack(VulnerabilityAnalysisDecisionChangeSubject.class);
+                yield subject.getProject().getUuid();
+            }
             case GROUP_PROJECT_CREATED -> {
                 requireSubjectOfTypeAnyOf(notification, List.of(Project.class));
                 final var subject = notification.getSubject().unpack(Project.class);

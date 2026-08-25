@@ -393,6 +393,8 @@ final class NotificationRouter {
                         NewVulnerableDependencySubject.class);
                 case GROUP_POLICY_VIOLATION -> notification.getSubject().unpack(
                         PolicyViolationSubject.class);
+                case GROUP_VULNERABILITY_ANALYSIS_COMMENT -> notification.getSubject().unpack(
+                        VulnerabilityAnalysisDecisionChangeSubject.class);
                 case GROUP_PROJECT_AUDIT_CHANGE -> {
                     if (notification.getSubject().is(PolicyViolationAnalysisDecisionChangeSubject.class)) {
                         yield notification.getSubject().unpack(PolicyViolationAnalysisDecisionChangeSubject.class);

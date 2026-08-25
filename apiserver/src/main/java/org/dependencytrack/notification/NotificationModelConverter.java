@@ -65,6 +65,7 @@ public final class NotificationModelConverter {
             case NEW_VULNERABLE_DEPENDENCY -> Group.GROUP_NEW_VULNERABLE_DEPENDENCY;
             case POLICY_VIOLATION -> Group.GROUP_POLICY_VIOLATION;
             case PROJECT_AUDIT_CHANGE -> Group.GROUP_PROJECT_AUDIT_CHANGE;
+            case VULNERABILITY_ANALYSIS_COMMENT -> Group.GROUP_VULNERABILITY_ANALYSIS_COMMENT;
             case PROJECT_CREATED -> Group.GROUP_PROJECT_CREATED;
             case REPOSITORY -> Group.GROUP_REPOSITORY;
             case USER_CREATED -> Group.GROUP_USER_CREATED;
@@ -92,6 +93,7 @@ public final class NotificationModelConverter {
             case GROUP_NEW_VULNERABLE_DEPENDENCY -> NotificationGroup.NEW_VULNERABLE_DEPENDENCY;
             case GROUP_POLICY_VIOLATION -> NotificationGroup.POLICY_VIOLATION;
             case GROUP_PROJECT_AUDIT_CHANGE -> NotificationGroup.PROJECT_AUDIT_CHANGE;
+            case GROUP_VULNERABILITY_ANALYSIS_COMMENT -> NotificationGroup.VULNERABILITY_ANALYSIS_COMMENT;
             case GROUP_PROJECT_CREATED -> NotificationGroup.PROJECT_CREATED;
             case GROUP_REPOSITORY -> NotificationGroup.REPOSITORY;
             case GROUP_USER_CREATED -> NotificationGroup.USER_CREATED;
@@ -326,13 +328,14 @@ public final class NotificationModelConverter {
     }
 
     public static VulnerabilityAnalysis convert(org.dependencytrack.model.Analysis analysis) {
-        return VulnerabilityAnalysis.newBuilder()
+        final var builder = VulnerabilityAnalysis.newBuilder()
                 .setProject(convert(analysis.getProject()))
                 .setComponent(convert(analysis.getComponent()))
                 .setVulnerability(convert(analysis.getVulnerability()))
                 .setState(analysis.getAnalysisState().name())
-                .setSuppressed(analysis.isSuppressed())
-                .build();
+                .setSuppressed(analysis.isSuppressed());
+
+        return builder.build();
     }
 
 }

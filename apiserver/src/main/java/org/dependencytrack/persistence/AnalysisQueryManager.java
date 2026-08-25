@@ -104,29 +104,32 @@ public class AnalysisQueryManager extends QueryManager {
 
             boolean stateChanged = false;
             boolean suppressionChanged = false;
+            boolean detailsChanged = false;
+            boolean commentAdded = false;
 
             if (command.state() != null && command.state() != analysis.getAnalysisState()) {
                 auditTrailComments.add("Analysis: %s → %s".formatted(analysis.getAnalysisState(), command.state()));
                 analysis.setAnalysisState(command.state());
                 stateChanged = true;
-            }
+             }
             if (command.justification() != null && command.justification() != analysis.getAnalysisJustification()) {
                 auditTrailComments.add("Justification: %s → %s".formatted(analysis.getAnalysisJustification(), command.justification()));
                 analysis.setAnalysisJustification(command.justification());
-            }
+             }
             if (command.response() != null && command.response() != analysis.getAnalysisResponse()) {
                 auditTrailComments.add("Vendor Response: %s → %s".formatted(analysis.getAnalysisResponse(), command.response()));
                 analysis.setAnalysisResponse(command.response());
-            }
+             }
             if (command.details() != null && !command.details().equals(analysis.getAnalysisDetails())) {
                 auditTrailComments.add("Details: %s".formatted(command.details()));
                 analysis.setAnalysisDetails(command.details());
-            }
+                detailsChanged = true;
+             }
             if (command.suppress() != null && command.suppress() != analysis.isSuppressed()) {
                 auditTrailComments.add(command.suppress() ? "Suppressed" : "Unsuppressed");
                 analysis.setSuppressed(command.suppress());
                 suppressionChanged = true;
-            }
+             }
             if (command.owaspVector() != null && !command.owaspVector().equals(analysis.getOwaspVector())) {
                 auditTrailComments.add(formatComment(AnalysisCommentField.OWASP_VECTOR, analysis.getOwaspVector(), command.owaspVector()));
                 analysis.setOwaspVector(command.owaspVector());
@@ -143,27 +146,75 @@ public class AnalysisQueryManager extends QueryManager {
                             : new ArrayList<>();
             if (command.comment() != null) {
                 comments.add(command.comment());
+                commentAdded = true;
+            }
+            final Date now = new Date();
+            final String commenterToUse;
+            final String commenterId;
+            if (command.commenter() == null) {
+                commenterToUse = switch (principal) {
+                    case User user -> user.getUsername();
+                    case ApiKey apiKey -> apiKey.getTeams().get(0).getName();
+                    case null -> null;
+                    default -> throw new IllegalStateException(
+                            "Unexpected principal type: " + principal.getClass().getName());
+                };
+                commenterId = switch (principal) {
+                    case User user -> String.valueOf(user.getId());
+                    case ApiKey apiKey -> String.valueOf(apiKey.getId());
+                    case null -> null;
+                    default -> null;
+                };
+            } else {
+                commenterToUse = command.commenter();
+                commenterId = null;
             }
 
-            createAnalysisComments(analysis, command.commenter(), comments);
+            createAnalysisComments(analysis, commenterToUse, comments, now);
 
             if (!command.options().contains(MakeAnalysisCommand.Option.OMIT_NOTIFICATION)
-                    && (stateChanged || suppressionChanged)) {
-                // NB: KEV is a transient field and must be computed ad-hoc.
+                     && (stateChanged || suppressionChanged || detailsChanged || !comments.isEmpty())) {
+                  // NB: KEV is a transient field and must be computed ad-hoc.
                 final boolean isKev = !super.getKev(
                         List.of(VulnerabilityKey.of(
                                 analysis.getVulnerability()))).isEmpty();
                 analysis.getVulnerability().setKev(isKev);
 
-                new JdoNotificationEmitter(this).emit(
-                        createVulnerabilityAnalysisDecisionChangeNotification(
-                                NotificationModelConverter.convert(analysis.getProject()),
-                                NotificationModelConverter.convert(analysis.getComponent()),
-                                NotificationModelConverter.convert(analysis.getVulnerability()),
-                                NotificationModelConverter.convert(analysis),
-                                stateChanged,
-                                suppressionChanged));
-            }
+                if (stateChanged || suppressionChanged || detailsChanged) {
+                    new JdoNotificationEmitter(this).emit(
+                            createVulnerabilityAnalysisDecisionChangeNotification(
+                                    NotificationModelConverter.convert(analysis.getProject()),
+                                    NotificationModelConverter.convert(analysis.getComponent()),
+                                    NotificationModelConverter.convert(analysis.getVulnerability()),
+                                    NotificationModelConverter.convert(analysis),
+                                    stateChanged,
+                                    suppressionChanged,
+                                    detailsChanged));
+                }
+
+                if (!comments.isEmpty()) {
+                    final var commentBuilder = org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisComment.newBuilder();
+                    commentBuilder.setContent(String.join("\n", comments));
+                    if (commenterToUse != null) {
+                        commentBuilder.setCommenter(commenterToUse);
+                    }
+                    if (commenterId != null) {
+                        commentBuilder.setCommenterId(commenterId);
+                    }
+                    commentBuilder.setTimestamp(com.google.protobuf.Timestamp.newBuilder()
+                            .setSeconds(now.getTime() / 1000)
+                            .setNanos((int) ((now.getTime() % 1000) * 1000000))
+                            .build());
+
+                    new JdoNotificationEmitter(this).emit(
+                            org.dependencytrack.notification.api.NotificationFactory.createVulnerabilityAnalysisCommentNotification(
+                                    NotificationModelConverter.convert(analysis.getProject()),
+                                    NotificationModelConverter.convert(analysis.getComponent()),
+                                    NotificationModelConverter.convert(analysis.getVulnerability()),
+                                    NotificationModelConverter.convert(analysis),
+                                    commentBuilder.build()));
+                }
+              }
 
             return analysis.getId();
         });
@@ -171,27 +222,13 @@ public class AnalysisQueryManager extends QueryManager {
 
     private void createAnalysisComments(
             final Analysis analysis,
-            final String commenter,
-            final List<String> comments) {
+            final String commenterToUse,
+            final List<String> comments,
+            final Date now) {
         assertPersistent(analysis, "analysis must be persistent");
 
         if (comments == null || comments.isEmpty()) {
             return;
-        }
-
-        final var now = new Date();
-
-        final String commenterToUse;
-        if (commenter == null) {
-            commenterToUse = switch (principal) {
-                case User user -> user.getUsername();
-                case ApiKey apiKey -> apiKey.getTeams().get(0).getName();
-                case null -> null;
-                default -> throw new IllegalStateException(
-                        "Unexpected principal type: " + principal.getClass().getName());
-            };
-        } else {
-            commenterToUse = commenter;
         }
 
         runInTransaction(() -> {

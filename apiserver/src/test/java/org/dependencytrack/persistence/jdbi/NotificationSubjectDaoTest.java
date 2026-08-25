@@ -644,10 +644,12 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vulnA, component, "internal");
 
-        // Suppress vulnB, it should not appear in the query results.
+          // Suppress vulnB, it should not appear in the query results.
         qm.makeAnalysis(
                 new MakeAnalysisCommand(component, vulnA)
-                        .withState(AnalysisState.NOT_AFFECTED));
+                         .withState(AnalysisState.NOT_AFFECTED)
+                         .withDetails("analysisDetails")
+                         .withComment("manual comment"));
 
         var policyAnalysis = qm.getAnalysis(component, vulnA);
 
@@ -782,9 +784,9 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                          "owaspRRVector": "(SL:5/M:5/O:2/S:9/ED:4/EE:2/A:7/ID:2/LC:2/LI:2/LAV:7/LAC:9/FD:3/RD:5/NC:0/PV:7)",
                                          "isKev": true
                                          },
-                                         "state": "NOT_AFFECTED",
-                                         "suppressed": false
-                                     }
+                                           "state": "NOT_AFFECTED",
+                                           "suppressed": false
+                                       }
                                  }
                                 """));
     }

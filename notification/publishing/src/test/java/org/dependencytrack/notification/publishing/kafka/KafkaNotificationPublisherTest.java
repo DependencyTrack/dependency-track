@@ -129,4 +129,8 @@ class KafkaNotificationPublisherTest extends AbstractNotificationPublisherTest {
         }
     }
 
+
+    private void validateVulnerabilityAnalysisCommentNotificationPublish() {
+        // dummy
+    }
 }

@@ -213,7 +213,8 @@ final class AnalysisReconciler {
             hasChanged |= analysisStateChanged;
             hasChanged |= diffField(comments, AnalysisCommentField.JUSTIFICATION, justification, desiredJustification);
             hasChanged |= diffField(comments, AnalysisCommentField.RESPONSE, response, desiredResponse);
-            hasChanged |= diffField(comments, AnalysisCommentField.DETAILS, details, desiredDetails);
+            final boolean detailsChanged = diffField(comments, AnalysisCommentField.DETAILS, details, desiredDetails);
+            hasChanged |= detailsChanged;
             final boolean suppressionChanged = diffField(comments, AnalysisCommentField.SUPPRESSED, suppressed, desiredSuppressed);
             hasChanged |= suppressionChanged;
             hasChanged |= diffField(comments, AnalysisCommentField.SEVERITY, severity, desiredSeverity);
@@ -260,11 +261,12 @@ final class AnalysisReconciler {
                     commenter,
                     comments,
                     analysisStateChanged,
-                    suppressionChanged);
-        }
-    }
+                    suppressionChanged,
+                    detailsChanged);
+         }
+     }
 
-    @Nullable Result reconcileForNoPolicy() {
+     @Nullable Result reconcileForNoPolicy() {
         final var comments = new ArrayList<String>();
         boolean hasChanged = false;
 
@@ -272,7 +274,8 @@ final class AnalysisReconciler {
         hasChanged |= analysisStateChanged;
         hasChanged |= diffField(comments, AnalysisCommentField.JUSTIFICATION, justification, AnalysisJustification.NOT_SET);
         hasChanged |= diffField(comments, AnalysisCommentField.RESPONSE, response, AnalysisResponse.NOT_SET);
-        hasChanged |= diffField(comments, AnalysisCommentField.DETAILS, details, null);
+        final boolean detailsChanged = diffField(comments, AnalysisCommentField.DETAILS, details, null);
+        hasChanged |= detailsChanged;
         final boolean suppressionChanged = diffField(comments, AnalysisCommentField.SUPPRESSED, suppressed, false);
         hasChanged |= suppressionChanged;
         hasChanged |= diffField(comments, AnalysisCommentField.SEVERITY, severity, null);
@@ -318,11 +321,12 @@ final class AnalysisReconciler {
         return new Result(
                 new FindingKey(componentId, vulnDbId),
                 command,
-                "[Policy{None}]",
+                 "[Policy{None}]",
                 comments,
                 analysisStateChanged,
-                suppressionChanged);
-    }
+                suppressionChanged,
+                detailsChanged);
+      }
 
     private static boolean diffField(
             List<String> comments,
@@ -343,7 +347,8 @@ final class AnalysisReconciler {
             String commenter,
             List<String> comments,
             boolean analysisStateChanged,
-            boolean suppressionChanged) {
+            boolean suppressionChanged,
+            boolean detailsChanged) {
 
         List<CreateCommentCommand> createCommentCommands(long analysisId) {
             return comments.stream()

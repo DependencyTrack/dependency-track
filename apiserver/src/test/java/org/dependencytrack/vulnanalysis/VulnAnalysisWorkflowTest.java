@@ -103,6 +103,7 @@ import static org.dependencytrack.notification.NotificationTestUtil.createCatchA
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABILITY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABLE_DEPENDENCY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
+import static org.dependencytrack.notification.proto.v1.Group.GROUP_VULNERABILITY_ANALYSIS_COMMENT;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_VULNERABILITY_RETRACTED;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -560,7 +561,8 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                 .extracting(org.dependencytrack.notification.proto.v1.Notification::getGroup)
                 .containsExactlyInAnyOrder(
                         GROUP_NEW_VULNERABILITY,
-                        GROUP_PROJECT_AUDIT_CHANGE);
+                        GROUP_PROJECT_AUDIT_CHANGE,
+                        GROUP_VULNERABILITY_ANALYSIS_COMMENT);
     }
 
     @Test
@@ -635,8 +637,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
 
         // Suppressed finding should NOT generate a NEW_VULNERABILITY notification,
         // but should still generate a PROJECT_AUDIT_CHANGE notification.
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification ->
-                assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE));
+        assertThat(qm.getNotificationOutbox()).satisfiesExactlyInAnyOrder(
+                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE),
+                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_VULNERABILITY_ANALYSIS_COMMENT));
     }
 
     @Test
@@ -734,8 +737,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
 
         // Existing finding should not trigger NEW_VULNERABILITY notification,
         // but state and suppression changed, so PROJECT_AUDIT_CHANGE should be emitted.
-        assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification ->
-                assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE));
+        assertThat(qm.getNotificationOutbox()).satisfiesExactlyInAnyOrder(
+                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE),
+                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_VULNERABILITY_ANALYSIS_COMMENT));
     }
 
     @Test
@@ -932,9 +936,11 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                             "Details: new details");
         });
 
-        // No state or suppression change, so no NEW_VULNERABILITY or PROJECT_AUDIT_CHANGE.
-        assertThat(qm.getNotificationOutbox()).isEmpty();
-    }
+          // Details changed, so a PROJECT_AUDIT_CHANGE notification should be emitted.
+        assertThat(qm.getNotificationOutbox()).satisfiesExactlyInAnyOrder(
+                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_PROJECT_AUDIT_CHANGE),
+                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_VULNERABILITY_ANALYSIS_COMMENT));
+      }
 
     @Test
     void analysisThroughPolicyWithPoliciesLoggableTest() {

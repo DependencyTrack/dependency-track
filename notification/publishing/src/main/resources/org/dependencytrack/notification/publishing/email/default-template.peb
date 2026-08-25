@@ -34,7 +34,7 @@ Description:
 {{ vulnerability.description }}
 
 {% endfor %}
-{% elseif notification.group == "GROUP_PROJECT_AUDIT_CHANGE" %}
+{% elseif notification.group == "GROUP_PROJECT_AUDIT_CHANGE" or notification.group == "GROUP_VULNERABILITY_ANALYSIS_COMMENT" %}
 Analysis Type:  Project Analysis
 {% if subject.policyViolation is defined %}
 Violation Analysis State:    {{ subject.analysis.state }}
@@ -55,6 +55,13 @@ Component URL:     {{ baseUrl }}/component/?uuid={{ subject.component.uuid }}
 Project:           {{ subject.project | summarize }}
 Description:       {{ subject.project.description }}
 Project URL:       {{ baseUrl }}/projects/{{ subject.project.uuid }}
+{% if notification.group == "GROUP_VULNERABILITY_ANALYSIS_COMMENT" %}
+Comment Added By: {% if subject.vulnerabilityAnalysisComment.commenter is not empty %}{{ subject.vulnerabilityAnalysisComment.commenter }}{% else %}System{% endif %} {% if subject.vulnerabilityAnalysisComment.commenterId is not empty %}({{ subject.vulnerabilityAnalysisComment.commenterId }}){% endif %}
+
+Comment Timestamp: {{ subject.vulnerabilityAnalysisComment.timestamp | formatTimestamp("yyyy-MM-dd HH:mm:ss") }}
+Comment Text:
+{{ subject.vulnerabilityAnalysisComment.content }}
+{% endif %}
 {% elseif notification.group == "GROUP_BOM_CONSUMED" %}
 Project:           {{ subject.project.name }}
 Version:           {{ subject.project.version }}

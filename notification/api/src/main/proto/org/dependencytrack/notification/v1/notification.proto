@@ -66,6 +66,8 @@ enum Group {
   // Scheduled summary of new policy violations across projects.
   GROUP_NEW_POLICY_VIOLATIONS_SUMMARY = 24;
 
+  GROUP_VULNERABILITY_ANALYSIS_COMMENT = 25;
+
   // Indexing service has been removed as of
   // https://github.com/DependencyTrack/hyades/issues/661
   reserved 5;
@@ -150,6 +152,14 @@ message VulnerabilityAnalysisDecisionChangeSubject {
   Project project = 2;
   Vulnerability vulnerability = 3;
   VulnerabilityAnalysis analysis = 4;
+  VulnerabilityAnalysisComment vulnerability_analysis_comment = 5;
+}
+
+message VulnerabilityAnalysisComment {
+  google.protobuf.Timestamp timestamp = 1;
+  string content = 2;
+  optional string commenter = 3;
+  optional string commenter_id = 4;
 }
 
 message PolicyViolationAnalysisDecisionChangeSubject {

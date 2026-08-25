@@ -38,7 +38,7 @@
           "value": "{{ subject.component | summarize | escape(strategy="json") }}"
         }
       ],
-      {% elseif notification.group == "GROUP_PROJECT_AUDIT_CHANGE" %}
+      {% elseif notification.group == "GROUP_PROJECT_AUDIT_CHANGE" or notification.group == "GROUP_VULNERABILITY_ANALYSIS_COMMENT" %}
       "facts": [
         {
           "name": "Analysis Type",
@@ -91,6 +91,12 @@
           "name": "Project",
           "value": "{{ subject.project | summarize | escape(strategy="json") }}"
         }
+        {% if notification.group == "GROUP_VULNERABILITY_ANALYSIS_COMMENT" %}
+        ,{
+          "name": "Comment Added by {% if subject.vulnerabilityAnalysisComment.commenter is not empty %}{{ subject.vulnerabilityAnalysisComment.commenter | escape(strategy="json") }}{% else %}System{% endif %} {% if subject.vulnerabilityAnalysisComment.commenterId is not empty %}({{ subject.vulnerabilityAnalysisComment.commenterId | escape(strategy="json") }}){% endif %}",
+          "value": "{{ subject.vulnerabilityAnalysisComment.content | escape(strategy="json") }}"
+        }
+        {% endif %}
       ],
       {% elseif notification.group == "GROUP_POLICY_VIOLATION" %}
       "facts": [
@@ -114,6 +120,12 @@
           "name": "Project",
           "value": "{{ subject.project | summarize | escape(strategy="json") }}"
         }
+        {% if notification.group == "GROUP_VULNERABILITY_ANALYSIS_COMMENT" %}
+        ,{
+          "name": "Comment Added by {% if subject.vulnerabilityAnalysisComment.commenter is not empty %}{{ subject.vulnerabilityAnalysisComment.commenter | escape(strategy="json") }}{% else %}System{% endif %} {% if subject.vulnerabilityAnalysisComment.commenterId is not empty %}({{ subject.vulnerabilityAnalysisComment.commenterId | escape(strategy="json") }}){% endif %}",
+          "value": "{{ subject.vulnerabilityAnalysisComment.content | escape(strategy="json") }}"
+        }
+        {% endif %}
       ],
       {% elseif notification.group == "GROUP_BOM_PROCESSING_FAILED" %}
       "facts": [

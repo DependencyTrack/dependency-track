@@ -58,6 +58,7 @@ import static org.dependencytrack.notification.api.NotificationFactory.createUse
 import static org.dependencytrack.notification.api.NotificationFactory.createVexConsumedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createVexProcessedNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createVulnerabilityAnalysisDecisionChangeNotification;
+import static org.dependencytrack.notification.api.NotificationFactory.createVulnerabilityAnalysisCommentNotification;
 import static org.dependencytrack.notification.api.NotificationFactory.createVulnerabilityRetractedNotification;
 import static org.dependencytrack.notification.proto.v1.AnalysisTrigger.ANALYSIS_TRIGGER_BOM_UPLOAD;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_ANALYZER;
@@ -72,6 +73,7 @@ import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERAB
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_NEW_VULNERABLE_DEPENDENCY;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_POLICY_VIOLATION;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_AUDIT_CHANGE;
+import static org.dependencytrack.notification.proto.v1.Group.GROUP_VULNERABILITY_ANALYSIS_COMMENT;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_PROJECT_CREATED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_USER_CREATED;
 import static org.dependencytrack.notification.proto.v1.Group.GROUP_USER_DELETED;
@@ -132,6 +134,9 @@ public final class TestNotificationFactory {
                     Map.entry(
                             new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_PROJECT_AUDIT_CHANGE, LEVEL_INFORMATIONAL),
                             TestNotificationFactory::createProjectAuditChangeTestNotification),
+                    Map.entry(
+                            new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_VULNERABILITY_ANALYSIS_COMMENT, LEVEL_INFORMATIONAL),
+                            TestNotificationFactory::createVulnerabilityAnalysisCommentTestNotification),
                     Map.entry(
                             new SupplierMatrixKey(SCOPE_PORTFOLIO, GROUP_PROJECT_CREATED, LEVEL_INFORMATIONAL),
                             TestNotificationFactory::createProjectCreatedTestNotification),
@@ -243,6 +248,27 @@ public final class TestNotificationFactory {
                                 createPolicy())));
     }
 
+
+    public static Notification createVulnerabilityAnalysisCommentTestNotification() {
+        final var commentBuilder = org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisComment.newBuilder();
+        commentBuilder.setContent("This is a test comment.");
+        commentBuilder.setCommenter("Test User");
+        commentBuilder.setCommenterId("test-user-id");
+        commentBuilder.setTimestamp(com.google.protobuf.Timestamp.newBuilder()
+                .setSeconds(1700000000L)
+                .build());
+
+        return createVulnerabilityAnalysisCommentNotification(
+                createProject(),
+                createComponent(),
+                createVulnerability(),
+                createVulnerabilityAnalysis(
+                        createProject(),
+                        createComponent(),
+                        createVulnerability()),
+                commentBuilder.build());
+    }
+
     public static Notification createProjectAuditChangeTestNotification() {
         return createVulnerabilityAnalysisDecisionChangeNotification(
                 createProject(),
@@ -253,6 +279,7 @@ public final class TestNotificationFactory {
                         createComponent(),
                         createVulnerability()),
                 true,
+                false,
                 false);
     }
 

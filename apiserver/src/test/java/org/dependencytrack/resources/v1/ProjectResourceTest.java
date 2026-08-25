@@ -679,6 +679,50 @@ class ProjectResourceTest extends ResourceTest {
     }
 
     @Test
+    void getProjectsOnlyLatestVersionsTest() {
+        initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
+        final var projectV1 = new Project();
+        projectV1.setName("acme-app");
+        projectV1.setVersion("1.0.0");
+        projectV1.setIsLatest(false);
+        qm.persist(projectV1);
+
+        final var projectV2 = new Project();
+        projectV2.setName("acme-app");
+        projectV2.setVersion("2.0.0");
+        projectV2.setIsLatest(true);
+        qm.persist(projectV2);
+
+        // Should return both when onlyLatestVersions=false.
+        var response = jersey.target(V1_PROJECT)
+                .queryParam("onlyLatestVersions", "false")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("2");
+
+        // Should return only the latest version when onlyLatestVersions=true.
+        response = jersey.target(V1_PROJECT)
+                .queryParam("onlyLatestVersions", "true")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [ {
+                   "name" : "acme-app",
+                   "version" : "2.0.0",
+                   "uuid" : "${json-unit.any-string}",
+                   "isLatest" : true,
+                   "active" : true,
+                   "hasChildren" : false
+                 } ]
+                """);
+    }
+
+    @Test
     void getProjectLookupTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
         for (int i = 0; i < 500; i++) {

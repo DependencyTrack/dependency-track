@@ -139,6 +139,8 @@ public class ProjectResource extends AbstractApiResource {
                                 @QueryParam("excludeInactive") boolean excludeInactive,
                                 @Parameter(description = "Optionally excludes children projects from being returned")
                                 @QueryParam("onlyRoot") boolean onlyRoot,
+                                @Parameter(description = "Optionally includes only projects flagged as the latest version of their name")
+                                @QueryParam("onlyLatestVersions") boolean onlyLatestVersions,
                                 @Parameter(description = "The UUID of the team which projects shall be excluded", schema = @Schema(format = "uuid", type = "string"))
                                 @QueryParam("notAssignedToTeamWithUuid") @ValidUuid String notAssignedToTeamWithUuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
@@ -158,6 +160,7 @@ public class ProjectResource extends AbstractApiResource {
                                     .withSearchText(getAlpineRequest().getFilter())
                                     .withExcludeInactive(excludeInactive)
                                     .withOnlyRoot(onlyRoot)
+                                    .withOnlyLatestVersions(onlyLatestVersions)
                                     .withIncludeMetrics(true)));
             return Response
                     .ok(ListProjectsResponseItem.of(projectsPage.items()))

@@ -68,6 +68,7 @@ import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
+import org.dependencytrack.resources.v1.vo.FindingResponse;
 import org.dependencytrack.resources.v1.vo.TotalCountMode;
 import org.dependencytrack.util.PersistenceUtil;
 import org.dependencytrack.util.PurlUtil;
@@ -143,7 +144,7 @@ public class FindingResource extends AbstractV1ApiResource {
                             @Header(name = TOTAL_COUNT_TYPE_HEADER, ref = TOTAL_COUNT_TYPE_HEADER_REF)
                     },
                     content = {
-                            @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)), mediaType = MediaType.APPLICATION_JSON),
+                            @Content(array = @ArraySchema(schema = @Schema(implementation = FindingResponse.class)), mediaType = MediaType.APPLICATION_JSON),
                             @Content(schema = @Schema(type = "string"), mediaType = MEDIA_TYPE_SARIF_JSON)
                     }
             ),
@@ -221,7 +222,6 @@ public class FindingResource extends AbstractV1ApiResource {
                         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An error occurred while generating SARIF file").build();
                     }
                 }
-
                 final Page<FindingDao.FindingRow> page = withJdbiHandle(getAlpineRequest(), handle ->
                         handle.attach(FindingDao.class).getFindingsByProject(
                                 project.getId(),
@@ -235,7 +235,8 @@ public class FindingResource extends AbstractV1ApiResource {
                                 totalCountThreshold(totalCount)));
 
                 return withTotalCountHeaders(
-                        Response.ok(mapComponentLatestVersion(page.items().stream().map(Finding::new).toList())),
+                        Response.ok(mapComponentLatestVersion(page.items().stream().map(Finding::new).toList())
+                                .stream().map(FindingResponse::of).toList()),
                         page.totalCount())
                         .build();
             } else {
@@ -355,7 +356,7 @@ public class FindingResource extends AbstractV1ApiResource {
                             @Header(name = TOTAL_COUNT_HEADER, description = "The number of findings, exact or a lower bound. See `X-Total-Count-Type`.", schema = @Schema(format = "integer")),
                             @Header(name = TOTAL_COUNT_TYPE_HEADER, ref = TOTAL_COUNT_TYPE_HEADER_REF)
                     },
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)))
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = FindingResponse.class)))
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -448,7 +449,8 @@ public class FindingResource extends AbstractV1ApiResource {
                                 totalCountThreshold(totalCount)));
 
         return withTotalCountHeaders(
-                Response.ok(mapComponentLatestVersion(page.items().stream().map(Finding::new).toList())),
+                Response.ok(mapComponentLatestVersion(page.items().stream().map(Finding::new).toList())
+                        .stream().map(FindingResponse::of).toList()),
                 page.totalCount())
                 .build();
     }

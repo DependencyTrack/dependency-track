@@ -127,7 +127,7 @@
         <lib.awaitility.version>4.3.0</lib.awaitility.version>
         <lib.byte-buddy.version>1.18.12</lib.byte-buddy.version>
         <lib.caffeine.version>3.2.4</lib.caffeine.version>
-        <lib.cel-java.version>0.13.1</lib.cel-java.version>
+        <lib.cel-java.version>0.14.0</lib.cel-java.version>
         <lib.commons-codec.version>1.22.1</lib.commons-codec.version>
         <lib.commons-lang3.version>3.20.0</lib.commons-lang3.version>
         <lib.commons-logging.version>1.4.0</lib.commons-logging.version>

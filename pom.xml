@@ -188,7 +188,7 @@
         <lib.tink.version>1.23.0</lib.tink.version>
         <lib.versatile.version>0.24.0</lib.versatile.version>
         <lib.wiremock.version>3.13.2</lib.wiremock.version>
-        <lib.zstd-jni.version>1.5.7-13</lib.zstd-jni.version>
+        <lib.zstd-jni.version>1.5.7-15</lib.zstd-jni.version>
 
         <!-- Severity of NullAway findings. Set to OFF to disable. -->
         <nullaway.severity>ERROR</nullaway.severity>

@@ -32,6 +32,9 @@ import org.jspecify.annotations.Nullable;
 
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
@@ -41,6 +44,7 @@ import static java.util.Objects.requireNonNull;
  */
 final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeConfigurable {
 
+    private static final String DEFAULT_SOURCE_NAME = "default";
     private @Nullable ConfigRegistry configRegistry;
     private @Nullable KeyValueStore kvStore;
     private @Nullable ObjectMapper objectMapper;
@@ -72,22 +76,31 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
 
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
-        final var defaultConfig = new OsvVulnDataSourceConfigV1()
+        final var defaultSource = new OsvSourceConfigV1()
+                .withName(DEFAULT_SOURCE_NAME)
                 .withIncrementalMirroringEnabled(true)
                 .withEnabled(false)
                 .withAliasSyncEnabled(false)
                 .withDataUrl(URI.create("https://storage.googleapis.com/osv-vulnerabilities"))
                 .withEcosystems(Set.of("Go", "Maven", "npm", "NuGet", "PyPI"));
 
-        return RuntimeConfigSpec.of(defaultConfig, config -> {
-            if (!config.isEnabled()) {
-                return;
-            }
-            if (config.getDataUrl() == null) {
-                throw new InvalidRuntimeConfigException("No data URL provided");
-            }
-            if (config.getEcosystems() == null || config.getEcosystems().isEmpty()) {
-                throw new InvalidRuntimeConfigException("At least one ecosystem must be specified");
+        final var defaultConfig = new OsvVulnDataSourceConfigV1()
+                .withSources(new LinkedHashSet<>(Set.of(defaultSource)));
+
+        return RuntimeConfigSpec.of(defaultConfig, (OsvVulnDataSourceConfigV1 config) -> {
+            for (final var source : config.getSources()) {
+                if (source.getName() == null || source.getName().isBlank()) {
+                    throw new InvalidRuntimeConfigException("No data source name provided");
+                }
+                if (!source.isEnabled()) {
+                    continue;
+                }
+                if (source.getDataUrl() == null) {
+                    throw new InvalidRuntimeConfigException("No data URL provided");
+                }
+                if (source.getEcosystems() == null || source.getEcosystems().isEmpty()) {
+                    throw new InvalidRuntimeConfigException("At least one ecosystem must be specified");
+                }
             }
         });
     }
@@ -95,7 +108,7 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     @Override
     public boolean isDataSourceEnabled() {
         requireNonNull(configRegistry, "configRegistry must not be null");
-        return configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class).isEnabled();
+        return !enabledSources(configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class)).isEmpty();
     }
 
     @Override
@@ -105,22 +118,32 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         requireNonNull(objectMapper, "objectMapper must not be null");
         requireNonNull(httpClient, "httpClient must not be null");
 
-        final var config = configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class);
-        if (!config.isEnabled()) {
+        final List<OsvSourceConfigV1> sources = enabledSources(configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class));
+        if (sources.isEmpty()) {
             throw new IllegalStateException("Vulnerability data source is disabled and cannot be created");
         }
 
-        final WatermarkManager watermarkManager = config.isIncrementalMirroringEnabled()
-                ? new WatermarkManager(config.getEcosystems(), kvStore)
-                : null;
+        final var dataSources = new ArrayList<OsvVulnDataSource>(sources.size());
+        for (final OsvSourceConfigV1 source : sources) {
+            final WatermarkManager watermarkManager = source.isIncrementalMirroringEnabled()
+                    ? new WatermarkManager(source.getName(), source.getEcosystems(), kvStore)
+                    : null;
 
-        return new OsvVulnDataSource(
-                watermarkManager,
-                objectMapper,
-                config.getDataUrl().toString(),
-                config.getEcosystems(),
-                httpClient,
-                config.getAliasSyncEnabled());
+            dataSources.add(new OsvVulnDataSource(
+                    source.getName(),
+                    watermarkManager,
+                    objectMapper,
+                    source.getDataUrl().toString(),
+                    source.getEcosystems(),
+                    httpClient,
+                    source.getAliasSyncEnabled()));
+        }
+        return new OsvCompositeVulnDataSource(dataSources);
     }
 
+    private List<OsvSourceConfigV1> enabledSources(final OsvVulnDataSourceConfigV1 config) {
+        return config.getSources().stream()
+                .filter(OsvSourceConfigV1::isEnabled)
+                .toList();
+    }
 }

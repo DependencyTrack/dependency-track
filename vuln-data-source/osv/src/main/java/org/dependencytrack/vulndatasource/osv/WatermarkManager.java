@@ -39,9 +39,10 @@ final class WatermarkManager {
     private final Map<String, WatermarkRecord> committedRecordByEcosystem;
 
     WatermarkManager(
+            final String sourceName,
             final Collection<String> ecosystems,
             final KeyValueStore kvStore) {
-        final var watermarkStore = new WatermarkStore(kvStore);
+        final var watermarkStore = new WatermarkStore(sourceName, kvStore);
         final Map<String, WatermarkRecord> recordByEcosystem =
                 watermarkStore.getForEcosystems(ecosystems);
 

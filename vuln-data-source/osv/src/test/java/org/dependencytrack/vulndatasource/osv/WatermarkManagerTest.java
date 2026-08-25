@@ -35,11 +35,11 @@ class WatermarkManagerTest {
     @Test
     void createShouldInitializeWatermarkWhenAvailable() {
         kvStore.putMany(Map.ofEntries(
-                Map.entry("watermark/maven", String.valueOf(Instant.ofEpochSecond(666).toEpochMilli())),
-                Map.entry("watermark/npm", String.valueOf(Instant.ofEpochSecond(555).toEpochMilli()))
+                Map.entry("watermark/default/maven", String.valueOf(Instant.ofEpochSecond(666).toEpochMilli())),
+                Map.entry("watermark/default/npm", String.valueOf(Instant.ofEpochSecond(555).toEpochMilli()))
         ));
 
-        final var watermarkManager = new WatermarkManager(List.of("maven", "npm"), kvStore);
+        final var watermarkManager = new WatermarkManager("default", List.of("maven", "npm"), kvStore);
         assertThat(watermarkManager).isNotNull();
         assertThat(watermarkManager.getWatermark("maven")).isEqualTo(Instant.ofEpochSecond(666));
         assertThat(watermarkManager.getWatermark("npm")).isEqualTo(Instant.ofEpochSecond(555));
@@ -47,14 +47,14 @@ class WatermarkManagerTest {
 
     @Test
     void createShouldNotInitializeWatermarkWhenNotAvailable() {
-        final var watermarkManager = new WatermarkManager(List.of("maven"), kvStore);
+        final var watermarkManager = new WatermarkManager("default", List.of("maven"), kvStore);
         assertThat(watermarkManager).isNotNull();
         assertThat(watermarkManager.getWatermark("maven")).isNull();
     }
 
     @Test
     void shouldAdvanceWatermarkWhenInitialWatermarkIsNull() {
-        final var watermarkManager = new WatermarkManager(List.of("maven"), kvStore);
+        final var watermarkManager = new WatermarkManager("default", List.of("maven"), kvStore);
 
         watermarkManager.maybeAdvance("maven", Instant.ofEpochSecond(666));
         assertThat(watermarkManager.getWatermark("maven")).isNull();
@@ -65,9 +65,9 @@ class WatermarkManagerTest {
 
     @Test
     void shouldAdvanceWatermarkWhenInitialWatermarkIsEarlier() {
-        kvStore.put("watermark/maven", String.valueOf(Instant.ofEpochSecond(666).toEpochMilli()));
+        kvStore.put("watermark/default/maven", String.valueOf(Instant.ofEpochSecond(666).toEpochMilli()));
 
-        final var watermarkManager = new WatermarkManager(List.of("maven"), kvStore);
+        final var watermarkManager = new WatermarkManager("default", List.of("maven"), kvStore);
 
         watermarkManager.maybeAdvance("maven", Instant.ofEpochSecond(667));
         assertThat(watermarkManager.getWatermark("maven")).isEqualTo(Instant.ofEpochSecond(666));

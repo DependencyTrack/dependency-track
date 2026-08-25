@@ -96,6 +96,7 @@ public record FindingResponse(
                         value(vulnerability, "epssPercentile", BigDecimal.class),
                         cwes(vulnerability.get("cwes")),
                         aliases(vulnerability.get("aliases")),
+                        value(vulnerability, "isKev", Boolean.class),
                         timestamp(vulnerability.get("published"))),
                 new Analysis(
                         enumValue(analysis, "state", AnalysisState.class),
@@ -202,6 +203,7 @@ public record FindingResponse(
             @Nullable BigDecimal epssPercentile,
             @Nullable List<Cwe> cwes,
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<Alias> aliases,
+            @Nullable Boolean isKev,
             @Schema(type = "integer", format = "int64", description = "Publication timestamp in milliseconds since the Unix epoch")
             @Nullable Long published) {
     }

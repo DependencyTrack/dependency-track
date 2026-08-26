@@ -24,11 +24,12 @@ import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.Timestamps;
 import org.dependencytrack.common.Mappers;
 import org.jdbi.v3.core.result.UnableToProduceResultException;
-import org.postgresql.util.PSQLException;
-import org.postgresql.util.PSQLState;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.Array;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Arrays;
@@ -39,12 +40,14 @@ import java.util.function.Consumer;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
-public class RowMapperUtil {
+@NullMarked
+public final class RowMapperUtil {
 
     private RowMapperUtil() {}
 
     public interface ThrowingBiFunction<V> {
-        V apply(final ResultSet rs, final String key) throws SQLException;
+        @Nullable
+        V apply(ResultSet rs, String key) throws SQLException;
     }
 
     /**
@@ -62,8 +65,7 @@ public class RowMapperUtil {
      * @param <V>        The value type
      * @throws SQLException When accessing the {@link ResultSet} failed
      */
-    public static <V> void maybeSet(
-            final ResultSet rs, final String columnName, final ThrowingBiFunction<V> getter, final Consumer<V> setter)
+    public static <V> void maybeSet(ResultSet rs, String columnName, ThrowingBiFunction<V> getter, Consumer<V> setter)
             throws SQLException {
         final V value = maybeGet(rs, columnName, getter);
         if (value != null) {
@@ -71,29 +73,27 @@ public class RowMapperUtil {
         }
     }
 
-    public static <V> V maybeGet(final ResultSet rs, final String columnName, final ThrowingBiFunction<V> getter)
+    public static <V> @Nullable V maybeGet(ResultSet rs, String columnName, ThrowingBiFunction<V> getter)
             throws SQLException {
         if (!hasColumn(rs, columnName)) {
             return null;
         }
+
         return getter.apply(rs, columnName);
     }
 
-    public static boolean hasColumn(final ResultSet rs, final String columnName) throws SQLException {
-        try {
-            return rs.findColumn(columnName) >= 0;
-        } catch (SQLException e) {
-            if (e instanceof final PSQLException pe) {
-                if (PSQLState.UNDEFINED_COLUMN.getState().equals(pe.getSQLState())) {
-                    return false;
-                }
+    public static boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
+        final ResultSetMetaData metaData = rs.getMetaData();
+        for (int i = 1; i <= metaData.getColumnCount(); i++) {
+            if (columnName.equalsIgnoreCase(metaData.getColumnLabel(i))) {
+                return true;
             }
-
-            throw e;
         }
+
+        return false;
     }
 
-    public static Double nullableDouble(final ResultSet rs, final String columnName) throws SQLException {
+    public static @Nullable Double nullableDouble(ResultSet rs, String columnName) throws SQLException {
         final double value = rs.getDouble(columnName);
         if (rs.wasNull()) {
             return null;
@@ -102,12 +102,12 @@ public class RowMapperUtil {
         return value;
     }
 
-    public static Timestamp nullableTimestamp(final ResultSet rs, final String columnName) throws SQLException {
+    public static @Nullable Timestamp nullableTimestamp(ResultSet rs, String columnName) throws SQLException {
         final Date timestamp = rs.getTimestamp(columnName);
         return timestamp != null ? Timestamps.fromDate(timestamp) : null;
     }
 
-    public static List<String> stringArray(final ResultSet rs, final String columnName) throws SQLException {
+    public static List<String> stringArray(ResultSet rs, String columnName) throws SQLException {
         final Array array = rs.getArray(columnName);
         if (array == null) {
             return Collections.emptyList();
@@ -120,7 +120,7 @@ public class RowMapperUtil {
         return Arrays.asList((String[]) array.getArray());
     }
 
-    public static List<Long> longArray(final ResultSet rs, final String columnName) throws SQLException {
+    public static List<Long> longArray(ResultSet rs, String columnName) throws SQLException {
         final Array array = rs.getArray(columnName);
         if (array == null) {
             return Collections.emptyList();
@@ -129,11 +129,12 @@ public class RowMapperUtil {
             throw new IllegalArgumentException(
                     "Expected array with base type BIGINT, but got %s".formatted(array.getBaseTypeName()));
         }
+
         return Arrays.asList((Long[]) array.getArray());
     }
 
-    public static <T> T deserializeJson(
-            final ResultSet rs, final String columnName, final TypeReference<T> typeReference) throws SQLException {
+    public static <T> @Nullable T deserializeJson(ResultSet rs, String columnName, TypeReference<T> typeReference)
+            throws SQLException {
         final String jsonString = rs.getString(columnName);
         if (isBlank(jsonString)) {
             return null;

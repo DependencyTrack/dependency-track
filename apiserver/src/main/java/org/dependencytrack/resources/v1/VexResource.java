@@ -397,12 +397,18 @@ public class VexResource extends AbstractApiResource {
                             .build();
                 }
                 try (InputStream in = bodyPartEntity.getInputStream()) {
+<<<<<<< HEAD
                     final byte[] content = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(in).get());
                     validateVex(content, project);
                     final byte[] content = IOUtils.toByteArray(
                             BOMInputStream.builder().setInputStream(in).get());
                     BomResource.validate(content, project);
                     return startVexImport(project, content);
+=======
+                    final byte[] vexBytes = IOUtils.toByteArray(BOMInputStream.builder().setInputStream(in).get());
+                    validateVex(vexBytes, project);
+                    return startVexImport(project, vexBytes);
+>>>>>>> db326d3d1 (fix(vex): resolve variable scope collision in VexResource)
                 } catch (IOException e) {
                     return Response.status(Response.Status.BAD_REQUEST).build();
                 }
@@ -502,4 +508,9 @@ public class VexResource extends AbstractApiResource {
 
         return Response.ok(new BomUploadResponse(runId, project.getUuid())).build();
     }
+<<<<<<< HEAD
 }
+=======
+
+}
+>>>>>>> db326d3d1 (fix(vex): resolve variable scope collision in VexResource)

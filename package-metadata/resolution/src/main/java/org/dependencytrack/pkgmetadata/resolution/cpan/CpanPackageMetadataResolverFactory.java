@@ -45,6 +45,11 @@ public final class CpanPackageMetadataResolverFactory implements PackageMetadata
     }
 
     @Override
+    public String displayName() {
+        return "CPAN";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return CpanPackageMetadataResolver.class;
     }

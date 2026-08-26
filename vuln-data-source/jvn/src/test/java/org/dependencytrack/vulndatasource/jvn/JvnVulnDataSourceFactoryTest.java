@@ -16,12 +16,14 @@
  * SPDX-License-Identifier: Apache-2.0
  * Copyright (c) OWASP Foundation. All Rights Reserved.
  */
-package org.dependencytrack.e2e.api.model;
+package org.dependencytrack.vulndatasource.jvn;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
+import org.dependencytrack.vulndatasource.api.VulnDataSource;
 
-import java.util.UUID;
+class JvnVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<VulnDataSource, JvnVulnDataSourceFactory> {
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public record NotificationPublisher(UUID uuid, String name, String extensionName) {
+    protected JvnVulnDataSourceFactoryTest() {
+        super(JvnVulnDataSourceFactory.class);
+    }
 }

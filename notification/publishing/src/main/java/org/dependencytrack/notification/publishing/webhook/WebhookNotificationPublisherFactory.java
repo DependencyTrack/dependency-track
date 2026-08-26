@@ -45,6 +45,11 @@ public final class WebhookNotificationPublisherFactory implements NotificationPu
     }
 
     @Override
+    public String displayName() {
+        return "Webhook";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return WebhookNotificationPublisher.class;
     }

@@ -45,6 +45,11 @@ public final class CargoPackageMetadataResolverFactory implements PackageMetadat
     }
 
     @Override
+    public String displayName() {
+        return "Cargo";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return CargoPackageMetadataResolver.class;
     }

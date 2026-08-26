@@ -91,6 +91,11 @@ public final class KafkaNotificationPublisherFactory implements NotificationPubl
     }
 
     @Override
+    public String displayName() {
+        return "Kafka";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return KafkaNotificationPublisher.class;
     }

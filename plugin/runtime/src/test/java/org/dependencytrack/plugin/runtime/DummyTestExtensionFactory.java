@@ -33,6 +33,11 @@ class DummyTestExtensionFactory implements ExtensionFactory<@NonNull TestExtensi
     }
 
     @Override
+    public @NonNull String displayName() {
+        return DummyTestExtension.NAME;
+    }
+
+    @Override
     public @NonNull Class<? extends TestExtensionPoint> extensionClass() {
         return DummyTestExtension.class;
     }

@@ -58,6 +58,11 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
     }
 
     @Override
+    public String displayName() {
+        return "GitHub Advisories";
+    }
+
+    @Override
     public Class<? extends VulnDataSource> extensionClass() {
         return GitHubVulnDataSource.class;
     }

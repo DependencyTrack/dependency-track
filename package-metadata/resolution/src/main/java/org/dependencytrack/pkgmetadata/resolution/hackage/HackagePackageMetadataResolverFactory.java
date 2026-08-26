@@ -45,6 +45,11 @@ public final class HackagePackageMetadataResolverFactory implements PackageMetad
     }
 
     @Override
+    public String displayName() {
+        return "Hackage";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return HackagePackageMetadataResolver.class;
     }

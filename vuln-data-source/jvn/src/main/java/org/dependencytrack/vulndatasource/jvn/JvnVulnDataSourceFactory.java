@@ -71,6 +71,11 @@ final class JvnVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     @Override
+    public String displayName() {
+        return "JVN iPedia";
+    }
+
+    @Override
     public Class<? extends VulnDataSource> extensionClass() {
         return JvnVulnDataSource.class;
     }

@@ -45,6 +45,11 @@ public final class WebexNotificationPublisherFactory implements NotificationPubl
     }
 
     @Override
+    public String displayName() {
+        return "Webex";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return WebexNotificationPublisher.class;
     }

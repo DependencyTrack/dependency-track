@@ -45,6 +45,11 @@ public final class SlackNotificationPublisherFactory implements NotificationPubl
     }
 
     @Override
+    public String displayName() {
+        return "Slack";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return SlackNotificationPublisher.class;
     }

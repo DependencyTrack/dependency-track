@@ -47,6 +47,11 @@ public final class JiraNotificationPublisherFactory implements NotificationPubli
     }
 
     @Override
+    public String displayName() {
+        return "Jira";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return JiraNotificationPublisher.class;
     }

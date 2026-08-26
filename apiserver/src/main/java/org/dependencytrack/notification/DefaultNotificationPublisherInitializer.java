@@ -20,7 +20,6 @@ package org.dependencytrack.notification;
 
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
-import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplate;
@@ -61,7 +60,7 @@ public final class DefaultNotificationPublisherInitializer implements ServletCon
         final var publishers = new ArrayList<org.dependencytrack.model.NotificationPublisher>(extensionFactories.size());
         for (final var extensionFactory : extensionFactories) {
             final var publisher = new org.dependencytrack.model.NotificationPublisher();
-            publisher.setName(StringUtils.capitalize(extensionFactory.extensionName()));
+            publisher.setName(extensionFactory.displayName());
             publisher.setDescription("Default %s publisher".formatted(publisher.getName()));
             publisher.setExtensionName(extensionFactory.extensionName());
             publisher.setDefaultPublisher(true);

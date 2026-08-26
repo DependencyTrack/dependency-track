@@ -58,6 +58,11 @@ final class InternalVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
     }
 
     @Override
+    public String displayName() {
+        return "Internal";
+    }
+
+    @Override
     public Class<? extends VulnAnalyzer> extensionClass() {
         return InternalVulnAnalyzer.class;
     }

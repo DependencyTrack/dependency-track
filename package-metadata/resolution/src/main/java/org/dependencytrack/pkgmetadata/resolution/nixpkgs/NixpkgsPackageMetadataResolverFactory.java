@@ -44,6 +44,11 @@ public final class NixpkgsPackageMetadataResolverFactory implements PackageMetad
     }
 
     @Override
+    public String displayName() {
+        return "Nixpkgs";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return NixpkgsPackageMetadataResolver.class;
     }

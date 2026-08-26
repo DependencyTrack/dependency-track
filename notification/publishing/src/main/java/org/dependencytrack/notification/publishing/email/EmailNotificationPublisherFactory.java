@@ -78,6 +78,11 @@ public final class EmailNotificationPublisherFactory implements NotificationPubl
     }
 
     @Override
+    public String displayName() {
+        return "Email";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return EmailNotificationPublisher.class;
     }

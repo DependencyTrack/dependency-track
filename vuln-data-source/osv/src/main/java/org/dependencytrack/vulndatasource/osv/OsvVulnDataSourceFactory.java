@@ -52,6 +52,11 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     @Override
+    public String displayName() {
+        return "OSV";
+    }
+
+    @Override
     public Class<? extends VulnDataSource> extensionClass() {
         return OsvVulnDataSource.class;
     }

@@ -45,6 +45,11 @@ public final class NugetPackageMetadataResolverFactory implements PackageMetadat
     }
 
     @Override
+    public String displayName() {
+        return "NuGet";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return NugetPackageMetadataResolver.class;
     }

@@ -18,12 +18,12 @@
         <maven.install.skip>true</maven.install.skip>
 
         <!-- Dependency Versions -->
-        <lib.cloud-sql-postgres-socket-factory.version>1.28.6</lib.cloud-sql-postgres-socket-factory.version>
+        <lib.cloud-sql-postgres-socket-factory.version>1.29.0</lib.cloud-sql-postgres-socket-factory.version>
         <lib.owasp-rr-calculator.version>1.0.1</lib.owasp-rr-calculator.version>
         <lib.micrometer-jvm-extras.version>0.3.0</lib.micrometer-jvm-extras.version>
-        <lib.swagger-parser.version>2.1.45</lib.swagger-parser.version>
+        <lib.swagger-parser.version>2.1.47</lib.swagger-parser.version>
         <lib.system-rules.version>1.19.0</lib.system-rules.version>
-        <lib.woodstox.version>7.2.1</lib.woodstox.version>
+        <lib.woodstox.version>7.2.2</lib.woodstox.version>
         <lib.javacron.version>1.4.0</lib.javacron.version>
 
         <!-- CycloneDX CLI -->
@@ -139,6 +139,11 @@
         </dependency>
         <dependency>
             <groupId>org.dependencytrack</groupId>
+            <artifactId>vuln-analyzer-checkmarx</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
             <artifactId>package-metadata-api</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -224,6 +229,11 @@
         </dependency>
         <dependency>
             <groupId>org.dependencytrack</groupId>
+            <artifactId>vuln-data-source-jvn</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
             <artifactId>vuln-data-source-nvd</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -270,10 +280,6 @@
         <dependency>
             <groupId>dev.cel</groupId>
             <artifactId>cel</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>dev.cel</groupId>
-            <artifactId>extensions</artifactId>
         </dependency>
         <dependency>
             <groupId>org.metaeffekt.core</groupId>
@@ -330,10 +336,6 @@
         </dependency>
 
         <dependency>
-            <groupId>jakarta.activation</groupId>
-            <artifactId>jakarta.activation-api</artifactId>
-        </dependency>
-        <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
         </dependency>
@@ -344,6 +346,10 @@
         <dependency>
             <groupId>org.eclipse.jetty.compression</groupId>
             <artifactId>jetty-compression-gzip</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty.compression</groupId>
+            <artifactId>jetty-compression-zstandard</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty.compression</groupId>
@@ -449,16 +455,7 @@
         <!-- Resilience4J -->
         <dependency>
             <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-retry</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-micrometer</artifactId>
-        </dependency>
-        <!-- Logging -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>log4j-over-slf4j</artifactId>
+            <artifactId>resilience4j-core</artifactId>
         </dependency>
         <!-- YAML -->
         <dependency>
@@ -506,11 +503,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>uk.org.webcompere</groupId>
-            <artifactId>system-stubs-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
@@ -553,16 +545,22 @@
 
         <plugins>
             <plugin>
-                <groupId>us.springett</groupId>
-                <artifactId>maven-uuid-generator</artifactId>
-                <version>1.0.1</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>generate-uuid</id>
+                        <id>generate-build-uuid</id>
                         <phase>initialize</phase>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>bsh-property</goal>
                         </goals>
+                        <configuration>
+                            <source>
+                                project.getProperties().setProperty(
+                                    "project.build.uuid",
+                                    java.util.UUID.randomUUID().toString());
+                            </source>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -642,7 +640,7 @@
             <plugin>
                 <groupId>org.cyclonedx</groupId>
                 <artifactId>cyclonedx-maven-plugin</artifactId>
-                <version>2.9.2</version>
+                <version>2.9.3</version>
                 <executions>
                     <execution>
                         <id>cyclonedx-aggregate</id>
@@ -779,6 +777,7 @@
             <properties>
                 <spotless.check.skip>true</spotless.check.skip>
                 <cyclonedx.skip>true</cyclonedx.skip>
+                <enforcer.skip>true</enforcer.skip>
                 <jacoco.skip>true</jacoco.skip>
                 <maven.test.skip>true</maven.test.skip>
                 <resolve.skip>true</resolve.skip>

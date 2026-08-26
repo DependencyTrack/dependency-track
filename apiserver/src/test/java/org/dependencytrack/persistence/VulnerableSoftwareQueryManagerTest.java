@@ -105,7 +105,8 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testSynchronizeVulnerableSoftwareUpdatesLastSeen() {
+    @SuppressWarnings("removal")
+    public void shouldNotUpdateAttributionTimestampsWhenSynchronizeVulnerableSoftwareReportsUnchangedVersions() {
         final VulnerableSoftware vs = new VulnerableSoftware();
         vs.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
 
@@ -139,10 +140,26 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
                 Vulnerability.Source.NVD
         );
 
-        // Verify lastSeen was updated
-        assertThat(attribution2.getLastSeen()).isAfter(firstLastSeen);
-        // Verify firstSeen was not changed
+        // Re-reporting the same affected version must not write to the attribution at all.
+        assertThat(attribution2.getLastSeen()).isEqualTo(firstLastSeen);
         assertThat(attribution2.getFirstSeen()).isEqualTo(attribution1.getFirstSeen());
+    }
+
+    @Test
+    @SuppressWarnings("removal")
+    public void shouldRecordLastSeenEqualToFirstSeenWhenSynchronizeVulnerableSoftwareCreatesAttribution() {
+        final VulnerableSoftware vs = new VulnerableSoftware();
+        vs.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
+        qm.persist(vs);
+
+        final VulnerableSoftware vsTransient = new VulnerableSoftware();
+        vsTransient.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
+        qm.synchronizeVulnerableSoftware(vulnerability, List.of(vsTransient), Vulnerability.Source.NVD);
+
+        final AffectedVersionAttribution attribution =
+                qm.getAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.NVD);
+
+        assertThat(attribution.getLastSeen()).isEqualTo(attribution.getFirstSeen());
     }
 
     @Test
@@ -568,25 +585,7 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
     }
 
     @Test
-    public void testHasAffectedVersionAttribution() {
-        final VulnerableSoftware vs = new VulnerableSoftware();
-        vs.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
-        qm.persist(vs);
-
-        // Initially, no attribution exists
-        assertThat(qm.hasAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.NVD)).isFalse();
-
-        // Create attribution using a new transient object
-        final VulnerableSoftware vsTransient = new VulnerableSoftware();
-        vsTransient.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
-        qm.synchronizeVulnerableSoftware(vulnerability, List.of(vsTransient), Vulnerability.Source.NVD);
-
-        // Now attribution should exist
-        assertThat(qm.hasAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.NVD)).isTrue();
-    }
-
-    @Test
-    public void testHasAffectedVersionAttributionWithDifferentSource() {
+    public void shouldReturnNullWhenGetAffectedVersionAttributionQueriesAnotherSource() {
         final VulnerableSoftware vs = new VulnerableSoftware();
         vs.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
         qm.persist(vs);
@@ -596,11 +595,8 @@ public class VulnerableSoftwareQueryManagerTest extends PersistenceCapableTest {
         vsTransient.setCpe23("cpe:2.3:a:acme:product:1.0.0:*:*:*:*:*:*:*");
         qm.synchronizeVulnerableSoftware(vulnerability, List.of(vsTransient), Vulnerability.Source.NVD);
 
-        // Check for NVD - should exist
-        assertThat(qm.hasAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.NVD)).isTrue();
-
-        // Check for OSV - should not exist
-        assertThat(qm.hasAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.OSV)).isFalse();
+        assertThat(qm.getAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.NVD)).isNotNull();
+        assertThat(qm.getAffectedVersionAttribution(vulnerability, vs, Vulnerability.Source.OSV)).isNull();
     }
 
     @Test

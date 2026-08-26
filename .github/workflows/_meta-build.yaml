@@ -45,12 +45,12 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # tag=v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up JDK
-        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # tag=v5.5.0
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # tag=v5.7.0
         with:
           distribution: 'temurin'
           java-version: '25'
@@ -115,6 +115,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      artifact-metadata: write # Required to create the artifact storage record.
+      attestations: write # Required to generate SLSA build provenance.
+      id-token: write # Required for keyless signing of SLSA build provenance.
       packages: write # Required to push images to ghcr.io
     needs:
       - build-java
@@ -132,7 +135,7 @@ jobs:
             prepare-cmd: ":" # no-op
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # tag=v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
         with:
           persist-credentials: false
 
@@ -149,13 +152,13 @@ jobs:
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # tag=v4.2.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # tag=v4.2.0
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # tag=v4.3.0
         id: buildx
         with:
           install: true
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # tag=v4.4.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # tag=v4.6.0
         if: ${{ inputs.publish-container }}
         with:
           registry: ghcr.io
@@ -192,8 +195,10 @@ jobs:
             TAGS="${IMAGE_NAME}:${APP_VERSION}"
           fi
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+          echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
 
       - name: Build multi-arch Container Image
+        id: push
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # tag=v7.3.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
@@ -204,3 +209,11 @@ jobs:
           push: ${{ inputs.publish-container }}
           context: ./${{ matrix.context }}
           file: ./${{ matrix.context }}/src/main/docker/Dockerfile
+
+      - name: Generate SLSA Build Provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # tag=v4.2.2
+        if: ${{ inputs.publish-container }}
+        with:
+          subject-name: ${{ steps.tags.outputs.image }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true

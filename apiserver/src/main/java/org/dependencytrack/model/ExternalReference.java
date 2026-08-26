@@ -26,7 +26,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+
 import java.io.Serializable;
+import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * Model class for tracking external references.
@@ -52,6 +55,15 @@ public class ExternalReference implements Serializable {
     @JsonView(JsonViews.MetadataTools.class)
     private String comment;
 
+    public ExternalReference() {
+    }
+
+    public ExternalReference(org.cyclonedx.model.ExternalReference.Type type, String url, String comment) {
+        this.type = type;
+        this.url = url;
+        this.comment = comment;
+    }
+
     public org.cyclonedx.model.ExternalReference.Type getType() {
         return type;
     }
@@ -75,4 +87,30 @@ public class ExternalReference implements Serializable {
     public void setComment(String comment) {
         this.comment = comment;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof final ExternalReference that)) {
+            return false;
+        }
+
+        return type == that.type
+                && Objects.equals(url, that.url)
+                && Objects.equals(comment, that.comment);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, url, comment);
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", ExternalReference.class.getSimpleName() + "[", "]")
+                .add("type=" + type)
+                .add("url='" + url + "'")
+                .add("comment='" + comment + "'")
+                .toString();
+    }
+
 }

@@ -511,6 +511,10 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().updateComponent(transientComponent, commitIndex);
     }
 
+    public void seedPackageMetadataResolution(Project project) {
+        getComponentQueryManager().seedPackageMetadataResolution(project);
+    }
+
     public Map<String, Component> getDependencyGraphForComponents(Project project, List<Component> components) {
         return getComponentQueryManager().getDependencyGraphForComponents(project, components);
     }
@@ -642,6 +646,10 @@ public class QueryManager extends AlpineQueryManager {
         return getVulnerabilityQueryManager().getVulnerabilityByVulnId(source, vulnId, includeVulnerableSoftware);
     }
 
+    public List<Vulnerability> getVulnerabilitiesByVulnId(String vulnId) {
+        return getVulnerabilityQueryManager().getVulnerabilitiesByVulnId(vulnId);
+    }
+
     public void addVulnerability(
             Vulnerability vulnerability,
             Component component,
@@ -686,13 +694,6 @@ public class QueryManager extends AlpineQueryManager {
             final List<VulnerableSoftware> vulnerableSoftwares,
             final Vulnerability.Source source) {
         getVulnerabilityQueryManager().deleteAffectedVersionAttributions(vulnerability, vulnerableSoftwares, source);
-    }
-
-    public boolean hasAffectedVersionAttribution(
-            final Vulnerability vulnerability,
-            final VulnerableSoftware vulnerableSoftware,
-            final Vulnerability.Source source) {
-        return getVulnerabilityQueryManager().hasAffectedVersionAttribution(vulnerability, vulnerableSoftware, source);
     }
 
     public boolean hasVulnerabilities(final Project project) {

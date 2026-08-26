@@ -23,14 +23,12 @@ import com.google.protobuf.util.Timestamps;
 import dev.cel.common.CelValidationException;
 import dev.cel.common.types.CelType;
 import dev.cel.runtime.CelEvaluationException;
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyCondition.Subject;
 import org.dependencytrack.model.PolicyViolation;
 import org.dependencytrack.notification.JdbiNotificationEmitter;
+import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.persistence.jdbi.NotificationSubjectDao;
 import org.dependencytrack.persistence.jdbi.ProjectDao;
 import org.dependencytrack.policy.cel.CelPolicyCompiler.CacheMode;
@@ -64,6 +62,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -71,7 +70,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.collections4.MultiMapUtils.emptyMultiValuedMap;
 import static org.dependencytrack.notification.api.NotificationFactory.createPolicyViolationNotification;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
@@ -114,7 +112,7 @@ public final class CelPolicyEngine {
         this.scriptHost = scriptHost;
     }
 
-    public void evaluateProject(UUID uuid) {
+    public void evaluateProject(UUID uuid) throws InterruptedException {
         // TODO: Should this entire procedure run in a single DB transaction?
         //   Would be better for atomicity, but could block DB connections for prolonged
         //   period of time for larger projects with many violations.
@@ -133,7 +131,7 @@ public final class CelPolicyEngine {
             LOGGER.info("No applicable policies found");
             inJdbiTransaction(handle ->
                     new CelPolicyDao(handle).reconcileViolations(
-                            projectId, emptyMultiValuedMap()));
+                            projectId, Map.of()));
             return;
         }
 
@@ -144,11 +142,11 @@ public final class CelPolicyEngine {
             LOGGER.info("No compilable policy conditions found");
             inJdbiTransaction(handle ->
                     new CelPolicyDao(handle).reconcileViolations(
-                            projectId, emptyMultiValuedMap()));
+                            projectId, Map.of()));
             return;
         }
 
-        final MultiValuedMap<CelType, String> requirements = determineScriptRequirements(policiesWithScripts);
+        final Map<CelType, Set<String>> requirements = determineScriptRequirements(policiesWithScripts);
         final long conditionCount = policiesWithScripts.stream().mapToLong(pws -> pws.conditionScripts().size()).sum();
         LOGGER.debug("Requirements for {} policy conditions: {}", conditionCount, requirements);
 
@@ -164,7 +162,7 @@ public final class CelPolicyEngine {
         // Preload components for the entire project, to avoid excessive queries.
         final Map<Long, ComponentWithLicenseId> componentsWithLicense = withJdbiHandle(
                 handle -> new CelPolicyDao(handle)
-                        .fetchAllComponents(projectId, requirements.get(TYPE_COMPONENT)));
+                        .fetchAllComponents(projectId, requirements.getOrDefault(TYPE_COMPONENT, Set.of())));
 
         // Preload licenses for the entire project, as chances are high that
         // they will be used by multiple components.
@@ -175,8 +173,8 @@ public final class CelPolicyEngine {
                     handle -> new CelPolicyDao(handle)
                             .fetchAllLicenses(
                                     projectId,
-                                    requirements.get(TYPE_LICENSE),
-                                    requirements.get(TYPE_LICENSE_GROUP)));
+                                    requirements.getOrDefault(TYPE_LICENSE, Set.of()),
+                                    requirements.getOrDefault(TYPE_LICENSE_GROUP, Set.of())));
         } else {
             licenseById = Collections.emptyMap();
         }
@@ -189,7 +187,7 @@ public final class CelPolicyEngine {
                     handle -> new CelPolicyDao(handle)
                             .fetchAllComponentProperties(
                                     projectId,
-                                    requirements.get(TYPE_COMPONENT_PROPERTY)));
+                                    requirements.getOrDefault(TYPE_COMPONENT_PROPERTY, Set.of())));
         } else {
             componentPropertiesById = Collections.emptyMap();
         }
@@ -237,7 +235,7 @@ public final class CelPolicyEngine {
                                         vulnIdsByComponentId.values().stream()
                                                 .flatMap(Set::stream)
                                                 .collect(Collectors.toSet()),
-                                        requirements.get(TYPE_VULNERABILITY)));
+                                        requirements.getOrDefault(TYPE_VULNERABILITY, Set.of())));
             } else {
                 protoVulnById = Map.of();
             }
@@ -246,10 +244,14 @@ public final class CelPolicyEngine {
             vulnIdsByComponentId = Map.of();
         }
 
-        final var violationsByComponentId = new ArrayListValuedHashMap<Long, PolicyViolation>();
+        final var violationsByComponentId = new HashMap<Long, List<PolicyViolation>>();
         final Timestamp protoNow = Timestamps.now();
 
         for (final Map.Entry<Long, Component> entry : componentsById.entrySet()) {
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Interrupted before policies could be evaluated for all components");
+            }
+
             final long componentId = entry.getKey();
             final Component protoComponent = entry.getValue();
 
@@ -280,13 +282,25 @@ public final class CelPolicyEngine {
         LOGGER.info("Identified {} new violations", newViolationIds.size());
 
         if (!newViolationIds.isEmpty()) {
-            useJdbiTransaction(handle -> new JdbiNotificationEmitter(handle).emitAll(
-                    handle.attach(NotificationSubjectDao.class)
-                            .getForNewPolicyViolations(newViolationIds)
-                            .stream()
-                            .map(subject -> createPolicyViolationNotification(
-                                    subject.getProject(), subject.getComponent(), subject.getPolicyViolation()))
-                            .toList()));
+            useJdbiTransaction(handle -> {
+                final var notificationSubjectDao = handle.attach(NotificationSubjectDao.class);
+
+                // Assembling notification subjects is expensive. Skip it for groups that no
+                // enabled rule subscribes to. The emitter would discard those notifications anyway.
+                if (!notificationSubjectDao
+                        .getSubscribedNotificationGroups()
+                        .contains(NotificationGroup.POLICY_VIOLATION.name())) {
+                    return;
+                }
+
+                new JdbiNotificationEmitter(handle).emitAll(
+                        notificationSubjectDao
+                                .getForNewPolicyViolations(newViolationIds)
+                                .stream()
+                                .map(subject -> createPolicyViolationNotification(
+                                        subject.getProject(), subject.getComponent(), subject.getPolicyViolation()))
+                                .toList());
+            });
         }
     }
 
@@ -316,13 +330,16 @@ public final class CelPolicyEngine {
         return result;
     }
 
-    private MultiValuedMap<CelType, String> determineScriptRequirements(
+    private Map<CelType, Set<String>> determineScriptRequirements(
             Collection<PolicyWithScripts> policiesWithScripts) {
-        final var requirements = new HashSetValuedHashMap<CelType, String>();
+        final var requirements = new HashMap<CelType, Set<String>>();
 
         for (final PolicyWithScripts policyWithScripts : policiesWithScripts) {
             for (final ConditionScript conditionScript : policyWithScripts.conditionScripts()) {
-                requirements.putAll(conditionScript.script().getRequirements());
+                conditionScript.script().getRequirements().forEach(
+                        (type, fieldNames) -> requirements
+                                .computeIfAbsent(type, _ -> new HashSet<>())
+                                .addAll(fieldNames));
             }
         }
 
@@ -360,7 +377,7 @@ public final class CelPolicyEngine {
             List<PolicyWithScripts> policiesWithScripts,
             long componentId,
             Map<String, Object> scriptArgs,
-            MultiValuedMap<Long, PolicyViolation> violationsByComponentId) {
+            Map<Long, List<PolicyViolation>> violationsByComponentId) {
         for (final PolicyWithScripts pws : policiesWithScripts) {
             final Policy policy = pws.policy();
             final var violatedConditions = new ArrayList<PolicyCondition>();
@@ -386,7 +403,9 @@ public final class CelPolicyEngine {
                     violation.setType(condition.getViolationType());
                     violation.setPolicyCondition(condition);
                     violation.setTimestamp(new Date());
-                    violationsByComponentId.put(componentId, violation);
+                    violationsByComponentId
+                            .computeIfAbsent(componentId, _ -> new ArrayList<>())
+                            .add(violation);
                 }
             }
         }

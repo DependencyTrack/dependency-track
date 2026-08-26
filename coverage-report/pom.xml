@@ -263,6 +263,12 @@
         </dependency>
         <dependency>
             <groupId>org.dependencytrack</groupId>
+            <artifactId>vuln-analyzer-checkmarx</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.dependencytrack</groupId>
             <artifactId>vuln-analyzer-oss-index</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>

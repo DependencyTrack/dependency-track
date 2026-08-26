@@ -19,7 +19,6 @@
 package org.dependencytrack.policy.cel.persistence;
 
 import dev.cel.common.types.CelType;
-import org.apache.commons.collections4.MultiValuedMap;
 import org.dependencytrack.model.Policy;
 import org.dependencytrack.model.PolicyCondition;
 import org.dependencytrack.model.PolicyViolation;
@@ -188,7 +187,8 @@ public final class CelPolicyDao {
                            AND EXISTS (
                              SELECT 1
                                FROM "FINDINGATTRIBUTION" AS fa
-                              WHERE fa."COMPONENT_ID" = c."ID"
+                              WHERE fa."PROJECT_ID" = :projectId
+                                AND fa."COMPONENT_ID" = c."ID"
                                 AND fa."VULNERABILITY_ID" = cv."VULNERABILITY_ID"
                                 AND fa."DELETED_AT" IS NULL
                            )
@@ -318,7 +318,7 @@ public final class CelPolicyDao {
                         <#-- @ftlvariable name="shouldFetchIsKev" type="boolean" -->
                         SELECT ${fetchColumns?join(", ")}
                         <#if shouldFetchIsKev>
-                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS is_kev
+                             , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS is_kev
                         </#if>
                           FROM "VULNERABILITY" AS v
                         <#if shouldFetchEpss!false>
@@ -470,7 +470,7 @@ public final class CelPolicyDao {
 
     public Set<Long> reconcileViolations(
             long projectId,
-            MultiValuedMap<Long, PolicyViolation> reportedViolationsByComponentId) {
+            Map<Long, List<PolicyViolation>> reportedViolationsByComponentId) {
         if (reportedViolationsByComponentId.isEmpty()) {
             jdbiHandle
                     .createUpdate("""
@@ -488,7 +488,11 @@ public final class CelPolicyDao {
             return Set.of();
         }
 
-        final int size = reportedViolationsByComponentId.size();
+        int size = 0;
+        for (final var entry : reportedViolationsByComponentId.entrySet()) {
+            size += entry.getValue().size();
+        }
+
         final var timestamps = new Timestamp[size];
         final var componentIds = new Long[size];
         final var projIds = new Long[size];
@@ -496,13 +500,15 @@ public final class CelPolicyDao {
         final var types = new String[size];
 
         int i = 0;
-        for (final var entry : reportedViolationsByComponentId.entries()) {
-            timestamps[i] = new Timestamp(entry.getValue().getTimestamp().getTime());
-            componentIds[i] = entry.getKey();
-            projIds[i] = projectId;
-            condIds[i] = entry.getValue().getPolicyCondition().getId();
-            types[i] = entry.getValue().getType().name();
-            i++;
+        for (final var entry : reportedViolationsByComponentId.entrySet()) {
+            for (final PolicyViolation violation : entry.getValue()) {
+                timestamps[i] = new Timestamp(violation.getTimestamp().getTime());
+                componentIds[i] = entry.getKey();
+                projIds[i] = projectId;
+                condIds[i] = violation.getPolicyCondition().getId();
+                types[i] = violation.getType().name();
+                i++;
+            }
         }
 
         return jdbiHandle
@@ -551,8 +557,8 @@ public final class CelPolicyDao {
                 .set();
     }
 
-    public Project loadRequiredFields(long projectId, MultiValuedMap<CelType, String> requirements) {
-        final Collection<String> projectRequirements = requirements.get(TYPE_PROJECT);
+    public Project loadRequiredFields(long projectId, Map<CelType, Set<String>> requirements) {
+        final Collection<String> projectRequirements = requirements.getOrDefault(TYPE_PROJECT, Set.of());
         if (projectRequirements.isEmpty()) {
             return Project.getDefaultInstance();
         }
@@ -655,12 +661,12 @@ public final class CelPolicyDao {
 
     public Map<Long, Component> loadRequiredComponentFields(
             Collection<Long> componentIds,
-            MultiValuedMap<CelType, String> requirements) {
+            Map<CelType, Set<String>> requirements) {
         if (componentIds.isEmpty()) {
             return Map.of();
         }
 
-        final Collection<String> componentRequirements = requirements.get(TYPE_COMPONENT);
+        final Collection<String> componentRequirements = requirements.getOrDefault(TYPE_COMPONENT, Set.of());
         if (componentRequirements.isEmpty()) {
             final var result = new HashMap<Long, Component>();
             for (long componentId : componentIds) {
@@ -715,12 +721,12 @@ public final class CelPolicyDao {
 
     public Map<Long, Vulnerability> loadRequiredVulnerabilityFields(
             Collection<Long> vulnIds,
-            MultiValuedMap<CelType, String> requirements) {
+            Map<CelType, Set<String>> requirements) {
         if (vulnIds.isEmpty()) {
             return Map.of();
         }
 
-        final Collection<String> vulnRequirements = requirements.get(TYPE_VULNERABILITY);
+        final Collection<String> vulnRequirements = requirements.getOrDefault(TYPE_VULNERABILITY, Set.of());
         if (vulnRequirements.isEmpty()) {
             final var result = new HashMap<Long, Vulnerability>();
             for (long vulnId : vulnIds) {
@@ -747,7 +753,7 @@ public final class CelPolicyDao {
                              , ${fetchColumns?join(", ")}
                         </#if>
                         <#if shouldFetchIsKev>
-                             , <@sql.isKev vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS is_kev
+                             , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS is_kev
                         </#if>
                           FROM "VULNERABILITY" AS v
                         <#if needsEpss!false>

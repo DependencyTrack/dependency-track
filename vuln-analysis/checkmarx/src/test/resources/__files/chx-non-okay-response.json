@@ -1,0 +1,12 @@
+[
+  {
+    "package": {
+      "status": "UnsupportedPackageType",
+      "remediation": {},
+      "name": "acme.lib:acme-artefact",
+      "version": "1.2.3",
+      "purl": "pkg:rpm/acme-artefact@1.2.3"
+    },
+    "vulnerabilities": []
+  }
+]

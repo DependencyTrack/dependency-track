@@ -29,6 +29,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter.MeterProvider;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.common.pagination.PageIterator;
@@ -55,6 +56,7 @@ import org.dependencytrack.dex.engine.api.event.DexEngineEvent;
 import org.dependencytrack.dex.engine.api.event.DexEngineEventListener;
 import org.dependencytrack.dex.engine.api.event.WorkflowRunsCompletedEvent;
 import org.dependencytrack.dex.engine.api.event.WorkflowRunsCompletedEventListener;
+import org.dependencytrack.dex.engine.api.request.CountWorkflowRunsRequest;
 import org.dependencytrack.dex.engine.api.request.CreateTaskQueueRequest;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
@@ -75,8 +77,10 @@ import org.dependencytrack.dex.engine.persistence.command.PollWorkflowTaskComman
 import org.dependencytrack.dex.engine.persistence.command.ScheduleActivityTaskRetryCommand;
 import org.dependencytrack.dex.engine.persistence.command.UpdateAndUnlockRunCommand;
 import org.dependencytrack.dex.engine.persistence.jdbi.JdbiFactory;
+import org.dependencytrack.dex.engine.persistence.model.ConcurrencyKeyWakeup;
 import org.dependencytrack.dex.engine.persistence.model.PolledWorkflowEvents;
 import org.dependencytrack.dex.engine.persistence.model.PolledWorkflowTask;
+import org.dependencytrack.dex.engine.persistence.model.UnlockedWorkflowRun;
 import org.dependencytrack.dex.engine.persistence.request.GetWorkflowRunHistoryRequest;
 import org.dependencytrack.dex.engine.support.Buffer;
 import org.dependencytrack.dex.engine.support.CircuitBreakerStateTransitionLogger;
@@ -104,6 +108,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -115,6 +120,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
@@ -152,7 +158,7 @@ final class DexEngineImpl implements DexEngine {
     private final DexEngineConfig config;
     private final Jdbi jdbi;
     private final ReentrantLock statusLock = new ReentrantLock();
-    private final MetadataRegistry metadataRegistry = new MetadataRegistry();
+    private final MetadataRegistry metadataRegistry;
     private final Map<String, TaskWorker> taskWorkerByName = new HashMap<>();
     private final Map<String, TaskWorker> workflowWorkerByQueue = new HashMap<>();
     private final Map<String, TaskWorker> activityWorkerByQueue = new HashMap<>();
@@ -169,13 +175,17 @@ final class DexEngineImpl implements DexEngine {
     private @Nullable Buffer<ExternalEvent> externalEventBuffer;
     private @Nullable Buffer<TaskEvent> taskEventBuffer;
     private @Nullable Buffer<ActivityTaskHeartbeat> activityTaskHeartbeatBuffer;
+    private @Nullable ActivityHeartbeatScheduler activityHeartbeatScheduler;
     private @Nullable CircuitBreakerRegistry bufferFlushCircuitBreakerRegistry;
     private @Nullable MaintenanceWorker maintenanceWorker;
     private @Nullable Cache<WorkflowRunHistoryCacheKey, CachedWorkflowRunHistory> runHistoryCache;
 
     DexEngineImpl(DexEngineConfig config) {
         this.config = requireNonNull(config);
-        this.jdbi = JdbiFactory.create(config.dataSource(), config.pageTokenEncoder());
+        this.metadataRegistry = new MetadataRegistry(
+                config.defaultActivityLockTimeout(),
+                config.defaultActivityExecutionTimeout());
+        this.jdbi = JdbiFactory.create(config.dataSource(), config.queryTimeout(), config.pageTokenEncoder());
         this.runsCreatedCounter = Counter
                 .builder("dt.dex.engine.runs.created")
                 .withRegistry(config.metrics().meterRegistry());
@@ -186,6 +196,8 @@ final class DexEngineImpl implements DexEngine {
 
     @Override
     public void start() {
+        requireSupportedActivityLockTimeouts();
+
         setStatus(Status.STARTING);
         LOGGER.debug("Starting");
 
@@ -202,7 +214,7 @@ final class DexEngineImpl implements DexEngine {
             runHistoryCacheBuilder.expireAfterAccess(config.runHistoryCache().evictAfterAccess());
         }
         runHistoryCache = runHistoryCacheBuilder.build();
-        new CaffeineCacheMetrics<>(runHistoryCache, "DexEngine-RunHistoryCache", null)
+        new CaffeineCacheMetrics<>(runHistoryCache, "DexEngine-RunHistoryCache", Tags.empty())
                 .bindTo(config.metrics().meterRegistry());
 
         LOGGER.debug("Registering default event listeners");
@@ -232,6 +244,7 @@ final class DexEngineImpl implements DexEngine {
             LOGGER.debug("Starting metrics collector");
             metricsCollector = new DexEngineMetricsCollector(
                     jdbi,
+                    this::isLeader,
                     config.metrics().collectorInitialDelay(),
                     config.metrics().collectorInterval(),
                     config.metrics().meterRegistry());
@@ -244,10 +257,11 @@ final class DexEngineImpl implements DexEngine {
             LOGGER.debug("Starting workflow task scheduler");
             workflowTaskScheduler = new WorkflowTaskScheduler(
                     jdbi,
-                    leaderElection::isLeader,
+                    this::isLeader,
                     config.metrics().meterRegistry(),
                     config.workflowTaskScheduler().pollInterval(),
                     config.workflowTaskScheduler().pollBackoffFunction(),
+                    config.workflowTaskScheduler().concurrencyKeyWakeupRepairInterval(),
                     queueName -> {
                         final TaskWorker worker = workflowWorkerByQueue.get(queueName);
                         if (worker != null) {
@@ -259,7 +273,7 @@ final class DexEngineImpl implements DexEngine {
             LOGGER.debug("Starting activity task scheduler");
             activityTaskScheduler = new ActivityTaskScheduler(
                     jdbi,
-                    leaderElection::isLeader,
+                    this::isLeader,
                     config.metrics().meterRegistry(),
                     config.activityTaskScheduler().pollInterval(),
                     config.activityTaskScheduler().pollBackoffFunction(),
@@ -343,11 +357,17 @@ final class DexEngineImpl implements DexEngine {
                 bufferFlushCircuitBreakerRegistry);
         activityTaskHeartbeatBuffer.start();
 
+        LOGGER.debug("Starting activity heartbeat scheduler");
+        activityHeartbeatScheduler = new ActivityHeartbeatScheduler(
+                this::tryHeartbeatActivityTask,
+                config.activityHeartbeatInterval());
+        activityHeartbeatScheduler.start();
+
         if (config.leaderElection().isEnabled()) {
             LOGGER.debug("Starting maintenance worker");
             maintenanceWorker = new MaintenanceWorker(
                     jdbi,
-                    leaderElection::isLeader,
+                    this::isLeader,
                     config.maintenance().runRetentionDuration(),
                     config.maintenance().runDeletionBatchSize(),
                     config.maintenance().runDeletionMaxBatchesPerCycle(),
@@ -408,6 +428,12 @@ final class DexEngineImpl implements DexEngine {
             LOGGER.debug("Waiting for external event buffer to stop");
             externalEventBuffer.close();
             externalEventBuffer = null;
+        }
+
+        if (activityHeartbeatScheduler != null) {
+            LOGGER.debug("Stopping activity heartbeat scheduler");
+            activityHeartbeatScheduler.close();
+            activityHeartbeatScheduler = null;
         }
 
         if (activityTaskHeartbeatBuffer != null) {
@@ -511,9 +537,11 @@ final class DexEngineImpl implements DexEngine {
             Activity<A, R> activity,
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
-            Duration lockTimeout) {
+            @Nullable Duration lockTimeout,
+            @Nullable Duration executionTimeout) {
         requireStatusAnyOf(Status.CREATED, Status.STOPPED);
-        metadataRegistry.registerActivity(activity, argumentConverter, resultConverter, lockTimeout);
+        metadataRegistry.registerActivity(
+                activity, argumentConverter, resultConverter, lockTimeout, executionTimeout);
     }
 
     <A, R> void registerActivityInternal(
@@ -521,7 +549,25 @@ final class DexEngineImpl implements DexEngine {
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
             String defaultTaskQueueName,
-            Duration lockTimeout,
+            @Nullable Duration lockTimeout,
+            Activity<A, R> activity) {
+        registerActivityInternal(
+                activityName,
+                argumentConverter,
+                resultConverter,
+                defaultTaskQueueName,
+                lockTimeout,
+                null,
+                activity);
+    }
+
+    <A, R> void registerActivityInternal(
+            String activityName,
+            PayloadConverter<A> argumentConverter,
+            PayloadConverter<R> resultConverter,
+            String defaultTaskQueueName,
+            @Nullable Duration lockTimeout,
+            @Nullable Duration executionTimeout,
             Activity<A, R> activity) {
         requireStatusAnyOf(Status.CREATED, Status.STOPPED);
         metadataRegistry.registerActivity(
@@ -530,6 +576,7 @@ final class DexEngineImpl implements DexEngine {
                 resultConverter,
                 defaultTaskQueueName,
                 lockTimeout,
+                executionTimeout,
                 activity);
     }
 
@@ -553,6 +600,8 @@ final class DexEngineImpl implements DexEngine {
             throw new IllegalStateException("Activity task queue %s does not exist".formatted(options.queueName()));
         }
 
+        requireUnregisteredTaskWorker("activity/" + options.name(), options.queueName(), activityWorkerByQueue);
+
         final var worker = new ActivityTaskWorker(
                 options.name(),
                 this,
@@ -565,14 +614,8 @@ final class DexEngineImpl implements DexEngine {
                 () -> (taskEventBuffer == null || taskEventBuffer.acceptsWork())
                         && (activityTaskHeartbeatBuffer == null || activityTaskHeartbeatBuffer.acceptsWork()));
 
-        if (taskWorkerByName.putIfAbsent("activity/" + options.name(), worker) != null) {
-            throw new IllegalStateException(
-                    "An task worker with name %s was already registered".formatted(options.name()));
-        }
-        if (activityWorkerByQueue.putIfAbsent(options.queueName(), worker) != null) {
-            throw new IllegalStateException(
-                    "An activity task worker for queue %s was already registered".formatted(options.queueName()));
-        }
+        taskWorkerByName.put("activity/" + options.name(), worker);
+        activityWorkerByQueue.put(options.queueName(), worker);
     }
 
     private void registerWorkflowTaskWorker(TaskWorkerOptions options) {
@@ -581,6 +624,8 @@ final class DexEngineImpl implements DexEngine {
         if (!queueExists) {
             throw new IllegalStateException("Workflow task queue %s does not exist".formatted(options.queueName()));
         }
+
+        requireUnregisteredTaskWorker("workflow/" + options.name(), options.queueName(), workflowWorkerByQueue);
 
         final var worker = new WorkflowTaskWorker(
                 options.name(),
@@ -593,14 +638,8 @@ final class DexEngineImpl implements DexEngine {
                 config.metrics().meterRegistry(),
                 () -> taskEventBuffer == null || taskEventBuffer.acceptsWork());
 
-        if (taskWorkerByName.putIfAbsent("workflow/" + options.name(), worker) != null) {
-            throw new IllegalStateException(
-                    "A task worker with name %s was already registered".formatted(options.name()));
-        }
-        if (workflowWorkerByQueue.putIfAbsent(options.queueName(), worker) != null) {
-            throw new IllegalStateException(
-                    "A workflow task worker for queue %s was already registered".formatted(options.queueName()));
-        }
+        taskWorkerByName.put("workflow/" + options.name(), worker);
+        workflowWorkerByQueue.put(options.queueName(), worker);
     }
 
     @Override
@@ -664,7 +703,10 @@ final class DexEngineImpl implements DexEngine {
                 } else {
                     argumentPayload = workflowMetadata.argumentConverter().convertToPayload(request.argument());
                 }
-                runCreatedBuilder.setArgument(argumentPayload);
+                runCreatedBuilder.setArgument(
+                        requireNonNull(
+                                argumentPayload,
+                                "argumentPayload must not be null"));
             }
 
             messagesToCreate.add(
@@ -684,6 +726,17 @@ final class DexEngineImpl implements DexEngine {
             if (createdRunIdByRequestId.isEmpty()) {
                 return Collections.emptyList();
             }
+
+            dao.upsertConcurrencyKeyWakeups(
+                    createWorkflowRunCommands.stream()
+                            .filter(cmd -> cmd.concurrencyKey() != null
+                                    && createdRunIdByRequestId.containsKey(cmd.requestId()))
+                            .map(cmd -> new ConcurrencyKeyWakeup(
+                                    cmd.taskQueueName(),
+                                    cmd.concurrencyKey(),
+                                    /* freed */ false))
+                            .collect(Collectors.toSet()));
+
             if (createdRunIdByRequestId.size() != createWorkflowRunCommands.size()) {
                 // Drop messages targeting runs that were not created due to instance ID conflict.
                 // Keeping them would cause a foreign key violation when inserting into the inbox.
@@ -693,7 +746,7 @@ final class DexEngineImpl implements DexEngine {
 
             handle.afterCommit(() -> {
                 for (final CreateWorkflowRunRequest<?> request : requests) {
-                    if (createdRunIdByRequestId.containsKey(request.requestId())) {
+                    if (!createdRunIdByRequestId.containsKey(request.requestId())) {
                         continue;
                     }
 
@@ -778,6 +831,11 @@ final class DexEngineImpl implements DexEngine {
     @Override
     public boolean existsRun(ExistsWorkflowRunRequest request) {
         return jdbi.withHandle(handle -> new WorkflowRunDao(handle).existsRun(request));
+    }
+
+    @Override
+    public long countRuns(CountWorkflowRunsRequest request) {
+        return jdbi.withHandle(handle -> new WorkflowRunDao(handle).countRuns(request));
     }
 
     @Override
@@ -904,7 +962,7 @@ final class DexEngineImpl implements DexEngine {
         requireStatusAnyOf(Status.RUNNING);
 
         try {
-            return externalEventBuffer.add(externalEvent);
+            return requireStarted(externalEventBuffer, "externalEventBuffer").add(externalEvent);
         } catch (InterruptedException | TimeoutException e) {
             throw new RuntimeException(e);
         }
@@ -937,7 +995,7 @@ final class DexEngineImpl implements DexEngine {
     void onTaskEvent(TaskEvent taskEvent) {
         final CompletableFuture<Void> future;
         try {
-            future = taskEventBuffer.add(taskEvent);
+            future = requireStarted(taskEventBuffer, "taskEventBuffer").add(taskEvent);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(
@@ -1000,6 +1058,9 @@ final class DexEngineImpl implements DexEngine {
             String queueName,
             Collection<PollWorkflowTaskCommand> commands,
             int limit) {
+        final Cache<WorkflowRunHistoryCacheKey, CachedWorkflowRunHistory> runHistoryCache =
+                requireStarted(this.runHistoryCache, "runHistoryCache");
+
         return jdbi.inTransaction(handle -> {
             final var dao = new WorkflowDao(handle);
 
@@ -1030,7 +1091,9 @@ final class DexEngineImpl implements DexEngine {
 
             return polledTaskByRunId.values().stream()
                     .map(polledTask -> {
-                        final PolledWorkflowEvents polledEvents = polledEventsByRunId.get(polledTask.runId());
+                        final PolledWorkflowEvents polledEvents = requireNonNull(
+                                polledEventsByRunId.get(polledTask.runId()),
+                                "polledEvents must not be null for workflow run %s".formatted(polledTask.runId()));
                         final CachedWorkflowRunHistory cachedHistory = cachedHistoryByRunId.get(polledTask.runId());
                         final List<WorkflowEvent> cachedHistoryEvents = cachedHistory != null
                                 ? cachedHistory.events()
@@ -1092,7 +1155,7 @@ final class DexEngineImpl implements DexEngine {
                 .map(WorkflowTaskCompletedEvent::workflowRunState)
                 .collect(Collectors.toList());
 
-        final List<UUID> updatedRunIds = workflowDao.updateAndUnlockRuns(
+        final List<UnlockedWorkflowRun> unlockedWorkflowRuns = workflowDao.updateAndUnlockRuns(
                 this.config.instanceId(),
                 events.stream()
                         .map(event -> new UpdateAndUnlockRunCommand(
@@ -1108,6 +1171,9 @@ final class DexEngineImpl implements DexEngine {
                                 event.task().lock().version()))
                         .toList());
 
+        final List<UUID> updatedRunIds = unlockedWorkflowRuns.stream()
+                .map(UnlockedWorkflowRun::id)
+                .toList();
         if (updatedRunIds.size() != events.size()) {
             final Set<UUID> notUpdatedRunIds = events.stream()
                     .map(WorkflowTaskCompletedEvent::workflowRunState)
@@ -1254,14 +1320,18 @@ final class DexEngineImpl implements DexEngine {
                 runHistoryCacheKeysToInvalidate.add(
                         new WorkflowRunHistoryCacheKey(
                                 run.id(),
-                                continuedAsNewGenerationByRunId.get(run.id())));
+                                requireNonNull(
+                                        continuedAsNewGenerationByRunId.get(run.id()),
+                                        () -> "continuedAsNewGeneration must not be null for workflow run %s"
+                                                .formatted(run.id()))));
             }
         }
 
         if (!continuedAsNewRunIds.isEmpty()) {
             workflowDao.truncateRunHistories(continuedAsNewRunIds);
             workflowDao.getJdbiHandle().afterCommit(
-                    () -> runHistoryCache.invalidateAll(runHistoryCacheKeysToInvalidate));
+                    () -> requireStarted(runHistoryCache, "runHistoryCache")
+                            .invalidateAll(runHistoryCacheKeysToInvalidate));
         }
 
         if (!createHistoryEntryCommands.isEmpty()) {
@@ -1271,8 +1341,30 @@ final class DexEngineImpl implements DexEngine {
                     historyEntriesCreated, createHistoryEntryCommands.size());
         }
 
+        final var concurrencyKeyWakeups = new HashSet<ConcurrencyKeyWakeup>();
+        for (final UnlockedWorkflowRun unlockedWorkflowRun : unlockedWorkflowRuns) {
+            if (unlockedWorkflowRun.freedConcurrencyKey() != null) {
+                concurrencyKeyWakeups.add(
+                        new ConcurrencyKeyWakeup(
+                                unlockedWorkflowRun.queueName(),
+                                unlockedWorkflowRun.freedConcurrencyKey(),
+                                /* freed */ true));
+            }
+        }
+
         if (!createWorkflowRunCommands.isEmpty()) {
             final Map<UUID, UUID> createdRunIdByRequestId = workflowDao.createRuns(createWorkflowRunCommands);
+
+            for (final CreateWorkflowRunCommand cmd : createWorkflowRunCommands) {
+                if (cmd.concurrencyKey() != null && createdRunIdByRequestId.containsKey(cmd.requestId())) {
+                    concurrencyKeyWakeups.add(
+                            new ConcurrencyKeyWakeup(
+                                    cmd.taskQueueName(),
+                                    cmd.concurrencyKey(),
+                                    /* freed */ false));
+                }
+            }
+
             workflowDao.getJdbiHandle().afterCommit(() -> {
                 for (final CreateWorkflowRunCommand cmd : createWorkflowRunCommands) {
                     if (!createdRunIdByRequestId.containsKey(cmd.requestId())) {
@@ -1327,6 +1419,8 @@ final class DexEngineImpl implements DexEngine {
                 }
             }
         }
+
+        workflowDao.upsertConcurrencyKeyWakeups(concurrencyKeyWakeups);
 
         if (!messagesToCreate.isEmpty()) {
             final int createdMessages = workflowDao.createMessages(messagesToCreate);
@@ -1518,21 +1612,73 @@ final class DexEngineImpl implements DexEngine {
         }
     }
 
-    CompletableFuture<TaskLock> heartbeatActivityTask(
+    @SuppressWarnings("rawtypes")
+    private void requireSupportedActivityLockTimeouts() {
+        final Duration minLockTimeout =
+                ActivityHeartbeatScheduler.minSupportedLockTimeout(
+                        config.activityHeartbeatInterval());
+
+        for (final ActivityMetadata metadata : metadataRegistry.getAllActivityMetadata()) {
+            if (metadata.lockTimeout().compareTo(minLockTimeout) < 0) {
+                throw new IllegalStateException("""
+                        Lock timeout %s of activity %s is too short for the activity heartbeat \
+                        interval %s: the heartbeat scheduler would give up on the lock before ever \
+                        attempting a renewal. Increase the lock timeout to at least %s, or decrease \
+                        the heartbeat interval.""".formatted(
+                        metadata.lockTimeout(),
+                        metadata.name(),
+                        config.activityHeartbeatInterval(),
+                        minLockTimeout));
+            }
+        }
+    }
+
+    ActivityHeartbeatRegistration registerActivityHeartbeat(
+            ActivityTask task,
+            Duration lockTimeout,
+            Future<?> activityFuture) {
+        // NB: STOPPING is permitted because workers keep processing already polled
+        // tasks while the engine shuts down. Those executions must keep their lock.
+        requireStatusAnyOf(Status.RUNNING, Status.STOPPING);
+        final ActivityHeartbeatScheduler scheduler = requireNonNull(
+                activityHeartbeatScheduler,
+                "activityHeartbeatScheduler must not be null");
+
+        scheduler.register(
+                task.activityName(),
+                task.id(),
+                task.executionId(),
+                lockTimeout,
+                task::lock,
+                task::setLock,
+                activityFuture);
+        return () -> scheduler.unregister(activityFuture);
+    }
+
+    private @Nullable CompletableFuture<TaskLock> tryHeartbeatActivityTask(
             ActivityTaskId taskId,
             TaskLock taskLock,
             Duration lockTimeout) {
+        final Buffer<ActivityTaskHeartbeat> buffer = activityTaskHeartbeatBuffer;
+        if (buffer == null) {
+            return null;
+        }
+
         final var future = new CompletableFuture<TaskLock>();
         final var heartbeat = new ActivityTaskHeartbeat(taskId, taskLock, lockTimeout, future);
-
-        try {
-            activityTaskHeartbeatBuffer.add(heartbeat);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            future.completeExceptionally(e);
-        } catch (TimeoutException e) {
-            future.completeExceptionally(e);
+        final CompletableFuture<Void> bufferFuture = buffer.offer(heartbeat);
+        if (bufferFuture == null) {
+            return null;
         }
+
+        // The buffer may fail an item without ever invoking the batch consumer,
+        // e.g. when its circuit breaker is open. Propagate such failures, or the
+        // renewal would never settle and the scheduler would wait for it forever.
+        bufferFuture.whenComplete((_, error) -> {
+            if (error != null) {
+                future.completeExceptionally(error);
+            }
+        });
 
         return future;
     }
@@ -1543,7 +1689,7 @@ final class DexEngineImpl implements DexEngine {
             lockByTaskId = jdbi.inTransaction(handle -> {
                 final Update update = handle.createUpdate("""
                         update dex_activity_task as task
-                           set locked_until = locked_until + t.lock_timeout
+                           set locked_until = now() + t.lock_timeout
                              , lock_version = task.lock_version + 1
                              , updated_at = now()
                           from unnest(:queueNames, :workflowRunIds, :createdEventIds, :lockTimeouts, :lockVersions)
@@ -1720,6 +1866,38 @@ final class DexEngineImpl implements DexEngine {
 
             runsCompletedCounter.withTags(tags).increment();
         }
+    }
+
+    private void requireUnregisteredTaskWorker(
+            String workerName,
+            String queueName,
+            Map<String, TaskWorker> workerByQueue) {
+        if (taskWorkerByName.containsKey(workerName)) {
+            throw new IllegalStateException(
+                    "A task worker with name %s was already registered".formatted(workerName));
+        }
+        if (workerByQueue.containsKey(queueName)) {
+            throw new IllegalStateException(
+                    "A task worker for queue %s was already registered".formatted(queueName));
+        }
+    }
+
+    private boolean isLeader() {
+        // Every instance acts as leader when leader election is disabled.
+        // A null leaderElection with leader election enabled means the engine
+        // is shutting down, in which case leadership must not be assumed.
+        return leaderElection != null
+                ? leaderElection.isLeader()
+                : !config.leaderElection().isEnabled();
+    }
+
+    private <T> T requireStarted(final @Nullable T component, final String name) {
+        if (component == null) {
+            throw new IllegalStateException(
+                    "%s is not initialized; Engine is in status %s".formatted(name, this.status));
+        }
+
+        return component;
     }
 
     private void setStatus(Status newStatus) {

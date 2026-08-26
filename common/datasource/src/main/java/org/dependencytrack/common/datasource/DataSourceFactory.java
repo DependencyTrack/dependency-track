@@ -40,6 +40,19 @@ final class DataSourceFactory {
     }
 
     static DataSource createDataSource(DataSourceConfig config) {
+        final DataSource dataSource = createDataSourceInternal(config);
+
+        final long queryTimeoutMillis = config.getQueryTimeoutMillis();
+        if (queryTimeoutMillis <= 0) {
+            return dataSource;
+        }
+        
+        return new QueryTimeoutDataSource(
+                dataSource,
+                Math.toIntExact(Math.max(1, TimeUnit.MILLISECONDS.toSeconds(queryTimeoutMillis))));
+    }
+
+    private static DataSource createDataSourceInternal(DataSourceConfig config) {
         final String appName = "dependency-track[%s]".formatted(config.getName());
 
         if (config.isPoolEnabled()) {

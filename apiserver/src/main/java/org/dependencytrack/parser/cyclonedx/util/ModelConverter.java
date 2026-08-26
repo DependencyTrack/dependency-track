@@ -26,9 +26,8 @@ import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
+import org.cyclonedx.Version;
 import org.cyclonedx.model.BomReference;
 import org.cyclonedx.model.Dependency;
 import org.cyclonedx.model.Evidence;
@@ -39,6 +38,7 @@ import org.cyclonedx.model.Swid;
 import org.cyclonedx.model.Tool;
 import org.cyclonedx.model.component.evidence.Occurrence;
 import org.cyclonedx.model.license.Expression;
+import org.cyclonedx.model.license.ExpressionDetailed;
 import org.dependencytrack.model.Analysis;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
@@ -76,14 +76,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -96,6 +101,28 @@ import static org.dependencytrack.util.PurlUtil.silentPurlCoordinatesOnly;
 public class ModelConverter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelConverter.class);
+
+    private record ComponentHashFieldAccessors(
+            Function<Component, String> getter,
+            BiConsumer<Component, String> setter) {
+    }
+
+    private static final Map<Hash.Algorithm, ComponentHashFieldAccessors> COMPONENT_HASH_FIELD_ACCESSORS_BY_ALGORITHM =
+            new EnumMap<>(Map.ofEntries(
+                    Map.entry(Hash.Algorithm.MD5, new ComponentHashFieldAccessors(Component::getMd5, Component::setMd5)),
+                    Map.entry(Hash.Algorithm.SHA1, new ComponentHashFieldAccessors(Component::getSha1, Component::setSha1)),
+                    Map.entry(Hash.Algorithm.SHA_256, new ComponentHashFieldAccessors(Component::getSha256, Component::setSha256)),
+                    Map.entry(Hash.Algorithm.SHA_384, new ComponentHashFieldAccessors(Component::getSha384, Component::setSha384)),
+                    Map.entry(Hash.Algorithm.SHA_512, new ComponentHashFieldAccessors(Component::getSha512, Component::setSha512)),
+                    Map.entry(Hash.Algorithm.SHA3_256, new ComponentHashFieldAccessors(Component::getSha3_256, Component::setSha3_256)),
+                    Map.entry(Hash.Algorithm.SHA3_384, new ComponentHashFieldAccessors(Component::getSha3_384, Component::setSha3_384)),
+                    Map.entry(Hash.Algorithm.SHA3_512, new ComponentHashFieldAccessors(Component::getSha3_512, Component::setSha3_512)),
+                    Map.entry(Hash.Algorithm.BLAKE2b_256, new ComponentHashFieldAccessors(Component::getBlake2b_256, Component::setBlake2b_256)),
+                    Map.entry(Hash.Algorithm.BLAKE2b_384, new ComponentHashFieldAccessors(Component::getBlake2b_384, Component::setBlake2b_384)),
+                    Map.entry(Hash.Algorithm.BLAKE2b_512, new ComponentHashFieldAccessors(Component::getBlake2b_512, Component::setBlake2b_512)),
+                    Map.entry(Hash.Algorithm.BLAKE3, new ComponentHashFieldAccessors(Component::getBlake3, Component::setBlake3)),
+                    Map.entry(Hash.Algorithm.STREEBOG_256, new ComponentHashFieldAccessors(Component::getStreebog_256, Component::setStreebog_256)),
+                    Map.entry(Hash.Algorithm.STREEBOG_512, new ComponentHashFieldAccessors(Component::getStreebog_512, Component::setStreebog_512))));
 
     /**
      * Private Constructor.
@@ -159,13 +186,13 @@ public class ModelConverter {
         project.setCpe(trimToNull(cdxComponent.getCpe()));
         project.setExternalReferences(convertExternalReferences(cdxComponent.getExternalReferences()));
 
-        List<OrganizationalContact> contacts = new ArrayList<>();
-        if(cdxComponent.getAuthor()!=null){
-            contacts.add(new OrganizationalContact() {{
-                setName(cdxComponent.getAuthor());
-            }});
+        final List<OrganizationalContact> contacts = new ArrayList<>();
+        if (cdxComponent.getAuthor() != null) {
+            final var author = new OrganizationalContact();
+            author.setName(cdxComponent.getAuthor());
+            contacts.add(author);
         }
-        if(cdxComponent.getAuthors()!=null){
+        if (cdxComponent.getAuthors() != null) {
             contacts.addAll(convertCdxContacts(cdxComponent.getAuthors()));
         }
         project.setAuthors(contacts);
@@ -210,13 +237,13 @@ public class ModelConverter {
         component.setExternalReferences(convertExternalReferences(cdxComponent.getExternalReferences()));
         component.setProperties(convertToComponentProperties(cdxComponent.getProperties()));
 
-        List<OrganizationalContact> contacts = new ArrayList<>();
-        if(cdxComponent.getAuthor()!=null){
-            contacts.add(new OrganizationalContact() {{
-                setName(cdxComponent.getAuthor());
-            }});
+        final List<OrganizationalContact> contacts = new ArrayList<>();
+        if (cdxComponent.getAuthor() != null) {
+            final var author = new OrganizationalContact();
+            author.setName(cdxComponent.getAuthor());
+            contacts.add(author);
         }
-        if(cdxComponent.getAuthors()!=null){
+        if (cdxComponent.getAuthors() != null) {
             contacts.addAll(convertCdxContacts(cdxComponent.getAuthors()));
         }
         component.setAuthors(contacts);
@@ -235,28 +262,7 @@ public class ModelConverter {
             component.setSwidTagId(trimToNull(cdxComponent.getSwid().getTagId()));
         }
 
-        if (cdxComponent.getHashes() != null && !cdxComponent.getHashes().isEmpty()) {
-            for (final org.cyclonedx.model.Hash cdxHash : cdxComponent.getHashes()) {
-                final Consumer<String> hashSetter = switch (cdxHash.getAlgorithm().toLowerCase()) {
-                    case "md5" -> component::setMd5;
-                    case "sha-1" -> component::setSha1;
-                    case "sha-256" -> component::setSha256;
-                    case "sha-384" -> component::setSha384;
-                    case "sha-512" -> component::setSha512;
-                    case "sha3-256" -> component::setSha3_256;
-                    case "sha3-384" -> component::setSha3_384;
-                    case "sha3-512" -> component::setSha3_512;
-                    case "blake2b-256" -> component::setBlake2b_256;
-                    case "blake2b-384" -> component::setBlake2b_384;
-                    case "blake2b-512" -> component::setBlake2b_512;
-                    case "blake3" -> component::setBlake3;
-                    default -> null;
-                };
-                if (hashSetter != null) {
-                    hashSetter.accept(cdxHash.getValue());
-                }
-            }
-        }
+        applyHashes(component, cdxComponent.getHashes());
 
         final var licenseCandidates = new ArrayList<org.cyclonedx.model.License>();
         if (cdxComponent.getLicenses() != null) {
@@ -270,12 +276,12 @@ public class ModelConverter {
                         .forEach(licenseCandidates::add);
             }
 
-            final Expression licenseExpression = cdxComponent.getLicenses().getExpression();
-            if (licenseExpression != null && isNotBlank(licenseExpression.getValue())) {
+            final String licenseExpression = convertLicenseExpression(cdxComponent.getLicenses());
+            if (isNotBlank(licenseExpression)) {
                 // If the expression consists of just one license ID, add it as another option.
-                final SpdxExpression expression = SpdxExpressionParser.getInstance().tryParse(licenseExpression.getValue());
+                final SpdxExpression expression = SpdxExpressionParser.getInstance().tryParse(licenseExpression);
                 if (expression != null) {
-                    component.setLicenseExpression(trim(licenseExpression.getValue()));
+                    component.setLicenseExpression(trim(licenseExpression));
 
                     if (expression instanceof SpdxExpression.Identifier(String id)) {
                         final var expressionLicense = new org.cyclonedx.model.License();
@@ -285,10 +291,10 @@ public class ModelConverter {
                     }
                 } else {
                     LOGGER.warn("""
-                            Encountered invalid license expression "%s" for \
-                            Component{group=%s, name=%s, version=%s, bomRef=%s}; Skipping\
-                            """.formatted(cdxComponent.getLicenses().getExpression(), component.getGroup(),
-                            component.getName(), component.getVersion(), component.getBomRef()));
+                                    Encountered invalid license expression "{}" for \
+                                    Component{group={}, name={}, version={}, bomRef={}}; Skipping\
+                                    """, licenseExpression, component.getGroup(),
+                            component.getName(), component.getVersion(), component.getBomRef());
                 }
             }
         }
@@ -326,30 +332,45 @@ public class ModelConverter {
         component.setVersion(trimToNull(tool.getVersion()));
         component.setExternalReferences(convertExternalReferences(tool.getExternalReferences()));
 
-        if (tool.getHashes() != null && !tool.getHashes().isEmpty()) {
-            for (final org.cyclonedx.model.Hash cdxHash : tool.getHashes()) {
-                final Consumer<String> hashSetter = switch (cdxHash.getAlgorithm().toLowerCase()) {
-                    case "md5" -> component::setMd5;
-                    case "sha-1" -> component::setSha1;
-                    case "sha-256" -> component::setSha256;
-                    case "sha-384" -> component::setSha384;
-                    case "sha-512" -> component::setSha512;
-                    case "sha3-256" -> component::setSha3_256;
-                    case "sha3-384" -> component::setSha3_384;
-                    case "sha3-512" -> component::setSha3_512;
-                    case "blake2b-256" -> component::setBlake2b_256;
-                    case "blake2b-384" -> component::setBlake2b_384;
-                    case "blake2b-512" -> component::setBlake2b_512;
-                    case "blake3" -> component::setBlake3;
-                    default -> null;
-                };
-                if (hashSetter != null) {
-                    hashSetter.accept(cdxHash.getValue());
-                }
-            }
-        }
+        applyHashes(component, tool.getHashes());
 
         return component;
+    }
+
+    @SuppressWarnings("deprecation")
+    private static String convertLicenseExpression(LicenseChoice cdxLicenses) {
+        final Expression expression = cdxLicenses.getExpression();
+        if (expression != null) {
+            return expression.getValue();
+        }
+
+        // NB: New in CycloneDX 1.7.
+        final ExpressionDetailed expressionDetailed = cdxLicenses.getExpressionDetailed();
+        return expressionDetailed != null
+                ? expressionDetailed.getExpression()
+                : null;
+    }
+
+    private static void applyHashes(Component component, List<org.cyclonedx.model.Hash> cdxHashes) {
+        if (cdxHashes == null) {
+            return;
+        }
+
+        for (final org.cyclonedx.model.Hash cdxHash : cdxHashes) {
+            final Hash.Algorithm cdxHashAlgo;
+            try {
+                cdxHashAlgo = Hash.Algorithm.fromSpec(cdxHash.getAlgorithm());
+            } catch (IllegalArgumentException e) {
+                LOGGER.debug("Encountered hash with unknown algorithm {}", cdxHash.getAlgorithm());
+                continue;
+            }
+
+            final ComponentHashFieldAccessors accessors =
+                    COMPONENT_HASH_FIELD_ACCESSORS_BY_ALGORITHM.get(cdxHashAlgo);
+            if (accessors != null) {
+                accessors.setter().accept(component, cdxHash.getValue());
+            }
+        }
     }
 
     public static OrganizationalEntity convert(final org.cyclonedx.model.OrganizationalEntity cdxEntity) {
@@ -505,8 +526,8 @@ public class ModelConverter {
         return service;
     }
 
-    public static MultiValuedMap<String, String> convertDependencyGraph(final List<Dependency> cdxDependencies) {
-        final var dependencyGraph = new HashSetValuedHashMap<String, String>();
+    public static Map<String, Set<String>> convertDependencyGraph(final List<Dependency> cdxDependencies) {
+        final var dependencyGraph = new HashMap<String, Set<String>>();
         if (cdxDependencies == null || cdxDependencies.isEmpty()) {
             return dependencyGraph;
         }
@@ -518,7 +539,9 @@ public class ModelConverter {
 
             final List<String> directDependencies = cdxDependency.getDependencies().stream()
                     .map(BomReference::getRef).toList();
-            dependencyGraph.putAll(cdxDependency.getRef(), directDependencies);
+            dependencyGraph
+                    .computeIfAbsent(cdxDependency.getRef(), _ -> new HashSet<>())
+                    .addAll(directDependencies);
         }
 
         return dependencyGraph;
@@ -633,23 +656,19 @@ public class ModelConverter {
         return result;
     }
 
-    public static org.cyclonedx.model.Component convert(final Component component) {
-        final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
+    public static org.cyclonedx.model.Component convertIdentity(Component component) {
+        final var cycloneComponent = new org.cyclonedx.model.Component();
         cycloneComponent.setBomRef(component.getUuid().toString());
         cycloneComponent.setGroup(StringUtils.trimToNull(component.getGroup()));
         cycloneComponent.setName(StringUtils.trimToNull(component.getName()));
         cycloneComponent.setVersion(StringUtils.trimToNull(component.getVersion()));
-        cycloneComponent.setDescription(StringUtils.trimToNull(component.getDescription()));
-        cycloneComponent.setCopyright(StringUtils.trimToNull(component.getCopyright()));
         cycloneComponent.setCpe(StringUtils.trimToNull(component.getCpe()));
-        cycloneComponent.setScope(mapCdxScope(component.getScope()));
-        cycloneComponent.setAuthor(StringUtils.trimToNull(convertContactsToString(component.getAuthors())));
-        cycloneComponent.setSupplier(convert(component.getSupplier()));
-        cycloneComponent.setProperties(convert(component.getProperties()));
 
         if (component.getSwidTagId() != null) {
             final Swid swid = new Swid();
             swid.setTagId(component.getSwidTagId());
+            swid.setName(StringUtils.trimToNull(component.getName()));
+            swid.setVersion(StringUtils.trimToNull(component.getVersion()));
             cycloneComponent.setSwid(swid);
         }
 
@@ -663,24 +682,24 @@ public class ModelConverter {
             cycloneComponent.setType(org.cyclonedx.model.Component.Type.LIBRARY);
         }
 
-        if (component.getMd5() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.MD5, component.getMd5()));
-        }
-        if (component.getSha1() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA1, component.getSha1()));
-        }
-        if (component.getSha256() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA_256, component.getSha256()));
-        }
-        if (component.getSha512() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA_512, component.getSha512()));
-        }
-        if (component.getSha3_256() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA3_256, component.getSha3_256()));
-        }
-        if (component.getSha3_512() != null) {
-            cycloneComponent.addHash(new Hash(Hash.Algorithm.SHA3_512, component.getSha3_512()));
-        }
+        COMPONENT_HASH_FIELD_ACCESSORS_BY_ALGORITHM.forEach((algorithm, accessors) -> {
+            final String hashValue = accessors.getter().apply(component);
+            if (hashValue != null && !hashValue.isBlank()) {
+                cycloneComponent.addHash(new Hash(algorithm, hashValue));
+            }
+        });
+
+        return cycloneComponent;
+    }
+
+    public static org.cyclonedx.model.Component convert(Component component) {
+        final org.cyclonedx.model.Component cycloneComponent = convertIdentity(component);
+        cycloneComponent.setDescription(StringUtils.trimToNull(component.getDescription()));
+        cycloneComponent.setCopyright(StringUtils.trimToNull(component.getCopyright()));
+        cycloneComponent.setScope(mapCdxScope(component.getScope()));
+        cycloneComponent.setAuthor(StringUtils.trimToNull(convertContactsToString(component.getAuthors())));
+        cycloneComponent.setSupplier(convert(component.getSupplier()));
+        cycloneComponent.setProperties(convert(component.getProperties()));
 
         final LicenseChoice licenses = new LicenseChoice();
         if (component.getResolvedLicense() != null) {
@@ -799,14 +818,9 @@ public class ModelConverter {
         return cdxProperties;
     }
 
-    public static org.cyclonedx.model.Metadata createMetadata(final Project project) {
+    public static org.cyclonedx.model.Metadata createMetadata(final Project project, final Version version) {
         final org.cyclonedx.model.Metadata metadata = new org.cyclonedx.model.Metadata();
-        final org.cyclonedx.model.Tool tool = new org.cyclonedx.model.Tool();
-        tool.setVendor("OWASP");
-        final Config config = ConfigProvider.getConfig();
-        tool.setName(config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_NAME, String.class));
-        tool.setVersion(config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_VERSION, String.class));
-        metadata.setTools(Collections.singletonList(tool));
+        setMetadataTools(metadata, version);
         if (project != null) {
             metadata.setManufacture(convert(project.getManufacturer()));
             final org.cyclonedx.model.Component cycloneComponent = new org.cyclonedx.model.Component();
@@ -862,6 +876,41 @@ public class ModelConverter {
             }
         }
         return metadata;
+    }
+
+    private static void setMetadataTools(final org.cyclonedx.model.Metadata metadata, final Version version) {
+        final Config config = ConfigProvider.getConfig();
+        final String applicationName = config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_NAME, String.class);
+        final String applicationVersion = config.getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_VERSION, String.class);
+
+        if (version.compareTo(Version.VERSION_15) >= 0) {
+            final var supplier = new org.cyclonedx.model.OrganizationalEntity();
+            supplier.setName("OWASP");
+
+            final var toolComponent = new org.cyclonedx.model.Component();
+            toolComponent.setType(org.cyclonedx.model.Component.Type.APPLICATION);
+            toolComponent.setSupplier(supplier);
+            toolComponent.setName(applicationName);
+            toolComponent.setVersion(applicationVersion);
+
+            final var toolInformation = new org.cyclonedx.model.metadata.ToolInformation();
+            toolInformation.setComponents(List.of(toolComponent));
+            metadata.setToolChoice(toolInformation);
+        } else {
+            setLegacyMetadataTool(metadata, applicationName, applicationVersion);
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private static void setLegacyMetadataTool(
+            final org.cyclonedx.model.Metadata metadata,
+            final String applicationName,
+            final String applicationVersion) {
+        final var tool = new org.cyclonedx.model.Tool();
+        tool.setVendor("OWASP");
+        tool.setName(applicationName);
+        tool.setVersion(applicationVersion);
+        metadata.setTools(List.of(tool));
     }
 
     public static org.cyclonedx.model.Service convert(final QueryManager qm, final ServiceComponent service) {
@@ -927,28 +976,19 @@ public class ModelConverter {
         return cycloneService;
     }
 
-    public static org.cyclonedx.model.vulnerability.Vulnerability convert(final QueryManager qm, final CycloneDXExporter.Variant variant,
-                                                                          final Finding finding) {
-        final Component component = qm.getObjectByUuid(Component.class, finding.getComponent().get("uuid").toString());
-        if (component == null) {
-            return null;
-        }
-        final Project project = component.getProject();
-        final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, finding.getVulnerability().get("uuid").toString());
-        if (vulnerability == null) {
-            return null;
-        }
-
-        final org.cyclonedx.model.vulnerability.Vulnerability cdxVulnerability = new org.cyclonedx.model.vulnerability.Vulnerability();
-        cdxVulnerability.setBomRef(vulnerability.getUuid().toString());
+    private static org.cyclonedx.model.vulnerability.Vulnerability convert(
+            Vulnerability vulnerability,
+            Analysis analysis,
+            SortedSet<String> affectedComponentUuids) {
+        // NB: No bom-ref. It is optional, nothing references a vulnerability entry,
+        // and one vulnerability may yield several entries, which historically made the vulnerability
+        // UUID a source of duplicate bom-refs. CycloneDX requires every bom-ref to be unique within the BOM.
+        final var cdxVulnerability = new org.cyclonedx.model.vulnerability.Vulnerability();
         cdxVulnerability.setId(vulnerability.getVulnId());
-        // Add the vulnerability source
-        org.cyclonedx.model.vulnerability.Vulnerability.Source cdxSource = new org.cyclonedx.model.vulnerability.Vulnerability.Source();
-        cdxSource.setName(vulnerability.getSource());
         cdxVulnerability.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
 
         if (vulnerability.getCvssV2BaseScore() != null) {
-            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            final var rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
             rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.CVSSV2);
             rating.setScore(vulnerability.getCvssV2BaseScore().doubleValue());
@@ -963,7 +1003,7 @@ public class ModelConverter {
             cdxVulnerability.addRating(rating);
         }
         if (vulnerability.getCvssV3BaseScore() != null) {
-            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            final var rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
             if (vulnerability.getCvssV3Vector() != null && vulnerability.getCvssV3Vector().contains("CVSS:3.0")) {
                 rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.CVSSV3);
@@ -984,7 +1024,7 @@ public class ModelConverter {
             cdxVulnerability.addRating(rating);
         }
         if (vulnerability.getCvssV4Score() != null) {
-            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            final var rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
             rating.setScore(vulnerability.getCvssV4Score().doubleValue());
             rating.setVector(vulnerability.getCvssV4Vector());
@@ -1000,7 +1040,7 @@ public class ModelConverter {
             cdxVulnerability.addRating(rating);
         }
         if (vulnerability.getOwaspRRLikelihoodScore() != null && vulnerability.getOwaspRRTechnicalImpactScore() != null && vulnerability.getOwaspRRBusinessImpactScore() != null) {
-            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            final var rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSeverity(convertDtSeverityToCdxSeverity(VulnerabilityUtil.normalizedOwaspRRScore(vulnerability.getOwaspRRLikelihoodScore().doubleValue(), vulnerability.getOwaspRRTechnicalImpactScore().doubleValue(), vulnerability.getOwaspRRBusinessImpactScore().doubleValue())));
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
             rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.OWASP);
@@ -1008,7 +1048,7 @@ public class ModelConverter {
             cdxVulnerability.addRating(rating);
         }
         if (vulnerability.getCvssV2BaseScore() == null && vulnerability.getCvssV3BaseScore() == null && vulnerability.getCvssV4Score() == null && vulnerability.getOwaspRRLikelihoodScore() == null) {
-            org.cyclonedx.model.vulnerability.Vulnerability.Rating rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
+            final var rating = new org.cyclonedx.model.vulnerability.Vulnerability.Rating();
             rating.setSeverity(convertDtSeverityToCdxSeverity(vulnerability.getSeverity()));
             rating.setSource(convertDtVulnSourceToCdxVulnSource(Vulnerability.Source.valueOf(vulnerability.getSource())));
             rating.setMethod(org.cyclonedx.model.vulnerability.Vulnerability.Rating.Method.OTHER);
@@ -1028,41 +1068,34 @@ public class ModelConverter {
         cdxVulnerability.setPublished(vulnerability.getPublished());
         cdxVulnerability.setUpdated(vulnerability.getUpdated());
 
-        if (CycloneDXExporter.Variant.INVENTORY_WITH_VULNERABILITIES == variant || CycloneDXExporter.Variant.VDR == variant) {
-            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
-            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
-            affect.setRef(component.getUuid().toString());
+        // The affected components are VEX "subcomponents", i.e. the elements of the product
+        // in which the vulnerability originates. The product itself is identified by metadata.component.
+        final var affects = new ArrayList<org.cyclonedx.model.vulnerability.Vulnerability.Affect>(
+                affectedComponentUuids.size());
+        for (final String componentUuid : affectedComponentUuids) {
+            final var affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
+            affect.setRef(componentUuid);
             affects.add(affect);
-            cdxVulnerability.setAffects(affects);
-        } else if (CycloneDXExporter.Variant.VEX == variant && project != null) {
-            final List<org.cyclonedx.model.vulnerability.Vulnerability.Affect> affects = new ArrayList<>();
-            final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
-            affect.setRef(project.getUuid().toString());
-            affects.add(affect);
-            cdxVulnerability.setAffects(affects);
         }
+        cdxVulnerability.setAffects(affects);
 
-        if (CycloneDXExporter.Variant.VEX == variant || CycloneDXExporter.Variant.VDR == variant) {
-            final Analysis analysis = qm.getAnalysis(component, vulnerability);
-            if (analysis != null) {
-                final org.cyclonedx.model.vulnerability.Vulnerability.Analysis cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
-                if (analysis.getAnalysisResponse() != null) {
-                    final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response response = convertDtVulnAnalysisResponseToCdxAnalysisResponse(analysis.getAnalysisResponse());
-                    if (response != null) {
-                        List<org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response> responses = new ArrayList<>();
-                        responses.add(response);
-                        cdxAnalysis.setResponses(responses);
-                    }
+        if (analysis != null) {
+            final var cdxAnalysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
+            if (analysis.getAnalysisResponse() != null) {
+                final org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Response response =
+                        convertDtVulnAnalysisResponseToCdxAnalysisResponse(analysis.getAnalysisResponse());
+                if (response != null) {
+                    cdxAnalysis.setResponses(new ArrayList<>(List.of(response)));
                 }
-                if (analysis.getAnalysisState() != null) {
-                    cdxAnalysis.setState(convertDtVulnAnalysisStateToCdxAnalysisState(analysis.getAnalysisState()));
-                }
-                if (analysis.getAnalysisJustification() != null) {
-                    cdxAnalysis.setJustification(convertDtVulnAnalysisJustificationToCdxAnalysisJustification(analysis.getAnalysisJustification()));
-                }
-                cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
-                cdxVulnerability.setAnalysis(cdxAnalysis);
             }
+            if (analysis.getAnalysisState() != null) {
+                cdxAnalysis.setState(convertDtVulnAnalysisStateToCdxAnalysisState(analysis.getAnalysisState()));
+            }
+            if (analysis.getAnalysisJustification() != null) {
+                cdxAnalysis.setJustification(convertDtVulnAnalysisJustificationToCdxAnalysisJustification(analysis.getAnalysisJustification()));
+            }
+            cdxAnalysis.setDetail(StringUtils.trimToNull(analysis.getAnalysisDetails()));
+            cdxVulnerability.setAnalysis(cdxAnalysis);
         }
 
         return cdxVulnerability;
@@ -1284,19 +1317,80 @@ public class ModelConverter {
     }
 
     public static List<org.cyclonedx.model.vulnerability.Vulnerability> generateVulnerabilities(
-            final QueryManager qm,
-            final CycloneDXExporter.Variant variant,
-            final List<Finding> findings
-    ) {
+            QueryManager qm,
+            CycloneDXExporter.Variant variant,
+            List<Finding> findings) {
         if (findings == null) {
-            return Collections.emptyList();
+            return List.of();
         }
-        final var vulnerabilitiesSeen = new HashSet<org.cyclonedx.model.vulnerability.Vulnerability>();
-        return findings.stream()
-                .map(finding -> convert(qm, variant, finding))
-                .filter(Objects::nonNull)
-                .filter(vulnerabilitiesSeen::add)
+
+        // CISA's VEX minimum requirements allow one statement to cover multiple affected elements,
+        // but only while the status holds for all of them:
+        //
+        //   "If status or other VEX information changes for a subset of products,
+        //   additional VEX statements MUST be created for the respective subset."
+        //
+        // Hence, we group by vulnerability and analysis.
+        final var groups = new LinkedHashMap<VulnerabilityGroupKey, VulnerabilityGroup>();
+        for (final Finding finding : findings) {
+            final Component component = qm.getObjectByUuid(
+                    Component.class,
+                    finding.getComponent().get("uuid").toString());
+            if (component == null) {
+                continue;
+            }
+
+            final Vulnerability vulnerability = qm.getObjectByUuid(
+                    Vulnerability.class,
+                    finding.getVulnerability().get("uuid").toString());
+            if (vulnerability == null) {
+                continue;
+            }
+
+            final Analysis analysis = variant.hasCapability(CycloneDXExporter.Capability.EMITS_ANALYSIS)
+                    ? qm.getAnalysis(component, vulnerability)
+                    : null;
+
+            groups.computeIfAbsent(
+                            VulnerabilityGroupKey.of(vulnerability, analysis),
+                            ignored -> new VulnerabilityGroup(vulnerability, analysis, new TreeSet<>()))
+                    .affectedComponentUuids()
+                    .add(component.getUuid().toString());
+        }
+
+        return groups.values().stream()
+                .map(group -> convert(group.vulnerability(), group.analysis(), group.affectedComponentUuids()))
                 .toList();
+    }
+
+    private record VulnerabilityGroup(
+            Vulnerability vulnerability,
+            Analysis analysis,
+            SortedSet<String> affectedComponentUuids) {
+    }
+
+    private record VulnerabilityGroupKey(
+            UUID vulnerabilityUuid,
+            boolean analyzed,
+            AnalysisState analysisState,
+            AnalysisJustification analysisJustification,
+            AnalysisResponse analysisResponse,
+            String analysisDetails) {
+
+        private static VulnerabilityGroupKey of(Vulnerability vulnerability, Analysis analysis) {
+            if (analysis == null) {
+                return new VulnerabilityGroupKey(vulnerability.getUuid(), false, null, null, null, null);
+            }
+
+            return new VulnerabilityGroupKey(
+                    vulnerability.getUuid(),
+                    true,
+                    analysis.getAnalysisState(),
+                    analysis.getAnalysisJustification(),
+                    analysis.getAnalysisResponse(),
+                    StringUtils.trimToNull(analysis.getAnalysisDetails()));
+        }
+
     }
 
     public static org.cyclonedx.model.Component.Scope mapCdxScope(Scope scope) {

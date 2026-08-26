@@ -149,26 +149,22 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         engine.registerActivity(
                 new DeleteFilesActivity(fileStorage),
                 protoConverter(DeleteFilesArgument.class),
-                voidConverter(),
-                Duration.ofSeconds(5));
+                voidConverter());
         engine.registerActivity(
                 new InvokeVulnAnalyzerActivity(fileStorage, pluginManager),
                 protoConverter(InvokeVulnAnalyzerArg.class),
-                protoConverter(InvokeVulnAnalyzerRes.class),
-                Duration.ofSeconds(5));
+                protoConverter(InvokeVulnAnalyzerRes.class));
         engine.registerActivity(
                 new PrepareVulnAnalysisActivity(fileStorage, pluginManager),
                 protoConverter(PrepareVulnAnalysisArg.class),
-                protoConverter(PrepareVulnAnalysisRes.class),
-                Duration.ofSeconds(5));
+                protoConverter(PrepareVulnAnalysisRes.class));
         engine.registerActivity(
                 new ReconcileVulnAnalysisResultsActivity(
                         fileStorage,
                         pluginManager,
                         new CelVulnerabilityPolicyEvaluator()),
                 protoConverter(ReconcileVulnAnalysisResultsArg.class),
-                voidConverter(),
-                Duration.ofSeconds(5));
+                voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));
@@ -323,7 +319,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         final Supplier<List<FindingRow>> findingsSupplier = () -> withJdbiHandle(
                 handle -> handle
                         .attach(FindingDao.class)
-                        .getFindingsByProject(
+                        .selectFindingsByProject(
                                 projectId,
                                 /* includeInactive */ false,
                                 /* includeSuppressed */ false,
@@ -332,7 +328,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 /* source */ null,
                                 /* epssFrom */ null,
                                 /* epssTo */ null,
-                                /* isKev */ null));
+                                /* isKev */ null,
+                                /* emitTotalCount */ false,
+                                /* paginate */ false));
 
         List<FindingRow> findings = findingsSupplier.get();
         assertThat(findings).hasSize(1);
@@ -1270,7 +1268,7 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
         final long projectId = project.getId();
         final List<FindingDao.FindingRow> findings = withJdbiHandle(
                 handle -> handle.attach(FindingDao.class)
-                        .getFindingsByProject(
+                        .selectFindingsByProject(
                                 projectId,
                                 /* includeInactive */ false,
                                 /* includeSuppressed */ false,
@@ -1279,7 +1277,9 @@ class VulnAnalysisWorkflowTest extends PersistenceCapableTest {
                                 /* source */ null,
                                 /* epssFrom */ null,
                                 /* epssTo */ null,
-                                /* isKev */ null));
+                                /* isKev */ null,
+                                /* emitTotalCount */ false,
+                                /* paginate */ false));
         assertThat(findings).hasSize(1);
 
         assertThat(getAllAliasGroups()).satisfiesExactly(group ->

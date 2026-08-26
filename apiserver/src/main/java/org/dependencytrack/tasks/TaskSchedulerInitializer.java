@@ -27,18 +27,20 @@ import com.github.kagkarlsson.scheduler.stats.StatsRegistryAdapter;
 import com.github.kagkarlsson.scheduler.task.ExecutionComplete;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.kagkarlsson.scheduler.task.helper.Tasks;
+import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
 import com.github.kagkarlsson.scheduler.task.schedule.Schedule;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
+import org.dependencytrack.analysis.PortfolioAnalysisTask;
 import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.common.HttpClient;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
-import org.dependencytrack.kevdatasource.MirrorKevDataSourceWorkflow;
+import org.dependencytrack.kevdatasource.KevDataSourceMirrorService;
 import org.dependencytrack.kevdatasource.api.KevDataSource;
 import org.dependencytrack.kevdatasource.api.KevDataSourceFactory;
 import org.dependencytrack.metrics.UpdatePortfolioMetricsWorkflow;
@@ -49,7 +51,6 @@ import org.dependencytrack.persistence.jdbi.VulnerabilityPolicyDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.policy.vulnerability.SyncVulnPolicyBundleWorkflow;
-import org.dependencytrack.proto.internal.workflow.v1.MirrorKevDataSourceArg;
 import org.dependencytrack.proto.internal.workflow.v1.ProcessScheduledNotificationsWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.secret.management.SecretManager;
@@ -180,6 +181,7 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
             DexEngine dexEngine,
             PluginManager pluginManager,
             SecretManager secretManager) {
+        final var kevDataSourceMirrorService = new KevDataSourceMirrorService(pluginManager, dexEngine);
         final var vulnDataSourceMirrorService = new VulnDataSourceMirrorService(pluginManager, dexEngine);
 
         return List.of(
@@ -202,17 +204,7 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                             final Collection<KevDataSourceFactory> factories =
                                     pluginManager.getFactories(KevDataSource.class);
                             for (final KevDataSourceFactory factory : factories) {
-                                final String name = factory.extensionName();
-                                if (!factory.isEnabled()) {
-                                    continue;
-                                }
-
-                                dexEngine.createRun(
-                                        new CreateWorkflowRunRequest<>(MirrorKevDataSourceWorkflow.class)
-                                                .withWorkflowInstanceId("mirror-kev-data-source:" + name)
-                                                .withArgument(MirrorKevDataSourceArg.newBuilder()
-                                                        .setDataSourceName(name)
-                                                        .build()));
+                                kevDataSourceMirrorService.trigger(factory.extensionName(), null);
                             }
                         }),
                 recurringTask(
@@ -253,8 +245,13 @@ public final class TaskSchedulerInitializer implements ServletContextListener {
                                         .withWorkflowInstanceId(UpdatePortfolioMetricsWorkflow.INSTANCE_ID))),
                 recurringTask(
                         "Portfolio Vulnerability Analysis",
-                        getCronScheduleFromConfig(config, ConfigKeys.TASK_PORTFOLIO_ANALYSIS_CRON),
-                        new PortfolioAnalysisTask(dexEngine)),
+                        FixedDelay.of(Duration.ofSeconds(60)),
+                        new PortfolioAnalysisTask(
+                                dexEngine,
+                                config.getValue(ConfigKeys.TASK_PORTFOLIO_ANALYSIS_MAX_IN_FLIGHT_ANALYSES, int.class),
+                                Duration.ofMillis(config.getValue(
+                                        ConfigKeys.TASK_PORTFOLIO_ANALYSIS_MAX_ANALYSIS_AGE_MS,
+                                        long.class)))),
                 recurringTask(
                         "Project Maintenance",
                         getCronScheduleFromConfig(config, ConfigKeys.TASK_PROJECT_MAINTENANCE_CRON),

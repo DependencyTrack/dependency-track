@@ -34,6 +34,7 @@
         <spotless.check.skip>true</spotless.check.skip>
         <spotless.apply.skip>true</spotless.apply.skip>
         <cyclonedx.skip>true</cyclonedx.skip>
+        <enforcer.skip>true</enforcer.skip>
         <jacoco.skip>true</jacoco.skip>
         <maven.install.skip>true</maven.install.skip>
         <skipE2E>true</skipE2E>

@@ -81,7 +81,7 @@ import javax.jdo.FetchGroup;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -98,7 +98,6 @@ import static org.dependencytrack.common.MdcKeys.MDC_PROJECT_VERSION;
 import static org.dependencytrack.notification.api.NotificationFactory.createProjectCreatedNotification;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.inJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
-import static org.dependencytrack.util.PersistenceUtil.isPersistent;
 import static org.dependencytrack.util.PersistenceUtil.isUniqueConstraintViolation;
 
 /**
@@ -386,7 +385,7 @@ public class ProjectResource extends AbstractApiResource {
     public Response getProject(
             @Parameter(description = "The name of the project to query on", required = true)
             @QueryParam("name") String name,
-            @Parameter(description = "The version of the project to query on", required = true)
+            @Parameter(description = "The version of the project to query on", required = false)
             @QueryParam("version") String version) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = ProjectAccess.unrestricted(() -> qm.getProject(name, version));
@@ -582,7 +581,7 @@ public class ProjectResource extends AbstractApiResource {
                                 .entity("""
                                         accessTeams must either specify a UUID or a name,\
                                         but the team %s has neither.\
-                                        """.formatted(chosenTeam))
+                                        """.formatted(chosenTeam.getName()))
                                 .build());
                     }
                 }
@@ -596,23 +595,30 @@ public class ProjectResource extends AbstractApiResource {
                     } else {
                         userTeams = List.of();
                     }
+                    if (userTeams == null) {
+                        userTeams = List.of();
+                    }
 
                     boolean canSeeAllTeams =
                             super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
                                     || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
-                    List<Team> visibleTeams = canSeeAllTeams ? qm.getTeams().getList(Team.class) : userTeams;
-                    final var visibleTeamByUuid = new HashMap<UUID, Team>(visibleTeams.size());
-                    final var visibleTeamByName = new HashMap<String, Team>(visibleTeams.size());
-                    for (final Team visibleTeam : visibleTeams) {
-                        visibleTeamByUuid.put(visibleTeam.getUuid(), visibleTeam);
-                        visibleTeamByName.put(visibleTeam.getName(), visibleTeam);
+                    final Set<UUID> memberTeamUuids = new HashSet<>();
+                    if (!canSeeAllTeams) {
+                        for (final Team userTeam : userTeams) {
+                            memberTeamUuids.add(userTeam.getUuid());
+                        }
                     }
 
                     for (Team chosenTeam : chosenTeams) {
-                        Team visibleTeam = visibleTeamByUuid.getOrDefault(
-                                chosenTeam.getUuid(),
-                                visibleTeamByName.get(chosenTeam.getName()));
-                        if (visibleTeam == null) {
+                        Team visibleTeam = null;
+                        if (chosenTeam.getUuid() != null) {
+                            visibleTeam = qm.getObjectByUuid(Team.class, chosenTeam.getUuid());
+                        }
+                        if (visibleTeam == null && chosenTeam.getName() != null) {
+                            visibleTeam = qm.getTeam(chosenTeam.getName());
+                        }
+                        if (visibleTeam == null
+                                || (!canSeeAllTeams && !memberTeamUuids.contains(visibleTeam.getUuid()))) {
                             throw new ClientErrorException(Response
                                     .status(Response.Status.BAD_REQUEST)
                                     .entity("""
@@ -622,11 +628,6 @@ public class ProjectResource extends AbstractApiResource {
                                             ? "UUID " + chosenTeam.getUuid()
                                             : "name " + chosenTeam.getName()))
                                     .build());
-                        }
-                        if (!isPersistent(visibleTeam)) {
-                            // Teams sourced from the principal will not be in persistent state
-                            // and need to be attached to the persistence context.
-                            visibleTeam = qm.getObjectById(Team.class, visibleTeam.getId());
                         }
                         jsonProject.addAccessTeam(visibleTeam);
                     }
@@ -1022,34 +1023,21 @@ public class ProjectResource extends AbstractApiResource {
                     responseCode = "403",
                     description = "Access to the requested project is forbidden",
                     content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "The UUID of the project could not be found"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "The UUID of the project could not be found",
+                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
             @ApiResponse(responseCode = "500", description = "Unable to delete components of the project")
     })
     @PermissionRequired({Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE})
     public Response deleteProject(
             @Parameter(description = "The UUID of the project to delete", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        try (final var qm = new QueryManager(getAlpineRequest())) {
-            qm.runInTransaction(() -> {
-                final Project project = qm.getObjectByUuid(Project.class, uuid, Project.FetchGroup.ALL.name());
-                if (project == null) {
-                    throw new ClientErrorException(Response
-                            .status(Response.Status.NOT_FOUND)
-                            .entity("The UUID of the project could not be found.")
-                            .build());
-                }
-                requireAccess(qm, project);
-
-                try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, project.getUuid().toString());
-                     var _ = MDC.putCloseable(MDC_PROJECT_NAME, project.getName());
-                     var _ = MDC.putCloseable(MDC_PROJECT_VERSION, project.getVersion())) {
-                    LOGGER.info("Project {} deletion request by {}", project, super.getPrincipal().getName());
-                }
-
-                qm.delete(project);
-            });
-        }
-
+        final UUID projectUuid = UUID.fromString(uuid);
+        logDeletedProjects(inJdbiTransaction(getAlpineRequest(), handle -> {
+            requireProjectAccess(handle, projectUuid);
+            return handle.attach(ProjectDao.class).deleteProjects(Set.of(projectUuid));
+        }));
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
@@ -1070,13 +1058,32 @@ public class ProjectResource extends AbstractApiResource {
             Permissions.Constants.PORTFOLIO_MANAGEMENT_DELETE
     })
     public Response deleteProjects(@Size(min = 1, max = 1000) final Set<UUID> uuids) {
-        final Set<UUID> deletedProjectUuids = inJdbiTransaction(
-                getAlpineRequest(),
-                handle -> handle.attach(ProjectDao.class).deleteProjects(uuids));
-        for (final UUID uuid : deletedProjectUuids) {
-            LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted project {}", uuid);
-        }
+        logDeletedProjects(inJdbiTransaction(getAlpineRequest(), handle ->
+                handle.attach(ProjectDao.class).deleteProjects(uuids)));
         return Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    private static void logDeletedProjects(final List<ProjectDao.DeletedProjectRow> deletedProjects) {
+        for (final ProjectDao.DeletedProjectRow deletedProject : deletedProjects) {
+            try (var _ = MDC.putCloseable(MDC_PROJECT_UUID, deletedProject.uuid().toString());
+                 var _ = MDC.putCloseable(MDC_PROJECT_NAME, deletedProject.name());
+                 var _ = MDC.putCloseable(MDC_PROJECT_VERSION, String.valueOf(deletedProject.version()))) {
+                if (deletedProject.ancestorUuid() == null) {
+                    LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted project {}",
+                            formatDeletedProject(deletedProject));
+                } else {
+                    LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Deleted project {} as descendant of {}",
+                            formatDeletedProject(deletedProject),
+                            deletedProject.ancestorUuid());
+                }
+            }
+        }
+    }
+
+    private static String formatDeletedProject(final ProjectDao.DeletedProjectRow deletedProject) {
+        return deletedProject.version() == null
+                ? deletedProject.name()
+                : deletedProject.name() + " : " + deletedProject.version();
     }
 
     @PUT

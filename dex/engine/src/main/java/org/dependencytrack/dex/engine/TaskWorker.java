@@ -29,7 +29,7 @@ interface TaskWorker extends Closeable {
         STARTING(2),   // 1
         RUNNING(3),    // 2
         STOPPING(4),   // 3
-        STOPPED(1);    // 4
+        STOPPED;       // 4
 
         private final Set<Integer> allowedTransitions;
 

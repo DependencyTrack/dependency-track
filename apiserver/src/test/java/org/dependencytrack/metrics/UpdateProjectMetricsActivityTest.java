@@ -18,6 +18,7 @@
  */
 package org.dependencytrack.metrics;
 
+import org.dependencytrack.kevdatasource.api.KevAssertion;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.DependencyMetrics;
@@ -28,10 +29,13 @@ import org.dependencytrack.model.ProjectMetrics;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.ViolationAnalysisState;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
+import org.dependencytrack.persistence.jdbi.KevDao;
 import org.dependencytrack.persistence.jdbi.MetricsDao;
 import org.dependencytrack.persistence.jdbi.MetricsTestDao;
+import org.dependencytrack.persistence.jdbi.VulnerabilityAliasDao;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.junit.jupiter.api.Test;
 
@@ -39,9 +43,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 
 class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
@@ -67,6 +73,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         assertThat(metrics.getMedium()).isZero();
         assertThat(metrics.getLow()).isZero();
         assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getKev()).isZero();
         assertThat(metrics.getVulnerabilities()).isZero();
         assertThat(metrics.getSuppressed()).isZero();
         assertThat(metrics.getFindingsTotal()).isZero();
@@ -203,6 +210,18 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln);
 
+        useJdbiHandle(handle -> handle
+                .attach(KevDao.class)
+                .upsertBatch("cisa", List.of(
+                        new KevAssertion(
+                                "INTERNAL",
+                                "INTERNAL-001",
+                                null,
+                                null,
+                                null,
+                                null,
+                                null))));
+
         // Create a component with an unaudited vulnerability.
         var componentUnaudited = new Component();
         componentUnaudited.setProject(project);
@@ -272,6 +291,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         assertThat(metrics.getMedium()).isZero();
         assertThat(metrics.getLow()).isZero();
         assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getKev()).isEqualTo(2); // One is suppressed
         assertThat(metrics.getVulnerabilities()).isEqualTo(2); // One is suppressed
         assertThat(metrics.getSuppressed()).isEqualTo(1);
         assertThat(metrics.getFindingsTotal()).isEqualTo(2); // One is suppressed
@@ -379,6 +399,7 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
         assertThat(metrics.getMedium()).isZero();
         assertThat(metrics.getLow()).isZero();
         assertThat(metrics.getUnassigned()).isZero();
+        assertThat(metrics.getKev()).isZero();
         assertThat(metrics.getVulnerabilities()).isZero();
         assertThat(metrics.getSuppressed()).isZero();
         assertThat(metrics.getFindingsTotal()).isZero();
@@ -635,6 +656,49 @@ class UpdateProjectMetricsActivityTest extends AbstractMetricsUpdateTaskTest {
                         .attach(MetricsDao.class)
                         .getDependencyMetricsSince(component.getId(), Instant.EPOCH));
         assertThat(componentMetrics).hasSize(2);
+    }
+
+    @Test
+    void shouldCountAliasedVulnerabilitiesOnce() throws Exception {
+        var project = new Project();
+        project.setName("acme-app");
+        qm.createProject(project, List.of(), false);
+
+        createTestConfigProperties();
+
+        var component = new Component();
+        component.setProject(project);
+        component.setName("acme-lib-a");
+        component = qm.createComponent(component, false);
+
+        var vulnA = new Vulnerability();
+        vulnA.setVulnId("CVE-100");
+        vulnA.setSource(Vulnerability.Source.NVD);
+        vulnA.setSeverity(Severity.HIGH);
+        vulnA = qm.createVulnerability(vulnA);
+        qm.addVulnerability(vulnA, component, "none");
+
+        var vulnB = new Vulnerability();
+        vulnB.setVulnId("GHSA-100");
+        vulnB.setSource(Vulnerability.Source.GITHUB);
+        vulnB.setSeverity(Severity.HIGH);
+        vulnB = qm.createVulnerability(vulnB);
+        qm.addVulnerability(vulnB, component, "none");
+
+        useJdbiTransaction(
+                handle -> new VulnerabilityAliasDao(handle)
+                        .syncAssertions(
+                                "TEST",
+                                new VulnerabilityKey("CVE-100", Vulnerability.Source.NVD),
+                                Set.of(new VulnerabilityKey("GHSA-100", Vulnerability.Source.GITHUB))));
+
+        executeActivity(project);
+
+        final ProjectMetrics metrics = withJdbiHandle(
+                handle -> handle.attach(MetricsDao.class).getMostRecentProjectMetrics(project.getId()));
+        assertThat(metrics.getVulnerabilities()).isEqualTo(1);
+        assertThat(metrics.getHigh()).isEqualTo(1);
+        assertThat(metrics.getVulnerableComponents()).isEqualTo(1);
     }
 
     private void executeActivity(Project project) throws Exception {

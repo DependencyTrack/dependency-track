@@ -36,6 +36,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
@@ -46,7 +47,9 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.dependencytrack.analysis.AnalyzeProjectWorkflow;
+import org.dependencytrack.analysis.ProjectLastAnalysisDao;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.request.CreateWorkflowRunRequest;
 import org.dependencytrack.integrations.FindingPackagingFormat;
@@ -62,12 +65,13 @@ import org.dependencytrack.persistence.jdbi.FindingDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.dependencytrack.pkgmetadata.ResolvePackageMetadataWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
-import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.BomUploadResponse;
+import org.dependencytrack.resources.v1.vo.TotalCountMode;
 import org.dependencytrack.util.PersistenceUtil;
 import org.dependencytrack.util.PurlUtil;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,6 +79,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,9 +87,11 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_ANALYSIS_TRIGGER;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_PROJECT_UUID;
 import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_TRIGGERED_BY;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
+import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger.ANALYSIS_TRIGGER_MANUAL;
 
@@ -100,16 +107,24 @@ import static org.dependencytrack.proto.internal.workflow.v1.AnalysisTrigger.ANA
         @SecurityRequirement(name = "ApiKeyAuth"),
         @SecurityRequirement(name = "BearerAuth")
 })
-public class FindingResource extends AbstractApiResource {
+public class FindingResource extends AbstractV1ApiResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FindingResource.class);
     public static final String MEDIA_TYPE_SARIF_JSON = "application/sarif+json";
+
+    /// Cap for opt-in bounded counts, per ADR 036. The server owns it so that a client
+    /// cannot raise it and cause a slow full scan.
+    private static final int BOUNDED_TOTAL_COUNT_LIMIT = 10_000;
 
     private final DexEngine dexEngine;
 
     @Inject
     FindingResource(DexEngine dexEngine) {
         this.dexEngine = dexEngine;
+    }
+
+    private static @Nullable Integer totalCountThreshold(final TotalCountMode mode) {
+        return mode == TotalCountMode.BOUNDED ? BOUNDED_TOTAL_COUNT_LIMIT : null;
     }
 
     @GET
@@ -122,12 +137,20 @@ public class FindingResource extends AbstractApiResource {
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "A list of all findings for a specific project, or a SARIF file",
-                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of findings", schema = @Schema(format = "integer")),
+                    description = "A list of all findings for a specific project, or a SARIF file. SARIF responses carry no count headers.",
+                    headers = {
+                            @Header(name = TOTAL_COUNT_HEADER, description = "The number of findings, exact or a lower bound. See `X-Total-Count-Type`.", schema = @Schema(format = "integer")),
+                            @Header(name = TOTAL_COUNT_TYPE_HEADER, ref = TOTAL_COUNT_TYPE_HEADER_REF)
+                    },
                     content = {
                             @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)), mediaType = MediaType.APPLICATION_JSON),
                             @Content(schema = @Schema(type = "string"), mediaType = MEDIA_TYPE_SARIF_JSON)
                     }
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid query parameter",
+                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(
@@ -161,7 +184,9 @@ public class FindingResource extends AbstractApiResource {
                                          @Parameter(description = "Filter EPSS score to this value (inclusive)")
                                          @QueryParam("epssTo") final BigDecimal epssTo,
                                          @Parameter(description = "Filter by known exploited vulnerability (KEV) status: omit for any, true for KEVs only, false to exclude KEVs")
-                                         @QueryParam("isKev") final Boolean isKev) {
+                                         @QueryParam("isKev") final Boolean isKev,
+                                         @Parameter(description = "The counting mode for `X-Total-Count`. With `BOUNDED`, the count stops at a fixed server-side cap. `X-Total-Count` is then exact when the count finishes within the cap, or when the requested page ends the result set. Otherwise it is a lower bound, never below the end of the requested page. `X-Total-Count-Type` says which case applies. See the Pagination section of the API description.")
+                                         @QueryParam("totalCount") @DefaultValue("EXACT") final TotalCountMode totalCount) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
@@ -171,24 +196,22 @@ public class FindingResource extends AbstractApiResource {
                         (rawFilter != null && !rawFilter.isBlank())
                                 ? PersistenceUtil.escapeLikePattern(rawFilter)
                                 : null;
-                List<FindingDao.FindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle -> {
-                    final var dao = handle.attach(FindingDao.class);
-                    return dao.withJitDisabled(
-                            () -> dao.getFindingsByProject(
+                final String sourceName = source != null ? source.name() : null;
+
+                if (acceptHeader != null && acceptHeader.contains(MEDIA_TYPE_SARIF_JSON)) {
+                    // SARIF responses carry no count headers, so skip all count work.
+                    final List<FindingDao.FindingRow> rows = withJdbiHandle(getAlpineRequest(), handle ->
+                            handle.attach(FindingDao.class).selectAllProjectFindings(
                                     project.getId(),
-                                    /* includeInactive */ false,
                                     suppressed,
                                     searchText,
                                     hasAnalysis,
-                                    source != null ? source.name() : null,
+                                    sourceName,
                                     epssFrom,
                                     epssTo,
                                     isKev));
-                });
-                final long totalCount = findingRows.isEmpty() ? 0 : findingRows.getFirst().totalCount();
-                List<Finding> findings = findingRows.stream().map(Finding::new).toList();
-                findings = mapComponentLatestVersion(findings);
-                if (acceptHeader != null && acceptHeader.contains(MEDIA_TYPE_SARIF_JSON)) {
+                    final List<Finding> findings = mapComponentLatestVersion(
+                            rows.stream().map(Finding::new).toList());
                     try {
                         return Response.ok(generateSARIF(findings), MEDIA_TYPE_SARIF_JSON)
                                 .header("content-disposition", "attachment; filename=\"findings-" + uuid + ".sarif\"")
@@ -198,7 +221,23 @@ public class FindingResource extends AbstractApiResource {
                         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An error occurred while generating SARIF file").build();
                     }
                 }
-                return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();
+
+                final Page<FindingDao.FindingRow> page = withJdbiHandle(getAlpineRequest(), handle ->
+                        handle.attach(FindingDao.class).getFindingsByProject(
+                                project.getId(),
+                                suppressed,
+                                searchText,
+                                hasAnalysis,
+                                sourceName,
+                                epssFrom,
+                                epssTo,
+                                isKev,
+                                totalCountThreshold(totalCount)));
+
+                return withTotalCountHeaders(
+                        Response.ok(mapComponentLatestVersion(page.items().stream().map(Finding::new).toList())),
+                        page.totalCount())
+                        .build();
             } else {
                 return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
             }
@@ -268,13 +307,17 @@ public class FindingResource extends AbstractApiResource {
     public Response analyzeProject(
             @Parameter(description = "The UUID of the project to analyze", schema = @Schema(type = "string", format = "uuid"), required = true)
             @PathParam("uuid") @ValidUuid String uuid) {
-        useJdbiHandle(handle -> requireProjectAccess(handle, UUID.fromString(uuid)));
+        final var projectUuid = UUID.fromString(uuid);
+        useJdbiHandle(handle -> requireProjectAccess(handle, projectUuid));
 
         final UUID runId = dexEngine.createRun(
                 new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
-                        .withWorkflowInstanceId("analyze-project-manual:" + uuid)
-                        .withConcurrencyKey("analyze-project:" + uuid)
+                        .withWorkflowInstanceId(AnalyzeProjectWorkflow.instanceIdForManual(projectUuid))
+                        .withConcurrencyKey(AnalyzeProjectWorkflow.concurrencyKeyForProject(projectUuid))
                         .withLabels(Map.ofEntries(
+                                Map.entry(
+                                        WF_LABEL_ANALYSIS_TRIGGER,
+                                        AnalyzeProjectWorkflow.triggerLabelValue(ANALYSIS_TRIGGER_MANUAL)),
                                 Map.entry(WF_LABEL_PROJECT_UUID, uuid),
                                 Map.entry(WF_LABEL_TRIGGERED_BY, getPrincipal().getName())))
                         .withPriority(75)
@@ -286,6 +329,10 @@ public class FindingResource extends AbstractApiResource {
         if (runId == null) {
             return Response.status(Response.Status.CONFLICT).build();
         }
+
+        useJdbiTransaction(handle -> handle
+                .attach(ProjectLastAnalysisDao.class)
+                .recordAttempt(projectUuid, Instant.now()));
 
         dexEngine.createRun(
                 new CreateWorkflowRunRequest<>(ResolvePackageMetadataWorkflow.class)
@@ -304,8 +351,16 @@ public class FindingResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "A list of all findings",
-                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of findings", schema = @Schema(format = "integer")),
+                    headers = {
+                            @Header(name = TOTAL_COUNT_HEADER, description = "The number of findings, exact or a lower bound. See `X-Total-Count-Type`.", schema = @Schema(format = "integer")),
+                            @Header(name = TOTAL_COUNT_TYPE_HEADER, ref = TOTAL_COUNT_TYPE_HEADER_REF)
+                    },
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid query parameter",
+                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)
             ),
             @ApiResponse(responseCode = "401", description = "Unauthorized"),
     })
@@ -354,7 +409,9 @@ public class FindingResource extends AbstractApiResource {
                                    @Parameter(description = "Filter EPSS Percentile to this value")
                                    @QueryParam("epssPercentileTo") String epssPercentileTo,
                                    @Parameter(description = "Filter by known exploited vulnerability (KEV) status: omit for any, true for KEVs only, false to exclude KEVs")
-                                   @QueryParam("isKev") Boolean isKev) {
+                                   @QueryParam("isKev") Boolean isKev,
+                                   @Parameter(description = "The counting mode for `X-Total-Count`. With `BOUNDED`, the count stops at a fixed server-side cap. `X-Total-Count` is then exact when the count finishes within the cap, or when the requested page ends the result set. Otherwise it is a lower bound, never below the end of the requested page. `X-Total-Count-Type` says which case applies. See the Pagination section of the API description.")
+                                   @QueryParam("totalCount") @DefaultValue("EXACT") TotalCountMode totalCount) {
         final Map<String, String> filters = new HashMap<>();
         filters.put("severity", severity);
         filters.put("analysisStatus", analysisStatus);
@@ -378,12 +435,22 @@ public class FindingResource extends AbstractApiResource {
         if (isKev != null) {
             filters.put("isKev", String.valueOf(isKev));
         }
-        List<FindingDao.FindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle -> handle.attach(FindingDao.class)
-                .getAllFindings(filters, showSuppressed, showInactive, getAlpineRequest().getOrderBy()));
-        final long totalCount = findingRows.isEmpty() ? 0 : findingRows.getFirst().totalCount();
-        List<Finding> findings = findingRows.stream().map(Finding::new).toList();
-        findings = mapComponentLatestVersion(findings);
-        return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();
+        final String orderBy = getAlpineRequest().getOrderBy();
+
+        final Page<FindingDao.FindingRow> page = withJdbiHandle(
+                getAlpineRequest(),
+                handle -> handle.attach(FindingDao.class)
+                        .getAllFindings(
+                                filters,
+                                showSuppressed,
+                                showInactive,
+                                orderBy,
+                                totalCountThreshold(totalCount)));
+
+        return withTotalCountHeaders(
+                Response.ok(mapComponentLatestVersion(page.items().stream().map(Finding::new).toList())),
+                page.totalCount())
+                .build();
     }
 
     @GET
@@ -397,10 +464,18 @@ public class FindingResource extends AbstractApiResource {
             @ApiResponse(
                     responseCode = "200",
                     description = "A list of all findings grouped by vulnerability",
-                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of findings", schema = @Schema(format = "integer")),
+                    headers = {
+                            @Header(name = TOTAL_COUNT_HEADER, description = "The number of findings, exact or a lower bound. See `X-Total-Count-Type`.", schema = @Schema(format = "integer")),
+                            @Header(name = TOTAL_COUNT_TYPE_HEADER, ref = TOTAL_COUNT_TYPE_HEADER_REF)
+                    },
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = Finding.class)))
             ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid query parameter",
+                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
     })
     @PaginatedApi
     @PermissionRequired(Permissions.Constants.VIEW_VULNERABILITY)
@@ -441,7 +516,9 @@ public class FindingResource extends AbstractApiResource {
                                    @Parameter(description = "Filter occurrences in projects to this value")
                                    @QueryParam("occurrencesTo") String occurrencesTo,
                                    @Parameter(description = "Filter by known exploited vulnerability (KEV) status: omit for any, true for KEVs only, false to exclude KEVs")
-                                   @QueryParam("isKev") Boolean isKev) {
+                                   @QueryParam("isKev") Boolean isKev,
+                                   @Parameter(description = "The counting mode for `X-Total-Count`. With `BOUNDED`, the count is skipped and `X-Total-Count` reports what the requested page itself proves. `X-Total-Count-Type` is then `EXACT` when the page ends the result set, and `AT_LEAST` otherwise. A page past the end reports `AT_LEAST` with a count of 0, which means the total is unknown. See the Pagination section of the API description.")
+                                   @QueryParam("totalCount") @DefaultValue("EXACT") TotalCountMode totalCount) {
         final Map<String, String> filters = new HashMap<>();
         filters.put("severity", severity);
         filters.put("publishDateFrom", publishDateFrom);
@@ -463,11 +540,18 @@ public class FindingResource extends AbstractApiResource {
         if (isKev != null) {
             filters.put("isKev", String.valueOf(isKev));
         }
-        List<FindingDao.GroupedFindingRow> findingRows = withJdbiHandle(getAlpineRequest(), handle -> handle.attach(FindingDao.class)
-                .getGroupedFindings(filters, showInactive));
-        final long totalCount = findingRows.isEmpty() ? 0 : findingRows.getFirst().totalCount();
-        List<GroupedFinding> findings = findingRows.stream().map(GroupedFinding::new).toList();
-        return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();
+
+        final Page<FindingDao.GroupedFindingRow> page = withJdbiHandle(
+                getAlpineRequest(),
+                handle -> handle.attach(FindingDao.class).getGroupedFindings(
+                        filters,
+                        showInactive,
+                        /* boundedTotalCount */ totalCount == TotalCountMode.BOUNDED));
+
+        return withTotalCountHeaders(
+                Response.ok(page.items().stream().map(GroupedFinding::new).toList()),
+                page.totalCount())
+                .build();
     }
 
     private String generateSARIF(List<Finding> findings) throws IOException {
@@ -485,7 +569,7 @@ public class FindingResource extends AbstractApiResource {
                 .collect(Collectors.toMap(
                         finding -> finding.getVulnerability().get("vulnId"),
                         Finding::getVulnerability,
-                        (existingVuln, replacementVuln) -> existingVuln))
+                        (existingVuln, _) -> existingVuln))
                 .values()
                 .stream()
                 .toList();

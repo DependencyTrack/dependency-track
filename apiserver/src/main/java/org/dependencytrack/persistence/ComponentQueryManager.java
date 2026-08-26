@@ -21,6 +21,7 @@ package org.dependencytrack.persistence;
 import alpine.model.IConfigProperty.PropertyType;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
+import alpine.persistence.ScopedCustomization;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
@@ -56,6 +57,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 import static org.dependencytrack.model.sqlmapping.ComponentProjection.mapToComponent;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 import static org.dependencytrack.util.PersistenceUtil.assertNonPersistent;
@@ -149,6 +151,8 @@ final class ComponentQueryManager extends QueryManager {
                         "A0"."SHA3_256" AS "sha3_256",
                         "A0"."SHA3_384" AS "sha3_384",
                         "A0"."SHA3_512" AS "sha3_512",
+                        "A0"."STREEBOG_256" AS "streebog_256",
+                        "A0"."STREEBOG_512" AS "streebog_512",
                         "A0"."SWIDTAGID" AS "swidTagId",
                         "A0"."UUID" AS "uuid",
                         "A0"."VERSION" AS "version",
@@ -302,9 +306,9 @@ final class ComponentQueryManager extends QueryManager {
         final String queryFilter = switch (hash.length()) {
             case 32 -> "(md5 == :hash)";
             case 40 -> "(sha1 == :hash)";
-            case 64 -> "(sha256 == :hash || sha3_256 == :hash || blake2b_256 == :hash)";
+            case 64 -> "(sha256 == :hash || sha3_256 == :hash || blake2b_256 == :hash || streebog_256 == :hash)";
             case 96 -> "(sha384 == :hash || sha3_384 == :hash || blake2b_384 == :hash)";
-            case 128 -> "(sha512 == :hash || sha3_512 == :hash || blake2b_512 == :hash)";
+            case 128 -> "(sha512 == :hash || sha3_512 == :hash || blake2b_512 == :hash || streebog_512 == :hash)";
             default -> "(blake3 == :hash)";
         };
 
@@ -422,6 +426,7 @@ final class ComponentQueryManager extends QueryManager {
      */
     public Component createComponent(Component component, boolean commitIndex) {
         final Component result = persist(component);
+        seedPackageMetadataResolution(result);
         return result;
     }
 
@@ -441,9 +446,17 @@ final class ComponentQueryManager extends QueryManager {
         component.setMd5(transientComponent.getMd5());
         component.setSha1(transientComponent.getSha1());
         component.setSha256(transientComponent.getSha256());
+        component.setSha384(transientComponent.getSha384());
         component.setSha512(transientComponent.getSha512());
         component.setSha3_256(transientComponent.getSha3_256());
+        component.setSha3_384(transientComponent.getSha3_384());
         component.setSha3_512(transientComponent.getSha3_512());
+        component.setBlake2b_256(transientComponent.getBlake2b_256());
+        component.setBlake2b_384(transientComponent.getBlake2b_384());
+        component.setBlake2b_512(transientComponent.getBlake2b_512());
+        component.setBlake3(transientComponent.getBlake3());
+        component.setStreebog_256(transientComponent.getStreebog_256());
+        component.setStreebog_512(transientComponent.getStreebog_512());
         component.setDescription(transientComponent.getDescription());
         component.setCopyright(transientComponent.getCopyright());
         component.setLicense(transientComponent.getLicense());
@@ -459,7 +472,42 @@ final class ComponentQueryManager extends QueryManager {
         component.setSupplier(transientComponent.getSupplier());
         component.setExternalReferences(transientComponent.getExternalReferences());
         final Component result = persist(component);
+        seedPackageMetadataResolution(result);
         return result;
+    }
+
+    /// @since 5.1.0
+    private void seedPackageMetadataResolution(Component component) {
+        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
+            final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
+                    INSERT INTO "PACKAGE_METADATA_RESOLUTION" ("PURL", "STATUS")
+                    SELECT "PURL"
+                         , 'PENDING'
+                      FROM "COMPONENT"
+                     WHERE "ID" = ?
+                       AND "PURL" IS NOT NULL
+                    ON CONFLICT ("PURL") DO NOTHING
+                    """);
+            executeAndCloseWithArray(query, component.getId());
+        }
+    }
+
+    /// @since 5.1.0
+    @Override
+    public void seedPackageMetadataResolution(Project project) {
+        try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
+            final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
+                    INSERT INTO "PACKAGE_METADATA_RESOLUTION" ("PURL", "STATUS")
+                    SELECT DISTINCT "PURL"
+                         , 'PENDING'
+                      FROM "COMPONENT"
+                     WHERE "PROJECT_ID" = ?
+                       AND "PURL" IS NOT NULL
+                     ORDER BY "PURL"
+                    ON CONFLICT ("PURL") DO NOTHING
+                    """);
+            executeAndCloseWithArray(query, project.getId());
+        }
     }
 
     /**

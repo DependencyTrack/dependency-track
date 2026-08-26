@@ -18,6 +18,9 @@ type: object
 properties:
   name:
     type: string
+  display_name:
+    type: string
+    description: Human-readable name of the extension.
   configurable:
     type: boolean
     description: Whether the extension supports runtime configuration.
@@ -26,5 +29,6 @@ properties:
     description: Whether the extension can be tested.
 required:
 - name
+- display_name
 - configurable
 - testable

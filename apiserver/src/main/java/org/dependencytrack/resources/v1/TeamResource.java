@@ -27,6 +27,7 @@ import alpine.security.InvalidApiKeyFormatException;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -61,6 +62,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.datanucleus.PropertyNames.PROPERTY_RETAIN_VALUES;
@@ -248,9 +250,25 @@ public class TeamResource extends AbstractApiResource {
     @GET
     @Path("/visible")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Returns a list of Teams that are visible", description = "<p></p>")
+    @Operation(
+            summary = "Returns a list of Teams that are visible",
+            description = """
+                    <p>Optional query parameter <code>searchText</code>. The search is case insensitive \
+                    and matches team names.</p>"""
+    )
+    @PaginatedApi
+    @Parameter(
+            name = "searchText",
+            in = ParameterIn.QUERY,
+            description = "Optional case-insensitive substring match on team name."
+    )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "The Visible Teams", content = @Content(array = @ArraySchema(schema = @Schema(implementation = VisibleTeams.class)))),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "The Visible Teams",
+                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of visible teams", schema = @Schema(format = "integer")),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = VisibleTeams.class)))
+            ),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public Response availableTeams() {
@@ -258,23 +276,39 @@ public class TeamResource extends AbstractApiResource {
             boolean isAllTeams =
                     super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
                             || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
-            List<Team> teams = new ArrayList<>();
+            final List<Team> teams;
+            final long total;
             if (isAllTeams) {
-                var paginatedResult = qm.getTeams();
+                final PaginatedResult paginatedResult = qm.getTeams();
                 teams = paginatedResult.getList(Team.class);
+                total = paginatedResult.getTotal();
             } else {
-                if (getPrincipal() instanceof final User user) {
-                    teams = user.getTeams();
-                } else if (getPrincipal() instanceof final ApiKey apiKey) {
-                    teams = apiKey.getTeams();
+                List<Team> visibleTeams = List.of();
+                if (getPrincipal() instanceof final User user && user.getTeams() != null) {
+                    visibleTeams = user.getTeams();
+                } else if (getPrincipal() instanceof final ApiKey apiKey && apiKey.getTeams() != null) {
+                    visibleTeams = apiKey.getTeams();
                 }
+                final String filter = getAlpineRequest().getFilter();
+                if (filter != null && !filter.isBlank()) {
+                    final String needle = filter.toLowerCase();
+                    visibleTeams = visibleTeams.stream()
+                            .filter(team -> team.getName() != null && team.getName().toLowerCase().contains(needle))
+                            .toList();
+                }
+                total = visibleTeams.size();
+                teams = visibleTeams.stream()
+                        .sorted(Comparator.comparing(Team::getName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                        .skip(getAlpineRequest().getPagination().getOffset())
+                        .limit(getAlpineRequest().getPagination().getLimit())
+                        .toList();
             }
 
-            List<VisibleTeams> response = new ArrayList<>();
+            final List<VisibleTeams> response = new ArrayList<>(teams.size());
             for (Team team : teams) {
                 response.add(new VisibleTeams(team.getName(), team.getUuid()));
             }
-            return Response.ok(response).build();
+            return Response.ok(response).header(TOTAL_COUNT_HEADER, total).build();
         }
     }
 

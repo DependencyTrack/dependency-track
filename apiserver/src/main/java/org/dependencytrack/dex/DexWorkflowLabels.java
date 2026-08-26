@@ -23,6 +23,7 @@ package org.dependencytrack.dex;
  */
 public final class DexWorkflowLabels {
 
+    public static final String WF_LABEL_ANALYSIS_TRIGGER = "analysis_trigger";
     public static final String WF_LABEL_BOM_UPLOAD_TOKEN = "bom_upload_token";
     public static final String WF_LABEL_PROJECT_UUID = "project_uuid";
     public static final String WF_LABEL_TRIGGERED_BY = "triggered_by";

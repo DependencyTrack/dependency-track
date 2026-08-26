@@ -137,6 +137,7 @@ public class ExtensionsResource extends AbstractApiResource implements Extension
                                 .<ListExtensionsResponseItem>map(
                                         extensionFactory -> ListExtensionsResponseItem.builder()
                                                 .name(extensionFactory.extensionName())
+                                                .displayName(extensionFactory.displayName())
                                                 .configurable(extensionFactory instanceof RuntimeConfigurable)
                                                 .testable(extensionFactory instanceof Testable)
                                                 .build())

@@ -20,6 +20,7 @@ package org.dependencytrack.kevdatasource;
 
 import org.dependencytrack.kevdatasource.cisa.CisaKevDataSourceFactory;
 import org.dependencytrack.kevdatasource.enisa.EnisaKevDataSourceFactory;
+import org.dependencytrack.kevdatasource.vulncheck.VulnCheckKevDataSourceFactory;
 import org.dependencytrack.plugin.api.ExtensionFactory;
 import org.dependencytrack.plugin.api.ExtensionPoint;
 import org.dependencytrack.plugin.api.Plugin;
@@ -34,7 +35,8 @@ public final class BuiltinKevDataSourcePlugin implements Plugin {
     public Collection<? extends ExtensionFactory<? extends ExtensionPoint>> extensionFactories() {
         return List.of(
                 new CisaKevDataSourceFactory(),
-                new EnisaKevDataSourceFactory());
+                new EnisaKevDataSourceFactory(),
+                new VulnCheckKevDataSourceFactory());
     }
 
 }

@@ -32,6 +32,7 @@ import org.dependencytrack.dex.DexEngineBinder;
 import org.dependencytrack.filestorage.FileStorageBinder;
 import org.dependencytrack.filters.DeprecationResponseFilter;
 import org.dependencytrack.filters.JerseyMetricsApplicationEventListener;
+import org.dependencytrack.kevdatasource.KevDataSourceMirrorServiceBinder;
 import org.dependencytrack.plugin.PluginManagerBinder;
 import org.dependencytrack.secret.SecretManagerBinder;
 import org.dependencytrack.vulndatasource.VulnDataSourceMirrorServiceBinder;
@@ -77,6 +78,7 @@ public final class ResourceConfig extends org.glassfish.jersey.server.ResourceCo
         register(CacheManagerBinder.class);
         register(DexEngineBinder.class);
         register(FileStorageBinder.class);
+        register(KevDataSourceMirrorServiceBinder.class);
         register(PluginManagerBinder.class);
         register(SecretManagerBinder.class);
         register(SystemCapabilitiesBinder.class);

@@ -70,7 +70,6 @@ public final class IdentifyInternalComponentsActivity implements Activity<Void, 
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before all components could be processed");
             }
-            ctx.maybeHeartbeat();
 
             for (final Component component : components) {
                 String coordinates = component.getName();

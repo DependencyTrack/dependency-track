@@ -84,6 +84,19 @@ class LegacyConfigPropertyValidatorTest {
                 .hasMessageContaining("alpine.cors.allow.origin");
     }
 
+    @Test
+    void shouldFailWhenRemovedPropertyIsPresent() {
+        final Config config = new SmallRyeConfigBuilder()
+                .withDefaultValue("dt.task.portfolio-analysis.cron", "0 6 * * *")
+                .build();
+
+        assertThatThrownBy(() -> LegacyConfigPropertyValidator.validate(config))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no longer supported")
+                .hasMessageContaining("dt.task.portfolio-analysis.cron")
+                .hasMessageContaining("dt.task.portfolio-analysis.max-analysis-age-ms");
+    }
+
     @ParameterizedTest
     @MethodSource("legacyV5Rc1Renames")
     void shouldFailWhenLegacyV5Rc1PropertyIsPresent(final String oldName, final String newName) {

@@ -80,6 +80,7 @@ public class ModelMapper {
                 .medium(metrics.getMedium())
                 .low(metrics.getLow())
                 .unassigned(metrics.getUnassigned())
+                .kev(metrics.getKev())
                 .vulnerabilities(metrics.getVulnerabilities())
                 .suppressed(metrics.getSuppressed())
                 .findingsTotal(metrics.getFindingsTotal())
@@ -116,7 +117,9 @@ public class ModelMapper {
                 || component.getBlake2b_256() != null
                 || component.getBlake2b_384() != null
                 || component.getBlake2b_512() != null
-                || component.getBlake3() != null;
+                || component.getBlake3() != null
+                || component.getStreebog_256() != null
+                || component.getStreebog_512() != null;
 
         if (!hasAnyHash) {
             return null;
@@ -135,6 +138,8 @@ public class ModelMapper {
                 .blake2b384(component.getBlake2b_384())
                 .blake2b512(component.getBlake2b_512())
                 .blake3(component.getBlake3())
+                .streebog256(component.getStreebog_256())
+                .streebog512(component.getStreebog_512())
                 .build();
     }
 

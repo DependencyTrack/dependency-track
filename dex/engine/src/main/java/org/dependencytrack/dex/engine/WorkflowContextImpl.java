@@ -274,7 +274,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
         final int eventId = currentEventId++;
         final int elapsedEventId = currentEventId++;
         pendingCommandByEventId.put(eventId, new CreateTimerCommand(
-                eventId, elapsedEventId, name, currentTime.plus(delay)));
+                eventId, elapsedEventId, name, currentTime().plus(delay)));
 
         final var awaitable = new AwaitableImpl<>(this, voidConverter());
         pendingAwaitableByEventId.put(elapsedEventId, awaitable);
@@ -399,7 +399,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
                 LOGGER.trace("Blocked");
             }
         } catch (WorkflowRunCanceledError e) {
-            cancel(e.getMessage());
+            cancel(requireNonNullElse(e.getMessage(), "Workflow run was canceled"));
         } catch (WorkflowRunContinuedAsNewError e) {
             continueAsNew(e.getArgument());
         } catch (WorkflowRunDeterminismError | Exception e) {

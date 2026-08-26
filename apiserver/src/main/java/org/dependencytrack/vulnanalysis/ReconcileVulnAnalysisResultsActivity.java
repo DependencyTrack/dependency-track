@@ -33,6 +33,7 @@ import org.dependencytrack.model.FindingKey;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
 import org.dependencytrack.notification.JdbiNotificationEmitter;
+import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.proto.v1.Notification;
 import org.dependencytrack.notification.proto.v1.VulnerabilityAnalysisDecisionChangeSubject;
 import org.dependencytrack.parser.dependencytrack.BovModelConverter;
@@ -533,6 +534,10 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             final var notificationSubjectDao = handle.attach(NotificationSubjectDao.class);
             final var findingDao = new FindingDao(handle);
 
+            // Assembling notification subjects is expensive. Skip it for groups that no
+            // enabled rule subscribes to. The emitter would discard those notifications anyway.
+            final Set<String> subscribedGroups = notificationSubjectDao.getSubscribedNotificationGroups();
+
             final List<FindingKey> createdFindingKeys = findingDao.createFindings(findingsToCreate);
             LOGGER.debug("Created {} new finding(s)", createdFindingKeys.size());
 
@@ -550,13 +555,19 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             LOGGER.debug("Removed {} stale attribution(s)", attributionsDeleted);
 
             final List<Notification> auditChangeNotifications =
-                    applyVulnPolicyResults(handle, projectId, policyResults, vulnDbIdsByComponentId);
+                    applyVulnPolicyResults(
+                            handle,
+                            projectId,
+                            policyResults,
+                            vulnDbIdsByComponentId,
+                            subscribedGroups);
 
             final var notifications = new ArrayList<>(auditChangeNotifications);
             notifications.addAll(createAnalyzerErrorNotifications(projectUuid, failedAnalyzers));
             notifications.addAll(
                     createNewVulnerabilityNotifications(
                             notificationSubjectDao,
+                            subscribedGroups,
                             Stream
                                     .concat(createdFindingKeys.stream(), reactivatedFindingKeys.stream())
                                     .collect(Collectors.toSet()),
@@ -564,8 +575,10 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             notifications.addAll(
                     createVulnerabilityRetractedNotifications(
                             notificationSubjectDao,
+                            subscribedGroups,
                             inactiveFindingKeys));
-            if (arg.hasContextFileMetadata()) {
+            if (arg.hasContextFileMetadata()
+                    && subscribedGroups.contains(NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name())) {
                 final List<Long> newComponentIds = readNewComponentIds(arg.getContextFileMetadata());
                 if (!newComponentIds.isEmpty()) {
                     notificationSubjectDao
@@ -647,7 +660,7 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
     private Map<Long, Map<Long, VulnerabilityPolicy>> evaluateVulnPolicies(
             long projectId,
-            Map<Long, Set<Long>> vulnIdsByComponentId) {
+            Map<Long, Set<Long>> vulnIdsByComponentId) throws InterruptedException {
         if (vulnIdsByComponentId.isEmpty()) {
             return Map.of();
         }
@@ -692,7 +705,8 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
             Handle handle,
             long projectId,
             Map<Long, Map<Long, VulnerabilityPolicy>> policyResults,
-            Map<Long, Set<Long>> activeFindings) {
+            Map<Long, Set<Long>> activeFindings,
+            Set<String> subscribedGroups) {
         final var analysisDao = new AnalysisDao(handle);
         final var reconcileResults = new ArrayList<AnalysisReconciler.Result>();
 
@@ -779,6 +793,10 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
         final int commentsCreated = analysisDao.createComments(createCommentCommands);
         LOGGER.debug("Created {} analysis comment(s)", commentsCreated);
 
+        if (!subscribedGroups.contains(NotificationGroup.PROJECT_AUDIT_CHANGE.name())) {
+            return List.of();
+        }
+
         // Build notifications for analyses where state or suppression changed.
         final List<AnalysisReconciler.Result> auditChangeResults =
                 reconcileResults.stream()
@@ -833,9 +851,11 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
     private List<Notification> createNewVulnerabilityNotifications(
             NotificationSubjectDao dao,
+            Set<String> subscribedGroups,
             Collection<FindingKey> findingKeys,
             AnalysisTrigger analysisTrigger) {
-        if (findingKeys.isEmpty()) {
+        if (findingKeys.isEmpty()
+                || !subscribedGroups.contains(NotificationGroup.NEW_VULNERABILITY.name())) {
             return List.of();
         }
 
@@ -860,8 +880,10 @@ public final class ReconcileVulnAnalysisResultsActivity implements Activity<Reco
 
     private List<Notification> createVulnerabilityRetractedNotifications(
             NotificationSubjectDao dao,
+            Set<String> subscribedGroups,
             Collection<FindingKey> findingKeys) {
-        if (findingKeys.isEmpty()) {
+        if (findingKeys.isEmpty()
+                || !subscribedGroups.contains(NotificationGroup.VULNERABILITY_RETRACTED.name())) {
             return List.of();
         }
 

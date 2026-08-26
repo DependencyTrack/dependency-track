@@ -73,6 +73,8 @@ public class PolicyProtoMapper {
         maybeSet(component::getBlake2b_384, protoBuilder::setBlake2B384);
         maybeSet(component::getBlake2b_512, protoBuilder::setBlake2B512);
         maybeSet(component::getBlake3, protoBuilder::setBlake3);
+        maybeSet(component::getStreebog_256, protoBuilder::setStreebog256);
+        maybeSet(component::getStreebog_512, protoBuilder::setStreebog512);
         maybeSet(component::getResolvedLicense, license -> protoBuilder.setResolvedLicense(mapToProto(license)));
 
         return protoBuilder.build();

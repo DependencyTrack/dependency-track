@@ -31,6 +31,9 @@ import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.common.health.HealthCheckRegistry;
 import org.dependencytrack.common.pagination.SimplePageTokenEncoder;
 import org.dependencytrack.dex.activity.DeleteFilesActivity;
+import org.dependencytrack.dex.api.Activity;
+import org.dependencytrack.dex.api.ActivitySpec;
+import org.dependencytrack.dex.api.payload.PayloadConverter;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.DexEngineConfig;
 import org.dependencytrack.dex.engine.api.DexEngineFactory;
@@ -50,6 +53,7 @@ import org.dependencytrack.notification.ProcessScheduledNotificationRuleActivity
 import org.dependencytrack.notification.ProcessScheduledNotificationsWorkflow;
 import org.dependencytrack.notification.PublishNotificationActivity;
 import org.dependencytrack.notification.PublishNotificationWorkflow;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.templating.pebble.PebbleNotificationTemplateRendererFactory;
 import org.dependencytrack.persistence.jdbi.ConfigPropertyDao;
 import org.dependencytrack.pkgmetadata.FetchPackageMetadataResolutionCandidatesActivity;
@@ -64,6 +68,7 @@ import org.dependencytrack.policy.vulnerability.SyncVulnPolicyBundleWorkflow;
 import org.dependencytrack.proto.internal.workflow.v1.AnalyzeProjectWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.DeleteFilesArgument;
 import org.dependencytrack.proto.internal.workflow.v1.EvalProjectPoliciesArg;
+import org.dependencytrack.proto.internal.workflow.v1.FetchPackageMetadataResolutionCandidatesArg;
 import org.dependencytrack.proto.internal.workflow.v1.FetchPackageMetadataResolutionCandidatesRes;
 import org.dependencytrack.proto.internal.workflow.v1.FetchProjectMetricsUpdateCandidatesRes;
 import org.dependencytrack.proto.internal.workflow.v1.ImportBomArg;
@@ -80,6 +85,7 @@ import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationActivit
 import org.dependencytrack.proto.internal.workflow.v1.PublishNotificationWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.ReconcileVulnAnalysisResultsArg;
 import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataActivityArg;
+import org.dependencytrack.proto.internal.workflow.v1.ResolvePackageMetadataWorkflowArg;
 import org.dependencytrack.proto.internal.workflow.v1.SyncVulnPolicyBundleArg;
 import org.dependencytrack.proto.internal.workflow.v1.UpdateProjectMetricsArg;
 import org.dependencytrack.proto.internal.workflow.v1.VulnAnalysisWorkflowArg;
@@ -158,7 +164,7 @@ public final class DexEngineInitializer implements ServletContextListener {
         requireNonNull(secretManager, "secretManager has not been initialized");
 
         final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
-                Map.of("baseUrl", () -> withJdbiHandle(
+                Map.of(NotificationTemplateVariables.BASE_URL, () -> withJdbiHandle(
                         handle -> handle
                                 .attach(ConfigPropertyDao.class)
                                 .getOptionalValue(GENERAL_BASE_URL)
@@ -209,7 +215,7 @@ public final class DexEngineInitializer implements ServletContextListener {
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
                 new ResolvePackageMetadataWorkflow(),
-                voidConverter(),
+                protoConverter(ResolvePackageMetadataWorkflowArg.class),
                 voidConverter(),
                 Duration.ofMinutes(1));
         engine.registerWorkflow(
@@ -228,116 +234,114 @@ public final class DexEngineInitializer implements ServletContextListener {
                 voidConverter(),
                 Duration.ofMinutes(1));
 
-        engine.registerActivity(
+        registerActivity(
+                engine,
                 new IdentifyInternalComponentsActivity(),
                 voidConverter(),
-                voidConverter(),
-                Duration.ofMinutes(30));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new ImportBomActivity(
                         fileStorage,
                         engine,
                         config.getOptionalValue("dt.tmp.delay-bom-processed-notification", boolean.class).orElse(false)),
                 protoConverter(ImportBomArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new ImportVexActivity(fileStorage),
                 protoConverter(ImportVexArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new DeleteFilesActivity(fileStorage),
                 protoConverter(DeleteFilesArgument.class),
-                voidConverter(),
-                Duration.ofMinutes(1));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new EvalProjectPoliciesActivity(new CelPolicyEngine()),
                 protoConverter(EvalProjectPoliciesArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new FetchPackageMetadataResolutionCandidatesActivity(pluginManager),
-                voidConverter(),
-                protoConverter(FetchPackageMetadataResolutionCandidatesRes.class),
-                Duration.ofMinutes(1));
-        engine.registerActivity(
+                protoConverter(FetchPackageMetadataResolutionCandidatesArg.class),
+                protoConverter(FetchPackageMetadataResolutionCandidatesRes.class));
+        registerActivity(
+                engine,
                 new FetchProjectMetricsUpdateCandidatesActivity(),
                 voidConverter(),
-                protoConverter(FetchProjectMetricsUpdateCandidatesRes.class),
-                Duration.ofMinutes(1));
-        engine.registerActivity(
+                protoConverter(FetchProjectMetricsUpdateCandidatesRes.class));
+        registerActivity(
+                engine,
                 new InvokeVulnAnalyzerActivity(fileStorage, pluginManager),
                 protoConverter(InvokeVulnAnalyzerArg.class),
-                protoConverter(InvokeVulnAnalyzerRes.class),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                protoConverter(InvokeVulnAnalyzerRes.class));
+        registerActivity(
+                engine,
                 new MirrorVulnDataSourceActivity(pluginManager),
                 protoConverter(MirrorVulnDataSourceArg.class),
-                voidConverter(),
-                // NB: Account for slow downloads, mainly of sources relying on data dumps.
-                // Activities can't heartbeat while blocked on I/O.
-                Duration.ofMinutes(15));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new MirrorKevDataSourceActivity(pluginManager),
                 protoConverter(MirrorKevDataSourceArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new PrepareVulnAnalysisActivity(fileStorage, pluginManager),
                 protoConverter(PrepareVulnAnalysisArg.class),
-                protoConverter(PrepareVulnAnalysisRes.class),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                protoConverter(PrepareVulnAnalysisRes.class));
+        registerActivity(
+                engine,
                 new ProcessScheduledNotificationRuleActivity(
                         engine,
                         fileStorage,
                         config.getValue(ConfigKeys.NOTIFICATION_OUTBOX_RELAY_LARGE_NOTIFICATION_THRESHOLD_BYTES, int.class)),
                 protoConverter(ProcessScheduledNotificationRuleArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new PublishNotificationActivity(
                         pluginManager,
                         fileStorage,
                         secretManager::getSecretValue,
                         templateRendererFactory),
                 protoConverter(PublishNotificationActivityArg.class),
-                voidConverter(),
-                Duration.ofMinutes(1));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new ReconcileVulnAnalysisResultsActivity(
                         fileStorage,
                         pluginManager,
                         new CelVulnerabilityPolicyEvaluator()),
                 protoConverter(ReconcileVulnAnalysisResultsArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new RefreshGlobalPortfolioMetricsActivity(),
                 voidConverter(),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new RefreshVulnerabilityMetricsActivity(),
                 voidConverter(),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new ResolvePackageMetadataActivity(pluginManager, secretManager),
                 protoConverter(ResolvePackageMetadataActivityArg.class),
-                voidConverter(),
-                Duration.ofMinutes(10));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new SyncVulnPolicyBundleActivity(config, HttpClient.INSTANCE),
                 protoConverter(SyncVulnPolicyBundleArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
-        engine.registerActivity(
+                voidConverter());
+        registerActivity(
+                engine,
                 new UpdateProjectMetricsActivity(),
                 protoConverter(UpdateProjectMetricsArg.class),
-                voidConverter(),
-                Duration.ofMinutes(5));
+                voidConverter());
 
         ensureTaskQueues(engine, List.of(
                 new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1000),
@@ -411,6 +415,17 @@ public final class DexEngineInitializer implements ServletContextListener {
         final var engineConfig = new DexEngineConfig(dataSource);
         engineConfig.setPageTokenEncoder(new SimplePageTokenEncoder());
 
+        config.getOptionalValue("dt.dex-engine.query-timeout-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig::setQueryTimeout);
+
+        config.getOptionalValue("dt.dex-engine.activity.lock-timeout-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig::setDefaultActivityLockTimeout);
+        config.getOptionalValue("dt.dex-engine.activity.execution-timeout-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig::setDefaultActivityExecutionTimeout);
+
         // Leader election.
         config.getOptionalValue("dt.dex-engine.leader-election.enabled", boolean.class)
                 .ifPresent(engineConfig.leaderElection()::setEnabled);
@@ -438,6 +453,9 @@ public final class DexEngineInitializer implements ServletContextListener {
                 .ifPresent(engineConfig.workflowTaskScheduler()::setPollInterval);
         getBackoffFunction(config, "dt.dex-engine.workflow-task-scheduler.poll-backoff")
                 .ifPresent(engineConfig.workflowTaskScheduler()::setPollBackoffFunction);
+        config.getOptionalValue("dt.dex-engine.workflow-task-scheduler.concurrency-key-wakeup-repair-interval-ms", long.class)
+                .map(Duration::ofMillis)
+                .ifPresent(engineConfig.workflowTaskScheduler()::setConcurrencyKeyWakeupRepairInterval);
 
         // Activity task scheduler.
         config.getOptionalValue("dt.dex-engine.activity-task-scheduler.poll-interval-ms", long.class)
@@ -583,6 +601,28 @@ public final class DexEngineInitializer implements ServletContextListener {
                 maxDelayMillis.get());
 
         return Optional.of(backoffFunction);
+    }
+
+    private <A, R> void registerActivity(
+            DexEngine engine,
+            Activity<A, R> activity,
+            PayloadConverter<A> argumentConverter,
+            PayloadConverter<R> resultConverter) {
+        final var activitySpec = activity.getClass().getAnnotation(ActivitySpec.class);
+        requireNonNull(activitySpec, "Activity class must be annotated with @" + ActivitySpec.class.getSimpleName());
+
+        final Duration executionTimeout = config.getOptionalValue(
+                        "dt.dex-engine.activity.%s.execution-timeout-ms".formatted(activitySpec.name()),
+                        long.class)
+                .map(Duration::ofMillis)
+                .orElse(null);
+
+        engine.registerActivity(
+                activity,
+                argumentConverter,
+                resultConverter,
+                /* lockTimeout */ null,
+                executionTimeout);
     }
 
 }

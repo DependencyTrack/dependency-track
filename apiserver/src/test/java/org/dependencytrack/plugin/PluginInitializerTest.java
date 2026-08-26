@@ -30,12 +30,14 @@ import org.dependencytrack.plugin.runtime.ExtensionPointMetadata;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.secret.TestSecretManager;
 import org.dependencytrack.secret.management.SecretManager;
+import org.dependencytrack.vulnanalysis.checkmarx.CheckmarxVulnAnalyzerPlugin;
 import org.dependencytrack.vulnanalysis.internal.InternalVulnAnalyzerPlugin;
 import org.dependencytrack.vulnanalysis.ossindex.OssIndexVulnAnalyzerPlugin;
 import org.dependencytrack.vulnanalysis.snyk.SnykVulnAnalyzerPlugin;
 import org.dependencytrack.vulnanalysis.trivy.TrivyVulnAnalyzerPlugin;
 import org.dependencytrack.vulnanalysis.vulndb.VulnDbVulnAnalyzerPlugin;
 import org.dependencytrack.vulndatasource.github.GitHubVulnDataSourcePlugin;
+import org.dependencytrack.vulndatasource.jvn.JvnVulnDataSourcePlugin;
 import org.dependencytrack.vulndatasource.nvd.NvdVulnDataSourcePlugin;
 import org.dependencytrack.vulndatasource.osv.OsvVulnDataSourcePlugin;
 import org.eclipse.microprofile.config.Config;
@@ -99,10 +101,12 @@ class PluginInitializerTest extends PersistenceCapableTest {
                         "vuln-data-source");
         assertThat(pluginManager.getLoadedPlugins()).satisfiesExactlyInAnyOrder(
                 plugin -> assertThat(plugin).isInstanceOf(BuiltinKevDataSourcePlugin.class),
+                plugin -> assertThat(plugin).isInstanceOf(CheckmarxVulnAnalyzerPlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(DefaultNotificationPublishersPlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(DefaultPackageMetadataResolutionPlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(GitHubVulnDataSourcePlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(InternalVulnAnalyzerPlugin.class),
+                plugin -> assertThat(plugin).isInstanceOf(JvnVulnDataSourcePlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(NvdVulnDataSourcePlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(OssIndexVulnAnalyzerPlugin.class),
                 plugin -> assertThat(plugin).isInstanceOf(OsvVulnDataSourcePlugin.class),

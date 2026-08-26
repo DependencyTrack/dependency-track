@@ -37,7 +37,7 @@ updates:
           - version-update:semver-major
   - package-ecosystem: docker
     target-branch: 5.0.x
-    directory: /src/main/docker
+    directory: /apiserver/src/main/docker
     schedule:
       interval: daily
     cooldown:

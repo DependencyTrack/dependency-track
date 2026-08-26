@@ -37,6 +37,7 @@ BEGIN
            , l."MEDIUM"
            , l."LOW"
            , l."UNASSIGNED_SEVERITY"
+           , l."KEV"
            , l."RISKSCORE"
            , l."FINDINGS_TOTAL"
            , l."FINDINGS_AUDITED"
@@ -64,6 +65,7 @@ BEGIN
            , c.medium
            , c.low
            , c.unassigned
+           , c.kev
            , c.risk_score
            , c.findings_total
            , c.findings_audited
@@ -105,6 +107,7 @@ BEGIN
     , "MEDIUM"
     , "LOW"
     , "UNASSIGNED_SEVERITY"
+    , "KEV"
     , "RISKSCORE"
     , "FINDINGS_TOTAL"
     , "FINDINGS_AUDITED"
@@ -136,6 +139,7 @@ BEGIN
          , medium
          , low
          , unassigned
+         , kev
          , risk_score
          , findings_total
          , findings_audited
@@ -176,6 +180,7 @@ BEGIN
        , COALESCE(SUM(medium)::INT, 0) AS medium
        , COALESCE(SUM(low)::INT, 0) AS low
        , COALESCE(SUM(unassigned)::INT, 0) AS unassigned
+       , COALESCE(SUM(kev)::INT, 0) AS kev
        , COALESCE(SUM(findings_total)::INT, 0) AS findings_total
        , COALESCE(SUM(findings_audited)::INT, 0) AS findings_audited
        , COALESCE(SUM(findings_unaudited)::INT, 0) AS findings_unaudited
@@ -218,6 +223,7 @@ BEGIN
            , pm."MEDIUM"
            , pm."LOW"
            , pm."UNASSIGNED_SEVERITY"
+           , pm."KEV"
            , pm."RISKSCORE"
            , pm."FINDINGS_TOTAL"
            , pm."FINDINGS_AUDITED"
@@ -247,6 +253,7 @@ BEGIN
            , v_project.medium
            , v_project.low
            , v_project.unassigned
+           , v_project.kev
            , v_project.risk_score
            , v_project.findings_total
            , v_project.findings_audited
@@ -279,6 +286,7 @@ BEGIN
     , "MEDIUM"
     , "LOW"
     , "UNASSIGNED_SEVERITY"
+    , "KEV"
     , "RISKSCORE"
     , "FINDINGS_TOTAL"
     , "FINDINGS_AUDITED"
@@ -311,6 +319,7 @@ BEGIN
          , v_project.medium
          , v_project.low
          , v_project.unassigned
+         , v_project.kev
          , v_project.risk_score
          , v_project.findings_total
          , v_project.findings_audited

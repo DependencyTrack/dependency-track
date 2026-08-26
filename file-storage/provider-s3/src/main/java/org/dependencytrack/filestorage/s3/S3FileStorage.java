@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.UncheckedIOException;
@@ -147,8 +148,16 @@ final class S3FileStorage implements FileStorage {
                             /* objectSize */ -1L,
                             /* partSize */ 10485760L /* (10MiB) */)
                     .build());
+            compressionFuture.get();
+        } catch (InterruptedException e) {
+            compressionFuture.cancel(/* mayInterruptIfRunning */ true);
+            Thread.currentThread().interrupt();
 
-            compressionFuture.join();
+            final var interruptedException =
+                    new InterruptedIOException(
+                            "Interrupted before the file could be stored");
+            interruptedException.initCause(e);
+            throw interruptedException;
         } catch (Exception e) {
             compressionFuture.cancel(true);
 

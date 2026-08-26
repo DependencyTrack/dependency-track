@@ -33,6 +33,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -69,7 +73,7 @@ class DataSourceRegistryTest {
     }
 
     @Test
-    void shouldCreateSimpleDataSourceWhenPoolIsDisabled() {
+    void shouldCreateSimpleDataSourceWhenPoolIsDisabled() throws SQLException {
         MemoryConfigSource.setProperties(Map.ofEntries(
                 Map.entry("dt.datasource.url", postgresContainer.getJdbcUrl()),
                 Map.entry("dt.datasource.username", postgresContainer.getUsername()),
@@ -77,11 +81,11 @@ class DataSourceRegistryTest {
                 Map.entry("dt.datasource.pool.enabled", "false")));
 
         final DataSource dataSource = registry.getDefault();
-        assertThat(dataSource).isInstanceOf(PGSimpleDataSource.class);
+        assertThat(dataSource.isWrapperFor(PGSimpleDataSource.class)).isTrue();
     }
 
     @Test
-    void shouldCreatePooledDataSourceWhenPoolIsEnabled() {
+    void shouldCreatePooledDataSourceWhenPoolIsEnabled() throws SQLException {
         MemoryConfigSource.setProperties(Map.ofEntries(
                 Map.entry("dt.datasource.url", postgresContainer.getJdbcUrl()),
                 Map.entry("dt.datasource.username", postgresContainer.getUsername()),
@@ -91,12 +95,13 @@ class DataSourceRegistryTest {
                 Map.entry("dt.datasource.pool.min-idle", "1")));
 
         final DataSource dataSource = registry.getDefault();
-        assertThat(dataSource).isInstanceOf(HikariDataSource.class);
-
-        final var hikariDataSource = (HikariDataSource) dataSource;
+        final HikariDataSource hikariDataSource = dataSource.unwrap(HikariDataSource.class);
         assertThat(hikariDataSource.getPoolName()).isEqualTo("default");
         assertThat(hikariDataSource.getMaximumPoolSize()).isEqualTo(2);
         assertThat(hikariDataSource.getMinimumIdle()).isEqualTo(1);
+
+        registry.closeAll();
+        assertThat(hikariDataSource.isClosed()).isTrue();
     }
 
     @Test
@@ -122,6 +127,119 @@ class DataSourceRegistryTest {
 
         final DataSource dataSource = registry.get("foo");
         assertThat(dataSource).isNotNull();
+    }
+
+    @Test
+    void shouldApplyDefaultQueryTimeoutToStatements() throws SQLException {
+        MemoryConfigSource.setProperties(Map.ofEntries(
+                Map.entry("dt.datasource.url", postgresContainer.getJdbcUrl()),
+                Map.entry("dt.datasource.username", postgresContainer.getUsername()),
+                Map.entry("dt.datasource.password", postgresContainer.getPassword()),
+                Map.entry("dt.datasource.pool.enabled", "false")));
+
+        final DataSource dataSource = registry.getDefault();
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             PreparedStatement preparedStatement = connection.prepareStatement("SELECT 1")) {
+            assertThat(statement.getQueryTimeout()).isEqualTo(60);
+            assertThat(preparedStatement.getQueryTimeout()).isEqualTo(60);
+        }
+    }
+
+    @Test
+    void shouldNotApplyQueryTimeoutWhenDisabled() throws SQLException {
+        MemoryConfigSource.setProperties(Map.ofEntries(
+                Map.entry("dt.datasource.url", postgresContainer.getJdbcUrl()),
+                Map.entry("dt.datasource.username", postgresContainer.getUsername()),
+                Map.entry("dt.datasource.password", postgresContainer.getPassword()),
+                Map.entry("dt.datasource.pool.enabled", "false"),
+                Map.entry("dt.datasource.query-timeout-ms", "0")));
+
+        final DataSource dataSource = registry.getDefault();
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement()) {
+            assertThat(statement.getQueryTimeout()).isZero();
+        }
+    }
+
+    @Test
+    void shouldCancelStatementExceedingQueryTimeout() throws SQLException {
+        MemoryConfigSource.setProperties(Map.ofEntries(
+                Map.entry("dt.datasource.url", postgresContainer.getJdbcUrl()),
+                Map.entry("dt.datasource.username", postgresContainer.getUsername()),
+                Map.entry("dt.datasource.password", postgresContainer.getPassword()),
+                Map.entry("dt.datasource.pool.enabled", "false"),
+                Map.entry("dt.datasource.query-timeout-ms", "1000")));
+
+        final DataSource dataSource = registry.getDefault();
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement()) {
+            assertThatExceptionOfType(SQLException.class)
+                    .isThrownBy(() -> statement.execute("SELECT PG_SLEEP(2)"))
+                    .satisfies(e -> assertThat(e.getSQLState()).isEqualTo("57014"));
+        }
+    }
+
+    @Test
+    void shouldAllowStatementsToOverrideQueryTimeout() throws SQLException {
+        MemoryConfigSource.setProperties(Map.ofEntries(
+                Map.entry("dt.datasource.url", postgresContainer.getJdbcUrl()),
+                Map.entry("dt.datasource.username", postgresContainer.getUsername()),
+                Map.entry("dt.datasource.password", postgresContainer.getPassword()),
+                Map.entry("dt.datasource.pool.enabled", "false"),
+                Map.entry("dt.datasource.query-timeout-ms", "1000")));
+
+        final DataSource dataSource = registry.getDefault();
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement()) {
+            statement.setQueryTimeout(0);
+            assertThat(statement.execute("SELECT PG_SLEEP(1.1)")).isTrue();
+        }
+    }
+
+    @Test
+    void shouldBypassQueryTimeoutForCallersThatMustRunUnbounded() throws SQLException {
+        MemoryConfigSource.setProperties(Map.ofEntries(
+                Map.entry("dt.datasource.url", postgresContainer.getJdbcUrl()),
+                Map.entry("dt.datasource.username", postgresContainer.getUsername()),
+                Map.entry("dt.datasource.password", postgresContainer.getPassword()),
+                Map.entry("dt.datasource.pool.enabled", "false")));
+
+        final DataSource dataSource = registry.getDefault();
+        final Integer queryTimeout = QueryTimeout.bypassing(() -> {
+            try (Connection connection = dataSource.getConnection();
+                 Statement statement = connection.createStatement()) {
+                return statement.getQueryTimeout();
+            }
+        });
+
+        assertThat(queryTimeout).isZero();
+    }
+
+    @Test
+    void shouldRearmQueryTimeoutOnEveryAcquisition() throws SQLException {
+        MemoryConfigSource.setProperties(Map.ofEntries(
+                Map.entry("dt.datasource.url", postgresContainer.getJdbcUrl()),
+                Map.entry("dt.datasource.username", postgresContainer.getUsername()),
+                Map.entry("dt.datasource.password", postgresContainer.getPassword()),
+                Map.entry("dt.datasource.pool.enabled", "true"),
+                Map.entry("dt.datasource.pool.max-size", "1"),
+                Map.entry("dt.datasource.pool.min-idle", "1")));
+
+        final DataSource dataSource = registry.getDefault();
+
+        final Integer bypassedTimeout = QueryTimeout.bypassing(() -> {
+            try (Connection connection = dataSource.getConnection();
+                 Statement statement = connection.createStatement()) {
+                return statement.getQueryTimeout();
+            }
+        });
+        assertThat(bypassedTimeout).isZero();
+
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement()) {
+            assertThat(statement.getQueryTimeout()).isEqualTo(60);
+        }
     }
 
     @ParameterizedTest

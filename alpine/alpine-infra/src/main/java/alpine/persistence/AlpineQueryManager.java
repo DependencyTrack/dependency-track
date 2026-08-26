@@ -421,7 +421,7 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
             }
             for (final String groupDN: groupDNs) {
                 for (final MappedLdapGroup mappedLdapGroup: getMappedLdapGroups(groupDN)) {
-                    LOGGER.debug("Adding user: {} to team: {}", user.getUsername(), mappedLdapGroup.getTeam());
+                    LOGGER.debug("Adding user: {} to team: {}", user.getUsername(), mappedLdapGroup.getTeam().getName());
                     addUserToTeam(user, mappedLdapGroup.getTeam());
                 }
             }
@@ -566,6 +566,7 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
         if (filter != null) {
             query.setFilter("name.toLowerCase().matches(:filter)");
             final String filterString = ".*" + filter.toLowerCase() + ".*";
+            query.setOrdering("name asc");
             return execute(query, filterString);
         }
         query.setOrdering("name asc");

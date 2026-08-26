@@ -20,6 +20,7 @@ package org.dependencytrack.persistence;
 
 import alpine.persistence.OrderDirection;
 import alpine.persistence.PaginatedResult;
+import alpine.persistence.ScopedCustomization;
 import alpine.resources.AlpineRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.auth.Permissions;
@@ -48,6 +49,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static org.datanucleus.PropertyNames.PROPERTY_QUERY_SQL_ALLOWALL;
 
 public class TagQueryManager extends QueryManager {
 
@@ -320,16 +323,18 @@ public class TagQueryManager extends QueryManager {
             if (!errorByTagName.isEmpty()) {
                 throw TagOperationFailedException.forDeletion(errorByTagName);
             }
+            
+            final Long[] tagIds = candidateRows.stream()
+                    .map(TagDeletionCandidateRow::id)
+                    .toArray(Long[]::new);
 
-            final Query<Tag> deletionQuery = pm.newQuery(Tag.class);
-            deletionQuery.setFilter(":ids.contains(id)");
-            try {
-                deletionQuery.deletePersistentAll(
-                        candidateRows.stream()
-                                .map(TagDeletionCandidateRow::id)
-                                .toList());
-            } finally {
-                deletionQuery.closeAll();
+            try (var _ = new ScopedCustomization(pm).withProperty(PROPERTY_QUERY_SQL_ALLOWALL, "true")) {
+                final Query<?> deletionQuery = pm.newQuery(Query.SQL, /* language=SQL */ """
+                        DELETE
+                          FROM "TAG"
+                         WHERE "ID" = ANY(:ids)
+                        """);
+                executeAndCloseWithMap(deletionQuery, Map.of("ids", tagIds));
             }
         });
     }

@@ -43,7 +43,6 @@ import org.jdbi.v3.sqlobject.customizer.AllowUnusedBindings;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMap;
 import org.jdbi.v3.sqlobject.customizer.Define;
-import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jspecify.annotations.Nullable;
@@ -143,6 +142,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                  , COALESCE(SUM(pm."MEDIUM"), 0) AS medium
                  , COALESCE(SUM(pm."LOW"), 0) AS low
                  , COALESCE(SUM(pm."UNASSIGNED_SEVERITY"), 0) AS unassigned
+                 , COALESCE(SUM(pm."KEV"), 0) AS kev
                  , COALESCE(SUM(pm."RISKSCORE"), 0) AS "inheritedRiskScore"
                  , COALESCE(SUM(pm."FINDINGS_TOTAL"), 0) AS "findingsTotal"
                  , COALESCE(SUM(pm."FINDINGS_AUDITED"), 0) AS "findingsAudited"
@@ -189,6 +189,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
                  , "MEDIUM" AS medium
                  , "LOW" AS low
                  , "UNASSIGNED_SEVERITY" AS unassigned
+                 , "KEV" AS kev
                  , "RISKSCORE" AS "inheritedRiskScore"
                  , "FINDINGS_TOTAL" AS "findingsTotal"
                  , "FINDINGS_AUDITED" AS "findingsAudited"
@@ -434,6 +435,7 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             int components,
             int critical,
             int high,
+            int kev,
             int low,
             int medium,
             int policyViolationsFail,
@@ -717,22 +719,52 @@ public interface ProjectDao extends SqlObject, PaginationSupport {
             """)
     int deleteProject(@Bind final UUID projectUuid);
 
-    @SqlUpdate("""
-            WITH cte_locked AS (
+    /**
+     * Deletes accessible projects and returns a row for each removed project,
+     * including descendants removed by {@code ON DELETE CASCADE}.
+     * {@code ancestorUuid} is {@code null} for explicitly requested projects;
+     * otherwise it is the closest requested ancestor.
+     */
+    @SqlQuery(/* language=InjectedFreeMarker */ """
+            <#-- @ftlvariable name="apiProjectAclCondition" type="String" -->
+            WITH
+            cte_locked AS (
               SELECT "ID"
                 FROM "PROJECT"
                WHERE ${apiProjectAclCondition}
                  AND "UUID" = ANY(:projectUuids)
                ORDER BY "ID"
                  FOR UPDATE
+            ),
+            cte_deleted AS (
+              DELETE
+                FROM "PROJECT"
+               WHERE "ID" IN (SELECT "ID" FROM cte_locked)
+              RETURNING "ID"
             )
-            DELETE
-              FROM "PROJECT"
-             WHERE "ID" IN (SELECT "ID" FROM cte_locked)
-            RETURNING "UUID"
+            SELECT DISTINCT ON (project."ID")
+                   project."UUID" AS "UUID"
+                 , project."NAME" AS "NAME"
+                 , project."VERSION" AS "VERSION"
+                 , CASE WHEN ph."DEPTH" = 0 THEN NULL ELSE ancestor."UUID" END AS "ANCESTOR_UUID"
+              FROM "PROJECT_HIERARCHY" AS ph
+             INNER JOIN "PROJECT" AS ancestor
+                ON ancestor."ID" = ph."PARENT_PROJECT_ID"
+             INNER JOIN "PROJECT" AS project
+                ON project."ID" = ph."CHILD_PROJECT_ID"
+             WHERE ph."PARENT_PROJECT_ID" IN (SELECT "ID" FROM cte_deleted)
+             ORDER BY project."ID"
+                    , ph."DEPTH"
             """)
-    @GetGeneratedKeys
-    Set<UUID> deleteProjects(@Bind Collection<UUID> projectUuids);
+    @RegisterConstructorMapper(DeletedProjectRow.class)
+    List<DeletedProjectRow> deleteProjects(@Bind Collection<UUID> projectUuids);
+
+    record DeletedProjectRow(
+            UUID uuid,
+            String name,
+            @Nullable String version,
+            @Nullable UUID ancestorUuid) {
+    }
 
     @SqlQuery("""
              WITH "CTE" AS (

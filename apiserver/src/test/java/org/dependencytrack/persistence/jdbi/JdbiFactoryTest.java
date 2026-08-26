@@ -23,6 +23,8 @@ import org.dependencytrack.model.Project;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,6 +61,17 @@ public class JdbiFactoryTest extends PersistenceCapableTest {
                     handle.createQuery("SELECT \"NAME\" FROM \"PROJECT\"").mapTo(String.class).findFirst());
             assertThat(projectName).isNotPresent();
         });
+    }
+
+    @Test
+    public void testStatementsCarryQueryTimeoutDefault() throws SQLException {
+        final int queryTimeout = JdbiFactory.<Integer, SQLException>withJdbiHandle(handle -> {
+            try (Statement statement = handle.getConnection().createStatement()) {
+                return statement.getQueryTimeout();
+            }
+        });
+
+        assertThat(queryTimeout).isEqualTo(60);
     }
 
 }

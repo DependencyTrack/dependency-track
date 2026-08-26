@@ -28,7 +28,6 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Query;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.core.statement.Update;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -43,22 +42,23 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static org.dependencytrack.dex.engine.MdcKeys.MDC_QUEUE_NAME;
+
 final class ActivityTaskScheduler implements Closeable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityTaskScheduler.class);
 
     private final Jdbi jdbi;
     private final Supplier<Boolean> leadershipSupplier;
-    private final MeterRegistry meterRegistry;
     private final long pollIntervalMillis;
     private final IntervalFunction pollBackoffFunction;
     private final Consumer<String> onTasksScheduledCallback;
     private final Thread pollThread;
+    private final Counter pollsCounter;
+    private final MeterProvider<Timer> taskSchedulingLatencyTimer;
+    private final MeterProvider<Counter> tasksScheduledCounter;
     private volatile boolean stopped = false;
     private volatile boolean nudged = false;
-    private @Nullable Counter pollsCounter;
-    private @Nullable MeterProvider<Timer> taskSchedulingLatencyTimer;
-    private @Nullable MeterProvider<Counter> tasksScheduledCounter;
 
     ActivityTaskScheduler(
             Jdbi jdbi,
@@ -69,26 +69,24 @@ final class ActivityTaskScheduler implements Closeable {
             Consumer<String> onTasksScheduledCallback) {
         this.jdbi = jdbi;
         this.leadershipSupplier = leadershipSupplier;
-        this.meterRegistry = meterRegistry;
         this.pollIntervalMillis = pollIntervalMillis.toMillis();
         this.pollBackoffFunction = pollBackoffFunction;
         this.onTasksScheduledCallback = onTasksScheduledCallback;
         this.pollThread = Thread.ofPlatform()
                 .name(ActivityTaskScheduler.class.getSimpleName())
                 .unstarted(this::pollLoop);
+        this.pollsCounter = Counter
+                .builder("dt.dex.engine.activity.task.scheduler.polls")
+                .register(meterRegistry);
+        this.taskSchedulingLatencyTimer = Timer
+                .builder("dt.dex.engine.activity.task.scheduling.latency")
+                .withRegistry(meterRegistry);
+        this.tasksScheduledCounter = Counter
+                .builder("dt.dex.engine.activity.tasks.scheduled")
+                .withRegistry(meterRegistry);
     }
 
     void start() {
-        pollsCounter = Counter
-                .builder("dt.dex.engine.activity.task.scheduler.polls")
-                .register(meterRegistry);
-        taskSchedulingLatencyTimer = Timer
-                .builder("dt.dex.engine.activity.task.scheduling.latency")
-                .withRegistry(meterRegistry);
-        tasksScheduledCounter = Counter
-                .builder("dt.dex.engine.activity.tasks.scheduled")
-                .withRegistry(meterRegistry);
-
         pollThread.start();
     }
 
@@ -204,7 +202,7 @@ final class ActivityTaskScheduler implements Closeable {
         boolean didScheduleTasks = false;
         for (final Queue queue : queues) {
             final Timer.Sample latencySample = Timer.start();
-            try (var _ = MDC.putCloseable("queueName", queue.name())) {
+            try (var _ = MDC.putCloseable(MDC_QUEUE_NAME, queue.name())) {
                 didScheduleTasks |= jdbi.inTransaction(handle -> processQueue(handle, queue));
             } finally {
                 latencySample.stop(

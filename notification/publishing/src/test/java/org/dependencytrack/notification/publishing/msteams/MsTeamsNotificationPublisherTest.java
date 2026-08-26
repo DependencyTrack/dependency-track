@@ -181,6 +181,18 @@ class MsTeamsNotificationPublisherTest extends AbstractNotificationPublisherTest
                                 {
                                   "name": "Group",
                                   "value": "GROUP_BOM_VALIDATION_FAILED"
+                                },
+                                {
+                                  "name": "Project",
+                                  "value": "projectName : projectVersion"
+                                },
+                                {
+                                  "name": "Project URL",
+                                  "value": "https://example.com/projects/c9c9539a-e381-4b36-ac52-6a7ab83b2c95"
+                                },
+                                {
+                                  "name": "Errors",
+                                  "value": "cause 1, cause 2"
                                 }
                               ],
                               "text": "An error occurred while validating a BOM"

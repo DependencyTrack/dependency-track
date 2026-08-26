@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.persistence.jdbi;
 
+import alpine.persistence.Pagination;
+import alpine.resources.AlpineRequest;
 import org.dependencytrack.common.pagination.Page.TotalCount;
 import org.jdbi.v3.core.statement.Query;
 import org.jdbi.v3.core.statement.SqlStatements;
@@ -25,7 +27,10 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
@@ -149,11 +154,98 @@ public interface PaginationSupport extends SqlObject {
             return new TotalCount(count, TotalCount.Type.EXACT);
         }
 
+        return TotalCount.bounded(count, threshold);
+    }
+
+    /// Resolves the exact total count from a page with a window count,
+    /// or falls back to a separate count query when the page carries none.
+    ///
+    /// @since 5.1.0
+    default <T> TotalCount exactTotalCount(
+            List<T> items,
+            Function<T, @Nullable Long> windowTotalCountExtractor,
+            LongSupplier exactCountSupplier) {
+        if (items.isEmpty()) {
+            // When the page is empty, we could erroneously report a total count of 0,
+            // even if there were preceding pages. If this was a request for a later
+            // page, we have to run a separate count query to find the true total.
+            return new TotalCount(
+                    itemsPrecedingPage() > 0
+                            ? exactCountSupplier.getAsLong()
+                            : 0,
+                    TotalCount.Type.EXACT);
+        }
+
         return new TotalCount(
-                Math.min(count, threshold),
-                count > threshold
-                        ? TotalCount.Type.AT_LEAST
-                        : TotalCount.Type.EXACT);
+                requireNonNull(
+                        windowTotalCountExtractor.apply(items.getFirst()),
+                        "totalCount must not be null when the window count was requested"),
+                TotalCount.Type.EXACT);
+    }
+
+    /// Interprets a count capped at `threshold`, never below what the page itself proves.
+    ///
+    /// The count query only runs when it can still improve on [#pageDerivedTotalCount(int)].
+    /// Otherwise its result would be discarded.
+    ///
+    /// @since 5.1.0
+    default TotalCount boundedTotalCountOrAtLeast(
+            LongSupplier boundedCountSupplier,
+            int threshold,
+            int returnedItems) {
+        final TotalCount pageDerived = pageDerivedTotalCount(returnedItems);
+        if (pageDerived.type() == TotalCount.Type.EXACT || pageDerived.value() > threshold) {
+            return pageDerived;
+        }
+
+        return TotalCount.bounded(boundedCountSupplier.getAsLong(), threshold);
+    }
+
+    /// The best total provable from the page alone,
+    /// for queries where even a capped count is too expensive.
+    ///
+    /// Only works for offset pagination, **do not use for token pagination**.
+    ///
+    /// @since 5.1.0
+    default TotalCount pageDerivedTotalCount(int returnedItems) {
+        final Pagination pagination = apiPagination();
+        if (pagination == null) {
+            // Without pagination, we know the query returned the entire result set.
+            return new TotalCount(returnedItems, TotalCount.Type.EXACT);
+        }
+
+        if (returnedItems == 0) {
+            // An empty page doesn't tell us whether truly no items exist,
+            // or we just moved past the number of items in the collection.
+            return new TotalCount(0, pagination.getOffset() == 0
+                    ? TotalCount.Type.EXACT
+                    : TotalCount.Type.AT_LEAST);
+        }
+
+        return new TotalCount(
+                pagination.getOffset() + returnedItems,
+                returnedItems < pagination.getLimit()
+                        ? TotalCount.Type.EXACT
+                        : TotalCount.Type.AT_LEAST);
+    }
+
+    private long itemsPrecedingPage() {
+        final Pagination pagination = apiPagination();
+        return pagination != null
+                ? pagination.getOffset()
+                : 0;
+    }
+
+    private @Nullable Pagination apiPagination() {
+        final AlpineRequest apiRequest = getHandle().getConfig(ApiRequestConfig.class).apiRequest();
+        if (apiRequest == null) {
+            return null;
+        }
+
+        final Pagination pagination = apiRequest.getPagination();
+        return pagination != null && pagination.isPaginated()
+                ? pagination
+                : null;
     }
 
     default <T> T withJitDisabled(Supplier<T> supplier) {

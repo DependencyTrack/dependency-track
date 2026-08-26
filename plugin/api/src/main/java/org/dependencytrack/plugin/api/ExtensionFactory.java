@@ -34,6 +34,14 @@ public interface ExtensionFactory<T extends ExtensionPoint> extends Closeable {
     String extensionName();
 
     /**
+     * @return Human-readable name of the extension, for display purposes. Defaults to {@link #extensionName()}.
+     * @since 5.1.0
+     */
+    default String displayName() {
+        return extensionName();
+    }
+
+    /**
      * @return {@link Class} of the extension.
      */
     Class<? extends T> extensionClass();

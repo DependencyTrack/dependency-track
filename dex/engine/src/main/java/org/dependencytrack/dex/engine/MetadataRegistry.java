@@ -22,6 +22,7 @@ import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivitySpec;
 import org.dependencytrack.dex.api.Workflow;
 import org.dependencytrack.dex.api.WorkflowSpec;
+import org.dependencytrack.dex.api.WorkflowSpecs;
 import org.dependencytrack.dex.api.payload.PayloadConverter;
 import org.jspecify.annotations.Nullable;
 
@@ -39,6 +40,8 @@ final class MetadataRegistry {
 
     private static final Pattern WORKFLOW_NAME_PATTERN = Pattern.compile("^[\\w-]+");
     private static final Pattern ACTIVITY_NAME_PATTERN = WORKFLOW_NAME_PATTERN;
+    private final Duration defaultActivityLockTimeout;
+    private final Duration defaultActivityExecutionTimeout;
 
     @SuppressWarnings("rawtypes")
     private final Map<Class<? extends Workflow>, String> workflowNameByExecutorClass = new ConcurrentHashMap<>();
@@ -52,6 +55,17 @@ final class MetadataRegistry {
     @SuppressWarnings("rawtypes")
     private final Map<String, ActivityMetadata> activityMetadataByName = new HashMap<>();
 
+    MetadataRegistry(
+            Duration defaultActivityLockTimeout,
+            Duration defaultActivityExecutionTimeout) {
+        this.defaultActivityLockTimeout = requireNonNull(
+                defaultActivityLockTimeout,
+                "defaultActivityLockTimeout must not be null");
+        this.defaultActivityExecutionTimeout = requireNonNull(
+                defaultActivityExecutionTimeout,
+                "defaultActivityExecutionTimeout must not be null");
+    }
+
     <A, R> void registerWorkflow(
             Workflow<A, R> workflow,
             PayloadConverter<A> argumentConverter,
@@ -59,7 +73,7 @@ final class MetadataRegistry {
             Duration lockTimeout) {
         requireNonNull(workflow, "workflow must not be null");
 
-        final WorkflowSpec workflowSpec = requireWorkflowSpec(workflow.getClass());
+        final WorkflowSpec workflowSpec = WorkflowSpecs.of(workflow.getClass());
 
         registerWorkflow(
                 workflowSpec.name(),
@@ -113,7 +127,8 @@ final class MetadataRegistry {
             Activity<A, R> activity,
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
-            Duration lockTimeout) {
+            @Nullable Duration lockTimeout,
+            @Nullable Duration executionTimeout) {
         requireNonNull(activity, "activity must not be null");
 
         final ActivitySpec activitySpec = requireActivitySpec(activity.getClass());
@@ -124,6 +139,7 @@ final class MetadataRegistry {
                 resultConverter,
                 activitySpec.defaultTaskQueue(),
                 lockTimeout,
+                executionTimeout,
                 activity);
     }
 
@@ -132,14 +148,26 @@ final class MetadataRegistry {
             PayloadConverter<A> argumentConverter,
             PayloadConverter<R> resultConverter,
             String defaultTaskQueueName,
-            Duration lockTimeout,
+            @Nullable Duration lockTimeout,
+            @Nullable Duration executionTimeout,
             Activity<A, R> activity) {
         requireValidActivityName(name);
         requireNonNull(argumentConverter, "argumentConverter must not be null");
         requireNonNull(resultConverter, "resultConverter must not be null");
         requireValidTaskQueueName(defaultTaskQueueName);
-        requireValidLockTimeout(lockTimeout);
         requireNonNull(activity, "activity must not be null");
+
+        final Duration effectiveLockTimeout =
+                lockTimeout == null
+                        ? defaultActivityLockTimeout
+                        : lockTimeout;
+        requireValidLockTimeout(effectiveLockTimeout);
+
+        final Duration effectiveExecutionTimeout =
+                executionTimeout == null
+                        ? defaultActivityExecutionTimeout
+                        : executionTimeout;
+        requireValidExecutionTimeout(effectiveExecutionTimeout);
 
         if (activityNameByExecutorClass.containsKey(activity.getClass())) {
             throw new IllegalArgumentException(
@@ -157,7 +185,8 @@ final class MetadataRegistry {
                 argumentConverter,
                 resultConverter,
                 defaultTaskQueueName,
-                lockTimeout);
+                effectiveLockTimeout,
+                effectiveExecutionTimeout);
         activityNameByExecutorClass.put(activity.getClass(), name);
         activityMetadataByName.put(name, metadata);
     }
@@ -216,7 +245,9 @@ final class MetadataRegistry {
 
     @SuppressWarnings("rawtypes")
     private String getWorkflowName(Class<? extends Workflow> workflowClass) {
-        return workflowNameByExecutorClass.computeIfAbsent(workflowClass, clazz -> requireWorkflowSpec(clazz).name());
+        return workflowNameByExecutorClass.computeIfAbsent(
+                workflowClass,
+                clazz -> WorkflowSpecs.of(clazz).name());
     }
 
     @SuppressWarnings("rawtypes")
@@ -229,16 +260,6 @@ final class MetadataRegistry {
         final ActivitySpec spec = activityClass.getAnnotation(ActivitySpec.class);
         if (spec == null) {
             throw new IllegalArgumentException("Activity class must be annotated with @" + ActivitySpec.class.getSimpleName());
-        }
-
-        return spec;
-    }
-
-    @SuppressWarnings("rawtypes")
-    private static WorkflowSpec requireWorkflowSpec(Class<? extends Workflow> activityClass) {
-        final WorkflowSpec spec = activityClass.getAnnotation(WorkflowSpec.class);
-        if (spec == null) {
-            throw new IllegalArgumentException("Workflow class must be annotated with @" + WorkflowSpec.class.getSimpleName());
         }
 
         return spec;
@@ -272,6 +293,12 @@ final class MetadataRegistry {
         requireNonNull(lockTimeout, "lockTimeout must not be null");
         if (!lockTimeout.isPositive()) {
             throw new IllegalArgumentException("lockTimeout must positive");
+        }
+    }
+
+    private static void requireValidExecutionTimeout(Duration executionTimeout) {
+        if (!executionTimeout.isPositive()) {
+            throw new IllegalArgumentException("executionTimeout must be positive");
         }
     }
 

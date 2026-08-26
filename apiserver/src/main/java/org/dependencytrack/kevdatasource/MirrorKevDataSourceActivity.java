@@ -90,7 +90,6 @@ public final class MirrorKevDataSourceActivity implements Activity<MirrorKevData
                         throw new InterruptedException(
                                 "Interrupted before all KEV assertions could be consumed");
                     }
-                    ctx.maybeHeartbeat();
 
                     final KevAssertion assertion = dataSource.next();
                     batch.add(assertion);

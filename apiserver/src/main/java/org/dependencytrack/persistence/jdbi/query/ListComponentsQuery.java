@@ -62,7 +62,9 @@ public record ListComponentsQuery(
         BLAKE2B_256,
         BLAKE2B_384,
         BLAKE2B_512,
-        BLAKE3
+        BLAKE3,
+        STREEBOG_256,
+        STREEBOG_512
     }
 
     public record PageToken(

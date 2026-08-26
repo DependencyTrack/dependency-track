@@ -58,6 +58,8 @@ public class CoordinatesConditionTest extends PersistenceCapableTest {
                 new Object[]{PolicyCondition.Operator.MATCHES, "{\"group\": \"acme-app\", \"name\": \"*\", \"version\": \"1.0.0\"}", "{\"group\": \"acme-app\", \"name\": \"Anything\", \"version\": \"1.0.0\"}", true},
                 //Matches on wild card version
                 new Object[]{PolicyCondition.Operator.MATCHES, "{\"group\": \"acme-app\", \"name\": \"Test Component\", \"version\": \">=*\"}", "{\"group\": \"acme-app\", \"name\": \"Test Component\", \"version\": \"4.4.4\"}", true},
+                //Matches on bare wild card version
+                new Object[]{PolicyCondition.Operator.MATCHES, "{\"group\": \"acme-app\", \"name\": \"Test Component\", \"version\": \"*\"}", "{\"group\": \"acme-app\", \"name\": \"Test Component\", \"version\": \"4.4.4\"}", true},
                 //Matches on empty policy - uncomment after fixing script builder
                 //new Object[]{PolicyCondition.Operator.MATCHES, "{}", "{}", true},
                 //Does not match on lower version

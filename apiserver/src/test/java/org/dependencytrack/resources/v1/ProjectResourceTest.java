@@ -1367,6 +1367,7 @@ class ProjectResourceTest extends ResourceTest {
             projectMetricsLatest.setInheritedRiskScore(13.13);
             projectMetricsLatest.setUnassigned(14);
             projectMetricsLatest.setVulnerabilities(15);
+            projectMetricsLatest.setKev(16);
             projectMetricsLatest.setFirstOccurrence(Date.from(projectMetricsLatestOccurrence));
             projectMetricsLatest.setLastOccurrence(Date.from(projectMetricsLatestOccurrence));
             dao.createProjectMetrics(projectMetricsLatest);
@@ -1411,6 +1412,7 @@ class ProjectResourceTest extends ResourceTest {
                       "components": 1,
                       "critical": 2,
                       "high": 3,
+                      "kev": 16,
                       "low": 4,
                       "medium": 5,
                       "policyViolationsFail": 6,
@@ -1915,6 +1917,7 @@ class ProjectResourceTest extends ResourceTest {
             projectMetricsLatest.setInheritedRiskScore(13.13);
             projectMetricsLatest.setUnassigned(14);
             projectMetricsLatest.setVulnerabilities(15);
+            projectMetricsLatest.setKev(16);
             projectMetricsLatest.setFirstOccurrence(Date.from(projectMetricsLatestOccurrence));
             projectMetricsLatest.setLastOccurrence(Date.from(projectMetricsLatestOccurrence));
             dao.createProjectMetrics(projectMetricsLatest);
@@ -1959,6 +1962,7 @@ class ProjectResourceTest extends ResourceTest {
                       "components": 1,
                       "critical": 2,
                       "high": 3,
+                      "kev": 16,
                       "low": 4,
                       "medium": 5,
                       "policyViolationsFail": 6,
@@ -4687,6 +4691,43 @@ class ProjectResourceTest extends ResourceTest {
 
         assertThat(qm.getProject("acme-app", null)).satisfies(project ->
                 assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly("otherTeam"));
+    }
+
+    @Test
+    void createProjectAsUserWithAclEnabledAndTeamBeyondDefaultPageSizeAdminTest() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT, Permissions.PORTFOLIO_MANAGEMENT_CREATE);
+        enablePortfolioAccessControl();
+
+        final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
+        qm.addUserToTeam(testUser, team);
+
+        final String userSessionToken = new SessionTokenService().createSession(testUser.getId());
+
+        // getTeams() is ordered by name and defaults to page size 100.
+        // Names starting with "Z" sort after the built-in "Test Users" team.
+        Team lastTeam = null;
+        for (int i = 0; i < 100; i++) {
+            lastTeam = qm.createTeam("ZTeam " + String.format("%03d", i));
+        }
+        final Team assignedTeam = lastTeam;
+
+        final Response response = jersey.target(V1_PROJECT)
+                .request()
+                .header("Authorization", "Bearer " + userSessionToken)
+                .put(Entity.json(/* language=JSON */ """
+                        {
+                          "name": "acme-app",
+                          "accessTeams": [
+                            {
+                              "uuid": "%s"
+                            }
+                          ]
+                        }
+                        """.formatted(assignedTeam.getUuid())));
+        assertThat(response.getStatus()).isEqualTo(201);
+
+        assertThat(qm.getProject("acme-app", null)).satisfies(project ->
+                assertThat(project.getAccessTeams()).extracting(Team::getName).containsOnly(assignedTeam.getName()));
     }
 
     @Test

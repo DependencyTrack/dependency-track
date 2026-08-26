@@ -128,6 +128,30 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
     }
 
     @Test
+    public void testWithAlpineRequestPaginationOptOut() {
+        final var request = new AlpineRequest(
+                /* principal */ null,
+                /* pagination */ new Pagination(Pagination.Strategy.PAGES, 1, 100),
+                /* filter */ null,
+                /* orderBy */ null,
+                /* orderDirection */ null
+        );
+
+        useJdbiHandle(request, handle -> handle
+                .addCustomizer(inspectStatement(ctx -> {
+                    assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace(/* language=SQL */ """
+                            SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
+                            """);
+
+                    assertThat(ctx.getBinding()).hasToString("{}");
+                }))
+                .createQuery(TEST_QUERY_TEMPLATE)
+                .define(JdbiAttributes.ATTRIBUTE_API_PAGINATE, false)
+                .mapTo(Integer.class)
+                .findOne());
+    }
+
+    @Test
     public void testWithAlpineRequestOrderingWithoutAllowedColumns() {
         final var request = new AlpineRequest(
                 /* principal */ null,

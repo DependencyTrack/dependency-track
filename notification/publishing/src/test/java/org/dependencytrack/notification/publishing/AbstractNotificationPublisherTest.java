@@ -25,6 +25,7 @@ import org.dependencytrack.notification.api.publishing.NotificationPublishContex
 import org.dependencytrack.notification.api.publishing.NotificationPublisher;
 import org.dependencytrack.notification.api.publishing.NotificationPublisherFactory;
 import org.dependencytrack.notification.api.templating.NotificationTemplateRenderer;
+import org.dependencytrack.notification.api.templating.NotificationTemplateVariables;
 import org.dependencytrack.notification.proto.v1.Group;
 import org.dependencytrack.notification.proto.v1.Level;
 import org.dependencytrack.notification.proto.v1.Notification;
@@ -101,7 +102,10 @@ public abstract class AbstractNotificationPublisherTest {
 
         final var templateRendererFactory =
                 new PebbleNotificationTemplateRendererFactory(
-                        Map.of("baseUrl", () -> "https://example.com"));
+                        Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"),
+                        // NB: strictVariables enabled so rendering fails when default
+                        // templates reference nonexistent variables.
+                        /* strictVariables */ true);
         final NotificationTemplateRenderer templateRenderer =
                 templateRendererFactory.createRenderer(
                         publisherFactory.defaultTemplate());
@@ -152,6 +156,10 @@ public abstract class AbstractNotificationPublisherTest {
                 }
             }
         }
+
+        // NB: GROUP_PROJECT_AUDIT_CHANGE has two possible subjects, but the supplier matrix
+        // can only provide one per scope / group / level combination.
+        notifications.add(TestNotificationFactory.createPolicyViolationAuditChangeTestNotification());
 
         return notifications.stream()
                 // Ensure notification data is deterministic.

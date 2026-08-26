@@ -53,7 +53,7 @@ public class CpeConditionTest extends PersistenceCapableTest {
 
     @ParameterizedTest
     @MethodSource("parameters")
-    public void testCondition(final Operator operator, final String conditionCpe, final String componentCpe, final boolean expectViolation) {
+    public void testCondition(final Operator operator, final String conditionCpe, final String componentCpe, final boolean expectViolation) throws Exception {
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.INFO);
         qm.createPolicyCondition(policy, PolicyCondition.Subject.CPE, operator, conditionCpe);
 

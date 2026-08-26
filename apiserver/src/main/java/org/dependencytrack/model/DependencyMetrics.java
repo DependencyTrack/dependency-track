@@ -48,6 +48,7 @@ public class DependencyMetrics implements Serializable {
     private int medium;
     private int low;
     private int unassigned;
+    private int kev;
     private int vulnerabilities;
     private int suppressed;
     private int findingsTotal;
@@ -132,6 +133,14 @@ public class DependencyMetrics implements Serializable {
 
     public void setUnassigned(int unassigned) {
         this.unassigned = unassigned;
+    }
+
+    public int getKev() {
+        return kev;
+    }
+
+    public void setKev(int kev) {
+        this.kev = kev;
     }
 
     public int getVulnerabilities() {

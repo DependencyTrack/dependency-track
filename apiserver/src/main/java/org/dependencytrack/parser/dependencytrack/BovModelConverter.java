@@ -59,13 +59,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static io.github.nscuro.versatile.version.KnownVersioningSchemes.SCHEME_GENERIC;
 import static org.apache.commons.lang3.StringUtils.trimToNull;
@@ -272,16 +274,17 @@ public final class BovModelConverter {
             return Collections.emptyList();
         }
 
-        final var componentByBomRef = new HashMap<String, Component>();
+        final Map<String, Component> componentByBomRef =
+                bov.getComponentsList().stream().collect(
+                        Collectors.toMap(
+                                Component::getBomRef,
+                                Function.identity(),
+                                (first, _) -> first));
+
         final var vsList = new ArrayList<VulnerableSoftware>();
 
         for (final VulnerabilityAffects bovVulnAffects : vuln.getAffectsList()) {
-            final Component component = componentByBomRef.computeIfAbsent(
-                    bovVulnAffects.getRef(),
-                    bomRef -> bov.getComponentsList().stream()
-                            .filter(c -> bomRef.equals(c.getBomRef()))
-                            .findAny()
-                            .orElse(null));
+            final Component component = componentByBomRef.get(bovVulnAffects.getRef());
             if (component == null) {
                 LOGGER.warn(
                         "No component in the BOV for {} is matching the BOM ref '{}' of the affects node; Skipping",
@@ -326,6 +329,7 @@ public final class BovModelConverter {
             case OSV -> alias.setOsvId(cycloneVuln.getId());
             case SNYK -> alias.setSnykId(cycloneVuln.getId());
             case VULNDB -> alias.setVulnDbId(cycloneVuln.getId());
+            case CX -> alias.setCxId(cycloneVuln.getId());
             // Source of the vulnerability itself has been validated before,
             // so this scenario is highly unlikely to ever happen. Including
             // it here to make linters happy.
@@ -341,6 +345,7 @@ public final class BovModelConverter {
             case OSV -> alias.setOsvId(cycloneAlias.getId());
             case SNYK -> alias.setSnykId(cycloneAlias.getId());
             case VULNDB -> alias.setVulnDbId(cycloneAlias.getId());
+            case CX -> alias.setCxId(cycloneAlias.getId());
             default -> throw new IllegalArgumentException(
                     "Invalid source %s for alias %s".formatted(aliasSource, cycloneAlias.getId()));
         }
@@ -477,7 +482,8 @@ public final class BovModelConverter {
             return Vers.parseLenient(range).validate().split();
         } catch (InvalidVersionException e) {
             String[] rangeParts = range.split(":", 2);
-            if (SCHEME_GENERIC.equals(rangeParts[0])) {
+            String[] versions = rangeParts[1].split("/", 2);
+            if (SCHEME_GENERIC.equals(versions[0])) {
                 LOGGER.warn("""
                         Range '{}' could not be parsed because one or more versions \
                         do not comply with the versioning scheme's rules; Skipping""", range, e);
@@ -488,7 +494,6 @@ public final class BovModelConverter {
                     Range '{}' could not be parsed because one or more versions \
                     do not comply with the versioning scheme's rules; \
                     Falling back to versioning scheme 'generic' instead""", range, e);
-            String[] versions = rangeParts[1].split("/", 2);
             var genericRange = rangeParts[0] + ":" + SCHEME_GENERIC + "/" + versions[1];
             return convertRangeToVersList(genericRange);
         }

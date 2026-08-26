@@ -27,11 +27,6 @@ import alpine.model.Team;
 import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.assertj.core.api.Assertions;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
@@ -43,6 +38,12 @@ import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,9 +61,7 @@ public class TeamResourceTest extends ResourceTest {
 
     @RegisterExtension
     static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(TeamResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+            new ResourceConfig(TeamResource.class).register(ApiFilter.class).register(AuthFeature.class));
 
     public void setUpUser(boolean isAdmin) {
         ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
@@ -85,16 +84,17 @@ public class TeamResourceTest extends ResourceTest {
         for (int i = 0; i < 1000; i++) {
             qm.createTeam("Team " + i);
         }
-        Response response = jersey.target(V1_TEAM).request()
-                .header(X_API_KEY, apiKey)
-                .get(Response.class);
+        Response response =
+                jersey.target(V1_TEAM).request().header(X_API_KEY, apiKey).get(Response.class);
         org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
         // There's already a built-in team in ResourceTest
-        org.junit.jupiter.api.Assertions.assertEquals(String.valueOf(1001), response.getHeaderString(TOTAL_COUNT_HEADER));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                String.valueOf(1001), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         org.junit.jupiter.api.Assertions.assertNotNull(json);
         org.junit.jupiter.api.Assertions.assertEquals(100, json.size()); // Max size on one page
-        org.junit.jupiter.api.Assertions.assertEquals("Team 0", json.getJsonObject(0).getString("name"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "Team 0", json.getJsonObject(0).getString("name"));
     }
 
     @Test
@@ -178,7 +178,9 @@ public class TeamResourceTest extends ResourceTest {
 
         Team team = qm.createTeam("ABC");
         Response response = jersey.target(V1_TEAM + "/" + team.getUuid())
-                .request().header(X_API_KEY, apiKey).get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
         org.junit.jupiter.api.Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
@@ -191,7 +193,9 @@ public class TeamResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_READ);
 
         Response response = jersey.target(V1_TEAM + "/" + UUID.randomUUID())
-                .request().header(X_API_KEY, apiKey).get(Response.class);
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         org.junit.jupiter.api.Assertions.assertEquals(404, response.getStatus(), 0);
         org.junit.jupiter.api.Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         String body = getPlainTextBody(response);
@@ -201,28 +205,41 @@ public class TeamResourceTest extends ResourceTest {
     @Test
     public void getTeamSelfTest() {
         initializeWithPermissions(Permissions.BOM_UPLOAD, Permissions.PROJECT_CREATION_UPLOAD);
-        var response = jersey.target(V1_TEAM + "/self").request().header(X_API_KEY, apiKey).get(Response.class);
+        var response = jersey.target(V1_TEAM + "/self")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get(Response.class);
         org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus());
         final var json = parseJsonObject(response);
         org.junit.jupiter.api.Assertions.assertEquals(team.getName(), json.getString("name"));
         org.junit.jupiter.api.Assertions.assertEquals(team.getUuid().toString(), json.getString("uuid"));
         final var permissions = json.getJsonArray("permissions");
         org.junit.jupiter.api.Assertions.assertEquals(2, permissions.size());
-        org.junit.jupiter.api.Assertions.assertEquals(Permissions.BOM_UPLOAD.toString(), permissions.get(0).asJsonObject().getString("name"));
-        org.junit.jupiter.api.Assertions.assertEquals(Permissions.PROJECT_CREATION_UPLOAD.toString(), permissions.get(1).asJsonObject().getString("name"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                Permissions.BOM_UPLOAD.toString(),
+                permissions.get(0).asJsonObject().getString("name"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                Permissions.PROJECT_CREATION_UPLOAD.toString(),
+                permissions.get(1).asJsonObject().getString("name"));
 
         // missing api-key
         response = jersey.target(V1_TEAM + "/self").request().get(Response.class);
         org.junit.jupiter.api.Assertions.assertEquals(401, response.getStatus());
 
         // wrong api-key
-        response = jersey.target(V1_TEAM + "/self").request().header(X_API_KEY, "5ce9b8a5-5f18-4c1f-9eda-1611b83e8915").get(Response.class);
+        response = jersey.target(V1_TEAM + "/self")
+                .request()
+                .header(X_API_KEY, "5ce9b8a5-5f18-4c1f-9eda-1611b83e8915")
+                .get(Response.class);
         org.junit.jupiter.api.Assertions.assertEquals(401, response.getStatus());
 
         // not an api-key
         final ManagedUser testUser = qm.createManagedUser("testuser", TEST_USER_PASSWORD_HASH);
         final String sessionToken = new SessionTokenService().createSession(testUser.getId());
-        response = jersey.target(V1_TEAM + "/self").request().header("Authorization", "Bearer " + sessionToken).get(Response.class);
+        response = jersey.target(V1_TEAM + "/self")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .get(Response.class);
         org.junit.jupiter.api.Assertions.assertEquals(400, response.getStatus());
     }
 
@@ -232,7 +249,8 @@ public class TeamResourceTest extends ResourceTest {
 
         Team team = new Team();
         team.setName("My Team");
-        Response response = jersey.target(V1_TEAM).request()
+        Response response = jersey.target(V1_TEAM)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.entity(team, MediaType.APPLICATION_JSON));
         org.junit.jupiter.api.Assertions.assertEquals(201, response.getStatus(), 0);
@@ -240,7 +258,8 @@ public class TeamResourceTest extends ResourceTest {
         org.junit.jupiter.api.Assertions.assertNotNull(json);
         org.junit.jupiter.api.Assertions.assertEquals("My Team", json.getString("name"));
         org.junit.jupiter.api.Assertions.assertTrue(UuidUtil.isValidUUID(json.getString("uuid")));
-        org.junit.jupiter.api.Assertions.assertEquals(0, json.getJsonArray("apiKeys").size());
+        org.junit.jupiter.api.Assertions.assertEquals(
+                0, json.getJsonArray("apiKeys").size());
     }
 
     @Test
@@ -249,9 +268,8 @@ public class TeamResourceTest extends ResourceTest {
 
         final Team existingTeam = qm.createTeam("My Team");
 
-        final Response response = jersey.target(V1_TEAM).request()
-                .header(X_API_KEY, apiKey)
-                .put(Entity.json(/* language=JSON */ """
+        final Response response =
+                jersey.target(V1_TEAM).request().header(X_API_KEY, apiKey).put(Entity.json(/* language=JSON */ """
                         {
                           "name": "My Team"
                         }
@@ -277,7 +295,8 @@ public class TeamResourceTest extends ResourceTest {
 
         Team team = qm.createTeam("My Team");
         team.setName("My New Teams Name");
-        Response response = jersey.target(V1_TEAM).request()
+        Response response = jersey.target(V1_TEAM)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(team, MediaType.APPLICATION_JSON));
         org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
@@ -292,7 +311,8 @@ public class TeamResourceTest extends ResourceTest {
 
         Team team = qm.createTeam("My Team");
         team.setName(" ");
-        Response response = jersey.target(V1_TEAM).request()
+        Response response = jersey.target(V1_TEAM)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(team, MediaType.APPLICATION_JSON));
         org.junit.jupiter.api.Assertions.assertEquals(400, response.getStatus(), 0);
@@ -305,7 +325,8 @@ public class TeamResourceTest extends ResourceTest {
         Team team = new Team();
         team.setName("My Team");
         team.setUuid(UUID.randomUUID());
-        Response response = jersey.target(V1_TEAM).request()
+        Response response = jersey.target(V1_TEAM)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(team, MediaType.APPLICATION_JSON));
         org.junit.jupiter.api.Assertions.assertEquals(404, response.getStatus(), 0);
@@ -319,7 +340,8 @@ public class TeamResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
 
         Team team = qm.createTeam("My Team");
-        Response response = jersey.target(V1_TEAM).request()
+        Response response = jersey.target(V1_TEAM)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 .method("DELETE", Entity.entity(team, MediaType.APPLICATION_JSON)); // HACK
@@ -332,9 +354,16 @@ public class TeamResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
 
         Team team = qm.createTeam("My Team");
-        ConfigProperty aclToogle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        ConfigProperty aclToogle = qm.getConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
         if (aclToogle == null) {
-            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+            qm.createConfigProperty(
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                    "true",
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
         } else {
             aclToogle.setPropertyValue("true");
             qm.persist(aclToogle);
@@ -342,7 +371,8 @@ public class TeamResourceTest extends ResourceTest {
         Project project = qm.createProject("Acme Example", null, "1", null, null, null, null, false);
         project.addAccessTeam(team);
         qm.persist(project);
-        Response response = jersey.target(V1_TEAM).request()
+        Response response = jersey.target(V1_TEAM)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 .method("DELETE", Entity.entity(team, MediaType.APPLICATION_JSON)); // HACK
@@ -356,7 +386,8 @@ public class TeamResourceTest extends ResourceTest {
 
         Team team = qm.createTeam("My Team");
         org.junit.jupiter.api.Assertions.assertEquals(0, team.getApiKeys().size());
-        Response response = jersey.target(V1_TEAM + "/" + team.getUuid().toString() + "/key").request()
+        Response response = jersey.target(V1_TEAM + "/" + team.getUuid().toString() + "/key")
+                .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
                 .put(Entity.entity(null, MediaType.APPLICATION_JSON));
@@ -369,7 +400,8 @@ public class TeamResourceTest extends ResourceTest {
     public void generateApiKeyInvalidTest() {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
 
-        Response response = jersey.target(V1_TEAM + "/" + UUID.randomUUID().toString() + "/key").request()
+        Response response = jersey.target(V1_TEAM + "/" + UUID.randomUUID().toString() + "/key")
+                .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
                 .put(Entity.entity(null, MediaType.APPLICATION_JSON));
@@ -385,7 +417,8 @@ public class TeamResourceTest extends ResourceTest {
         team.setPermissions(List.of(qm.createPermission(Permissions.ACCESS_MANAGEMENT_CREATE.name(), null)));
         ApiKey apiKey = qm.createApiKey(team);
         org.junit.jupiter.api.Assertions.assertEquals(1, team.getApiKeys().size());
-        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getPublicId()).request()
+        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getPublicId())
+                .request()
                 .header(X_API_KEY, apiKey.getKey())
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
         org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
@@ -408,7 +441,8 @@ public class TeamResourceTest extends ResourceTest {
         team.setPermissions(List.of(qm.createPermission(Permissions.ACCESS_MANAGEMENT_CREATE.name(), null)));
         ApiKey apiKey = qm.createApiKey(team);
         org.junit.jupiter.api.Assertions.assertEquals(1, team.getApiKeys().size());
-        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getKey()).request()
+        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getKey())
+                .request()
                 .header(X_API_KEY, apiKey.getKey())
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
         org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
@@ -429,7 +463,8 @@ public class TeamResourceTest extends ResourceTest {
     public void regenerateApiKeyInvalidTest() {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_CREATE);
 
-        Response response = jersey.target(V1_TEAM + "/key/" + UUID.randomUUID().toString()).request()
+        Response response = jersey.target(V1_TEAM + "/key/" + UUID.randomUUID().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.entity(null, MediaType.APPLICATION_JSON));
         org.junit.jupiter.api.Assertions.assertEquals(404, response.getStatus(), 0);
@@ -444,7 +479,8 @@ public class TeamResourceTest extends ResourceTest {
         team.setPermissions(List.of(qm.createPermission(Permissions.ACCESS_MANAGEMENT_DELETE.name(), null)));
         ApiKey apiKey = qm.createApiKey(team);
         org.junit.jupiter.api.Assertions.assertEquals(1, team.getApiKeys().size());
-        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getPublicId()).request()
+        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getPublicId())
+                .request()
                 .header(X_API_KEY, apiKey.getKey())
                 .delete();
         org.junit.jupiter.api.Assertions.assertEquals(204, response.getStatus(), 0);
@@ -456,7 +492,8 @@ public class TeamResourceTest extends ResourceTest {
         team.setPermissions(List.of(qm.createPermission(Permissions.ACCESS_MANAGEMENT_DELETE.name(), null)));
         ApiKey apiKey = qm.createApiKey(team);
         org.junit.jupiter.api.Assertions.assertEquals(1, team.getApiKeys().size());
-        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getKey()).request()
+        Response response = jersey.target(V1_TEAM + "/key/" + apiKey.getKey())
+                .request()
                 .header(X_API_KEY, apiKey.getKey())
                 .delete();
         org.junit.jupiter.api.Assertions.assertEquals(204, response.getStatus(), 0);
@@ -466,7 +503,8 @@ public class TeamResourceTest extends ResourceTest {
     public void deleteApiKeyInvalidTest() {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
 
-        Response response = jersey.target(V1_TEAM + "/key/" + UUID.randomUUID().toString()).request()
+        Response response = jersey.target(V1_TEAM + "/key/" + UUID.randomUUID().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .delete();
         org.junit.jupiter.api.Assertions.assertEquals(404, response.getStatus(), 0);
@@ -486,7 +524,8 @@ public class TeamResourceTest extends ResourceTest {
         assertThat(apiKey.getLastUsed()).isNull();
         assertThat(apiKey.getComment()).isNull();
 
-        final Response response = jersey.target("%s/key/%s/comment".formatted(V1_TEAM, apiKey.getPublicId())).request()
+        final Response response = jersey.target("%s/key/%s/comment".formatted(V1_TEAM, apiKey.getPublicId()))
+                .request()
                 .header(X_API_KEY, this.apiKey)
                 .post(Entity.entity("Some comment 123", MediaType.TEXT_PLAIN));
 
@@ -516,7 +555,8 @@ public class TeamResourceTest extends ResourceTest {
         assertThat(apiKey.getLastUsed()).isNull();
         assertThat(apiKey.getComment()).isNull();
 
-        final Response response = jersey.target("%s/key/%s/comment".formatted(V1_TEAM, apiKey.getKey())).request()
+        final Response response = jersey.target("%s/key/%s/comment".formatted(V1_TEAM, apiKey.getKey()))
+                .request()
                 .header(X_API_KEY, this.apiKey)
                 .post(Entity.entity("Some comment 123", MediaType.TEXT_PLAIN));
 
@@ -539,7 +579,8 @@ public class TeamResourceTest extends ResourceTest {
     public void updateApiKeyCommentNotFoundTest() {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_UPDATE);
 
-        final Response response = jersey.target("%s/key/does-not-exist/comment".formatted(V1_TEAM)).request()
+        final Response response = jersey.target("%s/key/does-not-exist/comment".formatted(V1_TEAM))
+                .request()
                 .header(X_API_KEY, this.apiKey)
                 .post(Entity.entity("Some comment 123", MediaType.TEXT_PLAIN));
 
@@ -556,7 +597,8 @@ public class TeamResourceTest extends ResourceTest {
         org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
         JsonArray teams = parseJsonArray(response);
         org.junit.jupiter.api.Assertions.assertEquals(1, teams.size());
-        org.junit.jupiter.api.Assertions.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test
@@ -575,8 +617,10 @@ public class TeamResourceTest extends ResourceTest {
         org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
         JsonArray teams = parseJsonArray(response);
         org.junit.jupiter.api.Assertions.assertEquals(2, teams.size());
-        org.junit.jupiter.api.Assertions.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
-        org.junit.jupiter.api.Assertions.assertEquals(userNotPartof.getUuid().toString(), teams.get(1).asJsonObject().getString("uuid"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                userNotPartof.getUuid().toString(), teams.get(1).asJsonObject().getString("uuid"));
     }
 
     @Test
@@ -589,8 +633,10 @@ public class TeamResourceTest extends ResourceTest {
         org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
         JsonArray teams = parseJsonArray(response);
         org.junit.jupiter.api.Assertions.assertEquals(2, teams.size());
-        org.junit.jupiter.api.Assertions.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
-        org.junit.jupiter.api.Assertions.assertEquals(userNotPartof.getUuid().toString(), teams.get(1).asJsonObject().getString("uuid"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                userNotPartof.getUuid().toString(), teams.get(1).asJsonObject().getString("uuid"));
     }
 
     @Test
@@ -642,8 +688,10 @@ public class TeamResourceTest extends ResourceTest {
         JsonArray teams = parseJsonArray(response);
         org.junit.jupiter.api.Assertions.assertEquals(2, teams.size());
         org.junit.jupiter.api.Assertions.assertEquals("2", response.getHeaderString(TOTAL_COUNT_HEADER));
-        org.junit.jupiter.api.Assertions.assertEquals("Alpha Team", teams.getJsonObject(0).getString("name"));
-        org.junit.jupiter.api.Assertions.assertEquals("Alphabet Soup", teams.getJsonObject(1).getString("name"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "Alpha Team", teams.getJsonObject(0).getString("name"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "Alphabet Soup", teams.getJsonObject(1).getString("name"));
     }
 
     @Test
@@ -660,7 +708,8 @@ public class TeamResourceTest extends ResourceTest {
         JsonArray teams = parseJsonArray(response);
         org.junit.jupiter.api.Assertions.assertEquals(1, teams.size());
         org.junit.jupiter.api.Assertions.assertEquals("1", response.getHeaderString(TOTAL_COUNT_HEADER));
-        org.junit.jupiter.api.Assertions.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
 
         response = jersey.target(V1_TEAM + "/visible")
                 .queryParam("searchText", "unrelated")
@@ -683,7 +732,8 @@ public class TeamResourceTest extends ResourceTest {
         org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
         JsonArray teams = parseJsonArray(response);
         org.junit.jupiter.api.Assertions.assertEquals(1, teams.size());
-        org.junit.jupiter.api.Assertions.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
 
     @Test
@@ -695,7 +745,7 @@ public class TeamResourceTest extends ResourceTest {
         org.junit.jupiter.api.Assertions.assertEquals(200, response.getStatus(), 0);
         JsonArray teams = parseJsonArray(response);
         org.junit.jupiter.api.Assertions.assertEquals(1, teams.size());
-        org.junit.jupiter.api.Assertions.assertEquals(this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                this.team.getUuid().toString(), teams.getFirst().asJsonObject().getString("uuid"));
     }
-
 }

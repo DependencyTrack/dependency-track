@@ -48,46 +48,34 @@ import java.util.function.Supplier;
 public final class HttpClient extends java.net.http.HttpClient {
 
     public static final HttpClient INSTANCE = create(
-            ConfigProvider.getConfig(),
-            ProxyUtil.getProxyConfig(),
-            Metrics.globalRegistry,
-            ClusterInfo::getClusterId);
+            ConfigProvider.getConfig(), ProxyUtil.getProxyConfig(), Metrics.globalRegistry, ClusterInfo::getClusterId);
 
     private final java.net.http.HttpClient delegate;
     private final String userAgentPrefix;
     private final Supplier<String> clusterIdSupplier;
     private volatile String userAgent;
 
-    private HttpClient(
-            java.net.http.HttpClient delegate,
-            String userAgentPrefix,
-            Supplier<String> clusterIdSupplier) {
+    private HttpClient(java.net.http.HttpClient delegate, String userAgentPrefix, Supplier<String> clusterIdSupplier) {
         this.delegate = delegate;
         this.userAgentPrefix = userAgentPrefix;
         this.clusterIdSupplier = clusterIdSupplier;
     }
 
     static HttpClient create(
-            Config config,
-            ProxyConfig proxyConfig,
-            MeterRegistry meterRegistry,
-            Supplier<String> clusterIdSupplier) {
-        final String appName = config
-                .getOptionalValue("alpine.build-info.application.name", String.class)
+            Config config, ProxyConfig proxyConfig, MeterRegistry meterRegistry, Supplier<String> clusterIdSupplier) {
+        final String appName = config.getOptionalValue("alpine.build-info.application.name", String.class)
                 .orElse("Dependency-Track");
-        final String appVersion = config
-                .getOptionalValue("alpine.build-info.application.version", String.class)
+        final String appVersion = config.getOptionalValue("alpine.build-info.application.version", String.class)
                 .orElse("Unknown");
-        final String userAgentPrefix =
-                "%s v%s (%s; %s; %s) ManagedHttpClient/".formatted(
+        final String userAgentPrefix = "%s v%s (%s; %s; %s) ManagedHttpClient/"
+                .formatted(
                         appName,
                         appVersion,
                         SystemUtil.getOsArchitecture(),
                         SystemUtil.getOsName(),
                         SystemUtil.getOsVersion());
 
-        final long connectTimeoutMs = config
-                .getOptionalValue(AlpineConfigKeys.HTTP_CONNECT_TIMEOUT_MS, long.class)
+        final long connectTimeoutMs = config.getOptionalValue(AlpineConfigKeys.HTTP_CONNECT_TIMEOUT_MS, long.class)
                 .orElse(30_000L);
         final var clientBuilder = java.net.http.HttpClient.newBuilder()
                 .proxy(new ProxySelector(proxyConfig))
@@ -118,7 +106,8 @@ public final class HttpClient extends java.net.http.HttpClient {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
                     if (getRequestorType() == RequestorType.PROXY) {
-                        return new PasswordAuthentication(username, proxyConfig.getPassword().toCharArray());
+                        return new PasswordAuthentication(
+                                username, proxyConfig.getPassword().toCharArray());
                     }
 
                     return null;
@@ -127,8 +116,7 @@ public final class HttpClient extends java.net.http.HttpClient {
         }
 
         return new HttpClient(
-                MicrometerHttpClient
-                        .instrumentationBuilder(clientBuilder.build(), meterRegistry)
+                MicrometerHttpClient.instrumentationBuilder(clientBuilder.build(), meterRegistry)
                         .build(),
                 userAgentPrefix,
                 clusterIdSupplier);
@@ -189,16 +177,14 @@ public final class HttpClient extends java.net.http.HttpClient {
     }
 
     @Override
-    public <T> HttpResponse<T> send(
-            HttpRequest request,
-            HttpResponse.BodyHandler<T> responseBodyHandler) throws IOException, InterruptedException {
+    public <T> HttpResponse<T> send(HttpRequest request, HttpResponse.BodyHandler<T> responseBodyHandler)
+            throws IOException, InterruptedException {
         return delegate.send(withUserAgent(request), responseBodyHandler);
     }
 
     @Override
     public <T> CompletableFuture<HttpResponse<T>> sendAsync(
-            HttpRequest request,
-            HttpResponse.BodyHandler<T> responseBodyHandler) {
+            HttpRequest request, HttpResponse.BodyHandler<T> responseBodyHandler) {
         return delegate.sendAsync(withUserAgent(request), responseBodyHandler);
     }
 
@@ -211,10 +197,8 @@ public final class HttpClient extends java.net.http.HttpClient {
     }
 
     private HttpRequest withUserAgent(HttpRequest request) {
-        return HttpRequest
-                .newBuilder(request, (name, value) -> !"User-Agent".equalsIgnoreCase(name))
+        return HttpRequest.newBuilder(request, (name, value) -> !"User-Agent".equalsIgnoreCase(name))
                 .header("User-Agent", userAgent())
                 .build();
     }
-
 }

@@ -31,8 +31,8 @@ class ConstraintViolationExceptionTest {
 
     @Test
     void shouldTranslateUniqueViolation() {
-        final var psqlException = createPSQLException(
-                "23505", "VULNERABILITY_POLICY_NAME_IDX", "VULNERABILITY_POLICY", null);
+        final var psqlException =
+                createPSQLException("23505", "VULNERABILITY_POLICY_NAME_IDX", "VULNERABILITY_POLICY", null);
         final var wrapping = new UnableToExecuteStatementException(psqlException, null);
 
         final var result = ConstraintViolationException.of(wrapping);
@@ -47,8 +47,8 @@ class ConstraintViolationExceptionTest {
 
     @Test
     void shouldTranslateCheckViolation() {
-        final var psqlException = createPSQLException(
-                "23514", "VULNERABILITY_POLICY_PRIORITY_check", "VULNERABILITY_POLICY", null);
+        final var psqlException =
+                createPSQLException("23514", "VULNERABILITY_POLICY_PRIORITY_check", "VULNERABILITY_POLICY", null);
         final var wrapping = new UnableToExecuteStatementException(psqlException, null);
 
         final var result = ConstraintViolationException.of(wrapping);
@@ -61,8 +61,7 @@ class ConstraintViolationExceptionTest {
 
     @Test
     void shouldTranslateNotNullViolation() {
-        final var psqlException = createPSQLException(
-                "23502", null, "VULNERABILITY_POLICY", "NAME");
+        final var psqlException = createPSQLException("23502", null, "VULNERABILITY_POLICY", "NAME");
         final var wrapping = new UnableToExecuteStatementException(psqlException, null);
 
         final var result = ConstraintViolationException.of(wrapping);
@@ -84,8 +83,7 @@ class ConstraintViolationExceptionTest {
 
     @Test
     void shouldReturnNullForNonPSQLException() {
-        final var wrapping = new UnableToExecuteStatementException(
-                new RuntimeException("not a psql error"), null);
+        final var wrapping = new UnableToExecuteStatementException(new RuntimeException("not a psql error"), null);
 
         assertThat(ConstraintViolationException.of(wrapping)).isNull();
     }
@@ -100,8 +98,7 @@ class ConstraintViolationExceptionTest {
 
     @Test
     void shouldFindPSQLExceptionInDeepCauseChain() {
-        final var psqlException = createPSQLException(
-                "23505", "some_idx", "SOME_TABLE", null);
+        final var psqlException = createPSQLException("23505", "some_idx", "SOME_TABLE", null);
         final var mid = new RuntimeException("mid", psqlException);
         final var outer = new UnableToExecuteStatementException(mid, null);
 
@@ -113,8 +110,7 @@ class ConstraintViolationExceptionTest {
 
     @Test
     void shouldPreserveOriginalExceptionAsCause() {
-        final var psqlException = createPSQLException(
-                "23505", "some_idx", "SOME_TABLE", null);
+        final var psqlException = createPSQLException("23505", "some_idx", "SOME_TABLE", null);
         final var wrapping = new UnableToExecuteStatementException(psqlException, null);
 
         final var result = ConstraintViolationException.of(wrapping);
@@ -124,13 +120,10 @@ class ConstraintViolationExceptionTest {
     }
 
     private static PSQLException createPSQLException(
-            String sqlState,
-            String constraintName,
-            String tableName,
-            String columnName) {
+            String sqlState, String constraintName, String tableName, String columnName) {
         try {
-            final String encodedMessage = buildEncodedServerErrorMessage(
-                    sqlState, constraintName, tableName, columnName);
+            final String encodedMessage =
+                    buildEncodedServerErrorMessage(sqlState, constraintName, tableName, columnName);
             final Constructor<ServerErrorMessage> constructor =
                     ServerErrorMessage.class.getDeclaredConstructor(String.class);
             constructor.setAccessible(true);
@@ -145,10 +138,7 @@ class ConstraintViolationExceptionTest {
      * @see <a href="https://www.postgresql.org/docs/current/protocol-error-fields.html">Protocol Error Fields</a>
      */
     private static String buildEncodedServerErrorMessage(
-            String sqlState,
-            String constraintName,
-            String tableName,
-            String columnName) {
+            String sqlState, String constraintName, String tableName, String columnName) {
         final var sb = new StringBuilder();
         sb.append('S').append("ERROR").append('\0');
         sb.append('C').append(sqlState).append('\0');
@@ -165,5 +155,4 @@ class ConstraintViolationExceptionTest {
         sb.append('\0');
         return sb.toString();
     }
-
 }

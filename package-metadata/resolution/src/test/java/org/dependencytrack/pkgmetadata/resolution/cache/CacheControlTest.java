@@ -66,8 +66,7 @@ class CacheControlTest {
 
     @Test
     void shouldIgnoreUnknownDirectives() {
-        final CacheControl directives = CacheControl.of(
-                List.of("max-age=300, immutable, stale-while-revalidate=10"));
+        final CacheControl directives = CacheControl.of(List.of("max-age=300, immutable, stale-while-revalidate=10"));
 
         assertThat(directives.maxAgeSeconds()).isEqualTo(300L);
         assertThat(directives.noStore()).isFalse();
@@ -99,8 +98,7 @@ class CacheControlTest {
 
     @Test
     void shouldMergeAcrossMultipleHeaderValues() {
-        final CacheControl directives = CacheControl.of(
-                List.of("no-cache", "max-age=120"));
+        final CacheControl directives = CacheControl.of(List.of("no-cache", "max-age=120"));
 
         assertThat(directives.noCache()).isTrue();
         assertThat(directives.maxAgeSeconds()).isEqualTo(120L);
@@ -112,5 +110,4 @@ class CacheControlTest {
 
         assertThat(directives.maxAgeSeconds()).isEqualTo(10L);
     }
-
 }

@@ -39,7 +39,8 @@ import static org.dependencytrack.model.ConfigPropertyConstants.GENERAL_BASE_URL
 
 public class FindingPackagingFormat {
 
-    private static final ObjectWriter OBJECT_WRITER = Mappers.jsonMapper().writer()
+    private static final ObjectWriter OBJECT_WRITER = Mappers.jsonMapper()
+            .writer()
             .without(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .withDefaultPrettyPrinter();
 
@@ -47,6 +48,7 @@ public class FindingPackagingFormat {
      * FPF is versioned. If the format changes, the version needs to be bumped.
      */
     private static final String FPF_VERSION = "1.5";
+
     private static final String FIELD_APPLICATION = "application";
     private static final String FIELD_VERSION = "version";
     private static final String FIELD_TIMESTAMP = "timestamp";
@@ -74,13 +76,14 @@ public class FindingPackagingFormat {
         try (QueryManager qm = new QueryManager()) {
             final Project project = qm.getObjectByUuid(Project.class, projectUuid);
             final About about = new About();
-            final ConfigProperty baseUrl = qm.getConfigProperty(GENERAL_BASE_URL.getGroupName(), GENERAL_BASE_URL.getPropertyName());
+            final ConfigProperty baseUrl =
+                    qm.getConfigProperty(GENERAL_BASE_URL.getGroupName(), GENERAL_BASE_URL.getPropertyName());
 
             /*
-                Create a generic meta object containing basic Dependency-Track information
-                This is useful for file-based parsing systems that needs to be able to
-                identify what type of file it is, and what type of system generated it.
-             */
+               Create a generic meta object containing basic Dependency-Track information
+               This is useful for file-based parsing systems that needs to be able to
+               identify what type of file it is, and what type of system generated it.
+            */
             final ObjectNode meta = Mappers.jsonMapper().createObjectNode();
             meta.put(FIELD_APPLICATION, about.getApplication());
             meta.put(FIELD_VERSION, about.getVersion());
@@ -89,13 +92,12 @@ public class FindingPackagingFormat {
                 meta.put(FIELD_BASE_URL, baseUrl.getPropertyValue());
             }
 
-
             /*
-                Findings are specific to a given project. This information is useful for
-                systems outside of Dependency-Track so that they can perform mappings as
-                well as not have to perform additional queries back to Dependency-Track
-                to discover basic project information.
-             */
+               Findings are specific to a given project. This information is useful for
+               systems outside of Dependency-Track so that they can perform mappings as
+               well as not have to perform additional queries back to Dependency-Track
+               to discover basic project information.
+            */
             final ObjectNode projectJson = Mappers.jsonMapper().createObjectNode();
             projectJson.put(FIELD_UUID, project.getUuid().toString());
             projectJson.put(FIELD_NAME, project.getName());
@@ -112,11 +114,10 @@ public class FindingPackagingFormat {
                 projectJson.put(FIELD_CPE, project.getCpe());
             }
 
-
             /*
-                Add the meta and project objects along with the findings array
-                to a root json object and return.
-             */
+               Add the meta and project objects along with the findings array
+               to a root json object and return.
+            */
             final ObjectNode root = Mappers.jsonMapper().createObjectNode();
             root.put(FIELD_VERSION, FPF_VERSION);
             root.set(FIELD_META, meta);

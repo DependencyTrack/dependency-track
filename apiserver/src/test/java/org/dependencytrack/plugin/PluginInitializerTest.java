@@ -18,8 +18,6 @@
  */
 package org.dependencytrack.plugin;
 
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletContextEvent;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.api.NoopCacheManager;
@@ -46,6 +44,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,19 +71,15 @@ class PluginInitializerTest extends PersistenceCapableTest {
         final Config config = ConfigProvider.getConfig();
 
         final var servletContextMock = mock(ServletContext.class);
-        doReturn(new NoopCacheManager())
-                .when(servletContextMock).getAttribute(eq(CacheManager.class.getName()));
-        doReturn(new TestSecretManager())
-                .when(servletContextMock).getAttribute(eq(SecretManager.class.getName()));
+        doReturn(new NoopCacheManager()).when(servletContextMock).getAttribute(eq(CacheManager.class.getName()));
+        doReturn(new TestSecretManager()).when(servletContextMock).getAttribute(eq(SecretManager.class.getName()));
 
         final var attributeValueCaptor = ArgumentCaptor.forClass(PluginManager.class);
 
         final var initializer = new PluginInitializer(config);
         initializer.contextInitialized(new ServletContextEvent(servletContextMock));
 
-        verify(servletContextMock).setAttribute(
-                eq(PluginManager.class.getName()),
-                attributeValueCaptor.capture());
+        verify(servletContextMock).setAttribute(eq(PluginManager.class.getName()), attributeValueCaptor.capture());
 
         final PluginManager pluginManager = attributeValueCaptor.getValue();
         assertThat(pluginManager).isNotNull();
@@ -99,20 +96,21 @@ class PluginInitializerTest extends PersistenceCapableTest {
                         "package-metadata-resolver",
                         "vuln-analyzer",
                         "vuln-data-source");
-        assertThat(pluginManager.getLoadedPlugins()).satisfiesExactlyInAnyOrder(
-                plugin -> assertThat(plugin).isInstanceOf(BuiltinKevDataSourcePlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(CheckmarxVulnAnalyzerPlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(DefaultNotificationPublishersPlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(DefaultPackageMetadataResolutionPlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(GitHubVulnDataSourcePlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(InternalVulnAnalyzerPlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(JvnVulnDataSourcePlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(NvdVulnDataSourcePlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(OssIndexVulnAnalyzerPlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(OsvVulnDataSourcePlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(SnykVulnAnalyzerPlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(TrivyVulnAnalyzerPlugin.class),
-                plugin -> assertThat(plugin).isInstanceOf(VulnDbVulnAnalyzerPlugin.class));
+        assertThat(pluginManager.getLoadedPlugins())
+                .satisfiesExactlyInAnyOrder(
+                        plugin -> assertThat(plugin).isInstanceOf(BuiltinKevDataSourcePlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(CheckmarxVulnAnalyzerPlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(DefaultNotificationPublishersPlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(DefaultPackageMetadataResolutionPlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(GitHubVulnDataSourcePlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(InternalVulnAnalyzerPlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(JvnVulnDataSourcePlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(NvdVulnDataSourcePlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(OssIndexVulnAnalyzerPlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(OsvVulnDataSourcePlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(SnykVulnAnalyzerPlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(TrivyVulnAnalyzerPlugin.class),
+                        plugin -> assertThat(plugin).isInstanceOf(VulnDbVulnAnalyzerPlugin.class));
 
         initializer.contextDestroyed(new ServletContextEvent(servletContextMock));
 
@@ -120,5 +118,4 @@ class PluginInitializerTest extends PersistenceCapableTest {
 
         verify(servletContextMock).removeAttribute(eq(PluginManager.class.getName()));
     }
-
 }

@@ -111,7 +111,9 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
             var analysis = new org.cyclonedx.model.vulnerability.Vulnerability.Analysis();
             analysis.setState(org.cyclonedx.model.vulnerability.Vulnerability.Analysis.State.FALSE_POSITIVE);
             analysis.setDetail("Unit test");
-            analysis.setJustification(org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification.PROTECTED_BY_MITIGATING_CONTROL);
+            analysis.setJustification(
+                    org.cyclonedx.model.vulnerability.Vulnerability.Analysis.Justification
+                            .PROTECTED_BY_MITIGATING_CONTROL);
             audit.setAnalysis(analysis);
             var affect = new org.cyclonedx.model.vulnerability.Vulnerability.Affect();
             affect.setRef(vex.getMetadata().getComponent().getBomRef());
@@ -148,23 +150,31 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         assertThat(sources.size()).isEqualTo(sourceAudits.size());
         assertThat(sourceAudits).allSatisfy(analysis -> {
             assertThat(analysis.isSuppressed()).isTrue();
-            assertThat(analysis.getAnalysisComments()).satisfiesExactlyInAnyOrder(
-                    comment -> {
-                        assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                        assertThat(comment.getComment()).isEqualTo(String.format("Analysis: %s → %s", AnalysisState.NOT_SET, AnalysisState.FALSE_POSITIVE));
-                    },
-                    comment -> {
-                        assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                        assertThat(comment.getComment()).isEqualTo("Details: Unit test");
-                    },
-                    comment -> {
-                        assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                        assertThat(comment.getComment()).isEqualTo(String.format("Justification: %s → %s", AnalysisJustification.NOT_SET, AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL));
-                    },
-                    comment -> {
-                        assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
-                        assertThat(comment.getComment()).isEqualTo("Suppressed");
-                    });
+            assertThat(analysis.getAnalysisComments())
+                    .satisfiesExactlyInAnyOrder(
+                            comment -> {
+                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.getComment())
+                                        .isEqualTo(String.format(
+                                                "Analysis: %s → %s",
+                                                AnalysisState.NOT_SET, AnalysisState.FALSE_POSITIVE));
+                            },
+                            comment -> {
+                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.getComment()).isEqualTo("Details: Unit test");
+                            },
+                            comment -> {
+                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.getComment())
+                                        .isEqualTo(String.format(
+                                                "Justification: %s → %s",
+                                                AnalysisJustification.NOT_SET,
+                                                AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL));
+                            },
+                            comment -> {
+                                assertThat(comment.getCommenter()).isEqualTo("CycloneDX VEX");
+                                assertThat(comment.getComment()).isEqualTo("Suppressed");
+                            });
             assertThat(analysis.getAnalysisDetails()).isEqualTo("Unit test");
         });
     }
@@ -254,17 +264,13 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         qm.addVulnerability(vuln, componentA, "none");
         qm.addVulnerability(vuln, componentB, "none");
 
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentA, vuln)
-                        .withState(AnalysisState.NOT_AFFECTED)
-                        .withJustification(AnalysisJustification.CODE_NOT_REACHABLE));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentA, vuln)
+                .withState(AnalysisState.NOT_AFFECTED)
+                .withJustification(AnalysisJustification.CODE_NOT_REACHABLE));
 
         final var exporter = new CycloneDXExporter(CycloneDXExporter.Variant.VEX, qm);
-        final byte[] vexBytes = exporter
-                .export(
-                        exporter.create(project, Version.VERSION_16),
-                        CycloneDXExporter.Format.JSON,
-                        Version.VERSION_16)
+        final byte[] vexBytes = exporter.export(
+                        exporter.create(project, Version.VERSION_16), CycloneDXExporter.Format.JSON, Version.VERSION_16)
                 .getBytes(StandardCharsets.UTF_8);
 
         vexImporter.applyVex(qm, BomParserFactory.createParser(vexBytes).parse(vexBytes), project);
@@ -663,9 +669,7 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         assertThat(analysis.getSeverity()).isNull();
         assertThat(analysis.getAnalysisComments())
                 .extracting(AnalysisComment::getComment)
-                .contains(
-                        "OWASP Vector: (None) → " + OWASP_VECTOR,
-                        "OWASP Score: (None) → 7.5");
+                .contains("OWASP Vector: (None) → " + OWASP_VECTOR, "OWASP Score: (None) → 7.5");
     }
 
     @Test
@@ -771,5 +775,4 @@ public class CycloneDXVexImporterTest extends PersistenceCapableTest {
         assertThat(analysis.getOwaspVector()).isNull();
         assertThat(analysis.getOwaspScore()).isNull();
     }
-
 }

@@ -37,5 +37,4 @@ public final class ActivityFailureException extends FailureException {
     public String getActivityName() {
         return activityName;
     }
-
 }

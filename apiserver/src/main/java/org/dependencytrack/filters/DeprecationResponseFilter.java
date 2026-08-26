@@ -43,9 +43,7 @@ public final class DeprecationResponseFilter implements ContainerResponseFilter 
     }
 
     @Override
-    public void filter(
-            ContainerRequestContext requestContext,
-            ContainerResponseContext responseContext) {
+    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
         final Method method = resourceInfo.getResourceMethod();
         if (method == null) {
             return;
@@ -58,5 +56,4 @@ public final class DeprecationResponseFilter implements ContainerResponseFilter 
 
         responseContext.getHeaders().putSingle("X-API-Deprecated", "true");
     }
-
 }

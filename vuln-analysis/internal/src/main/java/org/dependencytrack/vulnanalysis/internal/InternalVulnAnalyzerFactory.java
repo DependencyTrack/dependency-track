@@ -71,9 +71,7 @@ final class InternalVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
     public void init(ServiceRegistry serviceRegistry) {
         configRegistry = serviceRegistry.require(ConfigRegistry.class);
 
-        final String dataSourceName = configRegistry
-                .getDeploymentConfig()
-                .getValue("datasource.name", String.class);
+        final String dataSourceName = configRegistry.getDeploymentConfig().getValue("datasource.name", String.class);
         final DataSource dataSource = dataSourceRegistry.get(dataSourceName);
         jdbi = Jdbi.create(dataSource)
                 .registerRowMapper(new MatchingCriteria.RowMapper())
@@ -91,20 +89,18 @@ final class InternalVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
     @Override
     public boolean isEnabled() {
         requireNonNull(configRegistry);
-        return configRegistry.getRuntimeConfig(InternalVulnAnalyzerConfigV1.class).isEnabled();
+        return configRegistry
+                .getRuntimeConfig(InternalVulnAnalyzerConfigV1.class)
+                .isEnabled();
     }
 
     @Override
     public EnumSet<VulnAnalyzerRequirement> analyzerRequirements() {
-        return EnumSet.of(
-                VulnAnalyzerRequirement.COMPONENT_CPE,
-                VulnAnalyzerRequirement.COMPONENT_PURL);
+        return EnumSet.of(VulnAnalyzerRequirement.COMPONENT_CPE, VulnAnalyzerRequirement.COMPONENT_PURL);
     }
 
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new InternalVulnAnalyzerConfigV1().withEnabled(true));
+        return RuntimeConfigSpec.of(new InternalVulnAnalyzerConfigV1().withEnabled(true));
     }
-
 }

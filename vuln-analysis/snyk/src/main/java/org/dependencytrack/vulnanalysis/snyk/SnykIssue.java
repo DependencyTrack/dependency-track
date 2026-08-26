@@ -33,35 +33,31 @@ record SnykIssue(String id, @Nullable String type, Attributes attributes) {
             @Nullable List<Problem> problems,
             @Nullable Slots slots,
             @Nullable List<Severity> severities,
-            @Nullable List<Coordinate> coordinates) {
-    }
+            @Nullable List<Coordinate> coordinates) {}
 
-    record Problem(String id, String source) {
-    }
+    record Problem(String id, String source) {}
 
-    record Severity(String source, String level, @Nullable Float score, @Nullable String vector) {
-    }
+    record Severity(
+            String source,
+            String level,
+            @Nullable Float score,
+            @Nullable String vector) {}
 
-    record Coordinate(@Nullable List<Representation> representations, @Nullable List<Remedy> remedies) {
-    }
+    record Coordinate(
+            @Nullable List<Representation> representations,
+            @Nullable List<Remedy> remedies) {}
 
     record Representation(
             @JsonProperty("resource_path") @Nullable String resourcePath,
-            @JsonProperty("package") @Nullable Pkg pkg) {
-    }
+            @JsonProperty("package") @Nullable Pkg pkg) {}
 
-    record Pkg(@Nullable String url) {
-    }
+    record Pkg(@Nullable String url) {}
 
-    record Remedy(@Nullable String description) {
-    }
+    record Remedy(@Nullable String description) {}
 
     record Slots(
             @Nullable List<Reference> references,
-            @JsonProperty("publication_time") @Nullable String publicationTime) {
-    }
+            @JsonProperty("publication_time") @Nullable String publicationTime) {}
 
-    record Reference(String url) {
-    }
-
+    record Reference(String url) {}
 }

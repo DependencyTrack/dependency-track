@@ -149,5 +149,4 @@ public record CreateWorkflowRunRequest<A>(
                 this.labels,
                 argument);
     }
-
 }

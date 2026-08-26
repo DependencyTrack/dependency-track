@@ -115,34 +115,28 @@ class NotificationPublisherIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "NAME", "EXTENSION_NAME"
                       FROM "NOTIFICATIONPUBLISHER"
                      ORDER BY "ID"
                     """).mapToMap().list());
 
-        assertThat(rows).extracting("id", "name", "extension_name")
-            .containsExactly(
-                tuple(1L, "Slack", "slack"),
-                tuple(2L, "Jira", "jira"),
-                tuple(3L, "Custom", "CustomPublisher")
-            );
+        assertThat(rows)
+                .extracting("id", "name", "extension_name")
+                .containsExactly(
+                        tuple(1L, "Slack", "slack"), tuple(2L, "Jira", "jira"), tuple(3L, "Custom", "CustomPublisher"));
 
         // Canonical map: duplicate row 4 collapses onto 1.
-        final List<Map<String, Object>> map = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> map =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT orig_id, canonical_id
                       FROM "dt_v4_migration".notificationpublisher_canonical_id_map
                      ORDER BY orig_id
                     """).mapToMap().list());
-        assertThat(map).extracting("orig_id", "canonical_id")
-            .containsExactly(
-                tuple(1L, 1L),
-                tuple(2L, 2L),
-                tuple(3L, 3L),
-                tuple(4L, 1L)
-            );
+        assertThat(map)
+                .extracting("orig_id", "canonical_id")
+                .containsExactly(tuple(1L, 1L), tuple(2L, 2L), tuple(3L, 3L), tuple(4L, 1L));
     }
 
     private void runPipeline() throws Exception {

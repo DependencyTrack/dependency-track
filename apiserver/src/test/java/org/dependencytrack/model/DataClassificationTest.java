@@ -37,10 +37,7 @@ class DataClassificationTest {
                         new DataClassification(Direction.INBOUND, "public"),
                         new DataClassification(Direction.INBOUND, "public"),
                         true),
-                arguments(
-                        new DataClassification(null, null),
-                        new DataClassification(null, null),
-                        true),
+                arguments(new DataClassification(null, null), new DataClassification(null, null), true),
                 arguments(
                         new DataClassification(Direction.INBOUND, "public"),
                         new DataClassification(Direction.OUTBOUND, "public"),
@@ -61,10 +58,7 @@ class DataClassificationTest {
 
     @ParameterizedTest
     @MethodSource
-    void equalsAndHashCodeShouldCompareByValue(
-            DataClassification left,
-            DataClassification right,
-            boolean expectEqual) {
+    void equalsAndHashCodeShouldCompareByValue(DataClassification left, DataClassification right, boolean expectEqual) {
         if (expectEqual) {
             assertThat(left).isEqualTo(right);
             assertThat(right).isEqualTo(left);
@@ -90,5 +84,4 @@ class DataClassificationTest {
         assertThat(dataClassification).isNotEqualTo(null);
         assertThat(dataClassification).isNotEqualTo("public");
     }
-
 }

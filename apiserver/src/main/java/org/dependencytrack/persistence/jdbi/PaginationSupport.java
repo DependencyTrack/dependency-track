@@ -125,14 +125,11 @@ public interface PaginationSupport extends SqlObject {
             // Only install the secondary ACL customizer when the chosen column
             // differs from the default. Otherwise the existing condition defined
             // by ApiRequestStatementCustomizer is already correct and no rewrite is needed.
-            final String defaultProjectIdColumn = getHandle()
-                    .getConfig(ApiRequestConfig.class)
-                    .projectAclProjectIdColumn();
+            final String defaultProjectIdColumn =
+                    getHandle().getConfig(ApiRequestConfig.class).projectAclProjectIdColumn();
             if (!projectIdColumn.equals(defaultProjectIdColumn)) {
-                query.addCustomizer(
-                        new DefineApiProjectAclCondition.StatementCustomizer(
-                                JdbiAttributes.ATTRIBUTE_API_PROJECT_ACL_CONDITION,
-                                projectIdColumn));
+                query.addCustomizer(new DefineApiProjectAclCondition.StatementCustomizer(
+                        JdbiAttributes.ATTRIBUTE_API_PROJECT_ACL_CONDITION, projectIdColumn));
             }
         }
 
@@ -141,8 +138,7 @@ public interface PaginationSupport extends SqlObject {
         // template doesn't reference them.
         query.getConfig(SqlStatements.class).setUnusedBindingAllowed(true);
 
-        final long count = query
-                .bindMap(whereParams)
+        final long count = query.bindMap(whereParams)
                 .bind("threshold", threshold)
                 .define("fromWhereClause", fromWhereClause)
                 .define("includeAcl", projectIdColumn != null)
@@ -162,18 +158,12 @@ public interface PaginationSupport extends SqlObject {
     ///
     /// @since 5.1.0
     default <T> TotalCount exactTotalCount(
-            List<T> items,
-            Function<T, @Nullable Long> windowTotalCountExtractor,
-            LongSupplier exactCountSupplier) {
+            List<T> items, Function<T, @Nullable Long> windowTotalCountExtractor, LongSupplier exactCountSupplier) {
         if (items.isEmpty()) {
             // When the page is empty, we could erroneously report a total count of 0,
             // even if there were preceding pages. If this was a request for a later
             // page, we have to run a separate count query to find the true total.
-            return new TotalCount(
-                    itemsPrecedingPage() > 0
-                            ? exactCountSupplier.getAsLong()
-                            : 0,
-                    TotalCount.Type.EXACT);
+            return new TotalCount(itemsPrecedingPage() > 0 ? exactCountSupplier.getAsLong() : 0, TotalCount.Type.EXACT);
         }
 
         return new TotalCount(
@@ -189,10 +179,7 @@ public interface PaginationSupport extends SqlObject {
     /// Otherwise its result would be discarded.
     ///
     /// @since 5.1.0
-    default TotalCount boundedTotalCountOrAtLeast(
-            LongSupplier boundedCountSupplier,
-            int threshold,
-            int returnedItems) {
+    default TotalCount boundedTotalCountOrAtLeast(LongSupplier boundedCountSupplier, int threshold, int returnedItems) {
         final TotalCount pageDerived = pageDerivedTotalCount(returnedItems);
         if (pageDerived.type() == TotalCount.Type.EXACT || pageDerived.value() > threshold) {
             return pageDerived;
@@ -217,35 +204,28 @@ public interface PaginationSupport extends SqlObject {
         if (returnedItems == 0) {
             // An empty page doesn't tell us whether truly no items exist,
             // or we just moved past the number of items in the collection.
-            return new TotalCount(0, pagination.getOffset() == 0
-                    ? TotalCount.Type.EXACT
-                    : TotalCount.Type.AT_LEAST);
+            return new TotalCount(0, pagination.getOffset() == 0 ? TotalCount.Type.EXACT : TotalCount.Type.AT_LEAST);
         }
 
         return new TotalCount(
                 pagination.getOffset() + returnedItems,
-                returnedItems < pagination.getLimit()
-                        ? TotalCount.Type.EXACT
-                        : TotalCount.Type.AT_LEAST);
+                returnedItems < pagination.getLimit() ? TotalCount.Type.EXACT : TotalCount.Type.AT_LEAST);
     }
 
     private long itemsPrecedingPage() {
         final Pagination pagination = apiPagination();
-        return pagination != null
-                ? pagination.getOffset()
-                : 0;
+        return pagination != null ? pagination.getOffset() : 0;
     }
 
     private @Nullable Pagination apiPagination() {
-        final AlpineRequest apiRequest = getHandle().getConfig(ApiRequestConfig.class).apiRequest();
+        final AlpineRequest apiRequest =
+                getHandle().getConfig(ApiRequestConfig.class).apiRequest();
         if (apiRequest == null) {
             return null;
         }
 
         final Pagination pagination = apiRequest.getPagination();
-        return pagination != null && pagination.isPaginated()
-                ? pagination
-                : null;
+        return pagination != null && pagination.isPaginated() ? pagination : null;
     }
 
     default <T> T withJitDisabled(Supplier<T> supplier) {
@@ -258,5 +238,4 @@ public interface PaginationSupport extends SqlObject {
             return supplier.get();
         });
     }
-
 }

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotNull;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -333,5 +334,4 @@ public class ProjectMetrics implements Serializable {
     public void setLastOccurrence(Date lastOccurrence) {
         this.lastOccurrence = lastOccurrence;
     }
-
 }

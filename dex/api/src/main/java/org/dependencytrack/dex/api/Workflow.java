@@ -36,5 +36,4 @@ public interface Workflow<A extends @Nullable Object, R extends @Nullable Object
      */
     @Nullable
     R execute(WorkflowContext<@Nullable A> ctx, @Nullable A argument) throws Exception;
-
 }

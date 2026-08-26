@@ -20,5 +20,4 @@ package org.dependencytrack.dex.engine;
 
 import java.util.UUID;
 
-public record ActivityTaskId(String queueName, UUID workflowRunId, int createdEventId) {
-}
+public record ActivityTaskId(String queueName, UUID workflowRunId, int createdEventId) {}

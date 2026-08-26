@@ -19,8 +19,9 @@
 package org.dependencytrack.resources.v1.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.ws.rs.BadRequestException;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
+
+import jakarta.ws.rs.BadRequestException;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -28,7 +29,6 @@ import java.util.stream.Collectors;
 /// @since 5.1.0
 @Schema(description = "The counting mode for the `X-Total-Count` response header.")
 public enum TotalCountMode {
-
     EXACT,
     BOUNDED;
 
@@ -37,17 +37,16 @@ public enum TotalCountMode {
         try {
             return valueOf(value);
         } catch (IllegalArgumentException _) {
-            throw new BadRequestException(
-                    new ProblemDetails(
+            throw new BadRequestException(new ProblemDetails(
                             400,
                             "Invalid query parameter",
-                            "\"%s\" is not a valid value for the totalCount parameter. Valid values are: %s.".formatted(
-                                    value,
-                                    Arrays.stream(values())
-                                            .map(Enum::name)
-                                            .collect(Collectors.joining(", "))))
-                            .toResponse());
+                            "\"%s\" is not a valid value for the totalCount parameter. Valid values are: %s."
+                                    .formatted(
+                                            value,
+                                            Arrays.stream(values())
+                                                    .map(Enum::name)
+                                                    .collect(Collectors.joining(", "))))
+                    .toResponse());
         }
     }
-
 }

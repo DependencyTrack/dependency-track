@@ -53,18 +53,17 @@ import static java.util.Objects.requireNonNull;
 final class TestDatabaseManager {
 
     private static final ReentrantLock LOCK = new ReentrantLock();
-    private static final List<TestDatabaseEventListener> EVENT_LISTENERS = ServiceLoader
-            .load(TestDatabaseEventListener.class).stream()
-            .map(ServiceLoader.Provider::get)
-            .toList();
+    private static final List<TestDatabaseEventListener> EVENT_LISTENERS =
+            ServiceLoader.load(TestDatabaseEventListener.class).stream()
+                    .map(ServiceLoader.Provider::get)
+                    .toList();
 
     private static @Nullable Connection connection;
     private static @Nullable String jdbcUrl;
     private static @Nullable String username;
     private static @Nullable String password;
 
-    private TestDatabaseManager() {
-    }
+    private TestDatabaseManager() {}
 
     static void initialize() {
         if (connection != null) {
@@ -85,11 +84,10 @@ final class TestDatabaseManager {
             final long pid = ProcessHandle.current().pid();
             final String dbName = "dtrack_" + pid;
 
-            final Path lockFile = Path.of(
-                    System.getProperty("java.io.tmpdir"),
-                    "dependencytrack-postgres-testcontainer.lock");
+            final Path lockFile =
+                    Path.of(System.getProperty("java.io.tmpdir"), "dependencytrack-postgres-testcontainer.lock");
             try (final var channel = FileChannel.open(lockFile, CREATE, WRITE);
-                 var _ = channel.lock()) {
+                    var _ = channel.lock()) {
                 container.start();
                 dropStaleDatabases(container, pid);
             } catch (IOException e) {
@@ -100,10 +98,10 @@ final class TestDatabaseManager {
             // Cannot connect to "dtrack" because CREATE DATABASE requires
             // no active connections to the template.
             try (final Connection connection = DriverManager.getConnection(
-                    container.getJdbcUrl().replace("/dtrack?", "/postgres?"),
-                    container.getUsername(),
-                    container.getPassword());
-                 final Statement statement = connection.createStatement()) {
+                            container.getJdbcUrl().replace("/dtrack?", "/postgres?"),
+                            container.getUsername(),
+                            container.getPassword());
+                    final Statement statement = connection.createStatement()) {
                 statement.execute("CREATE DATABASE %s TEMPLATE dtrack".formatted(dbName));
             } catch (SQLException e) {
                 throw new IllegalStateException("Failed to create test database " + dbName, e);
@@ -178,10 +176,10 @@ final class TestDatabaseManager {
 
     private static void dropStaleDatabases(PostgresTestContainer container, long pid) {
         try (final Connection connection = DriverManager.getConnection(
-                container.getJdbcUrl().replace("/dtrack?", "/postgres?"),
-                container.getUsername(),
-                container.getPassword());
-             final Statement statement = connection.createStatement()) {
+                        container.getJdbcUrl().replace("/dtrack?", "/postgres?"),
+                        container.getUsername(),
+                        container.getPassword());
+                final Statement statement = connection.createStatement()) {
             final var staleDatabases = new ArrayList<String>();
             try (final ResultSet rs = statement.executeQuery("""
                     SELECT datname
@@ -208,5 +206,4 @@ final class TestDatabaseManager {
             throw new IllegalStateException("Failed to drop stale databases", e);
         }
     }
-
 }

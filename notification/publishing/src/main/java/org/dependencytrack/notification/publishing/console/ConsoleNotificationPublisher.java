@@ -39,12 +39,12 @@ final class ConsoleNotificationPublisher implements NotificationPublisher {
 
     @Override
     public void publish(NotificationPublishContext ctx, Notification notification) throws IOException {
-        final RenderedNotificationTemplate renderedTemplate = ctx.templateRenderer().render(notification);
+        final RenderedNotificationTemplate renderedTemplate =
+                ctx.templateRenderer().render(notification);
         if (renderedTemplate == null) {
             throw new IllegalStateException("No template configured");
         }
 
         outputStream.write(renderedTemplate.content().getBytes());
     }
-
 }

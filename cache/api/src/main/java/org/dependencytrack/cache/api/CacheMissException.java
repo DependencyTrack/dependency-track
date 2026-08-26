@@ -36,5 +36,4 @@ final class CacheMissException extends RuntimeException {
     private CacheMissException() {
         super(null, null, /* enableSuppression */ false, /* writableStackTrace */ false);
     }
-
 }

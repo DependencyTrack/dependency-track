@@ -64,11 +64,11 @@ class TagMaintenanceTaskTest extends PersistenceCapableTest {
         final var task = new TagMaintenanceTask();
         assertThatNoException().isThrownBy(() -> task.run());
 
-        assertThat(qm.getTags()).satisfiesExactlyInAnyOrder(
-                tag -> assertThat(tag.name()).isEqualTo("tag-project"),
-                tag -> assertThat(tag.name()).isEqualTo("tag-policy"),
-                tag -> assertThat(tag.name()).isEqualTo("tag-vuln")
-        );
+        assertThat(qm.getTags())
+                .satisfiesExactlyInAnyOrder(
+                        tag -> assertThat(tag.name()).isEqualTo("tag-project"),
+                        tag -> assertThat(tag.name()).isEqualTo("tag-policy"),
+                        tag -> assertThat(tag.name()).isEqualTo("tag-vuln"));
     }
 
     @Test
@@ -85,9 +85,6 @@ class TagMaintenanceTaskTest extends PersistenceCapableTest {
         final var task = new TagMaintenanceTask();
         assertThatNoException().isThrownBy(() -> task.run());
 
-        assertThat(qm.getTags()).satisfiesExactly(
-                tag -> assertThat(tag.name()).isEqualTo("tag-orphaned")
-        );
+        assertThat(qm.getTags()).satisfiesExactly(tag -> assertThat(tag.name()).isEqualTo("tag-orphaned"));
     }
-
 }

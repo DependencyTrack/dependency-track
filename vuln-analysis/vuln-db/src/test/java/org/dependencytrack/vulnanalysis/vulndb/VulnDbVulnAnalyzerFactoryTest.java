@@ -26,5 +26,4 @@ class VulnDbVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnAna
     VulnDbVulnAnalyzerFactoryTest() {
         super(VulnDbVulnAnalyzerFactory.class);
     }
-
 }

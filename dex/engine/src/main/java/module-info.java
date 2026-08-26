@@ -24,7 +24,8 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 @SuppressWarnings("requires-automatic")
 module org.dependencytrack.dex.engine {
-    provides DexEngineFactory with DexEngineFactoryImpl;
+    provides DexEngineFactory with
+            DexEngineFactoryImpl;
 
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.uuid;

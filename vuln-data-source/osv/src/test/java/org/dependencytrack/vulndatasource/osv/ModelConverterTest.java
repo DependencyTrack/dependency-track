@@ -48,12 +48,10 @@ class ModelConverterTest {
 
         @Test
         void shouldIncludeAliasReferencesWhenEnabled() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-GHSA-77rv-6vfw-x4gc.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-GHSA-77rv-6vfw-x4gc.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .when(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -127,14 +125,13 @@ class ModelConverterTest {
 
         @Test
         void shouldOmitAliasReferencesWhenDisabled() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-GHSA-77rv-6vfw-x4gc.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-GHSA-77rv-6vfw-x4gc.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
             assertThat(bov.getVulnerabilitiesList())
                     .singleElement()
                     .satisfies(v -> assertThat(v.getReferencesList()).isEmpty());
         }
-
     }
 
     @Nested
@@ -142,12 +139,10 @@ class ModelConverterTest {
 
         @Test
         void shouldConvertMultipleAffectedRanges() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-vulnerability-with-ranges.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-vulnerability-with-ranges.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .when(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -262,12 +257,10 @@ class ModelConverterTest {
 
         @Test
         void shouldConvertVulnerabilityWithoutRanges() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-vulnerability-no-range.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-vulnerability-no-range.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .when(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "vulnerabilities": [
                                 {
@@ -301,12 +294,10 @@ class ModelConverterTest {
 
         @Test
         void shouldConvertGitCommitHashRanges() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-git-commit-hash-ranges.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-git-commit-hash-ranges.json"), true, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .when(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).when(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -366,12 +357,10 @@ class ModelConverterTest {
 
         @Test
         void shouldUseLowestUpperBoundWhenMultiplePresent() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-git-upper-bound-range.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-git-upper-bound-range.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .withOptions(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).withOptions(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -416,12 +405,10 @@ class ModelConverterTest {
 
         @Test
         void shouldEmitWildcardRangeWhenNoUpperBound() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-git-no-upper-bound-range.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-git-no-upper-bound-range.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .withOptions(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).withOptions(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -466,12 +453,10 @@ class ModelConverterTest {
 
         @Test
         void shouldEmitExactVersionWhenNoRange() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-vulnerability-exact-version.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-vulnerability-exact-version.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .withOptions(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).withOptions(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -557,12 +542,13 @@ class ModelConverterTest {
 
         @Test
         void shouldResolveConflictingUpperBounds() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-git-conflict-upper-bound-range.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(
+                            loadOsvAdvisory("osv-git-conflict-upper-bound-range.json"),
+                            false,
+                            DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .withOptions(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).withOptions(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "components": [
                                 {
@@ -637,9 +623,7 @@ class ModelConverterTest {
 
             final Bom bov = new ModelConverter(MAPPER).convert(advisory, false, "generic");
 
-            assertThatBov(bov)
-                    .inPath("$.vulnerabilities[0].affects[0]")
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).inPath("$.vulnerabilities[0].affects[0]").isEqualTo(/* language=JSON */ """
                             {
                               "ref": "${json-unit.any-string}"
                             }
@@ -1095,7 +1079,6 @@ class ModelConverterTest {
                             ]
                             """);
         }
-
     }
 
     @Nested
@@ -1103,12 +1086,10 @@ class ModelConverterTest {
 
         @Test
         void shouldFilterInvalidCvssVectors() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-vulnerability-invalid-cvss.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
+            final Bom bov = new ModelConverter(MAPPER)
+                    .convert(loadOsvAdvisory("osv-vulnerability-invalid-cvss.json"), false, DEFAULT_SOURCE_ECOSYSTEM);
 
-            assertThatBov(bov)
-                    .withOptions(Option.IGNORING_ARRAY_ORDER)
-                    .isEqualTo(/* language=JSON */ """
+            assertThatBov(bov).withOptions(Option.IGNORING_ARRAY_ORDER).isEqualTo(/* language=JSON */ """
                             {
                               "vulnerabilities": [
                                 {
@@ -1147,7 +1128,6 @@ class ModelConverterTest {
                             }
                             """);
         }
-
     }
 
     @Nested
@@ -1155,18 +1135,19 @@ class ModelConverterTest {
 
         @Test
         void shouldTrimSummaryToMaxLength() {
-            final String trimmed = trimSummary("In uvc_scan_chain_forward of uvc_driver.c, there is a possible linked list corruption due to an unusual root cause. This could lead to local escalation of privilege in the kernel with no additional execution privileges needed. User interaction is not needed for exploitation.");
+            final String trimmed = trimSummary(
+                    "In uvc_scan_chain_forward of uvc_driver.c, there is a possible linked list corruption due to an unusual root cause. This could lead to local escalation of privilege in the kernel with no additional execution privileges needed. User interaction is not needed for exploitation.");
 
             assertThat(trimmed)
                     .hasSize(255)
-                    .isEqualTo("In uvc_scan_chain_forward of uvc_driver.c, there is a possible linked list corruption due to an unusual root cause. This could lead to local escalation of privilege in the kernel with no additional execution privileges needed. User interaction is not ne..");
+                    .isEqualTo(
+                            "In uvc_scan_chain_forward of uvc_driver.c, there is a possible linked list corruption due to an unusual root cause. This could lead to local escalation of privilege in the kernel with no additional execution privileges needed. User interaction is not ne..");
         }
 
         @Test
         void shouldReturnShortSummaryUnchanged() {
             assertThat(trimSummary("I'm a short Summary")).isEqualTo("I'm a short Summary");
         }
-
     }
 
     @Test
@@ -1244,9 +1225,7 @@ class ModelConverterTest {
 
         final Bom bov = new ModelConverter(MAPPER).convert(advisory, false, "Maven");
 
-        assertThatBov(bov)
-                .inPath("$.vulnerabilities[0].credits.individuals")
-                .isEqualTo(/* language=JSON */ """
+        assertThatBov(bov).inPath("$.vulnerabilities[0].credits.individuals").isEqualTo(/* language=JSON */ """
                         [
                           {
                             "name": "Alice",
@@ -1272,8 +1251,7 @@ class ModelConverterTest {
 
         @Test
         void shouldEnrichPurlsForRealDebianAdvisory() throws IOException {
-            final Bom bov = new ModelConverter(MAPPER).convert(
-                    loadOsvAdvisory("osv-DSA-5474-1.json"), false, "Debian");
+            final Bom bov = new ModelConverter(MAPPER).convert(loadOsvAdvisory("osv-DSA-5474-1.json"), false, "Debian");
 
             assertThatBov(bov)
                     .when(Option.IGNORING_ARRAY_ORDER)
@@ -1328,7 +1306,6 @@ class ModelConverterTest {
                     .inPath("$.components[0].purl")
                     .isEqualTo("pkg:deb/debian/intel-microcode?distro=bullseye");
         }
-
     }
 
     private static Osv loadOsvAdvisory(String resource) throws IOException {
@@ -1363,5 +1340,4 @@ class ModelConverterTest {
 
         return new ModelConverter(MAPPER).convert(advisory, false, "PyPI");
     }
-
 }

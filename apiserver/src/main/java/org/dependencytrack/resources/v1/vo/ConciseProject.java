@@ -38,25 +38,53 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "A concise representation of a project")
 public record ConciseProject(
-        @Schema(description = "UUID of the project", requiredMode = Schema.RequiredMode.REQUIRED) UUID uuid,
-        @Schema(description = "Group or namespace of the project") String group,
-        @Schema(description = "Name of the project", requiredMode = Schema.RequiredMode.REQUIRED) String name,
+        @Schema(description = "UUID of the project", requiredMode = Schema.RequiredMode.REQUIRED)
+        UUID uuid,
+
+        @Schema(description = "Group or namespace of the project")
+        String group,
+
+        @Schema(description = "Name of the project", requiredMode = Schema.RequiredMode.REQUIRED)
+        String name,
+
         @Schema(description = "Version of the project") String version,
         @Schema(description = "Classifier of the project") Classifier classifier,
-        @Schema(description = "Whether the project is active", requiredMode = Schema.RequiredMode.REQUIRED) boolean active,
-        @Schema(description = "Whether the project version is latest") boolean isLatest,
-        @Schema(description = "Collection logic for aggregating child metrics") ProjectCollectionLogic collectionLogic,
-        @Schema(description = "Tags associated with the project") List<Tag> tags,
-        @Schema(description = "Teams associated with the project") List<Team> teams,
-        @Schema(description = "Timestamp of the last BOM import") Date lastBomImport,
-        @Schema(description = "Format of the last imported BOM") String lastBomImportFormat,
+
+        @Schema(description = "Whether the project is active", requiredMode = Schema.RequiredMode.REQUIRED)
+        boolean active,
+
+        @Schema(description = "Whether the project version is latest")
+        boolean isLatest,
+
+        @Schema(description = "Collection logic for aggregating child metrics")
+        ProjectCollectionLogic collectionLogic,
+
+        @Schema(description = "Tags associated with the project")
+        List<Tag> tags,
+
+        @Schema(description = "Teams associated with the project")
+        List<Team> teams,
+
+        @Schema(description = "Timestamp of the last BOM import")
+        Date lastBomImport,
+
+        @Schema(description = "Format of the last imported BOM")
+        String lastBomImportFormat,
+
         @Schema(description = "Last observed risk score") Double lastRiskScore,
-        @Schema(description = "Whether the project has children", requiredMode = Schema.RequiredMode.REQUIRED) boolean hasChildren,
-        @Schema(description = "Latest metrics for the project") ConciseProjectMetrics metrics
-) {
+
+        @Schema(description = "Whether the project has children", requiredMode = Schema.RequiredMode.REQUIRED)
+        boolean hasChildren,
+
+        @Schema(description = "Latest metrics for the project")
+        ConciseProjectMetrics metrics) {
 
     public ConciseProject(final ConciseProjectListRow row) {
-        this(row.uuid(), row.group(), row.name(), row.version(),
+        this(
+                row.uuid(),
+                row.group(),
+                row.name(),
+                row.version(),
                 row.classifier() != null ? Classifier.valueOf(row.classifier()) : null,
                 row.inactiveSince() == null,
                 row.isLatest(),
@@ -97,5 +125,4 @@ public record ConciseProject(
                 })
                 .toList();
     }
-
 }

@@ -69,26 +69,18 @@ public final class MockKeyValueStore implements KeyValueStore {
                             return a;
                         }
 
-                        return new Entry(
-                                a.key(),
-                                b.value(),
-                                a.createdAt(),
-                                b.createdAt(),
-                                a.version() + 1);
+                        return new Entry(a.key(), b.value(), a.createdAt(), b.createdAt(), a.version() + 1);
                     });
         }
     }
 
     @Override
     public CompareAndPutResult compareAndPut(
-            final String key,
-            final String value,
-            final @Nullable Long expectedVersion) {
+            final String key, final String value, final @Nullable Long expectedVersion) {
         final Instant now = Instant.now();
 
         if (expectedVersion == null) {
-            final Entry existingEntry = kvMap.putIfAbsent(
-                    key, new Entry(key, value, now, null, 0));
+            final Entry existingEntry = kvMap.putIfAbsent(key, new Entry(key, value, now, null, 0));
 
             return existingEntry == null
                     ? new CompareAndPutResult.Success(0)
@@ -108,12 +100,7 @@ public final class MockKeyValueStore implements KeyValueStore {
             }
 
             versionMatched.set(true);
-            return new Entry(
-                    key,
-                    value,
-                    existingEntry.createdAt(),
-                    now,
-                    existingEntry.version() + 1);
+            return new Entry(key, value, existingEntry.createdAt(), now, existingEntry.version() + 1);
         });
         if (entry == null) {
             return new CompareAndPutResult.Failure(CompareAndPutResult.Failure.Reason.VERSION_MISMATCH);
@@ -179,5 +166,4 @@ public final class MockKeyValueStore implements KeyValueStore {
 
         keys.forEach(kvMap::remove);
     }
-
 }

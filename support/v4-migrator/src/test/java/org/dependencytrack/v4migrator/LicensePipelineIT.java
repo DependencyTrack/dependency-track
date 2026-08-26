@@ -63,13 +63,16 @@ class LicensePipelineIT {
         // Seed v4 source.
         final UUID apacheUuid = UUID.fromString("c5b25734-69ce-4e9b-a4f3-1f0fa5b27d5f");
         final UUID mitUuid = UUID.fromString("8a3a4c1d-5be9-4d2a-9bc1-4d8a8c5d4b3a");
-        final byte[] seeAlsoBytes = new byte[]{1, 2, 3, 4, 5};
+        final byte[] seeAlsoBytes = new byte[] {1, 2, 3, 4, 5};
         source.jdbi().useHandle(h -> {
             h.createUpdate("""
                     INSERT INTO "LICENSE"
                         ("ID", "ISDEPRECATED", "ISOSIAPPROVED", "NAME", "LICENSEID", "UUID", "SEEALSO")
                     VALUES (1, FALSE, TRUE, 'Apache 2.0', 'Apache-2.0', :u, :sa)
-                """).bind("u", apacheUuid.toString()).bind("sa", seeAlsoBytes).execute();
+                """)
+                    .bind("u", apacheUuid.toString())
+                    .bind("sa", seeAlsoBytes)
+                    .execute();
             h.createUpdate("""
                     INSERT INTO "LICENSE"
                         ("ID", "ISDEPRECATED", "ISOSIAPPROVED", "NAME", "LICENSEID", "UUID")
@@ -94,33 +97,35 @@ class LicensePipelineIT {
         new LoadPhase(global, target.jdbi(), false).run();
 
         // Assert: v5 LICENSE contains the two rows with UUIDs converted to native uuid.
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "NAME", "LICENSEID", "UUID", "SEEALSO"
                       FROM "LICENSE"
                      ORDER BY "ID"
-                    """)
-                .mapToMap()
-                .list());
+                    """).mapToMap().list());
 
         assertThat(rows).hasSize(2);
-        assertThat(rows.get(0)).containsEntry("id", 1L)
-            .containsEntry("name", "Apache 2.0")
-            .containsEntry("licenseid", "Apache-2.0")
-            .containsEntry("uuid", apacheUuid);
+        assertThat(rows.get(0))
+                .containsEntry("id", 1L)
+                .containsEntry("name", "Apache 2.0")
+                .containsEntry("licenseid", "Apache-2.0")
+                .containsEntry("uuid", apacheUuid);
         assertThat((byte[]) rows.get(0).get("seealso")).isEqualTo(seeAlsoBytes);
-        assertThat(rows.get(1)).containsEntry("id", 2L)
-            .containsEntry("name", "MIT License")
-            .containsEntry("licenseid", "MIT")
-            .containsEntry("uuid", mitUuid);
+        assertThat(rows.get(1))
+                .containsEntry("id", 2L)
+                .containsEntry("name", "MIT License")
+                .containsEntry("licenseid", "MIT")
+                .containsEntry("uuid", mitUuid);
 
         // Identity sequence restarted: next insert should land at MAX(ID)+1 = 3.
         target.jdbi().useHandle(h -> h.execute("""
                 INSERT INTO "LICENSE" ("ISDEPRECATED", "ISOSIAPPROVED", "NAME", "UUID")
                 VALUES (FALSE, FALSE, 'Generated', gen_random_uuid())
                 """));
-        final Long maxId = target.jdbi().withHandle(h ->
-            h.createQuery("SELECT MAX(\"ID\") FROM \"LICENSE\"").mapTo(Long.class).one());
+        final Long maxId = target.jdbi()
+                .withHandle(h -> h.createQuery("SELECT MAX(\"ID\") FROM \"LICENSE\"")
+                        .mapTo(Long.class)
+                        .one());
         assertThat(maxId).isEqualTo(3L);
     }
 }

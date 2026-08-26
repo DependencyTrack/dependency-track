@@ -72,7 +72,8 @@ record MatchingCriteria(
 
         @Override
         public void init(ConfigRegistry registry) {
-            purlColumnMapper = registry.get(ColumnMappers.class).findFor(PackageURL.class).orElseThrow();
+            purlColumnMapper =
+                    registry.get(ColumnMappers.class).findFor(PackageURL.class).orElseThrow();
         }
 
         @Override
@@ -105,7 +106,5 @@ record MatchingCriteria(
                     rs.getString("versionstartincluding"),
                     rs.getInt("coordinate_index"));
         }
-
     }
-
 }

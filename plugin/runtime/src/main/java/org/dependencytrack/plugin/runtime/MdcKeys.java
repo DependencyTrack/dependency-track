@@ -26,7 +26,5 @@ final class MdcKeys {
     static final String MDC_EXTENSION_POINT_NAME = "extensionPointName";
     static final String MDC_PLUGIN = "plugin";
 
-    private MdcKeys() {
-    }
-
+    private MdcKeys() {}
 }

@@ -30,5 +30,4 @@ public final class InvalidPageTokenException extends IllegalArgumentException {
     InvalidPageTokenException(Throwable cause) {
         super(cause);
     }
-
 }

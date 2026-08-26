@@ -43,5 +43,4 @@ class WorkflowCallOptionsTest {
         final var callOptions = new WorkflowCallOptions<>().withConcurrencyKey("foo");
         assertThat(callOptions.concurrencyKey()).isEqualTo("foo");
     }
-
 }

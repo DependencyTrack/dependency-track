@@ -39,7 +39,8 @@ public final class NamespacedConfig implements Config {
 
     public NamespacedConfig(Config delegate, String namespace) {
         this.delegate = requireNonNull(delegate, "delegate must not be null");
-        this.prefix = requireNonNull(namespace, "namespace must not be null").endsWith(".") ? namespace : namespace + ".";
+        this.prefix =
+                requireNonNull(namespace, "namespace must not be null").endsWith(".") ? namespace : namespace + ".";
     }
 
     @Override
@@ -79,5 +80,4 @@ public final class NamespacedConfig implements Config {
     public <T> T unwrap(Class<T> type) {
         throw new UnsupportedOperationException();
     }
-
 }

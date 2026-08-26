@@ -33,11 +33,8 @@ final class SummarizeFilter implements Filter {
 
     @Override
     public Object apply(
-            Object input,
-            Map<String, Object> args,
-            PebbleTemplate self,
-            EvaluationContext context,
-            int lineNumber) throws PebbleException {
+            Object input, Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber)
+            throws PebbleException {
         if (input instanceof final Project project) {
             return summarize(project);
         } else if (input instanceof final Component component) {
@@ -76,5 +73,4 @@ final class SummarizeFilter implements Filter {
             return sb.toString();
         }
     }
-
 }

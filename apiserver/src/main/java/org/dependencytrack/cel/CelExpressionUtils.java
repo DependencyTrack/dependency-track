@@ -25,8 +25,7 @@ public final class CelExpressionUtils {
 
     private static final Pattern DURATION_DAYS_PATTERN = Pattern.compile("duration\\(\"(\\d+)d\"\\)");
 
-    private CelExpressionUtils() {
-    }
+    private CelExpressionUtils() {}
 
     public static String normalizeDurationDays(String expressionSrc) {
         // We migrated from https://github.com/projectnessie/cel-java
@@ -40,5 +39,4 @@ public final class CelExpressionUtils {
             return "duration(\"%dh\")".formatted(Math.multiplyExact(days, 24));
         });
     }
-
 }

@@ -38,5 +38,4 @@ public final class MigrationExecutor extends org.dependencytrack.support.flyway.
                 /* outOfOrder */ true,
                 skipRepeatable);
     }
-
 }

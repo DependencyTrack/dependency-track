@@ -18,11 +18,12 @@
  */
 package org.dependencytrack.capabilities;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * @since 5.0.0
@@ -51,9 +52,6 @@ public final class SystemCapabilitiesBinder extends AbstractBinder {
         }
 
         @Override
-        public void dispose(final SystemCapabilitiesAggregator instance) {
-        }
-
+        public void dispose(final SystemCapabilitiesAggregator instance) {}
     }
-
 }

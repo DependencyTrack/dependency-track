@@ -60,25 +60,12 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
 
     @Test
     void shouldMirrorEnabledSource() throws Exception {
-        final var activity = new MirrorKevDataSourceActivity(
-                createPluginManager(
-                        "cisa", () -> kevDataSourceOf(
-                                new KevAssertion(
-                                        "NVD",
-                                        "CVE-1",
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        JsonNodeFactory.instance.objectNode()),
-                                new KevAssertion(
-                                        "NVD",
-                                        "CVE-2",
-                                        null,
-                                        null,
-                                        null,
-                                        null,
-                                        JsonNodeFactory.instance.objectNode()))));
+        final var activity = new MirrorKevDataSourceActivity(createPluginManager(
+                "cisa",
+                () -> kevDataSourceOf(
+                        new KevAssertion("NVD", "CVE-1", null, null, null, null, JsonNodeFactory.instance.objectNode()),
+                        new KevAssertion(
+                                "NVD", "CVE-2", null, null, null, null, JsonNodeFactory.instance.objectNode()))));
 
         activity.execute(ctx, activityArgForKevDataSource("cisa"));
 
@@ -87,10 +74,10 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
 
     @Test
     void shouldMirrorAcrossMultipleBatchesAndReconcile() throws Exception {
-        final var activity = new MirrorKevDataSourceActivity(
-                createPluginManager("cisa", providingKevDataSources(
-                        kevDataSourceOf(createKevAssertions(2500)),
-                        kevDataSourceOf(createKevAssertions(1500)))));
+        final var activity = new MirrorKevDataSourceActivity(createPluginManager(
+                "cisa",
+                providingKevDataSources(
+                        kevDataSourceOf(createKevAssertions(2500)), kevDataSourceOf(createKevAssertions(1500)))));
 
         activity.execute(ctx, activityArgForKevDataSource("cisa"));
         assertThat(countKevAssertions("cisa")).isEqualTo(2500);
@@ -101,10 +88,8 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
 
     @Test
     void shouldNotPurgeExistingAssertionsWhenSourceReportsZero() throws Exception {
-        final var activity = new MirrorKevDataSourceActivity(
-                createPluginManager("cisa", providingKevDataSources(
-                        kevDataSourceOf(createKevAssertions(2)),
-                        kevDataSourceOf())));
+        final var activity = new MirrorKevDataSourceActivity(createPluginManager(
+                "cisa", providingKevDataSources(kevDataSourceOf(createKevAssertions(2)), kevDataSourceOf())));
 
         activity.execute(ctx, activityArgForKevDataSource("cisa"));
         assertThat(countKevAssertions("cisa")).isEqualTo(2);
@@ -115,9 +100,8 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
 
     @Test
     void shouldFailTerminallyWhenSourceDisabled() {
-        final var activity = new MirrorKevDataSourceActivity(
-                createPluginManager(List.of(
-                        new DisabledKevDataSourceFactory("cisa"))));
+        final var activity =
+                new MirrorKevDataSourceActivity(createPluginManager(List.of(new DisabledKevDataSourceFactory("cisa"))));
 
         assertThatExceptionOfType(TerminalApplicationFailureException.class)
                 .isThrownBy(() -> activity.execute(ctx, activityArgForKevDataSource("cisa")));
@@ -125,8 +109,7 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
 
     @Test
     void shouldFailTerminallyWhenSourceNotFound() {
-        final var activity = new MirrorKevDataSourceActivity(
-                createPluginManager(List.of()));
+        final var activity = new MirrorKevDataSourceActivity(createPluginManager(List.of()));
 
         assertThatExceptionOfType(TerminalApplicationFailureException.class)
                 .isThrownBy(() -> activity.execute(ctx, activityArgForKevDataSource("nonexistent")));
@@ -155,14 +138,8 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
     private static KevAssertion[] createKevAssertions(int count) {
         final var assertions = new KevAssertion[count];
         for (int i = 0; i < count; i++) {
-            assertions[i] = new KevAssertion(
-                    "NVD",
-                    "CVE-" + i,
-                    null,
-                    null,
-                    null,
-                    null,
-                    JsonNodeFactory.instance.objectNode());
+            assertions[i] =
+                    new KevAssertion("NVD", "CVE-" + i, null, null, null, null, JsonNodeFactory.instance.objectNode());
         }
 
         return assertions;
@@ -236,14 +213,12 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {
-        }
+        public void init(@NonNull ServiceRegistry serviceRegistry) {}
 
         @Override
         public @NonNull KevDataSource create() {
             return dataSourceSupplier.get();
         }
-
     }
 
     private static class DisabledKevDataSourceFactory implements KevDataSourceFactory {
@@ -280,14 +255,12 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {
-        }
+        public void init(@NonNull ServiceRegistry serviceRegistry) {}
 
         @Override
         public @NonNull KevDataSource create() {
             throw new UnsupportedOperationException();
         }
-
     }
 
     private static class TestKevDataSource implements KevDataSource {
@@ -301,7 +274,5 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
         public KevAssertion next() {
             throw new UnsupportedOperationException();
         }
-
     }
-
 }

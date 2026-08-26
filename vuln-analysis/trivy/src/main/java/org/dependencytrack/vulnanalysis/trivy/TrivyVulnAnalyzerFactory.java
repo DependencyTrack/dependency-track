@@ -112,5 +112,4 @@ final class TrivyVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConf
                     }
                 });
     }
-
 }

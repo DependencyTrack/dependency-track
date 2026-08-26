@@ -90,19 +90,19 @@ class ProjectMetadataIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "PROJECT_ID", "AUTHORS", "SUPPLIER", "TOOLS"
                       FROM "PROJECT_METADATA"
                      ORDER BY "ID"
                     """).mapToMap().list());
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0))
-            .containsEntry("id", 200L)
-            .containsEntry("project_id", 2L)
-            .containsEntry("authors", "[{\"name\":\"new\"}]")
-            .containsEntry("supplier", "{\"name\":\"NewCo\"}")
-            .containsEntry("tools", null);
+                .containsEntry("id", 200L)
+                .containsEntry("project_id", 2L)
+                .containsEntry("authors", "[{\"name\":\"new\"}]")
+                .containsEntry("supplier", "{\"name\":\"NewCo\"}")
+                .containsEntry("tools", null);
     }
 
     private void runPipeline() throws Exception {

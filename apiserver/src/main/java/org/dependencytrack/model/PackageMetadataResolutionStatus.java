@@ -34,5 +34,4 @@ public enum PackageMetadataResolutionStatus {
 
     /// Resolution can never succeed (e.g. the PURL is malformed).
     UNRESOLVABLE
-
 }

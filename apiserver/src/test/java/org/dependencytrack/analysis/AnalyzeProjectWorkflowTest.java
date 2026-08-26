@@ -58,8 +58,8 @@ import static org.mockito.Mockito.verify;
 class AnalyzeProjectWorkflowTest extends PersistenceCapableTest {
 
     @RegisterExtension
-    private final WorkflowTestExtension workflowTest
-            = new WorkflowTestExtension(DataSourceRegistry.getInstance().getDefault());
+    private final WorkflowTestExtension workflowTest =
+            new WorkflowTestExtension(DataSourceRegistry.getInstance().getDefault());
 
     private VulnAnalysisWorkflow vulnAnalysisWorkflowMock;
     private EvalProjectPoliciesActivity evalProjectPoliciesActivityMock;
@@ -85,27 +85,21 @@ class AnalyzeProjectWorkflowTest extends PersistenceCapableTest {
                 Duration.ofSeconds(5));
 
         engine.registerActivity(
-                evalProjectPoliciesActivityMock,
-                protoConverter(EvalProjectPoliciesArg.class),
-                voidConverter());
+                evalProjectPoliciesActivityMock, protoConverter(EvalProjectPoliciesArg.class), voidConverter());
         engine.registerActivity(
-                updateProjectMetricsActivityMock,
-                protoConverter(UpdateProjectMetricsArg.class),
-                voidConverter());
+                updateProjectMetricsActivityMock, protoConverter(UpdateProjectMetricsArg.class), voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "metrics-updates", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "policy-evaluations", 1));
 
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
         engine.registerTaskWorker(
                 new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-metrics-updates", "metrics-updates", 1)
                         .withMinPollInterval(Duration.ofMillis(25))
@@ -122,28 +116,32 @@ class AnalyzeProjectWorkflowTest extends PersistenceCapableTest {
     void shouldCompleteProjectAnalysis() throws Exception {
         final var projectUuid = UUID.randomUUID();
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
                         .withArgument(AnalyzeProjectWorkflowArg.newBuilder()
                                 .setProjectUuid(projectUuid.toString())
                                 .build()));
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        verify(vulnAnalysisWorkflowMock).execute(
-                any(WorkflowContext.class),
-                assertArg(arg -> assertThat(arg.getProjectUuid()).isEqualTo(projectUuid.toString())));
-        verify(evalProjectPoliciesActivityMock).execute(
-                any(ActivityContext.class),
-                assertArg(arg -> assertThat(arg.getProjectUuid()).isEqualTo(projectUuid.toString())));
-        verify(updateProjectMetricsActivityMock).execute(
-                any(ActivityContext.class),
-                assertArg(arg -> assertThat(arg.getProjectUuid()).isEqualTo(projectUuid.toString())));
+        verify(vulnAnalysisWorkflowMock)
+                .execute(
+                        any(WorkflowContext.class),
+                        assertArg(arg -> assertThat(arg.getProjectUuid()).isEqualTo(projectUuid.toString())));
+        verify(evalProjectPoliciesActivityMock)
+                .execute(
+                        any(ActivityContext.class),
+                        assertArg(arg -> assertThat(arg.getProjectUuid()).isEqualTo(projectUuid.toString())));
+        verify(updateProjectMetricsActivityMock)
+                .execute(
+                        any(ActivityContext.class),
+                        assertArg(arg -> assertThat(arg.getProjectUuid()).isEqualTo(projectUuid.toString())));
     }
 
     @Test
     void shouldFailWhenArgumentIsNull() {
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class));
+        final UUID runId =
+                workflowTest.getEngine().createRun(new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class));
 
         final var run = workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
         assertThat(run.failure()).isNotNull();
@@ -153,10 +151,12 @@ class AnalyzeProjectWorkflowTest extends PersistenceCapableTest {
     @Test
     void shouldFailWhenVulnAnalysisWorkflowFails() throws Exception {
         doThrow(new TerminalApplicationFailureException("vuln analysis failed"))
-                .when(vulnAnalysisWorkflowMock).execute(any(), any());
+                .when(vulnAnalysisWorkflowMock)
+                .execute(any(), any());
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
                         .withArgument(AnalyzeProjectWorkflowArg.newBuilder()
                                 .setProjectUuid(UUID.randomUUID().toString())
                                 .build()));
@@ -170,10 +170,12 @@ class AnalyzeProjectWorkflowTest extends PersistenceCapableTest {
     @Test
     void shouldFailWhenPolicyEvaluationFails() throws Exception {
         doThrow(new TerminalApplicationFailureException("policy evaluation failed"))
-                .when(evalProjectPoliciesActivityMock).execute(any(), any());
+                .when(evalProjectPoliciesActivityMock)
+                .execute(any(), any());
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
                         .withArgument(AnalyzeProjectWorkflowArg.newBuilder()
                                 .setProjectUuid(UUID.randomUUID().toString())
                                 .build()));
@@ -188,10 +190,12 @@ class AnalyzeProjectWorkflowTest extends PersistenceCapableTest {
     @Test
     void shouldFailWhenMetricsUpdateFails() throws Exception {
         doThrow(new TerminalApplicationFailureException("metrics update failed"))
-                .when(updateProjectMetricsActivityMock).execute(any(), any());
+                .when(updateProjectMetricsActivityMock)
+                .execute(any(), any());
 
-        final UUID runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
+        final UUID runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(AnalyzeProjectWorkflow.class)
                         .withArgument(AnalyzeProjectWorkflowArg.newBuilder()
                                 .setProjectUuid(UUID.randomUUID().toString())
                                 .build()));
@@ -202,5 +206,4 @@ class AnalyzeProjectWorkflowTest extends PersistenceCapableTest {
         verify(vulnAnalysisWorkflowMock).execute(any(), any());
         verify(evalProjectPoliciesActivityMock).execute(any(), any());
     }
-
 }

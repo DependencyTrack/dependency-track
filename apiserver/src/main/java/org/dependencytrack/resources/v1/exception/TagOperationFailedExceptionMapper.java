@@ -40,5 +40,4 @@ public class TagOperationFailedExceptionMapper implements ExceptionMapper<TagOpe
         problemDetails.setErrors(exception.getErrorByTagName());
         return problemDetails.toResponse();
     }
-
 }

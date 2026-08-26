@@ -64,10 +64,7 @@ final class JvnVulnDataSource implements VulnDataSource {
     private int currentFeedAdvisoryCount;
 
     JvnVulnDataSource(
-            final JvnClient client,
-            final WatermarkManager watermarkManager,
-            final int startYear,
-            final int endYear) {
+            final JvnClient client, final WatermarkManager watermarkManager, final int startYear, final int endYear) {
         this.client = client;
         this.watermarkManager = watermarkManager;
         for (int year = startYear; year <= endYear; year++) {

@@ -27,13 +27,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
 import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
@@ -41,6 +34,14 @@ import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.vo.IsTokenBeingProcessedResponse;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import java.util.Map;
 import java.util.UUID;
@@ -55,10 +56,7 @@ import static org.dependencytrack.dex.DexWorkflowLabels.WF_LABEL_BOM_UPLOAD_TOKE
  */
 @Path("/v1/event")
 @Tag(name = "event")
-@SecurityRequirements({
-        @SecurityRequirement(name = "ApiKeyAuth"),
-        @SecurityRequirement(name = "BearerAuth")
-})
+@SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class EventResource extends AbstractApiResource {
 
     private final DexEngine dexEngine;
@@ -72,7 +70,8 @@ public class EventResource extends AbstractApiResource {
     @Path("/token/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.",
+            summary =
+                    "Determines if there are any tasks associated with the token that are being processed, or in the queue to be processed.",
             description = """
                     <p>
                       This endpoint is intended to be used in conjunction with other API calls which return a token for asynchronous tasks.
@@ -83,19 +82,23 @@ public class EventResource extends AbstractApiResource {
                       </ul>
                       However, a value of <code>false</code> also does not confirm the token is valid,
                       only that no processing is associated with the specified token.
-                    </p>"""
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "The processing status of the provided token",
-                    content = @Content(schema = @Schema(implementation = IsTokenBeingProcessedResponse.class))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
+                    </p>""")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "The processing status of the provided token",
+                        content = @Content(schema = @Schema(implementation = IsTokenBeingProcessedResponse.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized")
+            })
     public Response isTokenBeingProcessed(
-            @Parameter(description = "The UUID of the token to query", schema = @Schema(type = "string", format = "uuid"), required = true)
-            @PathParam("uuid") @ValidUuid String uuid) {
+            @Parameter(
+                            description = "The UUID of the token to query",
+                            schema = @Schema(type = "string", format = "uuid"),
+                            required = true)
+                    @PathParam("uuid")
+                    @ValidUuid
+                    String uuid) {
         final UUID token = UUID.fromString(uuid);
 
         final boolean isProcessing;
@@ -111,10 +114,8 @@ public class EventResource extends AbstractApiResource {
     }
 
     private boolean hasNonTerminalDexRun(UUID token) {
-        final boolean hasNonTerminalByLabel =
-                dexEngine.existsRun(new ExistsWorkflowRunRequest(
-                        WorkflowRunStatus.NON_TERMINAL_STATUSES,
-                        Map.of(WF_LABEL_BOM_UPLOAD_TOKEN, token.toString())));
+        final boolean hasNonTerminalByLabel = dexEngine.existsRun(new ExistsWorkflowRunRequest(
+                WorkflowRunStatus.NON_TERMINAL_STATUSES, Map.of(WF_LABEL_BOM_UPLOAD_TOKEN, token.toString())));
         if (hasNonTerminalByLabel) {
             return true;
         }
@@ -122,5 +123,4 @@ public class EventResource extends AbstractApiResource {
         final WorkflowRunMetadata runMetadata = dexEngine.getRunMetadataById(token);
         return runMetadata != null && !runMetadata.status().isTerminal();
     }
-
 }

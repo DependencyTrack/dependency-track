@@ -43,7 +43,8 @@ public final class PackageMetadataRowMapper implements RowMapper<PackageMetadata
 
     @Override
     public void init(ConfigRegistry registry) {
-        purlColumnMapper = registry.get(ColumnMappers.class).findFor(PackageURL.class).orElseThrow();
+        purlColumnMapper =
+                registry.get(ColumnMappers.class).findFor(PackageURL.class).orElseThrow();
     }
 
     @Override
@@ -59,5 +60,4 @@ public final class PackageMetadataRowMapper implements RowMapper<PackageMetadata
                 rs.getString("RESOLVED_FROM"),
                 rs.getString("RESOLVED_BY"));
     }
-
 }

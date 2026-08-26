@@ -32,5 +32,4 @@ public enum NotificationTriggerType {
      * The notification is triggered on schedule.
      */
     SCHEDULE
-
 }

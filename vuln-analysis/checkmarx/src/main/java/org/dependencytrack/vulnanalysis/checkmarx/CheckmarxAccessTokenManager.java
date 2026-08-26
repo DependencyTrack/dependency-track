@@ -80,11 +80,10 @@ final class CheckmarxAccessTokenManager {
             }
 
             final var tokenRequest = new TokenRequest(apiKey);
-            final String requestBody =
-                    "client_id=" + URLEncoder.encode(tokenRequest.clientId(), StandardCharsets.UTF_8)
-                            + "&grant_type=" + URLEncoder.encode(tokenRequest.grantType(), StandardCharsets.UTF_8)
-                            + "&refresh_token=" + URLEncoder.encode(tokenRequest.apiKey(), StandardCharsets.UTF_8);
-            
+            final String requestBody = "client_id=" + URLEncoder.encode(tokenRequest.clientId(), StandardCharsets.UTF_8)
+                    + "&grant_type=" + URLEncoder.encode(tokenRequest.grantType(), StandardCharsets.UTF_8)
+                    + "&refresh_token=" + URLEncoder.encode(tokenRequest.apiKey(), StandardCharsets.UTF_8);
+
             final var request = HttpRequest.newBuilder()
                     .uri(authApiBaseUrl.resolve("/auth/realms/" + orgId + "/protocol/openid-connect/token"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
@@ -108,7 +107,8 @@ final class CheckmarxAccessTokenManager {
 
             final var tokenResponse = objectMapper.readValue(response.body(), TokenResponse.class);
             accessToken = tokenResponse.accessToken();
-            accessTokenExpiresAt = Instant.now().plusSeconds(tokenResponse.expiresIn()).minus(EXPIRY_BUFFER);
+            accessTokenExpiresAt =
+                    Instant.now().plusSeconds(tokenResponse.expiresIn()).minus(EXPIRY_BUFFER);
             this.authApiBaseUrl = authApiBaseUrl;
             this.orgId = orgId;
             this.apiKey = apiKey;
@@ -127,7 +127,6 @@ final class CheckmarxAccessTokenManager {
         TokenRequest(String apiKey) {
             this(CLIENT_ID, GRANT_TYPE, apiKey);
         }
-
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -135,10 +134,5 @@ final class CheckmarxAccessTokenManager {
             @JsonProperty("access_token") String accessToken,
             @JsonProperty("expires_in") long expiresIn,
             @JsonProperty("refresh_token") String apiKey,
-            @JsonProperty("refresh_expires_in") long refreshExpiresIn) {
-    }
-
+            @JsonProperty("refresh_expires_in") long refreshExpiresIn) {}
 }
-
-
-

@@ -89,8 +89,8 @@ final class JvnAdvisorySource implements Iterator<JvnAdvisory>, Closeable {
      * Opens a downloaded feed file for streaming; the file is deleted once the source is closed.
      */
     static JvnAdvisorySource open(final Path feedFilePath) throws IOException {
-        return new JvnAdvisorySource(new BufferedInputStream(
-                Files.newInputStream(feedFilePath, StandardOpenOption.DELETE_ON_CLOSE)));
+        return new JvnAdvisorySource(
+                new BufferedInputStream(Files.newInputStream(feedFilePath, StandardOpenOption.DELETE_ON_CLOSE)));
     }
 
     @Override
@@ -126,8 +126,7 @@ final class JvnAdvisorySource implements Iterator<JvnAdvisory>, Closeable {
         try {
             while (true) {
                 final int event = xmlReader.getEventType();
-                if (event == XMLStreamConstants.START_ELEMENT
-                        && "Vulinfo".equals(xmlReader.getLocalName())) {
+                if (event == XMLStreamConstants.START_ELEMENT && "Vulinfo".equals(xmlReader.getLocalName())) {
                     // The identity transform consumes the reader through the matching end element
                     // plus one further event, so the loop must re-examine the current event rather
                     // than advancing — an immediately following <Vulinfo> would be skipped otherwise.

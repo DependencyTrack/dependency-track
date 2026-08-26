@@ -38,12 +38,14 @@ public interface NotificationPublisherFactory extends ExtensionFactory<Notificat
      * @return Specification of rule-level configuration supported by the publisher.
      * May be {@code null} when the publisher doesn't support any rule-level configuration.
      */
-    @Nullable RuntimeConfigSpec ruleConfigSpec();
+    @Nullable
+    RuntimeConfigSpec ruleConfigSpec();
 
     /**
      * @return The default template of the publisher.
      */
-    @Nullable NotificationTemplate defaultTemplate();
+    @Nullable
+    NotificationTemplate defaultTemplate();
 
     @Override
     default int priority() {
@@ -64,5 +66,4 @@ public interface NotificationPublisherFactory extends ExtensionFactory<Notificat
             throw new UncheckedIOException(e);
         }
     }
-
 }

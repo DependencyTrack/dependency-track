@@ -27,6 +27,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Element;
 import javax.jdo.annotations.Extension;
@@ -80,7 +81,9 @@ public class Policy implements Serializable {
     @Index(name = "POLICY_NAME_IDX")
     @NotBlank
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The name may only contain printable characters")
     private String name;
 
     /**
@@ -90,7 +93,9 @@ public class Policy implements Serializable {
     @Column(name = "OPERATOR", allowsNull = "false")
     @NotBlank
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The operator may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The operator may only contain printable characters")
     private Operator operator;
 
     /**
@@ -100,7 +105,9 @@ public class Policy implements Serializable {
     @Column(name = "VIOLATIONSTATE", allowsNull = "false")
     @NotBlank
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The violation state may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The violation state may only contain printable characters")
     private ViolationState violationState;
 
     /**
@@ -123,7 +130,11 @@ public class Policy implements Serializable {
      * A list of zero-to-n tags
      */
     @Persistent(table = "POLICY_TAGS", defaultFetchGroup = "true", mappedBy = "policies")
-    @Join(column = "POLICY_ID", primaryKey = "POLICY_TAGS_PK", foreignKey = "POLICY_TAGS_POLICY_FK", deleteAction = ForeignKeyAction.CASCADE)
+    @Join(
+            column = "POLICY_ID",
+            primaryKey = "POLICY_TAGS_PK",
+            foreignKey = "POLICY_TAGS_POLICY_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
     @Element(column = "TAG_ID", foreignKey = "POLICY_TAGS_TAG_FK", deleteAction = ForeignKeyAction.CASCADE)
     private Set<Tag> tags;
 

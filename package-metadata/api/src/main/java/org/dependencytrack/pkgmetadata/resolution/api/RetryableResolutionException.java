@@ -37,9 +37,7 @@ public class RetryableResolutionException extends RuntimeException {
     private final @Nullable Duration retryAfter;
 
     public RetryableResolutionException(
-            @Nullable String message,
-            @Nullable Throwable cause,
-            @Nullable Duration retryAfter) {
+            @Nullable String message, @Nullable Throwable cause, @Nullable Duration retryAfter) {
         super(message, cause);
         if (retryAfter != null && (retryAfter.isZero() || retryAfter.isNegative())) {
             throw new IllegalArgumentException("retryAfter must be positive, but was: " + retryAfter);
@@ -77,5 +75,4 @@ public class RetryableResolutionException extends RuntimeException {
             throw new RetryableResolutionException(message, e);
         }
     }
-
 }

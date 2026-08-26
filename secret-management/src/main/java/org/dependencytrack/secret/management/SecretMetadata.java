@@ -40,5 +40,4 @@ public record SecretMetadata(
     public SecretMetadata {
         requireNonNull(name, "name must not be null");
     }
-
 }

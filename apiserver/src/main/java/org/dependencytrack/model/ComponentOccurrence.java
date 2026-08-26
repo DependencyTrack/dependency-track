@@ -41,20 +41,12 @@ import java.util.UUID;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ComponentOccurrence {
 
-    public record Identity(
-            String location,
-            Integer line,
-            Integer offset,
-            String symbol) {
+    public record Identity(String location, Integer line, Integer offset, String symbol) {
 
         public static Identity of(final ComponentOccurrence occurrence) {
             return new Identity(
-                    occurrence.getLocation(),
-                    occurrence.getLine(),
-                    occurrence.getOffset(),
-                    occurrence.getSymbol());
+                    occurrence.getLocation(), occurrence.getLine(), occurrence.getOffset(), occurrence.getSymbol());
         }
-
     }
 
     @PrimaryKey(name = "COMPONENT_OCCURRENCE_PK")
@@ -92,9 +84,7 @@ public class ComponentOccurrence {
     @Persistent
     @CreateTimestamp
     @Column(name = "CREATED_AT")
-    @JsonFormat(
-            shape = JsonFormat.Shape.NUMBER_INT,
-            without = JsonFormat.Feature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS)
+    @JsonFormat(shape = JsonFormat.Shape.NUMBER_INT, without = JsonFormat.Feature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS)
     private Instant createdAt;
 
     @NotPersistent
@@ -164,5 +154,4 @@ public class ComponentOccurrence {
     public void setTotalCount(final Integer totalCount) {
         this.totalCount = totalCount;
     }
-
 }

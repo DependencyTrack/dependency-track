@@ -90,8 +90,7 @@ public final class MockVulnAnalyzerPlugin implements Plugin {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {
-        }
+        public void init(@NonNull ServiceRegistry serviceRegistry) {}
 
         @Override
         public @NonNull VulnAnalyzer create() {
@@ -108,5 +107,4 @@ public final class MockVulnAnalyzerPlugin implements Plugin {
             return requirements;
         }
     }
-
 }

@@ -74,31 +74,22 @@ class ImportVexWorkflowTest extends PersistenceCapableTest {
         final DexEngine engine = workflowTest.getEngine();
 
         engine.registerWorkflow(
-                new ImportVexWorkflow(),
-                protoConverter(ImportVexArg.class),
-                voidConverter(),
-                Duration.ofSeconds(5));
+                new ImportVexWorkflow(), protoConverter(ImportVexArg.class), voidConverter(), Duration.ofSeconds(5));
         engine.registerActivity(
-                new ImportVexActivity(fileStorage),
-                protoConverter(ImportVexArg.class),
-                voidConverter());
+                new ImportVexActivity(fileStorage), protoConverter(ImportVexArg.class), voidConverter());
         engine.registerActivity(
-                new DeleteFilesActivity(fileStorage),
-                protoConverter(DeleteFilesArgument.class),
-                voidConverter());
+                new DeleteFilesActivity(fileStorage), protoConverter(DeleteFilesArgument.class), voidConverter());
 
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "default", 1));
         engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "artifact-imports", 1));
 
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
-                        .withMinPollInterval(Duration.ofMillis(25))
-                        .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.WORKFLOW, "workflow-worker", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-default", "default", 1)
+                .withMinPollInterval(Duration.ofMillis(25))
+                .withPollBackoffFunction(IntervalFunction.of(25)));
         engine.registerTaskWorker(
                 new TaskWorkerOptions(TaskType.ACTIVITY, "activity-worker-artifact-imports", "artifact-imports", 1)
                         .withMinPollInterval(Duration.ofMillis(25))
@@ -121,8 +112,7 @@ class ImportVexWorkflowTest extends PersistenceCapableTest {
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_VEX_CONSUMED))
                 .anySatisfy(notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_VEX_PROCESSED));
 
-        assertThatThrownBy(() -> fileStorage.get(vexFileMetadata))
-                .isInstanceOf(NoSuchFileException.class);
+        assertThatThrownBy(() -> fileStorage.get(vexFileMetadata)).isInstanceOf(NoSuchFileException.class);
     }
 
     @Test
@@ -130,14 +120,14 @@ class ImportVexWorkflowTest extends PersistenceCapableTest {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         final var vexFileMetadata = fileStorage.store(
                 "test/%s-%s".formatted(ImportVexWorkflowTest.class.getSimpleName(), UUID.randomUUID()),
-                new ByteArrayInputStream("{\"bomFormat\":\"CycloneDX\",\"specVersion\":\"1.4\",\"unterminated".getBytes()));
+                new ByteArrayInputStream(
+                        "{\"bomFormat\":\"CycloneDX\",\"specVersion\":\"1.4\",\"unterminated".getBytes()));
 
         final var runId = startWorkflow(project, vexFileMetadata);
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
         assertThat(qm.getNotificationOutbox()).isEmpty();
-        assertThatThrownBy(() -> fileStorage.get(vexFileMetadata))
-                .isInstanceOf(NoSuchFileException.class);
+        assertThatThrownBy(() -> fileStorage.get(vexFileMetadata)).isInstanceOf(NoSuchFileException.class);
     }
 
     @Test
@@ -146,8 +136,9 @@ class ImportVexWorkflowTest extends PersistenceCapableTest {
         final var unknownProjectUuid = UUID.randomUUID();
         final var vexUploadToken = UUID.randomUUID();
 
-        final var runId = workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ImportVexWorkflow.class)
+        final var runId = workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ImportVexWorkflow.class)
                         .withLabels(Map.ofEntries(
                                 Map.entry(WF_LABEL_VEX_UPLOAD_TOKEN, vexUploadToken.toString()),
                                 Map.entry(WF_LABEL_PROJECT_UUID, unknownProjectUuid.toString())))
@@ -161,19 +152,17 @@ class ImportVexWorkflowTest extends PersistenceCapableTest {
         workflowTest.awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
         assertThat(qm.getNotificationOutbox()).isEmpty();
-        assertThatThrownBy(() -> fileStorage.get(vexFileMetadata))
-                .isInstanceOf(NoSuchFileException.class);
+        assertThatThrownBy(() -> fileStorage.get(vexFileMetadata)).isInstanceOf(NoSuchFileException.class);
     }
 
     private UUID startWorkflow(Project project, FileMetadata vexFileMetadata) {
-        return workflowTest.getEngine().createRun(
-                new CreateWorkflowRunRequest<>(ImportVexWorkflow.class)
+        return workflowTest
+                .getEngine()
+                .createRun(new CreateWorkflowRunRequest<>(ImportVexWorkflow.class)
                         .withArgument(ImportVexArg.newBuilder()
                                 .setProjectUuid(project.getUuid().toString())
                                 .setProjectName(project.getName())
-                                .setProjectVersion(project.getVersion() != null
-                                        ? project.getVersion()
-                                        : "")
+                                .setProjectVersion(project.getVersion() != null ? project.getVersion() : "")
                                 .setVexUploadToken(UUID.randomUUID().toString())
                                 .setVexFileMetadata(vexFileMetadata)
                                 .build()));
@@ -184,11 +173,8 @@ class ImportVexWorkflowTest extends PersistenceCapableTest {
 
         try (final var fileInputStream = Files.newInputStream(vexFilePath)) {
             return fileStorage.store(
-                    "test/%s-%s".formatted(
-                            ImportVexWorkflowTest.class.getSimpleName(),
-                            UUID.randomUUID()),
+                    "test/%s-%s".formatted(ImportVexWorkflowTest.class.getSimpleName(), UUID.randomUUID()),
                     fileInputStream);
         }
     }
-
 }

@@ -32,15 +32,13 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 class ExceptionTranslationPluginTest {
 
     @Container
-    private static final PostgreSQLContainer POSTGRES =
-            new PostgreSQLContainer("postgres:14-alpine");
+    private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:14-alpine");
 
     private static Jdbi jdbi;
 
     @BeforeAll
     static void beforeAll() {
-        jdbi = Jdbi
-                .create(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+        jdbi = Jdbi.create(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .installPlugin(new ExceptionTranslationPlugin());
 
         jdbi.useHandle(handle -> handle.execute("""
@@ -100,5 +98,4 @@ class ExceptionTranslationPluginTest {
                 }))
                 .satisfies(e -> assertThat(e.getSqlState()).isEqualTo("57014"));
     }
-
 }

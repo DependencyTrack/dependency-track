@@ -52,11 +52,7 @@ class HttpClientTest {
     void shouldCreateWithDefaults() {
         final var config = new SmallRyeConfigBuilder().build();
 
-        final var client = HttpClient.create(
-                config,
-                null,
-                new SimpleMeterRegistry(),
-                () -> TEST_CLUSTER_ID);
+        final var client = HttpClient.create(config, null, new SimpleMeterRegistry(), () -> TEST_CLUSTER_ID);
 
         assertThat(client.userAgent()).startsWith("Dependency-Track vUnknown (");
         assertThat(client.userAgent()).endsWith("ManagedHttpClient/" + TEST_CLUSTER_ID);
@@ -73,18 +69,15 @@ class HttpClientTest {
                 .withDefaultValue("dt.http.connect-timeout-ms", "10000")
                 .build();
 
-        final var client = HttpClient.create(
-                config,
-                null,
-                new SimpleMeterRegistry(),
-                () -> TEST_CLUSTER_ID);
+        final var client = HttpClient.create(config, null, new SimpleMeterRegistry(), () -> TEST_CLUSTER_ID);
 
-        assertThat(client.userAgent()).isEqualTo(
-                "TestApp v1.2.3 (%s; %s; %s) ManagedHttpClient/%s".formatted(
-                        System.getProperty("os.arch"),
-                        System.getProperty("os.name"),
-                        System.getProperty("os.version"),
-                        TEST_CLUSTER_ID));
+        assertThat(client.userAgent())
+                .isEqualTo("TestApp v1.2.3 (%s; %s; %s) ManagedHttpClient/%s"
+                        .formatted(
+                                System.getProperty("os.arch"),
+                                System.getProperty("os.name"),
+                                System.getProperty("os.version"),
+                                TEST_CLUSTER_ID));
         assertThat(client.connectTimeout()).hasValue(Duration.ofSeconds(10));
     }
 
@@ -98,14 +91,11 @@ class HttpClientTest {
         proxyConfig.setUsername("user");
         proxyConfig.setPassword("pass");
 
-        final var client = HttpClient.create(
-                config,
-                proxyConfig,
-                new SimpleMeterRegistry(),
-                () -> TEST_CLUSTER_ID);
+        final var client = HttpClient.create(config, proxyConfig, new SimpleMeterRegistry(), () -> TEST_CLUSTER_ID);
 
         assertThat(client.authenticator()).isPresent();
-        final PasswordAuthentication auth = requestProxyAuth(client.authenticator().get());
+        final PasswordAuthentication auth =
+                requestProxyAuth(client.authenticator().get());
         assertThat(auth).isNotNull();
         assertThat(auth.getUserName()).isEqualTo("user");
         assertThat(auth.getPassword()).isEqualTo("pass".toCharArray());
@@ -122,14 +112,11 @@ class HttpClientTest {
         proxyConfig.setUsername("user");
         proxyConfig.setPassword("pass");
 
-        final var client = HttpClient.create(
-                config,
-                proxyConfig,
-                new SimpleMeterRegistry(),
-                () -> TEST_CLUSTER_ID);
+        final var client = HttpClient.create(config, proxyConfig, new SimpleMeterRegistry(), () -> TEST_CLUSTER_ID);
 
         assertThat(client.authenticator()).isPresent();
-        final PasswordAuthentication auth = requestProxyAuth(client.authenticator().get());
+        final PasswordAuthentication auth =
+                requestProxyAuth(client.authenticator().get());
         assertThat(auth).isNotNull();
         assertThat(auth.getUserName()).isEqualTo("CORP\\user");
     }
@@ -144,14 +131,11 @@ class HttpClientTest {
         proxyConfig.setUsername("user");
         proxyConfig.setPassword("pass");
 
-        final var client = HttpClient.create(
-                config,
-                proxyConfig,
-                new SimpleMeterRegistry(),
-                () -> TEST_CLUSTER_ID);
+        final var client = HttpClient.create(config, proxyConfig, new SimpleMeterRegistry(), () -> TEST_CLUSTER_ID);
 
         assertThat(client.authenticator()).isPresent();
-        final PasswordAuthentication auth = requestServerAuth(client.authenticator().get());
+        final PasswordAuthentication auth =
+                requestServerAuth(client.authenticator().get());
         assertThat(auth).isNull();
     }
 
@@ -163,11 +147,7 @@ class HttpClientTest {
         proxyConfig.setHost("proxy.example.com");
         proxyConfig.setPort(8080);
 
-        final var client = HttpClient.create(
-                config,
-                proxyConfig,
-                new SimpleMeterRegistry(),
-                () -> TEST_CLUSTER_ID);
+        final var client = HttpClient.create(config, proxyConfig, new SimpleMeterRegistry(), () -> TEST_CLUSTER_ID);
 
         assertThat(client.authenticator()).isEmpty();
     }
@@ -190,10 +170,9 @@ class HttpClientTest {
                             Proxy-Authenticate: Basic realm="proxy"
                             Content-Length: 0
                             Connection: close
-                            
+
                             """.replace("\n", "\r\n");
-                    firstConnection.getOutputStream().write(
-                            response.getBytes(StandardCharsets.US_ASCII));
+                    firstConnection.getOutputStream().write(response.getBytes(StandardCharsets.US_ASCII));
                     firstConnection.getOutputStream().flush();
                 } catch (IOException e) {
                     secondRequest.completeExceptionally(e);
@@ -206,10 +185,9 @@ class HttpClientTest {
                             HTTP/1.1 502 Bad Gateway
                             Content-Length: 0
                             Connection: close
-                            
+
                             """.replace("\n", "\r\n");
-                    secondConnection.getOutputStream().write(
-                            response.getBytes(StandardCharsets.US_ASCII));
+                    secondConnection.getOutputStream().write(response.getBytes(StandardCharsets.US_ASCII));
                     secondConnection.getOutputStream().flush();
                 } catch (IOException e) {
                     secondRequest.completeExceptionally(e);
@@ -229,7 +207,8 @@ class HttpClientTest {
                     () -> TEST_CLUSTER_ID)) {
                 try {
                     client.send(
-                            HttpRequest.newBuilder(URI.create("https://target.example.com/")).build(),
+                            HttpRequest.newBuilder(URI.create("https://target.example.com/"))
+                                    .build(),
                             HttpResponse.BodyHandlers.discarding());
                 } catch (IOException _) {
                     // Expected since tunnel is never established due to 502 response.
@@ -242,11 +221,9 @@ class HttpClientTest {
             assertThat(secondRequestLines).isNotEmpty();
             assertThat(secondRequestLines.getFirst()).startsWith("CONNECT target.example.com:443 ");
             final String expectedCredentials =
-                    Base64.getEncoder().encodeToString(
-                            "user:pass".getBytes(StandardCharsets.UTF_8));
-            assertThat(secondRequestLines).anyMatch(
-                    line -> line.equalsIgnoreCase(
-                            "Proxy-Authorization: Basic " + expectedCredentials));
+                    Base64.getEncoder().encodeToString("user:pass".getBytes(StandardCharsets.UTF_8));
+            assertThat(secondRequestLines)
+                    .anyMatch(line -> line.equalsIgnoreCase("Proxy-Authorization: Basic " + expectedCredentials));
         }
     }
 
@@ -260,8 +237,7 @@ class HttpClientTest {
                 "realm",
                 "basic",
                 URI.create("http://target.example.com").toURL(),
-                Authenticator.RequestorType.PROXY
-        );
+                Authenticator.RequestorType.PROXY);
     }
 
     private static PasswordAuthentication requestServerAuth(Authenticator authenticator) throws Exception {
@@ -274,15 +250,12 @@ class HttpClientTest {
                 "realm",
                 "basic",
                 URI.create("https://server.example.com").toURL(),
-                Authenticator.RequestorType.SERVER
-        );
+                Authenticator.RequestorType.SERVER);
     }
 
     private static List<String> readRequestLines(final Socket socket) throws IOException {
-        final var reader = new BufferedReader(
-                new InputStreamReader(
-                        socket.getInputStream(),
-                        StandardCharsets.US_ASCII));
+        final var reader =
+                new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.US_ASCII));
 
         final var lines = new ArrayList<String>();
         String line;
@@ -292,5 +265,4 @@ class HttpClientTest {
 
         return lines;
     }
-
 }

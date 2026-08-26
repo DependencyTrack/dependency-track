@@ -50,11 +50,8 @@ final class ActivityHeartbeatScheduler implements Closeable {
     @FunctionalInterface
     interface LockRenewer {
 
-        @Nullable CompletableFuture<TaskLock> tryRenew(
-                ActivityTaskId taskId,
-                TaskLock currentLock,
-                Duration lockTimeout);
-
+        @Nullable
+        CompletableFuture<TaskLock> tryRenew(ActivityTaskId taskId, TaskLock currentLock, Duration lockTimeout);
     }
 
     private record Registration(
@@ -65,8 +62,7 @@ final class ActivityHeartbeatScheduler implements Closeable {
             Supplier<TaskLock> lockGetter,
             Consumer<TaskLock> lockSetter,
             Future<?> activityFuture,
-            AtomicReference<@Nullable CompletableFuture<TaskLock>> pendingLockRenewal) {
-    }
+            AtomicReference<@Nullable CompletableFuture<TaskLock>> pendingLockRenewal) {}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityHeartbeatScheduler.class);
     private static final int LOCK_RENEWAL_MARGIN_DIVISOR = 3;
@@ -99,10 +95,7 @@ final class ActivityHeartbeatScheduler implements Closeable {
 
     void start() {
         scheduler.scheduleWithFixedDelay(
-                this::processRegistrations,
-                interval.toMillis(),
-                interval.toMillis(),
-                TimeUnit.MILLISECONDS);
+                this::processRegistrations, interval.toMillis(), interval.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     void register(
@@ -163,8 +156,7 @@ final class ActivityHeartbeatScheduler implements Closeable {
         } catch (TimeoutException e) {
             LOGGER.warn("""
                             Lock renewal did not complete within {}; completing the task may \
-                            race the renewal and be rejected, provoking a duplicate execution""",
-                    UNREGISTER_RENEWAL_SETTLE_TIMEOUT);
+                            race the renewal and be rejected, provoking a duplicate execution""", UNREGISTER_RENEWAL_SETTLE_TIMEOUT);
         }
     }
 
@@ -189,7 +181,8 @@ final class ActivityHeartbeatScheduler implements Closeable {
         // NB: We must read the pending renewal before the lock, because the renewal callback
         // publishes the new lock before its future completes, so an absent or completed pending
         // renewal guarantees the lock read below is current.
-        final CompletableFuture<TaskLock> pendingRenewal = registration.pendingLockRenewal().get();
+        final CompletableFuture<TaskLock> pendingRenewal =
+                registration.pendingLockRenewal().get();
         final boolean isRenewalInFlight = pendingRenewal != null && !pendingRenewal.isDone();
 
         final Instant now = clock.instant();
@@ -226,11 +219,8 @@ final class ActivityHeartbeatScheduler implements Closeable {
                 return;
             }
 
-            final CompletableFuture<TaskLock> renewalFuture =
-                    lockRenewer.tryRenew(
-                            registration.taskId(),
-                            registration.lockGetter().get(),
-                            registration.lockTimeout());
+            final CompletableFuture<TaskLock> renewalFuture = lockRenewer.tryRenew(
+                    registration.taskId(), registration.lockGetter().get(), registration.lockTimeout());
             if (renewalFuture == null) {
                 return;
             }
@@ -239,17 +229,16 @@ final class ActivityHeartbeatScheduler implements Closeable {
             // lock was set. unregister() relies on that. Since only the scheduler thread
             // starts renewals, and never while one is pending, no two renewals can
             // update the same lock at once.
-            registration.pendingLockRenewal().set(
-                    renewalFuture.whenComplete((newLock, error) -> {
-                        if (error == null && newLock != null) {
-                            registration.lockSetter().accept(newLock);
-                        } else if (isLockLost(error)) {
-                            onLockLost(registration, "its lock was taken over by another worker");
-                        }
+            registration.pendingLockRenewal().set(renewalFuture.whenComplete((newLock, error) -> {
+                if (error == null && newLock != null) {
+                    registration.lockSetter().accept(newLock);
+                } else if (isLockLost(error)) {
+                    onLockLost(registration, "its lock was taken over by another worker");
+                }
 
-                        // NB: Any other error is transient. The deadline checks earlier in the
-                        // method cancel the activity if we cannot renew before the lock expires.
-                    }));
+                // NB: Any other error is transient. The deadline checks earlier in the
+                // method cancel the activity if we cannot renew before the lock expires.
+            }));
         }
     }
 
@@ -284,10 +273,7 @@ final class ActivityHeartbeatScheduler implements Closeable {
     }
 
     private static boolean isLockLost(@Nullable Throwable error) {
-        final Throwable cause = error instanceof CompletionException
-                ? error.getCause()
-                : error;
+        final Throwable cause = error instanceof CompletionException ? error.getCause() : error;
         return cause instanceof TaskLockLostException;
     }
-
 }

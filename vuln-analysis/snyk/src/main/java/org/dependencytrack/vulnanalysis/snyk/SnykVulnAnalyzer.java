@@ -63,8 +63,18 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
     private static final int REQUEST_BATCH_SIZE = 100;
     private static final int CACHE_BATCH_SIZE = 500;
     private static final Set<String> SUPPORTED_PURL_TYPES = Set.of(
-            "cargo", "cocoapods", "composer", "gem", "generic",
-            "hex", "maven", "npm", "nuget", "pypi", "swift", "golang");
+            "cargo",
+            "cocoapods",
+            "composer",
+            "gem",
+            "generic",
+            "hex",
+            "maven",
+            "npm",
+            "nuget",
+            "pypi",
+            "swift",
+            "golang");
 
     private final Cache resultsCache;
     private final HttpClient httpClient;
@@ -149,8 +159,8 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             }
             if (component.getPropertiesCount() > 0
                     && component.getPropertiesList().stream()
-                    .map(Property::getName)
-                    .anyMatch("dependencytrack:internal:is-internal-component"::equalsIgnoreCase)) {
+                            .map(Property::getName)
+                            .anyMatch("dependencytrack:internal:is-internal-component"::equalsIgnoreCase)) {
                 continue;
             }
 
@@ -173,18 +183,16 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         return bomRefsByPurl;
     }
 
-    private Map<String, List<SnykIssue>> analyzePurls(
-            Collection<String> purls,
-            Map<String, Set<String>> bomRefsByPurl) throws InterruptedException {
+    private Map<String, List<SnykIssue>> analyzePurls(Collection<String> purls, Map<String, Set<String>> bomRefsByPurl)
+            throws InterruptedException {
         if (purls.isEmpty()) {
             return Map.of();
         }
 
         final var issuesByPurl = new HashMap<String, List<SnykIssue>>(purls.size());
 
-        for (final var purlBatch : (Iterable<List<String>>) () -> purls.stream()
-                .gather(Gatherers.windowFixed(REQUEST_BATCH_SIZE))
-                .iterator()) {
+        for (final var purlBatch : (Iterable<List<String>>) () ->
+                purls.stream().gather(Gatherers.windowFixed(REQUEST_BATCH_SIZE)).iterator()) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before all components could be analyzed");
             }
@@ -196,8 +204,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
     }
 
     private Map<String, List<SnykIssue>> analyzePurlBatch(
-            Collection<String> purlBatch,
-            Map<String, Set<String>> bomRefsByPurl) throws InterruptedException {
+            Collection<String> purlBatch, Map<String, Set<String>> bomRefsByPurl) throws InterruptedException {
         if (purlBatch.isEmpty()) {
             return Map.of();
         }
@@ -226,7 +233,10 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
                 final String issuePurlLower = issuePurl.toLowerCase();
                 if (!bomRefsByPurl.containsKey(issuePurlLower)) {
-                    LOGGER.warn("Received issue {} for PURL '{}', but no component with this PURL was submitted", issue.id(), issuePurl);
+                    LOGGER.warn(
+                            "Received issue {} for PURL '{}', but no component with this PURL was submitted",
+                            issue.id(),
+                            issuePurl);
                     continue;
                 }
 
@@ -290,9 +300,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         }
     }
 
-    private Bom assembleVdr(
-            Map<String, List<SnykIssue>> issuesByPurl,
-            Map<String, Set<String>> bomRefsByPurl) {
+    private Bom assembleVdr(Map<String, List<SnykIssue>> issuesByPurl, Map<String, Set<String>> bomRefsByPurl) {
         final var vulnBuilderByVulnId = new HashMap<String, Vulnerability.Builder>();
 
         for (final var entry : issuesByPurl.entrySet()) {
@@ -308,26 +316,20 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             }
 
             for (final SnykIssue issue : issues) {
-                final Vulnerability.Builder vulnBuilder =
-                        vulnBuilderByVulnId.computeIfAbsent(
-                                issue.id(),
-                                _ -> SnykModelConverter.convert(issue, aliasSyncEnabled));
+                final Vulnerability.Builder vulnBuilder = vulnBuilderByVulnId.computeIfAbsent(
+                        issue.id(), _ -> SnykModelConverter.convert(issue, aliasSyncEnabled));
 
                 for (final String bomRef : bomRefs) {
                     vulnBuilder.addAffects(
-                            VulnerabilityAffects.newBuilder()
-                                    .setRef(bomRef)
-                                    .build());
+                            VulnerabilityAffects.newBuilder().setRef(bomRef).build());
                 }
             }
         }
 
         return Bom.newBuilder()
-                .addAllVulnerabilities(
-                        vulnBuilderByVulnId.values().stream()
-                                .map(Vulnerability.Builder::build)
-                                .toList())
+                .addAllVulnerabilities(vulnBuilderByVulnId.values().stream()
+                        .map(Vulnerability.Builder::build)
+                        .toList())
                 .build();
     }
-
 }

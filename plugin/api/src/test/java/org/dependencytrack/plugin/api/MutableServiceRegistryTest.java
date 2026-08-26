@@ -29,9 +29,8 @@ class MutableServiceRegistryTest {
 
     @Test
     void shouldRegisterAndGetService() {
-        final var registry = new MutableServiceRegistry()
-                .register(String.class, "foo")
-                .freeze();
+        final var registry =
+                new MutableServiceRegistry().register(String.class, "foo").freeze();
 
         assertThat(registry.get(String.class)).contains("foo");
     }
@@ -45,9 +44,8 @@ class MutableServiceRegistryTest {
 
     @Test
     void shouldRequireRegisteredService() {
-        final var registry = new MutableServiceRegistry()
-                .register(String.class, "foo")
-                .freeze();
+        final var registry =
+                new MutableServiceRegistry().register(String.class, "foo").freeze();
 
         assertThat(registry.require(String.class)).isEqualTo("foo");
     }
@@ -63,8 +61,7 @@ class MutableServiceRegistryTest {
 
     @Test
     void shouldRejectDuplicateRegistration() {
-        final var registry = new MutableServiceRegistry()
-                .register(String.class, "foo");
+        final var registry = new MutableServiceRegistry().register(String.class, "foo");
 
         assertThatExceptionOfType(IllegalStateException.class)
                 .isThrownBy(() -> registry.register(String.class, "bar"))
@@ -106,5 +103,4 @@ class MutableServiceRegistryTest {
                 .isThrownBy(() -> registry.get(null))
                 .withMessage("type must not be null");
     }
-
 }

@@ -49,8 +49,7 @@ public class DataClassification implements Serializable {
     @JsonView(JsonViews.MetadataTools.class)
     private String name;
 
-    public DataClassification() {
-    }
+    public DataClassification() {}
 
     public DataClassification(Direction direction, String name) {
         this.direction = direction;
@@ -79,8 +78,7 @@ public class DataClassification implements Serializable {
             return false;
         }
 
-        return direction == that.direction
-                && Objects.equals(name, that.name);
+        return direction == that.direction && Objects.equals(name, that.name);
     }
 
     @Override
@@ -95,5 +93,4 @@ public class DataClassification implements Serializable {
                 .add("name='" + name + "'")
                 .toString();
     }
-
 }

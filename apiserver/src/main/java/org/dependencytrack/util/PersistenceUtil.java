@@ -37,17 +37,12 @@ import static javax.jdo.ObjectState.PERSISTENT_NONTRANSACTIONAL_DIRTY;
 
 public final class PersistenceUtil {
 
-    private PersistenceUtil() {
-    }
+    private PersistenceUtil() {}
 
-    public record Diff(Object before, Object after) {
-    }
+    public record Diff(Object before, Object after) {}
 
     public static <T, V> boolean applyIfChanged(
-            T existingObject,
-            T newObject,
-            Function<T, V> getter,
-            Consumer<V> setter) {
+            T existingObject, T newObject, Function<T, V> getter, Consumer<V> setter) {
         final V existingValue = getter.apply(existingObject);
         final V newValue = getter.apply(newObject);
 
@@ -143,10 +138,6 @@ public final class PersistenceUtil {
     }
 
     public static String escapeLikePattern(String input) {
-        return input
-                .replace("!", "!!")
-                .replace("%", "!%")
-                .replace("_", "!_");
+        return input.replace("!", "!!").replace("%", "!%").replace("_", "!_");
     }
-
 }

@@ -23,5 +23,4 @@ final class TaskLockLostException extends RuntimeException {
     TaskLockLostException() {
         super("Task lock was lost");
     }
-
 }

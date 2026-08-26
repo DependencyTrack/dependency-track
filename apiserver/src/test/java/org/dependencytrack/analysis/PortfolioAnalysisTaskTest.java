@@ -91,15 +91,14 @@ class PortfolioAnalysisTaskTest extends PersistenceCapableTest {
             assertThat(request.workflowName()).isEqualTo("analyze-project");
             assertThat(request.concurrencyKey()).isEqualTo("analyze-project:" + project.getUuid());
             assertThat(request.priority()).isZero();
-            assertThat(request.labels()).containsOnly(
-                    Map.entry("project_uuid", project.getUuid().toString()),
-                    Map.entry("analysis_trigger", "schedule"));
-            assertThat(request.argument()).isInstanceOfSatisfying(
-                    AnalyzeProjectWorkflowArg.class,
-                    arg -> {
-                        assertThat(arg.getProjectUuid()).isEqualTo(project.getUuid().toString());
-                        assertThat(arg.getTrigger()).isEqualTo(ANALYSIS_TRIGGER_SCHEDULE);
-                    });
+            assertThat(request.labels())
+                    .containsOnly(
+                            Map.entry("project_uuid", project.getUuid().toString()),
+                            Map.entry("analysis_trigger", "schedule"));
+            assertThat(request.argument()).isInstanceOfSatisfying(AnalyzeProjectWorkflowArg.class, arg -> {
+                assertThat(arg.getProjectUuid()).isEqualTo(project.getUuid().toString());
+                assertThat(arg.getTrigger()).isEqualTo(ANALYSIS_TRIGGER_SCHEDULE);
+            });
         });
     }
 
@@ -184,5 +183,4 @@ class PortfolioAnalysisTaskTest extends PersistenceCapableTest {
 
         verify(dexEngineMock, times(2)).createRuns(any());
     }
-
 }

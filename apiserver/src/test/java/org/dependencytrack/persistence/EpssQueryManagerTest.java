@@ -52,16 +52,17 @@ class EpssQueryManagerTest extends PersistenceCapableTest {
 
     @Test
     void shouldReturnNullWhenVulnHasNoCveAndNoAlias() {
-        assertThat(qm.getEffectiveEpssForVuln(Vulnerability.Source.GITHUB.name(), "GHSA-xxxx-yyyy-zzzz")).isNull();
-        assertThat(qm.getEffectiveEpssForVuln(Vulnerability.Source.NVD.name(), "CVE-MISSING")).isNull();
+        assertThat(qm.getEffectiveEpssForVuln(Vulnerability.Source.GITHUB.name(), "GHSA-xxxx-yyyy-zzzz"))
+                .isNull();
+        assertThat(qm.getEffectiveEpssForVuln(Vulnerability.Source.NVD.name(), "CVE-MISSING"))
+                .isNull();
     }
 
     @Test
     void shouldReturnEpssForAliasedVuln() {
         persistEpss("CVE-100", "0.42", "0.88");
         linkAliases(
-                new VulnerabilityKey("CVE-100", "NVD"),
-                Set.of(new VulnerabilityKey("GHSA-aaaa-bbbb-cccc", "GITHUB")));
+                new VulnerabilityKey("CVE-100", "NVD"), Set.of(new VulnerabilityKey("GHSA-aaaa-bbbb-cccc", "GITHUB")));
 
         assertThat(qm.getEffectiveEpssForVuln(Vulnerability.Source.GITHUB.name(), "GHSA-aaaa-bbbb-cccc"))
                 .isNotNull()
@@ -113,9 +114,7 @@ class EpssQueryManagerTest extends PersistenceCapableTest {
     void shouldReturnBatchKeyedBySourceAndVulnId() {
         persistEpss("CVE-400", "0.10", "0.10");
         persistEpss("CVE-401", "0.20", "0.20");
-        linkAliases(
-                new VulnerabilityKey("CVE-401", "NVD"),
-                Set.of(new VulnerabilityKey("GHSA-batch-test", "GITHUB")));
+        linkAliases(new VulnerabilityKey("CVE-401", "NVD"), Set.of(new VulnerabilityKey("GHSA-batch-test", "GITHUB")));
 
         final var result = qm.getEffectiveEpssForVulns(List.of(
                 new VulnerabilityKey("CVE-400", "NVD"),
@@ -123,10 +122,10 @@ class EpssQueryManagerTest extends PersistenceCapableTest {
                 new VulnerabilityKey("GHSA-missing", "GITHUB")));
 
         assertThat(result).hasSize(2);
-        assertThat(result.get(new VulnerabilityKey("CVE-400", "NVD"))).satisfies(e ->
-                assertThat(e.getScore()).isEqualByComparingTo("0.10"));
-        assertThat(result.get(new VulnerabilityKey("GHSA-batch-test", "GITHUB"))).satisfies(e ->
-                assertThat(e.getCve()).isEqualTo("CVE-401"));
+        assertThat(result.get(new VulnerabilityKey("CVE-400", "NVD")))
+                .satisfies(e -> assertThat(e.getScore()).isEqualByComparingTo("0.10"));
+        assertThat(result.get(new VulnerabilityKey("GHSA-batch-test", "GITHUB")))
+                .satisfies(e -> assertThat(e.getCve()).isEqualTo("CVE-401"));
     }
 
     @Test
@@ -140,7 +139,7 @@ class EpssQueryManagerTest extends PersistenceCapableTest {
     }
 
     private void linkAliases(final VulnerabilityKey vulnKey, final Set<VulnerabilityKey> aliasKeys) {
-        useJdbiTransaction(handle -> new VulnerabilityAliasDao(handle)
-                .syncAssertions("test", Map.of(vulnKey, aliasKeys)));
+        useJdbiTransaction(
+                handle -> new VulnerabilityAliasDao(handle).syncAssertions("test", Map.of(vulnKey, aliasKeys)));
     }
 }

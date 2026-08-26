@@ -55,8 +55,9 @@ public final class TestDatabaseEventListener implements org.dependencytrack.test
 
     @Override
     public void onTablesTruncated() {
-        try (final Connection connection = DataSourceRegistry.getInstance().getDefault().getConnection();
-             final Statement statement = connection.createStatement()) {
+        try (final Connection connection =
+                        DataSourceRegistry.getInstance().getDefault().getConnection();
+                final Statement statement = connection.createStatement()) {
             statement.execute("""
                     DO $$
                     DECLARE
@@ -80,5 +81,4 @@ public final class TestDatabaseEventListener implements org.dependencytrack.test
             throw new IllegalStateException("Failed to drop stale metrics partitions", e);
         }
     }
-
 }

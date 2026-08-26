@@ -54,12 +54,10 @@ final class StringPayloadConverter implements PayloadConverter<String> {
 
         final Payload.BinaryContent binaryContent = payload.getBinaryContent();
         if (!MEDIA_TYPE.equals(binaryContent.getMediaType())) {
-            throw new PayloadConversionException(
-                    "Expected binary content of type %s, but got %s".formatted(
-                            MEDIA_TYPE, binaryContent.getMediaType()));
+            throw new PayloadConversionException("Expected binary content of type %s, but got %s"
+                    .formatted(MEDIA_TYPE, binaryContent.getMediaType()));
         }
 
         return payload.getBinaryContent().getData().toStringUtf8();
     }
-
 }

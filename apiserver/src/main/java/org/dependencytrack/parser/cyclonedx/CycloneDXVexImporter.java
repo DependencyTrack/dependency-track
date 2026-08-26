@@ -61,7 +61,8 @@ public class CycloneDXVexImporter {
             return;
         }
 
-        final List<org.cyclonedx.model.vulnerability.Vulnerability> vexVulns = getApplicableVexVulnerabilities(bom.getVulnerabilities());
+        final List<org.cyclonedx.model.vulnerability.Vulnerability> vexVulns =
+                getApplicableVexVulnerabilities(bom.getVulnerabilities());
         if (vexVulns.isEmpty()) {
             LOGGER.info("The uploaded VEX does not contain any applicable vulnerabilities; Skipping VEX import");
             return;
@@ -80,13 +81,10 @@ public class CycloneDXVexImporter {
 
             for (final org.cyclonedx.model.vulnerability.Vulnerability.Affect affect : vexVuln.getAffects()) {
                 final String affectedBomRef = affect.getRef();
-                final BomRefTarget target = affectedBomRef != null
-                        ? targetByBomRef.get(affectedBomRef)
-                        : null;
+                final BomRefTarget target = affectedBomRef != null ? targetByBomRef.get(affectedBomRef) : null;
 
-                final boolean isProjectScoped =
-                        (target != null && target.isMetadataComponent())
-                                || (target == null && affectedBomRef != null && BomLink.isBomLink(affectedBomRef));
+                final boolean isProjectScoped = (target != null && target.isMetadataComponent())
+                        || (target == null && affectedBomRef != null && BomLink.isBomLink(affectedBomRef));
 
                 if (isProjectScoped) {
                     if (vulnerableComponents == null) {
@@ -123,8 +121,7 @@ public class CycloneDXVexImporter {
     }
 
     private static @Nullable Vulnerability resolveVulnerability(
-            final QueryManager qm,
-            final org.cyclonedx.model.vulnerability.Vulnerability vexVuln) {
+            final QueryManager qm, final org.cyclonedx.model.vulnerability.Vulnerability vexVuln) {
         final String vexVulnId = vexVuln.getId();
         final String vexVulnSource = sourceNameOf(vexVuln);
 
@@ -144,11 +141,15 @@ public class CycloneDXVexImporter {
             return null;
         }
         if (candidates.size() > 1) {
-            LOGGER.warn("""
+            LOGGER.warn(
+                    """
                     VEX contains analysis for vulnerability {} from source {}, which does not identify \
                     a vulnerability in Dependency-Track. The ID alone matches vulnerabilities from \
                     multiple sources ({}); Skipping it\
-                    """, vexVulnId, vexVulnSource, candidates.stream().map(Vulnerability::getSource).toList());
+                    """,
+                    vexVulnId,
+                    vexVulnSource,
+                    candidates.stream().map(Vulnerability::getSource).toList());
             return null;
         }
 
@@ -161,9 +162,7 @@ public class CycloneDXVexImporter {
         for (int vexVulnPos = 0; vexVulnPos < vexVulns.size(); vexVulnPos++) {
             final var vexVuln = vexVulns.get(vexVulnPos);
             if (isBlank(vexVuln.getId())) {
-                LOGGER.warn(
-                        "VEX vulnerability at position #{} does not have an ID; Skipping it",
-                        vexVulnPos);
+                LOGGER.warn("VEX vulnerability at position #{} does not have an ID; Skipping it", vexVulnPos);
                 continue;
             }
 
@@ -172,13 +171,17 @@ public class CycloneDXVexImporter {
             if (vexVuln.getAffects() == null || vexVuln.getAffects().isEmpty()) {
                 LOGGER.debug(
                         "VEX vulnerability {}/{} at position #{} does not have an affects node; Skipping it",
-                        vexVulnSource, vexVulnId, vexVulnPos);
+                        vexVulnSource,
+                        vexVulnId,
+                        vexVulnPos);
                 continue;
             }
             if (vexVuln.getAnalysis() == null && findOwaspRating(vexVuln) == null) {
                 LOGGER.debug(
                         "VEX vulnerability {}/{} at position #{} does not have an analysis or OWASP rating; Skipping it",
-                        vexVulnSource, vexVulnId, vexVulnPos);
+                        vexVulnSource,
+                        vexVulnId,
+                        vexVulnPos);
                 continue;
             }
 
@@ -188,8 +191,7 @@ public class CycloneDXVexImporter {
         return applicableVulns;
     }
 
-    private record BomRefTarget(org.cyclonedx.model.Component component, boolean isMetadataComponent) {
-    }
+    private record BomRefTarget(org.cyclonedx.model.Component component, boolean isMetadataComponent) {}
 
     private static Map<String, BomRefTarget> indexComponents(final Bom bom) {
         final Map<String, BomRefTarget> targetByBomRef = new HashMap<>();
@@ -215,9 +217,7 @@ public class CycloneDXVexImporter {
 
         for (final var component : components) {
             if (component.getBomRef() != null) {
-                targetByBomRef.putIfAbsent(
-                        component.getBomRef(),
-                        new BomRefTarget(component, metadataComponent));
+                targetByBomRef.putIfAbsent(component.getBomRef(), new BomRefTarget(component, metadataComponent));
             }
 
             if (component.getComponents() != null && !component.getComponents().isEmpty()) {
@@ -226,15 +226,18 @@ public class CycloneDXVexImporter {
         }
     }
 
-    private static void updateAnalysis(final QueryManager qm, final Component component, final Vulnerability vuln,
-                                       final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln) {
+    private static void updateAnalysis(
+            final QueryManager qm,
+            final Component component,
+            final Vulnerability vuln,
+            final org.cyclonedx.model.vulnerability.Vulnerability cdxVuln) {
         MakeAnalysisCommand command = new MakeAnalysisCommand(component, vuln).withCommenter(COMMENTER);
 
         if (cdxVuln.getAnalysis() != null) {
-            final AnalysisState state =
-                    convertCdxVulnAnalysisStateToDtAnalysisState(cdxVuln.getAnalysis().getState());
-            final AnalysisJustification justification =
-                    convertCdxVulnAnalysisJustificationToDtAnalysisJustification(cdxVuln.getAnalysis().getJustification());
+            final AnalysisState state = convertCdxVulnAnalysisStateToDtAnalysisState(
+                    cdxVuln.getAnalysis().getState());
+            final AnalysisJustification justification = convertCdxVulnAnalysisJustificationToDtAnalysisJustification(
+                    cdxVuln.getAnalysis().getJustification());
 
             // CycloneDX supports multiple responses, DT only one.
             // The decision to effectively pick the last one is legacy behavior,
@@ -250,13 +253,11 @@ public class CycloneDXVexImporter {
                 response = null;
             }
 
-            final boolean isSuppressed =
-                    state == AnalysisState.FALSE_POSITIVE
-                            || state == AnalysisState.NOT_AFFECTED
-                            || state == AnalysisState.RESOLVED;
+            final boolean isSuppressed = state == AnalysisState.FALSE_POSITIVE
+                    || state == AnalysisState.NOT_AFFECTED
+                    || state == AnalysisState.RESOLVED;
 
-            command = command
-                    .withState(state)
+            command = command.withState(state)
                     .withJustification(justification)
                     .withResponse(response)
                     .withDetails(cdxVuln.getAnalysis().getDetail())
@@ -265,9 +266,7 @@ public class CycloneDXVexImporter {
 
         final org.cyclonedx.model.vulnerability.Vulnerability.Rating owaspRating = findOwaspRating(cdxVuln);
         if (owaspRating != null) {
-            final BigDecimal score = owaspRating.getScore() != null
-                    ? BigDecimal.valueOf(owaspRating.getScore())
-                    : null;
+            final BigDecimal score = owaspRating.getScore() != null ? BigDecimal.valueOf(owaspRating.getScore()) : null;
             command = command.withOwasp(owaspRating.getVector(), score);
         }
 
@@ -289,5 +288,4 @@ public class CycloneDXVexImporter {
 
         return null;
     }
-
 }

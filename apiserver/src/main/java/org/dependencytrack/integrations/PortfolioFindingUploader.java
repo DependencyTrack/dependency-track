@@ -25,5 +25,4 @@ public interface PortfolioFindingUploader extends FindingUploader {
     InputStream process();
 
     void upload(InputStream payload);
-
 }

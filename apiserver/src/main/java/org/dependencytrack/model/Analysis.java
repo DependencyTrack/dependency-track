@@ -21,6 +21,7 @@ package org.dependencytrack.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.validation.constraints.NotNull;
 
 import javax.jdo.annotations.Column;
@@ -46,7 +47,9 @@ import java.util.List;
  * @since 3.0.0
  */
 @PersistenceCapable
-@Unique(name="ANALYSIS_COMPOSITE_IDX", members={"project", "component", "vulnerability"})
+@Unique(
+        name = "ANALYSIS_COMPOSITE_IDX",
+        members = {"project", "component", "vulnerability"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Analysis implements Serializable {
 
@@ -56,19 +59,31 @@ public class Analysis implements Serializable {
     private long id;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "ANALYSIS_PROJECT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "ANALYSIS_PROJECT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "PROJECT_ID")
     @JsonIgnore
     private Project project;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "ANALYSIS_COMPONENT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "ANALYSIS_COMPONENT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "COMPONENT_ID")
     @JsonIgnore
     private Component component;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "ANALYSIS_VULNERABILITY_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "ANALYSIS_VULNERABILITY_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "VULNERABILITY_ID", allowsNull = "false")
     @NotNull
     @JsonIgnore
@@ -105,10 +120,11 @@ public class Analysis implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "SEVERITY")
-    @Extensions(value = {
-            @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS severity)"),
-            @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS severity)")
-    })
+    @Extensions(
+            value = {
+                @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS severity)"),
+                @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS severity)")
+            })
     @JsonProperty(value = "severity")
     private Severity severity;
 

@@ -39,5 +39,4 @@ public final class JdbiNotificationEmitter extends JdbcNotificationEmitter {
     public JdbiNotificationEmitter(Handle jdbiHandle) {
         this(jdbiHandle, Metrics.globalRegistry);
     }
-
 }

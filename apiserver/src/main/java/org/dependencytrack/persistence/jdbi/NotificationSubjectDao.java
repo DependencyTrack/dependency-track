@@ -54,10 +54,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RegisterRowMappers({
-        @RegisterRowMapper(NotificationBomRowMapper.class),
-        @RegisterRowMapper(NotificationComponentRowMapper.class),
-        @RegisterRowMapper(NotificationProjectRowMapper.class),
-        @RegisterRowMapper(NotificationVulnerabilityRowMapper.class)
+    @RegisterRowMapper(NotificationBomRowMapper.class),
+    @RegisterRowMapper(NotificationComponentRowMapper.class),
+    @RegisterRowMapper(NotificationProjectRowMapper.class),
+    @RegisterRowMapper(NotificationVulnerabilityRowMapper.class)
 })
 public interface NotificationSubjectDao extends SqlObject {
 
@@ -755,5 +755,4 @@ public interface NotificationSubjectDao extends SqlObject {
                 })
                 .list();
     }
-
 }

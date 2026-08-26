@@ -90,11 +90,11 @@ import static org.cyclonedx.proto.v1_7.Severity.SEVERITY_UNKNOWN;
 final class ModelConverter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelConverter.class);
-    private static final Source SOURCE_GITHUB = Source.newBuilder().setName("GITHUB").build();
+    private static final Source SOURCE_GITHUB =
+            Source.newBuilder().setName("GITHUB").build();
     private static final Source SOURCE_NVD = Source.newBuilder().setName("NVD").build();
 
-    private ModelConverter() {
-    }
+    private ModelConverter() {}
 
     static Bom convert(final DefCveItem nvdVuln) {
         CveItem cveItem = nvdVuln.getCve();
@@ -143,7 +143,8 @@ final class ModelConverter {
                 // We can't compute negation.
                 .filter(node -> node.getNegate() == null || !node.getNegate())
                 .filter(node -> node.getCpeMatch() != null)
-                .map(node -> Optional.ofNullable(extractCpeMatchesFromNode(cveId, node)).orElse(List.of()))
+                .map(node -> Optional.ofNullable(extractCpeMatchesFromNode(cveId, node))
+                        .orElse(List.of()))
                 .flatMap(Collection::stream)
                 .filter(Objects::nonNull)
                 // We currently have no interest in non-vulnerable versions.
@@ -165,10 +166,7 @@ final class ModelConverter {
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(
-                        Map.Entry::getKey,
-                        Collectors.mapping(
-                                Map.Entry::getValue,
-                                Collectors.toList())));
+                        Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
 
         // CVE configurations may consist of applications and operating systems. In the case of
         // configurations that contain both application and operating system parts, we do not
@@ -188,20 +186,21 @@ final class ModelConverter {
                     .collect(Collectors.groupingBy(
                             entry -> entry.getKey().getPart(),
                             Collectors.flatMapping(entry -> entry.getValue().stream(), Collectors.toList())));
-            if (!cpeMatchesByPart.getOrDefault(Part.APPLICATION, Collections.emptyList()).isEmpty()
-                && !cpeMatchesByPart.getOrDefault(Part.OPERATING_SYSTEM, Collections.emptyList()).isEmpty()) {
+            if (!cpeMatchesByPart
+                            .getOrDefault(Part.APPLICATION, Collections.emptyList())
+                            .isEmpty()
+                    && !cpeMatchesByPart
+                            .getOrDefault(Part.OPERATING_SYSTEM, Collections.emptyList())
+                            .isEmpty()) {
                 return requireNonNull(cpeMatchesByPart.get(Part.APPLICATION));
             }
         }
 
-        return cpeMatchesByCpe.values().stream()
-                .flatMap(Collection::stream)
-                .toList();
+        return cpeMatchesByCpe.values().stream().flatMap(Collection::stream).toList();
     }
 
     private static Map.Entry<List<Component>, List<VulnerabilityAffects>> processCpeMatches(
-            final String cveId,
-            final List<CpeMatch> cpeMatches) {
+            final String cveId, final List<CpeMatch> cpeMatches) {
         final var componentByCpe = new HashMap<String, Component>();
         final var vulnAffectsBuilderByBomRef = new HashMap<String, VulnerabilityAffects.Builder>();
 
@@ -229,11 +228,12 @@ final class ModelConverter {
             final Vers versForCpeMatch;
             try {
                 versForCpeMatch = versFromNvdRange(
-                        cpeMatch.getVersionStartExcluding(),
-                        cpeMatch.getVersionStartIncluding(),
-                        cpeMatch.getVersionEndExcluding(),
-                        cpeMatch.getVersionEndIncluding(),
-                        cpe.getVersion()).orElse(null);
+                                cpeMatch.getVersionStartExcluding(),
+                                cpeMatch.getVersionStartIncluding(),
+                                cpeMatch.getVersionEndExcluding(),
+                                cpeMatch.getVersionEndIncluding(),
+                                cpe.getVersion())
+                        .orElse(null);
             } catch (VersException exception) {
                 LOGGER.warn("Failed to construct vers from CPE {}", cpe, exception);
                 continue;
@@ -241,8 +241,7 @@ final class ModelConverter {
 
             final VulnerabilityAffects.Builder affectsBuilder = vulnAffectsBuilderByBomRef.computeIfAbsent(
                     component.getBomRef(),
-                    bomRef -> VulnerabilityAffects.newBuilder()
-                            .setRef(bomRef));
+                    bomRef -> VulnerabilityAffects.newBuilder().setRef(bomRef));
 
             // NB: CPEs use "-" (NA) where the concept of versions does not apply
             // (e.g. some firmware or hardware). The entire product is considered
@@ -255,15 +254,15 @@ final class ModelConverter {
                         .noneMatch("-"::equals);
                 if (shouldAddVersion) {
                     affectsBuilder.addVersions(
-                            VulnerabilityAffectedVersions.newBuilder()
-                                    .setVersion("-"));
+                            VulnerabilityAffectedVersions.newBuilder().setVersion("-"));
                 }
 
                 continue;
             }
 
-            if (versForCpeMatch != null && versForCpeMatch.constraints().size() == 1
-                && versForCpeMatch.constraints().getFirst().comparator().equals(Comparator.EQUAL)) {
+            if (versForCpeMatch != null
+                    && versForCpeMatch.constraints().size() == 1
+                    && versForCpeMatch.constraints().getFirst().comparator().equals(Comparator.EQUAL)) {
                 var versConstraint = versForCpeMatch.constraints().getFirst();
                 // When the only constraint is an exact version match, populate the version field
                 // instead of the range field. We do this despite vers supporting such cases, too,
@@ -271,7 +270,8 @@ final class ModelConverter {
 
                 // CPEs with exact version matches can appear multiple times for the same CVE.
                 // For example:
-                //   * CVE-2014-6032 contains "cpe:2.3:a:f5:big-ip_application_security_manager:10.2.0:*:*:*:*:*:*:*" twice
+                //   * CVE-2014-6032 contains "cpe:2.3:a:f5:big-ip_application_security_manager:10.2.0:*:*:*:*:*:*:*"
+                // twice
                 //   * CVE-2021-0002 contains "cpe:2.3:o:fedoraproject:fedora:35:*:*:*:*:*:*:*" twice
                 // See:
                 //   * https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2014-6032
@@ -281,7 +281,8 @@ final class ModelConverter {
                         .map(VulnerabilityAffectedVersions::getVersion)
                         .noneMatch(versConstraint.version().toString()::equals);
                 if (shouldAddVersion) {
-                    affectsBuilder.addVersions(VulnerabilityAffectedVersions.newBuilder().setVersion(versConstraint.version().toString()));
+                    affectsBuilder.addVersions(VulnerabilityAffectedVersions.newBuilder()
+                            .setVersion(versConstraint.version().toString()));
                 }
             } else if (versForCpeMatch != null) {
                 // Similar to how we do it for exact version matches, avoid duplicate ranges.
@@ -290,7 +291,8 @@ final class ModelConverter {
                         .map(VulnerabilityAffectedVersions::getRange)
                         .noneMatch(versForCpeMatch.toString()::equals);
                 if (shouldAddRange) {
-                    affectsBuilder.addVersions(VulnerabilityAffectedVersions.newBuilder().setRange(versForCpeMatch.toString()));
+                    affectsBuilder.addVersions(
+                            VulnerabilityAffectedVersions.newBuilder().setRange(versForCpeMatch.toString()));
                 }
             }
         }
@@ -345,7 +347,8 @@ final class ModelConverter {
                 CvssV2Data cvss = baseMetric.getCvssData();
                 Optional.ofNullable(cvss)
                         .map(cvss20 -> VulnerabilityRating.newBuilder()
-                                .setScore(Double.parseDouble(NumberFormat.getInstance(Locale.US).format(cvss20.getBaseScore())))
+                                .setScore(Double.parseDouble(
+                                        NumberFormat.getInstance(Locale.US).format(cvss20.getBaseScore())))
                                 .setMethod(ScoreMethod.SCORE_METHOD_CVSSV2)
                                 .setVector(cvss20.getVectorString())
                                 .setSeverity(mapSeverity(baseMetric.getBaseSeverity()))
@@ -362,7 +365,8 @@ final class ModelConverter {
                 CvssV3Data cvss = baseMetric.getCvssData();
                 Optional.ofNullable(cvss)
                         .map(cvssx -> VulnerabilityRating.newBuilder()
-                                .setScore(Double.parseDouble(NumberFormat.getInstance(Locale.US).format(cvssx.getBaseScore())))
+                                .setScore(Double.parseDouble(
+                                        NumberFormat.getInstance(Locale.US).format(cvssx.getBaseScore())))
                                 .setMethod(ScoreMethod.SCORE_METHOD_CVSSV3)
                                 .setVector(cvssx.getVectorString())
                                 .setSeverity(mapSeverity(cvssx.getBaseSeverity()))
@@ -379,7 +383,8 @@ final class ModelConverter {
                 CvssV3Data cvss = baseMetric.getCvssData();
                 Optional.ofNullable(cvss)
                         .map(_ -> VulnerabilityRating.newBuilder()
-                                .setScore(Double.parseDouble(NumberFormat.getInstance(Locale.US).format(cvss.getBaseScore())))
+                                .setScore(Double.parseDouble(
+                                        NumberFormat.getInstance(Locale.US).format(cvss.getBaseScore())))
                                 .setMethod(ScoreMethod.SCORE_METHOD_CVSSV31)
                                 .setVector(cvss.getVectorString())
                                 .setSeverity(mapSeverity(cvss.getBaseSeverity()))
@@ -396,7 +401,8 @@ final class ModelConverter {
                 CvssV4Data cvss = baseMetric.getCvssData();
                 Optional.ofNullable(cvss)
                         .map(_ -> VulnerabilityRating.newBuilder()
-                                .setScore(Double.parseDouble(NumberFormat.getInstance(Locale.US).format(cvss.getBaseScore())))
+                                .setScore(Double.parseDouble(
+                                        NumberFormat.getInstance(Locale.US).format(cvss.getBaseScore())))
                                 .setMethod(ScoreMethod.SCORE_METHOD_CVSSV4)
                                 .setVector(cvss.getVectorString())
                                 .setSeverity(mapSeverity(String.valueOf(cvss.getBaseSeverity())))
@@ -427,9 +433,8 @@ final class ModelConverter {
     private static List<ExternalReference> parseReferences(@Nullable List<Reference> references) {
         List<ExternalReference> externalReferences = new ArrayList<>();
         if (references != null) {
-            references.forEach(reference -> externalReferences.add(ExternalReference.newBuilder()
-                    .setUrl(reference.getUrl())
-                    .build()));
+            references.forEach(reference -> externalReferences.add(
+                    ExternalReference.newBuilder().setUrl(reference.getUrl()).build()));
         }
         return externalReferences;
     }
@@ -476,5 +481,4 @@ final class ModelConverter {
         // the moment we only know about GitHub as alternative source.
         return SOURCE_NVD;
     }
-
 }

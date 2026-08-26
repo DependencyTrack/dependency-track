@@ -34,9 +34,7 @@ public final class CelPolicyProgram {
     CelPolicyProgram(final CelRuntime.Program program, final Map<CelType, Set<String>> requirements) {
         this.program = program;
         this.requirements = requirements.entrySet().stream()
-                .collect(Collectors.toUnmodifiableMap(
-                        Map.Entry::getKey,
-                        entry -> Set.copyOf(entry.getValue())));
+                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, entry -> Set.copyOf(entry.getValue())));
     }
 
     Map<CelType, Set<String>> getRequirements() {
@@ -46,5 +44,4 @@ public final class CelPolicyProgram {
     boolean execute(final Map<String, Object> arguments) throws CelEvaluationException {
         return (Boolean) program.eval(arguments);
     }
-
 }

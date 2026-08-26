@@ -26,5 +26,4 @@ class TrivyVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnAnal
     TrivyVulnAnalyzerFactoryTest() {
         super(TrivyVulnAnalyzerFactory.class);
     }
-
 }

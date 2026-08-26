@@ -34,8 +34,7 @@ public abstract class PersistenceCapableTest {
 
     protected QueryManager qm;
 
-    protected static final String TEST_PASSWORD_HASH = new String(
-            PasswordService.createHash("testuser".toCharArray()));
+    protected static final String TEST_PASSWORD_HASH = new String(PasswordService.createHash("testuser".toCharArray()));
 
     @BeforeEach
     public void before() throws Exception {
@@ -61,5 +60,4 @@ public abstract class PersistenceCapableTest {
                 .getNucleusContext()
                 .getStatistics();
     }
-
 }

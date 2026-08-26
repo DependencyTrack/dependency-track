@@ -55,18 +55,13 @@ public final class KevDataSourceMirrorService {
 
     public sealed interface TriggerResult {
 
-        record Triggered(UUID runId) implements TriggerResult {
-        }
+        record Triggered(UUID runId) implements TriggerResult {}
 
-        record AlreadyRunning() implements TriggerResult {
-        }
+        record AlreadyRunning() implements TriggerResult {}
 
-        record NotEnabled() implements TriggerResult {
-        }
+        record NotEnabled() implements TriggerResult {}
 
-        record NotFound() implements TriggerResult {
-        }
-
+        record NotFound() implements TriggerResult {}
     }
 
     public TriggerResult trigger(String dataSourceName, @Nullable String triggeredBy) {
@@ -81,12 +76,12 @@ public final class KevDataSourceMirrorService {
             return new TriggerResult.NotEnabled();
         }
 
-        CreateWorkflowRunRequest<MirrorKevDataSourceArg> request =
-                new CreateWorkflowRunRequest<>(MirrorKevDataSourceWorkflow.class)
-                        .withWorkflowInstanceId(workflowInstanceId(dataSourceName))
-                        .withArgument(MirrorKevDataSourceArg.newBuilder()
-                                .setDataSourceName(dataSourceName)
-                                .build());
+        CreateWorkflowRunRequest<MirrorKevDataSourceArg> request = new CreateWorkflowRunRequest<>(
+                        MirrorKevDataSourceWorkflow.class)
+                .withWorkflowInstanceId(workflowInstanceId(dataSourceName))
+                .withArgument(MirrorKevDataSourceArg.newBuilder()
+                        .setDataSourceName(dataSourceName)
+                        .build());
         if (triggeredBy != null) {
             request = request.withLabels(Map.of(WF_LABEL_TRIGGERED_BY, triggeredBy));
         }
@@ -106,7 +101,6 @@ public final class KevDataSourceMirrorService {
             @Nullable String failureReason) {
 
         public enum Status {
-
             PENDING,
             RUNNING,
             COMPLETED,
@@ -120,9 +114,7 @@ public final class KevDataSourceMirrorService {
                     case CANCELLED, FAILED -> MirrorStatus.Status.FAILED;
                 };
             }
-
         }
-
     }
 
     public @Nullable MirrorStatus getLatestStatus(String dataSourceName) {
@@ -132,22 +124,22 @@ public final class KevDataSourceMirrorService {
             return null;
         }
 
-        final Page<WorkflowRunMetadata> runsPage = dexEngine.listRuns(
-                new ListWorkflowRunsRequest()
-                        .withWorkflowInstanceId(workflowInstanceId(dataSourceName))
-                        .withSortBy(ListWorkflowRunsRequest.SortBy.CREATED_AT)
-                        .withSortDirection(SortDirection.DESC)
-                        .withLimit(1));
+        final Page<WorkflowRunMetadata> runsPage = dexEngine.listRuns(new ListWorkflowRunsRequest()
+                .withWorkflowInstanceId(workflowInstanceId(dataSourceName))
+                .withSortBy(ListWorkflowRunsRequest.SortBy.CREATED_AT)
+                .withSortDirection(SortDirection.DESC)
+                .withLimit(1));
         if (runsPage.items().isEmpty()) {
             return null;
         }
 
         final WorkflowRunMetadata runMetadata = runsPage.items().getFirst();
-        final String failureReason = switch (runMetadata.status()) {
-            case FAILED -> extractFailureReason(runMetadata.id());
-            case CANCELLED -> "Cancelled";
-            default -> null;
-        };
+        final String failureReason =
+                switch (runMetadata.status()) {
+                    case FAILED -> extractFailureReason(runMetadata.id());
+                    case CANCELLED -> "Cancelled";
+                    default -> null;
+                };
 
         return new MirrorStatus(
                 MirrorStatus.Status.of(runMetadata.status()),
@@ -163,8 +155,7 @@ public final class KevDataSourceMirrorService {
         }
 
         return switch (run.failure().getFailureDetailsCase()) {
-            case ACTIVITY_FAILURE_DETAILS,
-                 CHILD_WORKFLOW_FAILURE_DETAILS -> {
+            case ACTIVITY_FAILURE_DETAILS, CHILD_WORKFLOW_FAILURE_DETAILS -> {
                 if (!run.failure().hasCause()) {
                     yield "Unknown failure";
                 }
@@ -179,5 +170,4 @@ public final class KevDataSourceMirrorService {
     private static String workflowInstanceId(String dataSourceName) {
         return WORKFLOW_INSTANCE_ID_PREFIX + dataSourceName;
     }
-
 }

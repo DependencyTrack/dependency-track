@@ -55,15 +55,11 @@ final class MetadataRegistry {
     @SuppressWarnings("rawtypes")
     private final Map<String, ActivityMetadata> activityMetadataByName = new HashMap<>();
 
-    MetadataRegistry(
-            Duration defaultActivityLockTimeout,
-            Duration defaultActivityExecutionTimeout) {
-        this.defaultActivityLockTimeout = requireNonNull(
-                defaultActivityLockTimeout,
-                "defaultActivityLockTimeout must not be null");
-        this.defaultActivityExecutionTimeout = requireNonNull(
-                defaultActivityExecutionTimeout,
-                "defaultActivityExecutionTimeout must not be null");
+    MetadataRegistry(Duration defaultActivityLockTimeout, Duration defaultActivityExecutionTimeout) {
+        this.defaultActivityLockTimeout =
+                requireNonNull(defaultActivityLockTimeout, "defaultActivityLockTimeout must not be null");
+        this.defaultActivityExecutionTimeout =
+                requireNonNull(defaultActivityExecutionTimeout, "defaultActivityExecutionTimeout must not be null");
     }
 
     <A, R> void registerWorkflow(
@@ -102,23 +98,15 @@ final class MetadataRegistry {
         requireNonNull(workflow, "workflow must not be null");
 
         if (workflowNameByExecutorClass.containsKey(workflow.getClass())) {
-            throw new IllegalArgumentException(
-                    "A workflow with workflow %s is already registered".formatted(
-                            workflow.getClass().getName()));
+            throw new IllegalArgumentException("A workflow with workflow %s is already registered"
+                    .formatted(workflow.getClass().getName()));
         }
         if (workflowMetadataByName.containsKey(name)) {
-            throw new IllegalArgumentException(
-                    "A workflow with name %s is already registered".formatted(name));
+            throw new IllegalArgumentException("A workflow with name %s is already registered".formatted(name));
         }
 
         final var metadata = new WorkflowMetadata<>(
-                name,
-                version,
-                workflow,
-                argumentConverter,
-                resultConverter,
-                defaultTaskQueueName,
-                lockTimeout);
+                name, version, workflow, argumentConverter, resultConverter, defaultTaskQueueName, lockTimeout);
         workflowNameByExecutorClass.put(workflow.getClass(), name);
         workflowMetadataByName.put(name, metadata);
     }
@@ -157,26 +145,19 @@ final class MetadataRegistry {
         requireValidTaskQueueName(defaultTaskQueueName);
         requireNonNull(activity, "activity must not be null");
 
-        final Duration effectiveLockTimeout =
-                lockTimeout == null
-                        ? defaultActivityLockTimeout
-                        : lockTimeout;
+        final Duration effectiveLockTimeout = lockTimeout == null ? defaultActivityLockTimeout : lockTimeout;
         requireValidLockTimeout(effectiveLockTimeout);
 
         final Duration effectiveExecutionTimeout =
-                executionTimeout == null
-                        ? defaultActivityExecutionTimeout
-                        : executionTimeout;
+                executionTimeout == null ? defaultActivityExecutionTimeout : executionTimeout;
         requireValidExecutionTimeout(effectiveExecutionTimeout);
 
         if (activityNameByExecutorClass.containsKey(activity.getClass())) {
-            throw new IllegalArgumentException(
-                    "An activity with activity %s is already registered".formatted(
-                            activity.getClass().getName()));
+            throw new IllegalArgumentException("An activity with activity %s is already registered"
+                    .formatted(activity.getClass().getName()));
         }
         if (activityMetadataByName.containsKey(name)) {
-            throw new IllegalArgumentException(
-                    "An activity with name %s is already registered".formatted(name));
+            throw new IllegalArgumentException("An activity with name %s is already registered".formatted(name));
         }
 
         final var metadata = new ActivityMetadata<>(
@@ -246,20 +227,21 @@ final class MetadataRegistry {
     @SuppressWarnings("rawtypes")
     private String getWorkflowName(Class<? extends Workflow> workflowClass) {
         return workflowNameByExecutorClass.computeIfAbsent(
-                workflowClass,
-                clazz -> WorkflowSpecs.of(clazz).name());
+                workflowClass, clazz -> WorkflowSpecs.of(clazz).name());
     }
 
     @SuppressWarnings("rawtypes")
     private String getActivityName(Class<? extends Activity> activityClass) {
-        return activityNameByExecutorClass.computeIfAbsent(activityClass, clazz -> requireActivitySpec(clazz).name());
+        return activityNameByExecutorClass.computeIfAbsent(
+                activityClass, clazz -> requireActivitySpec(clazz).name());
     }
 
     @SuppressWarnings("rawtypes")
     private static ActivitySpec requireActivitySpec(Class<? extends Activity> activityClass) {
         final ActivitySpec spec = activityClass.getAnnotation(ActivitySpec.class);
         if (spec == null) {
-            throw new IllegalArgumentException("Activity class must be annotated with @" + ActivitySpec.class.getSimpleName());
+            throw new IllegalArgumentException(
+                    "Activity class must be annotated with @" + ActivitySpec.class.getSimpleName());
         }
 
         return spec;
@@ -301,5 +283,4 @@ final class MetadataRegistry {
             throw new IllegalArgumentException("executionTimeout must be positive");
         }
     }
-
 }

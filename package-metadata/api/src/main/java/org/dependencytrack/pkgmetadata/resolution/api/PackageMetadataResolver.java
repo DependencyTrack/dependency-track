@@ -50,9 +50,8 @@ public interface PackageMetadataResolver extends ExtensionPoint {
      *                   or {@code null} if no prior data is available.
      * @return The resolved metadata, or {@code null} if no metadata could be resolved.
      */
-    @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException;
-
+    @Nullable
+    PackageMetadata resolve(
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException;
 }

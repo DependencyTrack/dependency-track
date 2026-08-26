@@ -50,9 +50,7 @@ record SnykCachedPurlResult(
     }
 
     static SnykCachedPurlResult of(
-            SnykMatchType matchType,
-            @Nullable List<SnykIssue> issues,
-            SnykIssuesMeta.@Nullable Match match) {
+            SnykMatchType matchType, @Nullable List<SnykIssue> issues, SnykIssuesMeta.@Nullable Match match) {
         Boolean nameVersion = null;
         Boolean checksum = null;
         if (match != null && match.details() != null) {
@@ -61,5 +59,4 @@ record SnykCachedPurlResult(
         }
         return new SnykCachedPurlResult(matchType, issues, nameVersion, checksum);
     }
-
 }

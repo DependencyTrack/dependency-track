@@ -50,5 +50,4 @@ final class ExceptionTranslationCallbackDecorator implements HandleCallbackDecor
             }
         };
     }
-
 }

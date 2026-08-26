@@ -34,5 +34,4 @@ final class ActivityContextImpl implements ActivityContext {
     public UUID workflowRunId() {
         return task.id().workflowRunId();
     }
-
 }

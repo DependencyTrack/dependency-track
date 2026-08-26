@@ -30,8 +30,7 @@ import java.util.Map;
  * @since 5.1.0
  */
 record SnykIssuesMeta(
-        @Nullable List<Error> errors,
-        @Nullable Map<String, PackageMetaEntry> packages) {
+        @Nullable List<Error> errors, @Nullable Map<String, PackageMetaEntry> packages) {
 
     /**
      * JSON:API error object from {@code meta.errors}.
@@ -39,16 +38,14 @@ record SnykIssuesMeta(
     record Error(
             @Nullable String id,
             @Nullable String status,
-            @Nullable String detail) {
-    }
+            @Nullable String detail) {}
 
     /**
      * Per-PURL entry in {@code meta.packages}.
      */
     record PackageMetaEntry(
             @Nullable Match match,
-            @JsonProperty("package") @Nullable PackageInfo packageInfo) {
-    }
+            @JsonProperty("package") @Nullable PackageInfo packageInfo) {}
 
     /**
      * Resolved package identity from {@code meta.packages[].package}.
@@ -58,8 +55,7 @@ record SnykIssuesMeta(
             @Nullable String namespace,
             @Nullable String type,
             @Nullable String url,
-            @Nullable String version) {
-    }
+            @Nullable String version) {}
 
     /**
      * Match metadata from Snyk's {@code meta.packages[].match} or {@code meta.match}.
@@ -73,13 +69,8 @@ record SnykIssuesMeta(
 
         record Details(
                 @JsonProperty("name_version") @Nullable Boolean nameVersion,
-                @Nullable Boolean checksum) {
-        }
+                @Nullable Boolean checksum) {}
 
-        record Input(
-                @Nullable String purl,
-                @Nullable String checksum) {
-        }
+        record Input(@Nullable String purl, @Nullable String checksum) {}
     }
-
 }

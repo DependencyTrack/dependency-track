@@ -46,6 +46,11 @@ public final class NpmPackageMetadataResolverFactory implements PackageMetadataR
     }
 
     @Override
+    public String displayName() {
+        return "npm";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return NpmPackageMetadataResolver.class;
     }
@@ -98,5 +103,4 @@ public final class NpmPackageMetadataResolverFactory implements PackageMetadataR
     public PackageMetadataResolver create() {
         return new NpmPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

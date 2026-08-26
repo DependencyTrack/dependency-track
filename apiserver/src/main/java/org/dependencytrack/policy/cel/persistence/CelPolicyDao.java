@@ -67,13 +67,9 @@ public final class CelPolicyDao {
     }
 
     public record ComponentWithLicenseId(
-            Component component,
-            @Nullable Long resolvedLicenseId) {
-    }
+            Component component, @Nullable Long resolvedLicenseId) {}
 
-    public Map<Long, ComponentWithLicenseId> fetchAllComponents(
-            long projectId,
-            Collection<String> protoFieldNames) {
+    public Map<Long, ComponentWithLicenseId> fetchAllComponents(long projectId, Collection<String> protoFieldNames) {
         final List<String> fetchColumns = new ArrayList<>();
         fetchColumns.add("c.\"ID\" AS db_id");
 
@@ -88,15 +84,13 @@ public final class CelPolicyDao {
         }
 
         final boolean shouldJoinPm =
-                protoFieldNames.contains("latest_version")
-                        || protoFieldNames.contains("latest_version_published_at");
-        final boolean shouldJoinPam =
-                shouldJoinPm
-                        || protoFieldNames.contains("published_at")
-                        || protoFieldNames.contains("package_artifact_md5")
-                        || protoFieldNames.contains("package_artifact_sha1")
-                        || protoFieldNames.contains("package_artifact_sha256")
-                        || protoFieldNames.contains("package_artifact_sha512");
+                protoFieldNames.contains("latest_version") || protoFieldNames.contains("latest_version_published_at");
+        final boolean shouldJoinPam = shouldJoinPm
+                || protoFieldNames.contains("published_at")
+                || protoFieldNames.contains("package_artifact_md5")
+                || protoFieldNames.contains("package_artifact_sha1")
+                || protoFieldNames.contains("package_artifact_sha256")
+                || protoFieldNames.contains("package_artifact_sha512");
 
         final var componentRowMapper = new CelPolicyComponentRowMapper();
         return jdbiHandle
@@ -120,29 +114,21 @@ public final class CelPolicyDao {
                 .define("shouldJoinPam", shouldJoinPam)
                 .define("shouldJoinPm", shouldJoinPm)
                 .bind("projectId", projectId)
-                .reduceResultSet(
-                        new HashMap<>(),
-                        (accumulator, rs, ctx) -> {
-                            final long dbId = rs.getLong("db_id");
-                            Long licenseId = needsResolvedLicense
-                                    ? rs.getLong("resolved_license_id")
-                                    : null;
-                            if (licenseId != null && rs.wasNull()) {
-                                licenseId = null;
-                            }
-                            accumulator.put(
-                                    dbId,
-                                    new ComponentWithLicenseId(
-                                            componentRowMapper.map(rs, ctx),
-                                            licenseId));
-                            return accumulator;
-                        });
+                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
+                    final long dbId = rs.getLong("db_id");
+                    Long licenseId = needsResolvedLicense ? rs.getLong("resolved_license_id") : null;
+                    if (licenseId != null && rs.wasNull()) {
+                        licenseId = null;
+                    }
+                    accumulator.put(dbId, new ComponentWithLicenseId(componentRowMapper.map(rs, ctx), licenseId));
+                    return accumulator;
+                });
     }
 
     public Map<Long, List<Component.Property>> fetchAllComponentProperties(
-            long projectId,
-            Collection<String> propertyProtoFieldNames) {
-        final List<String> fetchColumns = new ArrayList<>(selectColumns(COMPONENT_PROPERTY_FIELDS, propertyProtoFieldNames));
+            long projectId, Collection<String> propertyProtoFieldNames) {
+        final List<String> fetchColumns =
+                new ArrayList<>(selectColumns(COMPONENT_PROPERTY_FIELDS, propertyProtoFieldNames));
         if (fetchColumns.isEmpty()) {
             fetchColumns.add("cp.\"ID\" AS \"_id\"");
         }
@@ -159,20 +145,18 @@ public final class CelPolicyDao {
                         """)
                 .define("fetchColumns", fetchColumns)
                 .bind("projectId", projectId)
-                .reduceResultSet(
-                        new HashMap<>(),
-                        (accumulator, rs, ctx) -> {
-                            final long componentId = rs.getLong("component_id");
-                            final Component.Property.Builder builder = Component.Property.newBuilder();
-                            maybeSet(rs, "group", ResultSet::getString, builder::setGroup);
-                            maybeSet(rs, "name", ResultSet::getString, builder::setName);
-                            maybeSet(rs, "value", ResultSet::getString, builder::setValue);
-                            maybeSet(rs, "type", ResultSet::getString, builder::setType);
-                            accumulator
-                                    .computeIfAbsent(componentId, k -> new ArrayList<>())
-                                    .add(builder.build());
-                            return accumulator;
-                        });
+                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
+                    final long componentId = rs.getLong("component_id");
+                    final Component.Property.Builder builder = Component.Property.newBuilder();
+                    maybeSet(rs, "group", ResultSet::getString, builder::setGroup);
+                    maybeSet(rs, "name", ResultSet::getString, builder::setName);
+                    maybeSet(rs, "value", ResultSet::getString, builder::setValue);
+                    maybeSet(rs, "type", ResultSet::getString, builder::setType);
+                    accumulator
+                            .computeIfAbsent(componentId, k -> new ArrayList<>())
+                            .add(builder.build());
+                    return accumulator;
+                });
     }
 
     public Map<Long, Set<Long>> fetchAllComponentsVulnerabilities(long projectId) {
@@ -202,22 +186,18 @@ public final class CelPolicyDao {
                            )
                         """)
                 .bind("projectId", projectId)
-                .reduceResultSet(
-                        new HashMap<>(),
-                        (accumulator, rs, _) -> {
-                            final long componentId = rs.getLong("component_id");
-                            final long vulnerabilityId = rs.getLong("vulnerability_id");
-                            accumulator
-                                    .computeIfAbsent(componentId, k -> new HashSet<>())
-                                    .add(vulnerabilityId);
-                            return accumulator;
-                        });
+                .reduceResultSet(new HashMap<>(), (accumulator, rs, _) -> {
+                    final long componentId = rs.getLong("component_id");
+                    final long vulnerabilityId = rs.getLong("vulnerability_id");
+                    accumulator
+                            .computeIfAbsent(componentId, k -> new HashSet<>())
+                            .add(vulnerabilityId);
+                    return accumulator;
+                });
     }
 
     public Map<Long, License> fetchAllLicenses(
-            long projectId,
-            Collection<String> licenseProtoFieldNames,
-            Collection<String> licenseGroupProtoFieldNames) {
+            long projectId, Collection<String> licenseProtoFieldNames, Collection<String> licenseGroupProtoFieldNames) {
         final List<String> fetchColumns = new ArrayList<>();
         fetchColumns.add("l.\"ID\" AS db_id");
         fetchColumns.addAll(selectColumns(LICENSE_FIELDS, licenseProtoFieldNames));
@@ -289,25 +269,21 @@ public final class CelPolicyDao {
                 .define("fetchColumns", fetchColumns)
                 .define("groupByColumns", groupByColumns)
                 .bind("projectId", projectId)
-                .reduceResultSet(
-                        new HashMap<>(),
-                        (accumulator, rs, ctx) -> {
-                            final long dbId = rs.getLong("db_id");
-                            accumulator.put(dbId, licenseRowMapper.map(rs, ctx));
-                            return accumulator;
-                        });
+                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
+                    final long dbId = rs.getLong("db_id");
+                    accumulator.put(dbId, licenseRowMapper.map(rs, ctx));
+                    return accumulator;
+                });
     }
 
     public Map<Long, Vulnerability> fetchAllVulnerabilities(
-            Collection<Long> vulnDbIds,
-            Collection<String> protoFieldNames) {
+            Collection<Long> vulnDbIds, Collection<String> protoFieldNames) {
         final List<String> fetchColumns = new ArrayList<>();
         fetchColumns.add("v.\"ID\" AS db_id");
         fetchColumns.addAll(selectColumns(VULNERABILITY_FIELDS, protoFieldNames));
 
         final boolean shouldFetchEpss =
-                protoFieldNames.contains("epss_score")
-                        || protoFieldNames.contains("epss_percentile");
+                protoFieldNames.contains("epss_score") || protoFieldNames.contains("epss_percentile");
         final boolean shouldFetchIsKev = protoFieldNames.contains("is_kev");
 
         final var vulnRowMapper = new CelPolicyVulnerabilityRowMapper();
@@ -359,13 +335,11 @@ public final class CelPolicyDao {
                 .define("shouldFetchEpss", shouldFetchEpss)
                 .define("shouldFetchIsKev", shouldFetchIsKev)
                 .bindArray("vulnDbIds", Long.class, vulnDbIds)
-                .reduceResultSet(
-                        new HashMap<>(),
-                        (accumulator, rs, ctx) -> {
-                            final long dbId = rs.getLong("db_id");
-                            accumulator.put(dbId, vulnRowMapper.map(rs, ctx));
-                            return accumulator;
-                        });
+                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
+                    final long dbId = rs.getLong("db_id");
+                    accumulator.put(dbId, vulnRowMapper.map(rs, ctx));
+                    return accumulator;
+                });
     }
 
     public boolean isDirectDependency(Component component) {
@@ -430,50 +404,46 @@ public final class CelPolicyDao {
                                 , pc."ID"
                         """)
                 .bind("projectId", projectId)
-                .reduceResultSet(
-                        new LinkedHashMap<Long, Policy>(),
-                        (accumulator, rs, ctx) -> {
-                            final long policyId = rs.getLong("policy_id");
+                .reduceResultSet(new LinkedHashMap<Long, Policy>(), (accumulator, rs, ctx) -> {
+                    final long policyId = rs.getLong("policy_id");
 
-                            Policy policy = accumulator.get(policyId);
-                            if (policy == null) {
-                                policy = new Policy();
-                                policy.setId(policyId);
-                                policy.setUuid(rs.getObject("policy_uuid", UUID.class));
-                                policy.setName(rs.getString("policy_name"));
-                                policy.setOperator(Policy.Operator.valueOf(rs.getString("policy_operator")));
-                                policy.setViolationState(Policy.ViolationState.valueOf(rs.getString("policy_violation_state")));
-                                policy.setPolicyConditions(new ArrayList<>());
-                                accumulator.put(policyId, policy);
-                            }
+                    Policy policy = accumulator.get(policyId);
+                    if (policy == null) {
+                        policy = new Policy();
+                        policy.setId(policyId);
+                        policy.setUuid(rs.getObject("policy_uuid", UUID.class));
+                        policy.setName(rs.getString("policy_name"));
+                        policy.setOperator(Policy.Operator.valueOf(rs.getString("policy_operator")));
+                        policy.setViolationState(Policy.ViolationState.valueOf(rs.getString("policy_violation_state")));
+                        policy.setPolicyConditions(new ArrayList<>());
+                        accumulator.put(policyId, policy);
+                    }
 
-                            final var condition = new PolicyCondition();
-                            condition.setId(rs.getLong("condition_id"));
-                            condition.setUuid(rs.getObject("condition_uuid", UUID.class));
-                            condition.setOperator(PolicyCondition.Operator.valueOf(rs.getString("condition_operator")));
-                            condition.setSubject(PolicyCondition.Subject.valueOf(rs.getString("condition_subject")));
-                            condition.setValue(rs.getString("condition_value"));
-                            final String violationType = rs.getString("condition_violation_type");
-                            if (violationType != null) {
-                                condition.setViolationType(PolicyViolation.Type.valueOf(violationType));
-                            }
-                            condition.setPolicy(policy);
+                    final var condition = new PolicyCondition();
+                    condition.setId(rs.getLong("condition_id"));
+                    condition.setUuid(rs.getObject("condition_uuid", UUID.class));
+                    condition.setOperator(PolicyCondition.Operator.valueOf(rs.getString("condition_operator")));
+                    condition.setSubject(PolicyCondition.Subject.valueOf(rs.getString("condition_subject")));
+                    condition.setValue(rs.getString("condition_value"));
+                    final String violationType = rs.getString("condition_violation_type");
+                    if (violationType != null) {
+                        condition.setViolationType(PolicyViolation.Type.valueOf(violationType));
+                    }
+                    condition.setPolicy(policy);
 
-                            policy.getPolicyConditions().add(condition);
+                    policy.getPolicyConditions().add(condition);
 
-                            return accumulator;
-                        })
+                    return accumulator;
+                })
                 .values()
                 .stream()
                 .toList();
     }
 
     public Set<Long> reconcileViolations(
-            long projectId,
-            Map<Long, List<PolicyViolation>> reportedViolationsByComponentId) {
+            long projectId, Map<Long, List<PolicyViolation>> reportedViolationsByComponentId) {
         if (reportedViolationsByComponentId.isEmpty()) {
-            jdbiHandle
-                    .createUpdate("""
+            jdbiHandle.createUpdate("""
                             DELETE FROM "POLICYVIOLATION"
                              WHERE "ID" IN (
                                SELECT "ID"
@@ -482,9 +452,7 @@ public final class CelPolicyDao {
                                 ORDER BY "ID"
                                   FOR UPDATE
                              )
-                            """)
-                    .bind("projectId", projectId)
-                    .execute();
+                            """).bind("projectId", projectId).execute();
             return Set.of();
         }
 
@@ -606,7 +574,8 @@ public final class CelPolicyDao {
             fetchColumns.add("tags");
         }
 
-        final Project project = jdbiHandle.createQuery(/* language=InjectedFreeMarker */ """
+        final Project project = jdbiHandle
+                .createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
                         <#-- @ftlvariable name="needsMetadataTools" type="boolean" -->
                         <#-- @ftlvariable name="needsBomGenerated" type="boolean" -->
@@ -660,8 +629,7 @@ public final class CelPolicyDao {
     }
 
     public Map<Long, Component> loadRequiredComponentFields(
-            Collection<Long> componentIds,
-            Map<CelType, Set<String>> requirements) {
+            Collection<Long> componentIds, Map<CelType, Set<String>> requirements) {
         if (componentIds.isEmpty()) {
             return Map.of();
         }
@@ -677,19 +645,18 @@ public final class CelPolicyDao {
 
         final List<String> fetchColumns = new ArrayList<>(selectColumns(COMPONENT_FIELDS, componentRequirements));
 
-        final boolean shouldJoinPm =
-                componentRequirements.contains("latest_version")
-                        || componentRequirements.contains("latest_version_published_at");
-        final boolean shouldJoinPam =
-                shouldJoinPm
-                        || componentRequirements.contains("published_at")
-                        || componentRequirements.contains("package_artifact_md5")
-                        || componentRequirements.contains("package_artifact_sha1")
-                        || componentRequirements.contains("package_artifact_sha256")
-                        || componentRequirements.contains("package_artifact_sha512");
+        final boolean shouldJoinPm = componentRequirements.contains("latest_version")
+                || componentRequirements.contains("latest_version_published_at");
+        final boolean shouldJoinPam = shouldJoinPm
+                || componentRequirements.contains("published_at")
+                || componentRequirements.contains("package_artifact_md5")
+                || componentRequirements.contains("package_artifact_sha1")
+                || componentRequirements.contains("package_artifact_sha256")
+                || componentRequirements.contains("package_artifact_sha512");
 
         final var componentRowMapper = new CelPolicyComponentRowMapper();
-        return jdbiHandle.createQuery(/* language=InjectedFreeMarker */ """
+        return jdbiHandle
+                .createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
                         <#-- @ftlvariable name="shouldJoinPam" type="boolean" -->
                         <#-- @ftlvariable name="shouldJoinPm" type="boolean" -->
@@ -720,8 +687,7 @@ public final class CelPolicyDao {
     }
 
     public Map<Long, Vulnerability> loadRequiredVulnerabilityFields(
-            Collection<Long> vulnIds,
-            Map<CelType, Set<String>> requirements) {
+            Collection<Long> vulnIds, Map<CelType, Set<String>> requirements) {
         if (vulnIds.isEmpty()) {
             return Map.of();
         }
@@ -738,13 +704,13 @@ public final class CelPolicyDao {
         final List<String> fetchColumns = new ArrayList<>(selectColumns(VULNERABILITY_FIELDS, vulnRequirements));
 
         final boolean needsEpss =
-                vulnRequirements.contains("epss_score")
-                        || vulnRequirements.contains("epss_percentile");
+                vulnRequirements.contains("epss_score") || vulnRequirements.contains("epss_percentile");
         final boolean shouldFetchIsKev = vulnRequirements.contains("is_kev");
 
         final var vulnRowMapper = new CelPolicyVulnerabilityRowMapper();
 
-        return jdbiHandle.createQuery(/* language=InjectedFreeMarker */ """
+        return jdbiHandle
+                .createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
                         <#-- @ftlvariable name="needsEpss" type="boolean" -->
                         <#-- @ftlvariable name="shouldFetchIsKev" type="boolean" -->
@@ -794,13 +760,10 @@ public final class CelPolicyDao {
                 .define("needsEpss", needsEpss)
                 .define("shouldFetchIsKev", shouldFetchIsKev)
                 .bindArray("ids", Long.class, vulnIds)
-                .reduceResultSet(
-                        new HashMap<>(),
-                        (accumulator, rs, ctx) -> {
-                            final long dbId = rs.getLong("db_id");
-                            accumulator.put(dbId, vulnRowMapper.map(rs, ctx));
-                            return accumulator;
-                        });
+                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
+                    final long dbId = rs.getLong("db_id");
+                    accumulator.put(dbId, vulnRowMapper.map(rs, ctx));
+                    return accumulator;
+                });
     }
-
 }

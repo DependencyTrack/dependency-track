@@ -59,9 +59,7 @@ final class JvnClient {
 
     JvnClient(final HttpClient httpClient, final String feedBaseUrl) {
         this.httpClient = httpClient;
-        this.feedBaseUrl = feedBaseUrl.endsWith("/")
-                ? feedBaseUrl.substring(0, feedBaseUrl.length() - 1)
-                : feedBaseUrl;
+        this.feedBaseUrl = feedBaseUrl.endsWith("/") ? feedBaseUrl.substring(0, feedBaseUrl.length() - 1) : feedBaseUrl;
     }
 
     /**
@@ -81,8 +79,7 @@ final class JvnClient {
             final HttpResponse<Path> response = httpClient.send(request, BodyHandlers.ofFile(tempFile));
             if (response.statusCode() != 200) {
                 // BodyHandlers.ofFile writes the error body to the file as well.
-                throw new IOException("Unexpected response code " + response.statusCode()
-                        + " from JVN feed: " + url);
+                throw new IOException("Unexpected response code " + response.statusCode() + " from JVN feed: " + url);
             }
             return response.body();
         } catch (IOException | InterruptedException | RuntimeException e) {
@@ -127,8 +124,7 @@ final class JvnClient {
                 .build();
         final HttpResponse<byte[]> response = httpClient.send(request, BodyHandlers.ofByteArray());
         if (response.statusCode() != 200) {
-            throw new IOException("Unexpected response code " + response.statusCode()
-                    + " from JVN feed: " + url);
+            throw new IOException("Unexpected response code " + response.statusCode() + " from JVN feed: " + url);
         }
         return response.body();
     }

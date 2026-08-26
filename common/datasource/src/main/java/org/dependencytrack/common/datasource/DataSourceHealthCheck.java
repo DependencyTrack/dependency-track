@@ -52,7 +52,8 @@ public final class DataSourceHealthCheck implements HealthCheck {
         final var responseBuilder = HealthCheckResponse.named("dataSources");
 
         boolean isUp = true;
-        for (final Map.Entry<String, DataSource> entry : dataSourceRegistry.getAll().entrySet()) {
+        for (final Map.Entry<String, DataSource> entry :
+                dataSourceRegistry.getAll().entrySet()) {
             final String name = entry.getKey();
             final DataSource dataSource = entry.getValue();
 
@@ -67,5 +68,4 @@ public final class DataSourceHealthCheck implements HealthCheck {
 
         return responseBuilder.status(isUp).build();
     }
-
 }

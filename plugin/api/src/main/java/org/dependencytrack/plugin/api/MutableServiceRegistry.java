@@ -34,14 +34,12 @@ public final class MutableServiceRegistry implements ServiceRegistry {
 
     public <T> MutableServiceRegistry register(Class<T> type, T service) {
         if (frozen) {
-            throw new IllegalStateException(
-                    "Cannot register service after registry is already frozen");
+            throw new IllegalStateException("Cannot register service after registry is already frozen");
         }
         requireNonNull(type, "type must not be null");
         requireNonNull(service, "service must not be null");
         if (services.containsKey(type)) {
-            throw new IllegalStateException(
-                    "Service already registered for type: " + type.getName());
+            throw new IllegalStateException("Service already registered for type: " + type.getName());
         }
 
         services.put(type, service);
@@ -59,5 +57,4 @@ public final class MutableServiceRegistry implements ServiceRegistry {
         this.frozen = true;
         return this;
     }
-
 }

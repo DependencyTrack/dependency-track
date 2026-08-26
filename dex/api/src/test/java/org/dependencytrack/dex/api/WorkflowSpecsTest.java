@@ -38,9 +38,8 @@ class WorkflowSpecsTest {
     void shouldThrowWhenClassIsNotAnnotated() {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> WorkflowSpecs.of(UnspeccedWorkflow.class))
-                .withMessage("Class %s is not annotated with @%s".formatted(
-                        UnspeccedWorkflow.class.getName(),
-                        WorkflowSpec.class.getName()));
+                .withMessage("Class %s is not annotated with @%s"
+                        .formatted(UnspeccedWorkflow.class.getName(), WorkflowSpec.class.getName()));
     }
 
     @WorkflowSpec(name = "specced", version = 3)
@@ -50,7 +49,6 @@ class WorkflowSpecsTest {
         public @Nullable Void execute(@NonNull WorkflowContext<Void> ctx, Void arg) {
             return null;
         }
-
     }
 
     private static final class UnspeccedWorkflow implements Workflow<Void, Void> {
@@ -59,7 +57,5 @@ class WorkflowSpecsTest {
         public @Nullable Void execute(@NonNull WorkflowContext<Void> ctx, Void arg) {
             return null;
         }
-
     }
-
 }

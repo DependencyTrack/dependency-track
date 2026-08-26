@@ -28,7 +28,6 @@ import org.jspecify.annotations.Nullable;
  * @since 5.1.0
  */
 enum SnykMatchType {
-
     FULL,
     PARTIAL,
     NONE;
@@ -50,5 +49,4 @@ enum SnykMatchType {
             default -> null;
         };
     }
-
 }

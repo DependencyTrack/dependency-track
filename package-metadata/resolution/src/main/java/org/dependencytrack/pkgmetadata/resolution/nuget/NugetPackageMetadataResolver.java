@@ -67,10 +67,8 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
     //  * 3.4.0: gzip-compressed, SemVer 1 only
     //  * (unversioned): uncompressed, SemVer 1 only
     // See https://learn.microsoft.com/en-us/nuget/api/registration-base-url-resource
-    private static final List<String> REGISTRATIONS_RESOURCE_TYPES = List.of(
-            "registrationsbaseurl/3.6.0",
-            "registrationsbaseurl/3.4.0",
-            "registrationsbaseurl");
+    private static final List<String> REGISTRATIONS_RESOURCE_TYPES =
+            List.of("registrationsbaseurl/3.6.0", "registrationsbaseurl/3.4.0", "registrationsbaseurl");
 
     private final ObjectMapper objectMapper;
     private final CachingHttpClient cachingHttpClient;
@@ -82,9 +80,8 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String registrationsBaseUrl = discoverRegistrationsBaseUrl(repository);
@@ -182,8 +179,7 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
         // unparseable bounds last (lexicographic descending fallback).
         return StreamSupport.stream(pagesNode.spliterator(), false)
                 .map(NugetPackageMetadataResolver::toPage)
-                .sorted(Comparator
-                        .comparing((Page page) -> page.upperVersion() != null, Comparator.reverseOrder())
+                .sorted(Comparator.comparing((Page page) -> page.upperVersion() != null, Comparator.reverseOrder())
                         .thenComparing((a, b) -> {
                             if (a.upperVersion() != null && b.upperVersion() != null) {
                                 return b.upperVersion().compareTo(a.upperVersion());
@@ -208,10 +204,8 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
         }
     }
 
-    private @Nullable CatalogEntry findLatest(
-            List<Page> pages,
-            PackageRepository repository,
-            boolean includePreRelease) throws InterruptedException {
+    private @Nullable CatalogEntry findLatest(List<Page> pages, PackageRepository repository, boolean includePreRelease)
+            throws InterruptedException {
         for (final Page page : pages) {
             final JsonNode leaves = resolveLeaves(page.node(), repository);
             if (leaves == null) {
@@ -254,10 +248,8 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
         return null;
     }
 
-    private @Nullable Instant findPublishedAt(
-            List<Page> pages,
-            PackageRepository repository,
-            String requestedVersion) throws InterruptedException {
+    private @Nullable Instant findPublishedAt(List<Page> pages, PackageRepository repository, String requestedVersion)
+            throws InterruptedException {
         // NuGet canonicalises versions in registration responses (e.g. "1.0" -> "1.0.0",
         // "1.0.0.0" -> "1.0.0"), so a raw string match would silently miss equivalent
         // versions. Compare semantically when possible, falling back to string equality
@@ -266,8 +258,7 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
         try {
             requested = VersionFactory.forScheme(SCHEME_NUGET, requestedVersion);
         } catch (InvalidVersionException e) {
-            LOGGER.debug("Requested NuGet version is unparseable, using raw string match: {}",
-                    requestedVersion, e);
+            LOGGER.debug("Requested NuGet version is unparseable, using raw string match: {}", requestedVersion, e);
             return findPublishedAtByRawVersion(pages, repository, requestedVersion);
         }
 
@@ -305,9 +296,7 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
     }
 
     private @Nullable Instant findPublishedAtByRawVersion(
-            List<Page> pages,
-            PackageRepository repository,
-            String requestedVersion) throws InterruptedException {
+            List<Page> pages, PackageRepository repository, String requestedVersion) throws InterruptedException {
         for (final Page page : pages) {
             final JsonNode leaves = resolveLeaves(page.node(), repository);
             if (leaves == null) {
@@ -325,7 +314,8 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
         return null;
     }
 
-    private @Nullable JsonNode resolveLeaves(JsonNode pageNode, PackageRepository repository) throws InterruptedException {
+    private @Nullable JsonNode resolveLeaves(JsonNode pageNode, PackageRepository repository)
+            throws InterruptedException {
         final JsonNode inline = pageNode.path("items");
         if (inline.isArray() && !inline.isEmpty()) {
             return inline;
@@ -357,7 +347,8 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
             return null;
         }
 
-        return new CatalogEntry(version, parsePublished(catalogEntry.path("published").asText(null)));
+        return new CatalogEntry(
+                version, parsePublished(catalogEntry.path("published").asText(null)));
     }
 
     private byte @Nullable [] fetch(String url, PackageRepository repository) throws InterruptedException {
@@ -378,10 +369,8 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
             return null;
         }
 
-        final HttpRequest.Builder builder = HttpRequest.newBuilder()
-                .uri(uri)
-                .timeout(REQUEST_TIMEOUT)
-                .GET();
+        final HttpRequest.Builder builder =
+                HttpRequest.newBuilder().uri(uri).timeout(REQUEST_TIMEOUT).GET();
         applyAuth(builder, repository, uri);
         return cachingHttpClient.get(builder, repository);
     }
@@ -400,8 +389,9 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
 
         if (repository.username() != null) {
             final String credentials = repository.username() + ":" + repository.password();
-            builder.header("Authorization", "Basic " + Base64.getEncoder().encodeToString(
-                    credentials.getBytes(StandardCharsets.UTF_8)));
+            builder.header(
+                    "Authorization",
+                    "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8)));
         } else {
             builder.header("Authorization", "Bearer " + repository.password());
         }
@@ -433,11 +423,10 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
         }
     }
 
-    private record Page(JsonNode node, String upperRaw, @Nullable Version upperVersion) {
-    }
+    private record Page(
+            JsonNode node, String upperRaw, @Nullable Version upperVersion) {}
 
-    private record CatalogEntry(String version, @Nullable Instant publishedAt) {
-    }
+    private record CatalogEntry(String version, @Nullable Instant publishedAt) {}
 
     private static boolean isStableVersion(String version) {
         try {
@@ -446,5 +435,4 @@ final class NugetPackageMetadataResolver implements PackageMetadataResolver {
             return false;
         }
     }
-
 }

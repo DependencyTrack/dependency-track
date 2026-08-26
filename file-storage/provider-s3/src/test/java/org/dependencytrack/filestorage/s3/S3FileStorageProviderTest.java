@@ -41,8 +41,7 @@ class S3FileStorageProviderTest {
     @Test
     void resolveCredentialsProviderShouldReturnStaticProviderByDefault() {
         final Config config = configOf(Map.ofEntries(
-                Map.entry("dt.file-storage.s3.access-key", "foo"),
-                Map.entry("dt.file-storage.s3.secret-key", "bar")));
+                Map.entry("dt.file-storage.s3.access-key", "foo"), Map.entry("dt.file-storage.s3.secret-key", "bar")));
 
         assertThat(S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
                 .hasValueSatisfying(provider -> assertThat(provider).isInstanceOf(StaticProvider.class));
@@ -61,10 +60,10 @@ class S3FileStorageProviderTest {
 
     @Test
     void resolveCredentialsProviderShouldReturnEmptyWhenStaticKeysAreMissing() {
-        final Config config = configOf(Map.ofEntries(
-                Map.entry("dt.file-storage.s3.credentials-source", "static")));
+        final Config config = configOf(Map.ofEntries(Map.entry("dt.file-storage.s3.credentials-source", "static")));
 
-        assertThat(S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient())).isEmpty();
+        assertThat(S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
+                .isEmpty();
     }
 
     @Test
@@ -93,8 +92,7 @@ class S3FileStorageProviderTest {
 
     @Test
     void resolveCredentialsProviderShouldReturnChainedProviderWhenSourceIsAws() {
-        final Config config = configOf(Map.ofEntries(
-                Map.entry("dt.file-storage.s3.credentials-source", "aws")));
+        final Config config = configOf(Map.ofEntries(Map.entry("dt.file-storage.s3.credentials-source", "aws")));
 
         assertThat(S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
                 .hasValueSatisfying(provider -> assertThat(provider).isInstanceOf(ChainedProvider.class));
@@ -118,18 +116,16 @@ class S3FileStorageProviderTest {
      */
     @Test
     void resolveCredentialsProviderShouldConsultAwsEnvironmentWhenSourceIsAws() {
-        final Config config = configOf(Map.ofEntries(
-                Map.entry("dt.file-storage.s3.credentials-source", "aws")));
+        final Config config = configOf(Map.ofEntries(Map.entry("dt.file-storage.s3.credentials-source", "aws")));
 
         System.setProperty("AWS_ACCESS_KEY_ID", "foo");
         System.setProperty("AWS_SECRET_ACCESS_KEY", "bar");
         try {
             assertThat(S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()))
-                    .hasValueSatisfying(provider -> assertThat(provider.fetch())
-                            .satisfies(credentials -> {
-                                assertThat(credentials.accessKey()).isEqualTo("foo");
-                                assertThat(credentials.secretKey()).isEqualTo("bar");
-                            }));
+                    .hasValueSatisfying(provider -> assertThat(provider.fetch()).satisfies(credentials -> {
+                        assertThat(credentials.accessKey()).isEqualTo("foo");
+                        assertThat(credentials.secretKey()).isEqualTo("bar");
+                    }));
         } finally {
             System.clearProperty("AWS_ACCESS_KEY_ID");
             System.clearProperty("AWS_SECRET_ACCESS_KEY");
@@ -138,17 +134,13 @@ class S3FileStorageProviderTest {
 
     @Test
     void resolveCredentialsProviderShouldThrowWhenSourceIsInvalid() {
-        final Config config = configOf(Map.ofEntries(
-                Map.entry("dt.file-storage.s3.credentials-source", "bogus")));
+        final Config config = configOf(Map.ofEntries(Map.entry("dt.file-storage.s3.credentials-source", "bogus")));
 
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> S3FileStorageProvider.resolveCredentialsProvider(config, new OkHttpClient()));
     }
 
     private static Config configOf(Map<String, String> configValues) {
-        return new SmallRyeConfigBuilder()
-                .withDefaultValues(configValues)
-                .build();
+        return new SmallRyeConfigBuilder().withDefaultValues(configValues).build();
     }
-
 }

@@ -45,15 +45,18 @@ public final class CpanPackageMetadataResolverFactory implements PackageMetadata
     }
 
     @Override
+    public String displayName() {
+        return "CPAN";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return CpanPackageMetadataResolver.class;
     }
 
     @Override
     public @Nullable PackageURL normalize(PackageURL purl) {
-        if (!"cpan".equals(purl.getType())
-                || purl.getName() == null
-                || purl.getVersion() == null) {
+        if (!"cpan".equals(purl.getType()) || purl.getName() == null || purl.getVersion() == null) {
             return null;
         }
 
@@ -76,8 +79,7 @@ public final class CpanPackageMetadataResolverFactory implements PackageMetadata
 
     @Override
     public void init(ServiceRegistry serviceRegistry) {
-        objectMapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
                 serviceRegistry.require(CacheManager.class).getCache("responses"));
@@ -87,5 +89,4 @@ public final class CpanPackageMetadataResolverFactory implements PackageMetadata
     public PackageMetadataResolver create() {
         return new CpanPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

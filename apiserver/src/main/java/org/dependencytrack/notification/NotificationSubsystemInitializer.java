@@ -19,9 +19,6 @@
 package org.dependencytrack.notification;
 
 import io.micrometer.core.instrument.Metrics;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletContextEvent;
-import jakarta.servlet.ServletContextListener;
 import org.dependencytrack.common.ConfigKeys;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.filestorage.api.FileStorage;
@@ -30,6 +27,10 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import static java.util.Objects.requireNonNull;
 

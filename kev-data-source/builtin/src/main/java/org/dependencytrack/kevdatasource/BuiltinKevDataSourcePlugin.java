@@ -34,9 +34,6 @@ public final class BuiltinKevDataSourcePlugin implements Plugin {
     @Override
     public Collection<? extends ExtensionFactory<? extends ExtensionPoint>> extensionFactories() {
         return List.of(
-                new CisaKevDataSourceFactory(),
-                new EnisaKevDataSourceFactory(),
-                new VulnCheckKevDataSourceFactory());
+                new CisaKevDataSourceFactory(), new EnisaKevDataSourceFactory(), new VulnCheckKevDataSourceFactory());
     }
-
 }

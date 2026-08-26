@@ -88,7 +88,9 @@ public class OrganizationalEntity implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final OrganizationalEntity that = (OrganizationalEntity) o;
-        return Objects.equals(name, that.name) && Arrays.equals(urls, that.urls) && Objects.equals(contacts, that.contacts);
+        return Objects.equals(name, that.name)
+                && Arrays.equals(urls, that.urls)
+                && Objects.equals(contacts, that.contacts);
     }
 
     @Override

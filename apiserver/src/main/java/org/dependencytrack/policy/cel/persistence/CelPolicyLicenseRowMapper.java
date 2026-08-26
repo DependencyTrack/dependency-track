@@ -61,8 +61,12 @@ public final class CelPolicyLicenseRowMapper implements RowMapper<License> {
             final ArrayNode groupsArray = Mappers.jsonMapper().readValue(jsonString, ArrayNode.class);
             for (final JsonNode groupNode : groupsArray) {
                 builder.addGroups(License.Group.newBuilder()
-                        .setUuid(Optional.ofNullable(groupNode.get("uuid")).map(JsonNode::asText).orElse(""))
-                        .setName(Optional.ofNullable(groupNode.get("name")).map(JsonNode::asText).orElse(""))
+                        .setUuid(Optional.ofNullable(groupNode.get("uuid"))
+                                .map(JsonNode::asText)
+                                .orElse(""))
+                        .setName(Optional.ofNullable(groupNode.get("name"))
+                                .map(JsonNode::asText)
+                                .orElse(""))
                         .build());
             }
         } catch (JacksonException e) {

@@ -37,5 +37,4 @@ public final class KennaSecurityUploadTask extends VulnerabilityManagementUpload
     public void run() {
         runUpload(new KennaSecurityUploader(httpClient, secretManager));
     }
-
 }

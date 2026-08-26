@@ -39,7 +39,8 @@ final class PolledWorkflowEventRowMapper implements RowMapper<PolledWorkflowEven
 
     @Override
     public void init(final ConfigRegistry registry) {
-        eventColumnMapper = registry.get(ColumnMappers.class).findFor(WorkflowEvent.class).orElseThrow();
+        eventColumnMapper =
+                registry.get(ColumnMappers.class).findFor(WorkflowEvent.class).orElseThrow();
     }
 
     @Override
@@ -53,5 +54,4 @@ final class PolledWorkflowEventRowMapper implements RowMapper<PolledWorkflowEven
                 rs.getInt("sequence_number"),
                 rs.getInt("message_id"));
     }
-
 }

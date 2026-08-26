@@ -26,13 +26,10 @@ import java.util.UUID;
 import static java.util.Objects.requireNonNull;
 
 public record ExternalEvent(
-        UUID workflowRunId,
-        String eventId,
-        @Nullable Payload payload) {
+        UUID workflowRunId, String eventId, @Nullable Payload payload) {
 
     public ExternalEvent {
         requireNonNull(workflowRunId, "workflowRunId must not be null");
         requireNonNull(eventId, "eventId must not be null");
     }
-
 }

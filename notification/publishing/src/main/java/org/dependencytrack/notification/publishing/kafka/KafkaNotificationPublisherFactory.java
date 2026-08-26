@@ -71,12 +71,10 @@ import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_TYPE_CONF
 /**
  * @since 5.0.0
  */
-public final class KafkaNotificationPublisherFactory implements NotificationPublisherFactory, RuntimeConfigurable, Testable {
+public final class KafkaNotificationPublisherFactory
+        implements NotificationPublisherFactory, RuntimeConfigurable, Testable {
 
-    private record CachedProducer(
-            ProducerConfig config,
-            KafkaProducer<String, byte[]> producer) {
-    }
+    private record CachedProducer(ProducerConfig config, KafkaProducer<String, byte[]> producer) {}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaNotificationPublisherFactory.class);
 
@@ -88,6 +86,11 @@ public final class KafkaNotificationPublisherFactory implements NotificationPubl
     @Override
     public String extensionName() {
         return "kafka";
+    }
+
+    @Override
+    public String displayName() {
+        return "Kafka";
     }
 
     @Override
@@ -132,32 +135,31 @@ public final class KafkaNotificationPublisherFactory implements NotificationPubl
 
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new KafkaNotificationPublisherGlobalConfigV1(),
-                config -> {
-                    if (!config.isEnabled()) {
-                        return;
-                    }
-                    if (config.getBootstrapServers() == null || config.getBootstrapServers().isEmpty()) {
-                        throw new InvalidRuntimeConfigException("No bootstrap servers provided");
-                    }
-                    if (config.getTls() != null && config.getTls().isEnabled()) {
-                        if (config.getTls().getCaCert() == null) {
-                            throw new InvalidRuntimeConfigException("No TLS CA certificate provided");
-                        }
-                    }
-                    if (config.getmTls() != null && config.getmTls().isEnabled()) {
-                        if (!config.getTls().isEnabled()) {
-                            throw new InvalidRuntimeConfigException("mTLS requires TLS to be enabled");
-                        }
-                        if (config.getmTls().getClientCert() == null) {
-                            throw new InvalidRuntimeConfigException("No mTLS client certificate provided");
-                        }
-                        if (config.getmTls().getClientKey() == null) {
-                            throw new InvalidRuntimeConfigException("No mTLS client key provided");
-                        }
-                    }
-                });
+        return RuntimeConfigSpec.of(new KafkaNotificationPublisherGlobalConfigV1(), config -> {
+            if (!config.isEnabled()) {
+                return;
+            }
+            if (config.getBootstrapServers() == null
+                    || config.getBootstrapServers().isEmpty()) {
+                throw new InvalidRuntimeConfigException("No bootstrap servers provided");
+            }
+            if (config.getTls() != null && config.getTls().isEnabled()) {
+                if (config.getTls().getCaCert() == null) {
+                    throw new InvalidRuntimeConfigException("No TLS CA certificate provided");
+                }
+            }
+            if (config.getmTls() != null && config.getmTls().isEnabled()) {
+                if (!config.getTls().isEnabled()) {
+                    throw new InvalidRuntimeConfigException("mTLS requires TLS to be enabled");
+                }
+                if (config.getmTls().getClientCert() == null) {
+                    throw new InvalidRuntimeConfigException("No mTLS client certificate provided");
+                }
+                if (config.getmTls().getClientKey() == null) {
+                    throw new InvalidRuntimeConfigException("No mTLS client key provided");
+                }
+            }
+        });
     }
 
     @Override
@@ -203,10 +205,9 @@ public final class KafkaNotificationPublisherFactory implements NotificationPubl
 
     @Override
     public RuntimeConfigSpec ruleConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new KafkaNotificationPublisherRuleConfigV1()
-                        .withTopicName("dependencytrack-notifications")
-                        .withPublishProtobuf(true));
+        return RuntimeConfigSpec.of(new KafkaNotificationPublisherRuleConfigV1()
+                .withTopicName("dependencytrack-notifications")
+                .withPublishProtobuf(true));
     }
 
     @Override
@@ -254,9 +255,7 @@ public final class KafkaNotificationPublisherFactory implements NotificationPubl
 
     private static ProducerConfig createProducerConfig(KafkaNotificationPublisherGlobalConfigV1 config) {
         final var props = new Properties();
-        props.put(
-                BOOTSTRAP_SERVERS_CONFIG,
-                String.join(",", config.getBootstrapServers()));
+        props.put(BOOTSTRAP_SERVERS_CONFIG, String.join(",", config.getBootstrapServers()));
         props.put(KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         props.put(VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
         props.put(ENABLE_IDEMPOTENCE_CONFIG, "true");
@@ -273,7 +272,8 @@ public final class KafkaNotificationPublisherFactory implements NotificationPubl
 
             if (config.getmTls() != null && config.getmTls().isEnabled()) {
                 props.put(SSL_KEYSTORE_TYPE_CONFIG, "PEM");
-                props.put(SSL_KEYSTORE_CERTIFICATE_CHAIN_CONFIG, config.getmTls().getClientCert());
+                props.put(
+                        SSL_KEYSTORE_CERTIFICATE_CHAIN_CONFIG, config.getmTls().getClientCert());
                 props.put(SSL_KEYSTORE_KEY_CONFIG, config.getmTls().getClientKey());
             }
         }
@@ -299,5 +299,4 @@ public final class KafkaNotificationPublisherFactory implements NotificationPubl
             return false;
         }
     }
-
 }

@@ -25,13 +25,11 @@ import java.io.IOException;
 
 public final class ProtobufTestUtil {
 
-    private ProtobufTestUtil() {
-    }
+    private ProtobufTestUtil() {}
 
     public static Bom generateBomFromJson(String json) throws IOException {
         Bom.Builder bomBuilder = Bom.newBuilder();
         JsonFormat.parser().ignoringUnknownFields().merge(json, bomBuilder);
         return bomBuilder.build();
     }
-
 }

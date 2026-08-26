@@ -19,6 +19,7 @@
 package org.dependencytrack.parser.common.resolver;
 
 import jakarta.annotation.Generated;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -101,11 +102,14 @@ public final class CweDictionary {
         DICTIONARY.put(71, "DEPRECATED: Apple '.DS_Store'");
         DICTIONARY.put(72, "Improper Handling of Apple HFS+ Alternate Data Stream Path");
         DICTIONARY.put(73, "External Control of File Name or Path");
-        DICTIONARY.put(74, "Improper Neutralization of Special Elements in Output Used by a Downstream Component ('Injection')");
+        DICTIONARY.put(
+                74,
+                "Improper Neutralization of Special Elements in Output Used by a Downstream Component ('Injection')");
         DICTIONARY.put(75, "Failure to Sanitize Special Elements into a Different Plane (Special Element Injection)");
         DICTIONARY.put(76, "Improper Neutralization of Equivalent Special Elements");
         DICTIONARY.put(77, "Improper Neutralization of Special Elements used in a Command ('Command Injection')");
-        DICTIONARY.put(78, "Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')");
+        DICTIONARY.put(
+                78, "Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')");
         DICTIONARY.put(79, "Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')");
         DICTIONARY.put(80, "Improper Neutralization of Script-Related HTML Tags in a Web Page (Basic XSS)");
         DICTIONARY.put(81, "Improper Neutralization of Script in an Error Message Web Page");
@@ -125,7 +129,9 @@ public final class CweDictionary {
         DICTIONARY.put(95, "Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')");
         DICTIONARY.put(96, "Improper Neutralization of Directives in Statically Saved Code ('Static Code Injection')");
         DICTIONARY.put(97, "Improper Neutralization of Server-Side Includes (SSI) Within a Web Page");
-        DICTIONARY.put(98, "Improper Control of Filename for Include/Require Statement in PHP Program ('PHP Remote File Inclusion')");
+        DICTIONARY.put(
+                98,
+                "Improper Control of Filename for Include/Require Statement in PHP Program ('PHP Remote File Inclusion')");
         DICTIONARY.put(99, "Improper Control of Resource Identifiers ('Resource Injection')");
         DICTIONARY.put(100, "DEPRECATED: Technology-Specific Input Validation Problems");
         DICTIONARY.put(101, "DEPRECATED: Struts Validation Problems");
@@ -140,7 +146,8 @@ public final class CweDictionary {
         DICTIONARY.put(110, "Struts: Validator Without Form Field");
         DICTIONARY.put(111, "Direct Use of Unsafe JNI");
         DICTIONARY.put(112, "Missing XML Validation");
-        DICTIONARY.put(113, "Improper Neutralization of CRLF Sequences in HTTP Headers ('HTTP Request/Response Splitting')");
+        DICTIONARY.put(
+                113, "Improper Neutralization of CRLF Sequences in HTTP Headers ('HTTP Request/Response Splitting')");
         DICTIONARY.put(114, "Process Control");
         DICTIONARY.put(115, "Misinterpretation of Input");
         DICTIONARY.put(116, "Improper Encoding or Escaping of Output");
@@ -389,7 +396,8 @@ public final class CweDictionary {
         DICTIONARY.put(359, "Exposure of Private Personal Information to an Unauthorized Actor");
         DICTIONARY.put(360, "Trust of System Event Data");
         DICTIONARY.put(361, "7PK - Time and State");
-        DICTIONARY.put(362, "Concurrent Execution using Shared Resource with Improper Synchronization ('Race Condition')");
+        DICTIONARY.put(
+                362, "Concurrent Execution using Shared Resource with Improper Synchronization ('Race Condition')");
         DICTIONARY.put(363, "Race Condition Enabling Link Following");
         DICTIONARY.put(364, "Signal Handler Race Condition");
         DICTIONARY.put(365, "DEPRECATED: Race Condition in Switch");
@@ -676,7 +684,8 @@ public final class CweDictionary {
         DICTIONARY.put(646, "Reliance on File Name or Extension of Externally-Supplied File");
         DICTIONARY.put(647, "Use of Non-Canonical URL Paths for Authorization Decisions");
         DICTIONARY.put(648, "Incorrect Use of Privileged APIs");
-        DICTIONARY.put(649, "Reliance on Obfuscation or Encryption of Security-Relevant Inputs without Integrity Checking");
+        DICTIONARY.put(
+                649, "Reliance on Obfuscation or Encryption of Security-Relevant Inputs without Integrity Checking");
         DICTIONARY.put(650, "Trusting HTTP Permission Methods on the Server Side");
         DICTIONARY.put(651, "Exposure of WSDL File Containing Sensitive Information");
         DICTIONARY.put(652, "Improper Neutralization of Data within XQuery Expressions ('XQuery Injection')");
@@ -872,22 +881,36 @@ public final class CweDictionary {
         DICTIONARY.put(842, "Placement of User into Incorrect Group");
         DICTIONARY.put(843, "Access of Resource Using Incompatible Type ('Type Confusion')");
         DICTIONARY.put(844, "Weaknesses Addressed by The CERT Oracle Secure Coding Standard for Java (2011)");
-        DICTIONARY.put(845, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 2 - Input Validation and Data Sanitization (IDS)");
-        DICTIONARY.put(846, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 3 - Declarations and Initialization (DCL)");
+        DICTIONARY.put(
+                845,
+                "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 2 - Input Validation and Data Sanitization (IDS)");
+        DICTIONARY.put(
+                846,
+                "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 3 - Declarations and Initialization (DCL)");
         DICTIONARY.put(847, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 4 - Expressions (EXP)");
-        DICTIONARY.put(848, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 5 - Numeric Types and Operations (NUM)");
-        DICTIONARY.put(849, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 6 - Object Orientation (OBJ)");
+        DICTIONARY.put(
+                848,
+                "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 5 - Numeric Types and Operations (NUM)");
+        DICTIONARY.put(
+                849, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 6 - Object Orientation (OBJ)");
         DICTIONARY.put(850, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 7 - Methods (MET)");
-        DICTIONARY.put(851, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 8 - Exceptional Behavior (ERR)");
-        DICTIONARY.put(852, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 9 - Visibility and Atomicity (VNA)");
+        DICTIONARY.put(
+                851, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 8 - Exceptional Behavior (ERR)");
+        DICTIONARY.put(
+                852,
+                "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 9 - Visibility and Atomicity (VNA)");
         DICTIONARY.put(853, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 10 - Locking (LCK)");
         DICTIONARY.put(854, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 11 - Thread APIs (THI)");
         DICTIONARY.put(855, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 12 - Thread Pools (TPS)");
-        DICTIONARY.put(856, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 13 - Thread-Safety Miscellaneous (TSM)");
+        DICTIONARY.put(
+                856,
+                "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 13 - Thread-Safety Miscellaneous (TSM)");
         DICTIONARY.put(857, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 14 - Input Output (FIO)");
         DICTIONARY.put(858, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 15 - Serialization (SER)");
-        DICTIONARY.put(859, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 16 - Platform Security (SEC)");
-        DICTIONARY.put(860, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 17 - Runtime Environment (ENV)");
+        DICTIONARY.put(
+                859, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 16 - Platform Security (SEC)");
+        DICTIONARY.put(
+                860, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 17 - Runtime Environment (ENV)");
         DICTIONARY.put(861, "The CERT Oracle Secure Coding Standard for Java (2011) Chapter 18 - Miscellaneous (MSC)");
         DICTIONARY.put(862, "Missing Authorization");
         DICTIONARY.put(863, "Incorrect Authorization");
@@ -944,7 +967,9 @@ public final class CweDictionary {
         DICTIONARY.put(914, "Improper Control of Dynamically-Identified Variables");
         DICTIONARY.put(915, "Improperly Controlled Modification of Dynamically-Determined Object Attributes");
         DICTIONARY.put(916, "Use of Password Hash With Insufficient Computational Effort");
-        DICTIONARY.put(917, "Improper Neutralization of Special Elements used in an Expression Language Statement ('Expression Language Injection')");
+        DICTIONARY.put(
+                917,
+                "Improper Neutralization of Special Elements used in an Expression Language Statement ('Expression Language Injection')");
         DICTIONARY.put(918, "Server-Side Request Forgery (SSRF)");
         DICTIONARY.put(919, "Weaknesses in Mobile Applications");
         DICTIONARY.put(920, "Improper Restriction of Power Consumption");
@@ -1066,7 +1091,9 @@ public final class CweDictionary {
         DICTIONARY.put(1036, "OWASP Top Ten 2017 Category A10 - Insufficient Logging \u0026 Monitoring");
         DICTIONARY.put(1037, "Processor Optimization Removal or Modification of Security-critical Code");
         DICTIONARY.put(1038, "Insecure Automated Optimizations");
-        DICTIONARY.put(1039, "Inadequate Detection or Handling of Adversarial Input Perturbations in Automated Recognition Mechanism");
+        DICTIONARY.put(
+                1039,
+                "Inadequate Detection or Handling of Adversarial Input Perturbations in Automated Recognition Mechanism");
         DICTIONARY.put(1040, "Quality Weaknesses with Indirect Security Impacts");
         DICTIONARY.put(1041, "Use of Redundant Code");
         DICTIONARY.put(1042, "Static Member Data Element outside of a Singleton Class Element");
@@ -1085,14 +1112,17 @@ public final class CweDictionary {
         DICTIONARY.put(1055, "Multiple Inheritance from Concrete Classes");
         DICTIONARY.put(1056, "Invokable Control Element with Variadic Parameters");
         DICTIONARY.put(1057, "Data Access Operations Outside of Expected Data Manager Component");
-        DICTIONARY.put(1058, "Invokable Control Element in Multi-Thread Context with non-Final Static Storable or Member Element");
+        DICTIONARY.put(
+                1058,
+                "Invokable Control Element in Multi-Thread Context with non-Final Static Storable or Member Element");
         DICTIONARY.put(1059, "Insufficient Technical Documentation");
         DICTIONARY.put(1060, "Excessive Number of Inefficient Server-Side Data Accesses");
         DICTIONARY.put(1061, "Insufficient Encapsulation");
         DICTIONARY.put(1062, "Parent Class with References to Child Class");
         DICTIONARY.put(1063, "Creation of Class Instance within a Static Code Block");
         DICTIONARY.put(1064, "Invokable Control Element with Signature Containing an Excessive Number of Parameters");
-        DICTIONARY.put(1065, "Runtime Resource Management Control Element in a Component Built to Run on Application Servers");
+        DICTIONARY.put(
+                1065, "Runtime Resource Management Control Element in a Component Built to Run on Application Servers");
         DICTIONARY.put(1066, "Missing Serialization Control Element");
         DICTIONARY.put(1067, "Excessive Execution of Sequential Searches of Data Resource");
         DICTIONARY.put(1068, "Inconsistency Between Implementation and Documented Design");
@@ -1161,24 +1191,40 @@ public final class CweDictionary {
         DICTIONARY.put(1131, "CISQ Quality Measures (2016) - Security");
         DICTIONARY.put(1132, "CISQ Quality Measures (2016) - Performance Efficiency");
         DICTIONARY.put(1133, "Weaknesses Addressed by the SEI CERT Oracle Coding Standard for Java");
-        DICTIONARY.put(1134, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 00. Input Validation and Data Sanitization (IDS)");
-        DICTIONARY.put(1135, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 01. Declarations and Initialization (DCL)");
+        DICTIONARY.put(
+                1134,
+                "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 00. Input Validation and Data Sanitization (IDS)");
+        DICTIONARY.put(
+                1135,
+                "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 01. Declarations and Initialization (DCL)");
         DICTIONARY.put(1136, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 02. Expressions (EXP)");
-        DICTIONARY.put(1137, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 03. Numeric Types and Operations (NUM)");
-        DICTIONARY.put(1138, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 04. Characters and Strings (STR)");
-        DICTIONARY.put(1139, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 05. Object Orientation (OBJ)");
+        DICTIONARY.put(
+                1137,
+                "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 03. Numeric Types and Operations (NUM)");
+        DICTIONARY.put(
+                1138, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 04. Characters and Strings (STR)");
+        DICTIONARY.put(
+                1139, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 05. Object Orientation (OBJ)");
         DICTIONARY.put(1140, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 06. Methods (MET)");
-        DICTIONARY.put(1141, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 07. Exceptional Behavior (ERR)");
-        DICTIONARY.put(1142, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 08. Visibility and Atomicity (VNA)");
+        DICTIONARY.put(
+                1141, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 07. Exceptional Behavior (ERR)");
+        DICTIONARY.put(
+                1142,
+                "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 08. Visibility and Atomicity (VNA)");
         DICTIONARY.put(1143, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 09. Locking (LCK)");
         DICTIONARY.put(1144, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 10. Thread APIs (THI)");
         DICTIONARY.put(1145, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 11. Thread Pools (TPS)");
-        DICTIONARY.put(1146, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 12. Thread-Safety Miscellaneous (TSM)");
+        DICTIONARY.put(
+                1146,
+                "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 12. Thread-Safety Miscellaneous (TSM)");
         DICTIONARY.put(1147, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 13. Input Output (FIO)");
         DICTIONARY.put(1148, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 14. Serialization (SER)");
-        DICTIONARY.put(1149, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 15. Platform Security (SEC)");
-        DICTIONARY.put(1150, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 16. Runtime Environment (ENV)");
-        DICTIONARY.put(1151, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 17. Java Native Interface (JNI)");
+        DICTIONARY.put(
+                1149, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 15. Platform Security (SEC)");
+        DICTIONARY.put(
+                1150, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 16. Runtime Environment (ENV)");
+        DICTIONARY.put(
+                1151, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 17. Java Native Interface (JNI)");
         DICTIONARY.put(1152, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 49. Miscellaneous (MSC)");
         DICTIONARY.put(1153, "SEI CERT Oracle Secure Coding Standard for Java - Guidelines 50. Android (DRD)");
         DICTIONARY.put(1154, "Weaknesses Addressed by the SEI CERT C Coding Standard");
@@ -1206,7 +1252,8 @@ public final class CweDictionary {
         DICTIONARY.put(1176, "Inefficient CPU Computation");
         DICTIONARY.put(1177, "Use of Prohibited Code");
         DICTIONARY.put(1178, "Weaknesses Addressed by the SEI CERT Perl Coding Standard");
-        DICTIONARY.put(1179, "SEI CERT Perl Coding Standard - Guidelines 01. Input Validation and Data Sanitization (IDS)");
+        DICTIONARY.put(
+                1179, "SEI CERT Perl Coding Standard - Guidelines 01. Input Validation and Data Sanitization (IDS)");
         DICTIONARY.put(1180, "SEI CERT Perl Coding Standard - Guidelines 02. Declarations and Initialization (DCL)");
         DICTIONARY.put(1181, "SEI CERT Perl Coding Standard - Guidelines 03. Expressions (EXP)");
         DICTIONARY.put(1182, "SEI CERT Perl Coding Standard - Guidelines 04. Integers (INT)");
@@ -1277,7 +1324,8 @@ public final class CweDictionary {
         DICTIONARY.put(1247, "Improper Protection Against Voltage and Clock Glitches");
         DICTIONARY.put(1248, "Semiconductor Defects in Hardware Logic with Security-Sensitive Implications");
         DICTIONARY.put(1249, "Application-Level Admin Tool with Inconsistent View of Underlying Operating System");
-        DICTIONARY.put(1250, "Improper Preservation of Consistency Between Independent Representations of Shared State");
+        DICTIONARY.put(
+                1250, "Improper Preservation of Consistency Between Independent Representations of Shared State");
         DICTIONARY.put(1251, "Mirrored Regions with Different Values");
         DICTIONARY.put(1252, "CPU Hardware Not Configured to Support Exclusivity of Write and Execute Operations");
         DICTIONARY.put(1253, "Incorrect Selection of Fuse Values");
@@ -1305,7 +1353,9 @@ public final class CweDictionary {
         DICTIONARY.put(1275, "Sensitive Cookie with Improper SameSite Attribute");
         DICTIONARY.put(1276, "Hardware Child Block Incorrectly Connected to Parent System");
         DICTIONARY.put(1277, "Firmware Not Updateable");
-        DICTIONARY.put(1278, "Missing Protection Against Hardware Reverse Engineering Using Integrated Circuit (IC) Imaging Techniques");
+        DICTIONARY.put(
+                1278,
+                "Missing Protection Against Hardware Reverse Engineering Using Integrated Circuit (IC) Imaging Techniques");
         DICTIONARY.put(1279, "Cryptographic Operations are run Before Supporting Units are Ready");
         DICTIONARY.put(1280, "Access Control Check Implemented After Asset is Accessed");
         DICTIONARY.put(1281, "Sequence of Processor Instructions Leads to Unexpected Behavior");
@@ -1331,7 +1381,9 @@ public final class CweDictionary {
         DICTIONARY.put(1301, "Insufficient or Incomplete Data Removal within Hardware Component");
         DICTIONARY.put(1302, "Missing Source Identifier in Entity Transactions on a System-On-Chip (SOC)");
         DICTIONARY.put(1303, "Non-Transparent Sharing of Microarchitectural Resources");
-        DICTIONARY.put(1304, "Improperly Preserved Integrity of Hardware Configuration State During a Power Save/Restore Operation");
+        DICTIONARY.put(
+                1304,
+                "Improperly Preserved Integrity of Hardware Configuration State During a Power Save/Restore Operation");
         DICTIONARY.put(1305, "CISQ Quality Measures (2020)");
         DICTIONARY.put(1306, "CISQ Quality Measures - Reliability");
         DICTIONARY.put(1307, "CISQ Quality Measures - Maintainability");
@@ -1343,12 +1395,15 @@ public final class CweDictionary {
         DICTIONARY.put(1313, "Hardware Allows Activation of Test or Debug Logic at Runtime");
         DICTIONARY.put(1314, "Missing Write Protection for Parametric Data Values");
         DICTIONARY.put(1315, "Improper Setting of Bus Controlling Capability in Fabric End-point");
-        DICTIONARY.put(1316, "Fabric-Address Map Allows Programming of Unwarranted Overlaps of Protected and Unprotected Ranges");
+        DICTIONARY.put(
+                1316,
+                "Fabric-Address Map Allows Programming of Unwarranted Overlaps of Protected and Unprotected Ranges");
         DICTIONARY.put(1317, "Improper Access Control in Fabric Bridge");
         DICTIONARY.put(1318, "Missing Support for Security Features in On-chip Fabrics or Buses");
         DICTIONARY.put(1319, "Improper Protection against Electromagnetic Fault Injection (EM-FI)");
         DICTIONARY.put(1320, "Improper Protection for Outbound Error Messages and Alert Signals");
-        DICTIONARY.put(1321, "Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')");
+        DICTIONARY.put(
+                1321, "Improperly Controlled Modification of Object Prototype Attributes ('Prototype Pollution')");
         DICTIONARY.put(1322, "Use of Blocking Code in Single-threaded, Non-blocking Context");
         DICTIONARY.put(1323, "Improper Management of Sensitive Trace Data");
         DICTIONARY.put(1324, "DEPRECATED: Sensitive Information Accessible by Physical Probing of JTAG Interface");
@@ -1410,7 +1465,8 @@ public final class CweDictionary {
         DICTIONARY.put(1380, "ICS Operations (\u0026 Maintenance): Post-analysis changes");
         DICTIONARY.put(1381, "ICS Operations (\u0026 Maintenance): Exploitable Standard Operational Procedures");
         DICTIONARY.put(1382, "ICS Operations (\u0026 Maintenance): Emerging Energy Technologies");
-        DICTIONARY.put(1383, "ICS Operations (\u0026 Maintenance): Compliance/Conformance with Regulatory Requirements");
+        DICTIONARY.put(
+                1383, "ICS Operations (\u0026 Maintenance): Compliance/Conformance with Regulatory Requirements");
         DICTIONARY.put(1384, "Improper Handling of Physical or Environmental Conditions");
         DICTIONARY.put(1385, "Missing Origin Validation in WebSockets");
         DICTIONARY.put(1386, "Insecure Operation on Windows Junction / Mount Point");
@@ -1448,9 +1504,15 @@ public final class CweDictionary {
         DICTIONARY.put(1418, "Comprehensive Categorization: Violation of Secure Design Principles");
         DICTIONARY.put(1419, "Incorrect Initialization of Resource");
         DICTIONARY.put(1420, "Exposure of Sensitive Information during Transient Execution");
-        DICTIONARY.put(1421, "Exposure of Sensitive Information in Shared Microarchitectural Structures during Transient Execution");
-        DICTIONARY.put(1422, "Exposure of Sensitive Information caused by Incorrect Data Forwarding during Transient Execution");
-        DICTIONARY.put(1423, "Exposure of Sensitive Information caused by Shared Microarchitectural Predictor State that Influences Transient Execution");
+        DICTIONARY.put(
+                1421,
+                "Exposure of Sensitive Information in Shared Microarchitectural Structures during Transient Execution");
+        DICTIONARY.put(
+                1422,
+                "Exposure of Sensitive Information caused by Incorrect Data Forwarding during Transient Execution");
+        DICTIONARY.put(
+                1423,
+                "Exposure of Sensitive Information caused by Shared Microarchitectural Predictor State that Influences Transient Execution");
         DICTIONARY.put(1424, "Weaknesses Addressed by ISA/IEC 62443 Requirements");
         DICTIONARY.put(1425, "Weaknesses in the 2023 CWE Top 25 Most Dangerous Software Weaknesses");
         DICTIONARY.put(1426, "Improper Validation of Generative AI Output");
@@ -1474,13 +1536,12 @@ public final class CweDictionary {
         DICTIONARY.put(1444, "OWASP Top Ten 2025 Category A09:2025 - Logging \u0026 Alerting Failures");
         DICTIONARY.put(1445, "OWASP Top Ten 2025 Category A10:2025 - Mishandling of Exceptional Conditions");
         DICTIONARY.put(1446, "Weaknesses That are Specific to AI/ML Technology");
-        DICTIONARY.put(1447, "General Software Weaknesses that Appear in Products that Use or Support AI/ML Technology");
+        DICTIONARY.put(
+                1447, "General Software Weaknesses that Appear in Products that Use or Support AI/ML Technology");
         DICTIONARY.put(1448, "Weaknesses Related to AI/ML Products");
         DICTIONARY.put(1450, "Weaknesses in OWASP Top Ten RC1 (2025)");
         DICTIONARY.put(2000, "Comprehensive CWE Dictionary");
-        }
-
-    private CweDictionary() {
     }
 
+    private CweDictionary() {}
 }

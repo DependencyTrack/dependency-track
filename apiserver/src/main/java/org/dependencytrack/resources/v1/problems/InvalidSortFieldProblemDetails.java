@@ -37,14 +37,12 @@ public final class InvalidSortFieldProblemDetails extends ProblemDetails {
             requiredMode = Schema.RequiredMode.REQUIRED)
     private final String invalidField;
 
-    @Schema(
-            description = """
+    @Schema(description = """
                     Names of fields for which sorting is supported. \
                     When empty, sorting is explicitly *not* supported. \
                     When absent, sorting may be supported, but no definitive guarantees exist. \
                     Consult the operation's description.\
-                    """
-    )
+                    """)
     private final @Nullable List<String> supportedFields;
 
     public InvalidSortFieldProblemDetails(String invalidField, @Nullable List<String> supportedFields) {
@@ -62,5 +60,4 @@ public final class InvalidSortFieldProblemDetails extends ProblemDetails {
     public @Nullable List<String> getSupportedFields() {
         return supportedFields;
     }
-
 }

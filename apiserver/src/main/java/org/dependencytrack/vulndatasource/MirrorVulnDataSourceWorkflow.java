@@ -33,9 +33,8 @@ import org.jspecify.annotations.Nullable;
 public final class MirrorVulnDataSourceWorkflow implements Workflow<MirrorVulnDataSourceArg, Void> {
 
     @Override
-    public @Nullable Void execute(
-            WorkflowContext<MirrorVulnDataSourceArg> ctx,
-            @Nullable MirrorVulnDataSourceArg arg) throws Exception {
+    public @Nullable Void execute(WorkflowContext<MirrorVulnDataSourceArg> ctx, @Nullable MirrorVulnDataSourceArg arg)
+            throws Exception {
         if (arg == null || arg.getDataSourceName().isEmpty()) {
             throw new TerminalApplicationFailureException("No argument or data source name provided");
         }
@@ -44,5 +43,4 @@ public final class MirrorVulnDataSourceWorkflow implements Workflow<MirrorVulnDa
         ctx.activity(RefreshVulnerabilityMetricsActivity.class).call().await();
         return null;
     }
-
 }

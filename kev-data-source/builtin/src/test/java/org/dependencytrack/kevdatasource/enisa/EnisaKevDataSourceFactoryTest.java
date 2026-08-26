@@ -37,7 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-class EnisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull KevDataSource, @NonNull EnisaKevDataSourceFactory> {
+class EnisaKevDataSourceFactoryTest
+        extends AbstractExtensionFactoryTest<@NonNull KevDataSource, @NonNull EnisaKevDataSourceFactory> {
 
     protected EnisaKevDataSourceFactoryTest() {
         super(EnisaKevDataSourceFactory.class);
@@ -63,8 +64,9 @@ class EnisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNul
         final EnisaKevDataSourceConfigV1 config = defaultRuntimeConfig();
 
         assertThat(config.isEnabled()).isTrue();
-        assertThat(config.getFeedUrl()).isEqualTo(URI.create(
-                "https://raw.githubusercontent.com/enisaeu/CNW/main/advisories/eukev/eukev.json"));
+        assertThat(config.getFeedUrl())
+                .isEqualTo(
+                        URI.create("https://raw.githubusercontent.com/enisaeu/CNW/main/advisories/eukev/eukev.json"));
     }
 
     @Test
@@ -97,10 +99,9 @@ class EnisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNul
         final EnisaKevDataSourceConfigV1 config = defaultRuntimeConfig();
         config.setEnabled(isEnabled);
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
 
         assertThat(factory.isEnabled()).isEqualTo(isEnabled);
     }
@@ -110,13 +111,11 @@ class EnisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNul
         final EnisaKevDataSourceConfigV1 config = defaultRuntimeConfig();
         config.setEnabled(false);
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
 
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(factory::create);
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
     }
 
     @Test
@@ -124,10 +123,9 @@ class EnisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNul
         final EnisaKevDataSourceConfigV1 config = defaultRuntimeConfig();
         config.setEnabled(true);
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
 
         try (final KevDataSource dataSource = factory.create()) {
             assertThat(dataSource).isInstanceOf(EnisaKevDataSource.class);
@@ -141,7 +139,7 @@ class EnisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNul
     @SuppressWarnings("unchecked")
     private void validate(EnisaKevDataSourceConfigV1 config) {
         ((RuntimeConfigValidator<EnisaKevDataSourceConfigV1>)
-                factory.runtimeConfigSpec().validator()).validate(config);
+                        factory.runtimeConfigSpec().validator())
+                .validate(config);
     }
-
 }

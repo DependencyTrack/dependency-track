@@ -50,21 +50,21 @@ public final class ResolvePackageMetadataWorkflow implements Workflow<ResolvePac
     // Always use this instance ID when creating runs for it.
     public static final String INSTANCE_ID = "resolve-package-metadata";
 
-    private static final RetryPolicy RESOLVE_RETRY_POLICY =
-            new RetryPolicy(
-                    /* initialDelay */ Duration.ofSeconds(5),
-                    /* delayMultiplier */ 2.0,
-                    /* randomizationFactor */ 0.3,
-                    /* maxDelay */ Duration.ofMinutes(1),
-                    /* maxAttempts */ 3);
+    private static final RetryPolicy RESOLVE_RETRY_POLICY = new RetryPolicy(
+            /* initialDelay */ Duration.ofSeconds(5),
+            /* delayMultiplier */ 2.0,
+            /* randomizationFactor */ 0.3,
+            /* maxDelay */ Duration.ofMinutes(1),
+            /* maxAttempts */ 3);
 
     @Override
     public @Nullable Void execute(
             WorkflowContext<@Nullable ResolvePackageMetadataWorkflowArg> ctx,
-            @Nullable ResolvePackageMetadataWorkflowArg arg) throws Exception {
+            @Nullable ResolvePackageMetadataWorkflowArg arg)
+            throws Exception {
         ctx.logger().debug("Scheduling fetch of resolution candidates");
-        final FetchPackageMetadataResolutionCandidatesRes fetchResult = ctx
-                .activity(FetchPackageMetadataResolutionCandidatesActivity.class)
+        final FetchPackageMetadataResolutionCandidatesRes fetchResult = ctx.activity(
+                        FetchPackageMetadataResolutionCandidatesActivity.class)
                 .call(new ActivityCallOptions<FetchPackageMetadataResolutionCandidatesArg>()
                         .withArgument(FetchPackageMetadataResolutionCandidatesArg.newBuilder()
                                 .setCursor(arg != null ? arg.getCursor() : "")
@@ -76,18 +76,16 @@ public final class ResolvePackageMetadataWorkflow implements Workflow<ResolvePac
             return null;
         }
 
-        final List<PackageMetadataResolutionCandidateGroup> candidateGroups =
-                fetchResult.getCandidateGroupsList();
+        final List<PackageMetadataResolutionCandidateGroup> candidateGroups = fetchResult.getCandidateGroupsList();
         if (!candidateGroups.isEmpty()) {
             resolve(ctx, candidateGroups);
         }
 
         if (fetchResult.getHasMore()) {
-            ctx.continueAsNew(
-                    new ContinueAsNewOptions<ResolvePackageMetadataWorkflowArg>()
-                            .withArgument(ResolvePackageMetadataWorkflowArg.newBuilder()
-                                    .setCursor(fetchResult.getNextCursor())
-                                    .build()));
+            ctx.continueAsNew(new ContinueAsNewOptions<ResolvePackageMetadataWorkflowArg>()
+                    .withArgument(ResolvePackageMetadataWorkflowArg.newBuilder()
+                            .setCursor(fetchResult.getNextCursor())
+                            .build()));
         } else {
             ctx.logger().info("No more packages due for metadata resolution");
         }
@@ -101,23 +99,25 @@ public final class ResolvePackageMetadataWorkflow implements Workflow<ResolvePac
         final int totalPurls = candidateGroups.stream()
                 .mapToInt(PackageMetadataResolutionCandidateGroup::getPurlsCount)
                 .sum();
-        ctx.logger().debug(
-                "Resolving metadata for {} packages with resolvers {}",
-                totalPurls,
-                candidateGroups.stream()
-                        .map(PackageMetadataResolutionCandidateGroup::getResolverName)
-                        .sorted()
-                        .toList());
+        ctx.logger()
+                .debug(
+                        "Resolving metadata for {} packages with resolvers {}",
+                        totalPurls,
+                        candidateGroups.stream()
+                                .map(PackageMetadataResolutionCandidateGroup::getResolverName)
+                                .sorted()
+                                .toList());
 
         final var awaitableByResolverName = new LinkedHashMap<String, Awaitable<Void>>();
         for (final PackageMetadataResolutionCandidateGroup group : candidateGroups) {
             final String resolverName = group.getResolverName();
-            ctx.logger().debug(
-                    "Scheduling metadata resolution for {} PURLs with resolver '{}'",
-                    group.getPurlsCount(), resolverName);
+            ctx.logger()
+                    .debug(
+                            "Scheduling metadata resolution for {} PURLs with resolver '{}'",
+                            group.getPurlsCount(),
+                            resolverName);
 
-            final Awaitable<Void> awaitable = ctx
-                    .activity(ResolvePackageMetadataActivity.class)
+            final Awaitable<Void> awaitable = ctx.activity(ResolvePackageMetadataActivity.class)
                     .call(new ActivityCallOptions<ResolvePackageMetadataActivityArg>()
                             .withRetryPolicy(RESOLVE_RETRY_POLICY)
                             .withArgument(ResolvePackageMetadataActivityArg.newBuilder()
@@ -142,5 +142,4 @@ public final class ResolvePackageMetadataWorkflow implements Workflow<ResolvePac
             }
         }
     }
-
 }

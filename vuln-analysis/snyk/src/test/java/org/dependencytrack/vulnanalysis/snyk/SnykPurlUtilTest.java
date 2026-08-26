@@ -42,7 +42,8 @@ class SnykPurlUtilTest {
 
         assertThat(SnykPurlUtil.requiresChecksumMeta(purl, true)).isTrue();
         assertThat(SnykPurlUtil.toSnykRequestPurl(purl, true))
-                .isEqualTo("pkg:maven/org.jboss.logging/jboss-logging@3.4.1.final?checksum=sha1%3a40fd4d696c55793e996d1ff3c475833f836c2498");
+                .isEqualTo(
+                        "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.final?checksum=sha1%3a40fd4d696c55793e996d1ff3c475833f836c2498");
     }
 
     @Test
@@ -60,8 +61,7 @@ class SnykPurlUtilTest {
                 "pkg:npm/lodash@4.17.21?checksum=sha512:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
         assertThat(SnykPurlUtil.requiresChecksumMeta(purl, true)).isFalse();
-        assertThat(SnykPurlUtil.toSnykRequestPurl(purl, true))
-                .isEqualTo("pkg:npm/lodash@4.17.21");
+        assertThat(SnykPurlUtil.toSnykRequestPurl(purl, true)).isEqualTo("pkg:npm/lodash@4.17.21");
     }
 
     @Test
@@ -71,10 +71,9 @@ class SnykPurlUtilTest {
         final String encoded =
                 "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.Final?checksum=sha1%3A40fd4d696c55793e996d1ff3c475833f836c2498";
 
+        assertThat(SnykPurlUtil.normalizePurlKey(unencoded)).isEqualTo(SnykPurlUtil.normalizePurlKey(encoded));
         assertThat(SnykPurlUtil.normalizePurlKey(unencoded))
-                .isEqualTo(SnykPurlUtil.normalizePurlKey(encoded));
-        assertThat(SnykPurlUtil.normalizePurlKey(unencoded))
-                .isEqualTo("pkg:maven/org.jboss.logging/jboss-logging@3.4.1.final?checksum=sha1%3a40fd4d696c55793e996d1ff3c475833f836c2498");
+                .isEqualTo(
+                        "pkg:maven/org.jboss.logging/jboss-logging@3.4.1.final?checksum=sha1%3a40fd4d696c55793e996d1ff3c475833f836c2498");
     }
-
 }

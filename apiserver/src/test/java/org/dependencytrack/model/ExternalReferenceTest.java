@@ -37,10 +37,7 @@ class ExternalReferenceTest {
                         new ExternalReference(Type.WEBSITE, "https://example.com", "comment"),
                         new ExternalReference(Type.WEBSITE, "https://example.com", "comment"),
                         true),
-                arguments(
-                        new ExternalReference(null, null, null),
-                        new ExternalReference(null, null, null),
-                        true),
+                arguments(new ExternalReference(null, null, null), new ExternalReference(null, null, null), true),
                 arguments(
                         new ExternalReference(Type.WEBSITE, "https://example.com", "comment"),
                         new ExternalReference(Type.VCS, "https://example.com", "comment"),
@@ -69,10 +66,7 @@ class ExternalReferenceTest {
 
     @ParameterizedTest
     @MethodSource
-    void equalsAndHashCodeShouldCompareByValue(
-            ExternalReference left,
-            ExternalReference right,
-            boolean expectEqual) {
+    void equalsAndHashCodeShouldCompareByValue(ExternalReference left, ExternalReference right, boolean expectEqual) {
         if (expectEqual) {
             assertThat(left).isEqualTo(right);
             assertThat(right).isEqualTo(left);
@@ -100,5 +94,4 @@ class ExternalReferenceTest {
         assertThat(externalReference).isNotEqualTo(null);
         assertThat(externalReference).isNotEqualTo("https://example.com");
     }
-
 }

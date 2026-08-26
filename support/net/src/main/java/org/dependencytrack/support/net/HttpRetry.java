@@ -51,9 +51,7 @@ public record HttpRetry(int statusCode, @Nullable Duration retryAfter, String de
 
         return new HttpRetry(
                 statusCode,
-                isRetryableStatus(statusCode)
-                        ? extractRetryAfter(response, clock)
-                        : null,
+                isRetryableStatus(statusCode) ? extractRetryAfter(response, clock) : null,
                 statusCode == 429
                         ? "Rate limited by %s".formatted(requestUri)
                         : "Server error %d from %s".formatted(statusCode, requestUri));
@@ -78,16 +76,13 @@ public record HttpRetry(int statusCode, @Nullable Duration retryAfter, String de
         final String trimmed = value.strip();
         try {
             final long seconds = Long.parseLong(trimmed);
-            return seconds > 0
-                    ? Duration.ofSeconds(seconds)
-                    : null;
+            return seconds > 0 ? Duration.ofSeconds(seconds) : null;
         } catch (NumberFormatException _) {
             // Fallthrough to date parsing.
         }
 
         try {
-            final Instant deadline = ZonedDateTime
-                    .parse(trimmed, DateTimeFormatter.RFC_1123_DATE_TIME)
+            final Instant deadline = ZonedDateTime.parse(trimmed, DateTimeFormatter.RFC_1123_DATE_TIME)
                     .toInstant();
             final Duration delta = Duration.between(clock.instant(), deadline);
             return (delta.isZero() || delta.isNegative()) ? null : delta;
@@ -95,5 +90,4 @@ public record HttpRetry(int statusCode, @Nullable Duration retryAfter, String de
             return null;
         }
     }
-
 }

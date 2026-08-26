@@ -47,6 +47,11 @@ public final class JiraNotificationPublisherFactory implements NotificationPubli
     }
 
     @Override
+    public String displayName() {
+        return "Jira";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return JiraNotificationPublisher.class;
     }
@@ -73,19 +78,17 @@ public final class JiraNotificationPublisherFactory implements NotificationPubli
 
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new JiraNotificationPublisherGlobalConfigV1(),
-                config -> {
-                    if (!config.isEnabled()) {
-                        return;
-                    }
-                    if (config.getApiUrl() == null) {
-                        throw new InvalidRuntimeConfigException("No API URL provided");
-                    }
-                    if (config.getPasswordOrToken() == null) {
-                        throw new InvalidRuntimeConfigException("No password or token provided");
-                    }
-                });
+        return RuntimeConfigSpec.of(new JiraNotificationPublisherGlobalConfigV1(), config -> {
+            if (!config.isEnabled()) {
+                return;
+            }
+            if (config.getApiUrl() == null) {
+                throw new InvalidRuntimeConfigException("No API URL provided");
+            }
+            if (config.getPasswordOrToken() == null) {
+                throw new InvalidRuntimeConfigException("No password or token provided");
+            }
+        });
     }
 
     @Override
@@ -108,5 +111,4 @@ public final class JiraNotificationPublisherFactory implements NotificationPubli
     public NotificationTemplate defaultTemplate() {
         return new NotificationTemplate(loadDefaultTemplate(extensionClass()), "application/json");
     }
-
 }

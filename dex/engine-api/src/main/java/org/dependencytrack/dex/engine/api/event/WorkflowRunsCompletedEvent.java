@@ -27,5 +27,4 @@ import java.util.List;
  *
  * @param completedRuns Metadata of the completed runs.
  */
-public record WorkflowRunsCompletedEvent(List<WorkflowRunMetadata> completedRuns) implements DexEngineEvent {
-}
+public record WorkflowRunsCompletedEvent(List<WorkflowRunMetadata> completedRuns) implements DexEngineEvent {}

@@ -27,12 +27,11 @@ import java.time.LocalDate;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 record EnisaKevEntry(
-        @JsonProperty("cveID")
-        @Nullable String cveId,
-        @JsonProperty("euvdID")
-        String euvdId,
+        @JsonProperty("cveID") @Nullable String cveId,
+        @JsonProperty("euvdID") String euvdId,
+
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
         LocalDate dateReported,
+
         String shortDescription,
-        String exploitationType) {
-}
+        String exploitationType) {}

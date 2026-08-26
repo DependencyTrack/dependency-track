@@ -42,25 +42,20 @@ final class RateLimitGate {
         this.clock = clock;
     }
 
-    @Nullable Instant checkRateLimited(URI uri) {
+    @Nullable
+    Instant checkRateLimited(URI uri) {
         final String key = uri.getAuthority();
         if (key == null) {
             return null;
         }
 
-        return rateLimitedUntilByHost
-                .computeIfPresent(
-                        key,
-                        (k, until) -> clock.instant().isBefore(until) ? until : null);
+        return rateLimitedUntilByHost.computeIfPresent(
+                key, (k, until) -> clock.instant().isBefore(until) ? until : null);
     }
 
     Duration recordRateLimit(URI uri, @Nullable Duration retryAfter) {
-        Duration backoffDuration = retryAfter != null
-                ? retryAfter
-                : DEFAULT_BACKOFF;
-        backoffDuration = backoffDuration.compareTo(MAX_BACKOFF) > 0
-                ? MAX_BACKOFF
-                : backoffDuration;
+        Duration backoffDuration = retryAfter != null ? retryAfter : DEFAULT_BACKOFF;
+        backoffDuration = backoffDuration.compareTo(MAX_BACKOFF) > 0 ? MAX_BACKOFF : backoffDuration;
 
         final String hostKey = uri.getAuthority();
         if (hostKey == null) {
@@ -70,12 +65,9 @@ final class RateLimitGate {
         final Instant now = clock.instant();
         final Instant proposedUntil = now.plus(backoffDuration);
         final Instant effectiveUntil = rateLimitedUntilByHost.merge(
-                hostKey,
-                proposedUntil,
-                (existing, proposed) -> proposed.isAfter(existing) ? proposed : existing);
-        
+                hostKey, proposedUntil, (existing, proposed) -> proposed.isAfter(existing) ? proposed : existing);
+
         final Duration effective = Duration.between(now, effectiveUntil);
         return effective.isPositive() ? effective : backoffDuration;
     }
-
 }

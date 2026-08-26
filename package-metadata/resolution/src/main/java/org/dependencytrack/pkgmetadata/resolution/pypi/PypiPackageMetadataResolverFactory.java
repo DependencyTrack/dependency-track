@@ -46,6 +46,11 @@ public final class PypiPackageMetadataResolverFactory implements PackageMetadata
     }
 
     @Override
+    public String displayName() {
+        return "PyPI";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return PypiPackageMetadataResolver.class;
     }
@@ -64,8 +69,8 @@ public final class PypiPackageMetadataResolverFactory implements PackageMetadata
                     .withNamespace(purl.getNamespace())
                     .withName(purl.getName())
                     .withVersion(purl.getVersion());
-            final String fileName = purl.getQualifiers() != null
-                    ? purl.getQualifiers().get("file_name") : null;
+            final String fileName =
+                    purl.getQualifiers() != null ? purl.getQualifiers().get("file_name") : null;
             if (fileName != null) {
                 builder.withQualifier("file_name", fileName);
             }
@@ -94,5 +99,4 @@ public final class PypiPackageMetadataResolverFactory implements PackageMetadata
     public PackageMetadataResolver create() {
         return new PypiPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

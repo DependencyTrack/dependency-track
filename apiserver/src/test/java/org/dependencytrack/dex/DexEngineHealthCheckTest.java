@@ -30,8 +30,7 @@ class DexEngineHealthCheckTest {
 
     @Test
     void shouldForwardEngineResponse() {
-        final var response = HealthCheckResponse
-                .named("dex-engine")
+        final var response = HealthCheckResponse.named("dex-engine")
                 .status(true)
                 .withData("foo", "bar")
                 .build();
@@ -43,5 +42,4 @@ class DexEngineHealthCheckTest {
 
         assertThat(healthCheck.call()).isEqualTo(response);
     }
-
 }

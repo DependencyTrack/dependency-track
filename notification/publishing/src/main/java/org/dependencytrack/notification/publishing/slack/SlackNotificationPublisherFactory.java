@@ -45,6 +45,11 @@ public final class SlackNotificationPublisherFactory implements NotificationPubl
     }
 
     @Override
+    public String displayName() {
+        return "Slack";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return SlackNotificationPublisher.class;
     }
@@ -62,14 +67,12 @@ public final class SlackNotificationPublisherFactory implements NotificationPubl
 
     @Override
     public RuntimeConfigSpec ruleConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new HttpNotificationPublisherRuleConfigV1()
-                        .withDestinationUrl(URI.create("https://slack.example.com")));
+        return RuntimeConfigSpec.of(new HttpNotificationPublisherRuleConfigV1()
+                .withDestinationUrl(URI.create("https://slack.example.com")));
     }
 
     @Override
     public NotificationTemplate defaultTemplate() {
         return new NotificationTemplate(loadDefaultTemplate(extensionClass()), "application/json");
     }
-
 }

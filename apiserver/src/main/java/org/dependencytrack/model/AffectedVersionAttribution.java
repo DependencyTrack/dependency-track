@@ -52,8 +52,12 @@ import java.util.Objects;
  * @since 4.7.0
  */
 @PersistenceCapable
-@Index(name = "AFFECTEDVERSIONATTRIBUTION_KEYS_IDX", members = {"vulnerability", "vulnerableSoftware"})
-@Unique(name = "AFFECTEDVERSIONATTRIBUTION_COMPOSITE_IDX", members = {"source", "vulnerability", "vulnerableSoftware"})
+@Index(
+        name = "AFFECTEDVERSIONATTRIBUTION_KEYS_IDX",
+        members = {"vulnerability", "vulnerableSoftware"})
+@Unique(
+        name = "AFFECTEDVERSIONATTRIBUTION_COMPOSITE_IDX",
+        members = {"source", "vulnerability", "vulnerableSoftware"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AffectedVersionAttribution implements Serializable {
 
@@ -82,21 +86,29 @@ public class AffectedVersionAttribution implements Serializable {
     private Source source;
 
     @Persistent
-    @ForeignKey(name = "AFFECTEDVERSIONATTRIBUTION_VULNERABILITY_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "AFFECTEDVERSIONATTRIBUTION_VULNERABILITY_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "VULNERABILITY", allowsNull = "false")
     @JsonIgnore
     private Vulnerability vulnerability;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "AFFECTEDVERSIONATTRIBUTION_VULNERABLESOFTWARE_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "AFFECTEDVERSIONATTRIBUTION_VULNERABLESOFTWARE_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "VULNERABLE_SOFTWARE", allowsNull = "false")
     @JsonIgnore
     private VulnerableSoftware vulnerableSoftware;
 
-    public AffectedVersionAttribution() {
-    }
+    public AffectedVersionAttribution() {}
 
-    public AffectedVersionAttribution(final Source source, final Vulnerability vulnerability, final VulnerableSoftware vulnerableSoftware) {
+    public AffectedVersionAttribution(
+            final Source source, final Vulnerability vulnerability, final VulnerableSoftware vulnerableSoftware) {
         this.source = Objects.requireNonNull(source, "source must not be null");
         this.vulnerability = Objects.requireNonNull(vulnerability, "vulnerability must not be null");
         this.vulnerableSoftware = Objects.requireNonNull(vulnerableSoftware, "vulnerableSoftware must not be null");
@@ -154,5 +166,4 @@ public class AffectedVersionAttribution implements Serializable {
     public void setVulnerableSoftware(final VulnerableSoftware vulnerableSoftware) {
         this.vulnerableSoftware = vulnerableSoftware;
     }
-
 }

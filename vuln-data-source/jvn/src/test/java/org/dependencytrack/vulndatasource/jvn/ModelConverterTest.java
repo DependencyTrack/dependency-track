@@ -59,7 +59,7 @@ class ModelConverterTest {
         assertEquals(component.getBomRef(), affects.getRef());
         // Four affected version ranges in the fixture, all parseable to vers ranges.
         assertEquals(4, affects.getVersionsCount());
-        assertTrue(affects.getVersionsList().stream()
-                .anyMatch(v -> v.getRange().equals("vers:generic/>=0.15.0|<0.15.2")));
+        assertTrue(
+                affects.getVersionsList().stream().anyMatch(v -> v.getRange().equals("vers:generic/>=0.15.0|<0.15.2")));
     }
 }

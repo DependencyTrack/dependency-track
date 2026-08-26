@@ -59,10 +59,7 @@ final class S3FileStorage implements FileStorage {
     private final String bucketName;
     private final int compressionLevel;
 
-    S3FileStorage(
-            MinioClient s3Client,
-            String bucketName,
-            int compressionLevel) {
+    S3FileStorage(MinioClient s3Client, String bucketName, int compressionLevel) {
         this.s3Client = s3Client;
         this.bucketName = bucketName;
         this.compressionLevel = compressionLevel;
@@ -88,8 +85,8 @@ final class S3FileStorage implements FileStorage {
         private static S3FileLocation from(final FileMetadata fileMetadata) {
             final URI locationUri = URI.create(fileMetadata.getLocation());
             if (!S3FileStorageProvider.NAME.equals(locationUri.getScheme())) {
-                throw new IllegalArgumentException("%s: Unexpected scheme %s, expected %s".formatted(
-                        locationUri, locationUri.getScheme(), S3FileStorageProvider.NAME));
+                throw new IllegalArgumentException("%s: Unexpected scheme %s, expected %s"
+                        .formatted(locationUri, locationUri.getScheme(), S3FileStorageProvider.NAME));
             }
             if (locationUri.getHost() == null) {
                 throw new IllegalArgumentException(
@@ -102,13 +99,13 @@ final class S3FileStorage implements FileStorage {
 
             // The value returned by URI#getPath always has a leading slash.
             // Remove it to prevent the path from erroneously be interpreted as absolute.
-            return new S3FileLocation(locationUri.getHost(), locationUri.getPath().replaceFirst("^/", ""));
+            return new S3FileLocation(
+                    locationUri.getHost(), locationUri.getPath().replaceFirst("^/", ""));
         }
 
         private URI asURI() {
             return URI.create("%s://%s/%s".formatted(S3FileStorageProvider.NAME, bucket, object));
         }
-
     }
 
     @Override
@@ -132,7 +129,7 @@ final class S3FileStorage implements FileStorage {
         // Transparently compress in a separate thread so reading the entire contentStream can be avoided.
         final var compressionFuture = CompletableFuture.runAsync(() -> {
             try (final var digestOutputStream = new DigestOutputStream(pipedOutputStream, messageDigest);
-                 final var zstdOutputStream = new ZstdOutputStream(digestOutputStream, compressionLevel)) {
+                    final var zstdOutputStream = new ZstdOutputStream(digestOutputStream, compressionLevel)) {
                 contentStream.transferTo(zstdOutputStream);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -140,22 +137,16 @@ final class S3FileStorage implements FileStorage {
         });
 
         try {
-            s3Client.putObject(PutObjectArgs.builder()
-                    .bucket(fileLocation.bucket())
-                    .object(fileLocation.object())
-                    .stream(
-                            pipedInputStream,
-                            /* objectSize */ -1L,
-                            /* partSize */ 10485760L /* (10MiB) */)
-                    .build());
+            s3Client.putObject(
+                    PutObjectArgs.builder().bucket(fileLocation.bucket()).object(fileLocation.object()).stream(
+                                    pipedInputStream, /* objectSize */ -1L, /* partSize */ 10485760L /* (10MiB) */)
+                            .build());
             compressionFuture.get();
         } catch (InterruptedException e) {
             compressionFuture.cancel(/* mayInterruptIfRunning */ true);
             Thread.currentThread().interrupt();
 
-            final var interruptedException =
-                    new InterruptedIOException(
-                            "Interrupted before the file could be stored");
+            final var interruptedException = new InterruptedIOException("Interrupted before the file could be stored");
             interruptedException.initCause(e);
             throw interruptedException;
         } catch (Exception e) {
@@ -186,11 +177,10 @@ final class S3FileStorage implements FileStorage {
 
         final GetObjectResponse response;
         try {
-            response = s3Client.getObject(
-                    GetObjectArgs.builder()
-                            .bucket(fileLocation.bucket())
-                            .object(fileLocation.object())
-                            .build());
+            response = s3Client.getObject(GetObjectArgs.builder()
+                    .bucket(fileLocation.bucket())
+                    .object(fileLocation.object())
+                    .build());
         } catch (ErrorResponseException e) {
             // https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html#ErrorCodeList
             if ("NoSuchKey".equalsIgnoreCase(e.errorResponse().code())) {
@@ -233,5 +223,4 @@ final class S3FileStorage implements FileStorage {
         // request succeeded, it has successfully deleted the object.
         return true;
     }
-
 }

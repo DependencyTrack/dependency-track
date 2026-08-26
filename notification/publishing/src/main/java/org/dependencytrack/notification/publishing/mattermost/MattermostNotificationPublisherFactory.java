@@ -45,6 +45,11 @@ public final class MattermostNotificationPublisherFactory implements Notificatio
     }
 
     @Override
+    public String displayName() {
+        return "Mattermost";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return MattermostNotificationPublisher.class;
     }
@@ -62,14 +67,12 @@ public final class MattermostNotificationPublisherFactory implements Notificatio
 
     @Override
     public RuntimeConfigSpec ruleConfigSpec() {
-        return RuntimeConfigSpec.of(
-                new HttpNotificationPublisherRuleConfigV1()
-                        .withDestinationUrl(URI.create("https://mattermost.example.com")));
+        return RuntimeConfigSpec.of(new HttpNotificationPublisherRuleConfigV1()
+                .withDestinationUrl(URI.create("https://mattermost.example.com")));
     }
 
     @Override
     public NotificationTemplate defaultTemplate() {
         return new NotificationTemplate(loadDefaultTemplate(extensionClass()), "application/json");
     }
-
 }

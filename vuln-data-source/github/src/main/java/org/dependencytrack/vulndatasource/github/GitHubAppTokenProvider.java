@@ -18,6 +18,10 @@
  */
 package org.dependencytrack.vulndatasource.github;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -32,10 +36,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.regex.Pattern;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jspecify.annotations.Nullable;
 
 import static java.util.Objects.requireNonNull;
 
@@ -95,7 +95,8 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
 
     @Override
     public synchronized String currentToken() {
-        if (cachedToken == null || cachedTokenExpiresAt == null
+        if (cachedToken == null
+                || cachedTokenExpiresAt == null
                 || !clock.instant().isBefore(cachedTokenExpiresAt.minus(REFRESH_SKEW))) {
             mint();
         }
@@ -148,9 +149,8 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
      */
     static PrivateKey parsePrivateKey(final String pem) {
         if (pem.contains("RSA PRIVATE KEY")) {
-            throw new IllegalArgumentException(
-                    "GitHub App private key is in PKCS#1 format (BEGIN RSA PRIVATE KEY); "
-                            + "convert it to PKCS#8 with: openssl pkcs8 -topk8 -nocrypt -in key.pem -out key.pk8.pem");
+            throw new IllegalArgumentException("GitHub App private key is in PKCS#1 format (BEGIN RSA PRIVATE KEY); "
+                    + "convert it to PKCS#8 with: openssl pkcs8 -topk8 -nocrypt -in key.pem -out key.pk8.pem");
         }
         final byte[] pkcs8 = Base64.getDecoder().decode(PEM_ARMOR.matcher(pem).replaceAll(""));
         try {
@@ -175,11 +175,11 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
      */
     static String buildAppJwt(final String appId, final PrivateKey privateKey, final Clock clock) {
         final long now = clock.instant().getEpochSecond();
-        final String header = URL_ENCODER.encodeToString(
-                "{\"alg\":\"RS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
-        final String claims = URL_ENCODER.encodeToString(
-                ("{\"iss\":\"" + appId + "\",\"iat\":" + (now - JWT_IAT_SKEW_SECONDS)
-                        + ",\"exp\":" + (now + JWT_LIFETIME_SECONDS) + "}").getBytes(StandardCharsets.UTF_8));
+        final String header =
+                URL_ENCODER.encodeToString("{\"alg\":\"RS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
+        final String claims = URL_ENCODER.encodeToString(("{\"iss\":\"" + appId + "\",\"iat\":"
+                        + (now - JWT_IAT_SKEW_SECONDS) + ",\"exp\":" + (now + JWT_LIFETIME_SECONDS) + "}")
+                .getBytes(StandardCharsets.UTF_8));
         final String signingInput = header + "." + claims;
         try {
             final var signer = Signature.getInstance("SHA256withRSA");
@@ -190,5 +190,4 @@ final class GitHubAppTokenProvider implements GitHubTokenProvider {
             throw new IllegalStateException("Failed to sign GitHub App JWT", e);
         }
     }
-
 }

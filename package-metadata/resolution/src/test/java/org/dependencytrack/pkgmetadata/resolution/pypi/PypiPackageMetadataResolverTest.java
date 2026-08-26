@@ -97,12 +97,11 @@ class PypiPackageMetadataResolverTest {
         cacheManager = cacheProvider.create();
 
         factory = new PypiPackageMetadataResolverFactory();
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                        .register(CacheManager.class, cacheManager)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
+                .register(CacheManager.class, cacheManager)
+                .register(HttpClient.class, HttpClient.newHttpClient())
+                .register(KeyValueStore.class, new MockKeyValueStore()));
         resolver = factory.create();
     }
 
@@ -137,7 +136,8 @@ class PypiPackageMetadataResolverTest {
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().hashes())
                 .containsEntry(HashAlgorithm.MD5, "aaaa1111bbbb2222cccc3333dddd4444")
-                .containsEntry(HashAlgorithm.SHA256, "aaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222");
+                .containsEntry(
+                        HashAlgorithm.SHA256, "aaaa1111bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222");
     }
 
     @Test
@@ -161,7 +161,8 @@ class PypiPackageMetadataResolverTest {
         assertThat(result.artifactMetadata()).isNotNull();
         assertThat(result.artifactMetadata().hashes())
                 .containsEntry(HashAlgorithm.MD5, "bbbb2222cccc3333dddd4444eeee5555")
-                .containsEntry(HashAlgorithm.SHA256, "bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222cccc3333");
+                .containsEntry(
+                        HashAlgorithm.SHA256, "bbbb2222cccc3333dddd4444eeee5555ffff6666aaaa1111bbbb2222cccc3333");
     }
 
     @Test
@@ -254,8 +255,7 @@ class PypiPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -311,5 +311,4 @@ class PypiPackageMetadataResolverTest {
         assertThat(result.latestVersionPublishedAt()).isEqualTo(Instant.parse("2024-11-06T22:37:09.220617Z"));
         assertThat(result.artifactMetadata()).isNull();
     }
-
 }

@@ -20,8 +20,6 @@ package org.dependencytrack.dex;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.smallrye.config.SmallRyeConfigBuilder;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletContextEvent;
 import org.dependencytrack.cache.api.CacheManager;
 import org.dependencytrack.cache.api.NoopCacheManager;
 import org.dependencytrack.common.datasource.DataSourceRegistry;
@@ -45,6 +43,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+
 import java.net.http.HttpClient;
 import java.util.Collections;
 import java.util.Map;
@@ -62,6 +63,7 @@ class DexEngineInitializerTest {
     @Container
     private final PostgreSQLContainer postgresContainer =
             new PostgreSQLContainer(DockerImageName.parse("postgres:14-alpine"));
+
     private PGSimpleDataSource dataSource;
     private DataSourceRegistry dataSourceRegistry;
     private DexEngineInitializer initializer;
@@ -101,24 +103,25 @@ class DexEngineInitializerTest {
         final var secretManager = new TestSecretManager();
 
         final var servletContextMock = mock(ServletContext.class);
-        doReturn(cacheManager)
-                .when(servletContextMock).getAttribute(eq(CacheManager.class.getName()));
-        doReturn(new MemoryFileStorage())
-                .when(servletContextMock).getAttribute(eq(FileStorage.class.getName()));
-        doReturn(new PluginManager(config, cacheManager, secretManager::getSecretValue,
-                JdbiFactory.createLocalJdbi(dataSource),
-                HttpClient.newHttpClient(), Collections.emptyList()))
-                .when(servletContextMock).getAttribute(eq(PluginManager.class.getName()));
-        doReturn(secretManager)
-                .when(servletContextMock).getAttribute(eq(SecretManager.class.getName()));
+        doReturn(cacheManager).when(servletContextMock).getAttribute(eq(CacheManager.class.getName()));
+        doReturn(new MemoryFileStorage()).when(servletContextMock).getAttribute(eq(FileStorage.class.getName()));
+        doReturn(new PluginManager(
+                        config,
+                        cacheManager,
+                        secretManager::getSecretValue,
+                        JdbiFactory.createLocalJdbi(dataSource),
+                        HttpClient.newHttpClient(),
+                        Collections.emptyList()))
+                .when(servletContextMock)
+                .getAttribute(eq(PluginManager.class.getName()));
+        doReturn(secretManager).when(servletContextMock).getAttribute(eq(SecretManager.class.getName()));
 
-        initializer = new DexEngineInitializer(config, dataSourceRegistry, new SimpleMeterRegistry(), healthCheckRegistry);
+        initializer =
+                new DexEngineInitializer(config, dataSourceRegistry, new SimpleMeterRegistry(), healthCheckRegistry);
         initializer.contextInitialized(new ServletContextEvent(servletContextMock));
 
         final var engineCaptor = ArgumentCaptor.forClass(DexEngine.class);
-        verify(servletContextMock).setAttribute(
-                eq(DexEngine.class.getName()),
-                engineCaptor.capture());
+        verify(servletContextMock).setAttribute(eq(DexEngine.class.getName()), engineCaptor.capture());
 
         assertThat(healthCheckRegistry.getChecks())
                 .satisfiesExactly(healthCheck -> assertThat(healthCheck).isInstanceOf(DexEngineHealthCheck.class));
@@ -156,5 +159,4 @@ class DexEngineInitializerTest {
             }
         };
     }
-
 }

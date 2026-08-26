@@ -67,7 +67,8 @@ class UserConsolidationIT {
         // get -CONFLICT-LDAP), an OIDC user "bob" (no conflict), and a NULL-USERNAME LDAP
         // user that must be dropped silently.
         source.jdbi().useHandle(h -> {
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '11111111-1111-1111-1111-111111111111')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '11111111-1111-1111-1111-111111111111')");
             h.execute("""
                 INSERT INTO "MANAGEDUSER" (
                     "ID", "USERNAME", "PASSWORD", "FULLNAME", "EMAIL",
@@ -96,49 +97,44 @@ class UserConsolidationIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> users = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> users =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "TYPE", "USERNAME", "EMAIL", "FULLNAME", "PASSWORD", "DN", "SUBJECT_IDENTIFIER"
                       FROM "USER"
                      ORDER BY "USERNAME"
-                    """)
-                .mapToMap()
-                .list());
+                    """).mapToMap().list());
 
         // Expect 3 rows: alice (MANAGED), alice-CONFLICT-LDAP (LDAP), bob (OIDC).
         // The NULL-USERNAME LDAP row should not appear.
         assertThat(users).hasSize(3);
 
         assertThat(users.get(0))
-            .containsEntry("type", "MANAGED")
-            .containsEntry("username", "alice")
-            .containsEntry("fullname", "Alice Managed")
-            .containsEntry("password", "hash");
+                .containsEntry("type", "MANAGED")
+                .containsEntry("username", "alice")
+                .containsEntry("fullname", "Alice Managed")
+                .containsEntry("password", "hash");
 
         assertThat(users.get(1))
-            .containsEntry("type", "LDAP")
-            .containsEntry("username", "alice-CONFLICT-LDAP")
-            .containsEntry("dn", "cn=alice,dc=example,dc=com");
+                .containsEntry("type", "LDAP")
+                .containsEntry("username", "alice-CONFLICT-LDAP")
+                .containsEntry("dn", "cn=alice,dc=example,dc=com");
 
         assertThat(users.get(2))
-            .containsEntry("type", "OIDC")
-            .containsEntry("username", "bob")
-            .containsEntry("subject_identifier", "oidc-sub-bob");
+                .containsEntry("type", "OIDC")
+                .containsEntry("username", "bob")
+                .containsEntry("subject_identifier", "oidc-sub-bob");
 
         // USERS_TEAMS: three rows, one per real user, all pointing at team 1.
-        final List<Map<String, Object>> userTeams = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> userTeams =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT u."USERNAME", ut."TEAM_ID"
                       FROM "USERS_TEAMS" ut
                       JOIN "USER" u ON u."ID" = ut."USER_ID"
                      ORDER BY u."USERNAME"
-                    """)
-                .mapToMap()
-                .list());
+                    """).mapToMap().list());
 
         assertThat(userTeams).hasSize(3);
-        assertThat(userTeams).extracting(r -> r.get("username"))
-            .containsExactly("alice", "alice-CONFLICT-LDAP", "bob");
+        assertThat(userTeams).extracting(r -> r.get("username")).containsExactly("alice", "alice-CONFLICT-LDAP", "bob");
         assertThat(userTeams).allSatisfy(r -> assertThat(r).containsEntry("team_id", 1L));
     }
 

@@ -43,8 +43,7 @@ public record AlpineDistribution(String version) implements OsDistribution {
 
     @Override
     public boolean matches(OsDistribution other) {
-        return other instanceof AlpineDistribution(final String otherVersion)
-                && this.version.equals(otherVersion);
+        return other instanceof AlpineDistribution(final String otherVersion) && this.version.equals(otherVersion);
     }
 
     public static @Nullable AlpineDistribution of(@Nullable String qualifierValue) {
@@ -52,9 +51,8 @@ public record AlpineDistribution(String version) implements OsDistribution {
             return null;
         }
 
-        final String version = qualifierValue.toLowerCase().startsWith("alpine-")
-                ? qualifierValue.substring(7)
-                : qualifierValue;
+        final String version =
+                qualifierValue.toLowerCase().startsWith("alpine-") ? qualifierValue.substring(7) : qualifierValue;
 
         return ofVersion(version);
     }
@@ -71,5 +69,4 @@ public record AlpineDistribution(String version) implements OsDistribution {
 
         return new AlpineDistribution(matcher.group(1));
     }
-
 }

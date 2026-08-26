@@ -25,12 +25,12 @@ package org.dependencytrack.model;
  * @since 3.0.0
  */
 public enum Severity {
-    CRITICAL (5),
-    HIGH (4),
-    MEDIUM (3),
-    LOW (2),
-    INFO (1),
-    UNASSIGNED (0);
+    CRITICAL(5),
+    HIGH(4),
+    MEDIUM(3),
+    LOW(2),
+    INFO(1),
+    UNASSIGNED(0);
 
     private final int level;
 
@@ -41,5 +41,4 @@ public enum Severity {
     public int getLevel() {
         return level;
     }
-
 }

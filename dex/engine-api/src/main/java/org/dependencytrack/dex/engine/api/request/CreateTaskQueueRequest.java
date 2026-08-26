@@ -31,5 +31,4 @@ public record CreateTaskQueueRequest(TaskType type, String name, int capacity) {
             throw new IllegalArgumentException("capacity must not be negative or zero");
         }
     }
-
 }

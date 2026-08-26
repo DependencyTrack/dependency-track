@@ -87,17 +87,17 @@ class MetricsDedupIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> rows = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> rows =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "COMPONENT_ID", "CRITICAL", "VULNERABILITIES"
                       FROM "DEPENDENCYMETRICS"
                      WHERE "COMPONENT_ID" = 10
                     """).mapToMap().list());
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0))
-            .containsEntry("component_id", 10L)
-            .containsEntry("critical", 7)
-            .containsEntry("vulnerabilities", 7);
+                .containsEntry("component_id", 10L)
+                .containsEntry("critical", 7)
+                .containsEntry("vulnerabilities", 7);
     }
 
     private void runPipeline() throws Exception {

@@ -80,11 +80,10 @@ class SnykVulnAnalyzerChecksumMatchingTest {
                         .withOrgId("test-org-id")
                         .withApiToken("test-api-token"));
 
-        analyzerFactory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(CacheManager.class, cacheManager)
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        analyzerFactory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, configRegistry)
+                .register(CacheManager.class, cacheManager)
+                .register(HttpClient.class, HttpClient.newHttpClient()));
 
         analyzer = analyzerFactory.create();
     }
@@ -121,8 +120,7 @@ class SnykVulnAnalyzerChecksumMatchingTest {
         // Second analysis should hit cache — no additional HTTP.
         assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
 
-        verify(1, postRequestedFor(anyUrl())
-                .withRequestBody(containing("checksum")));
+        verify(1, postRequestedFor(anyUrl()).withRequestBody(containing("checksum")));
     }
 
     @Test
@@ -145,19 +143,17 @@ class SnykVulnAnalyzerChecksumMatchingTest {
         assertThat(vdr.getVulnerabilitiesCount()).isEqualTo(1);
         assertThat(vdr.getVulnerabilities(0).getId()).isEqualTo("SNYK-JAVA-ORGJBOSSLOGGING-0000001");
         assertThat(vdr.getVulnerabilities(0).getAffects(0).getRef()).isEqualTo("1");
-        assertThat(vdr.getVulnerabilities(0).getPropertiesList())
-                .anySatisfy(prop -> {
-                    assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
-                    assertThat(prop.getValue()).isEqualTo("100");
-                });
+        assertThat(vdr.getVulnerabilities(0).getPropertiesList()).anySatisfy(prop -> {
+            assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
+            assertThat(prop.getValue()).isEqualTo("100");
+        });
 
         final Bom cachedVdr = analyzer.analyze(bom);
         assertThat(cachedVdr.getVulnerabilitiesCount()).isEqualTo(1);
-        assertThat(cachedVdr.getVulnerabilities(0).getPropertiesList())
-                .anySatisfy(prop -> {
-                    assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
-                    assertThat(prop.getValue()).isEqualTo("100");
-                });
+        assertThat(cachedVdr.getVulnerabilities(0).getPropertiesList()).anySatisfy(prop -> {
+            assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
+            assertThat(prop.getValue()).isEqualTo("100");
+        });
 
         verify(1, postRequestedFor(anyUrl()));
     }
@@ -183,23 +179,20 @@ class SnykVulnAnalyzerChecksumMatchingTest {
         assertThat(vdr.getVulnerabilitiesList())
                 .extracting(org.cyclonedx.proto.v1_7.Vulnerability::getId)
                 .containsExactlyInAnyOrder(
-                        "SNYK-JAVA-COMFASTERXMLWOODSTOX-3091135",
-                        "SNYK-JAVA-COMFASTERXMLWOODSTOX-2928754");
+                        "SNYK-JAVA-COMFASTERXMLWOODSTOX-3091135", "SNYK-JAVA-COMFASTERXMLWOODSTOX-2928754");
         assertThat(vdr.getVulnerabilitiesList())
-                .allSatisfy(vuln -> assertThat(vuln.getPropertiesList())
-                        .anySatisfy(prop -> {
-                            assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
-                            assertThat(prop.getValue()).isEqualTo("50");
-                        }));
+                .allSatisfy(vuln -> assertThat(vuln.getPropertiesList()).anySatisfy(prop -> {
+                    assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
+                    assertThat(prop.getValue()).isEqualTo("50");
+                }));
 
         final Bom cachedVdr = analyzer.analyze(bom);
         assertThat(cachedVdr.getVulnerabilitiesList()).hasSize(2);
         assertThat(cachedVdr.getVulnerabilitiesList())
-                .allSatisfy(vuln -> assertThat(vuln.getPropertiesList())
-                        .anySatisfy(prop -> {
-                            assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
-                            assertThat(prop.getValue()).isEqualTo("50");
-                        }));
+                .allSatisfy(vuln -> assertThat(vuln.getPropertiesList()).anySatisfy(prop -> {
+                    assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
+                    assertThat(prop.getValue()).isEqualTo("50");
+                }));
 
         verify(1, postRequestedFor(anyUrl()));
     }
@@ -244,8 +237,7 @@ class SnykVulnAnalyzerChecksumMatchingTest {
 
         assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
 
-        verify(1, postRequestedFor(anyUrl())
-                .withRequestBody(equalToJson("""
+        verify(1, postRequestedFor(anyUrl()).withRequestBody(equalToJson("""
                         {
                           "data": {
                             "attributes": {
@@ -270,18 +262,20 @@ class SnykVulnAnalyzerChecksumMatchingTest {
                 .addComponents(Component.newBuilder()
                         .setBomRef("1")
                         .setName("lodash")
-                        .setPurl("pkg:npm/lodash@4.17.21?checksum=sha512:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+                        .setPurl(
+                                "pkg:npm/lodash@4.17.21?checksum=sha512:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
                         .build())
                 .build();
 
         assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
 
-        verify(1, postRequestedFor(anyUrl())
-                .withRequestBody(containing("pkg:npm/lodash@4.17.21"))
-                .withRequestBody(containing("\"purls\"")));
+        verify(
+                1,
+                postRequestedFor(anyUrl())
+                        .withRequestBody(containing("pkg:npm/lodash@4.17.21"))
+                        .withRequestBody(containing("\"purls\"")));
         // Request must not include the checksum qualifier for non-Maven.
-        verify(0, postRequestedFor(anyUrl())
-                .withRequestBody(containing("checksum=")));
+        verify(0, postRequestedFor(anyUrl()).withRequestBody(containing("checksum=")));
     }
 
     @Test
@@ -322,11 +316,10 @@ class SnykVulnAnalyzerChecksumMatchingTest {
                         .withOrgId("test-org-id")
                         .withApiToken("test-api-token"));
 
-        analyzerFactory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(CacheManager.class, cacheManager)
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        analyzerFactory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, configRegistry)
+                .register(CacheManager.class, cacheManager)
+                .register(HttpClient.class, HttpClient.newHttpClient()));
         analyzer = analyzerFactory.create();
 
         stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
@@ -345,8 +338,7 @@ class SnykVulnAnalyzerChecksumMatchingTest {
 
         assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
 
-        verify(1, postRequestedFor(anyUrl())
-                .withRequestBody(equalToJson("""
+        verify(1, postRequestedFor(anyUrl()).withRequestBody(equalToJson("""
                         {
                           "data": {
                             "attributes": {
@@ -357,8 +349,7 @@ class SnykVulnAnalyzerChecksumMatchingTest {
                           }
                         }
                         """)));
-        verify(0, postRequestedFor(anyUrl())
-                .withRequestBody(containing("checksum=")));
+        verify(0, postRequestedFor(anyUrl()).withRequestBody(containing("checksum=")));
     }
 
     @Test
@@ -394,9 +385,11 @@ class SnykVulnAnalyzerChecksumMatchingTest {
                     assertThat(v.getAffects(0).getRef()).isEqualTo("coords-comp");
                 });
 
-        verify(1, postRequestedFor(anyUrl())
-                .withRequestBody(containing("checksum="))
-                .withRequestBody(containing("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")));
+        verify(
+                1,
+                postRequestedFor(anyUrl())
+                        .withRequestBody(containing("checksum="))
+                        .withRequestBody(containing("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")));
     }
 
     @Test
@@ -477,5 +470,4 @@ class SnykVulnAnalyzerChecksumMatchingTest {
         assertThat(analyzer.analyze(bom).getVulnerabilitiesList()).isEmpty();
         verify(0, postRequestedFor(anyUrl()));
     }
-
 }

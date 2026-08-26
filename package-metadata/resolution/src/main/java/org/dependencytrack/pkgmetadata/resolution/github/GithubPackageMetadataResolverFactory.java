@@ -45,6 +45,11 @@ public final class GithubPackageMetadataResolverFactory implements PackageMetada
     }
 
     @Override
+    public String displayName() {
+        return "GitHub";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return GithubPackageMetadataResolver.class;
     }
@@ -77,8 +82,7 @@ public final class GithubPackageMetadataResolverFactory implements PackageMetada
 
     @Override
     public void init(ServiceRegistry serviceRegistry) {
-        objectMapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
                 serviceRegistry.require(CacheManager.class).getCache("responses"));
@@ -88,5 +92,4 @@ public final class GithubPackageMetadataResolverFactory implements PackageMetada
     public PackageMetadataResolver create() {
         return new GithubPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

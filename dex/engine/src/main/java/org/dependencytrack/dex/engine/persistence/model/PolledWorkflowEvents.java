@@ -26,5 +26,4 @@ public record PolledWorkflowEvents(
         List<WorkflowEvent> history,
         List<WorkflowEvent> inbox,
         int maxHistorySequenceNumber,
-        List<Long> inboxMessageIds) {
-}
+        List<Long> inboxMessageIds) {}

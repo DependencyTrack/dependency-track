@@ -32,16 +32,26 @@ import java.util.UUID;
 public record NotificationPublisherResponse(
         @Schema(description = "Name of the notification publisher", requiredMode = Schema.RequiredMode.REQUIRED)
         String name,
-        @Schema(description = "Description of the notification publisher")
-        @Nullable String description,
-        @Schema(description = "Name of the publisher extension that handles delivery", requiredMode = Schema.RequiredMode.REQUIRED)
+
+        @Schema(description = "Description of the notification publisher") @Nullable
+        String description,
+
+        @Schema(
+                description = "Name of the publisher extension that handles delivery",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         String extensionName,
-        @Schema(description = "Template used to render the notification payload")
-        @Nullable String template,
+
+        @Schema(description = "Template used to render the notification payload") @Nullable
+        String template,
+
         @Schema(description = "MIME type of the rendered template", requiredMode = Schema.RequiredMode.REQUIRED)
         String templateMimeType,
-        @Schema(description = "Whether the publisher is one of the built-in defaults", requiredMode = Schema.RequiredMode.REQUIRED)
+
+        @Schema(
+                description = "Whether the publisher is one of the built-in defaults",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         boolean defaultPublisher,
+
         @Schema(description = "UUID of the notification publisher", requiredMode = Schema.RequiredMode.REQUIRED)
         UUID uuid) {
 
@@ -55,5 +65,4 @@ public record NotificationPublisherResponse(
                 publisher.isDefaultPublisher(),
                 publisher.getUuid());
     }
-
 }

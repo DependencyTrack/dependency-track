@@ -65,16 +65,15 @@ public final class CisaKevDataSourceFactory implements KevDataSourceFactory, Run
     public void init(ServiceRegistry serviceRegistry) {
         this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
         this.httpClient = serviceRegistry.require(HttpClient.class);
-        this.objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule());
+        this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
-        final var defaultConfig =
-                new CisaKevDataSourceConfigV1()
-                        .withEnabled(true)
-                        .withFeedUrl(URI.create("https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"));
+        final var defaultConfig = new CisaKevDataSourceConfigV1()
+                .withEnabled(true)
+                .withFeedUrl(URI.create(
+                        "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"));
 
         return RuntimeConfigSpec.of(defaultConfig, config -> {
             if (!config.isEnabled()) {
@@ -95,16 +94,11 @@ public final class CisaKevDataSourceFactory implements KevDataSourceFactory, Run
 
     @Override
     public KevDataSource create() {
-        final var config = requireNonNull(configRegistry)
-                .getRuntimeConfig(CisaKevDataSourceConfigV1.class);
+        final var config = requireNonNull(configRegistry).getRuntimeConfig(CisaKevDataSourceConfigV1.class);
         if (!config.isEnabled()) {
             throw new IllegalStateException("KEV data source is disabled and cannot be created");
         }
 
-        return new CisaKevDataSource(
-                requireNonNull(httpClient),
-                requireNonNull(objectMapper),
-                config.getFeedUrl());
+        return new CisaKevDataSource(requireNonNull(httpClient), requireNonNull(objectMapper), config.getFeedUrl());
     }
-
 }

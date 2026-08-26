@@ -20,7 +20,6 @@ package org.dependencytrack.resources.v1;
 
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.ws.rs.core.Response;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
@@ -34,6 +33,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+
+import jakarta.ws.rs.core.Response;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -49,16 +50,15 @@ class EventResourceTest extends ResourceTest {
     private static final DexEngine DEX_ENGINE_MOCK = mock(DexEngine.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(EventResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class)
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(EventResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class)
+            .register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bind(DEX_ENGINE_MOCK).to(DexEngine.class);
+                }
+            }));
 
     @AfterEach
     void afterEach() {
@@ -87,8 +87,7 @@ class EventResourceTest extends ResourceTest {
         doReturn(false).when(DEX_ENGINE_MOCK).existsRun(any(ExistsWorkflowRunRequest.class));
         doReturn(runMetadata).when(DEX_ENGINE_MOCK).getRunMetadataById(runId);
 
-        final Response response = jersey
-                .target(V1_EVENT + "/token/6214c0c2-660c-4615-8b3a-174a64e4abe4")
+        final Response response = jersey.target(V1_EVENT + "/token/6214c0c2-660c-4615-8b3a-174a64e4abe4")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -107,8 +106,7 @@ class EventResourceTest extends ResourceTest {
         doReturn(null).when(DEX_ENGINE_MOCK).getRunMetadataById(bomUploadToken);
         doReturn(true).when(DEX_ENGINE_MOCK).existsRun(any(ExistsWorkflowRunRequest.class));
 
-        final Response response = jersey
-                .target(V1_EVENT + "/token/2ff20ad6-587c-4db6-8788-cca7a9b0dc1b")
+        final Response response = jersey.target(V1_EVENT + "/token/2ff20ad6-587c-4db6-8788-cca7a9b0dc1b")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -125,8 +123,7 @@ class EventResourceTest extends ResourceTest {
         doReturn(null).when(DEX_ENGINE_MOCK).getRunMetadataById(any());
         doReturn(false).when(DEX_ENGINE_MOCK).existsRun(any(ExistsWorkflowRunRequest.class));
 
-        final Response response = jersey
-                .target(V1_EVENT + "/token/089dcdbe-31cf-489a-a8f3-0743ea7f3cc5")
+        final Response response = jersey.target(V1_EVENT + "/token/089dcdbe-31cf-489a-a8f3-0743ea7f3cc5")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -137,5 +134,4 @@ class EventResourceTest extends ResourceTest {
                 }
                 """);
     }
-
 }

@@ -35,15 +35,17 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 class JvnVersionParserTest {
 
     @ParameterizedTest
-    @CsvSource(delimiter = ';', value = {
-            "0.15.0 以上 0.15.2 未満 ; vers:generic/>=0.15.0|<0.15.2",
-            "0.2.2 以上 3.19.0 未満   ; vers:generic/>=0.2.2|<3.19.0",
-            "0.32.0 未満             ; vers:generic/<0.32.0",
-            "1.0 から 3.1.1          ; vers:generic/>=1.0|<=3.1.1",
-            "0.9.5 およびそれ以前      ; vers:generic/<=0.9.5",
-            "5.0 以前                ; vers:generic/<=5.0",
-            "1.2.3 以上              ; vers:generic/>=1.2.3",
-    })
+    @CsvSource(
+            delimiter = ';',
+            value = {
+                "0.15.0 以上 0.15.2 未満 ; vers:generic/>=0.15.0|<0.15.2",
+                "0.2.2 以上 3.19.0 未満   ; vers:generic/>=0.2.2|<3.19.0",
+                "0.32.0 未満             ; vers:generic/<0.32.0",
+                "1.0 から 3.1.1          ; vers:generic/>=1.0|<=3.1.1",
+                "0.9.5 およびそれ以前      ; vers:generic/<=0.9.5",
+                "5.0 以前                ; vers:generic/<=5.0",
+                "1.2.3 以上              ; vers:generic/>=1.2.3",
+            })
     void parsesRanges(final String input, final String expectedVers) {
         final Result result = JvnVersionParser.parse(input, "generic");
         final VersionRange range = assertInstanceOf(VersionRange.class, result);
@@ -72,28 +74,30 @@ class JvnVersionParserTest {
     }
 
     @ParameterizedTest
-    @CsvSource(delimiter = ';', value = {
-            // Platform/edition qualifiers carry no version information; NVD encodes them in
-            // separate CPE attributes, so stripping them yields the NVD-equivalent version value.
-            "5.0 (client)                        ; 5.0",
-            "3 (x86-64)                          ; 3",
-            "4.0 (x86-64)                        ; 4.0",
-            "Version 1809 for x64-based Systems  ; 1809",
-            "Version 22H2 for ARM64-based Systems; 22H2",
-            "2019 for 64-bit editions            ; 2019",
-            "12.04 LTS                           ; 12.04",
-            "11 Express                          ; 11",
-            "2013 SP1                            ; 2013",
-            "2000 Gold                           ; 2000",
-            "R2 for x64-based Systems SP1        ; R2",
-            "2016 (32 ビット版)                   ; 2016",
-            "2013 SP1 (32-bit editions)          ; 2013",
-            "2013 RT SP1                         ; 2013",
-            "LTSC 2021 for 32-bit editions       ; 2021",
-            "Standard Version 6                  ; 6",
-            "- Web Edition Version 4             ; 4",
-            "2.5.1 (sparc)                       ; 2.5.1",
-    })
+    @CsvSource(
+            delimiter = ';',
+            value = {
+                // Platform/edition qualifiers carry no version information; NVD encodes them in
+                // separate CPE attributes, so stripping them yields the NVD-equivalent version value.
+                "5.0 (client)                        ; 5.0",
+                "3 (x86-64)                          ; 3",
+                "4.0 (x86-64)                        ; 4.0",
+                "Version 1809 for x64-based Systems  ; 1809",
+                "Version 22H2 for ARM64-based Systems; 22H2",
+                "2019 for 64-bit editions            ; 2019",
+                "12.04 LTS                           ; 12.04",
+                "11 Express                          ; 11",
+                "2013 SP1                            ; 2013",
+                "2000 Gold                           ; 2000",
+                "R2 for x64-based Systems SP1        ; R2",
+                "2016 (32 ビット版)                   ; 2016",
+                "2013 SP1 (32-bit editions)          ; 2013",
+                "2013 RT SP1                         ; 2013",
+                "LTSC 2021 for 32-bit editions       ; 2021",
+                "Standard Version 6                  ; 6",
+                "- Web Edition Version 4             ; 4",
+                "2.5.1 (sparc)                       ; 2.5.1",
+            })
     void salvagesQualifiedVersions(final String input, final String expectedVersion) {
         final Result result = JvnVersionParser.parse(input, "generic");
         final ExactVersion exact = assertInstanceOf(ExactVersion.class, result);
@@ -108,13 +112,15 @@ class JvnVersionParserTest {
     }
 
     @ParameterizedTest
-    @CsvSource(delimiter = ';', value = {
-            // Cisco-style parenthesized build numbers are exact version values in NVD's CPEs
-            // and must be kept verbatim, not stripped down to "11.0".
-            "11.0(20.3)   ; 11.0(20.3)",
-            "11.1(15)ca   ; 11.1(15)ca",
-            "12.0(3.4)T1  ; 12.0(3.4)T1",
-    })
+    @CsvSource(
+            delimiter = ';',
+            value = {
+                // Cisco-style parenthesized build numbers are exact version values in NVD's CPEs
+                // and must be kept verbatim, not stripped down to "11.0".
+                "11.0(20.3)   ; 11.0(20.3)",
+                "11.1(15)ca   ; 11.1(15)ca",
+                "12.0(3.4)T1  ; 12.0(3.4)T1",
+            })
     void parsesParenthesizedBuildVersions(final String input, final String expectedVersion) {
         final Result result = JvnVersionParser.parse(input, "generic");
         final ExactVersion exact = assertInstanceOf(ExactVersion.class, result);
@@ -122,16 +128,18 @@ class JvnVersionParserTest {
     }
 
     @ParameterizedTest
-    @CsvSource(delimiter = ';', value = {
-            // Qualifier-only texts must not be salvaged into an invented version value.
-            "(Server Core installation)",
-            "for x64-based Systems",
-            "(x64) SP2",
-            // Parenthesized content that is neither qualifier vocabulary nor a build number
-            // must stay untouched rather than be guessed at.
-            "2017 version 15.9 (includes 15.0 - 15.8)",
-            "10.01 (SD-UX version B.10.10)",
-    })
+    @CsvSource(
+            delimiter = ';',
+            value = {
+                // Qualifier-only texts must not be salvaged into an invented version value.
+                "(Server Core installation)",
+                "for x64-based Systems",
+                "(x64) SP2",
+                // Parenthesized content that is neither qualifier vocabulary nor a build number
+                // must stay untouched rather than be guessed at.
+                "2017 version 15.9 (includes 15.0 - 15.8)",
+                "10.01 (SD-UX version B.10.10)",
+            })
     void degradesOnQualifierOnlyOrNonQualifierParens(final String input) {
         assertInstanceOf(Unparseable.class, JvnVersionParser.parse(input, "generic"));
     }

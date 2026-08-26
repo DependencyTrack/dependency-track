@@ -46,4 +46,3 @@ message ResolvePackageMetadataActivityArg {
   string resolver_name = 1;
   repeated string purls = 2;
 }
-

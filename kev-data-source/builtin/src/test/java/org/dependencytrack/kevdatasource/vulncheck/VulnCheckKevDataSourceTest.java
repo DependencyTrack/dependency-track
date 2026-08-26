@@ -53,8 +53,7 @@ class VulnCheckKevDataSourceTest {
 
     private static final String API_TOKEN = "vulncheck_abc123";
 
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Test
     void shouldParseVulnCheckKevBackup(WireMockRuntimeInfo wmRuntimeInfo) {
@@ -85,26 +84,30 @@ class VulnCheckKevDataSourceTest {
                 """));
 
         try (final KevDataSource dataSource = createDataSource(wmRuntimeInfo)) {
-            assertThat(dataSource).toIterable().satisfiesExactly(
-                    assertion -> {
-                        assertThat(assertion.vulnSource()).isEqualTo("NVD");
-                        assertThat(assertion.vulnId()).isEqualTo("CVE-2021-44228");
-                        assertThat(assertion.publishedAt()).isEqualTo(Instant.parse("2021-12-10T00:00:00Z"));
-                        assertThat(assertion.requiredAction()).isEqualTo("Apply updates");
-                        assertThat(assertion.knownRansomware()).isTrue();
-                        assertThat(assertion.description()).isEqualTo("Log4Shell");
-                        assertThat(assertion.raw().get("product").asText()).isEqualTo("Log4j2");
-                    },
-                    assertion -> {
-                        assertThat(assertion.vulnId()).isEqualTo("CVE-2021-45046");
-                        assertThat(assertion.knownRansomware()).isTrue();
-                        assertThat(assertion.raw().get("product").asText()).isEqualTo("Log4j2");
-                    },
-                    assertion -> {
-                        assertThat(assertion.vulnId()).isEqualTo("CVE-2023-3519");
-                        assertThat(assertion.publishedAt()).isEqualTo(Instant.parse("2023-07-19T14:22:11Z"));
-                        assertThat(assertion.knownRansomware()).isNull();
-                    });
+            assertThat(dataSource)
+                    .toIterable()
+                    .satisfiesExactly(
+                            assertion -> {
+                                assertThat(assertion.vulnSource()).isEqualTo("NVD");
+                                assertThat(assertion.vulnId()).isEqualTo("CVE-2021-44228");
+                                assertThat(assertion.publishedAt()).isEqualTo(Instant.parse("2021-12-10T00:00:00Z"));
+                                assertThat(assertion.requiredAction()).isEqualTo("Apply updates");
+                                assertThat(assertion.knownRansomware()).isTrue();
+                                assertThat(assertion.description()).isEqualTo("Log4Shell");
+                                assertThat(assertion.raw().get("product").asText())
+                                        .isEqualTo("Log4j2");
+                            },
+                            assertion -> {
+                                assertThat(assertion.vulnId()).isEqualTo("CVE-2021-45046");
+                                assertThat(assertion.knownRansomware()).isTrue();
+                                assertThat(assertion.raw().get("product").asText())
+                                        .isEqualTo("Log4j2");
+                            },
+                            assertion -> {
+                                assertThat(assertion.vulnId()).isEqualTo("CVE-2023-3519");
+                                assertThat(assertion.publishedAt()).isEqualTo(Instant.parse("2023-07-19T14:22:11Z"));
+                                assertThat(assertion.knownRansomware()).isNull();
+                            });
         }
     }
 
@@ -130,8 +133,10 @@ class VulnCheckKevDataSourceTest {
                 """));
 
         try (final KevDataSource dataSource = createDataSource(wmRuntimeInfo)) {
-            assertThat(dataSource).toIterable().satisfiesExactly(
-                    assertion -> assertThat(assertion.vulnId()).isEqualTo("CVE-2023-3519"));
+            assertThat(dataSource)
+                    .toIterable()
+                    .satisfiesExactly(
+                            assertion -> assertThat(assertion.vulnId()).isEqualTo("CVE-2023-3519"));
         }
     }
 
@@ -152,8 +157,7 @@ class VulnCheckKevDataSourceTest {
 
         verify(getRequestedFor(urlEqualTo("/v3/backup/vulncheck-kev"))
                 .withHeader("Authorization", equalTo("Bearer " + API_TOKEN)));
-        verify(getRequestedFor(urlEqualTo("/backup.zip"))
-                .withoutHeader("Authorization"));
+        verify(getRequestedFor(urlEqualTo("/backup.zip")).withoutHeader("Authorization"));
     }
 
     @Test
@@ -178,9 +182,8 @@ class VulnCheckKevDataSourceTest {
 
     @Test
     void shouldFailOnUnexpectedResponseCode(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlEqualTo("/v3/backup/vulncheck-kev")).willReturn(aResponse()
-                .withStatus(401)
-                .withBody("token is not authorized")));
+        stubFor(get(urlEqualTo("/v3/backup/vulncheck-kev"))
+                .willReturn(aResponse().withStatus(401).withBody("token is not authorized")));
 
         try (final KevDataSource dataSource = createDataSource(wmRuntimeInfo)) {
             assertThatThrownBy(dataSource::hasNext)
@@ -191,9 +194,10 @@ class VulnCheckKevDataSourceTest {
 
     @Test
     void shouldRefuseInsecureDownloadUrl(WireMockRuntimeInfo wmRuntimeInfo) {
-        stubFor(get(urlEqualTo("/v3/backup/vulncheck-kev")).willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBody(/* language=JSON */ """
+        stubFor(get(urlEqualTo("/v3/backup/vulncheck-kev"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(/* language=JSON */ """
                         {
                           "data": [
                             {
@@ -213,23 +217,18 @@ class VulnCheckKevDataSourceTest {
 
     private VulnCheckKevDataSource createDataSource(WireMockRuntimeInfo wmRuntimeInfo) {
         return new VulnCheckKevDataSource(
-                HttpClient.newHttpClient(),
-                objectMapper,
-                URI.create(wmRuntimeInfo.getHttpBaseUrl()),
-                API_TOKEN);
+                HttpClient.newHttpClient(), objectMapper, URI.create(wmRuntimeInfo.getHttpBaseUrl()), API_TOKEN);
     }
 
     private static void stubBackup(WireMockRuntimeInfo wmRuntimeInfo, byte[] zipBytes) {
         stubBackupWithDigest(wmRuntimeInfo, zipBytes, sha256Hex(zipBytes));
     }
 
-    private static void stubBackupWithDigest(
-            WireMockRuntimeInfo wmRuntimeInfo,
-            byte[] zipBytes,
-            String sha256) {
-        stubFor(get(urlEqualTo("/v3/backup/vulncheck-kev")).willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBody(/* language=JSON */ """
+    private static void stubBackupWithDigest(WireMockRuntimeInfo wmRuntimeInfo, byte[] zipBytes, String sha256) {
+        stubFor(get(urlEqualTo("/v3/backup/vulncheck-kev"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(/* language=JSON */ """
                         {
                           "_meta": {
                             "index": "vulncheck-kev"
@@ -245,9 +244,10 @@ class VulnCheckKevDataSourceTest {
                         }
                         """.formatted(sha256, wmRuntimeInfo.getHttpBaseUrl()))));
 
-        stubFor(get(urlEqualTo("/backup.zip")).willReturn(aResponse()
-                .withHeader("Content-Type", "application/zip")
-                .withBody(zipBytes)));
+        stubFor(get(urlEqualTo("/backup.zip"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/zip")
+                        .withBody(zipBytes)));
     }
 
     private static byte[] createBackupArchive(String contentJson) {
@@ -270,5 +270,4 @@ class VulnCheckKevDataSourceTest {
             throw new IllegalStateException(e);
         }
     }
-
 }

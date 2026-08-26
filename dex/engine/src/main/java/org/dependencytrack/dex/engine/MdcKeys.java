@@ -28,7 +28,5 @@ final class MdcKeys {
     static final String MDC_WORKFLOW_NAME = "workflowName";
     static final String MDC_WORKFLOW_RUN_ID = "workflowRunId";
 
-    private MdcKeys() {
-    }
-
+    private MdcKeys() {}
 }

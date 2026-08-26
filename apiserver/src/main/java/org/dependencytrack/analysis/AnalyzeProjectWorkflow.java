@@ -49,8 +49,8 @@ public final class AnalyzeProjectWorkflow implements Workflow<AnalyzeProjectWork
 
     @Override
     public @Nullable Void execute(
-            WorkflowContext<@Nullable AnalyzeProjectWorkflowArg> ctx,
-            @Nullable AnalyzeProjectWorkflowArg arg) throws Exception {
+            WorkflowContext<@Nullable AnalyzeProjectWorkflowArg> ctx, @Nullable AnalyzeProjectWorkflowArg arg)
+            throws Exception {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -115,5 +115,4 @@ public final class AnalyzeProjectWorkflow implements Workflow<AnalyzeProjectWork
             default -> throw new IllegalArgumentException("Unexpected analysis trigger: " + trigger);
         };
     }
-
 }

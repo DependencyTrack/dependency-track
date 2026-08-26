@@ -59,8 +59,7 @@ final class WatermarkManager {
         final KeyValueStore.Entry watermarkEntry = kvStore.get("watermark");
         if (watermarkEntry != null) {
             try {
-                committedWatermark = Instant.ofEpochMilli(
-                        Long.parseLong(watermarkEntry.value()));
+                committedWatermark = Instant.ofEpochMilli(Long.parseLong(watermarkEntry.value()));
                 committedWatermarkVersion = watermarkEntry.version();
             } catch (NumberFormatException ex) {
                 LOGGER.warn("Encountered invalid watermark: {}; Ignoring", watermarkEntry, ex);
@@ -71,10 +70,8 @@ final class WatermarkManager {
         final var committedFeedDigestVersions = new HashMap<String, Long>();
 
         if (!feedNames.isEmpty()) {
-            final Map<String, String> feedNameByKey = feedNames.stream()
-                    .collect(Collectors.toMap(
-                            name -> FEED_DIGEST_KEY_PREFIX + name,
-                            name -> name));
+            final Map<String, String> feedNameByKey =
+                    feedNames.stream().collect(Collectors.toMap(name -> FEED_DIGEST_KEY_PREFIX + name, name -> name));
 
             final Map<String, KeyValueStore.Entry> entries = kvStore.getMany(feedNameByKey.keySet());
             for (final Map.Entry<String, KeyValueStore.Entry> entry : entries.entrySet()) {
@@ -92,7 +89,8 @@ final class WatermarkManager {
         this.pendingFeedDigests = new HashMap<>();
     }
 
-    @Nullable Instant getWatermark() {
+    @Nullable
+    Instant getWatermark() {
         return committedWatermark;
     }
 
@@ -107,7 +105,8 @@ final class WatermarkManager {
     }
 
     /** The digest committed for a feed on a previous run, or {@code null} if it was never seen. */
-    @Nullable String getCommittedFeedDigest(final String feedName) {
+    @Nullable
+    String getCommittedFeedDigest(final String feedName) {
         return committedFeedDigests.get(feedName);
     }
 
@@ -122,16 +121,13 @@ final class WatermarkManager {
     }
 
     private void commitWatermark() {
-        if (pendingWatermark == null
-                || (committedWatermark != null && committedWatermark.equals(pendingWatermark))) {
+        if (pendingWatermark == null || (committedWatermark != null && committedWatermark.equals(pendingWatermark))) {
             return;
         }
 
         LOGGER.debug("Committing watermark {} to KV store", pendingWatermark);
         final CompareAndPutResult capResult = kvStore.compareAndPut(
-                "watermark",
-                String.valueOf(pendingWatermark.toEpochMilli()),
-                committedWatermarkVersion);
+                "watermark", String.valueOf(pendingWatermark.toEpochMilli()), committedWatermarkVersion);
         switch (capResult) {
             case CompareAndPutResult.Success(long newVersion) -> {
                 committedWatermark = pendingWatermark;
@@ -139,9 +135,8 @@ final class WatermarkManager {
                 pendingWatermark = null;
             }
             case CompareAndPutResult.Failure(CompareAndPutResult.Failure.Reason reason) ->
-                    throw new IllegalStateException(
-                            "Failed to commit watermark %s to KV store: %s".formatted(
-                                    pendingWatermark, reason));
+                throw new IllegalStateException(
+                        "Failed to commit watermark %s to KV store: %s".formatted(pendingWatermark, reason));
         }
     }
 
@@ -153,21 +148,17 @@ final class WatermarkManager {
                 continue;
             }
             final CompareAndPutResult capResult = kvStore.compareAndPut(
-                    FEED_DIGEST_KEY_PREFIX + feedName,
-                    digest,
-                    committedFeedDigestVersions.get(feedName));
+                    FEED_DIGEST_KEY_PREFIX + feedName, digest, committedFeedDigestVersions.get(feedName));
             switch (capResult) {
                 case CompareAndPutResult.Success(long newVersion) -> {
                     committedFeedDigests.put(feedName, digest);
                     committedFeedDigestVersions.put(feedName, newVersion);
                 }
                 case CompareAndPutResult.Failure(CompareAndPutResult.Failure.Reason reason) ->
-                        throw new IllegalStateException(
-                                "Failed to commit feed digest for %s to KV store: %s".formatted(
-                                        feedName, reason));
+                    throw new IllegalStateException(
+                            "Failed to commit feed digest for %s to KV store: %s".formatted(feedName, reason));
             }
         }
         pendingFeedDigests.clear();
     }
-
 }

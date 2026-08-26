@@ -27,7 +27,5 @@ import java.util.List;
 public record Analysis(@JsonProperty("analysisComments") List<Comment> comments) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Comment(String comment, String commenter) {
-    }
-
+    public record Comment(String comment, String commenter) {}
 }

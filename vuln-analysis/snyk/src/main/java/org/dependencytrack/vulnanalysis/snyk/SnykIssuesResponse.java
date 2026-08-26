@@ -28,11 +28,9 @@ import java.util.List;
  * @since 5.0.0
  */
 record SnykIssuesResponse(
-        @Nullable List<SnykIssue> data,
-        @Nullable SnykIssuesMeta meta) {
+        @Nullable List<SnykIssue> data, @Nullable SnykIssuesMeta meta) {
 
     SnykIssuesResponse(@Nullable List<SnykIssue> data) {
         this(data, null);
     }
-
 }

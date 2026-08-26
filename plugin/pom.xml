@@ -24,21 +24,16 @@
         <artifactId>dependency-track-parent</artifactId>
         <version>5.1.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>plugin-parent</artifactId>
     <packaging>pom</packaging>
-
     <name>Plugin :: Parent</name>
-
     <modules>
         <module>api</module>
         <module>config</module>
         <module>runtime</module>
         <module>testing</module>
     </modules>
-
     <properties>
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
     </properties>
-
 </project>

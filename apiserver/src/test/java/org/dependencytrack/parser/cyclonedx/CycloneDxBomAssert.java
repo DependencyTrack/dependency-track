@@ -45,8 +45,8 @@ public class CycloneDxBomAssert extends AbstractAssert<CycloneDxBomAssert, Strin
     public CycloneDxBomAssert isValid() {
         isNotNull();
 
-        assertThatNoException().isThrownBy(
-                () -> CycloneDxValidator.getInstance().validate(actual.getBytes()));
+        assertThatNoException()
+                .isThrownBy(() -> CycloneDxValidator.getInstance().validate(actual.getBytes()));
         return this;
     }
 
@@ -82,5 +82,4 @@ public class CycloneDxBomAssert extends AbstractAssert<CycloneDxBomAssert, Strin
             bomRefs.add(bomRef.asText());
         }
     }
-
 }

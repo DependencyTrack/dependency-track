@@ -24,5 +24,4 @@ package org.dependencytrack.dex.engine.persistence.model;
 /// @param concurrencyKey The concurrency key that experienced a change.
 /// @param freed          Whether the change was caused by a workflow run terminating,
 ///                       freeing the concurrency key for a new run.
-public record ConcurrencyKeyWakeup(String queueName, String concurrencyKey, boolean freed) {
-}
+public record ConcurrencyKeyWakeup(String queueName, String concurrencyKey, boolean freed) {}

@@ -25,25 +25,18 @@
         <version>5.1.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
-
     <artifactId>cyclonedx-proto</artifactId>
     <packaging>jar</packaging>
-
     <name>Support :: CycloneDX Protocol Buffers</name>
-
     <properties>
         <project.parentBaseDir>${project.basedir}/../..</project.parentBaseDir>
-        <spotless.check.skip>true</spotless.check.skip>
-        <spotless.apply.skip>true</spotless.apply.skip>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -52,5 +45,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

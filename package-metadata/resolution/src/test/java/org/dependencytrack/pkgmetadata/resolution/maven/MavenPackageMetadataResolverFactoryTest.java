@@ -27,21 +27,24 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class MavenPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest<PackageMetadataResolver, MavenPackageMetadataResolverFactory> {
+class MavenPackageMetadataResolverFactoryTest
+        extends AbstractExtensionFactoryTest<PackageMetadataResolver, MavenPackageMetadataResolverFactory> {
 
     protected MavenPackageMetadataResolverFactoryTest() {
         super(MavenPackageMetadataResolverFactory.class);
     }
 
     @ParameterizedTest
-    @CsvSource(nullValues = "", value = {
-            "pkg:maven/com.example/foo@1.0, pkg:maven/com.example/foo@1.0?type=jar",
-            "pkg:maven/com.example/foo@1.0?type=pom, pkg:maven/com.example/foo@1.0?type=pom",
-            "pkg:maven/com.example/foo@1.0?classifier=sources&type=jar, pkg:maven/com.example/foo@1.0?classifier=sources&type=jar",
-            "pkg:maven/com.example/foo@1.0?type=jar&unrelated=value#sub/path, pkg:maven/com.example/foo@1.0?type=jar",
-            "pkg:npm/foo@1.0, ",
-            "pkg:maven/com.example/foo, ",
-    })
+    @CsvSource(
+            nullValues = "",
+            value = {
+                "pkg:maven/com.example/foo@1.0, pkg:maven/com.example/foo@1.0?type=jar",
+                "pkg:maven/com.example/foo@1.0?type=pom, pkg:maven/com.example/foo@1.0?type=pom",
+                "pkg:maven/com.example/foo@1.0?classifier=sources&type=jar, pkg:maven/com.example/foo@1.0?classifier=sources&type=jar",
+                "pkg:maven/com.example/foo@1.0?type=jar&unrelated=value#sub/path, pkg:maven/com.example/foo@1.0?type=jar",
+                "pkg:npm/foo@1.0, ",
+                "pkg:maven/com.example/foo, ",
+            })
     void shouldNormalize(String input, String expected) throws Exception {
         assertThat(factory.normalize(new PackageURL(input)))
                 .isEqualTo(expected != null ? new PackageURL(expected) : null);
@@ -51,5 +54,4 @@ class MavenPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTe
     void shouldRequireRepository() {
         assertThat(factory.requiresRepository()).isTrue();
     }
-
 }

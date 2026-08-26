@@ -36,8 +36,7 @@ final class SnykPurlUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(SnykPurlUtil.class);
     private static final String CHECKSUM = "checksum";
 
-    private SnykPurlUtil() {
-    }
+    private SnykPurlUtil() {}
 
     /**
      * Builds the request / cache key for a component PURL.
@@ -91,5 +90,4 @@ final class SnykPurlUtil {
             return purl.toLowerCase();
         }
     }
-
 }

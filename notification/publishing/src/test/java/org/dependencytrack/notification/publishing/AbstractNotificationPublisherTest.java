@@ -63,14 +63,11 @@ public abstract class AbstractNotificationPublisherTest {
 
     protected abstract NotificationPublisherFactory createPublisherFactory();
 
-    protected void customizeDeploymentConfig(Map<String, String> deploymentConfig) {
-    }
+    protected void customizeDeploymentConfig(Map<String, String> deploymentConfig) {}
 
-    protected void customizeGlobalConfig(RuntimeConfig globalConfig) {
-    }
+    protected void customizeGlobalConfig(RuntimeConfig globalConfig) {}
 
-    protected void customizeRuleConfig(RuntimeConfig ruleConfig) {
-    }
+    protected void customizeRuleConfig(RuntimeConfig ruleConfig) {}
 
     @BeforeEach
     protected void beforeEach() throws Exception {
@@ -80,35 +77,28 @@ public abstract class AbstractNotificationPublisherTest {
         customizeDeploymentConfig(deploymentConfig);
 
         RuntimeConfig globalConfig = null;
-        final RuntimeConfigSpec globalConfigSpec = publisherFactory instanceof RuntimeConfigurable rc
-                ? rc.runtimeConfigSpec()
-                : null;
+        final RuntimeConfigSpec globalConfigSpec =
+                publisherFactory instanceof RuntimeConfigurable rc ? rc.runtimeConfigSpec() : null;
         if (globalConfigSpec != null) {
             globalConfig = globalConfigSpec.defaultConfig();
             customizeGlobalConfig(globalConfig);
         }
 
         final var configRegistry = new MockConfigRegistry(
-                deploymentConfig,
-                globalConfigSpec,
-                RuntimeConfigMapper.getInstance(),
-                globalConfig);
+                deploymentConfig, globalConfigSpec, RuntimeConfigMapper.getInstance(), globalConfig);
 
-        publisherFactory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        publisherFactory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, configRegistry)
+                .register(HttpClient.class, HttpClient.newHttpClient()));
         publisher = publisherFactory.create();
 
-        final var templateRendererFactory =
-                new PebbleNotificationTemplateRendererFactory(
-                        Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"),
-                        // NB: strictVariables enabled so rendering fails when default
-                        // templates reference nonexistent variables.
-                        /* strictVariables */ true);
+        final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
+                Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"),
+                // NB: strictVariables enabled so rendering fails when default
+                // templates reference nonexistent variables.
+                /* strictVariables */ true);
         final NotificationTemplateRenderer templateRenderer =
-                templateRendererFactory.createRenderer(
-                        publisherFactory.defaultTemplate());
+                templateRendererFactory.createRenderer(publisherFactory.defaultTemplate());
 
         RuntimeConfig ruleConfig = null;
 
@@ -134,8 +124,7 @@ public abstract class AbstractNotificationPublisherTest {
     @ParameterizedTest
     @MethodSource("testNotificationPublishArguments")
     void testNotificationPublish(Notification notification) throws Exception {
-        assertThatNoException()
-                .isThrownBy(() -> publisher.publish(publishContext, notification));
+        assertThatNoException().isThrownBy(() -> publisher.publish(publishContext, notification));
 
         validateNotificationPublish(notification);
     }
@@ -169,5 +158,4 @@ public abstract class AbstractNotificationPublisherTest {
                         .build())
                 .map(Arguments::of);
     }
-
 }

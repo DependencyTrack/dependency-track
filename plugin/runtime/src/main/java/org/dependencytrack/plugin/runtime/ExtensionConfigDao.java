@@ -47,7 +47,8 @@ final class ExtensionConfigDao {
                 .one();
     }
 
-    @Nullable String get(String extensionPointName, String extensionName) {
+    @Nullable
+    String get(String extensionPointName, String extensionName) {
         return handle.createQuery("""
                         SELECT "CONFIG"
                           FROM "EXTENSION_RUNTIME_CONFIG"
@@ -77,5 +78,4 @@ final class ExtensionConfigDao {
                 .execute();
         return modifiedRows > 0;
     }
-
 }

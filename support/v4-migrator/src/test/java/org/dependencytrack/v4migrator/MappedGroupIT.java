@@ -67,8 +67,10 @@ class MappedGroupIT {
         final String ldapUuid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
         final String oidcUuid = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
         source.jdbi().useHandle(h -> {
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '11111111-1111-1111-1111-111111111111')");
-            h.execute("INSERT INTO \"OIDCGROUP\" (\"ID\", \"NAME\", \"UUID\") VALUES (5, 'admins', '22222222-2222-2222-2222-222222222222')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '11111111-1111-1111-1111-111111111111')");
+            h.execute(
+                    "INSERT INTO \"OIDCGROUP\" (\"ID\", \"NAME\", \"UUID\") VALUES (5, 'admins', '22222222-2222-2222-2222-222222222222')");
             h.createUpdate("""
                     INSERT INTO "MAPPEDLDAPGROUP" ("ID", "DN", "TEAM_ID", "UUID")
                     VALUES (100, 'cn=eng,dc=example,dc=com', 1, :u)
@@ -81,23 +83,23 @@ class MappedGroupIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> ldap = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> ldap =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "DN", "TEAM_ID", "UUID"
                       FROM "MAPPEDLDAPGROUP"
                      ORDER BY "ID"
                     """).mapToMap().list());
-        assertThat(ldap).extracting("id", "dn", "team_id", "uuid")
-            .containsExactly(tuple(100L, "cn=eng,dc=example,dc=com", 1L, ldapUuid));
+        assertThat(ldap)
+                .extracting("id", "dn", "team_id", "uuid")
+                .containsExactly(tuple(100L, "cn=eng,dc=example,dc=com", 1L, ldapUuid));
 
-        final List<Map<String, Object>> oidc = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> oidc =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "GROUP_ID", "TEAM_ID", "UUID"
                       FROM "MAPPEDOIDCGROUP"
                      ORDER BY "ID"
                     """).mapToMap().list());
-        assertThat(oidc).extracting("id", "group_id", "team_id", "uuid")
-            .containsExactly(tuple(200L, 5L, 1L, oidcUuid));
+        assertThat(oidc).extracting("id", "group_id", "team_id", "uuid").containsExactly(tuple(200L, 5L, 1L, oidcUuid));
     }
 
     private void runPipeline() throws Exception {

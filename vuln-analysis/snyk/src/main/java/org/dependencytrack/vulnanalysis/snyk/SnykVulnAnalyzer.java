@@ -65,8 +65,18 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
     private static final int REQUEST_BATCH_SIZE = 100;
     private static final int CACHE_BATCH_SIZE = 500;
     private static final Set<String> SUPPORTED_PURL_TYPES = Set.of(
-            "cargo", "cocoapods", "composer", "gem", "generic",
-            "hex", "maven", "npm", "nuget", "pypi", "swift", "golang");
+            "cargo",
+            "cocoapods",
+            "composer",
+            "gem",
+            "generic",
+            "hex",
+            "maven",
+            "npm",
+            "nuget",
+            "pypi",
+            "swift",
+            "golang");
 
     private final Cache resultsCache;
     private final HttpClient httpClient;
@@ -152,8 +162,8 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             }
             if (component.getPropertiesCount() > 0
                     && component.getPropertiesList().stream()
-                    .map(Property::getName)
-                    .anyMatch("dependencytrack:internal:is-internal-component"::equalsIgnoreCase)) {
+                            .map(Property::getName)
+                            .anyMatch("dependencytrack:internal:is-internal-component"::equalsIgnoreCase)) {
                 continue;
             }
 
@@ -164,9 +174,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                 }
 
                 final String requestPurl = SnykPurlUtil.toSnykRequestPurl(purl, checksumMatchingEnabled);
-                bomRefsByPurl
-                        .computeIfAbsent(requestPurl, _ -> new HashSet<>())
-                        .add(component.getBomRef());
+                bomRefsByPurl.computeIfAbsent(requestPurl, _ -> new HashSet<>()).add(component.getBomRef());
             } catch (MalformedPackageURLException e) {
                 LOGGER.warn("Failed to parse PURL '{}'; Skipping", component.getPurl(), e);
             }
@@ -179,14 +187,14 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             Collection<String> purls,
             Map<String, Set<String>> bomRefsByPurl,
             Map<String, List<SnykIssue>> issuesByPurl,
-            Map<String, SnykMatchType> matchTypeByPurl) throws InterruptedException {
+            Map<String, SnykMatchType> matchTypeByPurl)
+            throws InterruptedException {
         if (purls.isEmpty()) {
             return;
         }
 
-        for (final var purlBatch : (Iterable<List<String>>) () -> purls.stream()
-                .gather(Gatherers.windowFixed(REQUEST_BATCH_SIZE))
-                .iterator()) {
+        for (final var purlBatch : (Iterable<List<String>>) () ->
+                purls.stream().gather(Gatherers.windowFixed(REQUEST_BATCH_SIZE)).iterator()) {
             if (Thread.interrupted()) {
                 throw new InterruptedException("Interrupted before all components could be analyzed");
             }
@@ -199,7 +207,8 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             Collection<String> purlBatch,
             Map<String, Set<String>> bomRefsByPurl,
             Map<String, List<SnykIssue>> issuesByPurl,
-            Map<String, SnykMatchType> matchTypeByPurl) throws InterruptedException {
+            Map<String, SnykMatchType> matchTypeByPurl)
+            throws InterruptedException {
         if (purlBatch.isEmpty()) {
             return;
         }
@@ -217,8 +226,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
         if (response.meta() != null && response.meta().errors() != null) {
             for (final SnykIssuesMeta.Error error : response.meta().errors()) {
-                LOGGER.warn("Snyk meta error: id={}, status={}, detail={}",
-                        error.id(), error.status(), error.detail());
+                LOGGER.warn("Snyk meta error: id={}, status={}, detail={}", error.id(), error.status(), error.detail());
             }
         }
 
@@ -264,12 +272,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                         hasMetaErrors);
             } else {
                 processCoordinatesOnlyPurl(
-                        requestPurl,
-                        bomRefsByPurl,
-                        issuesByIssuePurl,
-                        issuesByPurl,
-                        matchTypeByPurl,
-                        entriesToCache);
+                        requestPurl, bomRefsByPurl, issuesByIssuePurl, issuesByPurl, matchTypeByPurl, entriesToCache);
             }
         }
 
@@ -285,17 +288,15 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             Map<String, byte @Nullable []> entriesToCache,
             boolean hasMetaErrors) {
         final String normalizedKey = SnykPurlUtil.normalizePurlKey(requestPurl);
-        final SnykIssuesMeta.PackageMetaEntry metaEntry = normalizedKey != null
-                ? metaByNormalizedPurl.get(normalizedKey)
-                : null;
+        final SnykIssuesMeta.PackageMetaEntry metaEntry =
+                normalizedKey != null ? metaByNormalizedPurl.get(normalizedKey) : null;
 
         if (metaEntry == null || metaEntry.match() == null || metaEntry.match().type() == null) {
             if (hasMetaErrors) {
                 // Permanent meta failure for this PURL (e.g. unsupported ecosystem): negative-cache.
                 LOGGER.warn("""
                         No usable meta.packages entry for checksum-qualified PURL '{}' \
-                        and meta.errors was non-empty; Skipping findings and negative-caching""",
-                        requestPurl);
+                        and meta.errors was non-empty; Skipping findings and negative-caching""", requestPurl);
                 entriesToCache.put(requestPurl, null);
             } else {
                 LOGGER.warn("""
@@ -317,13 +318,11 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                             match.description(),
                             match.details());
                 }
-                final List<SnykIssue> issues = resolveIssuesForRequestPurl(
-                        requestPurl, metaEntry, issuesByIssuePurl);
+                final List<SnykIssue> issues = resolveIssuesForRequestPurl(requestPurl, metaEntry, issuesByIssuePurl);
                 if (!issues.isEmpty()) {
                     issuesByRequestPurl.put(requestPurl, issues);
                     matchTypeByPurl.put(requestPurl, matchType);
-                    putCachedResult(entriesToCache, requestPurl,
-                            SnykCachedPurlResult.of(matchType, issues, match));
+                    putCachedResult(entriesToCache, requestPurl, SnykCachedPurlResult.of(matchType, issues, match));
                 } else {
                     entriesToCache.put(requestPurl, null);
                 }
@@ -358,7 +357,8 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                 } else {
                     LOGGER.warn(
                             "Received issue {} for PURL '{}', but no component with this PURL was submitted",
-                            issue.id(), requestPurl);
+                            issue.id(),
+                            requestPurl);
                 }
             }
         }
@@ -476,7 +476,8 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             if (entry.getValue().match() != null
                     && entry.getValue().match().input() != null
                     && entry.getValue().match().input().purl() != null) {
-                final String inputKey = SnykPurlUtil.normalizePurlKey(entry.getValue().match().input().purl());
+                final String inputKey = SnykPurlUtil.normalizePurlKey(
+                        entry.getValue().match().input().purl());
                 if (inputKey != null) {
                     indexed.putIfAbsent(inputKey, entry.getValue());
                 }
@@ -486,9 +487,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
     }
 
     private void putCachedResult(
-            Map<String, byte @Nullable []> entriesToCache,
-            String purl,
-            SnykCachedPurlResult result) {
+            Map<String, byte @Nullable []> entriesToCache, String purl, SnykCachedPurlResult result) {
         if (result.issues() == null || result.issues().isEmpty()) {
             entriesToCache.put(purl, null);
             return;
@@ -578,28 +577,22 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             }
 
             for (final SnykIssue issue : issues) {
-                final Vulnerability.Builder vulnBuilder =
-                        vulnBuilderByVulnId.computeIfAbsent(
-                                issue.id(),
-                                _ -> SnykModelConverter.convert(issue, aliasSyncEnabled));
+                final Vulnerability.Builder vulnBuilder = vulnBuilderByVulnId.computeIfAbsent(
+                        issue.id(), _ -> SnykModelConverter.convert(issue, aliasSyncEnabled));
 
                 SnykModelConverter.applyMatchingPercentage(vulnBuilder, matchingPercentage);
 
                 for (final String bomRef : bomRefs) {
                     vulnBuilder.addAffects(
-                            VulnerabilityAffects.newBuilder()
-                                    .setRef(bomRef)
-                                    .build());
+                            VulnerabilityAffects.newBuilder().setRef(bomRef).build());
                 }
             }
         }
 
         return Bom.newBuilder()
-                .addAllVulnerabilities(
-                        vulnBuilderByVulnId.values().stream()
-                                .map(Vulnerability.Builder::build)
-                                .toList())
+                .addAllVulnerabilities(vulnBuilderByVulnId.values().stream()
+                        .map(Vulnerability.Builder::build)
+                        .toList())
                 .build();
     }
-
 }

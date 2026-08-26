@@ -32,5 +32,4 @@ public enum TaskQueueStatus {
      * Workers will not dequeue any more tasks until the queue transitions back to the {@link #ACTIVE} status.
      */
     PAUSED
-
 }

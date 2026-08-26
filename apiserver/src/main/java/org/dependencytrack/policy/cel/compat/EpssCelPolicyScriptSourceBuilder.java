@@ -39,15 +39,18 @@ public class EpssCelPolicyScriptSourceBuilder implements CelPolicyScriptSourceBu
             return null;
         }
 
-        final String scriptSrcTemplate = switch (policyCondition.getOperator()) {
-            case NUMERIC_GREATER_THAN -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score > %s)";
-            case NUMERIC_GREATER_THAN_OR_EQUAL -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score >= %s)";
-            case NUMERIC_EQUAL -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score == %s)";
-            case NUMERIC_NOT_EQUAL -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score != %s)";
-            case NUMERIC_LESSER_THAN_OR_EQUAL -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score <= %s)";
-            case NUMERIC_LESS_THAN -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score < %s)";
-            default -> null;
-        };
+        final String scriptSrcTemplate =
+                switch (policyCondition.getOperator()) {
+                    case NUMERIC_GREATER_THAN -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score > %s)";
+                    case NUMERIC_GREATER_THAN_OR_EQUAL ->
+                        "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score >= %s)";
+                    case NUMERIC_EQUAL -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score == %s)";
+                    case NUMERIC_NOT_EQUAL -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score != %s)";
+                    case NUMERIC_LESSER_THAN_OR_EQUAL ->
+                        "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score <= %s)";
+                    case NUMERIC_LESS_THAN -> "vulns.exists(vuln, has(vuln.epss_score) && vuln.epss_score < %s)";
+                    default -> null;
+                };
         if (scriptSrcTemplate == null) {
             LOGGER.warn("Operator %s is not supported for EPSS conditions".formatted(policyCondition.getOperator()));
             return null;
@@ -55,5 +58,4 @@ public class EpssCelPolicyScriptSourceBuilder implements CelPolicyScriptSourceBu
 
         return scriptSrcTemplate.formatted(conditionValue);
     }
-
 }

@@ -37,5 +37,4 @@ public final class SideEffectFailureException extends FailureException {
     public String getSideEffectName() {
         return sideEffectName;
     }
-
 }

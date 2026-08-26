@@ -35,18 +35,18 @@ public class CompositeEncoder implements Encoder {
 
     @Override
     @SuppressWarnings("unchecked")
-    public void encode(final Object object, final Type bodyType, final RequestTemplate template) throws EncodeException {
+    public void encode(final Object object, final Type bodyType, final RequestTemplate template)
+            throws EncodeException {
         if (bodyType == Encoder.MAP_STRING_WILDCARD) {
             final Map<String, ?> body = (Map<String, ?>) object;
             template.body(body.entrySet().stream()
-                    .map(entry -> "%s=%s".formatted(
-                            URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8),
-                            URLEncoder.encode(String.valueOf(entry.getValue()), StandardCharsets.UTF_8)
-                    ))
+                    .map(entry -> "%s=%s"
+                            .formatted(
+                                    URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8),
+                                    URLEncoder.encode(String.valueOf(entry.getValue()), StandardCharsets.UTF_8)))
                     .collect(Collectors.joining("&")));
         } else {
             jsonEncoder.encode(object, bodyType, template);
         }
     }
-
 }

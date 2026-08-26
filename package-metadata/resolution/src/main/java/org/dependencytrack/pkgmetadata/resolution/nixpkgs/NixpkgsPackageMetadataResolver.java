@@ -44,9 +44,8 @@ final class NixpkgsPackageMetadataResolver implements PackageMetadataResolver {
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String cacheKey = CacheKeys.build(repository, purl.getName());
@@ -64,5 +63,4 @@ final class NixpkgsPackageMetadataResolver implements PackageMetadataResolver {
         cache.put(cacheKey, version.getBytes(StandardCharsets.UTF_8));
         return new PackageMetadata(version, null, Instant.now(), null);
     }
-
 }

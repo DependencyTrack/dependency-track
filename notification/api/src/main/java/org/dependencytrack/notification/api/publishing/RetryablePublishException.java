@@ -36,9 +36,7 @@ public class RetryablePublishException extends RuntimeException {
     private final @Nullable Duration retryAfter;
 
     public RetryablePublishException(
-            @Nullable String message,
-            @Nullable Throwable cause,
-            @Nullable Duration retryAfter) {
+            @Nullable String message, @Nullable Throwable cause, @Nullable Duration retryAfter) {
         super(message, cause);
         if (retryAfter != null && (retryAfter.isZero() || retryAfter.isNegative())) {
             throw new IllegalArgumentException("retryAfter must be positive, but was: " + retryAfter);
@@ -76,5 +74,4 @@ public class RetryablePublishException extends RuntimeException {
             throw new RetryablePublishException(message, e);
         }
     }
-
 }

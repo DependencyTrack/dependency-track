@@ -182,12 +182,7 @@ public interface MetricsTestDao extends SqlObject {
         String sql = String.format("""
             CREATE TABLE IF NOT EXISTS %s PARTITION OF %s
             FOR VALUES FROM (CAST('%s' AS timestamp) AT TIME ZONE 'UTC') TO (CAST('%s' AS timestamp) AT TIME ZONE 'UTC');
-        """,
-                "\"" + partitionName + "\"",
-                "\"" + tableName + "\"",
-                targetDate,
-                nextDay
-        );
+        """, "\"" + partitionName + "\"", "\"" + tableName + "\"", targetDate, nextDay);
         getHandle().execute(sql);
     }
 

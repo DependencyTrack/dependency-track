@@ -93,9 +93,7 @@ public interface FindingDao extends PaginationSupport {
             AnalysisState analysisState,
             boolean suppressed,
             @Nullable String analysisDetail,
-            @Nullable Long totalCount
-    ) {
-    }
+            @Nullable Long totalCount) {}
 
     record GroupedFindingRow(
             Vulnerability.Source vulnSource,
@@ -112,9 +110,7 @@ public interface FindingDao extends PaginationSupport {
             List<Integer> cwes,
             String analyzerIdentity,
             int affectedProjectCount,
-            @Nullable Long totalCount
-    ) {
-    }
+            @Nullable Long totalCount) {}
 
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="apiOrderByClause" type="String" -->
@@ -273,22 +269,24 @@ public interface FindingDao extends PaginationSupport {
             </#if>
              ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""), by = {
-            @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
-            @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
-            @AllowApiOrdering.Column(name = "vulnerability.epssScore", queryName = "\"epssScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.epssPercentile", queryName = "\"epssPercentile\""),
-            @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
-            @AllowApiOrdering.Column(name = "component.group", queryName = "c.\"GROUP\""),
-            @AllowApiOrdering.Column(name = "component.name", queryName = "c.\"NAME\""),
-            @AllowApiOrdering.Column(name = "component.version", queryName = "c.\"VERSION\""),
-            @AllowApiOrdering.Column(name = "analysis.state", queryName = "a.\"STATE\""),
-            @AllowApiOrdering.Column(name = "analysis.isSuppressed", queryName = "a.\"SUPPRESSED\""),
-            @AllowApiOrdering.Column(name = "attribution.attributedOn", queryName = "fa.\"ATTRIBUTED_ON\"")
-    })
+    @AllowApiOrdering(
+            alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""),
+            by = {
+                @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
+                @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
+                @AllowApiOrdering.Column(name = "vulnerability.epssScore", queryName = "\"epssScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.epssPercentile", queryName = "\"epssPercentile\""),
+                @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
+                @AllowApiOrdering.Column(name = "component.group", queryName = "c.\"GROUP\""),
+                @AllowApiOrdering.Column(name = "component.name", queryName = "c.\"NAME\""),
+                @AllowApiOrdering.Column(name = "component.version", queryName = "c.\"VERSION\""),
+                @AllowApiOrdering.Column(name = "analysis.state", queryName = "a.\"STATE\""),
+                @AllowApiOrdering.Column(name = "analysis.isSuppressed", queryName = "a.\"SUPPRESSED\""),
+                @AllowApiOrdering.Column(name = "attribution.attributedOn", queryName = "fa.\"ATTRIBUTED_ON\"")
+            })
     @DefineNamedBindings
     @RegisterConstructorMapper(FindingRow.class)
     List<FindingRow> selectFindingsByProject(
@@ -312,7 +310,8 @@ public interface FindingDao extends PaginationSupport {
     /// * The `FROM` / `WHERE` clauses **must** stay in sync with {@link #selectFindingsByProject},
     ///   or the count will drift from the list.
     ///
-    /// @return The total count of findings for the project, capped at `threshold + 1`, or exact when `threshold` is `null`.
+    /// @return The total count of findings for the project, capped at `threshold + 1`,
+    ///         or exact when `threshold` is `null`.
     @SqlQuery(/* language=InjectedFreeMarker */ """
             <#-- @ftlvariable name="threshold" type="boolean" -->
             <#-- @ftlvariable name="epssFrom" type="boolean" -->
@@ -423,20 +422,19 @@ public interface FindingDao extends PaginationSupport {
             BigDecimal epssFrom,
             BigDecimal epssTo,
             Boolean isKev) {
-        return withJitDisabled(
-                () -> selectFindingsByProject(
-                        projectId,
-                        /* includeInactive */ false,
-                        includeSuppressed,
-                        searchText,
-                        hasAnalysis,
-                        source,
-                        epssFrom,
-                        epssTo,
-                        isKev,
-                        // NB: No caller reads the total, so don't pay for the window count.
-                        /* emitTotalCount */ false,
-                        /* paginate */ false));
+        return withJitDisabled(() -> selectFindingsByProject(
+                projectId,
+                /* includeInactive */ false,
+                includeSuppressed,
+                searchText,
+                hasAnalysis,
+                source,
+                epssFrom,
+                epssTo,
+                isKev,
+                // NB: No caller reads the total, so don't pay for the window count.
+                /* emitTotalCount */ false,
+                /* paginate */ false));
     }
 
     /// Queries a project's findings as a page.
@@ -477,22 +475,20 @@ public interface FindingDao extends PaginationSupport {
                     isKev,
                     totalCountThreshold);
             if (totalCountThreshold == null) {
-                return new Page<>(rows).withTotalCount(
-                        exactTotalCount(rows, FindingRow::totalCount, countQuery));
+                return new Page<>(rows).withTotalCount(exactTotalCount(rows, FindingRow::totalCount, countQuery));
             }
 
-            return new Page<>(rows).withTotalCount(
-                    boundedTotalCountOrAtLeast(
-                            countQuery,
-                            totalCountThreshold,
-                            /* returnedItems */ rows.size()));
+            return new Page<>(rows)
+                    .withTotalCount(boundedTotalCountOrAtLeast(
+                            countQuery, totalCountThreshold, /* returnedItems */ rows.size()));
         });
     }
 
     /// Queries all findings across the entire portfolio.
     ///
     /// The query is split into:
-    /// * an inner `page` CTE that resolves only the row identity, plus the columns needed for filtering and ordering
+    /// * an inner `page` CTE that resolves only the row identity, plus the columns needed
+    ///   for filtering and ordering
     /// * an outer `SELECT` that enriches just the paginated rows with the expensive columns (e.g. aliases, EPSS)
     ///
     /// This keeps `COUNT(*) OVER()` and all enrichment off the full, pre-pagination row set.
@@ -734,24 +730,28 @@ public interface FindingDao extends PaginationSupport {
               ORDER BY c."ID", v."ID"
             </#if>
             """)
-    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""), by = {
-            @AllowApiOrdering.Column(name = "vulnerability.title", queryName = "v.\"TITLE\""),
-            @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
-            @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.epssScore", queryName = "\"epssScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.epssPercentile", queryName = "\"epssPercentile\""),
-            @AllowApiOrdering.Column(name = "vulnerability.published", queryName = "v.\"PUBLISHED\""),
-            @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
-            @AllowApiOrdering.Column(name = "component.projectName", queryName = "concat(p.\"NAME\", ' ', p.\"VERSION\")"),
-            @AllowApiOrdering.Column(name = "component.name", queryName = "c.\"NAME\""),
-            @AllowApiOrdering.Column(name = "component.version", queryName = "c.\"VERSION\""),
-            @AllowApiOrdering.Column(name = "analysis.state", queryName = "a.\"STATE\""),
-            @AllowApiOrdering.Column(name = "analysis.isSuppressed", queryName = "a.\"SUPPRESSED\""),
-            @AllowApiOrdering.Column(name = "attribution.attributedOn", queryName = "fa.\"ATTRIBUTED_ON\"")
-    })
+    @AllowApiOrdering(
+            alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "c.\"ID\", v.\"ID\""),
+            by = {
+                @AllowApiOrdering.Column(name = "vulnerability.title", queryName = "v.\"TITLE\""),
+                @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
+                @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.epssScore", queryName = "\"epssScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.epssPercentile", queryName = "\"epssPercentile\""),
+                @AllowApiOrdering.Column(name = "vulnerability.published", queryName = "v.\"PUBLISHED\""),
+                @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
+                @AllowApiOrdering.Column(
+                        name = "component.projectName",
+                        queryName = "concat(p.\"NAME\", ' ', p.\"VERSION\")"),
+                @AllowApiOrdering.Column(name = "component.name", queryName = "c.\"NAME\""),
+                @AllowApiOrdering.Column(name = "component.version", queryName = "c.\"VERSION\""),
+                @AllowApiOrdering.Column(name = "analysis.state", queryName = "a.\"STATE\""),
+                @AllowApiOrdering.Column(name = "analysis.isSuppressed", queryName = "a.\"SUPPRESSED\""),
+                @AllowApiOrdering.Column(name = "attribution.attributedOn", queryName = "fa.\"ATTRIBUTED_ON\"")
+            })
     @DefineNamedBindings
     @AllowUnusedBindings
     @DefineApiProjectAclCondition(projectIdColumn = "p.\"ID\"")
@@ -894,10 +894,10 @@ public interface FindingDao extends PaginationSupport {
         final StringBuilder queryFilter = new StringBuilder();
         final Map<String, Object> params = new HashMap<>();
 
-        final boolean isEpssOrdering = "vulnerability.epssScore".equals(orderBy)
-                || "vulnerability.epssPercentile".equals(orderBy);
-        final boolean isEpssPercentileFiltered = hasValue(filters, "epssPercentileFrom")
-                || hasValue(filters, "epssPercentileTo");
+        final boolean isEpssOrdering =
+                "vulnerability.epssScore".equals(orderBy) || "vulnerability.epssPercentile".equals(orderBy);
+        final boolean isEpssPercentileFiltered =
+                hasValue(filters, "epssPercentileFrom") || hasValue(filters, "epssPercentileTo");
         final boolean isEpssInPage = isEpssOrdering || isEpssPercentileFiltered;
         processFilters(filters, queryFilter, params, /* epssScoreViaExists */ true);
 
@@ -930,15 +930,12 @@ public interface FindingDao extends PaginationSupport {
                     totalCountThreshold,
                     params);
             if (totalCountThreshold == null) {
-                return new Page<>(rows).withTotalCount(
-                        exactTotalCount(rows, FindingRow::totalCount, countQuery));
+                return new Page<>(rows).withTotalCount(exactTotalCount(rows, FindingRow::totalCount, countQuery));
             }
 
-            return new Page<>(rows).withTotalCount(
-                    boundedTotalCountOrAtLeast(
-                            countQuery,
-                            totalCountThreshold,
-                            /* returnedItems */ rows.size()));
+            return new Page<>(rows)
+                    .withTotalCount(boundedTotalCountOrAtLeast(
+                            countQuery, totalCountThreshold, /* returnedItems */ rows.size()));
         });
     }
 
@@ -1043,17 +1040,21 @@ public interface FindingDao extends PaginationSupport {
             </#if>
             ${apiOffsetLimitClause!}
             """)
-    @AllowApiOrdering(alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "v.\"ID\""), by = {
-            @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
-            @AllowApiOrdering.Column(name = "vulnerability.title", queryName = "v.\"TITLE\""),
-            @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
-            @AllowApiOrdering.Column(name = "vulnerability.published", queryName = "v.\"PUBLISHED\""),
-            @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
-            @AllowApiOrdering.Column(name = "vulnerability.affectedProjectCount", queryName = "COUNT(DISTINCT p.\"ID\")")
-    })
+    @AllowApiOrdering(
+            alwaysBy = @AllowApiOrdering.AlwaysBy(queryName = "v.\"ID\""),
+            by = {
+                @AllowApiOrdering.Column(name = "vulnerability.vulnId", queryName = "v.\"VULNID\""),
+                @AllowApiOrdering.Column(name = "vulnerability.title", queryName = "v.\"TITLE\""),
+                @AllowApiOrdering.Column(name = "vulnerability.severity", queryName = "\"vulnSeverity\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV4Score", queryName = "\"cvssV4Score\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV3BaseScore", queryName = "\"cvssV3BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.cvssV2BaseScore", queryName = "\"cvssV2BaseScore\""),
+                @AllowApiOrdering.Column(name = "vulnerability.published", queryName = "v.\"PUBLISHED\""),
+                @AllowApiOrdering.Column(name = "attribution.analyzerIdentity", queryName = "fa.\"ANALYZERIDENTITY\""),
+                @AllowApiOrdering.Column(
+                        name = "vulnerability.affectedProjectCount",
+                        queryName = "COUNT(DISTINCT p.\"ID\")")
+            })
     @AllowUnusedBindings
     @DefineNamedBindings
     @DefineApiProjectAclCondition(projectIdColumn = "p.\"ID\"")
@@ -1076,9 +1077,7 @@ public interface FindingDao extends PaginationSupport {
      * @return the matching grouped findings and their {@link TotalCount}
      */
     default Page<GroupedFindingRow> getGroupedFindings(
-            Map<String, String> filters,
-            boolean showInactive,
-            boolean boundedTotalCount) {
+            Map<String, String> filters, boolean showInactive, boolean boundedTotalCount) {
         final StringBuilder queryFilter = new StringBuilder();
         final Map<String, Object> params = new HashMap<>();
 
@@ -1099,15 +1098,15 @@ public interface FindingDao extends PaginationSupport {
                     params,
                     /* emitTotalCount */ !boundedTotalCount);
             if (boundedTotalCount || rows.isEmpty()) {
-                return new Page<>(rows).withTotalCount(
-                        pageDerivedTotalCount(rows.size()));
+                return new Page<>(rows).withTotalCount(pageDerivedTotalCount(rows.size()));
             }
 
-            return new Page<>(rows).withTotalCount(
-                    requireNonNull(
-                            rows.getFirst().totalCount(),
-                            "totalCount must not be null when the window count was requested"),
-                    TotalCount.Type.EXACT);
+            return new Page<>(rows)
+                    .withTotalCount(
+                            requireNonNull(
+                                    rows.getFirst().totalCount(),
+                                    "totalCount must not be null when the window count was requested"),
+                            TotalCount.Type.EXACT);
         });
     }
 
@@ -1119,47 +1118,104 @@ public interface FindingDao extends PaginationSupport {
         for (String filter : filters.keySet()) {
             switch (filter) {
                 case "severity" ->
-                        processArrayFilter(queryFilter, params, filter, filters.get(filter), "v.\"SEVERITY\"");
+                    processArrayFilter(queryFilter, params, filter, filters.get(filter), "v.\"SEVERITY\"");
                 case "analysisStatus" ->
-                        processArrayFilter(queryFilter, params, filter, filters.get(filter), "a.\"STATE\"");
+                    processArrayFilter(queryFilter, params, filter, filters.get(filter), "a.\"STATE\"");
                 case "vendorResponse" ->
-                        processArrayFilter(queryFilter, params, filter, filters.get(filter), "a.\"RESPONSE\"");
+                    processArrayFilter(queryFilter, params, filter, filters.get(filter), "a.\"RESPONSE\"");
                 case "publishDateFrom" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"PUBLISHED\"", true, true, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "v.\"PUBLISHED\"", true, true, false);
                 case "publishDateTo" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"PUBLISHED\"", false, true, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "v.\"PUBLISHED\"", false, true, false);
                 case "attributedOnDateFrom" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "fa.\"ATTRIBUTED_ON\"", true, true, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "fa.\"ATTRIBUTED_ON\"",
+                            true,
+                            true,
+                            false);
                 case "attributedOnDateTo" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "fa.\"ATTRIBUTED_ON\"", false, true, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "fa.\"ATTRIBUTED_ON\"",
+                            false,
+                            true,
+                            false);
                 case "textSearchField" ->
-                        processInputFilter(queryFilter, params, filter, filters.get(filter), filters.get("textSearchInput"));
+                    processInputFilter(
+                            queryFilter, params, filter, filters.get(filter), filters.get("textSearchInput"));
                 case "cvssv2From" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV2BASESCORE\"", true, false, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "v.\"CVSSV2BASESCORE\"",
+                            true,
+                            false,
+                            false);
                 case "cvssv2To" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV2BASESCORE\"", false, false, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "v.\"CVSSV2BASESCORE\"",
+                            false,
+                            false,
+                            false);
                 case "cvssv3From" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV3BASESCORE\"", true, false, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "v.\"CVSSV3BASESCORE\"",
+                            true,
+                            false,
+                            false);
                 case "cvssv3To" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV3BASESCORE\"", false, false, false);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "v.\"CVSSV3BASESCORE\"",
+                            false,
+                            false,
+                            false);
                 case "cvssv4From" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV4SCORE\"", true, false, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "v.\"CVSSV4SCORE\"", true, false, false);
                 case "cvssv4To" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "v.\"CVSSV4SCORE\"", false, false, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "v.\"CVSSV4SCORE\"", false, false, false);
                 case "epssFrom" -> {
                     if (!epssScoreViaExists) {
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "ed.\"SCORE\"", true, false, false);
+                        processRangeFilter(
+                                queryFilter, params, filter, filters.get(filter), "ed.\"SCORE\"", true, false, false);
                     }
                 }
                 case "epssTo" -> {
                     if (!epssScoreViaExists) {
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "ed.\"SCORE\"", false, false, false);
+                        processRangeFilter(
+                                queryFilter, params, filter, filters.get(filter), "ed.\"SCORE\"", false, false, false);
                     }
                 }
                 case "epssPercentileFrom" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "ed.\"PERCENTILE\"", true, false, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "ed.\"PERCENTILE\"", true, false, false);
                 case "epssPercentileTo" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "ed.\"PERCENTILE\"", false, false, false);
+                    processRangeFilter(
+                            queryFilter, params, filter, filters.get(filter), "ed.\"PERCENTILE\"", false, false, false);
                 // NB: isKev is applied directly in the query templates via the shared
                 // <@sql.isKevFilter/> macro, not as a queryFilter fragment.
             }
@@ -1167,25 +1223,35 @@ public interface FindingDao extends PaginationSupport {
     }
 
     private void processAggregateFilters(
-            Map<String, String> filters,
-            StringBuilder queryFilter,
-            Map<String, Object> params) {
+            Map<String, String> filters, StringBuilder queryFilter, Map<String, Object> params) {
         for (String filter : filters.keySet()) {
             switch (filter) {
                 case "occurrencesFrom" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "COUNT(DISTINCT p.\"ID\")", true, false, true);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "COUNT(DISTINCT p.\"ID\")",
+                            true,
+                            false,
+                            true);
                 case "occurrencesTo" ->
-                        processRangeFilter(queryFilter, params, filter, filters.get(filter), "COUNT(DISTINCT p.\"ID\")", false, false, true);
+                    processRangeFilter(
+                            queryFilter,
+                            params,
+                            filter,
+                            filters.get(filter),
+                            "COUNT(DISTINCT p.\"ID\")",
+                            false,
+                            false,
+                            true);
             }
         }
     }
 
     private void processArrayFilter(
-            StringBuilder queryFilter,
-            Map<String, Object> params,
-            String paramName,
-            String filter,
-            String column) {
+            StringBuilder queryFilter, Map<String, Object> params, String paramName, String filter, String column) {
         if (filter != null && !filter.isEmpty()) {
             queryFilter.append(" AND (");
             String[] filters = filter.split(",");
@@ -1195,7 +1261,8 @@ public interface FindingDao extends PaginationSupport {
                     queryFilter.append("::SEVERITY");
                 }
                 params.put(paramName + i, filters[i].toUpperCase());
-                if (filters[i].equals("NOT_SET") && (paramName.equals("analysisStatus") || paramName.equals("vendorResponse"))) {
+                if (filters[i].equals("NOT_SET")
+                        && (paramName.equals("analysisStatus") || paramName.equals("vendorResponse"))) {
                     queryFilter.append(" OR ").append(column).append(" IS NULL");
                 }
                 if (i < length - 1) {
@@ -1236,11 +1303,7 @@ public interface FindingDao extends PaginationSupport {
     }
 
     private void processInputFilter(
-            StringBuilder queryFilter,
-            Map<String, Object> params,
-            String paramName,
-            String filter,
-            String input) {
+            StringBuilder queryFilter, Map<String, Object> params, String paramName, String filter, String input) {
         if (filter != null && !filter.isEmpty() && input != null && !input.isEmpty()) {
             queryFilter.append(" AND (");
             String[] filters = filter.split(",");
@@ -1276,5 +1339,4 @@ public interface FindingDao extends PaginationSupport {
     private static @Nullable Boolean maybeParseBoolean(@Nullable String value) {
         return value == null || value.isEmpty() ? null : Boolean.parseBoolean(value);
     }
-
 }

@@ -88,8 +88,8 @@ public abstract class AbstractApiResource extends AlpineResource {
                 logSecurityEvent(logger, SecurityMarkers.SECURITY_FAILURE, "Unauthorized project access attempt");
             }
 
-            throw new ProjectAccessDeniedException(requireNonNullElse(
-                    message, "Access to the requested project is forbidden"));
+            throw new ProjectAccessDeniedException(
+                    requireNonNullElse(message, "Access to the requested project is forbidden"));
         }
     }
 
@@ -160,12 +160,9 @@ public abstract class AbstractApiResource extends AlpineResource {
 
         final Set<UUID> accessibleUuids = withJdbiHandle(
                 super.getAlpineRequest(),
-                handle -> handle
-                        .attach(ProjectDao.class)
+                handle -> handle.attach(ProjectDao.class)
                         .getAccessibleProjectUuids(
-                                projects.stream()
-                                        .map(Project::getUuid)
-                                        .collect(Collectors.toSet())));
+                                projects.stream().map(Project::getUuid).collect(Collectors.toSet())));
 
         return projects.stream()
                 .filter(project -> accessibleUuids.contains(project.getUuid()))
@@ -179,11 +176,11 @@ public abstract class AbstractApiResource extends AlpineResource {
 
         return TotalCount.builder()
                 .count(totalCount.value())
-                .type(switch (totalCount.type()) {
-                    case AT_LEAST -> TotalCountType.AT_LEAST;
-                    case EXACT -> TotalCountType.EXACT;
-                })
+                .type(
+                        switch (totalCount.type()) {
+                            case AT_LEAST -> TotalCountType.AT_LEAST;
+                            case EXACT -> TotalCountType.EXACT;
+                        })
                 .build();
     }
-
 }

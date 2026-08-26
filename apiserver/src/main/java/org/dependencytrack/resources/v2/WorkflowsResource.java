@@ -22,10 +22,6 @@ import alpine.server.auth.PermissionRequired;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.util.JsonFormat;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.WorkflowsApi;
 import org.dependencytrack.api.v2.model.ListWorkflowRunEventsResponse;
 import org.dependencytrack.api.v2.model.ListWorkflowRunEventsResponseItem;
@@ -60,6 +56,11 @@ import org.dependencytrack.resources.AbstractApiResource;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
+import jakarta.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Instant;
@@ -93,26 +94,22 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
                         ChildRunFailed.getDescriptor().findFieldByName("child_run_created_event_id"),
                         TimerElapsed.getDescriptor().findFieldByName("timer_created_event_id")))
                 // Register message types that are used in Any fields.
-                .usingTypeRegistry(
-                        JsonFormat.TypeRegistry.newBuilder()
-                                .add(ArgumentArtifact.getDescriptor().getMessageTypes())
-                                .add(ArgumentCommon.getDescriptor().getMessageTypes())
-                                .add(ArgumentKevDataSource.getDescriptor().getMessageTypes())
-                                .add(ArgumentMetrics.getDescriptor().getMessageTypes())
-                                .add(ArgumentNotification.getDescriptor().getMessageTypes())
-                                .add(ArgumentPackageMetadata.getDescriptor().getMessageTypes())
-                                .add(ArgumentVulnanalysis.getDescriptor().getMessageTypes())
-                                .add(ArgumentVulnDataSource.getDescriptor().getMessageTypes())
-                                .add(ArgumentVulnPolicy.getDescriptor().getMessageTypes())
-                                .add(ResultVulnanalysis.getDescriptor().getMessageTypes())
-                                .build());
+                .usingTypeRegistry(JsonFormat.TypeRegistry.newBuilder()
+                        .add(ArgumentArtifact.getDescriptor().getMessageTypes())
+                        .add(ArgumentCommon.getDescriptor().getMessageTypes())
+                        .add(ArgumentKevDataSource.getDescriptor().getMessageTypes())
+                        .add(ArgumentMetrics.getDescriptor().getMessageTypes())
+                        .add(ArgumentNotification.getDescriptor().getMessageTypes())
+                        .add(ArgumentPackageMetadata.getDescriptor().getMessageTypes())
+                        .add(ArgumentVulnanalysis.getDescriptor().getMessageTypes())
+                        .add(ArgumentVulnDataSource.getDescriptor().getMessageTypes())
+                        .add(ArgumentVulnPolicy.getDescriptor().getMessageTypes())
+                        .add(ResultVulnanalysis.getDescriptor().getMessageTypes())
+                        .build());
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response getWorkflowInstance(String id) {
         final WorkflowRunMetadata runMetadata = dexEngine.getRunMetadataByInstanceId(id);
         if (runMetadata == null) {
@@ -123,10 +120,7 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response listWorkflowRuns(
             @Nullable String workflowName,
             @Nullable Integer workflowVersion,
@@ -141,41 +135,32 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
             @Nullable String pageToken,
             @Nullable SortDirection sortDirection,
             @Nullable String sortBy) {
-        final Page<WorkflowRunMetadata> runsPage = dexEngine.listRuns(
-                new ListWorkflowRunsRequest()
-                        .withWorkflowName(workflowName)
-                        .withWorkflowVersion(workflowVersion)
-                        .withWorkflowInstanceId(workflowInstanceId)
-                        .withStatuses(status != null ? Set.of(convert(status)) : null)
-                        .withLabels(convertLabelFilters(label))
-                        .withCreatedSince(createdSince != null
-                                ? Instant.ofEpochMilli(createdSince)
-                                : null)
-                        .withCreatedBefore(createdBefore != null
-                                ? Instant.ofEpochMilli(createdBefore)
-                                : null)
-                        .withCompletedSince(completedSince != null
-                                ? Instant.ofEpochMilli(completedSince)
-                                : null)
-                        .withCompletedBefore(completedBefore != null
-                                ? Instant.ofEpochMilli(completedBefore)
-                                : null)
-                        .withSortBy(switch (sortBy) {
+        final Page<WorkflowRunMetadata> runsPage = dexEngine.listRuns(new ListWorkflowRunsRequest()
+                .withWorkflowName(workflowName)
+                .withWorkflowVersion(workflowVersion)
+                .withWorkflowInstanceId(workflowInstanceId)
+                .withStatuses(status != null ? Set.of(convert(status)) : null)
+                .withLabels(convertLabelFilters(label))
+                .withCreatedSince(createdSince != null ? Instant.ofEpochMilli(createdSince) : null)
+                .withCreatedBefore(createdBefore != null ? Instant.ofEpochMilli(createdBefore) : null)
+                .withCompletedSince(completedSince != null ? Instant.ofEpochMilli(completedSince) : null)
+                .withCompletedBefore(completedBefore != null ? Instant.ofEpochMilli(completedBefore) : null)
+                .withSortBy(
+                        switch (sortBy) {
                             case "id" -> ListWorkflowRunsRequest.SortBy.ID;
                             case "created_at" -> ListWorkflowRunsRequest.SortBy.CREATED_AT;
                             case "completed_at" -> ListWorkflowRunsRequest.SortBy.COMPLETED_AT;
                             case null -> null;
-                            default -> throw new InvalidSortFieldException(
-                                    sortBy, List.of("id", "created_at", "completed_at"));
+                            default ->
+                                throw new InvalidSortFieldException(
+                                        sortBy, List.of("id", "created_at", "completed_at"));
                         })
-                        .withSortDirection(mapSortDirection(sortDirection))
-                        .withPageToken(pageToken)
-                        .withLimit(limit));
+                .withSortDirection(mapSortDirection(sortDirection))
+                .withPageToken(pageToken)
+                .withLimit(limit));
 
         final var response = ListWorkflowRunsResponse.builder()
-                .items(runsPage.items().stream()
-                        .map(WorkflowsResource::convert)
-                        .toList())
+                .items(runsPage.items().stream().map(WorkflowsResource::convert).toList())
                 .nextPageToken(runsPage.nextPageToken())
                 .total(convertTotalCount(runsPage.totalCount()))
                 .build();
@@ -184,10 +169,7 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response getWorkflowRun(UUID id) {
         final WorkflowRunMetadata runMetadata = dexEngine.getRunMetadataById(id);
         if (runMetadata == null) {
@@ -198,10 +180,7 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
     }
 
     @Override
-    @PermissionRequired({
-            Permissions.Constants.SYSTEM_CONFIGURATION,
-            Permissions.Constants.SYSTEM_CONFIGURATION_READ
-    })
+    @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_READ})
     public Response listWorkflowRunEvents(
             UUID id,
             @Nullable Integer fromSequenceNumber,
@@ -209,12 +188,11 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
             @Nullable String pageToken,
             @Nullable SortDirection sortDirection) {
         final Page<WorkflowRunHistoryEntry> historyEntryPage =
-                dexEngine.listRunHistory(
-                        new ListWorkflowRunHistoryRequest(id)
-                                .withFromSequenceNumber(fromSequenceNumber)
-                                .withSortDirection(mapSortDirection(sortDirection))
-                                .withPageToken(pageToken)
-                                .withLimit(limit));
+                dexEngine.listRunHistory(new ListWorkflowRunHistoryRequest(id)
+                        .withFromSequenceNumber(fromSequenceNumber)
+                        .withSortDirection(mapSortDirection(sortDirection))
+                        .withPageToken(pageToken)
+                        .withLimit(limit));
 
         final var response = ListWorkflowRunEventsResponse.builder()
                 .items(historyEntryPage.items().stream()
@@ -227,7 +205,8 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
         return Response.ok(response).build();
     }
 
-    private static org.dependencytrack.dex.engine.api.@Nullable WorkflowRunStatus convert(@Nullable WorkflowRunStatus status) {
+    private static org.dependencytrack.dex.engine.api.@Nullable WorkflowRunStatus convert(
+            @Nullable WorkflowRunStatus status) {
         return switch (status) {
             case CANCELLED -> org.dependencytrack.dex.engine.api.WorkflowRunStatus.CANCELLED;
             case COMPLETED -> org.dependencytrack.dex.engine.api.WorkflowRunStatus.COMPLETED;
@@ -279,27 +258,27 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
                 .concurrencyKey(runMetadata.concurrencyKey())
                 .labels(runMetadata.labels())
                 .createdAt(runMetadata.createdAt().toEpochMilli())
-                .updatedAt(runMetadata.updatedAt() != null
-                        ? runMetadata.updatedAt().toEpochMilli()
-                        : null)
-                .startedAt(runMetadata.startedAt() != null
-                        ? runMetadata.startedAt().toEpochMilli()
-                        : null)
-                .completedAt(runMetadata.completedAt() != null
-                        ? runMetadata.completedAt().toEpochMilli()
-                        : null)
+                .updatedAt(
+                        runMetadata.updatedAt() != null
+                                ? runMetadata.updatedAt().toEpochMilli()
+                                : null)
+                .startedAt(
+                        runMetadata.startedAt() != null
+                                ? runMetadata.startedAt().toEpochMilli()
+                                : null)
+                .completedAt(
+                        runMetadata.completedAt() != null
+                                ? runMetadata.completedAt().toEpochMilli()
+                                : null)
                 .build();
     }
 
     private static ListWorkflowRunEventsResponseItem convert(
-            WorkflowRunHistoryEntry entry,
-            JsonFormat.Printer eventJsonPrinter,
-            ObjectMapper objectMapper) {
+            WorkflowRunHistoryEntry entry, JsonFormat.Printer eventJsonPrinter, ObjectMapper objectMapper) {
         final Map<String, Object> eventJsonMap;
         try {
             final String eventJson = eventJsonPrinter.print(entry.event());
-            eventJsonMap = objectMapper.readValue(eventJson, new TypeReference<>() {
-            });
+            eventJsonMap = objectMapper.readValue(eventJson, new TypeReference<>() {});
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -309,5 +288,4 @@ public class WorkflowsResource extends AbstractApiResource implements WorkflowsA
                 .event(eventJsonMap)
                 .build();
     }
-
 }

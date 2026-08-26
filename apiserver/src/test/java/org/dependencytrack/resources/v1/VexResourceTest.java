@@ -59,6 +59,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentMatchers;
 
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -81,18 +84,17 @@ public class VexResourceTest extends ResourceTest {
     private static final DexEngine DEX_ENGINE_MOCK = mock(DexEngine.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(VexResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class)
-                    .register(MultiPartFeature.class)
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bindFactory(MemoryFileStorage::new).to(FileStorage.class);
-                            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(VexResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class)
+            .register(MultiPartFeature.class)
+            .register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bindFactory(MemoryFileStorage::new).to(FileStorage.class);
+                    bind(DEX_ENGINE_MOCK).to(DexEngine.class);
+                }
+            }));
 
     private UUID stubbedRunId;
 
@@ -151,11 +153,10 @@ public class VexResourceTest extends ResourceTest {
         componentWithVulnAndAnalysis.setDirectDependencies("[]");
         qm.createComponent(componentWithVulnAndAnalysis, false);
         qm.addVulnerability(vulnB, componentWithVulnAndAnalysis, "internal");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentWithVulnAndAnalysis, vulnB)
-                        .withState(AnalysisState.RESOLVED)
-                        .withResponse(AnalysisResponse.UPDATE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentWithVulnAndAnalysis, vulnB)
+                .withState(AnalysisState.RESOLVED)
+                .withResponse(AnalysisResponse.UPDATE)
+                .withSuppress(true));
 
         // Make componentWithoutVuln (acme-lib-a) depend on componentWithVuln (acme-lib-b)
         componentWithoutVuln.setDirectDependencies(/* language=JSON */ """
@@ -166,16 +167,14 @@ public class VexResourceTest extends ResourceTest {
 
         // Make project depend on componentWithoutVuln (acme-lib-a)
         // and componentWithVulnAndAnalysis (acme-lib-c)
-        project.setDirectDependencies(/* language=JSON */ """
+        project.setDirectDependencies(
+                /* language=JSON */ """
                 [
                     {"uuid": "%s"},
                     {"uuid": "%s"}
                 ]
-                """
-                .formatted(
-                        componentWithoutVuln.getUuid(),
-                        componentWithVulnAndAnalysis.getUuid()
-                ));
+                """.formatted(
+                                componentWithoutVuln.getUuid(), componentWithVulnAndAnalysis.getUuid()));
         qm.persist(project);
 
         final Response response = jersey.target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
@@ -184,14 +183,16 @@ public class VexResourceTest extends ResourceTest {
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
         final String jsonResponse = getPlainTextBody(response);
-        assertThatBom(jsonResponse)
-                .isValid()
-                .hasUniqueBomRefs();
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
         assertThatJson(jsonResponse)
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
-                .withMatcher("componentWithVulnUuid", equalTo(componentWithVuln.getUuid().toString()))
-                .withMatcher("componentWithVulnAndAnalysisUuid", equalTo(componentWithVulnAndAnalysis.getUuid().toString()))
+                .withMatcher(
+                        "componentWithVulnUuid",
+                        equalTo(componentWithVuln.getUuid().toString()))
+                .withMatcher(
+                        "componentWithVulnAndAnalysisUuid",
+                        equalTo(componentWithVulnAndAnalysis.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
                           "bomFormat": "CycloneDX",
@@ -294,11 +295,11 @@ public class VexResourceTest extends ResourceTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -335,12 +336,11 @@ public class VexResourceTest extends ResourceTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         final String jsonResponse = getPlainTextBody(response);
-        assertThatBom(jsonResponse)
-                .isValid()
-                .hasUniqueBomRefs();
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
 
         String expectedCdxVersionSpec = version.isEmpty() ? "1.5" : version;
-        assertThatJson(jsonResponse, json -> json.inPath("specVersion").isEqualTo("\"" + expectedCdxVersionSpec + "\""));
+        assertThatJson(
+                jsonResponse, json -> json.inPath("specVersion").isEqualTo("\"" + expectedCdxVersionSpec + "\""));
     }
 
     @ParameterizedTest
@@ -389,7 +389,8 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        final Response response = jersey.target(V1_VEX).request()
+        final Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -433,7 +434,8 @@ public class VexResourceTest extends ResourceTest {
                 </bom>
                 """.getBytes());
 
-        final Response response = jersey.target(V1_VEX).request()
+        final Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -468,7 +470,8 @@ public class VexResourceTest extends ResourceTest {
 
         final String vex = "a".repeat(StreamReadConstraints.DEFAULT_MAX_STRING_LEN + 1);
 
-        final Response response = jersey.target(V1_VEX).request()
+        final Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -506,7 +509,8 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        final Supplier<Response> responseSupplier = () -> jersey.target(V1_VEX).request()
+        final Supplier<Response> responseSupplier = () -> jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -583,16 +587,13 @@ public class VexResourceTest extends ResourceTest {
         qm.addVulnerability(vuln, component, "none");
         qm.makeAnalysis(new MakeAnalysisCommand(component, vuln).withState(AnalysisState.NOT_AFFECTED));
 
-        final Response response = jersey
-                .target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
+        final Response response = jersey.target("%s/cyclonedx/project/%s".formatted(V1_VEX, project.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
         final String jsonResponse = getPlainTextBody(response);
-        assertThatBom(jsonResponse)
-                .isValid()
-                .hasUniqueBomRefs();
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
         assertThatJson(jsonResponse)
                 .withMatcher("componentUuid", equalTo(component.getUuid().toString()))
                 .inPath("components")
@@ -654,18 +655,16 @@ public class VexResourceTest extends ResourceTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln);
         qm.addVulnerability(vuln, componentAWithVuln, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentAWithVuln, vuln)
-                        .withState(AnalysisState.RESOLVED)
-                        .withResponse(AnalysisResponse.UPDATE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentAWithVuln, vuln)
+                .withState(AnalysisState.RESOLVED)
+                .withResponse(AnalysisResponse.UPDATE)
+                .withSuppress(true));
 
         qm.addVulnerability(vuln, componentBWithVuln, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentBWithVuln, vuln)
-                        .withState(AnalysisState.RESOLVED)
-                        .withResponse(AnalysisResponse.UPDATE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentBWithVuln, vuln)
+                .withState(AnalysisState.RESOLVED)
+                .withResponse(AnalysisResponse.UPDATE)
+                .withSuppress(true));
 
         qm.persist(project);
 
@@ -675,14 +674,14 @@ public class VexResourceTest extends ResourceTest {
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
         final String jsonResponse = getPlainTextBody(response);
-        assertThatBom(jsonResponse)
-                .isValid()
-                .hasUniqueBomRefs();
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
         assertThatJson(jsonResponse)
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
-                .withMatcher("componentAUuid", equalTo(componentAWithVuln.getUuid().toString()))
-                .withMatcher("componentBUuid", equalTo(componentBWithVuln.getUuid().toString()))
+                .withMatcher(
+                        "componentAUuid", equalTo(componentAWithVuln.getUuid().toString()))
+                .withMatcher(
+                        "componentBUuid", equalTo(componentBWithVuln.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
                           "bomFormat": "CycloneDX",
@@ -787,18 +786,16 @@ public class VexResourceTest extends ResourceTest {
         vuln.setSeverity(Severity.HIGH);
         vuln = qm.createVulnerability(vuln);
         qm.addVulnerability(vuln, componentAWithVuln, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentAWithVuln, vuln)
-                        .withState(AnalysisState.IN_TRIAGE)
-                        .withResponse(AnalysisResponse.UPDATE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentAWithVuln, vuln)
+                .withState(AnalysisState.IN_TRIAGE)
+                .withResponse(AnalysisResponse.UPDATE)
+                .withSuppress(true));
 
         qm.addVulnerability(vuln, componentBWithVuln, "none");
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(componentBWithVuln, vuln)
-                        .withState(AnalysisState.EXPLOITABLE)
-                        .withResponse(AnalysisResponse.UPDATE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentBWithVuln, vuln)
+                .withState(AnalysisState.EXPLOITABLE)
+                .withResponse(AnalysisResponse.UPDATE)
+                .withSuppress(true));
 
         qm.persist(project);
 
@@ -808,14 +805,14 @@ public class VexResourceTest extends ResourceTest {
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
         final String jsonResponse = getPlainTextBody(response);
-        assertThatBom(jsonResponse)
-                .isValid()
-                .hasUniqueBomRefs();
+        assertThatBom(jsonResponse).isValid().hasUniqueBomRefs();
         assertThatJson(jsonResponse)
                 .withOptions(Option.IGNORING_ARRAY_ORDER)
                 .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
-                .withMatcher("componentAUuid", equalTo(componentAWithVuln.getUuid().toString()))
-                .withMatcher("componentBUuid", equalTo(componentBWithVuln.getUuid().toString()))
+                .withMatcher(
+                        "componentAUuid", equalTo(componentAWithVuln.getUuid().toString()))
+                .withMatcher(
+                        "componentBUuid", equalTo(componentBWithVuln.getUuid().toString()))
                 .isEqualTo(/* language=JSON */ """
                         {
                           "bomFormat": "CycloneDX",
@@ -924,8 +921,7 @@ public class VexResourceTest extends ResourceTest {
                 BOM_VALIDATION_MODE.getPropertyName(),
                 BomValidationMode.DISABLED.name(),
                 BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription()
-        );
+                BOM_VALIDATION_MODE.getDescription());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -948,7 +944,8 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        final Response response = jersey.target(V1_VEX).request()
+        final Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -969,15 +966,13 @@ public class VexResourceTest extends ResourceTest {
                 BOM_VALIDATION_MODE.getPropertyName(),
                 BomValidationMode.ENABLED_FOR_TAGS.name(),
                 BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription()
-        );
+                BOM_VALIDATION_MODE.getDescription());
         qm.createConfigProperty(
                 BOM_VALIDATION_TAGS_INCLUSIVE.getGroupName(),
                 BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyName(),
                 "[\"foo\"]",
                 BOM_VALIDATION_TAGS_INCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_INCLUSIVE.getDescription()
-        );
+                BOM_VALIDATION_TAGS_INCLUSIVE.getDescription());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1002,7 +997,8 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        Response response = jersey.target(V1_VEX).request()
+        Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -1015,7 +1011,8 @@ public class VexResourceTest extends ResourceTest {
 
         qm.bind(project, Collections.emptyList());
 
-        response = jersey.target(V1_VEX).request()
+        response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -1036,15 +1033,13 @@ public class VexResourceTest extends ResourceTest {
                 BOM_VALIDATION_MODE.getPropertyName(),
                 BomValidationMode.DISABLED_FOR_TAGS.name(),
                 BOM_VALIDATION_MODE.getPropertyType(),
-                BOM_VALIDATION_MODE.getDescription()
-        );
+                BOM_VALIDATION_MODE.getDescription());
         qm.createConfigProperty(
                 BOM_VALIDATION_TAGS_EXCLUSIVE.getGroupName(),
                 BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyName(),
                 "[\"foo\"]",
                 BOM_VALIDATION_TAGS_EXCLUSIVE.getPropertyType(),
-                BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription()
-        );
+                BOM_VALIDATION_TAGS_EXCLUSIVE.getDescription());
 
         final var project = new Project();
         project.setName("acme-app");
@@ -1069,7 +1064,8 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        Response response = jersey.target(V1_VEX).request()
+        Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -1082,7 +1078,8 @@ public class VexResourceTest extends ResourceTest {
 
         qm.bind(project, Collections.emptyList());
 
-        response = jersey.target(V1_VEX).request()
+        response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {
@@ -1112,7 +1109,8 @@ public class VexResourceTest extends ResourceTest {
                 }
                 """.getBytes());
 
-        final Response response = jersey.target(V1_VEX).request()
+        final Response response = jersey.target(V1_VEX)
+                .request()
                 .header(X_API_KEY, apiKey)
                 .put(Entity.json(/* language=JSON */ """
                         {

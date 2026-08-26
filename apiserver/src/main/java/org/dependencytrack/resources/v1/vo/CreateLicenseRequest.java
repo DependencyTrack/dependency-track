@@ -24,11 +24,12 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -38,13 +39,17 @@ import java.util.List;
 public record CreateLicenseRequest(
         @NotBlank
         @Size(min = 1, max = 255)
-        @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+        @Pattern(
+                regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+                message = "The name may only contain printable characters")
         @Schema(description = "Display name of the license", requiredMode = Schema.RequiredMode.REQUIRED)
         String name,
 
         @NotBlank
         @Size(min = 1, max = 255)
-        @Pattern(regexp = RegexSequence.Definition.STRING_IDENTIFIER, message = "The licenseId may only contain alpha, numeric, and specific symbols _-.+")
+        @Pattern(
+                regexp = RegexSequence.Definition.STRING_IDENTIFIER,
+                message = "The licenseId may only contain alpha, numeric, and specific symbols _-.+")
         @JsonAlias("licenseExceptionId")
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Identifier of the license", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -53,30 +58,34 @@ public record CreateLicenseRequest(
         @JsonAlias("licenseExceptionText")
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Full license text")
-        @Nullable String licenseText,
+        @Nullable
+        String licenseText,
 
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Standard license header typically added to the top of source code")
-        @Nullable String standardLicenseHeader,
+        @Nullable
+        String standardLicenseHeader,
 
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Standard license template used to derive the license text")
-        @Nullable String standardLicenseTemplate,
+        @Nullable
+        String standardLicenseTemplate,
 
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Comments about the license")
-        @Nullable String licenseComments,
+        @Nullable
+        String licenseComments,
 
         @JsonDeserialize(contentUsing = TrimmedStringDeserializer.class)
         @Schema(description = "Additional URLs with information about the license")
-        @Nullable List<String> seeAlso,
+        @Nullable
+        List<String> seeAlso,
 
-        @Schema(description = "Whether the license is approved by the OSI")
-        @Nullable Boolean isOsiApproved,
+        @Schema(description = "Whether the license is approved by the OSI") @Nullable
+        Boolean isOsiApproved,
 
-        @Schema(description = "Whether the license is FSF libre")
-        @Nullable Boolean isFsfLibre,
+        @Schema(description = "Whether the license is FSF libre") @Nullable
+        Boolean isFsfLibre,
 
-        @Schema(description = "Whether the licenseId has been deprecated by SPDX")
-        @Nullable Boolean isDeprecatedLicenseId) {
-}
+        @Schema(description = "Whether the licenseId has been deprecated by SPDX") @Nullable
+        Boolean isDeprecatedLicenseId) {}

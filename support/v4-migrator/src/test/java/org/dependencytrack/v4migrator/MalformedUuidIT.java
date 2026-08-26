@@ -67,7 +67,9 @@ class MalformedUuidIT {
             h.createUpdate("""
                 INSERT INTO "LICENSE" ("ID", "ISDEPRECATED", "ISOSIAPPROVED", "NAME", "UUID")
                 VALUES (1, FALSE, TRUE, 'Apache 2.0', :u)
-                """).bind("u", "c5b25734-69ce-4e9b-a4f3-1f0fa5b27d5f").execute();
+                """)
+                    .bind("u", "c5b25734-69ce-4e9b-a4f3-1f0fa5b27d5f")
+                    .execute();
             h.createUpdate("""
                 INSERT INTO "LICENSE" ("ID", "ISDEPRECATED", "ISOSIAPPROVED", "NAME", "UUID")
                 VALUES (2, FALSE, TRUE, 'Broken', :u)
@@ -77,23 +79,25 @@ class MalformedUuidIT {
         runPipeline();
 
         // The well-formed row is in v5.
-        final List<Map<String, Object>> v5 = target.jdbi().withHandle(h ->
-            h.createQuery("SELECT \"ID\", \"NAME\" FROM \"LICENSE\" ORDER BY \"ID\"").mapToMap().list());
+        final List<Map<String, Object>> v5 = target.jdbi()
+                .withHandle(h -> h.createQuery("SELECT \"ID\", \"NAME\" FROM \"LICENSE\" ORDER BY \"ID\"")
+                        .mapToMap()
+                        .list());
         assertThat(v5).hasSize(1);
         assertThat(v5.get(0)).containsEntry("id", 1L).containsEntry("name", "Apache 2.0");
 
         // The malformed row was probed.
-        final List<Map<String, Object>> probe = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> probe =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT table_name, orig_id, bad_uuid
                       FROM "dt_v4_migration".probe_invalid_uuids
                      ORDER BY orig_id
                     """).mapToMap().list());
         assertThat(probe).hasSize(1);
         assertThat(probe.get(0))
-            .containsEntry("table_name", "LICENSE")
-            .containsEntry("orig_id", 2L)
-            .containsEntry("bad_uuid", "not-a-uuid");
+                .containsEntry("table_name", "LICENSE")
+                .containsEntry("orig_id", 2L)
+                .containsEntry("bad_uuid", "not-a-uuid");
     }
 
     private void runPipeline() throws Exception {

@@ -28,8 +28,7 @@ import java.nio.channels.ClosedChannelException;
 /// @since 5.1.0
 public final class TransientNetworkErrors {
 
-    private TransientNetworkErrors() {
-    }
+    private TransientNetworkErrors() {}
 
     /// @param throwable The [Throwable] to inspect.
     /// @return `true` when `throwable` is, or was caused by, a transient network error.
@@ -47,5 +46,4 @@ public final class TransientNetworkErrors {
 
         return false;
     }
-
 }

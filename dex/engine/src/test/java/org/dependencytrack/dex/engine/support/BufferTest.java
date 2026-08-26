@@ -70,8 +70,7 @@ class BufferTest {
 
     @Test
     void addShouldThrowWhenNotRunning() {
-        final Consumer<List<String>> batchConsumer = _ -> {
-        };
+        final Consumer<List<String>> batchConsumer = _ -> {};
 
         final var buffer = new Buffer<>(
                 "test",
@@ -119,14 +118,13 @@ class BufferTest {
             throw new RuntimeException("downstream broken");
         };
 
-        final var registry = CircuitBreakerRegistry.of(
-                CircuitBreakerConfig.custom()
-                        .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
-                        .slidingWindowSize(3)
-                        .minimumNumberOfCalls(3)
-                        .failureRateThreshold(50.0f)
-                        .waitDurationInOpenState(Duration.ofMinutes(1))
-                        .build());
+        final var registry = CircuitBreakerRegistry.of(CircuitBreakerConfig.custom()
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .slidingWindowSize(3)
+                .minimumNumberOfCalls(3)
+                .failureRateThreshold(50.0f)
+                .waitDurationInOpenState(Duration.ofMinutes(1))
+                .build());
 
         final var buffer = new Buffer<>(
                 "test",
@@ -168,16 +166,15 @@ class BufferTest {
         };
 
         final var clock = new MutableClock();
-        final var registry = CircuitBreakerRegistry.of(
-                CircuitBreakerConfig.custom()
-                        .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
-                        .slidingWindowSize(2)
-                        .minimumNumberOfCalls(2)
-                        .failureRateThreshold(50.0f)
-                        .waitDurationInOpenState(Duration.ofMillis(200))
-                        .permittedNumberOfCallsInHalfOpenState(1)
-                        .clock(clock)
-                        .build());
+        final var registry = CircuitBreakerRegistry.of(CircuitBreakerConfig.custom()
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .slidingWindowSize(2)
+                .minimumNumberOfCalls(2)
+                .failureRateThreshold(50.0f)
+                .waitDurationInOpenState(Duration.ofMillis(200))
+                .permittedNumberOfCallsInHalfOpenState(1)
+                .clock(clock)
+                .build());
 
         final var buffer = new Buffer<>(
                 "test",
@@ -221,14 +218,13 @@ class BufferTest {
             throw new RuntimeException("downstream broken");
         };
 
-        final var registry = CircuitBreakerRegistry.of(
-                CircuitBreakerConfig.custom()
-                        .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
-                        .slidingWindowSize(2)
-                        .minimumNumberOfCalls(2)
-                        .failureRateThreshold(50.0f)
-                        .waitDurationInOpenState(Duration.ofMinutes(1))
-                        .build());
+        final var registry = CircuitBreakerRegistry.of(CircuitBreakerConfig.custom()
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .slidingWindowSize(2)
+                .minimumNumberOfCalls(2)
+                .failureRateThreshold(50.0f)
+                .waitDurationInOpenState(Duration.ofMinutes(1))
+                .build());
 
         final var buffer = new Buffer<>(
                 "test",
@@ -279,7 +275,5 @@ class BufferTest {
         void advance(Duration delta) {
             now.updateAndGet(current -> current.plus(delta));
         }
-
     }
-
 }

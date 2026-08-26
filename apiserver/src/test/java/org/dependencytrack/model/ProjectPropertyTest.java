@@ -29,7 +29,7 @@ public class ProjectPropertyTest {
         ProjectProperty property = new ProjectProperty();
         property.setId(111L);
         Assertions.assertEquals(111L, property.getId());
-    } 
+    }
 
     @Test
     public void testProject() {
@@ -44,7 +44,7 @@ public class ProjectPropertyTest {
         ProjectProperty property = new ProjectProperty();
         property.setGroupName("Group Name");
         Assertions.assertEquals("Group Name", property.getGroupName());
-    } 
+    }
 
     @Test
     public void testPropertyName() {
@@ -65,7 +65,7 @@ public class ProjectPropertyTest {
         ProjectProperty property = new ProjectProperty();
         property.setPropertyType(IConfigProperty.PropertyType.STRING);
         Assertions.assertEquals(IConfigProperty.PropertyType.STRING, property.getPropertyType());
-    } 
+    }
 
     @Test
     public void testDescription() {
@@ -73,4 +73,4 @@ public class ProjectPropertyTest {
         property.setDescription("Property Description");
         Assertions.assertEquals("Property Description", property.getDescription());
     }
-} 
+}

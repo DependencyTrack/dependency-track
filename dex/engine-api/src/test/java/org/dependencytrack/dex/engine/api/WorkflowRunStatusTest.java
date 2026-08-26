@@ -26,62 +26,61 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WorkflowRunStatusTest {
 
     @ParameterizedTest
-    @CsvSource(value = {
-            "CREATED, CREATED, false",
-            "CREATED, RUNNING, true",
-            "CREATED, SUSPENDED, false",
-            "CREATED, CANCELLED, true",
-            "CREATED, COMPLETED, false",
-            "CREATED, FAILED, false",
-            "RUNNING, CREATED, false",
-            "RUNNING, RUNNING, false",
-            "RUNNING, SUSPENDED, true",
-            "RUNNING, CANCELLED, true",
-            "RUNNING, COMPLETED, true",
-            "RUNNING, FAILED, true",
-            "SUSPENDED, CREATED, false",
-            "SUSPENDED, RUNNING, true",
-            "SUSPENDED, SUSPENDED, false",
-            "SUSPENDED, CANCELLED, true",
-            "SUSPENDED, COMPLETED, false",
-            "SUSPENDED, FAILED, false",
-            "CANCELLED, CREATED, false",
-            "CANCELLED, RUNNING, false",
-            "CANCELLED, SUSPENDED, false",
-            "CANCELLED, CANCELLED, false",
-            "CANCELLED, COMPLETED, false",
-            "CANCELLED, FAILED, false",
-            "COMPLETED, CREATED, false",
-            "COMPLETED, RUNNING, false",
-            "COMPLETED, SUSPENDED, false",
-            "COMPLETED, CANCELLED, false",
-            "COMPLETED, COMPLETED, false",
-            "COMPLETED, FAILED, false",
-            "FAILED, CREATED, false",
-            "FAILED, RUNNING, false",
-            "FAILED, SUSPENDED, false",
-            "FAILED, CANCELLED, false",
-            "FAILED, COMPLETED, false",
-            "FAILED, FAILED, false",
-    })
+    @CsvSource(
+            value = {
+                "CREATED, CREATED, false",
+                "CREATED, RUNNING, true",
+                "CREATED, SUSPENDED, false",
+                "CREATED, CANCELLED, true",
+                "CREATED, COMPLETED, false",
+                "CREATED, FAILED, false",
+                "RUNNING, CREATED, false",
+                "RUNNING, RUNNING, false",
+                "RUNNING, SUSPENDED, true",
+                "RUNNING, CANCELLED, true",
+                "RUNNING, COMPLETED, true",
+                "RUNNING, FAILED, true",
+                "SUSPENDED, CREATED, false",
+                "SUSPENDED, RUNNING, true",
+                "SUSPENDED, SUSPENDED, false",
+                "SUSPENDED, CANCELLED, true",
+                "SUSPENDED, COMPLETED, false",
+                "SUSPENDED, FAILED, false",
+                "CANCELLED, CREATED, false",
+                "CANCELLED, RUNNING, false",
+                "CANCELLED, SUSPENDED, false",
+                "CANCELLED, CANCELLED, false",
+                "CANCELLED, COMPLETED, false",
+                "CANCELLED, FAILED, false",
+                "COMPLETED, CREATED, false",
+                "COMPLETED, RUNNING, false",
+                "COMPLETED, SUSPENDED, false",
+                "COMPLETED, CANCELLED, false",
+                "COMPLETED, COMPLETED, false",
+                "COMPLETED, FAILED, false",
+                "FAILED, CREATED, false",
+                "FAILED, RUNNING, false",
+                "FAILED, SUSPENDED, false",
+                "FAILED, CANCELLED, false",
+                "FAILED, COMPLETED, false",
+                "FAILED, FAILED, false",
+            })
     void shouldOnlyAllowValidTransitions(
-            final WorkflowRunStatus from,
-            final WorkflowRunStatus to,
-            final boolean allowed) {
+            final WorkflowRunStatus from, final WorkflowRunStatus to, final boolean allowed) {
         assertThat(from.canTransitionTo(to)).isEqualTo(allowed);
     }
 
     @ParameterizedTest
-    @CsvSource(value = {
-            "CREATED, false",
-            "RUNNING, false",
-            "SUSPENDED, false",
-            "CANCELLED, true",
-            "COMPLETED, true",
-            "FAILED, true"
-    })
+    @CsvSource(
+            value = {
+                "CREATED, false",
+                "RUNNING, false",
+                "SUSPENDED, false",
+                "CANCELLED, true",
+                "COMPLETED, true",
+                "FAILED, true"
+            })
     void shouldDeclareTerminalStatuses(final WorkflowRunStatus status, final boolean terminal) {
         assertThat(status.isTerminal()).isEqualTo(terminal);
     }
-
 }

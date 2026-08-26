@@ -69,12 +69,11 @@ class ComposerPackageMetadataResolverTest {
         cacheManager = cacheProvider.create();
 
         resolverFactory = new ComposerPackageMetadataResolverFactory();
-        resolverFactory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
-                        .register(CacheManager.class, cacheManager)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+        resolverFactory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(Map.of(), null, null, null))
+                .register(CacheManager.class, cacheManager)
+                .register(HttpClient.class, HttpClient.newHttpClient())
+                .register(KeyValueStore.class, new MockKeyValueStore()));
         resolver = resolverFactory.create();
     }
 
@@ -209,8 +208,7 @@ class ComposerPackageMetadataResolverTest {
     @Test
     void shouldResolveFromIncludes(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubJsonFile("/packages.json", "composer/includes-packages.json");
-        stubJsonFile("/include/all$10dbe443e5265bcae424f7fb60cd9d01b78a1b60.json",
-                "composer/include-data.json");
+        stubJsonFile("/include/all$10dbe443e5265bcae424f7fb60cd9d01b78a1b60.json", "composer/include-data.json");
 
         final var purl = aPackageURL()
                 .withType("composer")
@@ -229,8 +227,7 @@ class ComposerPackageMetadataResolverTest {
         assertThat(result.artifactMetadata().publishedAt()).isEqualTo("2024-12-10T12:14:27Z");
 
         verify(1, getRequestedFor(urlPathEqualTo("/packages.json")));
-        verify(1, getRequestedFor(
-                urlPathEqualTo("/include/all$10dbe443e5265bcae424f7fb60cd9d01b78a1b60.json")));
+        verify(1, getRequestedFor(urlPathEqualTo("/include/all$10dbe443e5265bcae424f7fb60cd9d01b78a1b60.json")));
     }
 
     @Test
@@ -254,8 +251,7 @@ class ComposerPackageMetadataResolverTest {
 
         verify(1, getRequestedFor(urlPathEqualTo("/packages.json")));
         verify(1, getRequestedFor(urlPathEqualTo("/p2/space/cowboy.json")));
-        verify(0, getRequestedFor(
-                urlPathEqualTo("/include/all$10dbe443e5265bcae424f7fb60cd9d01b78a1b60.json")));
+        verify(0, getRequestedFor(urlPathEqualTo("/include/all$10dbe443e5265bcae424f7fb60cd9d01b78a1b60.json")));
     }
 
     @Test
@@ -284,8 +280,7 @@ class ComposerPackageMetadataResolverTest {
     void shouldReturnNullForEmptyRepoRoot(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlPathEqualTo("/packages.json"))
                 .willReturn(aResponse().withStatus(200).withBody("{}")));
-        stubFor(get(urlPathEqualTo("/p/empty/root.json"))
-                .willReturn(aResponse().withStatus(404)));
+        stubFor(get(urlPathEqualTo("/p/empty/root.json")).willReturn(aResponse().withStatus(404)));
 
         final var purl = aPackageURL()
                 .withType("composer")
@@ -324,7 +319,8 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("drupal", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo, null)).isNotNull()
+        assertThat(resolver.resolve(purl, repo, null))
+                .isNotNull()
                 .satisfies(r -> assertThat(r.latestVersion()).isEqualTo("2.2.1"));
 
         final var nonMatching = aPackageURL()
@@ -363,7 +359,8 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("available", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo, null)).isNotNull()
+        assertThat(resolver.resolve(purl, repo, null))
+                .isNotNull()
                 .satisfies(r -> assertThat(r.latestVersion()).isEqualTo("v1.2.0"));
 
         final var nonListed = aPackageURL()
@@ -402,7 +399,8 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("patterns", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThat(resolver.resolve(purl, repo, null)).isNotNull()
+        assertThat(resolver.resolve(purl, repo, null))
+                .isNotNull()
                 .satisfies(r -> assertThat(r.latestVersion()).isEqualTo("v1.2.0"));
 
         final var nonMatching = aPackageURL()
@@ -574,8 +572,7 @@ class ComposerPackageMetadataResolverTest {
                 .withVersion("1.0.0")
                 .build();
 
-        assertThatExceptionOfType(NullPointerException.class)
-                .isThrownBy(() -> resolver.resolve(purl, null, null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> resolver.resolve(purl, null, null));
     }
 
     @Test
@@ -638,8 +635,7 @@ class ComposerPackageMetadataResolverTest {
 
     @Test
     void shouldThrowWhenPackagesJsonReturns500(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
-        stubFor(get(urlPathEqualTo("/packages.json"))
-                .willReturn(aResponse().withStatus(500)));
+        stubFor(get(urlPathEqualTo("/packages.json")).willReturn(aResponse().withStatus(500)));
 
         final var purl = aPackageURL()
                 .withType("composer")
@@ -649,8 +645,7 @@ class ComposerPackageMetadataResolverTest {
                 .build();
 
         final var repo = new PackageRepository("broken", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThatExceptionOfType(UncheckedIOException.class)
-                .isThrownBy(() -> resolver.resolve(purl, repo, null));
+        assertThatExceptionOfType(UncheckedIOException.class).isThrownBy(() -> resolver.resolve(purl, repo, null));
 
         verify(1, getRequestedFor(urlPathEqualTo("/packages.json")));
     }
@@ -731,8 +726,8 @@ class ComposerPackageMetadataResolverTest {
     }
 
     @Test
-    void shouldResolveFromIncludesWhenInlinePackagesExistButDontContainTarget(
-            WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldResolveFromIncludesWhenInlinePackagesExistButDontContainTarget(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         stubJsonFile("/packages.json", "composer/inline-with-includes-packages.json");
         stubJsonFile("/include/all.json", "composer/include-data.json");
 
@@ -754,8 +749,8 @@ class ComposerPackageMetadataResolverTest {
     }
 
     @Test
-    void shouldAllowPackageInAvailablePackagesEvenWhenPatternsExistButDontMatch(
-            WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldAllowPackageInAvailablePackagesEvenWhenPatternsExistButDontMatch(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         stubJsonFile("/packages.json", "composer/available-packages-with-patterns.json");
         stubFor(get(urlPathEqualTo("/repository/p2/io2/captain-hook.json"))
                 .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
@@ -850,12 +845,14 @@ class ComposerPackageMetadataResolverTest {
                                 + "{\"version\":\"2.0.0\"}]}}")));
 
         final var purl = aPackageURL()
-                .withType("composer").withNamespace("vendor")
-                .withName("big").withVersion("1.0.0").build();
+                .withType("composer")
+                .withNamespace("vendor")
+                .withName("big")
+                .withVersion("1.0.0")
+                .build();
 
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, null);
-        assertThatExceptionOfType(UncheckedIOException.class)
-                .isThrownBy(() -> smallResolver.resolve(purl, repo, null));
+        assertThatExceptionOfType(UncheckedIOException.class).isThrownBy(() -> smallResolver.resolve(purl, repo, null));
     }
 
     @Test
@@ -873,10 +870,9 @@ class ComposerPackageMetadataResolverTest {
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), "user", "secret");
         assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
-        final String expected = "Basic " + Base64.getEncoder().encodeToString(
-                "user:secret".getBytes(StandardCharsets.UTF_8));
-        verify(getRequestedFor(urlPathEqualTo("/packages.json"))
-                .withHeader("Authorization", equalTo(expected)));
+        final String expected =
+                "Basic " + Base64.getEncoder().encodeToString("user:secret".getBytes(StandardCharsets.UTF_8));
+        verify(getRequestedFor(urlPathEqualTo("/packages.json")).withHeader("Authorization", equalTo(expected)));
         verify(getRequestedFor(urlPathEqualTo("/p2/typo3/class-alias-loader.json"))
                 .withHeader("Authorization", equalTo(expected)));
     }
@@ -896,15 +892,12 @@ class ComposerPackageMetadataResolverTest {
         final var repo = new PackageRepository("packagist", wmRuntimeInfo.getHttpBaseUrl(), null, "token");
         assertThat(resolver.resolve(purl, repo, null)).isNotNull();
 
-        verify(getRequestedFor(urlPathEqualTo("/packages.json"))
-                .withHeader("Authorization", equalTo("Bearer token")));
+        verify(getRequestedFor(urlPathEqualTo("/packages.json")).withHeader("Authorization", equalTo("Bearer token")));
         verify(getRequestedFor(urlPathEqualTo("/p2/typo3/class-alias-loader.json"))
                 .withHeader("Authorization", equalTo("Bearer token")));
     }
 
     private static void stubJsonFile(String path, String bodyFile) {
-        stubFor(get(urlPathEqualTo(path))
-                .willReturn(aResponse().withStatus(200).withBodyFile(bodyFile)));
+        stubFor(get(urlPathEqualTo(path)).willReturn(aResponse().withStatus(200).withBodyFile(bodyFile)));
     }
-
 }

@@ -27,20 +27,23 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CpanPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTest<PackageMetadataResolver, CpanPackageMetadataResolverFactory> {
+class CpanPackageMetadataResolverFactoryTest
+        extends AbstractExtensionFactoryTest<PackageMetadataResolver, CpanPackageMetadataResolverFactory> {
 
     protected CpanPackageMetadataResolverFactoryTest() {
         super(CpanPackageMetadataResolverFactory.class);
     }
 
     @ParameterizedTest
-    @CsvSource(nullValues = "", value = {
-            "pkg:cpan/foo@1.0, pkg:cpan/foo@1.0",
-            "pkg:cpan/ns/foo@1.0, pkg:cpan/ns/foo@1.0",
-            "pkg:npm/foo@1.0, ",
-            "pkg:cpan/foo, ",
-            "pkg:cpan/ns/foo@1.0?key=value#sub/path, pkg:cpan/ns/foo@1.0",
-    })
+    @CsvSource(
+            nullValues = "",
+            value = {
+                "pkg:cpan/foo@1.0, pkg:cpan/foo@1.0",
+                "pkg:cpan/ns/foo@1.0, pkg:cpan/ns/foo@1.0",
+                "pkg:npm/foo@1.0, ",
+                "pkg:cpan/foo, ",
+                "pkg:cpan/ns/foo@1.0?key=value#sub/path, pkg:cpan/ns/foo@1.0",
+            })
     void shouldNormalize(String input, String expected) throws Exception {
         assertThat(factory.normalize(new PackageURL(input)))
                 .isEqualTo(expected != null ? new PackageURL(expected) : null);
@@ -50,5 +53,4 @@ class CpanPackageMetadataResolverFactoryTest extends AbstractExtensionFactoryTes
     void shouldRequireRepository() {
         assertThat(factory.requiresRepository()).isTrue();
     }
-
 }

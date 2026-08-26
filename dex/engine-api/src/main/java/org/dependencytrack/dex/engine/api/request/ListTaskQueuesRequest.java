@@ -43,5 +43,4 @@ public record ListTaskQueuesRequest(TaskType type, @Nullable String pageToken, i
     public ListTaskQueuesRequest withLimit(final int limit) {
         return new ListTaskQueuesRequest(this.type, this.pageToken, limit);
     }
-
 }

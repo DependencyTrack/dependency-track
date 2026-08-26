@@ -62,11 +62,8 @@ final class MemoryCacheManager implements CacheManager {
         final var cacheConfig = new CacheConfig(config, name);
 
         final com.github.benmanes.caffeine.cache.Cache<String, Optional<byte[]>> caffeineCache =
-                Caffeine.newBuilder()
-                        .expireAfterWrite(cacheConfig.ttl())
-                        .build();
+                Caffeine.newBuilder().expireAfterWrite(cacheConfig.ttl()).build();
 
         return new MemoryCache(caffeineCache);
     }
-
 }

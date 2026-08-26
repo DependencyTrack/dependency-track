@@ -59,7 +59,8 @@ class CycloneDxBomAssertTest {
 
         @Test
         void shouldIgnoreBomRefsThatAreNotDeclarations() {
-            assertThatNoException().isThrownBy(() -> assertThatBom(/* language=JSON */ """
+            assertThatNoException()
+                    .isThrownBy(() -> assertThatBom(/* language=JSON */ """
                     {
                       "bomFormat": "CycloneDX",
                       "specVersion": "1.7",
@@ -82,7 +83,5 @@ class CycloneDxBomAssertTest {
                     }
                     """).hasUniqueBomRefs());
         }
-
     }
-
 }

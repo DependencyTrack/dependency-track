@@ -58,7 +58,8 @@ class JvnDetailParserTest {
         // The fixture carries a <RelatedItem type="cwe"> of CWE-1287; its numeric id is collected,
         // and its glossary URL must NOT leak into the reference list.
         assertEquals(List.of(1287), advisory.cweIds());
-        assertTrue(advisory.referenceUrls().stream().noneMatch(url -> url.contains("/cwe/")),
+        assertTrue(
+                advisory.referenceUrls().stream().noneMatch(url -> url.contains("/cwe/")),
                 "CWE glossary URLs must not be filed as references");
 
         assertEquals(1, advisory.affected().size());

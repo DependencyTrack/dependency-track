@@ -61,10 +61,7 @@ final class VulnDbVulnAnalyzer implements VulnAnalyzer {
     private final boolean aliasSyncEnabled;
 
     VulnDbVulnAnalyzer(
-            Cache resultsCache,
-            ObjectMapper objectMapper,
-            VulnDbApiClient apiClient,
-            boolean aliasSyncEnabled) {
+            Cache resultsCache, ObjectMapper objectMapper, VulnDbApiClient apiClient, boolean aliasSyncEnabled) {
         this.resultsCache = resultsCache;
         this.objectMapper = objectMapper;
         this.apiClient = apiClient;
@@ -125,8 +122,8 @@ final class VulnDbVulnAnalyzer implements VulnAnalyzer {
             }
             if (component.getPropertiesCount() > 0
                     && component.getPropertiesList().stream()
-                    .map(Property::getName)
-                    .anyMatch("dependencytrack:internal:is-internal-component"::equalsIgnoreCase)) {
+                            .map(Property::getName)
+                            .anyMatch("dependencytrack:internal:is-internal-component"::equalsIgnoreCase)) {
                 continue;
             }
 
@@ -138,8 +135,8 @@ final class VulnDbVulnAnalyzer implements VulnAnalyzer {
         return bomRefsByCpe;
     }
 
-    private Map<String, List<VulnDbApiResponse.Vulnerability>> fetchAndCacheVulnerabilities(
-            Collection<String> cpes) throws InterruptedException {
+    private Map<String, List<VulnDbApiResponse.Vulnerability>> fetchAndCacheVulnerabilities(Collection<String> cpes)
+            throws InterruptedException {
         if (cpes.isEmpty()) {
             return Map.of();
         }
@@ -180,8 +177,7 @@ final class VulnDbVulnAnalyzer implements VulnAnalyzer {
     }
 
     private Bom assembleVdr(
-            Map<String, List<VulnDbApiResponse.Vulnerability>> vulnsByCpe,
-            Map<String, Set<String>> bomRefsByCpe) {
+            Map<String, List<VulnDbApiResponse.Vulnerability>> vulnsByCpe, Map<String, Set<String>> bomRefsByCpe) {
         final var vulnBuilderByVulnId = new HashMap<String, Vulnerability.Builder>();
 
         for (final var entry : vulnsByCpe.entrySet()) {
@@ -198,26 +194,20 @@ final class VulnDbVulnAnalyzer implements VulnAnalyzer {
 
             for (final var vulnDbVuln : vulnDbVulns) {
                 final String vulnId = String.valueOf(vulnDbVuln.vulndbId());
-                final Vulnerability.Builder vulnBuilder =
-                        vulnBuilderByVulnId.computeIfAbsent(
-                                vulnId,
-                                _ -> VulnDbModelConverter.convert(vulnDbVuln, aliasSyncEnabled));
+                final Vulnerability.Builder vulnBuilder = vulnBuilderByVulnId.computeIfAbsent(
+                        vulnId, _ -> VulnDbModelConverter.convert(vulnDbVuln, aliasSyncEnabled));
 
                 for (final String bomRef : bomRefs) {
                     vulnBuilder.addAffects(
-                            VulnerabilityAffects.newBuilder()
-                                    .setRef(bomRef)
-                                    .build());
+                            VulnerabilityAffects.newBuilder().setRef(bomRef).build());
                 }
             }
         }
 
         return Bom.newBuilder()
-                .addAllVulnerabilities(
-                        vulnBuilderByVulnId.values().stream()
-                                .map(Vulnerability.Builder::build)
-                                .toList())
+                .addAllVulnerabilities(vulnBuilderByVulnId.values().stream()
+                        .map(Vulnerability.Builder::build)
+                        .toList())
                 .build();
     }
-
 }

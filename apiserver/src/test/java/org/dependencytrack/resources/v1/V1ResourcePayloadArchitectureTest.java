@@ -36,6 +36,7 @@ import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.DELETE;
@@ -98,53 +99,50 @@ class V1ResourcePayloadArchitectureTest {
     @ArchTest
     @SuppressWarnings("unused")
     static final ArchRule v1ResourceHandlerMethodsMustNotAcceptJdoModelsAsRequestBody =
-            FreezingArchRule.freeze(
-                    methods()
-                            .that(new DescribedPredicate<>("are JAX-RS resource handler methods") {
-                                @Override
-                                public boolean test(JavaMethod method) {
-                                    return isHttpHandlerMethod(method);
+            FreezingArchRule.freeze(methods()
+                    .that(new DescribedPredicate<>("are JAX-RS resource handler methods") {
+                        @Override
+                        public boolean test(JavaMethod method) {
+                            return isHttpHandlerMethod(method);
+                        }
+                    })
+                    .should(new ArchCondition<>("not accept JDO model classes as request body") {
+                        @Override
+                        public void check(JavaMethod method, ConditionEvents events) {
+                            for (JavaParameter parameter : method.getParameters()) {
+                                if (!isRequestBodyParameter(parameter)) {
+                                    continue;
                                 }
-                            })
-                            .should(new ArchCondition<>("not accept JDO model classes as request body") {
-                                @Override
-                                public void check(JavaMethod method, ConditionEvents events) {
-                                    for (JavaParameter parameter : method.getParameters()) {
-                                        if (!isRequestBodyParameter(parameter)) {
-                                            continue;
-                                        }
 
-                                        for (JavaClass leafType : extractLeafTypes(parameter.getType())) {
-                                            if (isJdoModelClass(leafType)) {
-                                                events.add(violated(
-                                                        method,
-                                                        "%s accepts JDO model class %s as request body".formatted(
-                                                                method.getFullName(), leafType.getName())));
-                                            }
-                                        }
+                                for (JavaClass leafType : extractLeafTypes(parameter.getType())) {
+                                    if (isJdoModelClass(leafType)) {
+                                        events.add(violated(
+                                                method,
+                                                "%s accepts JDO model class %s as request body"
+                                                        .formatted(method.getFullName(), leafType.getName())));
                                     }
                                 }
-                            }));
+                            }
+                        }
+                    }));
 
     @ArchTest
     @SuppressWarnings("unused")
-    static final ArchRule v1ResourceSwaggerResponseSchemasMustNotReferenceJdoModels =
-            FreezingArchRule.freeze(
-                    methods()
-                            .that(new DescribedPredicate<>("are JAX-RS resource handler methods") {
-                                @Override
-                                public boolean test(JavaMethod method) {
-                                    return isHttpHandlerMethod(method);
-                                }
-                            })
-                            .should(new ArchCondition<>("not declare JDO model classes in Swagger response schemas") {
-                                @Override
-                                public void check(JavaMethod method, ConditionEvents events) {
-                                    for (JavaAnnotation<?> annotation : method.getAnnotations()) {
-                                        collectSwaggerSchemaImplementations(annotation, method, events);
-                                    }
-                                }
-                            }));
+    static final ArchRule v1ResourceSwaggerResponseSchemasMustNotReferenceJdoModels = FreezingArchRule.freeze(methods()
+            .that(new DescribedPredicate<>("are JAX-RS resource handler methods") {
+                @Override
+                public boolean test(JavaMethod method) {
+                    return isHttpHandlerMethod(method);
+                }
+            })
+            .should(new ArchCondition<>("not declare JDO model classes in Swagger response schemas") {
+                @Override
+                public void check(JavaMethod method, ConditionEvents events) {
+                    for (JavaAnnotation<?> annotation : method.getAnnotations()) {
+                        collectSwaggerSchemaImplementations(annotation, method, events);
+                    }
+                }
+            }));
 
     private static boolean isHttpHandlerMethod(JavaMethod method) {
         for (JavaAnnotation<?> annotation : method.getAnnotations()) {
@@ -167,8 +165,7 @@ class V1ResourcePayloadArchitectureTest {
     }
 
     private static boolean isJdoModelClass(JavaClass javaClass) {
-        return !javaClass.isRecord()
-                && javaClass.isAnnotatedWith(PersistenceCapable.class);
+        return !javaClass.isRecord() && javaClass.isAnnotatedWith(PersistenceCapable.class);
     }
 
     private static Set<JavaClass> extractLeafTypes(JavaType type) {
@@ -192,14 +189,14 @@ class V1ResourcePayloadArchitectureTest {
     }
 
     private static void collectSwaggerSchemaImplementations(
-            JavaAnnotation<?> annotation,
-            JavaMethod method,
-            ConditionEvents events) {
+            JavaAnnotation<?> annotation, JavaMethod method, ConditionEvents events) {
         final String annotationType = annotation.getRawType().getName();
         if (annotationType.equals(ApiResponses.class.getName())) {
-            forEachNestedAnnotation(annotation, "value", inner -> collectSwaggerSchemaImplementations(inner, method, events));
+            forEachNestedAnnotation(
+                    annotation, "value", inner -> collectSwaggerSchemaImplementations(inner, method, events));
         } else if (annotationType.equals(ApiResponse.class.getName())) {
-            forEachNestedAnnotation(annotation, "content", inner -> collectSwaggerSchemaImplementations(inner, method, events));
+            forEachNestedAnnotation(
+                    annotation, "content", inner -> collectSwaggerSchemaImplementations(inner, method, events));
         } else if (annotationType.equals(Content.class.getName())) {
             annotation.get("schema").ifPresent(value -> {
                 if (value instanceof final JavaAnnotation<?> schema) {
@@ -219,25 +216,21 @@ class V1ResourcePayloadArchitectureTest {
     }
 
     private static void checkSwaggerSchemaImplementation(
-            JavaAnnotation<?> schema,
-            JavaMethod method,
-            ConditionEvents events) {
+            JavaAnnotation<?> schema, JavaMethod method, ConditionEvents events) {
         schema.get("implementation").ifPresent(value -> {
             if (value instanceof final JavaClass target
                     && !target.isEquivalentTo(Void.class)
                     && isJdoModelClass(target)) {
                 events.add(violated(
                         method,
-                        "%s declares JDO model class %s as Swagger response schema".formatted(
-                                method.getFullName(), target.getName())));
+                        "%s declares JDO model class %s as Swagger response schema"
+                                .formatted(method.getFullName(), target.getName())));
             }
         });
     }
 
     private static void forEachNestedAnnotation(
-            JavaAnnotation<?> annotation,
-            String property,
-            Consumer<JavaAnnotation<?>> consumer) {
+            JavaAnnotation<?> annotation, String property, Consumer<JavaAnnotation<?>> consumer) {
         annotation.get(property).ifPresent(value -> {
             if (value instanceof final JavaAnnotation<?>[] nested) {
                 for (JavaAnnotation<?> inner : nested) {
@@ -248,5 +241,4 @@ class V1ResourcePayloadArchitectureTest {
             }
         });
     }
-
 }

@@ -26,12 +26,6 @@ import alpine.model.Team;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonValue;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.Response;
 import net.javacrumbs.jsonunit.core.Option;
 import org.apache.commons.lang3.function.TriFunction;
 import org.dependencytrack.JerseyTestExtension;
@@ -71,6 +65,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
+
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -107,16 +108,15 @@ public class FindingResourceTest extends ResourceTest {
     private static final DexEngine DEX_ENGINE_MOCK = mock(DexEngine.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(FindingResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class)
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
-                        }
-                    }));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(FindingResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class)
+            .register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bind(DEX_ENGINE_MOCK).to(DexEngine.class);
+                }
+            }));
 
     @AfterEach
     void afterEach() {
@@ -143,51 +143,125 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c1, "none");
         qm.addVulnerability(v3, c2, "none");
         qm.addVulnerability(v4, c5, "none");
-        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(
+                        V1_FINDING + "/project/" + p1.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertEquals(200, response.getStatus(), 0);
         assertEquals(String.valueOf(3), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         assertNotNull(json);
-        assertThat(json).satisfiesExactlyInAnyOrder(
-                jsonValue -> {
-                    final JsonObject finding = jsonValue.asJsonObject();
-                    assertEquals("Component A", finding.getJsonObject("component").getString("name"));
-                    assertEquals("1.0", finding.getJsonObject("component").getString("version"));
-                    assertEquals("Vuln-1", finding.getJsonObject("vulnerability").getString("vulnId"));
-                    assertEquals(Severity.CRITICAL.name(), finding.getJsonObject("vulnerability").getString("severity"));
-                    assertEquals(2, finding.getJsonObject("vulnerability").getJsonArray("cwes").size());
-                    assertEquals(80, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
-                    assertEquals(666, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
-                    assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
-                    assertEquals(p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":" + v1.getUuid().toString(), finding.getString("matrix"));
-                },
-                jsonValue -> {
-                    final JsonObject finding = jsonValue.asJsonObject();
-                    assertEquals("Component A", finding.getJsonObject("component").getString("name"));
-                    assertEquals("1.0", finding.getJsonObject("component").getString("version"));
-                    assertEquals("Vuln-2", finding.getJsonObject("vulnerability").getString("vulnId"));
-                    assertEquals(Severity.HIGH.name(), finding.getJsonObject("vulnerability").getString("severity"));
-                    assertEquals(2, finding.getJsonObject("vulnerability").getJsonArray("cwes").size());
-                    assertEquals(80, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
-                    assertEquals(666, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
-                    assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
-                    assertEquals(p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":" + v2.getUuid().toString(), finding.getString("matrix"));
-                },
-                jsonValue -> {
-                    final JsonObject finding = jsonValue.asJsonObject();
-                    assertEquals("Component B", finding.getJsonObject("component").getString("name"));
-                    assertEquals("1.0", finding.getJsonObject("component").getString("version"));
-                    assertEquals("Vuln-3", finding.getJsonObject("vulnerability").getString("vulnId"));
-                    assertEquals(Severity.MEDIUM.name(), finding.getJsonObject("vulnerability").getString("severity"));
-                    assertEquals(2, finding.getJsonObject("vulnerability").getJsonArray("cwes").size());
-                    assertEquals(80, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
-                    assertEquals(666, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
-                    assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
-                    assertEquals(p1.getUuid().toString() + ":" + c2.getUuid().toString() + ":" + v3.getUuid().toString(), finding.getString("matrix"));
-                }
-        );
+        assertThat(json)
+                .satisfiesExactlyInAnyOrder(
+                        jsonValue -> {
+                            final JsonObject finding = jsonValue.asJsonObject();
+                            assertEquals(
+                                    "Component A",
+                                    finding.getJsonObject("component").getString("name"));
+                            assertEquals(
+                                    "1.0", finding.getJsonObject("component").getString("version"));
+                            assertEquals(
+                                    "Vuln-1",
+                                    finding.getJsonObject("vulnerability").getString("vulnId"));
+                            assertEquals(
+                                    Severity.CRITICAL.name(),
+                                    finding.getJsonObject("vulnerability").getString("severity"));
+                            assertEquals(
+                                    2,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .size());
+                            assertEquals(
+                                    80,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(0)
+                                            .getInt("cweId"));
+                            assertEquals(
+                                    666,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(1)
+                                            .getInt("cweId"));
+                            assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
+                            assertEquals(
+                                    p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":"
+                                            + v1.getUuid().toString(),
+                                    finding.getString("matrix"));
+                        },
+                        jsonValue -> {
+                            final JsonObject finding = jsonValue.asJsonObject();
+                            assertEquals(
+                                    "Component A",
+                                    finding.getJsonObject("component").getString("name"));
+                            assertEquals(
+                                    "1.0", finding.getJsonObject("component").getString("version"));
+                            assertEquals(
+                                    "Vuln-2",
+                                    finding.getJsonObject("vulnerability").getString("vulnId"));
+                            assertEquals(
+                                    Severity.HIGH.name(),
+                                    finding.getJsonObject("vulnerability").getString("severity"));
+                            assertEquals(
+                                    2,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .size());
+                            assertEquals(
+                                    80,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(0)
+                                            .getInt("cweId"));
+                            assertEquals(
+                                    666,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(1)
+                                            .getInt("cweId"));
+                            assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
+                            assertEquals(
+                                    p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":"
+                                            + v2.getUuid().toString(),
+                                    finding.getString("matrix"));
+                        },
+                        jsonValue -> {
+                            final JsonObject finding = jsonValue.asJsonObject();
+                            assertEquals(
+                                    "Component B",
+                                    finding.getJsonObject("component").getString("name"));
+                            assertEquals(
+                                    "1.0", finding.getJsonObject("component").getString("version"));
+                            assertEquals(
+                                    "Vuln-3",
+                                    finding.getJsonObject("vulnerability").getString("vulnId"));
+                            assertEquals(
+                                    Severity.MEDIUM.name(),
+                                    finding.getJsonObject("vulnerability").getString("severity"));
+                            assertEquals(
+                                    2,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .size());
+                            assertEquals(
+                                    80,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(0)
+                                            .getInt("cweId"));
+                            assertEquals(
+                                    666,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(1)
+                                            .getInt("cweId"));
+                            assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
+                            assertEquals(
+                                    p1.getUuid().toString() + ":" + c2.getUuid().toString() + ":"
+                                            + v3.getUuid().toString(),
+                                    finding.getString("matrix"));
+                        });
     }
 
     @Test
@@ -215,8 +289,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(vulnFoo, componentLiteral, "none");
 
         final Function<String, List<String>> searchFindings = searchText -> {
-            final Response response = jersey
-                    .target(V1_FINDING + "/project/" + project.getUuid())
+            final Response response = jersey.target(V1_FINDING + "/project/" + project.getUuid())
                     .queryParam("searchText", requireNonNullElse(searchText, ""))
                     .request()
                     .header(X_API_KEY, apiKey)
@@ -236,17 +309,13 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(searchFindings.apply("%char")).containsExactly("FOO-100");
         assertThat(searchFindings.apply("char_x")).containsExactly("FOO-100");
         assertThat(searchFindings.apply("alph_")).isEmpty();
-        assertThat(searchFindings.apply(vulnBar.getUuid().toString()))
-                .containsExactly("BAR-200");
+        assertThat(searchFindings.apply(vulnBar.getUuid().toString())).containsExactly("BAR-200");
         assertThat(searchFindings.apply(vulnBar.getUuid().toString().toUpperCase()))
                 .containsExactly("BAR-200");
-        assertThat(searchFindings.apply(componentBeta.getUuid().toString()))
+        assertThat(searchFindings.apply(componentBeta.getUuid().toString())).containsExactly("BAR-200");
+        assertThat(searchFindings.apply(componentBeta.getUuid() + ":" + vulnBar.getUuid()))
                 .containsExactly("BAR-200");
-        assertThat(searchFindings.apply(
-                componentBeta.getUuid() + ":" + vulnBar.getUuid()))
-                .containsExactly("BAR-200");
-        assertThat(searchFindings.apply(
-                componentAlpha.getUuid() + ":" + vulnBar.getUuid()))
+        assertThat(searchFindings.apply(componentAlpha.getUuid() + ":" + vulnBar.getUuid()))
                 .isEmpty();
         assertThat(searchFindings.apply(UUID.randomUUID().toString())).isEmpty();
     }
@@ -255,8 +324,8 @@ public class FindingResourceTest extends ResourceTest {
     public void getFindingsByProjectEmptyTest() throws Exception {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
-        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
-                new PackageMetadata(
+        useJdbiHandle(handle -> new PackageMetadataDao(handle)
+                .upsertAll(List.of(new PackageMetadata(
                         new com.github.packageurl.PackageURL("pkg:maven/com.acme/acme-lib"),
                         "1.2.3",
                         null,
@@ -281,7 +350,8 @@ public class FindingResourceTest extends ResourceTest {
     public void getFindingsByProjectInvalidTest() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
-        Response response = jersey.target(V1_FINDING + "/project/" + UUID.randomUUID()).request()
+        Response response = jersey.target(V1_FINDING + "/project/" + UUID.randomUUID())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertEquals(404, response.getStatus(), 0);
@@ -299,8 +369,8 @@ public class FindingResourceTest extends ResourceTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_FINDING + "/project/" + project.getUuid()).request()
+        final Supplier<Response> responseSupplier = () -> jersey.target(V1_FINDING + "/project/" + project.getUuid())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get();
 
@@ -335,12 +405,12 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v1, c1, "none");
         qm.addVulnerability(v2, c2, "none");
 
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(c1, v1)
-                        .withState(AnalysisState.FALSE_POSITIVE));
+        qm.makeAnalysis(new MakeAnalysisCommand(c1, v1).withState(AnalysisState.FALSE_POSITIVE));
 
         // Should include all findings with or without analysis.
-        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(
+                        V1_FINDING + "/project/" + p1.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
@@ -356,13 +426,11 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         JsonArray json = parseJsonArray(response);
         assertNotNull(json);
-        assertThat(json).satisfiesExactly(
-                jsonValue -> {
-                    final JsonObject finding = jsonValue.asJsonObject();
-                    assertEquals("Component A", finding.getJsonObject("component").getString("name"));
-                    assertEquals("FALSE_POSITIVE", finding.getJsonObject("analysis").getString("state"));
-                }
-        );
+        assertThat(json).satisfiesExactly(jsonValue -> {
+            final JsonObject finding = jsonValue.asJsonObject();
+            assertEquals("Component A", finding.getJsonObject("component").getString("name"));
+            assertEquals("FALSE_POSITIVE", finding.getJsonObject("analysis").getString("state"));
+        });
 
         // Should only include project without existing analysis.
         response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString())
@@ -374,12 +442,10 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         json = parseJsonArray(response);
         assertNotNull(json);
-        assertThat(json).satisfiesExactly(
-                jsonValue -> {
-                    final JsonObject finding = jsonValue.asJsonObject();
-                    assertEquals("Component B", finding.getJsonObject("component").getString("name"));
-                }
-        );
+        assertThat(json).satisfiesExactly(jsonValue -> {
+            final JsonObject finding = jsonValue.asJsonObject();
+            assertEquals("Component B", finding.getJsonObject("component").getString("name"));
+        });
     }
 
     @Test
@@ -391,12 +457,13 @@ public class FindingResourceTest extends ResourceTest {
         final Component cHigh = createComponent(project, "Component High", "1.0");
         final Component cNoEpss = createComponent(project, "Component NoEpss", "1.0");
 
-        qm.addVulnerability(createVulnerabilityWithEpss("Vuln-Low", Severity.LOW, new BigDecimal("0.10")), cLow, "none");
-        qm.addVulnerability(createVulnerabilityWithEpss("Vuln-High", Severity.CRITICAL, new BigDecimal("0.85")), cHigh, "none");
+        qm.addVulnerability(
+                createVulnerabilityWithEpss("Vuln-Low", Severity.LOW, new BigDecimal("0.10")), cLow, "none");
+        qm.addVulnerability(
+                createVulnerabilityWithEpss("Vuln-High", Severity.CRITICAL, new BigDecimal("0.85")), cHigh, "none");
         qm.addVulnerability(createVulnerability("Vuln-NoEpss", Severity.MEDIUM), cNoEpss, "none");
 
-        final Response response = jersey
-                .target(V1_FINDING + "/project/" + project.getUuid())
+        final Response response = jersey.target(V1_FINDING + "/project/" + project.getUuid())
                 .queryParam("epssFrom", "0.05")
                 .queryParam("epssTo", "0.5")
                 .request()
@@ -428,11 +495,8 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c2, "none");
         qm.addVulnerability(v1, c1, "none");
 
-        Response response = jersey
-                .target(V1_FINDING)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        Response response =
+                jersey.target(V1_FINDING).request().header(X_API_KEY, apiKey).get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(response))
                 .inPath("$[*].vulnerability.vulnId")
@@ -450,8 +514,7 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v5, c5, "none");
         qm.addVulnerability(v4, c4, "none");
 
-        response = jersey
-                .target(V1_FINDING + "/project/" + p4.getUuid())
+        response = jersey.target(V1_FINDING + "/project/" + p4.getUuid())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -482,59 +545,142 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c1, "none");
         qm.addVulnerability(v3, c2, "none");
         qm.addVulnerability(v4, c5, "none");
-        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString() + "/export").request()
+        Response response = jersey.target(
+                        V1_FINDING + "/project/" + p1.getUuid().toString() + "/export")
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertEquals(200, response.getStatus(), 0);
         assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonObject json = parseJsonObject(response);
         assertNotNull(json);
-        assertEquals(ConfigProvider.getConfig().getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_NAME, String.class), json.getJsonObject("meta").getString("application"));
-        assertEquals(ConfigProvider.getConfig().getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_VERSION, String.class), json.getJsonObject("meta").getString("version"));
+        assertEquals(
+                ConfigProvider.getConfig().getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_NAME, String.class),
+                json.getJsonObject("meta").getString("application"));
+        assertEquals(
+                ConfigProvider.getConfig().getValue(AlpineConfigKeys.BUILD_INFO_APPLICATION_VERSION, String.class),
+                json.getJsonObject("meta").getString("version"));
         assertNotNull(json.getJsonObject("meta").getString("timestamp"));
         assertEquals("Acme Example", json.getJsonObject("project").getString("name"));
         assertEquals("1.0", json.getJsonObject("project").getString("version"));
         assertEquals(p1.getUuid().toString(), json.getJsonObject("project").getString("uuid"));
         assertEquals("1.5", json.getString("version")); // FPF version
         JsonArray findings = json.getJsonArray("findings");
-        assertThat(findings).satisfiesExactlyInAnyOrder(
-                jsonValue -> {
-                    final JsonObject finding = jsonValue.asJsonObject();
-                    assertEquals("Component A", finding.getJsonObject("component").getString("name"));
-                    assertEquals("1.0", finding.getJsonObject("component").getString("version"));
-                    assertEquals("Vuln-1", finding.getJsonObject("vulnerability").getString("vulnId"));
-                    assertEquals(Severity.CRITICAL.name(), finding.getJsonObject("vulnerability").getString("severity"));
-                    assertEquals(2, finding.getJsonObject("vulnerability").getJsonArray("cwes").size());
-                    assertEquals(80, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
-                    assertEquals(666, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
-                    assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
-                    assertEquals(p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":" + v1.getUuid().toString(), finding.getString("matrix"));
-                },
-                jsonValue -> {
-                    final JsonObject finding = jsonValue.asJsonObject();
-                    assertEquals("Component A", finding.getJsonObject("component").getString("name"));
-                    assertEquals("1.0", finding.getJsonObject("component").getString("version"));
-                    assertEquals("Vuln-2", finding.getJsonObject("vulnerability").getString("vulnId"));
-                    assertEquals(Severity.HIGH.name(), finding.getJsonObject("vulnerability").getString("severity"));
-                    assertEquals(2, finding.getJsonObject("vulnerability").getJsonArray("cwes").size());
-                    assertEquals(80, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
-                    assertEquals(666, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
-                    assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
-                    assertEquals(p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":" + v2.getUuid().toString(), finding.getString("matrix"));
-                },
-                jsonValue -> {
-                    final JsonObject finding = jsonValue.asJsonObject();
-                    assertEquals("Component B", finding.getJsonObject("component").getString("name"));
-                    assertEquals("1.0", finding.getJsonObject("component").getString("version"));
-                    assertEquals("Vuln-3", finding.getJsonObject("vulnerability").getString("vulnId"));
-                    assertEquals(Severity.MEDIUM.name(), finding.getJsonObject("vulnerability").getString("severity"));
-                    assertEquals(2, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").size());
-                    assertEquals(80, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
-                    assertEquals(666, findings.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
-                    assertFalse(findings.getJsonObject(0).getJsonObject("analysis").getBoolean("isSuppressed"));
-                    assertEquals(p1.getUuid().toString() + ":" + c2.getUuid().toString() + ":" + v3.getUuid().toString(), finding.getString("matrix"));
-                }
-        );
+        assertThat(findings)
+                .satisfiesExactlyInAnyOrder(
+                        jsonValue -> {
+                            final JsonObject finding = jsonValue.asJsonObject();
+                            assertEquals(
+                                    "Component A",
+                                    finding.getJsonObject("component").getString("name"));
+                            assertEquals(
+                                    "1.0", finding.getJsonObject("component").getString("version"));
+                            assertEquals(
+                                    "Vuln-1",
+                                    finding.getJsonObject("vulnerability").getString("vulnId"));
+                            assertEquals(
+                                    Severity.CRITICAL.name(),
+                                    finding.getJsonObject("vulnerability").getString("severity"));
+                            assertEquals(
+                                    2,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .size());
+                            assertEquals(
+                                    80,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(0)
+                                            .getInt("cweId"));
+                            assertEquals(
+                                    666,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(1)
+                                            .getInt("cweId"));
+                            assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
+                            assertEquals(
+                                    p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":"
+                                            + v1.getUuid().toString(),
+                                    finding.getString("matrix"));
+                        },
+                        jsonValue -> {
+                            final JsonObject finding = jsonValue.asJsonObject();
+                            assertEquals(
+                                    "Component A",
+                                    finding.getJsonObject("component").getString("name"));
+                            assertEquals(
+                                    "1.0", finding.getJsonObject("component").getString("version"));
+                            assertEquals(
+                                    "Vuln-2",
+                                    finding.getJsonObject("vulnerability").getString("vulnId"));
+                            assertEquals(
+                                    Severity.HIGH.name(),
+                                    finding.getJsonObject("vulnerability").getString("severity"));
+                            assertEquals(
+                                    2,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .size());
+                            assertEquals(
+                                    80,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(0)
+                                            .getInt("cweId"));
+                            assertEquals(
+                                    666,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(1)
+                                            .getInt("cweId"));
+                            assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
+                            assertEquals(
+                                    p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":"
+                                            + v2.getUuid().toString(),
+                                    finding.getString("matrix"));
+                        },
+                        jsonValue -> {
+                            final JsonObject finding = jsonValue.asJsonObject();
+                            assertEquals(
+                                    "Component B",
+                                    finding.getJsonObject("component").getString("name"));
+                            assertEquals(
+                                    "1.0", finding.getJsonObject("component").getString("version"));
+                            assertEquals(
+                                    "Vuln-3",
+                                    finding.getJsonObject("vulnerability").getString("vulnId"));
+                            assertEquals(
+                                    Severity.MEDIUM.name(),
+                                    finding.getJsonObject("vulnerability").getString("severity"));
+                            assertEquals(
+                                    2,
+                                    findings.getJsonObject(1)
+                                            .getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .size());
+                            assertEquals(
+                                    80,
+                                    findings.getJsonObject(1)
+                                            .getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(0)
+                                            .getInt("cweId"));
+                            assertEquals(
+                                    666,
+                                    findings.getJsonObject(1)
+                                            .getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(1)
+                                            .getInt("cweId"));
+                            assertFalse(findings.getJsonObject(0)
+                                    .getJsonObject("analysis")
+                                    .getBoolean("isSuppressed"));
+                            assertEquals(
+                                    p1.getUuid().toString() + ":" + c2.getUuid().toString() + ":"
+                                            + v3.getUuid().toString(),
+                                    finding.getString("matrix"));
+                        });
     }
 
     @Test
@@ -549,8 +695,7 @@ public class FindingResourceTest extends ResourceTest {
                     "none");
         }
 
-        final Response response = jersey
-                .target(V1_FINDING + "/project/" + project.getUuid() + "/export")
+        final Response response = jersey.target(V1_FINDING + "/project/" + project.getUuid() + "/export")
                 .queryParam("pageNumber", "1")
                 .queryParam("pageSize", "1")
                 .request()
@@ -575,8 +720,7 @@ public class FindingResourceTest extends ResourceTest {
                     "none");
         }
 
-        final Response response = jersey
-                .target(V1_FINDING + "/project/" + project.getUuid())
+        final Response response = jersey.target(V1_FINDING + "/project/" + project.getUuid())
                 .queryParam("pageNumber", "1")
                 .queryParam("pageSize", "1")
                 .request()
@@ -594,7 +738,8 @@ public class FindingResourceTest extends ResourceTest {
     public void exportFindingsByProjectInvalidTest() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
-        Response response = jersey.target(V1_FINDING + "/project/" + UUID.randomUUID() + "/export").request()
+        Response response = jersey.target(V1_FINDING + "/project/" + UUID.randomUUID() + "/export")
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertEquals(404, response.getStatus(), 0);
@@ -612,10 +757,11 @@ public class FindingResourceTest extends ResourceTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_FINDING + "/project/" + project.getUuid() + "/export").request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_FINDING + "/project/" + project.getUuid() + "/export")
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -651,28 +797,29 @@ public class FindingResourceTest extends ResourceTest {
         Component c5 = createComponent(p2, "Component E", "1.0");
         c5.setPurl("pkg:/maven/org.acme/component-e@1.0.0");
 
-        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
-                new PackageMetadata(
-                        new com.github.packageurl.PackageURL("pkg:maven/org.acme/component-a"),
-                        "2.0.0",
-                        Instant.now(),
-                        Instant.now(),
-                        null,
-                        null),
-                new PackageMetadata(
-                        new com.github.packageurl.PackageURL("pkg:maven/org.acme/component-b"),
-                        "3.0.0",
-                        Instant.now(),
-                        Instant.now(),
-                        null,
-                        null),
-                new PackageMetadata(
-                        new com.github.packageurl.PackageURL("pkg:maven/org.acme/component-e"),
-                        "4.0.0",
-                        Instant.now(),
-                        Instant.now(),
-                        null,
-                        null))));
+        useJdbiHandle(handle -> new PackageMetadataDao(handle)
+                .upsertAll(List.of(
+                        new PackageMetadata(
+                                new com.github.packageurl.PackageURL("pkg:maven/org.acme/component-a"),
+                                "2.0.0",
+                                Instant.now(),
+                                Instant.now(),
+                                null,
+                                null),
+                        new PackageMetadata(
+                                new com.github.packageurl.PackageURL("pkg:maven/org.acme/component-b"),
+                                "3.0.0",
+                                Instant.now(),
+                                Instant.now(),
+                                null,
+                                null),
+                        new PackageMetadata(
+                                new com.github.packageurl.PackageURL("pkg:maven/org.acme/component-e"),
+                                "4.0.0",
+                                Instant.now(),
+                                Instant.now(),
+                                null,
+                                null))));
 
         createComponent(p2, "Component F", "1.0");
         Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
@@ -683,54 +830,133 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c1, "none");
         qm.addVulnerability(v3, c2, "none");
         qm.addVulnerability(v4, c5, "none");
-        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(
+                        V1_FINDING + "/project/" + p1.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertEquals(200, response.getStatus(), 0);
         assertEquals(String.valueOf(3), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray json = parseJsonArray(response);
         assertNotNull(json);
-        assertThat(json).satisfiesExactlyInAnyOrder(
-                jsonValue -> {
-                    final JsonObject finding = jsonValue.asJsonObject();
-                    assertEquals("Component A", finding.getJsonObject("component").getString("name"));
-                    assertEquals("1.0", finding.getJsonObject("component").getString("version"));
-                    assertEquals("Vuln-1", finding.getJsonObject("vulnerability").getString("vulnId"));
-                    assertEquals(Severity.CRITICAL.name(), finding.getJsonObject("vulnerability").getString("severity"));
-                    assertEquals(2, finding.getJsonObject("vulnerability").getJsonArray("cwes").size());
-                    assertEquals(80, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
-                    assertEquals(666, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
-                    assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
-                    assertEquals(p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":" + v1.getUuid().toString(), finding.getString("matrix"));
-                    assertEquals("2.0.0", finding.getJsonObject("component").getString("latestVersion"));
-                },
-                jsonValue -> {
-                    final JsonObject finding = jsonValue.asJsonObject();
-                    assertEquals("Component A", finding.getJsonObject("component").getString("name"));
-                    assertEquals("1.0", finding.getJsonObject("component").getString("version"));
-                    assertEquals("Vuln-2", finding.getJsonObject("vulnerability").getString("vulnId"));
-                    assertEquals(Severity.HIGH.name(), finding.getJsonObject("vulnerability").getString("severity"));
-                    assertEquals(2, finding.getJsonObject("vulnerability").getJsonArray("cwes").size());
-                    assertEquals(80, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
-                    assertEquals(666, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
-                    assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
-                    assertEquals(p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":" + v2.getUuid().toString(), finding.getString("matrix"));
-                    assertEquals("2.0.0", finding.getJsonObject("component").getString("latestVersion"));
-                },
-                jsonValue -> {
-                    final JsonObject finding = jsonValue.asJsonObject();
-                    assertEquals("Component B", finding.getJsonObject("component").getString("name"));
-                    assertEquals("1.0", finding.getJsonObject("component").getString("version"));
-                    assertEquals("Vuln-3", finding.getJsonObject("vulnerability").getString("vulnId"));
-                    assertEquals(Severity.MEDIUM.name(), finding.getJsonObject("vulnerability").getString("severity"));
-                    assertEquals(2, finding.getJsonObject("vulnerability").getJsonArray("cwes").size());
-                    assertEquals(80, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
-                    assertEquals(666, finding.getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
-                    assertFalse(json.getJsonObject(0).getJsonObject("analysis").getBoolean("isSuppressed"));
-                    assertEquals(p1.getUuid().toString() + ":" + c2.getUuid().toString() + ":" + v3.getUuid().toString(), finding.getString("matrix"));
-                    assertEquals("3.0.0", finding.getJsonObject("component").getString("latestVersion"));
-                }
-        );
+        assertThat(json)
+                .satisfiesExactlyInAnyOrder(
+                        jsonValue -> {
+                            final JsonObject finding = jsonValue.asJsonObject();
+                            assertEquals(
+                                    "Component A",
+                                    finding.getJsonObject("component").getString("name"));
+                            assertEquals(
+                                    "1.0", finding.getJsonObject("component").getString("version"));
+                            assertEquals(
+                                    "Vuln-1",
+                                    finding.getJsonObject("vulnerability").getString("vulnId"));
+                            assertEquals(
+                                    Severity.CRITICAL.name(),
+                                    finding.getJsonObject("vulnerability").getString("severity"));
+                            assertEquals(
+                                    2,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .size());
+                            assertEquals(
+                                    80,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(0)
+                                            .getInt("cweId"));
+                            assertEquals(
+                                    666,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(1)
+                                            .getInt("cweId"));
+                            assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
+                            assertEquals(
+                                    p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":"
+                                            + v1.getUuid().toString(),
+                                    finding.getString("matrix"));
+                            assertEquals(
+                                    "2.0.0", finding.getJsonObject("component").getString("latestVersion"));
+                        },
+                        jsonValue -> {
+                            final JsonObject finding = jsonValue.asJsonObject();
+                            assertEquals(
+                                    "Component A",
+                                    finding.getJsonObject("component").getString("name"));
+                            assertEquals(
+                                    "1.0", finding.getJsonObject("component").getString("version"));
+                            assertEquals(
+                                    "Vuln-2",
+                                    finding.getJsonObject("vulnerability").getString("vulnId"));
+                            assertEquals(
+                                    Severity.HIGH.name(),
+                                    finding.getJsonObject("vulnerability").getString("severity"));
+                            assertEquals(
+                                    2,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .size());
+                            assertEquals(
+                                    80,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(0)
+                                            .getInt("cweId"));
+                            assertEquals(
+                                    666,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(1)
+                                            .getInt("cweId"));
+                            assertFalse(finding.getJsonObject("analysis").getBoolean("isSuppressed"));
+                            assertEquals(
+                                    p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":"
+                                            + v2.getUuid().toString(),
+                                    finding.getString("matrix"));
+                            assertEquals(
+                                    "2.0.0", finding.getJsonObject("component").getString("latestVersion"));
+                        },
+                        jsonValue -> {
+                            final JsonObject finding = jsonValue.asJsonObject();
+                            assertEquals(
+                                    "Component B",
+                                    finding.getJsonObject("component").getString("name"));
+                            assertEquals(
+                                    "1.0", finding.getJsonObject("component").getString("version"));
+                            assertEquals(
+                                    "Vuln-3",
+                                    finding.getJsonObject("vulnerability").getString("vulnId"));
+                            assertEquals(
+                                    Severity.MEDIUM.name(),
+                                    finding.getJsonObject("vulnerability").getString("severity"));
+                            assertEquals(
+                                    2,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .size());
+                            assertEquals(
+                                    80,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(0)
+                                            .getInt("cweId"));
+                            assertEquals(
+                                    666,
+                                    finding.getJsonObject("vulnerability")
+                                            .getJsonArray("cwes")
+                                            .getJsonObject(1)
+                                            .getInt("cweId"));
+                            assertFalse(json.getJsonObject(0)
+                                    .getJsonObject("analysis")
+                                    .getBoolean("isSuppressed"));
+                            assertEquals(
+                                    p1.getUuid().toString() + ":" + c2.getUuid().toString() + ":"
+                                            + v3.getUuid().toString(),
+                                    finding.getString("matrix"));
+                            assertEquals(
+                                    "3.0.0", finding.getJsonObject("component").getString("latestVersion"));
+                        });
     }
 
     @Test
@@ -743,7 +969,9 @@ public class FindingResourceTest extends ResourceTest {
 
         Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL);
         qm.addVulnerability(v1, c1, "none");
-        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(
+                        V1_FINDING + "/project/" + p1.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertEquals(200, response.getStatus(), 0);
@@ -751,15 +979,39 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         assertNotNull(json);
         assertEquals(1, json.size());
-        assertEquals("Component A", json.getJsonObject(0).getJsonObject("component").getString("name"));
+        assertEquals(
+                "Component A", json.getJsonObject(0).getJsonObject("component").getString("name"));
         assertEquals("1.0", json.getJsonObject(0).getJsonObject("component").getString("version"));
-        assertEquals("Vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
-        assertEquals(Severity.CRITICAL.name(), json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
-        assertEquals(2, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").size());
-        assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(0).getInt("cweId"));
-        assertEquals(666, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getJsonObject(1).getInt("cweId"));
+        assertEquals(
+                "Vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
+        assertEquals(
+                Severity.CRITICAL.name(),
+                json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                2,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .size());
+        assertEquals(
+                80,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getJsonObject(0)
+                        .getInt("cweId"));
+        assertEquals(
+                666,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getJsonObject(1)
+                        .getInt("cweId"));
         assertFalse(json.getJsonObject(0).getJsonObject("analysis").getBoolean("isSuppressed"));
-        assertEquals(p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":" + v1.getUuid().toString(), json.getJsonObject(0).getString("matrix"));
+        assertEquals(
+                p1.getUuid().toString() + ":" + c1.getUuid().toString() + ":"
+                        + v1.getUuid().toString(),
+                json.getJsonObject(0).getString("matrix"));
         assertNull(json.getJsonObject(0).getJsonObject("component").get("latestVersion"));
     }
 
@@ -780,7 +1032,9 @@ public class FindingResourceTest extends ResourceTest {
         v1.setOwaspRRVector("owasp-vector");
         qm.addVulnerability(v1, c1, "none");
 
-        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(
+                        V1_FINDING + "/project/" + p1.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertEquals(200, response.getStatus(), 0);
@@ -788,12 +1042,36 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         assertNotNull(json);
         assertEquals(1, json.size());
-        assertEquals(0.2, json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("cvssV2BaseScore").doubleValue(), 0);
-        assertEquals(0.3, json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("cvssV3BaseScore").doubleValue(), 0);
-        assertEquals(0.4, json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("owaspBusinessImpactScore").doubleValue(), 0);
-        assertEquals("cvssV2-vector", json.getJsonObject(0).getJsonObject("vulnerability").getString("cvssV2Vector"));
-        assertEquals("cvssV3-vector", json.getJsonObject(0).getJsonObject("vulnerability").getString("cvssV3Vector"));
-        assertEquals("owasp-vector", json.getJsonObject(0).getJsonObject("vulnerability").getString("owaspRRVector"));
+        assertEquals(
+                0.2,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("cvssV2BaseScore")
+                        .doubleValue(),
+                0);
+        assertEquals(
+                0.3,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("cvssV3BaseScore")
+                        .doubleValue(),
+                0);
+        assertEquals(
+                0.4,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("owaspBusinessImpactScore")
+                        .doubleValue(),
+                0);
+        assertEquals(
+                "cvssV2-vector",
+                json.getJsonObject(0).getJsonObject("vulnerability").getString("cvssV2Vector"));
+        assertEquals(
+                "cvssV3-vector",
+                json.getJsonObject(0).getJsonObject("vulnerability").getString("cvssV3Vector"));
+        assertEquals(
+                "owasp-vector",
+                json.getJsonObject(0).getJsonObject("vulnerability").getString("owaspRRVector"));
     }
 
     @Test
@@ -816,7 +1094,9 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v1, c1, "none");
         qm.addVulnerability(v1, c2, "none");
 
-        Response response = jersey.target(V1_FINDING + "/project/" + p1.getUuid().toString()).request()
+        Response response = jersey.target(
+                        V1_FINDING + "/project/" + p1.getUuid().toString())
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertEquals(200, response.getStatus(), 0);
@@ -856,8 +1136,8 @@ public class FindingResourceTest extends ResourceTest {
         analysis.setSeverity(Severity.HIGH);
         qm.persist(analysis);
 
-        final Response response = jersey
-                .target(V1_FINDING + "/project/" + p1.getUuid().toString())
+        final Response response = jersey.target(
+                        V1_FINDING + "/project/" + p1.getUuid().toString())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -898,20 +1178,16 @@ public class FindingResourceTest extends ResourceTest {
         analysis.setSeverity(Severity.HIGH);
         qm.persist(analysis);
 
-        final Response response = jersey
-                .target(V1_FINDING + "/project/" + p1.getUuid().toString())
+        final Response response = jersey.target(
+                        V1_FINDING + "/project/" + p1.getUuid().toString())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         final String body = getPlainTextBody(response);
-        assertThatJson(body)
-                .inPath("$[0].vulnerability.cvssV3Vector")
-                .isEqualTo("a-cvssV3-vector");
-        assertThatJson(body)
-                .inPath("$[0].vulnerability.cvssV3BaseScore")
-                .isAbsent();
+        assertThatJson(body).inPath("$[0].vulnerability.cvssV3Vector").isEqualTo("a-cvssV3-vector");
+        assertThatJson(body).inPath("$[0].vulnerability.cvssV3BaseScore").isAbsent();
     }
 
     @Test
@@ -923,10 +1199,10 @@ public class FindingResourceTest extends ResourceTest {
         project = qm.persist(project);
 
         doReturn(UUID.fromString("d93df5a0-f29e-4ee1-9c98-cee4dd243750"))
-                .when(DEX_ENGINE_MOCK).createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
+                .when(DEX_ENGINE_MOCK)
+                .createRun(ArgumentMatchers.<CreateWorkflowRunRequest<?>>any());
 
-        Response response = jersey
-                .target("%s/project/%s/analyze".formatted(V1_FINDING, project.getUuid()))
+        Response response = jersey.target("%s/project/%s/analyze".formatted(V1_FINDING, project.getUuid()))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .post(Entity.json("{}"));
@@ -942,13 +1218,16 @@ public class FindingResourceTest extends ResourceTest {
                 ArgumentCaptor.forClass(CreateWorkflowRunRequest.class);
         verify(DEX_ENGINE_MOCK, times(2)).createRun(dexCreateRunCaptor.capture());
 
-        CreateWorkflowRunRequest<?> createDexRunRequest = dexCreateRunCaptor.getAllValues().getFirst();
+        CreateWorkflowRunRequest<?> createDexRunRequest =
+                dexCreateRunCaptor.getAllValues().getFirst();
         assertThat(createDexRunRequest.workflowName()).isEqualTo("analyze-project");
         assertThat(createDexRunRequest.workflowVersion()).isEqualTo(1);
         assertThat(createDexRunRequest.workflowInstanceId()).isEqualTo("analyze-project-manual:" + project.getUuid());
         assertThat(createDexRunRequest.concurrencyKey()).isEqualTo("analyze-project:" + project.getUuid());
-        assertThat(createDexRunRequest.labels()).containsEntry("project_uuid", project.getUuid().toString());
-        assertThat(createDexRunRequest.labels()).hasEntrySatisfying("triggered_by", value -> assertThat(value).startsWith("odt_"));
+        assertThat(createDexRunRequest.labels())
+                .containsEntry("project_uuid", project.getUuid().toString());
+        assertThat(createDexRunRequest.labels())
+                .hasEntrySatisfying("triggered_by", value -> assertThat(value).startsWith("odt_"));
         assertThat(createDexRunRequest.priority()).isEqualTo(75);
     }
 
@@ -990,26 +1269,77 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         assertNotNull(json);
         assertEquals(5, json.size());
-        assertEquals(date.getTime(), json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName(), json.getJsonObject(0).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion(), json.getJsonObject(0).getJsonObject("component").getString("projectVersion"));
-        assertEquals(p1.getUuid().toString(), json.getJsonObject(0).getJsonObject("component").getString("project"));
-        assertEquals(date.getTime(), json.getJsonObject(1).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName(), json.getJsonObject(1).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion(), json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
-        assertEquals(p1.getUuid().toString(), json.getJsonObject(1).getJsonObject("component").getString("project"));
-        assertEquals(date.getTime(), json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName(), json.getJsonObject(2).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion(), json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
-        assertEquals(p1.getUuid().toString(), json.getJsonObject(2).getJsonObject("component").getString("project"));
-        assertEquals(date.getTime(), json.getJsonObject(3).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1_child.getName(), json.getJsonObject(3).getJsonObject("component").getString("projectName"));
-        assertEquals(p1_child.getVersion(), json.getJsonObject(3).getJsonObject("component").getString("projectVersion"));
-        assertEquals(p1_child.getUuid().toString(), json.getJsonObject(3).getJsonObject("component").getString("project"));
-        assertEquals(date.getTime(), json.getJsonObject(4).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p2.getName(), json.getJsonObject(4).getJsonObject("component").getString("projectName"));
-        assertEquals(p2.getVersion(), json.getJsonObject(4).getJsonObject("component").getString("projectVersion"));
-        assertEquals(p2.getUuid().toString(), json.getJsonObject(4).getJsonObject("component").getString("project"));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                p1.getName(), json.getJsonObject(0).getJsonObject("component").getString("projectName"));
+        assertEquals(
+                p1.getVersion(),
+                json.getJsonObject(0).getJsonObject("component").getString("projectVersion"));
+        assertEquals(
+                p1.getUuid().toString(),
+                json.getJsonObject(0).getJsonObject("component").getString("project"));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(1)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                p1.getName(), json.getJsonObject(1).getJsonObject("component").getString("projectName"));
+        assertEquals(
+                p1.getVersion(),
+                json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
+        assertEquals(
+                p1.getUuid().toString(),
+                json.getJsonObject(1).getJsonObject("component").getString("project"));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(2)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                p1.getName(), json.getJsonObject(2).getJsonObject("component").getString("projectName"));
+        assertEquals(
+                p1.getVersion(),
+                json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
+        assertEquals(
+                p1.getUuid().toString(),
+                json.getJsonObject(2).getJsonObject("component").getString("project"));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(3)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                p1_child.getName(),
+                json.getJsonObject(3).getJsonObject("component").getString("projectName"));
+        assertEquals(
+                p1_child.getVersion(),
+                json.getJsonObject(3).getJsonObject("component").getString("projectVersion"));
+        assertEquals(
+                p1_child.getUuid().toString(),
+                json.getJsonObject(3).getJsonObject("component").getString("project"));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(4)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                p2.getName(), json.getJsonObject(4).getJsonObject("component").getString("projectName"));
+        assertEquals(
+                p2.getVersion(),
+                json.getJsonObject(4).getJsonObject("component").getString("projectVersion"));
+        assertEquals(
+                p2.getUuid().toString(),
+                json.getJsonObject(4).getJsonObject("component").getString("project"));
     }
 
     @Test
@@ -1039,9 +1369,15 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         assertNotNull(json);
         assertEquals(3, json.size());
-        assertEquals(v1.getSeverity().name(), json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
-        assertEquals(v3.getSeverity().name(), json.getJsonObject(1).getJsonObject("vulnerability").getString("severity"));
-        assertEquals(v2.getSeverity().name(), json.getJsonObject(2).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                v1.getSeverity().name(),
+                json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                v3.getSeverity().name(),
+                json.getJsonObject(1).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                v2.getSeverity().name(),
+                json.getJsonObject(2).getJsonObject("vulnerability").getString("severity"));
     }
 
     @Test
@@ -1072,7 +1408,8 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         assertNotNull(json);
         assertEquals(1, json.size());
-        assertEquals("CRITICAL", json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                "CRITICAL", json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
 
         // Filter by multiple severities
         response = jersey.target(V1_FINDING)
@@ -1097,10 +1434,10 @@ public class FindingResourceTest extends ResourceTest {
         final Vulnerability nonKevVuln = createVulnerability("Vuln-NON-KEV", Severity.HIGH);
         qm.addVulnerability(kevVuln, component, "none");
         qm.addVulnerability(nonKevVuln, component, "none");
-        useJdbiTransaction(handle -> handle
-                .attach(KevDao.class)
-                .upsertBatch("cisa", List.of(
-                        new KevAssertion(
+        useJdbiTransaction(handle -> handle.attach(KevDao.class)
+                .upsertBatch(
+                        "cisa",
+                        List.of(new KevAssertion(
                                 "INTERNAL",
                                 "Vuln-KEV",
                                 null,
@@ -1109,8 +1446,7 @@ public class FindingResourceTest extends ResourceTest {
                                 null,
                                 JsonNodeFactory.instance.objectNode()))));
 
-        Response response = jersey
-                .target(V1_FINDING)
+        Response response = jersey.target(V1_FINDING)
                 .queryParam("isKev", "true")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1121,8 +1457,7 @@ public class FindingResourceTest extends ResourceTest {
         assertThatJson(kevBody).node("[0].vulnerability.vulnId").isEqualTo("Vuln-KEV");
         assertThatJson(kevBody).node("[0].vulnerability.isKev").isEqualTo(true);
 
-        response = jersey
-                .target(V1_FINDING)
+        response = jersey.target(V1_FINDING)
                 .queryParam("isKev", "false")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1144,10 +1479,10 @@ public class FindingResourceTest extends ResourceTest {
         final Vulnerability nonKevVuln = createVulnerability("Vuln-NON-KEV", Severity.HIGH);
         qm.addVulnerability(kevVuln, component, "none");
         qm.addVulnerability(nonKevVuln, component, "none");
-        useJdbiTransaction(handle -> handle
-                .attach(KevDao.class)
-                .upsertBatch("cisa", List.of(
-                        new KevAssertion(
+        useJdbiTransaction(handle -> handle.attach(KevDao.class)
+                .upsertBatch(
+                        "cisa",
+                        List.of(new KevAssertion(
                                 "INTERNAL",
                                 "Vuln-KEV",
                                 null,
@@ -1156,8 +1491,7 @@ public class FindingResourceTest extends ResourceTest {
                                 null,
                                 JsonNodeFactory.instance.objectNode()))));
 
-        Response response = jersey
-                .target(V1_FINDING + "/grouped")
+        Response response = jersey.target(V1_FINDING + "/grouped")
                 .queryParam("isKev", "true")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1167,8 +1501,7 @@ public class FindingResourceTest extends ResourceTest {
         assertThatJson(kevBody).isArray().hasSize(1);
         assertThatJson(kevBody).node("[0].vulnerability.vulnId").isEqualTo("Vuln-KEV");
 
-        response = jersey
-                .target(V1_FINDING + "/grouped")
+        response = jersey.target(V1_FINDING + "/grouped")
                 .queryParam("isKev", "false")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1190,29 +1523,32 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(createVulnerability("INT-UNRELATED", Severity.HIGH), component, "none");
 
         useJdbiTransaction(handle -> {
-            new VulnerabilityAliasDao(handle).syncAssertions(
-                    "NVD",
-                    new VulnerabilityKey("CVE-2021-9999", Vulnerability.Source.NVD),
-                    Set.of(new VulnerabilityKey("INT-ALIASED", Vulnerability.Source.INTERNAL)));
-            handle.attach(KevDao.class).upsertBatch("cisa", List.of(
-                    new KevAssertion(
+            new VulnerabilityAliasDao(handle)
+                    .syncAssertions(
                             "NVD",
-                            "CVE-2021-9999",
-                            null,
-                            null,
-                            null,
-                            null,
-                            JsonNodeFactory.instance.objectNode())));
+                            new VulnerabilityKey("CVE-2021-9999", Vulnerability.Source.NVD),
+                            Set.of(new VulnerabilityKey("INT-ALIASED", Vulnerability.Source.INTERNAL)));
+            handle.attach(KevDao.class)
+                    .upsertBatch(
+                            "cisa",
+                            List.of(new KevAssertion(
+                                    "NVD",
+                                    "CVE-2021-9999",
+                                    null,
+                                    null,
+                                    null,
+                                    null,
+                                    JsonNodeFactory.instance.objectNode())));
         });
 
-        final String target = switch (endpoint) {
-            case "grouped" -> V1_FINDING + "/grouped";
-            case "project" -> V1_FINDING + "/project/" + project.getUuid();
-            default -> V1_FINDING;
-        };
+        final String target =
+                switch (endpoint) {
+                    case "grouped" -> V1_FINDING + "/grouped";
+                    case "project" -> V1_FINDING + "/project/" + project.getUuid();
+                    default -> V1_FINDING;
+                };
 
-        final Response response = jersey
-                .target(target)
+        final Response response = jersey.target(target)
                 .queryParam("isKev", "true")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1233,16 +1569,16 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(createVulnerability("INT-UNRELATED", Severity.HIGH), component, "none");
 
         useJdbiTransaction(handle -> {
-            new VulnerabilityAliasDao(handle).syncAssertions(
-                    "NVD",
-                    new VulnerabilityKey("CVE-2021-9998", Vulnerability.Source.NVD),
-                    Set.of(new VulnerabilityKey("INT-ALIASED", Vulnerability.Source.INTERNAL)));
-            handle.attach(EpssDao.class).createOrUpdateAll(
-                    List.of(new Epss("CVE-2021-9998", new BigDecimal("0.95"), null)));
+            new VulnerabilityAliasDao(handle)
+                    .syncAssertions(
+                            "NVD",
+                            new VulnerabilityKey("CVE-2021-9998", Vulnerability.Source.NVD),
+                            Set.of(new VulnerabilityKey("INT-ALIASED", Vulnerability.Source.INTERNAL)));
+            handle.attach(EpssDao.class)
+                    .createOrUpdateAll(List.of(new Epss("CVE-2021-9998", new BigDecimal("0.95"), null)));
         });
 
-        final Response response = jersey
-                .target(V1_FINDING)
+        final Response response = jersey.target(V1_FINDING)
                 .queryParam("epssFrom", "0.9")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -1282,14 +1618,22 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v2, c3, "none");
         qm.addVulnerability(v3, c2, "none");
         qm.addVulnerability(v4, c5, "none");
-        ConfigProperty aclToggle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        ConfigProperty aclToggle = qm.getConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
         if (aclToggle == null) {
-            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+            qm.createConfigProperty(
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                    "true",
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
         } else {
             aclToggle.setPropertyValue("true");
             qm.persist(aclToggle);
         }
-        Response response = jersey.target(V1_FINDING).request()
+        Response response = jersey.target(V1_FINDING)
+                .request()
                 .header(X_API_KEY, apiKey.getKey())
                 .get(Response.class);
         assertEquals(200, response.getStatus(), 0);
@@ -1297,24 +1641,65 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         assertNotNull(json);
         assertEquals(4, json.size());
-        assertEquals(date.getTime(), json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName(), json.getJsonObject(0).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion(), json.getJsonObject(0).getJsonObject("component").getString("projectVersion"));
-        assertEquals(p1.getUuid().toString(), json.getJsonObject(0).getJsonObject("component").getString("project"));
-        assertEquals(date.getTime(), json.getJsonObject(1).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName(), json.getJsonObject(1).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion(), json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
-        assertEquals(p1.getUuid().toString(), json.getJsonObject(1).getJsonObject("component").getString("project"));
-        assertEquals(date.getTime(), json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1.getName(), json.getJsonObject(2).getJsonObject("component").getString("projectName"));
-        assertEquals(p1.getVersion(), json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
-        assertEquals(p1.getUuid().toString(), json.getJsonObject(2).getJsonObject("component").getString("project"));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                p1.getName(), json.getJsonObject(0).getJsonObject("component").getString("projectName"));
+        assertEquals(
+                p1.getVersion(),
+                json.getJsonObject(0).getJsonObject("component").getString("projectVersion"));
+        assertEquals(
+                p1.getUuid().toString(),
+                json.getJsonObject(0).getJsonObject("component").getString("project"));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(1)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                p1.getName(), json.getJsonObject(1).getJsonObject("component").getString("projectName"));
+        assertEquals(
+                p1.getVersion(),
+                json.getJsonObject(1).getJsonObject("component").getString("projectVersion"));
+        assertEquals(
+                p1.getUuid().toString(),
+                json.getJsonObject(1).getJsonObject("component").getString("project"));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(2)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                p1.getName(), json.getJsonObject(2).getJsonObject("component").getString("projectName"));
+        assertEquals(
+                p1.getVersion(),
+                json.getJsonObject(2).getJsonObject("component").getString("projectVersion"));
+        assertEquals(
+                p1.getUuid().toString(),
+                json.getJsonObject(2).getJsonObject("component").getString("project"));
 
         // Findings of p1_child are returned because team was given access to its parent project p1.
-        assertEquals(date.getTime(), json.getJsonObject(3).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(p1_child.getName(), json.getJsonObject(3).getJsonObject("component").getString("projectName"));
-        assertEquals(p1_child.getVersion(), json.getJsonObject(3).getJsonObject("component").getString("projectVersion"));
-        assertEquals(p1_child.getUuid().toString(), json.getJsonObject(3).getJsonObject("component").getString("project"));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(3)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                p1_child.getName(),
+                json.getJsonObject(3).getJsonObject("component").getString("projectName"));
+        assertEquals(
+                p1_child.getVersion(),
+                json.getJsonObject(3).getJsonObject("component").getString("projectVersion"));
+        assertEquals(
+                p1_child.getUuid().toString(),
+                json.getJsonObject(3).getJsonObject("component").getString("project"));
     }
 
     @Test
@@ -1337,10 +1722,8 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v1, c1, "none");
         qm.addVulnerability(v1, c2, "none");
 
-        Response response = jersey.target(V1_FINDING)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get(Response.class);
+        Response response =
+                jersey.target(V1_FINDING).request().header(X_API_KEY, apiKey).get(Response.class);
         assertEquals(200, response.getStatus(), 0);
         assertEquals(String.valueOf(2), response.getHeaderString(TOTAL_COUNT_HEADER));
         JsonArray jsonArray = parseJsonArray(response);
@@ -1383,7 +1766,8 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v3, c2, "none");
         qm.addVulnerability(v3, c6, "none");
         qm.addVulnerability(v4, c5, "none");
-        Response response = jersey.target(V1_FINDING + "/grouped").request()
+        Response response = jersey.target(V1_FINDING + "/grouped")
+                .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
         assertEquals(200, response.getStatus(), 0);
@@ -1391,44 +1775,140 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         assertNotNull(json);
         assertEquals(4, json.size());
-        assertEquals("INTERNAL", json.getJsonObject(0).getJsonObject("vulnerability").getString("source"));
-        assertEquals("Vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
-        assertEquals(Severity.CRITICAL.name(), json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                "INTERNAL", json.getJsonObject(0).getJsonObject("vulnerability").getString("source"));
+        assertEquals(
+                "Vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
+        assertEquals(
+                Severity.CRITICAL.name(),
+                json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
         assertEquals("none", json.getJsonObject(0).getJsonObject("attribution").getString("analyzerIdentity"));
-        assertEquals(date.getTime(), json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(2, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").size());
-        assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getInt(0));
-        assertEquals(666, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getInt(1));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                2,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .size());
+        assertEquals(
+                80,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(0));
+        assertEquals(
+                666,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(1));
         assertEquals(1, json.getJsonObject(0).getJsonObject("vulnerability").getInt("affectedProjectCount"));
 
-        assertEquals("INTERNAL", json.getJsonObject(1).getJsonObject("vulnerability").getString("source"));
-        assertEquals("Vuln-2", json.getJsonObject(1).getJsonObject("vulnerability").getString("vulnId"));
-        assertEquals(Severity.HIGH.name(), json.getJsonObject(1).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                "INTERNAL", json.getJsonObject(1).getJsonObject("vulnerability").getString("source"));
+        assertEquals(
+                "Vuln-2", json.getJsonObject(1).getJsonObject("vulnerability").getString("vulnId"));
+        assertEquals(
+                Severity.HIGH.name(),
+                json.getJsonObject(1).getJsonObject("vulnerability").getString("severity"));
         assertEquals("none", json.getJsonObject(1).getJsonObject("attribution").getString("analyzerIdentity"));
-        assertEquals(date.getTime(), json.getJsonObject(1).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(2, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").size());
-        assertEquals(80, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getInt(0));
-        assertEquals(666, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getInt(1));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(1)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                2,
+                json.getJsonObject(1)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .size());
+        assertEquals(
+                80,
+                json.getJsonObject(1)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(0));
+        assertEquals(
+                666,
+                json.getJsonObject(1)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(1));
         assertEquals(3, json.getJsonObject(1).getJsonObject("vulnerability").getInt("affectedProjectCount"));
 
-        assertEquals("INTERNAL", json.getJsonObject(2).getJsonObject("vulnerability").getString("source"));
-        assertEquals("Vuln-3", json.getJsonObject(2).getJsonObject("vulnerability").getString("vulnId"));
-        assertEquals(Severity.MEDIUM.name(), json.getJsonObject(2).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                "INTERNAL", json.getJsonObject(2).getJsonObject("vulnerability").getString("source"));
+        assertEquals(
+                "Vuln-3", json.getJsonObject(2).getJsonObject("vulnerability").getString("vulnId"));
+        assertEquals(
+                Severity.MEDIUM.name(),
+                json.getJsonObject(2).getJsonObject("vulnerability").getString("severity"));
         assertEquals("none", json.getJsonObject(2).getJsonObject("attribution").getString("analyzerIdentity"));
-        assertEquals(date.getTime(), json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(2, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").size());
-        assertEquals(80, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getInt(0));
-        assertEquals(666, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getInt(1));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(2)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                2,
+                json.getJsonObject(2)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .size());
+        assertEquals(
+                80,
+                json.getJsonObject(2)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(0));
+        assertEquals(
+                666,
+                json.getJsonObject(2)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(1));
         assertEquals(2, json.getJsonObject(2).getJsonObject("vulnerability").getInt("affectedProjectCount"));
 
-        assertEquals("INTERNAL", json.getJsonObject(3).getJsonObject("vulnerability").getString("source"));
-        assertEquals("Vuln-4", json.getJsonObject(3).getJsonObject("vulnerability").getString("vulnId"));
-        assertEquals(Severity.LOW.name(), json.getJsonObject(3).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                "INTERNAL", json.getJsonObject(3).getJsonObject("vulnerability").getString("source"));
+        assertEquals(
+                "Vuln-4", json.getJsonObject(3).getJsonObject("vulnerability").getString("vulnId"));
+        assertEquals(
+                Severity.LOW.name(),
+                json.getJsonObject(3).getJsonObject("vulnerability").getString("severity"));
         assertEquals("none", json.getJsonObject(3).getJsonObject("attribution").getString("analyzerIdentity"));
-        assertEquals(date.getTime(), json.getJsonObject(3).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(2, json.getJsonObject(3).getJsonObject("vulnerability").getJsonArray("cwes").size());
-        assertEquals(80, json.getJsonObject(3).getJsonObject("vulnerability").getJsonArray("cwes").getInt(0));
-        assertEquals(666, json.getJsonObject(3).getJsonObject("vulnerability").getJsonArray("cwes").getInt(1));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(3)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                2,
+                json.getJsonObject(3)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .size());
+        assertEquals(
+                80,
+                json.getJsonObject(3)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(0));
+        assertEquals(
+                666,
+                json.getJsonObject(3)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(1));
         assertEquals(1, json.getJsonObject(3).getJsonObject("vulnerability").getInt("affectedProjectCount"));
     }
 
@@ -1463,14 +1943,22 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(v3, c2, "none");
         qm.addVulnerability(v3, c6, "none");
         qm.addVulnerability(v4, c5, "none");
-        ConfigProperty aclToggle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        ConfigProperty aclToggle = qm.getConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
         if (aclToggle == null) {
-            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+            qm.createConfigProperty(
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                    "true",
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
         } else {
             aclToggle.setPropertyValue("true");
             qm.persist(aclToggle);
         }
-        Response response = jersey.target(V1_FINDING + "/grouped").request()
+        Response response = jersey.target(V1_FINDING + "/grouped")
+                .request()
                 .header(X_API_KEY, apiKey.getKey())
                 .get(Response.class);
         assertEquals(200, response.getStatus(), 0);
@@ -1478,34 +1966,110 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         assertNotNull(json);
         assertEquals(3, json.size());
-        assertEquals("INTERNAL", json.getJsonObject(0).getJsonObject("vulnerability").getString("source"));
-        assertEquals("Vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
-        assertEquals(Severity.CRITICAL.name(), json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                "INTERNAL", json.getJsonObject(0).getJsonObject("vulnerability").getString("source"));
+        assertEquals(
+                "Vuln-1", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
+        assertEquals(
+                Severity.CRITICAL.name(),
+                json.getJsonObject(0).getJsonObject("vulnerability").getString("severity"));
         assertEquals("none", json.getJsonObject(0).getJsonObject("attribution").getString("analyzerIdentity"));
-        assertEquals(date.getTime(), json.getJsonObject(0).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(2, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").size());
-        assertEquals(80, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getInt(0));
-        assertEquals(666, json.getJsonObject(0).getJsonObject("vulnerability").getJsonArray("cwes").getInt(1));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                2,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .size());
+        assertEquals(
+                80,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(0));
+        assertEquals(
+                666,
+                json.getJsonObject(0)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(1));
         assertEquals(1, json.getJsonObject(0).getJsonObject("vulnerability").getInt("affectedProjectCount"));
 
-        assertEquals("INTERNAL", json.getJsonObject(1).getJsonObject("vulnerability").getString("source"));
-        assertEquals("Vuln-2", json.getJsonObject(1).getJsonObject("vulnerability").getString("vulnId"));
-        assertEquals(Severity.HIGH.name(), json.getJsonObject(1).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                "INTERNAL", json.getJsonObject(1).getJsonObject("vulnerability").getString("source"));
+        assertEquals(
+                "Vuln-2", json.getJsonObject(1).getJsonObject("vulnerability").getString("vulnId"));
+        assertEquals(
+                Severity.HIGH.name(),
+                json.getJsonObject(1).getJsonObject("vulnerability").getString("severity"));
         assertEquals("none", json.getJsonObject(1).getJsonObject("attribution").getString("analyzerIdentity"));
-        assertEquals(date.getTime(), json.getJsonObject(1).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(2, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").size());
-        assertEquals(80, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getInt(0));
-        assertEquals(666, json.getJsonObject(1).getJsonObject("vulnerability").getJsonArray("cwes").getInt(1));
-        assertEquals(2, json.getJsonObject(1).getJsonObject("vulnerability").getInt("affectedProjectCount")); // p1 and p1_child.
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(1)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                2,
+                json.getJsonObject(1)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .size());
+        assertEquals(
+                80,
+                json.getJsonObject(1)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(0));
+        assertEquals(
+                666,
+                json.getJsonObject(1)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(1));
+        assertEquals(
+                2,
+                json.getJsonObject(1)
+                        .getJsonObject("vulnerability")
+                        .getInt("affectedProjectCount")); // p1 and p1_child.
 
-        assertEquals("INTERNAL", json.getJsonObject(2).getJsonObject("vulnerability").getString("source"));
-        assertEquals("Vuln-3", json.getJsonObject(2).getJsonObject("vulnerability").getString("vulnId"));
-        assertEquals(Severity.MEDIUM.name(), json.getJsonObject(2).getJsonObject("vulnerability").getString("severity"));
+        assertEquals(
+                "INTERNAL", json.getJsonObject(2).getJsonObject("vulnerability").getString("source"));
+        assertEquals(
+                "Vuln-3", json.getJsonObject(2).getJsonObject("vulnerability").getString("vulnId"));
+        assertEquals(
+                Severity.MEDIUM.name(),
+                json.getJsonObject(2).getJsonObject("vulnerability").getString("severity"));
         assertEquals("none", json.getJsonObject(2).getJsonObject("attribution").getString("analyzerIdentity"));
-        assertEquals(date.getTime(), json.getJsonObject(2).getJsonObject("vulnerability").getJsonNumber("published").longValue());
-        assertEquals(2, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").size());
-        assertEquals(80, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getInt(0));
-        assertEquals(666, json.getJsonObject(2).getJsonObject("vulnerability").getJsonArray("cwes").getInt(1));
+        assertEquals(
+                date.getTime(),
+                json.getJsonObject(2)
+                        .getJsonObject("vulnerability")
+                        .getJsonNumber("published")
+                        .longValue());
+        assertEquals(
+                2,
+                json.getJsonObject(2)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .size());
+        assertEquals(
+                80,
+                json.getJsonObject(2)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(0));
+        assertEquals(
+                666,
+                json.getJsonObject(2)
+                        .getJsonObject("vulnerability")
+                        .getJsonArray("cwes")
+                        .getInt(1));
         assertEquals(1, json.getJsonObject(2).getJsonObject("vulnerability").getInt("affectedProjectCount"));
     }
 
@@ -1560,7 +2124,8 @@ public class FindingResourceTest extends ResourceTest {
         json = parseJsonArray(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals(1, json.size());
-        Assertions.assertEquals("Vuln-2", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
+        Assertions.assertEquals(
+                "Vuln-2", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
     }
 
     @Test
@@ -1593,7 +2158,8 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals(1, json.size());
-        Assertions.assertEquals("Vuln-2", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
+        Assertions.assertEquals(
+                "Vuln-2", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
     }
 
     @Test
@@ -1647,7 +2213,8 @@ public class FindingResourceTest extends ResourceTest {
         json = parseJsonArray(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals(1, json.size());
-        Assertions.assertEquals("Vuln-2", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
+        Assertions.assertEquals(
+                "Vuln-2", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
     }
 
     @Test
@@ -1680,30 +2247,31 @@ public class FindingResourceTest extends ResourceTest {
         JsonArray json = parseJsonArray(response);
         Assertions.assertNotNull(json);
         Assertions.assertEquals(1, json.size());
-        Assertions.assertEquals("Vuln-2", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
+        Assertions.assertEquals(
+                "Vuln-2", json.getJsonObject(0).getJsonObject("vulnerability").getString("vulnId"));
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "component.name",
-            "component.version",
-            "vulnerability.cvssV2BaseScore",
-            "vulnerability.cvssV3BaseScore",
-            "vulnerability.cvssV4Score",
-            "vulnerability.epssPercentile",
-            "vulnerability.epssScore",
-            "vulnerability.published",
-            "vulnerability.severity",
-            "vulnerability.title",
-            "vulnerability.vulnId"
-    })
+    @ValueSource(
+            strings = {
+                "component.name",
+                "component.version",
+                "vulnerability.cvssV2BaseScore",
+                "vulnerability.cvssV3BaseScore",
+                "vulnerability.cvssV4Score",
+                "vulnerability.epssPercentile",
+                "vulnerability.epssScore",
+                "vulnerability.published",
+                "vulnerability.severity",
+                "vulnerability.title",
+                "vulnerability.vulnId"
+            })
     void shouldOrderAllFindingsByEachSortableColumn(String sortName) {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
         createOrderedFindings();
 
-        Response response = jersey
-                .target(V1_FINDING)
+        Response response = jersey.target(V1_FINDING)
                 .queryParam("sortName", sortName)
                 .queryParam("sortOrder", "desc")
                 .request()
@@ -1715,8 +2283,7 @@ public class FindingResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactly("Vuln-2", "Vuln-1");
 
-        response = jersey
-                .target(V1_FINDING)
+        response = jersey.target(V1_FINDING)
                 .queryParam("sortName", sortName)
                 .queryParam("sortOrder", "asc")
                 .request()
@@ -1730,22 +2297,22 @@ public class FindingResourceTest extends ResourceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "vulnerability.cvssV2BaseScore",
-            "vulnerability.cvssV3BaseScore",
-            "vulnerability.cvssV4Score",
-            "vulnerability.published",
-            "vulnerability.severity",
-            "vulnerability.title",
-            "vulnerability.vulnId",
-    })
+    @ValueSource(
+            strings = {
+                "vulnerability.cvssV2BaseScore",
+                "vulnerability.cvssV3BaseScore",
+                "vulnerability.cvssV4Score",
+                "vulnerability.published",
+                "vulnerability.severity",
+                "vulnerability.title",
+                "vulnerability.vulnId",
+            })
     void shouldOrderGroupedFindingsByEachSortableColumn(String sortName) {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
         createOrderedFindings();
 
-        Response response = jersey
-                .target(V1_FINDING + "/grouped")
+        Response response = jersey.target(V1_FINDING + "/grouped")
                 .queryParam("sortName", sortName)
                 .queryParam("sortOrder", "desc")
                 .request()
@@ -1757,8 +2324,7 @@ public class FindingResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactly("Vuln-2", "Vuln-1");
 
-        response = jersey
-                .target(V1_FINDING + "/grouped")
+        response = jersey.target(V1_FINDING + "/grouped")
                 .queryParam("sortName", sortName)
                 .queryParam("sortOrder", "asc")
                 .request()
@@ -1772,20 +2338,20 @@ public class FindingResourceTest extends ResourceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "analysis.isSuppressed",
-            "analysis.state",
-            "attribution.analyzerIdentity",
-            "attribution.attributedOn",
-            "component.projectName"
-    })
+    @ValueSource(
+            strings = {
+                "analysis.isSuppressed",
+                "analysis.state",
+                "attribution.analyzerIdentity",
+                "attribution.attributedOn",
+                "component.projectName"
+            })
     void shouldAcceptAdditionalSortableColumnForAllFindings(String sortName) {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
         createOrderedFindings();
 
-        final Response response = jersey
-                .target(V1_FINDING)
+        final Response response = jersey.target(V1_FINDING)
                 .queryParam("sortName", sortName)
                 .queryParam("sortOrder", "desc")
                 .request()
@@ -1799,17 +2365,13 @@ public class FindingResourceTest extends ResourceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "attribution.analyzerIdentity",
-            "vulnerability.affectedProjectCount"
-    })
+    @ValueSource(strings = {"attribution.analyzerIdentity", "vulnerability.affectedProjectCount"})
     void shouldAcceptAdditionalSortableColumnForGroupedFindings(String sortName) {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
         createOrderedFindings();
 
-        final Response response = jersey
-                .target(V1_FINDING + "/grouped")
+        final Response response = jersey.target(V1_FINDING + "/grouped")
                 .queryParam("sortName", sortName)
                 .queryParam("sortOrder", "desc")
                 .request()
@@ -1828,8 +2390,7 @@ public class FindingResourceTest extends ResourceTest {
 
         createOrderedFindings();
 
-        final Response response = jersey
-                .target(V1_FINDING)
+        final Response response = jersey.target(V1_FINDING)
                 .queryParam("sortName", "vulnerability.epssScore")
                 .queryParam("sortOrder", "desc")
                 .queryParam("epssFrom", "0.5")
@@ -1857,10 +2418,38 @@ public class FindingResourceTest extends ResourceTest {
         c1.setPurl("pkg:maven/org.acme/component1@1.1.4?type=jar");
         c2.setPurl("pkg:maven/com.xyz/component2@2.78.123?type=jar");
 
-        Vulnerability v1 = createVulnerability("Vuln-1", Severity.CRITICAL, "Vuln Title 1", "This is a description", null, 80, Vulnerability.Source.INTERNAL);
-        Vulnerability v2 = createVulnerability("Vuln-2", Severity.HIGH, "Vuln Title 2", "   Yet another description but with surrounding whitespaces   ", "", 46, Vulnerability.Source.INTERNAL);
-        Vulnerability v3 = createVulnerability("Vuln-3", Severity.LOW, "Vuln Title 3", "A description-with-hyphens-(and parentheses)", "  Recommendation with whitespaces  ", 23, Vulnerability.Source.INTERNAL);
-        Vulnerability v4 = createVulnerability("Vuln-4", Severity.MEDIUM, "Vuln Title 4", "This is a vulnerability that has GITHUB Advisory as a source", null, 20, Vulnerability.Source.GITHUB);
+        Vulnerability v1 = createVulnerability(
+                "Vuln-1",
+                Severity.CRITICAL,
+                "Vuln Title 1",
+                "This is a description",
+                null,
+                80,
+                Vulnerability.Source.INTERNAL);
+        Vulnerability v2 = createVulnerability(
+                "Vuln-2",
+                Severity.HIGH,
+                "Vuln Title 2",
+                "   Yet another description but with surrounding whitespaces   ",
+                "",
+                46,
+                Vulnerability.Source.INTERNAL);
+        Vulnerability v3 = createVulnerability(
+                "Vuln-3",
+                Severity.LOW,
+                "Vuln Title 3",
+                "A description-with-hyphens-(and parentheses)",
+                "  Recommendation with whitespaces  ",
+                23,
+                Vulnerability.Source.INTERNAL);
+        Vulnerability v4 = createVulnerability(
+                "Vuln-4",
+                Severity.MEDIUM,
+                "Vuln Title 4",
+                "This is a vulnerability that has GITHUB Advisory as a source",
+                null,
+                20,
+                Vulnerability.Source.GITHUB);
 
         qm.addVulnerability(v1, c1, "none");
         qm.addVulnerability(v2, c1, "none");
@@ -1883,9 +2472,7 @@ public class FindingResourceTest extends ResourceTest {
         final String version = new About().getVersion();
         final String fullName = "OWASP Dependency-Track - " + version;
         String expectedTemplate = resourceToString(expectedResponsePath, StandardCharsets.UTF_8);
-        String expected = expectedTemplate
-                .replace("{{VERSION}}", version)
-                .replace("{{FULL_NAME}}", fullName);
+        String expected = expectedTemplate.replace("{{VERSION}}", version).replace("{{FULL_NAME}}", fullName);
         assertThatJson(jsonResponse).isEqualTo(expected);
     }
 
@@ -1911,9 +2498,12 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
         JsonArray json = parseJsonArray(response);
         assertThat(json.size()).isEqualTo(3);
-        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-0");
-        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-1");
-        assertThat(json.get(2).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-2");
+        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-0");
+        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-1");
+        assertThat(json.get(2).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-2");
 
         response = jersey.target(V1_FINDING)
                 .queryParam("pageNumber", "2")
@@ -1925,9 +2515,10 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
         json = parseJsonArray(response);
         assertThat(json.size()).isEqualTo(2);
-        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-3");
-        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-4");
-
+        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-3");
+        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-4");
     }
 
     @Test
@@ -1952,9 +2543,12 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
         JsonArray json = parseJsonArray(response);
         assertThat(json.size()).isEqualTo(3);
-        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-0");
-        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-1");
-        assertThat(json.get(2).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-2");
+        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-0");
+        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-1");
+        assertThat(json.get(2).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-2");
 
         response = jersey.target(V1_FINDING)
                 .queryParam("pageNumber", "2")
@@ -1966,9 +2560,10 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
         json = parseJsonArray(response);
         assertThat(json.size()).isEqualTo(2);
-        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-3");
-        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-4");
-
+        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-3");
+        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-4");
     }
 
     @Test
@@ -1993,9 +2588,12 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
         JsonArray json = parseJsonArray(response);
         assertThat(json.size()).isEqualTo(3);
-        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-0");
-        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-1");
-        assertThat(json.get(2).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-2");
+        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-0");
+        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-1");
+        assertThat(json.get(2).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-2");
 
         response = jersey.target(V1_FINDING)
                 .queryParam("pageNumber", "2")
@@ -2007,9 +2605,10 @@ public class FindingResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("5");
         json = parseJsonArray(response);
         assertThat(json.size()).isEqualTo(2);
-        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-3");
-        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId")).isEqualTo("Vuln-4");
-
+        assertThat(json.get(0).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-3");
+        assertThat(json.get(1).asJsonObject().getJsonObject("vulnerability").getString("vulnId"))
+                .isEqualTo("Vuln-4");
     }
 
     @Test
@@ -2020,14 +2619,12 @@ public class FindingResourceTest extends ResourceTest {
         for (int i = 0; i < 3; i++) {
             qm.addVulnerability(
                     createVulnerability("Vuln-" + i, Severity.HIGH),
-                    createComponent(project, "Component " + i, "1.0"), "none");
+                    createComponent(project, "Component " + i, "1.0"),
+                    "none");
         }
 
-        final Response response = jersey
-                .target(V1_FINDING)
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get(Response.class);
+        final Response response =
+                jersey.target(V1_FINDING).request().header(X_API_KEY, apiKey).get(Response.class);
         assertThat(response.getStatus()).isEqualTo(200);
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("3");
         assertThat(response.getHeaderString(TOTAL_COUNT_TYPE_HEADER)).isEqualTo("EXACT");
@@ -2041,11 +2638,11 @@ public class FindingResourceTest extends ResourceTest {
         for (int i = 0; i < 3; i++) {
             qm.addVulnerability(
                     createVulnerability("Vuln-" + i, Severity.HIGH),
-                    createComponent(project, "Component " + i, "1.0"), "none");
+                    createComponent(project, "Component " + i, "1.0"),
+                    "none");
         }
 
-        final Response response = jersey
-                .target(V1_FINDING)
+        final Response response = jersey.target(V1_FINDING)
                 .queryParam("totalCount", "BOUNDED")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -2069,8 +2666,7 @@ public class FindingResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
         seedFilterableFindings();
 
-        final Response response = jersey
-                .target(V1_FINDING + "/grouped")
+        final Response response = jersey.target(V1_FINDING + "/grouped")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get(Response.class);
@@ -2086,8 +2682,7 @@ public class FindingResourceTest extends ResourceTest {
 
         // The grouped endpoint has no bounded count query.
         // BOUNDED skips the count and reports the rows served so far as a lower bound.
-        final Response response = jersey
-                .target(V1_FINDING + "/grouped")
+        final Response response = jersey.target(V1_FINDING + "/grouped")
                 .queryParam("totalCount", "BOUNDED")
                 .queryParam("pageNumber", "2")
                 .queryParam("pageSize", "2")
@@ -2126,17 +2721,18 @@ public class FindingResourceTest extends ResourceTest {
         for (int i = 0; i < 3; i++) {
             qm.addVulnerability(
                     createVulnerability("Acc-" + i, Severity.HIGH),
-                    createComponent(accessible, "Acc " + i, "1.0"), "none");
+                    createComponent(accessible, "Acc " + i, "1.0"),
+                    "none");
         }
 
         for (int i = 0; i < 5; i++) {
             qm.addVulnerability(
                     createVulnerability("Forb-" + i, Severity.HIGH),
-                    createComponent(forbidden, "Forb " + i, "1.0"), "none");
+                    createComponent(forbidden, "Forb " + i, "1.0"),
+                    "none");
         }
 
-        final Response response = jersey
-                .target(V1_FINDING)
+        final Response response = jersey.target(V1_FINDING)
                 .queryParam("totalCount", "BOUNDED")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -2150,8 +2746,7 @@ public class FindingResourceTest extends ResourceTest {
     public void shouldRejectUnknownTotalCountValue() {
         initializeWithPermissions(Permissions.VIEW_VULNERABILITY);
 
-        final Response response = jersey
-                .target(V1_FINDING)
+        final Response response = jersey.target(V1_FINDING)
                 .queryParam("totalCount", "yes")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -2169,8 +2764,7 @@ public class FindingResourceTest extends ResourceTest {
     private static Stream<Arguments> getSARIFFindingsByProjectTestParameters() {
         return Stream.of(
                 Arguments.of("INTERNAL", "/unit/sarif/expected-internal.sarif.json"),
-                Arguments.of(null, "/unit/sarif/expected-all.sarif.json")
-        );
+                Arguments.of(null, "/unit/sarif/expected-all.sarif.json"));
     }
 
     private Component createComponent(Project project, String name, String version) {
@@ -2190,7 +2784,14 @@ public class FindingResourceTest extends ResourceTest {
         return qm.createVulnerability(vulnerability);
     }
 
-    private Vulnerability createVulnerability(String vulnId, Severity severity, String title, String description, String recommendation, Integer cweId, Vulnerability.Source source) {
+    private Vulnerability createVulnerability(
+            String vulnId,
+            Severity severity,
+            String title,
+            String description,
+            String recommendation,
+            Integer cweId,
+            Vulnerability.Source source) {
         Vulnerability vulnerability = new Vulnerability();
         vulnerability.setVulnId(vulnId);
         vulnerability.setSource(source);
@@ -2210,13 +2811,14 @@ public class FindingResourceTest extends ResourceTest {
         vulnerability.setCwes(List.of(80, 666));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        useJdbiHandle(handle -> handle.attach(EpssDao.class)
-                .createOrUpdateAll(List.of(new Epss(vulnId, epssScore, null))));
+        useJdbiHandle(
+                handle -> handle.attach(EpssDao.class).createOrUpdateAll(List.of(new Epss(vulnId, epssScore, null))));
 
         return vulnerability;
     }
 
-    private Vulnerability createVulnerabilityWithEpssPercentile(String vulnId, Severity severity, BigDecimal epssPercentile) {
+    private Vulnerability createVulnerabilityWithEpssPercentile(
+            String vulnId, Severity severity, BigDecimal epssPercentile) {
         Vulnerability vulnerability = new Vulnerability();
         vulnerability.setVulnId(vulnId);
         vulnerability.setSource(Vulnerability.Source.NVD);
@@ -2224,8 +2826,8 @@ public class FindingResourceTest extends ResourceTest {
         vulnerability.setCwes(List.of(80, 666));
         vulnerability = qm.createVulnerability(vulnerability);
 
-        useJdbiHandle(handle -> handle.attach(EpssDao.class)
-                .createOrUpdateAll(List.of(new Epss(vulnId, null, epssPercentile))));
+        useJdbiHandle(handle ->
+                handle.attach(EpssDao.class).createOrUpdateAll(List.of(new Epss(vulnId, null, epssPercentile))));
 
         return vulnerability;
     }
@@ -2263,9 +2865,10 @@ public class FindingResourceTest extends ResourceTest {
         qm.addVulnerability(qm.createVulnerability(vulnLow), low, "none");
         qm.addVulnerability(qm.createVulnerability(vulnHigh), high, "none");
 
-        useJdbiHandle(handle -> handle.attach(EpssDao.class).createOrUpdateAll(List.of(
-                new Epss("Vuln-1", new BigDecimal("0.10"), new BigDecimal("0.11")),
-                new Epss("Vuln-2", new BigDecimal("0.90"), new BigDecimal("0.91")))));
+        useJdbiHandle(handle -> handle.attach(EpssDao.class)
+                .createOrUpdateAll(List.of(
+                        new Epss("Vuln-1", new BigDecimal("0.10"), new BigDecimal("0.11")),
+                        new Epss("Vuln-2", new BigDecimal("0.90"), new BigDecimal("0.91")))));
     }
 
     private static final List<Map<String, String>> PORTFOLIO_FILTERS = List.of(
@@ -2307,7 +2910,8 @@ public class FindingResourceTest extends ResourceTest {
 
         for (int i = 0; i < filters.size(); i++) {
             for (int j = i + 1; j < filters.size(); j++) {
-                if (!Collections.disjoint(filters.get(i).keySet(), filters.get(j).keySet())) {
+                if (!Collections.disjoint(
+                        filters.get(i).keySet(), filters.get(j).keySet())) {
                     continue;
                 }
 
@@ -2329,11 +2933,17 @@ public class FindingResourceTest extends ResourceTest {
             boundedTarget = boundedTarget.queryParam(entry.getKey(), entry.getValue());
         }
 
-        final var exactResponse = exactTarget.request().header(X_API_KEY, apiKey).get(Response.class);
-        final var boundedResponse = boundedTarget.request().header(X_API_KEY, apiKey).get(Response.class);
+        final var exactResponse =
+                exactTarget.request().header(X_API_KEY, apiKey).get(Response.class);
+        final var boundedResponse =
+                boundedTarget.request().header(X_API_KEY, apiKey).get(Response.class);
 
-        assertThat(exactResponse.getStatus()).as("exact status for %s", queryParams).isEqualTo(200);
-        assertThat(boundedResponse.getStatus()).as("bounded status for %s", queryParams).isEqualTo(200);
+        assertThat(exactResponse.getStatus())
+                .as("exact status for %s", queryParams)
+                .isEqualTo(200);
+        assertThat(boundedResponse.getStatus())
+                .as("bounded status for %s", queryParams)
+                .isEqualTo(200);
         assertThat(boundedResponse.getHeaderString(TOTAL_COUNT_HEADER))
                 .as("bounded count equals exact count for %s", queryParams)
                 .isEqualTo(exactResponse.getHeaderString(TOTAL_COUNT_HEADER));
@@ -2349,33 +2959,34 @@ public class FindingResourceTest extends ResourceTest {
     private Project seedFilterableFindings() {
         final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
         qm.addVulnerability(
-                createVulnerability("INT-CRIT", Severity.CRITICAL),
-                createComponent(project, "c-crit", "1.0"),
-                "none");
+                createVulnerability("INT-CRIT", Severity.CRITICAL), createComponent(project, "c-crit", "1.0"), "none");
         qm.addVulnerability(
-                createVulnerability("INT-HIGH", Severity.HIGH),
-                createComponent(project, "c-high", "1.0"),
-                "none");
-        qm.addVulnerability(createVulnerability(
-                        "INT-MED", Severity.MEDIUM),
-                createComponent(project, "c-med", "1.0"),
-                "none");
+                createVulnerability("INT-HIGH", Severity.HIGH), createComponent(project, "c-high", "1.0"), "none");
+        qm.addVulnerability(
+                createVulnerability("INT-MED", Severity.MEDIUM), createComponent(project, "c-med", "1.0"), "none");
 
         final Vulnerability kevVuln = createVulnerability("INT-KEV", Severity.HIGH);
         qm.addVulnerability(kevVuln, createComponent(project, "c-kev", "1.0"), "none");
-        useJdbiTransaction(handle -> handle
-                .attach(KevDao.class)
-                .upsertBatch("cisa", List.of(
-                        new KevAssertion("INTERNAL", "INT-KEV", null, null, null, null,
+        useJdbiTransaction(handle -> handle.attach(KevDao.class)
+                .upsertBatch(
+                        "cisa",
+                        List.of(new KevAssertion(
+                                "INTERNAL",
+                                "INT-KEV",
+                                null,
+                                null,
+                                null,
+                                null,
                                 JsonNodeFactory.instance.objectNode()))));
 
-        final Vulnerability epssVuln = createVulnerabilityWithEpss("CVE-2021-0001", Severity.HIGH, new BigDecimal("0.90"));
+        final Vulnerability epssVuln =
+                createVulnerabilityWithEpss("CVE-2021-0001", Severity.HIGH, new BigDecimal("0.90"));
         qm.addVulnerability(epssVuln, createComponent(project, "c-epss", "1.0"), "none");
 
-        final Vulnerability epssPercentileVuln = createVulnerabilityWithEpssPercentile("CVE-2021-0002", Severity.HIGH, new BigDecimal("0.80"));
+        final Vulnerability epssPercentileVuln =
+                createVulnerabilityWithEpssPercentile("CVE-2021-0002", Severity.HIGH, new BigDecimal("0.80"));
         qm.addVulnerability(epssPercentileVuln, createComponent(project, "c-epss-percentile", "1.0"), "none");
 
         return project;
     }
-
 }

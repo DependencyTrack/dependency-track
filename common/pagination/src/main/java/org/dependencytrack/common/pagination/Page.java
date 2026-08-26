@@ -50,7 +50,6 @@ public record Page<T>(
              * not known.
              */
             AT_LEAST
-
         }
 
         public TotalCount {
@@ -66,11 +65,8 @@ public record Page<T>(
                 throw new IllegalArgumentException("threshold must not be less than 1");
             }
 
-            return count > threshold
-                    ? new TotalCount(threshold, Type.AT_LEAST)
-                    : new TotalCount(count, Type.EXACT);
+            return count > threshold ? new TotalCount(threshold, Type.AT_LEAST) : new TotalCount(count, Type.EXACT);
         }
-
     }
 
     public Page {
@@ -86,8 +82,7 @@ public record Page<T>(
     }
 
     public static <T> Page<T> empty() {
-        return new Page<T>(Collections.emptyList())
-                .withTotalCount(0, TotalCount.Type.EXACT);
+        return new Page<T>(Collections.emptyList()).withTotalCount(0, TotalCount.Type.EXACT);
     }
 
     public Page<T> withTotalCount(long value, TotalCount.Type type) {
@@ -97,5 +92,4 @@ public record Page<T>(
     public Page<T> withTotalCount(TotalCount totalCount) {
         return new Page<>(this.items, this.nextPageToken, totalCount);
     }
-
 }

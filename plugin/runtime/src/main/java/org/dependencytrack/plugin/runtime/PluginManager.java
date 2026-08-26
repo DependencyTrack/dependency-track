@@ -115,8 +115,7 @@ public class PluginManager implements Closeable {
         this.extensionNamesByExtensionPointClass = new HashMap<>();
         this.factoryByExtensionIdentity = new HashMap<>();
         this.configRegistryByExtensionIdentity = new HashMap<>();
-        this.factoryComparator = Comparator
-                .<ExtensionFactory<?>>comparingInt(ExtensionFactory::priority)
+        this.factoryComparator = Comparator.<ExtensionFactory<?>>comparingInt(ExtensionFactory::priority)
                 .thenComparing(ExtensionFactory::extensionName);
         this.lock = new ReentrantLock();
 
@@ -127,9 +126,8 @@ public class PluginManager implements Closeable {
         for (final var extensionPointClass : extensionPointClasses) {
             final var specAnnotation = extensionPointClass.getAnnotation(ExtensionPointSpec.class);
             if (specAnnotation == null) {
-                throw new IllegalArgumentException(
-                        "Extension point %s is not annotated with %s".formatted(
-                                extensionPointClass.getName(), ExtensionPointSpec.class.getName()));
+                throw new IllegalArgumentException("Extension point %s is not annotated with %s"
+                        .formatted(extensionPointClass.getName(), ExtensionPointSpec.class.getName()));
             }
 
             if (!EXTENSION_POINT_NAME_PATTERN.matcher(specAnnotation.name()).matches()) {
@@ -139,10 +137,7 @@ public class PluginManager implements Closeable {
 
             LOGGER.debug("Registered extension point %s".formatted(specAnnotation.name()));
             metadataByExtensionPointClass.put(
-                    extensionPointClass,
-                    new ExtensionPointMetadata(
-                            specAnnotation.name(),
-                            extensionPointClass));
+                    extensionPointClass, new ExtensionPointMetadata(specAnnotation.name(), extensionPointClass));
         }
     }
 
@@ -168,7 +163,8 @@ public class PluginManager implements Closeable {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends ExtensionPoint, U extends ExtensionFactory<T>> U getFactory(Class<T> extensionPointClass, String name) {
+    public <T extends ExtensionPoint, U extends ExtensionFactory<T>> U getFactory(
+            Class<T> extensionPointClass, String name) {
         final ExtensionPointMetadata extensionPointMetadata = requireKnownExtensionPoint(extensionPointClass);
 
         final var extensionIdentity = new ExtensionIdentity(extensionPointClass, name);
@@ -181,7 +177,8 @@ public class PluginManager implements Closeable {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends ExtensionPoint, U extends ExtensionFactory<T>> SequencedCollection<U> getFactories(Class<T> extensionPointClass) {
+    public <T extends ExtensionPoint, U extends ExtensionFactory<T>> SequencedCollection<U> getFactories(
+            Class<T> extensionPointClass) {
         requireKnownExtensionPoint(extensionPointClass);
 
         final Set<String> extensionNames = extensionNamesByExtensionPointClass.get(extensionPointClass);
@@ -202,14 +199,12 @@ public class PluginManager implements Closeable {
     }
 
     public <T extends ExtensionPoint> ConfigRegistry getConfigRegistry(
-            Class<T> extensionPointClass,
-            String extensionName) {
+            Class<T> extensionPointClass, String extensionName) {
         final ExtensionPointMetadata extensionPointMetadata = requireKnownExtensionPoint(extensionPointClass);
 
         final var extensionIdentity = new ExtensionIdentity(extensionPointClass, extensionName);
 
-        final ConfigRegistry configRegistry =
-                configRegistryByExtensionIdentity.get(extensionIdentity);
+        final ConfigRegistry configRegistry = configRegistryByExtensionIdentity.get(extensionIdentity);
         if (configRegistry == null) {
             throw new NoSuchExtensionException(extensionPointMetadata.name(), extensionName);
         }
@@ -218,8 +213,7 @@ public class PluginManager implements Closeable {
     }
 
     public <T extends ExtensionPoint> MutableConfigRegistry getMutableConfigRegistry(
-            Class<T> extensionPointClass,
-            String extensionName) {
+            Class<T> extensionPointClass, String extensionName) {
         final ConfigRegistry configRegistry = getConfigRegistry(extensionPointClass, extensionName);
         if (configRegistry instanceof final MutableConfigRegistry mutableConfigRegistry) {
             return mutableConfigRegistry;
@@ -228,9 +222,7 @@ public class PluginManager implements Closeable {
         throw new IllegalStateException("Config registry is immutable");
     }
 
-    public <T extends ExtensionPoint> KeyValueStore getKVStore(
-            Class<T> extensionPointClass,
-            String extensionName) {
+    public <T extends ExtensionPoint> KeyValueStore getKVStore(Class<T> extensionPointClass, String extensionName) {
         final ExtensionPointMetadata extensionPointMetadata = requireKnownExtensionPoint(extensionPointClass);
 
         final var extensionIdentity = new ExtensionIdentity(extensionPointClass, extensionName);
@@ -270,7 +262,8 @@ public class PluginManager implements Closeable {
     }
 
     private void loadExtensionsForPlugin(Plugin plugin) {
-        final Collection<? extends ExtensionFactory<? extends ExtensionPoint>> extensionFactories = plugin.extensionFactories();
+        final Collection<? extends ExtensionFactory<? extends ExtensionPoint>> extensionFactories =
+                plugin.extensionFactories();
         if (extensionFactories == null || extensionFactories.isEmpty()) {
             LOGGER.debug("Plugin does not define any extensions; Skipping");
             return;
@@ -278,19 +271,18 @@ public class PluginManager implements Closeable {
 
         for (final ExtensionFactory<? extends ExtensionPoint> extensionFactory : extensionFactories) {
             if (extensionFactory.extensionName() == null) {
-                throw new IllegalStateException(
-                        "%s does not define an extension name".formatted(
-                                extensionFactory.getClass().getName()));
+                throw new IllegalStateException("%s does not define an extension name"
+                        .formatted(extensionFactory.getClass().getName()));
             }
-            if (!EXTENSION_NAME_PATTERN.matcher(extensionFactory.extensionName()).matches()) {
-                throw new IllegalStateException(
-                        "%s defines an invalid extension name: %s".formatted(
-                                extensionFactory.getClass().getName(), extensionFactory.extensionName()));
+            if (!EXTENSION_NAME_PATTERN
+                    .matcher(extensionFactory.extensionName())
+                    .matches()) {
+                throw new IllegalStateException("%s defines an invalid extension name: %s"
+                        .formatted(extensionFactory.getClass().getName(), extensionFactory.extensionName()));
             }
             if (extensionFactory.extensionClass() == null) {
-                throw new IllegalStateException(
-                        "%s does not define an extension class".formatted(
-                                extensionFactory.getClass().getName()));
+                throw new IllegalStateException("%s does not define an extension class"
+                        .formatted(extensionFactory.getClass().getName()));
             }
 
             // Prevent plugins from registering their extensions as non-concrete classes.
@@ -300,17 +292,21 @@ public class PluginManager implements Closeable {
                     || Modifier.isAbstract(extensionFactory.extensionClass().getModifiers())) {
                 throw new IllegalStateException("""
                         Class %s of extension %s from plugin %s is either abstract or an interface; \
-                        Extension classes must be concrete""".formatted(extensionFactory.extensionClass().getName(),
-                        extensionFactory.extensionName(), MDC.get(MDC_PLUGIN)));
+                        Extension classes must be concrete""".formatted(
+                                extensionFactory.extensionClass().getName(),
+                                extensionFactory.extensionName(),
+                                MDC.get(MDC_PLUGIN)));
             }
 
             final ExtensionPointMetadata extensionPointMetadata =
                     requireImplementsExtensionPoint(extensionFactory.extensionClass());
 
             try (var _ = MDC.putCloseable(MDC_EXTENSION_POINT_NAME, extensionPointMetadata.name());
-                 var _ = MDC.putCloseable(MDC_EXTENSION_POINT, extensionPointMetadata.clazz().getName());
-                 var _ = MDC.putCloseable(MDC_EXTENSION_NAME, extensionFactory.extensionName());
-                 var _ = MDC.putCloseable(MDC_EXTENSION, extensionFactory.extensionClass().getName())) {
+                    var _ = MDC.putCloseable(
+                            MDC_EXTENSION_POINT, extensionPointMetadata.clazz().getName());
+                    var _ = MDC.putCloseable(MDC_EXTENSION_NAME, extensionFactory.extensionName());
+                    var _ = MDC.putCloseable(
+                            MDC_EXTENSION, extensionFactory.extensionClass().getName())) {
                 loadExtension(plugin, extensionFactory, extensionPointMetadata);
             }
         }
@@ -320,31 +316,30 @@ public class PluginManager implements Closeable {
             Plugin plugin,
             ExtensionFactory<? extends ExtensionPoint> extensionFactory,
             ExtensionPointMetadata extensionPointMetadata) {
-        final var extensionIdentity = new ExtensionIdentity(
-                extensionPointMetadata.clazz(),
-                extensionFactory.extensionName());
+        final var extensionIdentity =
+                new ExtensionIdentity(extensionPointMetadata.clazz(), extensionFactory.extensionName());
 
         // Prevent the same extension from being loaded from multiple plugins.
         if (pluginByExtensionIdentity.containsKey(extensionIdentity)) {
             final Plugin conflictingPlugin = pluginByExtensionIdentity.get(extensionIdentity);
-            throw new IllegalStateException(
-                    "Extension was already loaded from plugin %s".formatted(
-                            conflictingPlugin.getClass().getName()));
+            throw new IllegalStateException("Extension was already loaded from plugin %s"
+                    .formatted(conflictingPlugin.getClass().getName()));
         }
 
         if (extensionFactory.priority() < PRIORITY_HIGHEST) {
             throw new IllegalStateException("""
                     Extension %s from plugin %s has an invalid priority of %d; \
                     Allowed range is [%d..%d] (highest to lowest priority)\
-                    """.formatted(MDC.get(MDC_EXTENSION), MDC.get(MDC_PLUGIN),
-                    extensionFactory.priority(), PRIORITY_HIGHEST, PRIORITY_LOWEST)
-            );
+                    """.formatted(
+                            MDC.get(MDC_EXTENSION),
+                            MDC.get(MDC_PLUGIN),
+                            extensionFactory.priority(),
+                            PRIORITY_HIGHEST,
+                            PRIORITY_LOWEST));
         }
 
         final @Nullable RuntimeConfigSpec runtimeConfigSpec =
-                extensionFactory instanceof final RuntimeConfigurable rc
-                        ? rc.runtimeConfigSpec()
-                        : null;
+                extensionFactory instanceof final RuntimeConfigurable rc ? rc.runtimeConfigSpec() : null;
 
         final var configRegistry = new ConfigRegistryImpl(
                 jdbi,
@@ -352,12 +347,8 @@ public class PluginManager implements Closeable {
                 extensionPointMetadata.name(),
                 extensionIdentity.name(),
                 runtimeConfigSpec,
-                runtimeConfigSpec != null
-                        ? runtimeConfigMapper
-                        : null,
-                runtimeConfigSpec != null
-                        ? secretResolver
-                        : null);
+                runtimeConfigSpec != null ? runtimeConfigMapper : null,
+                runtimeConfigSpec != null ? secretResolver : null);
         configRegistryByExtensionIdentity.put(extensionIdentity, configRegistry);
 
         if (runtimeConfigSpec != null) {
@@ -378,16 +369,10 @@ public class PluginManager implements Closeable {
             }
         }
 
-        final var keyValueStore = new KeyValueStoreImpl(
-                jdbi,
-                extensionPointMetadata.name(),
-                extensionIdentity.name());
+        final var keyValueStore = new KeyValueStoreImpl(jdbi, extensionPointMetadata.name(), extensionIdentity.name());
 
         final var extensionCacheManager = new NamespacedCacheManager(
-                this.cacheManager,
-                "%s.%s".formatted(
-                        extensionPointMetadata.name(),
-                        extensionIdentity.name()));
+                this.cacheManager, "%s.%s".formatted(extensionPointMetadata.name(), extensionIdentity.name()));
 
         final var serviceRegistry = new MutableServiceRegistry()
                 .register(ConfigRegistry.class, configRegistry)
@@ -401,16 +386,14 @@ public class PluginManager implements Closeable {
             extensionFactory.init(serviceRegistry);
         } catch (RuntimeException e) {
             throw new IllegalStateException(
-                    "Failed to initialize extension %s from plugin %s".formatted(
-                            MDC.get(MDC_EXTENSION), MDC.get(MDC_PLUGIN)), e);
+                    "Failed to initialize extension %s from plugin %s"
+                            .formatted(MDC.get(MDC_EXTENSION), MDC.get(MDC_PLUGIN)),
+                    e);
         }
 
-        factoriesByPlugin.computeIfAbsent(
-                        plugin, _ -> new ArrayList<>())
-                .add(extensionFactory);
-        extensionNamesByExtensionPointClass.computeIfAbsent(
-                        extensionIdentity.extensionPointClass(),
-                        _ -> new HashSet<>())
+        factoriesByPlugin.computeIfAbsent(plugin, _ -> new ArrayList<>()).add(extensionFactory);
+        extensionNamesByExtensionPointClass
+                .computeIfAbsent(extensionIdentity.extensionPointClass(), _ -> new HashSet<>())
                 .add(extensionFactory.extensionName());
         factoryByExtensionIdentity.put(extensionIdentity, extensionFactory);
         pluginByExtensionIdentity.put(extensionIdentity, plugin);
@@ -425,16 +408,16 @@ public class PluginManager implements Closeable {
         return metadata;
     }
 
-    private ExtensionPointMetadata requireImplementsExtensionPoint(Class<? extends ExtensionPoint> concreteExtensionClass) {
+    private ExtensionPointMetadata requireImplementsExtensionPoint(
+            Class<? extends ExtensionPoint> concreteExtensionClass) {
         for (final Class<? extends ExtensionPoint> extensionPointClass : metadataByExtensionPointClass.keySet()) {
             if (extensionPointClass.isAssignableFrom(concreteExtensionClass)) {
                 return metadataByExtensionPointClass.get(extensionPointClass);
             }
         }
 
-        throw new IllegalStateException(
-                "Extension %s does not implement any known extension point".formatted(
-                        concreteExtensionClass.getName()));
+        throw new IllegalStateException("Extension %s does not implement any known extension point"
+                .formatted(concreteExtensionClass.getName()));
     }
 
     @Override
@@ -485,13 +468,15 @@ public class PluginManager implements Closeable {
 
         // Close factories in reverse order in which they were initialized.
         for (final ExtensionFactory<?> extensionFactory : factories.reversed()) {
-            final ExtensionPointMetadata extensionPointMetadata = requireImplementsExtensionPoint(extensionFactory.extensionClass());
+            final ExtensionPointMetadata extensionPointMetadata =
+                    requireImplementsExtensionPoint(extensionFactory.extensionClass());
 
-            final String extensionPointClassName = extensionPointMetadata.clazz().getName();
+            final String extensionPointClassName =
+                    extensionPointMetadata.clazz().getName();
             final String extensionClassName = extensionFactory.extensionClass().getName();
 
             try (var _ = MDC.putCloseable(MDC_EXTENSION_POINT, extensionPointClassName);
-                 var _ = MDC.putCloseable(MDC_EXTENSION, extensionClassName)) {
+                    var _ = MDC.putCloseable(MDC_EXTENSION, extensionClassName)) {
                 LOGGER.debug("Closing extension");
                 extensionFactory.close();
 
@@ -501,5 +486,4 @@ public class PluginManager implements Closeable {
             }
         }
     }
-
 }

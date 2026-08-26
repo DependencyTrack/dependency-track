@@ -20,5 +20,4 @@ package org.dependencytrack.dex.engine;
 
 import java.time.Instant;
 
-public record TaskLock(Instant expiresAt, int version) {
-}
+public record TaskLock(Instant expiresAt, int version) {}

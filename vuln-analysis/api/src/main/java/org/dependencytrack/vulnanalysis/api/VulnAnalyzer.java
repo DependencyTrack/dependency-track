@@ -133,5 +133,4 @@ public interface VulnAnalyzer extends ExtensionPoint {
      * @throws RetryableVulnAnalysisException When analysis failed with a retryable cause.
      */
     Bom analyze(Bom bom) throws InterruptedException;
-
 }

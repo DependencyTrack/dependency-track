@@ -29,7 +29,8 @@ import java.util.List;
 public class JsonbContainsMethod extends AbstractJsonbMethod {
 
     @Override
-    public SQLExpression getExpression(final SQLStatement stmt, final SQLExpression expr, final List<SQLExpression> args) {
+    public SQLExpression getExpression(
+            final SQLStatement stmt, final SQLExpression expr, final List<SQLExpression> args) {
         if (!(expr instanceof StringExpression)) {
             throw new NucleusException("Cannot invoke jsonbContains on expression of type %s"
                     .formatted(expr.getClass().getName()));
@@ -47,5 +48,4 @@ public class JsonbContainsMethod extends AbstractJsonbMethod {
         //
         return new BooleanExpression(expr, JsonbOperators.JSONB_CONTAINS_JSONB, castAsJsonb(stmt, argStringExpression));
     }
-
 }

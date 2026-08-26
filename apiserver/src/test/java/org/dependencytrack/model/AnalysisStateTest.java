@@ -21,7 +21,7 @@ package org.dependencytrack.model;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class AnalysisStateTest { 
+public class AnalysisStateTest {
 
     @Test
     public void testEnums() {
@@ -31,5 +31,4 @@ public class AnalysisStateTest {
         Assertions.assertEquals("FALSE_POSITIVE", AnalysisState.FALSE_POSITIVE.name());
         Assertions.assertEquals("NOT_AFFECTED", AnalysisState.NOT_AFFECTED.name());
     }
-
-} 
+}

@@ -68,9 +68,7 @@ final class Crypto {
     private final DataSource dataSource;
     private final Aead kek;
 
-    Crypto(
-            final DataSource dataSource,
-            final DatabaseSecretManagerConfig config) {
+    Crypto(final DataSource dataSource, final DatabaseSecretManagerConfig config) {
         this.dataSource = dataSource;
         this.kek = loadKek(config);
     }
@@ -78,16 +76,14 @@ final class Crypto {
     String decrypt(final byte[] cipherText, final byte[] serializedDek) throws GeneralSecurityException {
         // Parse and decrypt the DEK with the KEK.
         final KeysetHandle dekKeysetHandle =
-                TinkProtoKeysetFormat.parseEncryptedKeyset(
-                        serializedDek, kek, new byte[0]);
+                TinkProtoKeysetFormat.parseEncryptedKeyset(serializedDek, kek, new byte[0]);
 
         // Decrypt cipher text with the DEK.
         final Aead dek = dekKeysetHandle.getPrimitive(RegistryConfiguration.get(), Aead.class);
         return new String(dek.decrypt(cipherText, new byte[0]), StandardCharsets.UTF_8);
     }
 
-    record EncryptionResult(byte[] cipherText, byte[] serializedDek) {
-    }
+    record EncryptionResult(byte[] cipherText, byte[] serializedDek) {}
 
     EncryptionResult encrypt(final String plainText) throws GeneralSecurityException {
         // Generate a new DEK.
@@ -98,9 +94,7 @@ final class Crypto {
         final byte[] cipherText = dek.encrypt(plainText.getBytes(StandardCharsets.UTF_8), new byte[0]);
 
         // Encrypt the DEK with the KEK and serialize it.
-        final byte[] serializedDek =
-                TinkProtoKeysetFormat.serializeEncryptedKeyset(
-                        dekHandle, kek, new byte[0]);
+        final byte[] serializedDek = TinkProtoKeysetFormat.serializeEncryptedKeyset(dekHandle, kek, new byte[0]);
 
         return new EncryptionResult(cipherText, serializedDek);
     }
@@ -132,10 +126,7 @@ final class Crypto {
                         .build();
 
                 final var keysetHandle = KeysetHandle.newBuilder()
-                        .addEntry(KeysetHandle
-                                .importKey(key)
-                                .withFixedId(keyId)
-                                .makePrimary())
+                        .addEntry(KeysetHandle.importKey(key).withFixedId(keyId).makePrimary())
                         .build();
 
                 return doLocked(connection -> {
@@ -159,9 +150,8 @@ final class Crypto {
             final KeysetHandle keysetHandle;
             if (Files.exists(kekKeysetPath)) {
                 logger.info("Loading existing KEK keyset from {}", kekKeysetPath);
-                keysetHandle =
-                        TinkJsonProtoKeysetFormat.parseKeyset(
-                                Files.readString(kekKeysetPath), InsecureSecretKeyAccess.get());
+                keysetHandle = TinkJsonProtoKeysetFormat.parseKeyset(
+                        Files.readString(kekKeysetPath), InsecureSecretKeyAccess.get());
             } else if (config.isCreateKekKeysetIfMissing()) {
                 logger.info("KEK keyset at {} does not exist yet; Creating it", kekKeysetPath);
                 keysetHandle = KeysetHandle.generateNew(PredefinedAeadParameters.AES256_GCM);
@@ -172,11 +162,10 @@ final class Crypto {
                 // Create the file with as restrictive permissions as possible.
                 // Note that GROUP_READ is necessary for OpenShift deployments,
                 // since the user ID is assigned randomly.
-                final FileAttribute<?> posixPermissionsAttribute =
-                        PosixFilePermissions.asFileAttribute(Set.of(
-                                PosixFilePermission.OWNER_READ,
-                                PosixFilePermission.OWNER_WRITE,
-                                PosixFilePermission.GROUP_READ));
+                final FileAttribute<?> posixPermissionsAttribute = PosixFilePermissions.asFileAttribute(Set.of(
+                        PosixFilePermission.OWNER_READ,
+                        PosixFilePermission.OWNER_WRITE,
+                        PosixFilePermission.GROUP_READ));
 
                 if (!System.getProperty("os.name").toLowerCase().startsWith("win")) {
                     Files.createFile(kekKeysetPath, posixPermissionsAttribute);
@@ -212,9 +201,7 @@ final class Crypto {
     }
 
     private static String serializeKeyIds(Set<Integer> keyIds) {
-        return keyIds.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(","));
+        return keyIds.stream().map(String::valueOf).collect(Collectors.joining(","));
     }
 
     private static Set<Integer> deserializeKeyIds(String value) {
@@ -239,9 +226,7 @@ final class Crypto {
                    AND "PROPERTYNAME" = 'kek-keyset-key-ids'
                 """)) {
             final ResultSet rs = ps.executeQuery();
-            existingValue = rs.next()
-                    ? rs.getString(1)
-                    : null;
+            existingValue = rs.next() ? rs.getString(1) : null;
         }
 
         if (existingValue == null) {
@@ -256,8 +241,7 @@ final class Crypto {
 
         // Rotation: the loaded keyset contains all previously known keys AND new ones.
         if (loadedKeyIds.containsAll(storedKeyIds)) {
-            LoggerFactory
-                    .getLogger(DatabaseSecretManager.class)
+            LoggerFactory.getLogger(DatabaseSecretManager.class)
                     .info("KEK keyset has been rotated; Updating stored key IDs");
             upsertKeyIds(connection, serializeKeyIds(loadedKeyIds));
             return;
@@ -291,7 +275,7 @@ final class Crypto {
                 connection.setAutoCommit(false);
 
                 try (final PreparedStatement ps = connection.prepareStatement("""
-                        
+
                            SELECT pg_advisory_xact_lock(?)
                         """)) {
                     ps.setLong(1, ADVISORY_LOCK_ID);
@@ -330,5 +314,4 @@ final class Crypto {
     private interface CheckedFunction<T, R> {
         R apply(T t) throws Exception;
     }
-
 }

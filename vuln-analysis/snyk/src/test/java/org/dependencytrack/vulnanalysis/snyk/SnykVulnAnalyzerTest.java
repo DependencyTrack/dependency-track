@@ -76,11 +76,10 @@ class SnykVulnAnalyzerTest {
                         .withOrgId("test-org-id")
                         .withApiToken("test-api-token"));
 
-        analyzerFactory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(CacheManager.class, cacheManager)
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        analyzerFactory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, configRegistry)
+                .register(CacheManager.class, cacheManager)
+                .register(HttpClient.class, HttpClient.newHttpClient()));
 
         analyzer = analyzerFactory.create();
     }
@@ -101,12 +100,11 @@ class SnykVulnAnalyzerTest {
                 .willReturn(aResponse().withFault(CONNECTION_RESET_BY_PEER)));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("jackson-databind")
-                                .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
+                        .build())
                 .build();
 
         assertThatExceptionOfType(RetryableVulnAnalysisException.class)
@@ -123,12 +121,11 @@ class SnykVulnAnalyzerTest {
                         .withBodyFile("snyk-no-issues-response.json")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("jackson-databind")
-                                .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -149,12 +146,11 @@ class SnykVulnAnalyzerTest {
                         .withBodyFile("snyk-one-issue-response.json")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("jackson-databind")
-                                .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -241,12 +237,11 @@ class SnykVulnAnalyzerTest {
                         .withBodyFile("snyk-multiple-issues-response.json")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("woodstox-core")
-                                .setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("woodstox-core")
+                        .setPurl("pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -256,11 +251,10 @@ class SnykVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeComponentWithoutBomRef() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setName("acme-lib")
-                                .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -272,11 +266,10 @@ class SnykVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeComponentWithoutPurl() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-lib")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -288,12 +281,11 @@ class SnykVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeComponentsWithUnsupportedPurlType() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-artefact")
-                                .setPurl("pkg:rpm/acme-artefact@1.2.3")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-artefact")
+                        .setPurl("pkg:rpm/acme-artefact@1.2.3")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -305,17 +297,15 @@ class SnykVulnAnalyzerTest {
     @Test
     void shouldNotAnalyzeInternalComponents() throws Exception {
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-lib")
-                                .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
-                                .addProperties(
-                                        Property.newBuilder()
-                                                .setName("dependencytrack:internal:is-internal-component")
-                                                .setValue("does-not-matter")
-                                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
+                        .addProperties(Property.newBuilder()
+                                .setName("dependencytrack:internal:is-internal-component")
+                                .setValue("does-not-matter")
                                 .build())
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -334,17 +324,14 @@ class SnykVulnAnalyzerTest {
 
         final var components = new ArrayList<Component>(150);
         for (int i = 0; i < 150; i++) {
-            components.add(
-                    Component.newBuilder()
-                            .setBomRef(String.valueOf(i))
-                            .setName("acme-lib")
-                            .setPurl("pkg:maven/com.acme/acme-lib@1.0." + i)
-                            .build());
+            components.add(Component.newBuilder()
+                    .setBomRef(String.valueOf(i))
+                    .setName("acme-lib")
+                    .setPurl("pkg:maven/com.acme/acme-lib@1.0." + i)
+                    .build());
         }
 
-        final var bom = Bom.newBuilder()
-                .addAllComponents(components)
-                .build();
+        final var bom = Bom.newBuilder().addAllComponents(components).build();
 
         final Bom vdr = analyzer.analyze(bom);
         assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
@@ -398,12 +385,11 @@ class SnykVulnAnalyzerTest {
                                 """)));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-lib")
-                                .setPurl("pkg:maven/com.Acme/Acme-Lib@1.0.0")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/com.Acme/Acme-Lib@1.0.0")
+                        .build())
                 .build();
 
         final Bom vdr = analyzer.analyze(bom);
@@ -421,20 +407,20 @@ class SnykVulnAnalyzerTest {
                         .withBody("{\"data\":[]}")));
 
         final var bom = Bom.newBuilder()
-                .addComponents(
-                        Component.newBuilder()
-                                .setBomRef("1")
-                                .setName("acme-lib")
-                                .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
-                                .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/com.acme/acme-lib@1.0.0")
+                        .build())
                 .build();
 
         analyzer.analyze(bom);
 
-        verify(1, postRequestedFor(anyUrl())
-                .withHeader("Authorization", equalTo("token test-api-token"))
-                .withHeader("Content-Type", equalTo("application/vnd.api+json"))
-                .withHeader("Accept", equalTo("application/vnd.api+json")));
+        verify(
+                1,
+                postRequestedFor(anyUrl())
+                        .withHeader("Authorization", equalTo("token test-api-token"))
+                        .withHeader("Content-Type", equalTo("application/vnd.api+json"))
+                        .withHeader("Accept", equalTo("application/vnd.api+json")));
     }
-
 }

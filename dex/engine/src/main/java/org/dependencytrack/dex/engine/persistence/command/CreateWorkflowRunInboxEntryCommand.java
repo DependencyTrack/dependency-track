@@ -25,7 +25,4 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record CreateWorkflowRunInboxEntryCommand(
-        UUID workflowRunId,
-        @Nullable Instant visibleFrom,
-        WorkflowEvent event) {
-}
+        UUID workflowRunId, @Nullable Instant visibleFrom, WorkflowEvent event) {}

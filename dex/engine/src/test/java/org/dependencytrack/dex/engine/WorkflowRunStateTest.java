@@ -36,7 +36,8 @@ class WorkflowRunStateTest {
 
     @Test
     void shouldNotBeCreatedWhenHistoryIsEmpty() {
-        final var runState = new WorkflowRunState(timeBasedEpochRandomGenerator().generate(), List.of());
+        final var runState =
+                new WorkflowRunState(timeBasedEpochRandomGenerator().generate(), List.of());
 
         assertThat(runState.isCreated()).isFalse();
     }
@@ -57,10 +58,10 @@ class WorkflowRunStateTest {
 
     @Test
     void shouldThrowWhenAccessingRunCreatedFieldsBeforeRunWasCreated() {
-        final var runState = new WorkflowRunState(timeBasedEpochRandomGenerator().generate(), List.of());
+        final var runState =
+                new WorkflowRunState(timeBasedEpochRandomGenerator().generate(), List.of());
 
-        record Accessor(String field, Function<WorkflowRunState, Object> get) {
-        }
+        record Accessor(String field, Function<WorkflowRunState, Object> get) {}
 
         final List<Accessor> accessors = List.of(
                 new Accessor("workflowName", WorkflowRunState::workflowName),
@@ -74,8 +75,7 @@ class WorkflowRunStateTest {
             assertThatExceptionOfType(NullPointerException.class)
                     .as("accessor %s", accessor.field())
                     .isThrownBy(() -> accessor.get().apply(runState))
-                    .withMessage("%s is not set because no RunCreated event was applied"
-                            .formatted(accessor.field()));
+                    .withMessage("%s is not set because no RunCreated event was applied".formatted(accessor.field()));
         }
     }
 
@@ -91,5 +91,4 @@ class WorkflowRunStateTest {
                         .build())
                 .build();
     }
-
 }

@@ -86,9 +86,7 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
     }
 
     @Override
-    public @Nullable Void execute(
-            ActivityContext ctx,
-            @Nullable PublishNotificationActivityArg argument) {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable PublishNotificationActivityArg argument) {
         if (argument == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -155,8 +153,7 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
             @Nullable String publisherConfig,
             @Nullable String template,
             @Nullable String templateMimeType,
-            boolean logSuccessfulPublish) {
-    }
+            boolean logSuccessfulPublish) {}
 
     private @Nullable RuleMetadata getRuleMetadata(String ruleName) {
         return withJdbiHandle(handle -> {
@@ -172,14 +169,9 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
                      WHERE r."NAME" = :ruleName
                     """);
 
-            return query
-                    .bind("ruleName", ruleName)
+            return query.bind("ruleName", ruleName)
                     .map((rs, ctx) -> new RuleMetadata(
-                            rs.getString(1),
-                            rs.getString(2),
-                            rs.getString(3),
-                            rs.getString(4),
-                            rs.getBoolean(5)))
+                            rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getBoolean(5)))
                     .findOne()
                     .orElse(null);
         });
@@ -204,9 +196,7 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
         throw new TerminalApplicationFailureException("No notification found");
     }
 
-    private @Nullable RuntimeConfig getRuleConfig(
-            @Nullable RuntimeConfigSpec configSpec,
-            @Nullable String configJson) {
+    private @Nullable RuntimeConfig getRuleConfig(@Nullable RuntimeConfigSpec configSpec, @Nullable String configJson) {
         if (configSpec == null) {
             // Publisher doesn't support rule-level configuration.
             return null;
@@ -238,5 +228,4 @@ public final class PublishNotificationActivity implements Activity<PublishNotifi
 
         return config;
     }
-
 }

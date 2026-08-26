@@ -27,7 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
-class WebhookNotificationPublisherFactoryTest extends AbstractNotificationPublisherFactoryTest<WebhookNotificationPublisherFactory> {
+class WebhookNotificationPublisherFactoryTest
+        extends AbstractNotificationPublisherFactoryTest<WebhookNotificationPublisherFactory> {
 
     protected WebhookNotificationPublisherFactoryTest() {
         super(WebhookNotificationPublisherFactory.class);
@@ -102,8 +103,7 @@ class WebhookNotificationPublisherFactoryTest extends AbstractNotificationPublis
             config.setAuthHeaderName("Authorization");
             config.setAuthHeaderValue("Bearer token");
 
-            assertThatNoException()
-                    .isThrownBy(() -> ruleConfigSpec.validator().validate(config));
+            assertThatNoException().isThrownBy(() -> ruleConfigSpec.validator().validate(config));
         }
     }
 
@@ -113,9 +113,7 @@ class WebhookNotificationPublisherFactoryTest extends AbstractNotificationPublis
             final RuntimeConfigSpec ruleConfigSpec = publisherFactory.ruleConfigSpec();
             final var config = (WebhookNotificationPublisherRuleConfigV1) ruleConfigSpec.defaultConfig();
 
-            assertThatNoException()
-                    .isThrownBy(() -> ruleConfigSpec.validator().validate(config));
+            assertThatNoException().isThrownBy(() -> ruleConfigSpec.validator().validate(config));
         }
     }
-
 }

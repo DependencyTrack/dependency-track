@@ -54,8 +54,8 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
 public final class FetchPackageMetadataResolutionCandidatesActivity
         implements Activity<FetchPackageMetadataResolutionCandidatesArg, FetchPackageMetadataResolutionCandidatesRes> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(
-            FetchPackageMetadataResolutionCandidatesActivity.class);
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(FetchPackageMetadataResolutionCandidatesActivity.class);
     private static final int DEFAULT_RESOLVE_BATCH_SIZE = 250;
 
     private final PluginManager pluginManager;
@@ -65,17 +65,14 @@ public final class FetchPackageMetadataResolutionCandidatesActivity
         this(pluginManager, DEFAULT_RESOLVE_BATCH_SIZE);
     }
 
-    FetchPackageMetadataResolutionCandidatesActivity(
-            PluginManager pluginManager,
-            int resolveBatchSize) {
+    FetchPackageMetadataResolutionCandidatesActivity(PluginManager pluginManager, int resolveBatchSize) {
         this.pluginManager = pluginManager;
         this.resolveBatchSize = resolveBatchSize;
     }
 
     @Override
     public FetchPackageMetadataResolutionCandidatesRes execute(
-            ActivityContext ctx,
-            @Nullable FetchPackageMetadataResolutionCandidatesArg arg) {
+            ActivityContext ctx, @Nullable FetchPackageMetadataResolutionCandidatesArg arg) {
         final Cursor cursor;
         try {
             cursor = Cursor.decode(arg != null ? arg.getCursor() : null);
@@ -87,12 +84,9 @@ public final class FetchPackageMetadataResolutionCandidatesActivity
         final List<Candidate> fetchedDueCandidates = fetchDueCandidates(cursor, resolveBatchSize + 1);
 
         final boolean hasMore = fetchedDueCandidates.size() > resolveBatchSize;
-        final List<Candidate> candidates = hasMore
-                ? fetchedDueCandidates.subList(0, resolveBatchSize)
-                : fetchedDueCandidates;
-        final String nextCursor = hasMore
-                ? Cursor.of(candidates.getLast()).encode()
-                : null;
+        final List<Candidate> candidates =
+                hasMore ? fetchedDueCandidates.subList(0, resolveBatchSize) : fetchedDueCandidates;
+        final String nextCursor = hasMore ? Cursor.of(candidates.getLast()).encode() : null;
 
         final Collection<PackageMetadataResolverFactory> resolverFactories =
                 pluginManager.getFactories(PackageMetadataResolver.class);
@@ -106,9 +100,7 @@ public final class FetchPackageMetadataResolutionCandidatesActivity
                 purl = new PackageURL(purlStr);
             } catch (MalformedPackageURLException e) {
                 LOGGER.warn("Failed to parse PURL '{}'; Assigning to empty resolver", purlStr, e);
-                purlsByResolver
-                        .computeIfAbsent("", k -> new ArrayList<>())
-                        .add(purlStr);
+                purlsByResolver.computeIfAbsent("", k -> new ArrayList<>()).add(purlStr);
                 continue;
             }
 
@@ -127,19 +119,16 @@ public final class FetchPackageMetadataResolutionCandidatesActivity
 
         final var resultBuilder = FetchPackageMetadataResolutionCandidatesRes.newBuilder();
         for (final Map.Entry<String, List<String>> entry : purlsByResolver.entrySet()) {
-            resultBuilder.addCandidateGroups(
-                    PackageMetadataResolutionCandidateGroup.newBuilder()
-                            .setResolverName(entry.getKey())
-                            .addAllPurls(entry.getValue())
-                            .build());
+            resultBuilder.addCandidateGroups(PackageMetadataResolutionCandidateGroup.newBuilder()
+                    .setResolverName(entry.getKey())
+                    .addAllPurls(entry.getValue())
+                    .build());
         }
         if (nextCursor != null) {
             resultBuilder.setNextCursor(nextCursor);
         }
 
-        return resultBuilder
-                .setHasMore(hasMore)
-                .build();
+        return resultBuilder.setHasMore(hasMore).build();
     }
 
     private List<Candidate> fetchDueCandidates(@Nullable Cursor cursor, int limit) {
@@ -152,8 +141,7 @@ public final class FetchPackageMetadataResolutionCandidatesActivity
         //
         // Note that resolvers control their own caching strategy,
         // so not every due PURL triggers a remote lookup.
-        return withJdbiHandle(handle -> handle
-                .createQuery(/* language=InjectedFreeMarker */ """
+        return withJdbiHandle(handle -> handle.createQuery(/* language=InjectedFreeMarker */ """
                         <#-- @ftlvariable name="cursorLastAttemptedAt" type="boolean" -->
                         <#-- @ftlvariable name="cursorPurl" type="boolean" -->
                         SELECT pmr."PURL"
@@ -169,7 +157,9 @@ public final class FetchPackageMetadataResolutionCandidatesActivity
                          LIMIT :limit
                         """)
                 .configure(SqlStatements.class, cfg -> cfg.setUnusedBindingAllowed(true))
-                .define(ATTRIBUTE_QUERY_NAME, "%s#fetchDueCandidates".formatted(getClass().getSimpleName()))
+                .define(
+                        ATTRIBUTE_QUERY_NAME,
+                        "%s#fetchDueCandidates".formatted(getClass().getSimpleName()))
                 .bind("cursorLastAttemptedAt", cursor != null ? cursor.lastAttemptedAt() : null)
                 .bind("cursorPurl", cursor != null ? cursor.purl() : null)
                 .bind("limit", limit)
@@ -180,8 +170,7 @@ public final class FetchPackageMetadataResolutionCandidatesActivity
                 .list());
     }
 
-    private record Candidate(String purl, Instant lastAttemptedAt) {
-    }
+    private record Candidate(String purl, Instant lastAttemptedAt) {}
 
     private record Cursor(Instant lastAttemptedAt, String purl) {
 
@@ -204,18 +193,14 @@ public final class FetchPackageMetadataResolutionCandidatesActivity
             final String lastAttemptedAt = encoded.substring(0, delimiterIndex);
             try {
                 return new Cursor(
-                        Instant.parse(lastAttemptedAt),
-                        encoded.substring(delimiterIndex + DELIMITER.length()));
+                        Instant.parse(lastAttemptedAt), encoded.substring(delimiterIndex + DELIMITER.length()));
             } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException(
-                        "Malformed timestamp in resolution candidate cursor", e);
+                throw new IllegalArgumentException("Malformed timestamp in resolution candidate cursor", e);
             }
         }
 
         private String encode() {
             return "%s%s%s".formatted(lastAttemptedAt, DELIMITER, purl);
         }
-
     }
-
 }

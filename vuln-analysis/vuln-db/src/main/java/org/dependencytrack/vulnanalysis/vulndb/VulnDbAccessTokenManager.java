@@ -55,10 +55,8 @@ final class VulnDbAccessTokenManager {
         this.objectMapper = objectMapper;
     }
 
-    String getAccessToken(
-            URI apiBaseUrl,
-            String clientId,
-            String clientSecret) throws IOException, InterruptedException {
+    String getAccessToken(URI apiBaseUrl, String clientId, String clientSecret)
+            throws IOException, InterruptedException {
         final URI tokenEndpoint = apiBaseUrl.resolve("/oauth/token");
 
         lock.lockInterruptibly();
@@ -107,13 +105,10 @@ final class VulnDbAccessTokenManager {
         TokenRequest(String clientId, String clientSecret) {
             this(clientId, clientSecret, "client_credentials");
         }
-
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record TokenResponse(
             @JsonProperty("access_token") String accessToken,
-            @JsonProperty("expires_in") long expiresIn) {
-    }
-
+            @JsonProperty("expires_in") long expiresIn) {}
 }

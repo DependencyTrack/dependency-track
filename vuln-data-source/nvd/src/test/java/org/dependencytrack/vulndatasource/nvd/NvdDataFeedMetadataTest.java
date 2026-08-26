@@ -60,5 +60,4 @@ class NvdDataFeedMetadataTest {
 
         assertThat(metadata.sha256()).isEqualTo("abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
     }
-
 }

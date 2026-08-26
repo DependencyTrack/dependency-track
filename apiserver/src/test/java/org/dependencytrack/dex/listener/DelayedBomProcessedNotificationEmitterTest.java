@@ -62,22 +62,23 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
 
         final UUID bomUploadToken = UUID.randomUUID();
 
-        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(
-                createRunMetadata(
-                        "vuln-analysis",
-                        WorkflowRunStatus.COMPLETED,
-                        Map.ofEntries(
-                                Map.entry(WF_LABEL_PROJECT_UUID, project.getUuid().toString()),
-                                Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, bomUploadToken.toString()))))));
+        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(createRunMetadata(
+                "vuln-analysis",
+                WorkflowRunStatus.COMPLETED,
+                Map.ofEntries(
+                        Map.entry(WF_LABEL_PROJECT_UUID, project.getUuid().toString()),
+                        Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, bomUploadToken.toString()))))));
 
         assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_INFORMATIONAL);
             assertThat(notification.hasSubject()).isTrue();
-            assertThat(notification.getSubject().is(BomConsumedOrProcessedSubject.class)).isTrue();
+            assertThat(notification.getSubject().is(BomConsumedOrProcessedSubject.class))
+                    .isTrue();
             final var subject = notification.getSubject().unpack(BomConsumedOrProcessedSubject.class);
-            assertThat(subject.getProject().getUuid()).isEqualTo(project.getUuid().toString());
+            assertThat(subject.getProject().getUuid())
+                    .isEqualTo(project.getUuid().toString());
             assertThat(subject.getToken()).isEqualTo(bomUploadToken.toString());
             assertThat(subject.getBom().getFormat()).isEqualTo("CycloneDX");
             assertThat(subject.getBom().getSpecVersion()).isEqualTo("Unknown");
@@ -92,19 +93,25 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
 
         final UUID bomUploadToken = UUID.randomUUID();
 
-        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(
-                createRunMetadata("vuln-analysis", WorkflowRunStatus.FAILED,
-                        Map.of(WF_LABEL_PROJECT_UUID, project.getUuid().toString(),
-                                WF_LABEL_BOM_UPLOAD_TOKEN, bomUploadToken.toString())))));
+        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(createRunMetadata(
+                "vuln-analysis",
+                WorkflowRunStatus.FAILED,
+                Map.of(
+                        WF_LABEL_PROJECT_UUID,
+                        project.getUuid().toString(),
+                        WF_LABEL_BOM_UPLOAD_TOKEN,
+                        bomUploadToken.toString())))));
 
         assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
             assertThat(notification.getScope()).isEqualTo(SCOPE_PORTFOLIO);
             assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED);
             assertThat(notification.getLevel()).isEqualTo(LEVEL_ERROR);
             assertThat(notification.hasSubject()).isTrue();
-            assertThat(notification.getSubject().is(BomProcessingFailedSubject.class)).isTrue();
+            assertThat(notification.getSubject().is(BomProcessingFailedSubject.class))
+                    .isTrue();
             final var subject = notification.getSubject().unpack(BomProcessingFailedSubject.class);
-            assertThat(subject.getProject().getUuid()).isEqualTo(project.getUuid().toString());
+            assertThat(subject.getProject().getUuid())
+                    .isEqualTo(project.getUuid().toString());
             assertThat(subject.getToken()).isEqualTo(bomUploadToken.toString());
             assertThat(subject.getCause()).isEqualTo("Vulnerability analysis failed");
         });
@@ -128,18 +135,23 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
                         "vuln-analysis",
                         WorkflowRunStatus.COMPLETED,
                         Map.ofEntries(
-                                Map.entry(WF_LABEL_PROJECT_UUID, projectA.getUuid().toString()),
+                                Map.entry(
+                                        WF_LABEL_PROJECT_UUID,
+                                        projectA.getUuid().toString()),
                                 Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, tokenA.toString()))),
                 createRunMetadata(
                         "vuln-analysis",
                         WorkflowRunStatus.FAILED,
                         Map.ofEntries(
-                                Map.entry(WF_LABEL_PROJECT_UUID, projectB.getUuid().toString()),
+                                Map.entry(
+                                        WF_LABEL_PROJECT_UUID,
+                                        projectB.getUuid().toString()),
                                 Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, tokenB.toString()))))));
 
-        assertThat(qm.getNotificationOutbox()).satisfiesExactlyInAnyOrder(
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED),
-                notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
+        assertThat(qm.getNotificationOutbox())
+                .satisfiesExactlyInAnyOrder(
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSED),
+                        notification -> assertThat(notification.getGroup()).isEqualTo(GROUP_BOM_PROCESSING_FAILED));
     }
 
     @Test
@@ -148,35 +160,30 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
         project.setName("acme-app");
         qm.persist(project);
 
-        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(
-                createRunMetadata(
-                        "repo-meta-analysis",
-                        WorkflowRunStatus.COMPLETED,
-                        Map.ofEntries(
-                                Map.entry(WF_LABEL_PROJECT_UUID, project.getUuid().toString()),
-                                Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, UUID.randomUUID().toString()))))));
+        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(createRunMetadata(
+                "repo-meta-analysis",
+                WorkflowRunStatus.COMPLETED,
+                Map.ofEntries(
+                        Map.entry(WF_LABEL_PROJECT_UUID, project.getUuid().toString()),
+                        Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, UUID.randomUUID().toString()))))));
 
         assertThat(qm.getNotificationOutbox()).isEmpty();
     }
 
     @Test
     void shouldIgnoreRunsWithNoLabels() {
-        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(
-                createRunMetadata(
-                        "vuln-analysis",
-                        WorkflowRunStatus.COMPLETED,
-                        null))));
+        emitter.onEvent(new WorkflowRunsCompletedEvent(
+                List.of(createRunMetadata("vuln-analysis", WorkflowRunStatus.COMPLETED, null))));
 
         assertThat(qm.getNotificationOutbox()).isEmpty();
     }
 
     @Test
     void shouldIgnoreRunsWithMissingProjectUuid() {
-        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(
-                createRunMetadata(
-                        "vuln-analysis",
-                        WorkflowRunStatus.COMPLETED,
-                        Map.of(WF_LABEL_BOM_UPLOAD_TOKEN, UUID.randomUUID().toString())))));
+        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(createRunMetadata(
+                "vuln-analysis",
+                WorkflowRunStatus.COMPLETED,
+                Map.of(WF_LABEL_BOM_UPLOAD_TOKEN, UUID.randomUUID().toString())))));
 
         assertThat(qm.getNotificationOutbox()).isEmpty();
     }
@@ -187,24 +194,22 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
         project.setName("acme-app");
         qm.persist(project);
 
-        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(
-                createRunMetadata(
-                        "vuln-analysis",
-                        WorkflowRunStatus.COMPLETED,
-                        Map.of(WF_LABEL_PROJECT_UUID, project.getUuid().toString())))));
+        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(createRunMetadata(
+                "vuln-analysis",
+                WorkflowRunStatus.COMPLETED,
+                Map.of(WF_LABEL_PROJECT_UUID, project.getUuid().toString())))));
 
         assertThat(qm.getNotificationOutbox()).isEmpty();
     }
 
     @Test
     void shouldSkipRunsForNonExistentProject() {
-        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(
-                createRunMetadata(
-                        "vuln-analysis",
-                        WorkflowRunStatus.COMPLETED,
-                        Map.ofEntries(
-                                Map.entry(WF_LABEL_PROJECT_UUID, UUID.randomUUID().toString()),
-                                Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, UUID.randomUUID().toString()))))));
+        emitter.onEvent(new WorkflowRunsCompletedEvent(List.of(createRunMetadata(
+                "vuln-analysis",
+                WorkflowRunStatus.COMPLETED,
+                Map.ofEntries(
+                        Map.entry(WF_LABEL_PROJECT_UUID, UUID.randomUUID().toString()),
+                        Map.entry(WF_LABEL_BOM_UPLOAD_TOKEN, UUID.randomUUID().toString()))))));
 
         assertThat(qm.getNotificationOutbox()).isEmpty();
     }
@@ -217,9 +222,7 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
     }
 
     private static WorkflowRunMetadata createRunMetadata(
-            String workflowName,
-            WorkflowRunStatus status,
-            Map<String, String> labels) {
+            String workflowName, WorkflowRunStatus status, Map<String, String> labels) {
         return new WorkflowRunMetadata(
                 UUID.randomUUID(),
                 null,
@@ -237,5 +240,4 @@ class DelayedBomProcessedNotificationEmitterTest extends PersistenceCapableTest 
                 null,
                 null);
     }
-
 }

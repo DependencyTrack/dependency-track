@@ -58,11 +58,7 @@ public class CycloneDXExporter {
     }
 
     public enum Variant {
-
-        INVENTORY(
-                Capability.EMITS_COMPONENT_DETAILS,
-                Capability.EMITS_SERVICES,
-                Capability.EMITS_DEPENDENCY_GRAPH),
+        INVENTORY(Capability.EMITS_COMPONENT_DETAILS, Capability.EMITS_SERVICES, Capability.EMITS_DEPENDENCY_GRAPH),
         INVENTORY_WITH_VULNERABILITIES(
                 Capability.EMITS_FINDINGS,
                 Capability.EMITS_COMPONENT_DETAILS,
@@ -75,10 +71,7 @@ public class CycloneDXExporter {
                 Capability.EMITS_COMPONENT_DETAILS,
                 Capability.EMITS_SERVICES,
                 Capability.EMITS_DEPENDENCY_GRAPH),
-        VEX(
-                Capability.FILTERS_TO_VULNERABLE_COMPONENTS,
-                Capability.EMITS_FINDINGS,
-                Capability.EMITS_ANALYSIS);
+        VEX(Capability.FILTERS_TO_VULNERABLE_COMPONENTS, Capability.EMITS_FINDINGS, Capability.EMITS_ANALYSIS);
 
         private final Set<Capability> capabilities;
 
@@ -91,7 +84,6 @@ public class CycloneDXExporter {
         public boolean hasCapability(Capability capability) {
             return capabilities.contains(capability);
         }
-
     }
 
     private final QueryManager qm;
@@ -105,8 +97,7 @@ public class CycloneDXExporter {
     public Bom create(final Project project, final Version version) {
         final List<Component> components;
         final List<ServiceComponent> services;
-        try (var _ = new ScopedCustomization(qm.getPersistenceManager())
-                .withFetchGroup(FetchGroup.ALL)) {
+        try (var _ = new ScopedCustomization(qm.getPersistenceManager()).withFetchGroup(FetchGroup.ALL)) {
             components = qm.getAllComponents(project);
             services = qm.getAllServiceComponents(project);
         }
@@ -138,14 +129,17 @@ public class CycloneDXExporter {
         }
         final List<org.cyclonedx.model.Component> cycloneComponents = components != null
                 ? components.stream()
-                        .map(variant.hasCapability(Capability.EMITS_COMPONENT_DETAILS)
-                                ? ModelConverter::convert
-                                : ModelConverter::convertIdentity)
+                        .map(
+                                variant.hasCapability(Capability.EMITS_COMPONENT_DETAILS)
+                                        ? ModelConverter::convert
+                                        : ModelConverter::convertIdentity)
                         .collect(Collectors.toList())
                 : null;
         final List<org.cyclonedx.model.Service> cycloneServices =
                 (variant.hasCapability(Capability.EMITS_SERVICES) && services != null)
-                        ? services.stream().map(service -> ModelConverter.convert(qm, service)).collect(Collectors.toList())
+                        ? services.stream()
+                                .map(service -> ModelConverter.convert(qm, service))
+                                .collect(Collectors.toList())
                         : null;
         final Bom bom = new Bom();
         bom.setSerialNumber("urn:uuid:" + UUID.randomUUID());
@@ -167,5 +161,4 @@ public class CycloneDXExporter {
 
         return BomGeneratorFactory.createXml(version, bom).toXmlString();
     }
-
 }

@@ -43,40 +43,95 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 public class ComponentAgeCelPolicyTest extends PersistenceCapableTest {
 
     private static Object[] parameters() {
-        return new Object[]{
-                new Object[]{Instant.now().minus(Duration.ofDays(667)), PolicyCondition.Operator.NUMERIC_GREATER_THAN, "P666D", true},
-                new Object[]{Instant.now().minus(Duration.ofDays(667)), PolicyCondition.Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "P666D", true},
-                new Object[]{Instant.now().minus(Duration.ofDays(667)), PolicyCondition.Operator.NUMERIC_EQUAL, "P666D", false},
-                new Object[]{Instant.now().minus(Duration.ofDays(667)), PolicyCondition.Operator.NUMERIC_NOT_EQUAL, "P666D", true},
-                new Object[]{Instant.now().minus(Duration.ofDays(667)), PolicyCondition.Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "P666D", false},
-                new Object[]{Instant.now().minus(Duration.ofDays(667)), PolicyCondition.Operator.NUMERIC_LESS_THAN, "P666D", false},
-                // Component is newer by one day.
-                new Object[]{Instant.now().minus(Duration.ofDays(665)), PolicyCondition.Operator.NUMERIC_GREATER_THAN, "P666D", false},
-                new Object[]{Instant.now().minus(Duration.ofDays(665)), PolicyCondition.Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "P666D", false},
-                new Object[]{Instant.now().minus(Duration.ofDays(665)), PolicyCondition.Operator.NUMERIC_EQUAL, "P666D", false},
-                new Object[]{Instant.now().minus(Duration.ofDays(665)), PolicyCondition.Operator.NUMERIC_NOT_EQUAL, "P666D", true},
-                new Object[]{Instant.now().minus(Duration.ofDays(665)), PolicyCondition.Operator.NUMERIC_LESS_THAN, "P666D", true},
-                // Component is exactly as old.
-                new Object[]{Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_GREATER_THAN, "P666D", false},
-                new Object[]{Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_GREATER_THAN_OR_EQUAL, "P666D", true},
-                new Object[]{Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_EQUAL, "P666D", true},
-                new Object[]{Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_NOT_EQUAL, "P666D", false},
-                new Object[]{Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_LESSER_THAN_OR_EQUAL, "P666D", true},
-                new Object[]{Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_LESS_THAN, "P666D", false},
-                // Unsupported operator.
-                new Object[]{Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.MATCHES, "P666D", false},
-                // Negative age period.
-                new Object[]{Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_EQUAL, "P-666D", false},
-                // Invalid age period format.
-                new Object[]{Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_EQUAL, "foobar", false},
-                // No known publish date.
-                new Object[]{null, PolicyCondition.Operator.NUMERIC_EQUAL, "P666D", false},
+        return new Object[] {
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(667)), PolicyCondition.Operator.NUMERIC_GREATER_THAN, "P666D", true
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(667)),
+                PolicyCondition.Operator.NUMERIC_GREATER_THAN_OR_EQUAL,
+                "P666D",
+                true
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(667)), PolicyCondition.Operator.NUMERIC_EQUAL, "P666D", false
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(667)), PolicyCondition.Operator.NUMERIC_NOT_EQUAL, "P666D", true
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(667)),
+                PolicyCondition.Operator.NUMERIC_LESSER_THAN_OR_EQUAL,
+                "P666D",
+                false
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(667)), PolicyCondition.Operator.NUMERIC_LESS_THAN, "P666D", false
+            },
+            // Component is newer by one day.
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(665)), PolicyCondition.Operator.NUMERIC_GREATER_THAN, "P666D", false
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(665)),
+                PolicyCondition.Operator.NUMERIC_GREATER_THAN_OR_EQUAL,
+                "P666D",
+                false
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(665)), PolicyCondition.Operator.NUMERIC_EQUAL, "P666D", false
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(665)), PolicyCondition.Operator.NUMERIC_NOT_EQUAL, "P666D", true
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(665)), PolicyCondition.Operator.NUMERIC_LESS_THAN, "P666D", true
+            },
+            // Component is exactly as old.
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_GREATER_THAN, "P666D", false
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(666)),
+                PolicyCondition.Operator.NUMERIC_GREATER_THAN_OR_EQUAL,
+                "P666D",
+                true
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_EQUAL, "P666D", true
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_NOT_EQUAL, "P666D", false
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(666)),
+                PolicyCondition.Operator.NUMERIC_LESSER_THAN_OR_EQUAL,
+                "P666D",
+                true
+            },
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_LESS_THAN, "P666D", false
+            },
+            // Unsupported operator.
+            new Object[] {Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.MATCHES, "P666D", false},
+            // Negative age period.
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_EQUAL, "P-666D", false
+            },
+            // Invalid age period format.
+            new Object[] {
+                Instant.now().minus(Duration.ofDays(666)), PolicyCondition.Operator.NUMERIC_EQUAL, "foobar", false
+            },
+            // No known publish date.
+            new Object[] {null, PolicyCondition.Operator.NUMERIC_EQUAL, "P666D", false},
         };
     }
 
     @ParameterizedTest
     @MethodSource("parameters")
-    public void evaluateTest(Instant publishedDate, PolicyCondition.Operator operator, String ageValue, boolean shouldViolate) throws Exception {
+    public void evaluateTest(
+            Instant publishedDate, PolicyCondition.Operator operator, String ageValue, boolean shouldViolate)
+            throws Exception {
         final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
         final var condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.AGE, operator, ageValue);
         final var project = new Project();
@@ -89,21 +144,20 @@ public class ComponentAgeCelPolicyTest extends PersistenceCapableTest {
         qm.persist(component);
 
         useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
-                            new PackageURL("pkg:maven/foo/bar"),
-                            "1.2.3",
-                            null,
-                            Instant.now(),
-                            null,
-                            null)));
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
+                            new PackageURL("pkg:maven/foo/bar"), "1.2.3", null, Instant.now(), null, null)));
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
                             new PackageURL("pkg:maven/foo/bar@1.2.3"),
                             new PackageURL("pkg:maven/foo/bar"),
-                            null, null, null, null,
+                            null,
+                            null,
+                            null,
+                            null,
                             publishedDate,
-                            null, null,
+                            null,
+                            null,
                             Instant.now())));
         });
 
@@ -111,13 +165,12 @@ public class ComponentAgeCelPolicyTest extends PersistenceCapableTest {
 
         if (shouldViolate) {
             assertThat(qm.getAllPolicyViolations(component)).hasSize(1);
-            final PolicyViolation violation = qm.getAllPolicyViolations(component).get(0);
+            final PolicyViolation violation =
+                    qm.getAllPolicyViolations(component).get(0);
             assertThat(violation.getComponent()).isEqualTo(component);
             assertThat(violation.getPolicyCondition()).isEqualTo(condition);
         } else {
             assertThat(qm.getAllPolicyViolations(component)).isEmpty();
         }
     }
-
-
 }

@@ -79,7 +79,8 @@ class OsDistributionTest {
     @Test
     void shouldNotMatchDebianWithUbuntu() throws Exception {
         final OsDistribution debian = OsDistribution.of(new PackageURL("pkg:deb/debian/sudo@1.9.5?distro=debian-11"));
-        final OsDistribution ubuntu = OsDistribution.of(new PackageURL("pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-22.04"));
+        final OsDistribution ubuntu =
+                OsDistribution.of(new PackageURL("pkg:deb/ubuntu/sudo@1.9.5?distro=ubuntu-22.04"));
 
         assertThat(debian).isNotNull();
         assertThat(ubuntu).isNotNull();
@@ -108,5 +109,4 @@ class OsDistributionTest {
         assertThat(redhat.matches(alpine)).isFalse();
         assertThat(alpine.matches(redhat)).isFalse();
     }
-
 }

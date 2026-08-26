@@ -40,10 +40,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AddPackageMetadataResolutionMigrationTest {
 
     @Container
-    private final PostgreSQLContainer postgresContainer =
-            new PostgreSQLContainer(DockerImageName.parse("postgres:14-alpine"))
-                    .withCommand("postgres", "-c", "fsync=off", "-c", "full_page_writes=off")
-                    .withTmpFs(Map.of("/var/lib/postgresql/data", "rw"));
+    private final PostgreSQLContainer postgresContainer = new PostgreSQLContainer(
+                    DockerImageName.parse("postgres:14-alpine"))
+            .withCommand("postgres", "-c", "fsync=off", "-c", "full_page_writes=off")
+            .withTmpFs(Map.of("/var/lib/postgresql/data", "rw"));
 
     @Test
     void shouldBackfillResolutionStatusFromExistingMetadata() throws Exception {
@@ -57,7 +57,7 @@ class AddPackageMetadataResolutionMigrationTest {
 
         // Seed component and package (artifact) metadata to migrate.
         try (final Connection connection = dataSource.getConnection();
-             final Statement statement = connection.createStatement()) {
+                final Statement statement = connection.createStatement()) {
             statement.execute("""
                     INSERT INTO "PROJECT" ("NAME", "UUID")
                     VALUES ('acme-app', gen_random_uuid())
@@ -100,12 +100,13 @@ class AddPackageMetadataResolutionMigrationTest {
         new MigrationExecutor(dataSource, "202608041242", /* skipRepeatable */ false).execute();
 
         final Map<String, ResolutionRow> rowByPurl = fetchResolutionRows(dataSource);
-        assertThat(rowByPurl).containsOnlyKeys(
-                "pkg:maven/com.acme/resolved@1.0.0",
-                "pkg:maven/com.acme/resolved@0.9.0",
-                "pkg:maven/com.acme/notfound@1.0.0",
-                "pkg:maven/com.acme/pending@1.0.0",
-                "pkg:maven/com.acme/malformed%ZZ@1.0.0");
+        assertThat(rowByPurl)
+                .containsOnlyKeys(
+                        "pkg:maven/com.acme/resolved@1.0.0",
+                        "pkg:maven/com.acme/resolved@0.9.0",
+                        "pkg:maven/com.acme/notfound@1.0.0",
+                        "pkg:maven/com.acme/pending@1.0.0",
+                        "pkg:maven/com.acme/malformed%ZZ@1.0.0");
 
         assertThat(rowByPurl.get("pkg:maven/com.acme/resolved@1.0.0"))
                 .isEqualTo(new ResolutionRow("RESOLVED", Instant.parse("2026-01-01T00:00:00Z")));
@@ -119,32 +120,28 @@ class AddPackageMetadataResolutionMigrationTest {
                 .isEqualTo(new ResolutionRow("PENDING", Instant.EPOCH));
     }
 
-    private record ResolutionRow(String status, Instant lastAttemptedAt) {
-    }
+    private record ResolutionRow(String status, Instant lastAttemptedAt) {}
 
     private static Map<String, ResolutionRow> fetchResolutionRows(PGSimpleDataSource dataSource) throws Exception {
         final var rowByPurl = new HashMap<String, ResolutionRow>();
         try (final Connection connection = dataSource.getConnection();
-             final PreparedStatement statement = connection.prepareStatement("""
+                final PreparedStatement statement = connection.prepareStatement("""
                      SELECT "PURL"
                           , "STATUS"
                           , "LAST_ATTEMPTED_AT"
                        FROM "PACKAGE_METADATA_RESOLUTION"
                      """);
-             final ResultSet resultSet = statement.executeQuery()) {
+                final ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
                 final Timestamp lastAttemptedAt = resultSet.getTimestamp("LAST_ATTEMPTED_AT");
                 rowByPurl.put(
                         resultSet.getString("PURL"),
                         new ResolutionRow(
                                 resultSet.getString("STATUS"),
-                                lastAttemptedAt != null
-                                        ? lastAttemptedAt.toInstant()
-                                        : null));
+                                lastAttemptedAt != null ? lastAttemptedAt.toInstant() : null));
             }
         }
 
         return rowByPurl;
     }
-
 }

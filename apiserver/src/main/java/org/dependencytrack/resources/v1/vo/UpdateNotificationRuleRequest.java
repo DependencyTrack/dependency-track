@@ -20,15 +20,16 @@ package org.dependencytrack.resources.v1.vo;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import org.dependencytrack.model.Tag;
 import org.dependencytrack.model.validation.ValidCronExpression;
 import org.dependencytrack.notification.NotificationGroup;
 import org.dependencytrack.notification.NotificationLevel;
 import org.dependencytrack.notification.NotificationScope;
 import org.jspecify.annotations.Nullable;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.Set;
 import java.util.UUID;
@@ -50,5 +51,4 @@ public record UpdateNotificationRuleRequest(
         Set<Tag> tags,
         @NotNull UUID uuid,
         @Nullable @ValidCronExpression String scheduleCron,
-        @Nullable Boolean scheduleSkipUnchanged) {
-}
+        @Nullable Boolean scheduleSkipUnchanged) {}

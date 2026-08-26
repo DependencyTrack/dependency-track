@@ -43,7 +43,6 @@ public sealed interface RuntimeConfigSchemaSource {
         public String getSchema(Class<? extends RuntimeConfig> configClass) {
             return schema;
         }
-
     }
 
     record Resource(String resourcePath) implements RuntimeConfigSchemaSource {
@@ -54,7 +53,8 @@ public sealed interface RuntimeConfigSchemaSource {
 
         @Override
         public String getSchema(Class<? extends RuntimeConfig> configClass) {
-            // Load relative to config class's package so the same class loader sees the resource (reliable in tests and plugin setups)
+            // Load relative to config class's package so the same class loader sees the resource (reliable in tests and
+            // plugin setups)
             final InputStream inputStream = configClass.getResourceAsStream(resourcePath);
             if (inputStream == null) {
                 throw new NoSuchElementException("No resource found at " + resourcePath);
@@ -67,7 +67,5 @@ public sealed interface RuntimeConfigSchemaSource {
                 throw new UncheckedIOException(e);
             }
         }
-
     }
-
 }

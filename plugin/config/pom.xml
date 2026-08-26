@@ -24,16 +24,12 @@
         <artifactId>plugin-parent</artifactId>
         <version>5.1.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>plugin-config</artifactId>
     <packaging>jar</packaging>
-
     <name>Plugin :: Config</name>
-
     <properties>
         <project.parentBaseDir>${project.basedir}/../..</project.parentBaseDir>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.dependencytrack</groupId>
@@ -41,40 +37,33 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.networknt</groupId>
             <artifactId>json-schema-validator</artifactId>
         </dependency>
-
         <dependency>
             <groupId>net.javacrumbs.json-unit</groupId>
             <artifactId>json-unit-assertj</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -85,39 +74,37 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
                 <groupId>org.jsonschema2pojo</groupId>
                 <artifactId>jsonschema2pojo-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>test-runtime-config</id>
-                        <phase>generate-test-sources</phase>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
                 <configuration>
                     <sourceDirectory>${basedir}/src/test/resources/org/dependencytrack/plugin/config</sourceDirectory>
                     <outputDirectory>${project.build.directory}/generated-test-sources/jsonschema2pojo</outputDirectory>
                     <targetPackage>org.dependencytrack.plugin.config</targetPackage>
                     <generateBuilders>true</generateBuilders>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>test-runtime-config</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>generate-test-sources</phase>
+                    </execution>
+                </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <executions>
                     <execution>
                         <id>add-test-source</id>
-                        <phase>generate-test-sources</phase>
                         <goals>
                             <goal>add-test-source</goal>
                         </goals>
+                        <phase>generate-test-sources</phase>
                         <configuration>
                             <sources>
                                 <source>${project.build.directory}/generated-test-sources/jsonschema2pojo</source>
@@ -128,5 +115,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

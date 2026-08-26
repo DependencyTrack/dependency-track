@@ -63,4 +63,4 @@ public class AnalysisCommentTest {
         comment.setCommenter(commenter);
         Assertions.assertEquals(commenter, comment.getCommenter());
     }
-} 
+}

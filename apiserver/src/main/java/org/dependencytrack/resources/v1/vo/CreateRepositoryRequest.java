@@ -22,37 +22,49 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import org.dependencytrack.model.RepositoryType;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 /// @since 5.1.0
 @NullMarked
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record CreateRepositoryRequest(
-        @NotNull
-        @Schema(description = "Type of the repository", requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotNull @Schema(description = "Type of the repository", requiredMode = Schema.RequiredMode.REQUIRED)
         RepositoryType type,
+
         @NotBlank
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
-        @Schema(description = "Unique identifier of the repository within its type", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(
+                description = "Unique identifier of the repository within its type",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         String identifier,
+
         @NotBlank
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "URL of the repository", requiredMode = Schema.RequiredMode.REQUIRED)
         String url,
+
         @Schema(description = "Whether the repository is enabled", requiredMode = Schema.RequiredMode.REQUIRED)
         boolean enabled,
-        @Schema(description = "Whether the repository is internal to the organization")
-        @Nullable Boolean internal,
-        @Schema(description = "Whether the repository requires authentication", requiredMode = Schema.RequiredMode.REQUIRED)
+
+        @Schema(description = "Whether the repository is internal to the organization") @Nullable
+        Boolean internal,
+
+        @Schema(
+                description = "Whether the repository requires authentication",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         boolean authenticationRequired,
+
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Username to authenticate with")
-        @Nullable String username,
+        @Nullable
+        String username,
+
         @JsonDeserialize(using = TrimmedStringDeserializer.class)
         @Schema(description = "Name of the secret holding the password or token")
-        @Nullable String password) {
-}
+        @Nullable
+        String password) {}

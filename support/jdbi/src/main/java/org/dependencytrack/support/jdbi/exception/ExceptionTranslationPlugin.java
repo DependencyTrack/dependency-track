@@ -31,5 +31,4 @@ public final class ExceptionTranslationPlugin extends JdbiPlugin.Singleton {
         final var previousDecorator = jdbi.getHandleCallbackDecorator();
         jdbi.setHandleCallbackDecorator(new ExceptionTranslationCallbackDecorator(previousDecorator));
     }
-
 }

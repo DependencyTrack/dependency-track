@@ -27,17 +27,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.dependencytrack.resources.AbstractApiResource;
+import org.dependencytrack.resources.v1.vo.CvssScoreResponse;
+import org.metaeffekt.core.security.cvss.CvssVector;
+import us.springett.owasp.riskrating.MissingFactorException;
+import us.springett.owasp.riskrating.OwaspRiskRating;
+
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.dependencytrack.resources.AbstractApiResource;
-import org.dependencytrack.resources.v1.vo.CvssScoreResponse;
-import org.metaeffekt.core.security.cvss.CvssVector;
-import us.springett.owasp.riskrating.MissingFactorException;
-import us.springett.owasp.riskrating.OwaspRiskRating;
 
 /**
  * JAX-RS resources for processing severity calculations.
@@ -47,32 +48,30 @@ import us.springett.owasp.riskrating.OwaspRiskRating;
  */
 @Path("/v1/calculator")
 @Tag(name = "calculator")
-@SecurityRequirements({
-        @SecurityRequirement(name = "ApiKeyAuth"),
-        @SecurityRequirement(name = "BearerAuth")
-})
+@SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class CalculatorResource extends AbstractApiResource {
 
     @GET
     @Path("/cvss")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Returns the CVSS base score, impact sub-score and exploitability sub-score")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "The calculated scores",
-                    content = @Content(schema = @Schema(implementation = CvssScoreResponse.class))
-            ),
-            @ApiResponse(responseCode = "400", description = "An invalid CVSS vector was submitted"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "The calculated scores",
+                        content = @Content(schema = @Schema(implementation = CvssScoreResponse.class))),
+                @ApiResponse(responseCode = "400", description = "An invalid CVSS vector was submitted"),
+                @ApiResponse(responseCode = "401", description = "Unauthorized")
+            })
     public Response getCvssScores(
-            @Parameter(description = "A valid CVSSv2, CVSSv3 or CVSSv4 vector", required = true)
-            @QueryParam("vector") String vector) {
+            @Parameter(description = "A valid CVSSv2, CVSSv3 or CVSSv4 vector", required = true) @QueryParam("vector")
+                    String vector) {
         final CvssVector cvss = CvssVector.parseVector(vector, true);
         if (cvss == null || !cvss.isBaseFullyDefined()) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("An invalid CVSS vector was submitted.").build();
+                    .entity("An invalid CVSS vector was submitted.")
+                    .build();
         }
         return Response.ok(CvssScoreResponse.from(cvss.getBakedScores())).build();
     }
@@ -80,25 +79,29 @@ public class CalculatorResource extends AbstractApiResource {
     @GET
     @Path("/owasp")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Returns the OWASP Risk Rating likelihood score, technical impact score and business impact score")
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "The calculated scores",
-                    content = @Content(schema = @Schema(implementation = us.springett.owasp.riskrating.Score.class))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
+    @Operation(
+            summary =
+                    "Returns the OWASP Risk Rating likelihood score, technical impact score and business impact score")
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "The calculated scores",
+                        content =
+                                @Content(schema = @Schema(implementation = us.springett.owasp.riskrating.Score.class))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized")
+            })
     public Response getOwaspRRScores(
-            @Parameter(description = "A valid OWASP Risk Rating vector", required = true)
-            @QueryParam("vector") String vector) {
+            @Parameter(description = "A valid OWASP Risk Rating vector", required = true) @QueryParam("vector")
+                    String vector) {
         try {
             final OwaspRiskRating owaspRiskRating = OwaspRiskRating.fromVector(vector);
             final us.springett.owasp.riskrating.Score score = owaspRiskRating.calculateScore();
             return Response.ok(score).build();
         } catch (IllegalArgumentException | MissingFactorException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(e.getMessage())
+                    .build();
         }
     }
-
 }

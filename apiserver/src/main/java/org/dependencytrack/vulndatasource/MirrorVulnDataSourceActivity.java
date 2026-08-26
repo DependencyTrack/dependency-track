@@ -75,17 +75,14 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
     }
 
     @Override
-    public @Nullable Void execute(
-            ActivityContext ctx,
-            @Nullable MirrorVulnDataSourceArg arg) throws Exception {
+    public @Nullable Void execute(ActivityContext ctx, @Nullable MirrorVulnDataSourceArg arg) throws Exception {
         if (arg == null || arg.getDataSourceName().isEmpty()) {
             throw new TerminalApplicationFailureException("No argument or data source name provided");
         }
 
         final var source = Vulnerability.Source.ofName(arg.getSourceName());
         if (source == null) {
-            throw new TerminalApplicationFailureException(
-                    "Invalid source name: %s".formatted(arg.getSourceName()));
+            throw new TerminalApplicationFailureException("Invalid source name: %s".formatted(arg.getSourceName()));
         }
 
         final VulnDataSourceFactory dataSourceFactory;
@@ -177,7 +174,9 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             final List<VulnerableSoftware> vsList;
             try (var _ = new MdcScope(Map.ofEntries(
                     Map.entry(MDC_VULN_ID, bov.getVulnerabilities(0).getId()),
-                    Map.entry(MDC_VULN_SOURCE, bov.getVulnerabilities(0).getSource().getName())))) {
+                    Map.entry(
+                            MDC_VULN_SOURCE,
+                            bov.getVulnerabilities(0).getSource().getName())))) {
                 vuln = BovModelConverter.convert(bov, bov.getVulnerabilities(0), true);
                 vsList = BovModelConverter.extractVulnerableSoftware(bov);
             }
@@ -205,11 +204,11 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             qm.runInTransaction(() -> {
                 for (final Vulnerability vuln : vulns) {
                     final Vulnerability existingVuln = getExistingVuln(qm, vuln.getSource(), vuln.getVulnId());
-                    if (!updatePolicy.isUpdatableByDataSource(
-                            vuln.getSource(), dataSourceName, existingVuln != null)) {
+                    if (!updatePolicy.isUpdatableByDataSource(vuln.getSource(), dataSourceName, existingVuln != null)) {
                         LOGGER.debug(
                                 "Skipping vulnerability {} from source {}: authoritative source is enabled",
-                                vuln.getVulnId(), vuln.getSource());
+                                vuln.getVulnId(),
+                                vuln.getSource());
                         continue;
                     }
 
@@ -234,12 +233,9 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
         }
     }
 
-    private static @Nullable Vulnerability getExistingVuln(
-            QueryManager qm,
-            String source,
-            String vulnId) {
-        final Query<Vulnerability> query = qm.getPersistenceManager().newQuery(
-                Vulnerability.class, "source == :source && vulnId == :vulnId");
+    private static @Nullable Vulnerability getExistingVuln(QueryManager qm, String source, String vulnId) {
+        final Query<Vulnerability> query =
+                qm.getPersistenceManager().newQuery(Vulnerability.class, "source == :source && vulnId == :vulnId");
         query.getFetchPlan().addGroup(Vulnerability.FetchGroup.VULNERABLE_SOFTWARE.name());
         query.setParameters(source, vulnId);
         query.setRange(0, 1);
@@ -260,5 +256,4 @@ public final class MirrorVulnDataSourceActivity implements Activity<MirrorVulnDa
             }
         }
     }
-
 }

@@ -68,8 +68,10 @@ class NotificationJoinIT {
         source.jdbi().useHandle(h -> {
             h.execute("INSERT INTO \"TAG\" (\"ID\", \"NAME\") VALUES (1, 'frontend')");
             h.execute("INSERT INTO \"TAG\" (\"ID\", \"NAME\") VALUES (2, 'backend')");
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '00000000-0000-0000-0000-000000000001')");
-            h.execute("INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (2, 'Security',    '00000000-0000-0000-0000-000000000002')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (1, 'Engineering', '00000000-0000-0000-0000-000000000001')");
+            h.execute(
+                    "INSERT INTO \"TEAM\" (\"ID\", \"NAME\", \"UUID\") VALUES (2, 'Security',    '00000000-0000-0000-0000-000000000002')");
             h.execute("""
                 INSERT INTO "NOTIFICATIONPUBLISHER" (
                     "ID", "DEFAULT_PUBLISHER", "DESCRIPTION", "NAME", "PUBLISHER_CLASS",
@@ -95,31 +97,27 @@ class NotificationJoinIT {
             h.execute("INSERT INTO \"NOTIFICATIONRULE_TAGS\" (\"NOTIFICATIONRULE_ID\", \"TAG_ID\") VALUES (10, 2)");
             h.execute("INSERT INTO \"NOTIFICATIONRULE_TEAMS\" (\"NOTIFICATIONRULE_ID\", \"TEAM_ID\") VALUES (10, 1)");
             // NULL TEAM_ID — must be dropped on the way to v5.
-            h.execute("INSERT INTO \"NOTIFICATIONRULE_TEAMS\" (\"NOTIFICATIONRULE_ID\", \"TEAM_ID\") VALUES (10, NULL)");
+            h.execute(
+                    "INSERT INTO \"NOTIFICATIONRULE_TEAMS\" (\"NOTIFICATIONRULE_ID\", \"TEAM_ID\") VALUES (10, NULL)");
         });
 
         runPipeline();
 
-        final List<Map<String, Object>> tags = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> tags =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "NOTIFICATIONRULE_ID", "TAG_ID"
                       FROM "NOTIFICATIONRULE_TAGS"
                      ORDER BY "TAG_ID"
                     """).mapToMap().list());
-        assertThat(tags).extracting("notificationrule_id", "tag_id")
-            .containsExactly(
-                tuple(10L, 1L),
-                tuple(10L, 2L)
-            );
+        assertThat(tags).extracting("notificationrule_id", "tag_id").containsExactly(tuple(10L, 1L), tuple(10L, 2L));
 
-        final List<Map<String, Object>> teams = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> teams =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "NOTIFICATIONRULE_ID", "TEAM_ID"
                       FROM "NOTIFICATIONRULE_TEAMS"
                      ORDER BY "TEAM_ID"
                     """).mapToMap().list());
-        assertThat(teams).extracting("notificationrule_id", "team_id")
-            .containsExactly(tuple(10L, 1L));
+        assertThat(teams).extracting("notificationrule_id", "team_id").containsExactly(tuple(10L, 1L));
     }
 
     private void runPipeline() throws Exception {

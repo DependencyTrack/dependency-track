@@ -48,12 +48,13 @@ class FindingDaoTest extends PersistenceCapableTest {
 
             final Page<FindingDao.FindingRow> page = withJdbiHandle(
                     apiRequestWithOffsetAndLimit(3, 2),
-                    handle -> handle.attach(FindingDao.class).getAllFindings(
-                            /* filters */ Map.of(),
-                            /* showSuppressed */ false,
-                            /* showInactive */ false,
-                            /* orderBy */ null,
-                            /* totalCountThreshold */ 2));
+                    handle -> handle.attach(FindingDao.class)
+                            .getAllFindings(
+                                    /* filters */ Map.of(),
+                                    /* showSuppressed */ false,
+                                    /* showInactive */ false,
+                                    /* orderBy */ null,
+                                    /* totalCountThreshold */ 2));
 
             assertThat(page.items()).hasSize(2);
             assertThat(page.totalCount()).isEqualTo(new TotalCount(5, TotalCount.Type.AT_LEAST));
@@ -65,12 +66,13 @@ class FindingDaoTest extends PersistenceCapableTest {
 
             final Page<FindingDao.FindingRow> page = withJdbiHandle(
                     apiRequestWithOffsetAndLimit(10, 5),
-                    handle -> handle.attach(FindingDao.class).getAllFindings(
-                            /* filters */ Map.of(),
-                            /* showSuppressed */ false,
-                            /* showInactive */ false,
-                            /* orderBy */ null,
-                            /* totalCountThreshold */ 2));
+                    handle -> handle.attach(FindingDao.class)
+                            .getAllFindings(
+                                    /* filters */ Map.of(),
+                                    /* showSuppressed */ false,
+                                    /* showInactive */ false,
+                                    /* orderBy */ null,
+                                    /* totalCountThreshold */ 2));
 
             assertThat(page.items()).isEmpty();
             assertThat(page.totalCount()).isEqualTo(new TotalCount(2, TotalCount.Type.AT_LEAST));
@@ -82,12 +84,13 @@ class FindingDaoTest extends PersistenceCapableTest {
 
             final Page<FindingDao.FindingRow> page = withJdbiHandle(
                     apiRequestWithOffsetAndLimit(0, 3),
-                    handle -> handle.attach(FindingDao.class).getAllFindings(
-                            /* filters */ Map.of(),
-                            /* showSuppressed */ false,
-                            /* showInactive */ false,
-                            /* orderBy */ null,
-                            /* totalCountThreshold */ 100));
+                    handle -> handle.attach(FindingDao.class)
+                            .getAllFindings(
+                                    /* filters */ Map.of(),
+                                    /* showSuppressed */ false,
+                                    /* showInactive */ false,
+                                    /* orderBy */ null,
+                                    /* totalCountThreshold */ 100));
 
             assertThat(page.items()).hasSize(3);
             assertThat(page.totalCount()).isEqualTo(new TotalCount(3, TotalCount.Type.EXACT));
@@ -99,12 +102,13 @@ class FindingDaoTest extends PersistenceCapableTest {
 
             final Page<FindingDao.FindingRow> page = withJdbiHandle(
                     apiRequestWithOffsetAndLimit(3, 10),
-                    handle -> handle.attach(FindingDao.class).getAllFindings(
-                            /* filters */ Map.of(),
-                            /* showSuppressed */ false,
-                            /* showInactive */ false,
-                            /* orderBy */ null,
-                            /* totalCountThreshold */ 2));
+                    handle -> handle.attach(FindingDao.class)
+                            .getAllFindings(
+                                    /* filters */ Map.of(),
+                                    /* showSuppressed */ false,
+                                    /* showInactive */ false,
+                                    /* orderBy */ null,
+                                    /* totalCountThreshold */ 2));
 
             assertThat(page.items()).hasSize(2);
             assertThat(page.totalCount()).isEqualTo(new TotalCount(5, TotalCount.Type.EXACT));
@@ -116,17 +120,17 @@ class FindingDaoTest extends PersistenceCapableTest {
 
             final Page<FindingDao.FindingRow> page = withJdbiHandle(
                     apiRequestWithOffsetAndLimit(10, 5),
-                    handle -> handle.attach(FindingDao.class).getAllFindings(
-                            /* filters */ Map.of(),
-                            /* showSuppressed */ false,
-                            /* showInactive */ false,
-                            /* orderBy */ null,
-                            /* totalCountThreshold */ null));
+                    handle -> handle.attach(FindingDao.class)
+                            .getAllFindings(
+                                    /* filters */ Map.of(),
+                                    /* showSuppressed */ false,
+                                    /* showInactive */ false,
+                                    /* orderBy */ null,
+                                    /* totalCountThreshold */ null));
 
             assertThat(page.items()).isEmpty();
             assertThat(page.totalCount()).isEqualTo(new TotalCount(5, TotalCount.Type.EXACT));
         }
-
     }
 
     @Nested
@@ -138,21 +142,21 @@ class FindingDaoTest extends PersistenceCapableTest {
 
             final Page<FindingDao.FindingRow> page = withJdbiHandle(
                     apiRequestWithOffsetAndLimit(10, 5),
-                    handle -> handle.attach(FindingDao.class).getFindingsByProject(
-                            project.getId(),
-                            /* includeSuppressed */ false,
-                            /* searchText */ null,
-                            /* hasAnalysis */ null,
-                            /* source */ null,
-                            /* epssFrom */ null,
-                            /* epssTo */ null,
-                            /* isKev */ null,
-                            /* totalCountThreshold */ null));
+                    handle -> handle.attach(FindingDao.class)
+                            .getFindingsByProject(
+                                    project.getId(),
+                                    /* includeSuppressed */ false,
+                                    /* searchText */ null,
+                                    /* hasAnalysis */ null,
+                                    /* source */ null,
+                                    /* epssFrom */ null,
+                                    /* epssTo */ null,
+                                    /* isKev */ null,
+                                    /* totalCountThreshold */ null));
 
             assertThat(page.items()).isEmpty();
             assertThat(page.totalCount()).isEqualTo(new TotalCount(5, TotalCount.Type.EXACT));
         }
-
     }
 
     @Nested
@@ -164,10 +168,9 @@ class FindingDaoTest extends PersistenceCapableTest {
 
             final Page<FindingDao.GroupedFindingRow> page = withJdbiHandle(
                     apiRequestWithOffsetAndLimit(10, 5),
-                    handle -> handle.attach(FindingDao.class).getGroupedFindings(
-                            /* filters */ Map.of(),
-                            /* showInactive */ false,
-                            /* boundedTotalCount */ true));
+                    handle -> handle.attach(FindingDao.class)
+                            .getGroupedFindings(
+                                    /* filters */ Map.of(), /* showInactive */ false, /* boundedTotalCount */ true));
 
             assertThat(page.items()).isEmpty();
             assertThat(page.totalCount()).isEqualTo(new TotalCount(0, TotalCount.Type.AT_LEAST));
@@ -179,10 +182,9 @@ class FindingDaoTest extends PersistenceCapableTest {
 
             final Page<FindingDao.GroupedFindingRow> page = withJdbiHandle(
                     apiRequestWithOffsetAndLimit(3, 10),
-                    handle -> handle.attach(FindingDao.class).getGroupedFindings(
-                            /* filters */ Map.of(),
-                            /* showInactive */ false,
-                            /* boundedTotalCount */ true));
+                    handle -> handle.attach(FindingDao.class)
+                            .getGroupedFindings(
+                                    /* filters */ Map.of(), /* showInactive */ false, /* boundedTotalCount */ true));
 
             assertThat(page.items()).hasSize(2);
             assertThat(page.totalCount()).isEqualTo(new TotalCount(5, TotalCount.Type.EXACT));
@@ -194,10 +196,9 @@ class FindingDaoTest extends PersistenceCapableTest {
 
             final Page<FindingDao.GroupedFindingRow> page = withJdbiHandle(
                     apiRequestWithOffsetAndLimit(10, 5),
-                    handle -> handle.attach(FindingDao.class).getGroupedFindings(
-                            /* filters */ Map.of(),
-                            /* showInactive */ false,
-                            /* boundedTotalCount */ false));
+                    handle -> handle.attach(FindingDao.class)
+                            .getGroupedFindings(
+                                    /* filters */ Map.of(), /* showInactive */ false, /* boundedTotalCount */ false));
 
             assertThat(page.items()).isEmpty();
             assertThat(page.totalCount()).isEqualTo(new TotalCount(0, TotalCount.Type.AT_LEAST));
@@ -208,22 +209,20 @@ class FindingDaoTest extends PersistenceCapableTest {
             createFindings(5);
 
             final List<String> vulnIds = Stream.of(
-                            apiRequestWithOffsetAndLimit(0, 3),
-                            apiRequestWithOffsetAndLimit(3, 3))
+                            apiRequestWithOffsetAndLimit(0, 3), apiRequestWithOffsetAndLimit(3, 3))
                     .map(apiRequest -> withJdbiHandle(
                             apiRequest,
-                            handle -> handle.attach(FindingDao.class).getGroupedFindings(
-                                    /* filters */ Map.of(),
-                                    /* showInactive */ false,
-                                    /* boundedTotalCount */ true)))
+                            handle -> handle.attach(FindingDao.class)
+                                    .getGroupedFindings(
+                                            /* filters */ Map.of(),
+                                            /* showInactive */ false,
+                                            /* boundedTotalCount */ true)))
                     .flatMap(page -> page.items().stream())
                     .map(FindingDao.GroupedFindingRow::vulnId)
                     .toList();
 
-            assertThat(vulnIds).containsExactlyInAnyOrder(
-                    "Vuln-0", "Vuln-1", "Vuln-2", "Vuln-3", "Vuln-4");
+            assertThat(vulnIds).containsExactlyInAnyOrder("Vuln-0", "Vuln-1", "Vuln-2", "Vuln-3", "Vuln-4");
         }
-
     }
 
     @Nested
@@ -235,19 +234,19 @@ class FindingDaoTest extends PersistenceCapableTest {
 
             final List<FindingDao.FindingRow> items = withJdbiHandle(
                     apiRequestWithOffsetAndLimit(0, 1),
-                    handle -> handle.attach(FindingDao.class).selectAllProjectFindings(
-                            project.getId(),
-                            /* includeSuppressed */ false,
-                            /* searchText */ null,
-                            /* hasAnalysis */ null,
-                            /* source */ null,
-                            /* epssFrom */ null,
-                            /* epssTo */ null,
-                            /* isKev */ null));
+                    handle -> handle.attach(FindingDao.class)
+                            .selectAllProjectFindings(
+                                    project.getId(),
+                                    /* includeSuppressed */ false,
+                                    /* searchText */ null,
+                                    /* hasAnalysis */ null,
+                                    /* source */ null,
+                                    /* epssFrom */ null,
+                                    /* epssTo */ null,
+                                    /* isKev */ null));
 
             assertThat(items).hasSize(3);
         }
-
     }
 
     private static AlpineRequest apiRequestWithOffsetAndLimit(int offset, int limit) {
@@ -260,8 +259,7 @@ class FindingDaoTest extends PersistenceCapableTest {
     }
 
     private Project createFindings(int findingCount) {
-        final Project project = qm.createProject(
-                "Acme Example", null, "1.0", null, null, null, null, false);
+        final Project project = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
 
         for (int i = 0; i < findingCount; i++) {
             final var component = new Component();
@@ -274,13 +272,9 @@ class FindingDaoTest extends PersistenceCapableTest {
             vulnerability.setSource(Vulnerability.Source.INTERNAL);
             vulnerability.setSeverity(Severity.HIGH);
 
-            qm.addVulnerability(
-                    qm.createVulnerability(vulnerability),
-                    qm.createComponent(component, false),
-                    "none");
+            qm.addVulnerability(qm.createVulnerability(vulnerability), qm.createComponent(component, false), "none");
         }
 
         return project;
     }
-
 }

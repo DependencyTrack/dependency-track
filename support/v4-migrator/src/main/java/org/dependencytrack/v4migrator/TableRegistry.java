@@ -27,8 +27,8 @@ import java.util.List;
 public final class TableRegistry {
 
     private static final TableMigration LICENSE = new TableMigration(
-        "LICENSE",
-        """
+            "LICENSE",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_license (
             "ID"               bigint NOT NULL
           , "COMMENT"          text
@@ -45,7 +45,7 @@ public final class TableRegistry {
           , "UUID"             varchar(36) NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "COMMENT"
              , "ISCUSTOMLICENSE"
@@ -62,10 +62,21 @@ public final class TableRegistry {
           FROM "%s"."LICENSE"
          ORDER BY "ID"
         """,
-        List.of("ID", "COMMENT", "ISCUSTOMLICENSE", "ISDEPRECATED", "FSFLIBRE",
-            "HEADER", "LICENSEID", "ISOSIAPPROVED", "NAME", "SEEALSO",
-            "TEMPLATE", "TEXT", "UUID"),
-        """
+            List.of(
+                    "ID",
+                    "COMMENT",
+                    "ISCUSTOMLICENSE",
+                    "ISDEPRECATED",
+                    "FSFLIBRE",
+                    "HEADER",
+                    "LICENSEID",
+                    "ISOSIAPPROVED",
+                    "NAME",
+                    "SEEALSO",
+                    "TEMPLATE",
+                    "TEXT",
+                    "UUID"),
+            """
         -- Capture rows with malformed UUIDs into the probe so they surface in verify,
         -- and exclude them from the target tier (the ::uuid cast below would otherwise fail).
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
@@ -107,7 +118,7 @@ public final class TableRegistry {
           FROM "%1$s".src_license
          WHERE "UUID" ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
         """,
-        """
+            """
         INSERT INTO "LICENSE" (
             "ID"
           , "COMMENT"
@@ -137,8 +148,7 @@ public final class TableRegistry {
              , "TEXT"
              , "UUID"
           FROM "%1$s".tgt_license
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code TEAM} with dedup-by-NAME (canonical = MIN(ID)) per
@@ -146,22 +156,18 @@ public final class TableRegistry {
      * transforms (USERS_TEAMS, eventually NOTIFICATIONRULE_TEAMS, etc.) use to rewrite
      * v4 TEAM_IDs to the canonical value.
      */
-    private static final TableMigration TEAM = new TableMigration(
-        "TEAM",
-        """
+    private static final TableMigration TEAM =
+            new TableMigration("TEAM", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_team (
             "ID"   bigint NOT NULL
           , "NAME" varchar(255) NOT NULL
           , "UUID" varchar(36) NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID", "NAME", "UUID"
           FROM "%s"."TEAM"
          ORDER BY "ID"
-        """,
-        List.of("ID", "NAME", "UUID"),
-        """
+        """, List.of("ID", "NAME", "UUID"), """
         DROP TABLE IF EXISTS "%1$s".team_canonical_id_map;
         CREATE UNLOGGED TABLE "%1$s".team_canonical_id_map AS
         SELECT t."ID" AS orig_id, c.canonical_id
@@ -183,12 +189,10 @@ public final class TableRegistry {
         SELECT "ID", "NAME", "UUID"
           FROM "%1$s".src_team
          WHERE "ID" IN (SELECT canonical_id FROM "%1$s".team_canonical_id_map)
-        """,
-        """
+        """, """
         INSERT INTO "TEAM" ("ID", "NAME", "UUID")
         SELECT "ID", "NAME", "UUID" FROM "%1$s".tgt_team
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code TAG} with dedup-by-NAME (canonical = MIN(ID)) per
@@ -197,21 +201,16 @@ public final class TableRegistry {
      * join-table transforms (NOTIFICATIONRULE_TAGS, POLICY_TAGS, PROJECTS_TAGS,
      * VULNERABILITIES_TAGS) and PROJECT.COLLECTION_TAG rewrites.
      */
-    private static final TableMigration TAG = new TableMigration(
-        "TAG",
-        """
+    private static final TableMigration TAG = new TableMigration("TAG", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_tag (
             "ID"   bigint NOT NULL
           , "NAME" varchar(255) NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID", "NAME"
           FROM "%s"."TAG"
          ORDER BY "ID"
-        """,
-        List.of("ID", "NAME"),
-        """
+        """, List.of("ID", "NAME"), """
         DROP TABLE IF EXISTS "%1$s".tag_canonical_id_map;
         CREATE UNLOGGED TABLE "%1$s".tag_canonical_id_map AS
         SELECT t."ID" AS orig_id, c.canonical_id
@@ -232,41 +231,33 @@ public final class TableRegistry {
         SELECT "ID", "NAME"
           FROM "%1$s".src_tag
          WHERE "ID" IN (SELECT canonical_id FROM "%1$s".tag_canonical_id_map)
-        """,
-        """
+        """, """
         INSERT INTO "TAG" ("ID", "NAME")
         SELECT "ID", "NAME" FROM "%1$s".tgt_tag
-        """
-    );
+        """);
 
     // Source-only legacy user tables. No transform / load: they feed USER consolidation.
 
-    private static final TableMigration LDAPUSER = new TableMigration(
-        "LDAPUSER",
-        """
+    private static final TableMigration LDAPUSER =
+            new TableMigration("LDAPUSER", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_ldapuser (
             "ID"       bigint NOT NULL
           , "USERNAME" varchar(255)
           , "DN"       varchar(1024) NOT NULL
           , "EMAIL"    varchar(255)
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "USERNAME"
              , "DN"
              , "EMAIL"
           FROM "%s"."LDAPUSER"
          ORDER BY "ID"
-        """,
-        List.of("ID", "USERNAME", "DN", "EMAIL"),
-        null,
-        null
-    );
+        """, List.of("ID", "USERNAME", "DN", "EMAIL"), null, null);
 
     private static final TableMigration MANAGEDUSER = new TableMigration(
-        "MANAGEDUSER",
-        """
+            "MANAGEDUSER",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_manageduser (
             "ID"                     bigint NOT NULL
           , "USERNAME"               varchar(255)
@@ -279,7 +270,7 @@ public final class TableRegistry {
           , "SUSPENDED"              boolean NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "USERNAME"
              , "PASSWORD"
@@ -292,96 +283,75 @@ public final class TableRegistry {
           FROM "%s"."MANAGEDUSER"
          ORDER BY "ID"
         """,
-        List.of("ID", "USERNAME", "PASSWORD", "FULLNAME", "EMAIL",
-            "FORCE_PASSWORD_CHANGE", "LAST_PASSWORD_CHANGE",
-            "NON_EXPIRY_PASSWORD", "SUSPENDED"),
-        null,
-        null
-    );
+            List.of(
+                    "ID",
+                    "USERNAME",
+                    "PASSWORD",
+                    "FULLNAME",
+                    "EMAIL",
+                    "FORCE_PASSWORD_CHANGE",
+                    "LAST_PASSWORD_CHANGE",
+                    "NON_EXPIRY_PASSWORD",
+                    "SUSPENDED"),
+            null,
+            null);
 
     private static final TableMigration OIDCUSER = new TableMigration(
-        "OIDCUSER",
-        """
+            "OIDCUSER", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_oidcuser (
             "ID"                  bigint NOT NULL
           , "USERNAME"            varchar(255) NOT NULL
           , "SUBJECT_IDENTIFIER"  varchar(255)
           , "EMAIL"               varchar(255)
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "USERNAME"
              , "SUBJECT_IDENTIFIER"
              , "EMAIL"
           FROM "%s"."OIDCUSER"
          ORDER BY "ID"
-        """,
-        List.of("ID", "USERNAME", "SUBJECT_IDENTIFIER", "EMAIL"),
-        null,
-        null
-    );
+        """, List.of("ID", "USERNAME", "SUBJECT_IDENTIFIER", "EMAIL"), null, null);
 
-    private static final TableMigration LDAPUSERS_TEAMS = new TableMigration(
-        "LDAPUSERS_TEAMS",
-        """
+    private static final TableMigration LDAPUSERS_TEAMS =
+            new TableMigration("LDAPUSERS_TEAMS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_ldapusers_teams (
             "TEAM_ID"     bigint NOT NULL
           , "LDAPUSER_ID" bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("LDAPUSER_ID" AS bigint) AS "LDAPUSER_ID"
           FROM "%s"."LDAPUSERS_TEAMS"
-        """,
-        List.of("TEAM_ID", "LDAPUSER_ID"),
-        null,
-        null
-    );
+        """, List.of("TEAM_ID", "LDAPUSER_ID"), null, null);
 
-    private static final TableMigration MANAGEDUSERS_TEAMS = new TableMigration(
-        "MANAGEDUSERS_TEAMS",
-        """
+    private static final TableMigration MANAGEDUSERS_TEAMS =
+            new TableMigration("MANAGEDUSERS_TEAMS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_managedusers_teams (
             "TEAM_ID"        bigint NOT NULL
           , "MANAGEDUSER_ID" bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("MANAGEDUSER_ID" AS bigint) AS "MANAGEDUSER_ID"
           FROM "%s"."MANAGEDUSERS_TEAMS"
-        """,
-        List.of("TEAM_ID", "MANAGEDUSER_ID"),
-        null,
-        null
-    );
+        """, List.of("TEAM_ID", "MANAGEDUSER_ID"), null, null);
 
-    private static final TableMigration OIDCUSERS_TEAMS = new TableMigration(
-        "OIDCUSERS_TEAMS",
-        """
+    private static final TableMigration OIDCUSERS_TEAMS =
+            new TableMigration("OIDCUSERS_TEAMS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_oidcusers_teams (
             "TEAM_ID"        bigint NOT NULL
           , "OIDCUSERS_ID"   bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("OIDCUSERS_ID" AS bigint) AS "OIDCUSERS_ID"
           FROM "%s"."OIDCUSERS_TEAMS"
-        """,
-        List.of("TEAM_ID", "OIDCUSERS_ID"),
-        null,
-        null
-    );
+        """, List.of("TEAM_ID", "OIDCUSERS_ID"), null, null);
 
     /**
      * Derived USER consolidation per pipeline §7.1 and schema-changes §7.1. v4 user rows with
      * {@code USERNAME IS NULL} are skipped silently. Username conflicts across LDAP/OIDC vs
      * already-inserted users get the {@code -CONFLICT-LDAP} / {@code -CONFLICT-OIDC} suffix.
      */
-    private static final TableMigration USER_CONSOLIDATED = new TableMigration(
-        "USER",
-        null, null, null,
-        """
+    private static final TableMigration USER_CONSOLIDATED = new TableMigration("USER", null, null, null, """
         -- Record v4 user rows we are about to drop because of NULL USERNAME.
         INSERT INTO "%1$s".probe_skipped_users (table_name, orig_id, reason)
         SELECT 'LDAPUSER', "ID", 'USERNAME IS NULL' FROM "%1$s".src_ldapuser WHERE "USERNAME" IS NULL
@@ -516,8 +486,7 @@ public final class TableRegistry {
           FROM "%1$s".src_oidcuser o
          WHERE o."USERNAME" IS NOT NULL
            AND o."ID" NOT IN (SELECT "ORIG_ID" FROM inserted)
-        """,
-        """
+        """, """
         INSERT INTO "USER" (
             "ID"
           , "TYPE"
@@ -546,17 +515,13 @@ public final class TableRegistry {
              , "SUBJECT_IDENTIFIER"
           FROM "%1$s".tgt_user
          ORDER BY "ID"
-        """
-    );
+        """);
 
     /**
      * Derived USERS_TEAMS, joining the three legacy join tables to tgt_user via {@code ORIG_ID}
      * + {@code ORIG_TYPE} (preserves the suffix mapping for conflicts).
      */
-    private static final TableMigration USERS_TEAMS = new TableMigration(
-        "USERS_TEAMS",
-        null, null, null,
-        """
+    private static final TableMigration USERS_TEAMS = new TableMigration("USERS_TEAMS", null, null, null, """
         DROP TABLE IF EXISTS "%1$s".tgt_users_teams;
         CREATE UNLOGGED TABLE "%1$s".tgt_users_teams (
             "USER_ID"  bigint NOT NULL
@@ -587,12 +552,10 @@ public final class TableRegistry {
             ON u."ORIG_ID" = j."OIDCUSERS_ID" AND u."ORIG_TYPE" = 'OIDC'
           JOIN "%1$s".team_canonical_id_map m ON m.orig_id = j."TEAM_ID"
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "USERS_TEAMS" ("USER_ID", "TEAM_ID")
         SELECT "USER_ID", "TEAM_ID" FROM "%1$s".tgt_users_teams
-        """
-    );
+        """);
 
     /**
      * Source-only mirror of v4 {@code PERMISSION}. The v5 {@code PERMISSION} catalog is
@@ -605,22 +568,18 @@ public final class TableRegistry {
      * join-table {@code tgt_*} tables. See {@code TEAMS_PERMISSIONS} and the consolidated
      * {@code USERS_PERMISSIONS} transforms.
      */
-    private static final TableMigration PERMISSION = new TableMigration(
-        "PERMISSION",
-        """
+    private static final TableMigration PERMISSION =
+            new TableMigration("PERMISSION", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_permission (
             "ID"          bigint NOT NULL
           , "DESCRIPTION" text
           , "NAME"        varchar(255) NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID", "DESCRIPTION", "NAME"
           FROM "%s"."PERMISSION"
          ORDER BY "ID"
-        """,
-        List.of("ID", "DESCRIPTION", "NAME"),
-        """
+        """, List.of("ID", "DESCRIPTION", "NAME"), """
         DROP TABLE IF EXISTS "%1$s".permission_name_map;
         CREATE UNLOGGED TABLE "%1$s".permission_name_map (
             orig_id BIGINT NOT NULL PRIMARY KEY
@@ -631,60 +590,40 @@ public final class TableRegistry {
         SELECT s."ID", p."ID", s."NAME"
           FROM "%1$s".src_permission s
           JOIN "PERMISSION" p ON p."NAME" = s."NAME"
-        """,
-        null
-    );
+        """, null);
 
-    private static final TableMigration LDAPUSERS_PERMISSIONS = new TableMigration(
-        "LDAPUSERS_PERMISSIONS",
-        """
+    private static final TableMigration LDAPUSERS_PERMISSIONS =
+            new TableMigration("LDAPUSERS_PERMISSIONS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_ldapusers_permissions (
             "LDAPUSER_ID"   bigint NOT NULL
           , "PERMISSION_ID" bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("LDAPUSER_ID" AS bigint) AS "LDAPUSER_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."LDAPUSERS_PERMISSIONS"
-        """,
-        List.of("LDAPUSER_ID", "PERMISSION_ID"),
-        null,
-        null
-    );
+        """, List.of("LDAPUSER_ID", "PERMISSION_ID"), null, null);
 
     private static final TableMigration MANAGEDUSERS_PERMISSIONS = new TableMigration(
-        "MANAGEDUSERS_PERMISSIONS",
-        """
+            "MANAGEDUSERS_PERMISSIONS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_managedusers_permissions (
             "MANAGEDUSER_ID" bigint NOT NULL
           , "PERMISSION_ID"  bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("MANAGEDUSER_ID" AS bigint) AS "MANAGEDUSER_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."MANAGEDUSERS_PERMISSIONS"
-        """,
-        List.of("MANAGEDUSER_ID", "PERMISSION_ID"),
-        null,
-        null
-    );
+        """, List.of("MANAGEDUSER_ID", "PERMISSION_ID"), null, null);
 
-    private static final TableMigration OIDCUSERS_PERMISSIONS = new TableMigration(
-        "OIDCUSERS_PERMISSIONS",
-        """
+    private static final TableMigration OIDCUSERS_PERMISSIONS =
+            new TableMigration("OIDCUSERS_PERMISSIONS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_oidcusers_permissions (
             "OIDCUSER_ID"   bigint NOT NULL
           , "PERMISSION_ID" bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("OIDCUSER_ID" AS bigint) AS "OIDCUSER_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."OIDCUSERS_PERMISSIONS"
-        """,
-        List.of("OIDCUSER_ID", "PERMISSION_ID"),
-        null,
-        null
-    );
+        """, List.of("OIDCUSER_ID", "PERMISSION_ID"), null, null);
 
     /**
      * Derived USERS_PERMISSIONS, joining the three legacy join tables to tgt_user via
@@ -692,10 +631,8 @@ public final class TableRegistry {
      * {@code permission_name_map}. Rows whose v4 permission NAME has no v5 counterpart are
      * dropped silently by the inner join.
      */
-    private static final TableMigration USERS_PERMISSIONS = new TableMigration(
-        "USERS_PERMISSIONS",
-        null, null, null,
-        """
+    private static final TableMigration USERS_PERMISSIONS =
+            new TableMigration("USERS_PERMISSIONS", null, null, null, """
         DROP TABLE IF EXISTS "%1$s".tgt_users_permissions;
         CREATE UNLOGGED TABLE "%1$s".tgt_users_permissions (
             "USER_ID"       bigint NOT NULL
@@ -754,12 +691,10 @@ public final class TableRegistry {
           END
          WHERE src."NAME" IN ('ACCESS_MANAGEMENT', 'SYSTEM_CONFIGURATION')
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "USERS_PERMISSIONS" ("USER_ID", "PERMISSION_ID")
         SELECT "USER_ID", "PERMISSION_ID" FROM "%1$s".tgt_users_permissions
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code OIDCGROUP} with dedup-by-NAME (canonical = MIN(ID)) per
@@ -767,22 +702,18 @@ public final class TableRegistry {
      * {@code oidcgroup_canonical_id_map} is produced for the future MAPPEDOIDCGROUP join-table
      * transform, which is not yet in the registry.
      */
-    private static final TableMigration OIDCGROUP = new TableMigration(
-        "OIDCGROUP",
-        """
+    private static final TableMigration OIDCGROUP =
+            new TableMigration("OIDCGROUP", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_oidcgroup (
             "ID"   bigint NOT NULL
           , "NAME" varchar(1024) NOT NULL
           , "UUID" varchar(36) NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID", "NAME", "UUID"
           FROM "%s"."OIDCGROUP"
          ORDER BY "ID"
-        """,
-        List.of("ID", "NAME", "UUID"),
-        """
+        """, List.of("ID", "NAME", "UUID"), """
         DROP TABLE IF EXISTS "%1$s".oidcgroup_canonical_id_map;
         CREATE UNLOGGED TABLE "%1$s".oidcgroup_canonical_id_map AS
         SELECT g."ID" AS orig_id, c.canonical_id
@@ -804,37 +735,31 @@ public final class TableRegistry {
         SELECT "ID", "NAME", "UUID"
           FROM "%1$s".src_oidcgroup
          WHERE "ID" IN (SELECT canonical_id FROM "%1$s".oidcgroup_canonical_id_map)
-        """,
-        """
+        """, """
         INSERT INTO "OIDCGROUP" ("ID", "NAME", "UUID")
         SELECT "ID", "NAME", "UUID" FROM "%1$s".tgt_oidcgroup
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code LICENSEGROUP}. UUID converts from {@code varchar(36)} to native
      * {@code uuid}; malformed values are captured by the probe and excluded from the target.
      */
-    private static final TableMigration LICENSEGROUP = new TableMigration(
-        "LICENSEGROUP",
-        """
+    private static final TableMigration LICENSEGROUP =
+            new TableMigration("LICENSEGROUP", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_licensegroup (
             "ID"         bigint NOT NULL
           , "NAME"       varchar(255) NOT NULL
           , "RISKWEIGHT" integer NOT NULL
           , "UUID"       varchar(36) NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "NAME"
              , "RISKWEIGHT"
              , "UUID"
           FROM "%s"."LICENSEGROUP"
          ORDER BY "ID"
-        """,
-        List.of("ID", "NAME", "RISKWEIGHT", "UUID"),
-        """
+        """, List.of("ID", "NAME", "RISKWEIGHT", "UUID"), """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'LICENSEGROUP', "ID", "UUID"
           FROM "%1$s".src_licensegroup
@@ -855,8 +780,7 @@ public final class TableRegistry {
              , "UUID"::uuid
           FROM "%1$s".src_licensegroup
          WHERE "UUID" ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-        """,
-        """
+        """, """
         INSERT INTO "LICENSEGROUP" (
             "ID"
           , "NAME"
@@ -868,8 +792,7 @@ public final class TableRegistry {
              , "RISKWEIGHT"
              , "UUID"
           FROM "%1$s".tgt_licensegroup
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of the {@code LICENSEGROUP_LICENSE} join table. Both parents (LICENSE
@@ -878,20 +801,16 @@ public final class TableRegistry {
      * {@code tgt_licensegroup}. Sampling can also leave orphan join rows; the same filter
      * covers that case.
      */
-    private static final TableMigration LICENSEGROUP_LICENSE = new TableMigration(
-        "LICENSEGROUP_LICENSE",
-        """
+    private static final TableMigration LICENSEGROUP_LICENSE =
+            new TableMigration("LICENSEGROUP_LICENSE", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_licensegroup_license (
             "LICENSEGROUP_ID" bigint NOT NULL
           , "LICENSE_ID"      bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("LICENSEGROUP_ID" AS bigint) AS "LICENSEGROUP_ID", CAST("LICENSE_ID" AS bigint) AS "LICENSE_ID"
           FROM "%s"."LICENSEGROUP_LICENSE"
-        """,
-        List.of("LICENSEGROUP_ID", "LICENSE_ID"),
-        """
+        """, List.of("LICENSEGROUP_ID", "LICENSE_ID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_licensegroup_license;
         CREATE UNLOGGED TABLE "%1$s".tgt_licensegroup_license (
             "LICENSEGROUP_ID" bigint NOT NULL
@@ -903,13 +822,11 @@ public final class TableRegistry {
           FROM "%1$s".src_licensegroup_license j
           JOIN "%1$s".tgt_licensegroup lg ON lg."ID" = j."LICENSEGROUP_ID"
           JOIN "%1$s".tgt_license      l  ON l."ID"  = j."LICENSE_ID"
-        """,
-        """
+        """, """
         INSERT INTO "LICENSEGROUP_LICENSE" ("LICENSEGROUP_ID", "LICENSE_ID")
         SELECT "LICENSEGROUP_ID", "LICENSE_ID"
           FROM "%1$s".tgt_licensegroup_license
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code REPOSITORY} with PASSWORD purge per schema-changes §7.8: any
@@ -919,8 +836,8 @@ public final class TableRegistry {
      * probe and excluded from the target.
      */
     private static final TableMigration REPOSITORY = new TableMigration(
-        "REPOSITORY",
-        """
+            "REPOSITORY",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_repository (
             "ID"                     bigint NOT NULL
           , "AUTHENTICATIONREQUIRED" boolean
@@ -935,7 +852,7 @@ public final class TableRegistry {
           , "UUID"                   varchar(36)
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHENTICATIONREQUIRED"
              , "ENABLED"
@@ -950,9 +867,19 @@ public final class TableRegistry {
           FROM "%s"."REPOSITORY"
          ORDER BY "ID"
         """,
-        List.of("ID", "AUTHENTICATIONREQUIRED", "ENABLED", "IDENTIFIER", "INTERNAL",
-            "PASSWORD", "RESOLUTION_ORDER", "TYPE", "URL", "USERNAME", "UUID"),
-        """
+            List.of(
+                    "ID",
+                    "AUTHENTICATIONREQUIRED",
+                    "ENABLED",
+                    "IDENTIFIER",
+                    "INTERNAL",
+                    "PASSWORD",
+                    "RESOLUTION_ORDER",
+                    "TYPE",
+                    "URL",
+                    "USERNAME",
+                    "UUID"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'REPOSITORY', "ID", "UUID"
           FROM "%1$s".src_repository
@@ -990,7 +917,7 @@ public final class TableRegistry {
          WHERE "UUID" IS NULL
             OR "UUID" ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
         """,
-        """
+            """
         INSERT INTO "REPOSITORY" (
             "ID"
           , "AUTHENTICATIONREQUIRED"
@@ -1016,8 +943,7 @@ public final class TableRegistry {
              , "USERNAME"
              , "UUID"
           FROM "%1$s".tgt_repository
-        """
-    );
+        """);
 
     /**
      * PROJECT migration. Per schema-changes:
@@ -1039,8 +965,8 @@ public final class TableRegistry {
      * from {@code tgt_project} (matches the LICENSE pattern).
      */
     private static final TableMigration PROJECT = new TableMigration(
-        "PROJECT",
-        """
+            "PROJECT",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_project (
             "ID"                          bigint NOT NULL
           , "ACTIVE"                      boolean
@@ -1069,7 +995,7 @@ public final class TableRegistry {
           , "VERSION"                     varchar(255)
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "ACTIVE"
              , "AUTHORS"
@@ -1098,12 +1024,33 @@ public final class TableRegistry {
           FROM "%s"."PROJECT"
          ORDER BY "ID"
         """,
-        List.of("ID", "ACTIVE", "AUTHORS", "CLASSIFIER", "COLLECTION_LOGIC", "COLLECTION_TAG",
-            "CPE", "DESCRIPTION", "DIRECT_DEPENDENCIES", "EXTERNAL_REFERENCES", "GROUP",
-            "IS_LATEST", "LAST_BOM_IMPORTED", "LAST_BOM_IMPORTED_FORMAT", "LAST_RISKSCORE",
-            "LAST_VULNERABILITY_ANALYSIS", "MANUFACTURER", "NAME", "PARENT_PROJECT_ID",
-            "PUBLISHER", "PURL", "SUPPLIER", "SWIDTAGID", "UUID", "VERSION"),
-        """
+            List.of(
+                    "ID",
+                    "ACTIVE",
+                    "AUTHORS",
+                    "CLASSIFIER",
+                    "COLLECTION_LOGIC",
+                    "COLLECTION_TAG",
+                    "CPE",
+                    "DESCRIPTION",
+                    "DIRECT_DEPENDENCIES",
+                    "EXTERNAL_REFERENCES",
+                    "GROUP",
+                    "IS_LATEST",
+                    "LAST_BOM_IMPORTED",
+                    "LAST_BOM_IMPORTED_FORMAT",
+                    "LAST_RISKSCORE",
+                    "LAST_VULNERABILITY_ANALYSIS",
+                    "MANUFACTURER",
+                    "NAME",
+                    "PARENT_PROJECT_ID",
+                    "PUBLISHER",
+                    "PURL",
+                    "SUPPLIER",
+                    "SWIDTAGID",
+                    "UUID",
+                    "VERSION"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'PROJECT', "ID", "UUID"
           FROM "%1$s".src_project
@@ -1277,7 +1224,7 @@ public final class TableRegistry {
              , "INACTIVE_SINCE"
           FROM coerced
         """,
-        """
+            """
         INSERT INTO "PROJECT" (
             "ID"
           , "AUTHORS"
@@ -1331,17 +1278,18 @@ public final class TableRegistry {
              , "VERSION"
              , "INACTIVE_SINCE"
           FROM "%1$s".tgt_project
-        """
-    );
+        """);
 
     /**
      * PROJECT_HIERARCHY closure per pipeline §7.2 and schema-changes §7.2. Built via recursive
      * CTE from PROJECT.PARENT_PROJECT_ID. Includes a self-row at depth 0 for every project.
      */
     private static final TableMigration PROJECT_HIERARCHY = new TableMigration(
-        "PROJECT_HIERARCHY",
-        null, null, null,
-        """
+            "PROJECT_HIERARCHY",
+            null,
+            null,
+            null,
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_project_hierarchy;
         CREATE UNLOGGED TABLE "%1$s".tgt_project_hierarchy (
             "PARENT_PROJECT_ID" bigint NOT NULL
@@ -1363,15 +1311,14 @@ public final class TableRegistry {
         INSERT INTO "%1$s".tgt_project_hierarchy ("PARENT_PROJECT_ID", "CHILD_PROJECT_ID", "DEPTH")
         SELECT root_id, child_id, depth FROM walk
         """,
-        // The maintenance triggers on PROJECT_HIERARCHY's parent table fire on PROJECT inserts.
-        // To avoid double-population the migrator disables the trigger pack around the PROJECT
-        // load and re-populates PROJECT_HIERARCHY directly from tgt.
-        """
+            // The maintenance triggers on PROJECT_HIERARCHY's parent table fire on PROJECT inserts.
+            // To avoid double-population the migrator disables the trigger pack around the PROJECT
+            // load and re-populates PROJECT_HIERARCHY directly from tgt.
+            """
         INSERT INTO "PROJECT_HIERARCHY" ("PARENT_PROJECT_ID", "CHILD_PROJECT_ID", "DEPTH")
         SELECT "PARENT_PROJECT_ID", "CHILD_PROJECT_ID", "DEPTH"
           FROM "%1$s".tgt_project_hierarchy
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code NOTIFICATIONPUBLISHER} with dedup-by-NAME (canonical = MIN(ID))
@@ -1383,8 +1330,8 @@ public final class TableRegistry {
      * is consumed by NOTIFICATIONRULE to rewrite the {@code PUBLISHER} FK.
      */
     private static final TableMigration NOTIFICATIONPUBLISHER = new TableMigration(
-        "NOTIFICATIONPUBLISHER",
-        """
+            "NOTIFICATIONPUBLISHER",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_notificationpublisher (
             "ID"                 bigint NOT NULL
           , "DEFAULT_PUBLISHER"  boolean NOT NULL
@@ -1396,7 +1343,7 @@ public final class TableRegistry {
           , "UUID"               varchar(36) NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "DEFAULT_PUBLISHER"
              , "DESCRIPTION"
@@ -1408,9 +1355,16 @@ public final class TableRegistry {
           FROM "%s"."NOTIFICATIONPUBLISHER"
          ORDER BY "ID"
         """,
-        List.of("ID", "DEFAULT_PUBLISHER", "DESCRIPTION", "NAME", "PUBLISHER_CLASS",
-            "TEMPLATE", "TEMPLATE_MIME_TYPE", "UUID"),
-        """
+            List.of(
+                    "ID",
+                    "DEFAULT_PUBLISHER",
+                    "DESCRIPTION",
+                    "NAME",
+                    "PUBLISHER_CLASS",
+                    "TEMPLATE",
+                    "TEMPLATE_MIME_TYPE",
+                    "UUID"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'NOTIFICATIONPUBLISHER', "ID", "UUID"
           FROM "%1$s".src_notificationpublisher
@@ -1452,7 +1406,7 @@ public final class TableRegistry {
          WHERE "ID" IN (SELECT canonical_id FROM "%1$s".notificationpublisher_canonical_id_map)
            AND "UUID" ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
         """,
-        """
+            """
         INSERT INTO "NOTIFICATIONPUBLISHER" (
             "ID"
           , "NAME"
@@ -1472,8 +1426,7 @@ public final class TableRegistry {
              , "TEMPLATE_MIME_TYPE"
              , "UUID"
           FROM "%1$s".tgt_notificationpublisher
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code NOTIFICATIONRULE} with dedup-by-NAME (canonical = MIN(ID)) per
@@ -1487,8 +1440,8 @@ public final class TableRegistry {
      * equivalent).
      */
     private static final TableMigration NOTIFICATIONRULE = new TableMigration(
-        "NOTIFICATIONRULE",
-        """
+            "NOTIFICATIONRULE",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_notificationrule (
             "ID"                          bigint NOT NULL
           , "ENABLED"                     boolean NOT NULL
@@ -1509,7 +1462,7 @@ public final class TableRegistry {
           , "SCHEDULE_SKIP_UNCHANGED"     boolean
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "ENABLED"
              , "LOG_SUCCESSFUL_PUBLISH"
@@ -1530,11 +1483,25 @@ public final class TableRegistry {
           FROM "%s"."NOTIFICATIONRULE"
          ORDER BY "ID"
         """,
-        List.of("ID", "ENABLED", "LOG_SUCCESSFUL_PUBLISH", "MESSAGE", "NAME",
-            "NOTIFICATION_LEVEL", "NOTIFY_CHILDREN", "NOTIFY_ON", "PUBLISHER",
-            "PUBLISHER_CONFIG", "SCOPE", "UUID", "TRIGGER_TYPE", "SCHEDULE_CRON",
-            "SCHEDULE_LAST_TRIGGERED_AT", "SCHEDULE_NEXT_TRIGGER_AT", "SCHEDULE_SKIP_UNCHANGED"),
-        """
+            List.of(
+                    "ID",
+                    "ENABLED",
+                    "LOG_SUCCESSFUL_PUBLISH",
+                    "MESSAGE",
+                    "NAME",
+                    "NOTIFICATION_LEVEL",
+                    "NOTIFY_CHILDREN",
+                    "NOTIFY_ON",
+                    "PUBLISHER",
+                    "PUBLISHER_CONFIG",
+                    "SCOPE",
+                    "UUID",
+                    "TRIGGER_TYPE",
+                    "SCHEDULE_CRON",
+                    "SCHEDULE_LAST_TRIGGERED_AT",
+                    "SCHEDULE_NEXT_TRIGGER_AT",
+                    "SCHEDULE_SKIP_UNCHANGED"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'NOTIFICATIONRULE', "ID", "UUID"
           FROM "%1$s".src_notificationrule
@@ -1616,7 +1583,7 @@ public final class TableRegistry {
          WHERE r."ID" IN (SELECT canonical_id FROM "%1$s".notificationrule_canonical_id_map)
            AND r."UUID" ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
         """,
-        """
+            """
         INSERT INTO "NOTIFICATIONRULE" (
             "ID"
           , "ENABLED"
@@ -1656,27 +1623,22 @@ public final class TableRegistry {
              , "SCHEDULE_SKIP_UNCHANGED"
              , "FILTER_EXPRESSION"
           FROM "%1$s".tgt_notificationrule
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code NOTIFICATIONRULE_TAGS}. Rewrites both columns through the
      * NOTIFICATIONRULE and TAG canonical-id maps. Dedup on the composite key.
      */
-    private static final TableMigration NOTIFICATIONRULE_TAGS = new TableMigration(
-        "NOTIFICATIONRULE_TAGS",
-        """
+    private static final TableMigration NOTIFICATIONRULE_TAGS =
+            new TableMigration("NOTIFICATIONRULE_TAGS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_notificationrule_tags (
             "NOTIFICATIONRULE_ID" bigint NOT NULL
           , "TAG_ID"              bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("NOTIFICATIONRULE_ID" AS bigint) AS "NOTIFICATIONRULE_ID", CAST("TAG_ID" AS bigint) AS "TAG_ID"
           FROM "%s"."NOTIFICATIONRULE_TAGS"
-        """,
-        List.of("NOTIFICATIONRULE_ID", "TAG_ID"),
-        """
+        """, List.of("NOTIFICATIONRULE_ID", "TAG_ID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_notificationrule_tags;
         CREATE UNLOGGED TABLE "%1$s".tgt_notificationrule_tags (
             "NOTIFICATIONRULE_ID" bigint NOT NULL
@@ -1689,32 +1651,26 @@ public final class TableRegistry {
           JOIN "%1$s".notificationrule_canonical_id_map rm ON rm.orig_id = j."NOTIFICATIONRULE_ID"
           JOIN "%1$s".tag_canonical_id_map tm ON tm.orig_id = j."TAG_ID"
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "NOTIFICATIONRULE_TAGS" ("NOTIFICATIONRULE_ID", "TAG_ID")
         SELECT "NOTIFICATIONRULE_ID", "TAG_ID" FROM "%1$s".tgt_notificationrule_tags
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code NOTIFICATIONRULE_TEAMS}. v4 allows NULL {@code TEAM_ID}; v5
      * tightens it to NOT NULL, so NULL rows are dropped. Rewrites both columns through the
      * NOTIFICATIONRULE and TEAM canonical-id maps. Dedup on the composite key.
      */
-    private static final TableMigration NOTIFICATIONRULE_TEAMS = new TableMigration(
-        "NOTIFICATIONRULE_TEAMS",
-        """
+    private static final TableMigration NOTIFICATIONRULE_TEAMS =
+            new TableMigration("NOTIFICATIONRULE_TEAMS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_notificationrule_teams (
             "NOTIFICATIONRULE_ID" bigint NOT NULL
           , "TEAM_ID"             bigint
         )
-        """,
-        """
+        """, """
         SELECT CAST("NOTIFICATIONRULE_ID" AS bigint) AS "NOTIFICATIONRULE_ID", CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
           FROM "%s"."NOTIFICATIONRULE_TEAMS"
-        """,
-        List.of("NOTIFICATIONRULE_ID", "TEAM_ID"),
-        """
+        """, List.of("NOTIFICATIONRULE_ID", "TEAM_ID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_notificationrule_teams;
         CREATE UNLOGGED TABLE "%1$s".tgt_notificationrule_teams (
             "NOTIFICATIONRULE_ID" bigint NOT NULL
@@ -1728,12 +1684,10 @@ public final class TableRegistry {
           JOIN "%1$s".team_canonical_id_map tm ON tm.orig_id = j."TEAM_ID"
          WHERE j."TEAM_ID" IS NOT NULL
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "NOTIFICATIONRULE_TEAMS" ("NOTIFICATIONRULE_ID", "TEAM_ID")
         SELECT "NOTIFICATIONRULE_ID", "TEAM_ID" FROM "%1$s".tgt_notificationrule_teams
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code POLICY}. v4 already enforces UNIQUE(NAME) so no dedup is needed.
@@ -1741,8 +1695,8 @@ public final class TableRegistry {
      * captured by the probe and excluded from the target.
      */
     private static final TableMigration POLICY = new TableMigration(
-        "POLICY",
-        """
+            "POLICY",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_policy (
             "ID"                          bigint NOT NULL
           , "INCLUDE_CHILDREN"            boolean
@@ -1753,7 +1707,7 @@ public final class TableRegistry {
           , "VIOLATIONSTATE"              varchar(255) NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "INCLUDE_CHILDREN"
              , "NAME"
@@ -1764,9 +1718,15 @@ public final class TableRegistry {
           FROM "%s"."POLICY"
          ORDER BY "ID"
         """,
-        List.of("ID", "INCLUDE_CHILDREN", "NAME", "ONLY_LATEST_PROJECT_VERSION",
-            "OPERATOR", "UUID", "VIOLATIONSTATE"),
-        """
+            List.of(
+                    "ID",
+                    "INCLUDE_CHILDREN",
+                    "NAME",
+                    "ONLY_LATEST_PROJECT_VERSION",
+                    "OPERATOR",
+                    "UUID",
+                    "VIOLATIONSTATE"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'POLICY', "ID", "UUID"
           FROM "%1$s".src_policy
@@ -1794,7 +1754,7 @@ public final class TableRegistry {
           FROM "%1$s".src_policy
          WHERE "UUID" ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
         """,
-        """
+            """
         INSERT INTO "POLICY" (
             "ID"
           , "INCLUDE_CHILDREN"
@@ -1812,8 +1772,7 @@ public final class TableRegistry {
              , "UUID"
              , "VIOLATIONSTATE"
           FROM "%1$s".tgt_policy
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code POLICYCONDITION}. UUID is converted from {@code varchar(36)} to
@@ -1822,8 +1781,7 @@ public final class TableRegistry {
      * The new {@code VIOLATIONTYPE} column has no v4 equivalent and is NULL on load.
      */
     private static final TableMigration POLICYCONDITION = new TableMigration(
-        "POLICYCONDITION",
-        """
+            "POLICYCONDITION", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_policycondition (
             "ID"        bigint NOT NULL
           , "OPERATOR"  varchar(255) NOT NULL
@@ -1832,8 +1790,7 @@ public final class TableRegistry {
           , "UUID"      varchar(36) NOT NULL
           , "VALUE"     varchar(255) NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "OPERATOR"
              , CAST("POLICY_ID" AS bigint) AS "POLICY_ID"
@@ -1842,9 +1799,7 @@ public final class TableRegistry {
              , "VALUE"
           FROM "%s"."POLICYCONDITION"
          ORDER BY "ID"
-        """,
-        List.of("ID", "OPERATOR", "POLICY_ID", "SUBJECT", "UUID", "VALUE"),
-        """
+        """, List.of("ID", "OPERATOR", "POLICY_ID", "SUBJECT", "UUID", "VALUE"), """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'POLICYCONDITION', "ID", "UUID"
           FROM "%1$s".src_policycondition
@@ -1872,8 +1827,7 @@ public final class TableRegistry {
           FROM "%1$s".src_policycondition c
           JOIN "%1$s".tgt_policy p ON p."ID" = c."POLICY_ID"
          WHERE c."UUID" ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-        """,
-        """
+        """, """
         INSERT INTO "POLICYCONDITION" (
             "ID"
           , "OPERATOR"
@@ -1891,27 +1845,22 @@ public final class TableRegistry {
              , "VALUE"
              , "VIOLATIONTYPE"
           FROM "%1$s".tgt_policycondition
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code POLICY_TAGS}. POLICY_ID needs no rewrite (POLICY preserves v4 IDs);
      * TAG_ID is rewritten through {@code tag_canonical_id_map}. Dedup on the composite key.
      */
-    private static final TableMigration POLICY_TAGS = new TableMigration(
-        "POLICY_TAGS",
-        """
+    private static final TableMigration POLICY_TAGS =
+            new TableMigration("POLICY_TAGS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_policy_tags (
             "POLICY_ID" bigint NOT NULL
           , "TAG_ID"    bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("POLICY_ID" AS bigint) AS "POLICY_ID", CAST("TAG_ID" AS bigint) AS "TAG_ID"
           FROM "%s"."POLICY_TAGS"
-        """,
-        List.of("POLICY_ID", "TAG_ID"),
-        """
+        """, List.of("POLICY_ID", "TAG_ID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_policy_tags;
         CREATE UNLOGGED TABLE "%1$s".tgt_policy_tags (
             "POLICY_ID" bigint NOT NULL
@@ -1924,12 +1873,10 @@ public final class TableRegistry {
           JOIN "%1$s".tgt_policy p ON p."ID" = j."POLICY_ID"
           JOIN "%1$s".tag_canonical_id_map tm ON tm.orig_id = j."TAG_ID"
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "POLICY_TAGS" ("POLICY_ID", "TAG_ID")
         SELECT "POLICY_ID", "TAG_ID" FROM "%1$s".tgt_policy_tags
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code POLICY_PROJECTS}. POLICY_ID passes through (POLICY preserves
@@ -1938,20 +1885,16 @@ public final class TableRegistry {
      * (POLICY scope is governed by INCLUDE_CHILDREN / tag membership, not NULL rows), so
      * NULL PROJECT_ID rows are dropped via INNER JOIN. Dedup on the composite key.
      */
-    private static final TableMigration POLICY_PROJECTS = new TableMigration(
-        "POLICY_PROJECTS",
-        """
+    private static final TableMigration POLICY_PROJECTS =
+            new TableMigration("POLICY_PROJECTS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_policy_projects (
             "POLICY_ID"  bigint NOT NULL
           , "PROJECT_ID" bigint
         )
-        """,
-        """
+        """, """
         SELECT CAST("POLICY_ID" AS bigint) AS "POLICY_ID", CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
           FROM "%s"."POLICY_PROJECTS"
-        """,
-        List.of("POLICY_ID", "PROJECT_ID"),
-        """
+        """, List.of("POLICY_ID", "PROJECT_ID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_policy_projects;
         CREATE UNLOGGED TABLE "%1$s".tgt_policy_projects (
             "POLICY_ID"  bigint NOT NULL
@@ -1964,12 +1907,10 @@ public final class TableRegistry {
           JOIN "%1$s".tgt_policy p ON p."ID" = j."POLICY_ID"
           JOIN "%1$s".project_canonical_id_map pm ON pm.orig_id = j."PROJECT_ID"
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "POLICY_PROJECTS" ("POLICY_ID", "PROJECT_ID")
         SELECT "POLICY_ID", "PROJECT_ID" FROM "%1$s".tgt_policy_projects
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code NOTIFICATIONRULE_PROJECTS}. Rewrites NOTIFICATIONRULE_ID
@@ -1981,19 +1922,15 @@ public final class TableRegistry {
      * rows.
      */
     private static final TableMigration NOTIFICATIONRULE_PROJECTS = new TableMigration(
-        "NOTIFICATIONRULE_PROJECTS",
-        """
+            "NOTIFICATIONRULE_PROJECTS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_notificationrule_projects (
             "NOTIFICATIONRULE_ID" bigint NOT NULL
           , "PROJECT_ID"          bigint
         )
-        """,
-        """
+        """, """
         SELECT CAST("NOTIFICATIONRULE_ID" AS bigint) AS "NOTIFICATIONRULE_ID", CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
           FROM "%s"."NOTIFICATIONRULE_PROJECTS"
-        """,
-        List.of("NOTIFICATIONRULE_ID", "PROJECT_ID"),
-        """
+        """, List.of("NOTIFICATIONRULE_ID", "PROJECT_ID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_notificationrule_projects;
         CREATE UNLOGGED TABLE "%1$s".tgt_notificationrule_projects (
             "NOTIFICATIONRULE_ID" bigint NOT NULL
@@ -2004,12 +1941,10 @@ public final class TableRegistry {
           FROM "%1$s".src_notificationrule_projects j
           JOIN "%1$s".notificationrule_canonical_id_map rm ON rm.orig_id = j."NOTIFICATIONRULE_ID"
           LEFT JOIN "%1$s".project_canonical_id_map pm ON pm.orig_id = j."PROJECT_ID"
-        """,
-        """
+        """, """
         INSERT INTO "NOTIFICATIONRULE_PROJECTS" ("NOTIFICATIONRULE_ID", "PROJECT_ID")
         SELECT "NOTIFICATIONRULE_ID", "PROJECT_ID" FROM "%1$s".tgt_notificationrule_projects
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code PROJECT_METADATA}. PROJECT_ID is rewritten through
@@ -2018,24 +1953,20 @@ public final class TableRegistry {
      * via {@code ROW_NUMBER}. The additive v5 {@code TOOLS} column is NULL-filled.
      */
     private static final TableMigration PROJECT_METADATA = new TableMigration(
-        "PROJECT_METADATA",
-        """
+            "PROJECT_METADATA", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_project_metadata (
             "ID"         bigint NOT NULL
           , "AUTHORS"    text
           , "PROJECT_ID" bigint NOT NULL
           , "SUPPLIER"   text
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHORS"
              , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
              , "SUPPLIER"
           FROM "%s"."PROJECT_METADATA"
-        """,
-        List.of("ID", "AUTHORS", "PROJECT_ID", "SUPPLIER"),
-        """
+        """, List.of("ID", "AUTHORS", "PROJECT_ID", "SUPPLIER"), """
         DROP TABLE IF EXISTS "%1$s".tgt_project_metadata;
         CREATE UNLOGGED TABLE "%1$s".tgt_project_metadata (
             "ID"         bigint NOT NULL PRIMARY KEY
@@ -2073,8 +2004,7 @@ public final class TableRegistry {
              , NULL
           FROM ranked
          WHERE rn = 1
-        """,
-        """
+        """, """
         INSERT INTO "PROJECT_METADATA" (
             "ID"
           , "PROJECT_ID"
@@ -2088,8 +2018,7 @@ public final class TableRegistry {
              , "AUTHORS"
              , "TOOLS"
           FROM "%1$s".tgt_project_metadata
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code PROJECT_ACCESS_TEAMS}. Rewrites PROJECT_ID through
@@ -2097,20 +2026,16 @@ public final class TableRegistry {
      * v4 allows NULL TEAM_ID; v5 tightens to NOT NULL, so those rows are dropped via
      * INNER JOIN. Dedup on the composite key.
      */
-    private static final TableMigration PROJECT_ACCESS_TEAMS = new TableMigration(
-        "PROJECT_ACCESS_TEAMS",
-        """
+    private static final TableMigration PROJECT_ACCESS_TEAMS =
+            new TableMigration("PROJECT_ACCESS_TEAMS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_project_access_teams (
             "PROJECT_ID" bigint NOT NULL
           , "TEAM_ID"    bigint
         )
-        """,
-        """
+        """, """
         SELECT CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID", CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
           FROM "%s"."PROJECT_ACCESS_TEAMS"
-        """,
-        List.of("PROJECT_ID", "TEAM_ID"),
-        """
+        """, List.of("PROJECT_ID", "TEAM_ID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_project_access_teams;
         CREATE UNLOGGED TABLE "%1$s".tgt_project_access_teams (
             "PROJECT_ID" bigint NOT NULL
@@ -2124,12 +2049,10 @@ public final class TableRegistry {
           JOIN "%1$s".team_canonical_id_map tm ON tm.orig_id = j."TEAM_ID"
          WHERE j."TEAM_ID" IS NOT NULL
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "PROJECT_ACCESS_TEAMS" ("PROJECT_ID", "TEAM_ID")
         SELECT "PROJECT_ID", "TEAM_ID" FROM "%1$s".tgt_project_access_teams
-        """
-    );
+        """);
 
     /**
      * Derived {@code PROJECT_ACCESS_USERS} per pipeline §7.5 / schema-changes §7.5. Built
@@ -2137,10 +2060,8 @@ public final class TableRegistry {
      * source table for this; v5 maintains it via triggers, which the load phase disables to
      * allow the direct backfill.
      */
-    private static final TableMigration PROJECT_ACCESS_USERS = new TableMigration(
-        "PROJECT_ACCESS_USERS",
-        null, null, null,
-        """
+    private static final TableMigration PROJECT_ACCESS_USERS =
+            new TableMigration("PROJECT_ACCESS_USERS", null, null, null, """
         DROP TABLE IF EXISTS "%1$s".tgt_project_access_users;
         CREATE UNLOGGED TABLE "%1$s".tgt_project_access_users (
             "PROJECT_ID" bigint NOT NULL
@@ -2152,13 +2073,11 @@ public final class TableRegistry {
           FROM "%1$s".tgt_project_access_teams pat
           JOIN "%1$s".tgt_users_teams ut ON ut."TEAM_ID" = pat."TEAM_ID"
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "PROJECT_ACCESS_USERS" ("PROJECT_ID", "USER_ID")
         SELECT "PROJECT_ID", "USER_ID" FROM "%1$s".tgt_project_access_users
         ON CONFLICT DO NOTHING
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code PROJECTS_TAGS}. Rewrites PROJECT_ID through
@@ -2166,20 +2085,16 @@ public final class TableRegistry {
      * v4 PK is {@code (TAG_ID, PROJECT_ID)}; v5 reorders to {@code (PROJECT_ID, TAG_ID)}.
      * Dedup on the composite key.
      */
-    private static final TableMigration PROJECTS_TAGS = new TableMigration(
-        "PROJECTS_TAGS",
-        """
+    private static final TableMigration PROJECTS_TAGS =
+            new TableMigration("PROJECTS_TAGS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_projects_tags (
             "PROJECT_ID" bigint NOT NULL
           , "TAG_ID"     bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID", CAST("TAG_ID" AS bigint) AS "TAG_ID"
           FROM "%s"."PROJECTS_TAGS"
-        """,
-        List.of("PROJECT_ID", "TAG_ID"),
-        """
+        """, List.of("PROJECT_ID", "TAG_ID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_projects_tags;
         CREATE UNLOGGED TABLE "%1$s".tgt_projects_tags (
             "PROJECT_ID" bigint NOT NULL
@@ -2192,12 +2107,10 @@ public final class TableRegistry {
           JOIN "%1$s".project_canonical_id_map pm ON pm.orig_id = j."PROJECT_ID"
           JOIN "%1$s".tag_canonical_id_map tm ON tm.orig_id = j."TAG_ID"
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "PROJECTS_TAGS" ("PROJECT_ID", "TAG_ID")
         SELECT "PROJECT_ID", "TAG_ID" FROM "%1$s".tgt_projects_tags
-        """
-    );
+        """);
 
     /**
      * COMPONENT migration. Per schema-changes:
@@ -2216,8 +2129,8 @@ public final class TableRegistry {
      * {@code component_canonical_id_map} via LEFT JOIN (orphaned parents become NULL).
      */
     private static final TableMigration COMPONENT = new TableMigration(
-        "COMPONENT",
-        """
+            "COMPONENT",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_component (
             "ID"                  bigint NOT NULL
           , "AUTHORS"             text
@@ -2262,7 +2175,7 @@ public final class TableRegistry {
           , "VERSION"             varchar(255)
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHORS"
              , "BLAKE2B_256"
@@ -2307,15 +2220,49 @@ public final class TableRegistry {
           FROM "%s"."COMPONENT"
          ORDER BY "ID"
         """,
-        List.of("ID", "AUTHORS", "BLAKE2B_256", "BLAKE2B_384", "BLAKE2B_512", "BLAKE3",
-            "CLASSIFIER", "COPYRIGHT", "CPE", "DESCRIPTION", "DIRECT_DEPENDENCIES",
-            "EXTENSION", "EXTERNAL_REFERENCES", "FILENAME", "GROUP", "INTERNAL",
-            "LAST_RISKSCORE", "LICENSE", "LICENSE_EXPRESSION", "LICENSE_URL", "MD5",
-            "NAME", "TEXT", "PARENT_COMPONENT_ID", "PROJECT_ID", "PUBLISHER", "PURL",
-            "PURLCOORDINATES", "LICENSE_ID", "SCOPE", "SHA1", "SHA_256", "SHA_384",
-            "SHA3_256", "SHA3_384", "SHA3_512", "SHA_512", "SUPPLIER", "SWIDTAGID",
-            "UUID", "VERSION"),
-        """
+            List.of(
+                    "ID",
+                    "AUTHORS",
+                    "BLAKE2B_256",
+                    "BLAKE2B_384",
+                    "BLAKE2B_512",
+                    "BLAKE3",
+                    "CLASSIFIER",
+                    "COPYRIGHT",
+                    "CPE",
+                    "DESCRIPTION",
+                    "DIRECT_DEPENDENCIES",
+                    "EXTENSION",
+                    "EXTERNAL_REFERENCES",
+                    "FILENAME",
+                    "GROUP",
+                    "INTERNAL",
+                    "LAST_RISKSCORE",
+                    "LICENSE",
+                    "LICENSE_EXPRESSION",
+                    "LICENSE_URL",
+                    "MD5",
+                    "NAME",
+                    "TEXT",
+                    "PARENT_COMPONENT_ID",
+                    "PROJECT_ID",
+                    "PUBLISHER",
+                    "PURL",
+                    "PURLCOORDINATES",
+                    "LICENSE_ID",
+                    "SCOPE",
+                    "SHA1",
+                    "SHA_256",
+                    "SHA_384",
+                    "SHA3_256",
+                    "SHA3_384",
+                    "SHA3_512",
+                    "SHA_512",
+                    "SUPPLIER",
+                    "SWIDTAGID",
+                    "UUID",
+                    "VERSION"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'COMPONENT', "ID", "UUID"
           FROM "%1$s".src_component
@@ -2473,7 +2420,7 @@ public final class TableRegistry {
           LEFT JOIN "%1$s".tgt_license license_map
             ON license_map."ID" = c."LICENSE_ID"
         """,
-        """
+            """
         INSERT INTO "COMPONENT" (
             "ID"
           , "AUTHORS"
@@ -2559,8 +2506,7 @@ public final class TableRegistry {
              , "UUID"
              , "VERSION"
           FROM "%1$s".tgt_component
-        """
-    );
+        """);
 
     /**
      * SERVICECOMPONENT migration. v5 keeps the same column set as v4; only UUID widens to
@@ -2575,8 +2521,8 @@ public final class TableRegistry {
      * {@code servicecomponent_canonical_id_map} via LEFT JOIN (orphaned parents become NULL).
      */
     private static final TableMigration SERVICECOMPONENT = new TableMigration(
-        "SERVICECOMPONENT",
-        """
+            "SERVICECOMPONENT",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_servicecomponent (
             "ID"                         bigint NOT NULL
           , "AUTHENTICATED"              boolean
@@ -2596,7 +2542,7 @@ public final class TableRegistry {
           , "VERSION"                    varchar(255)
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "AUTHENTICATED"
              , "X_TRUST_BOUNDARY"
@@ -2616,11 +2562,24 @@ public final class TableRegistry {
           FROM "%s"."SERVICECOMPONENT"
          ORDER BY "ID"
         """,
-        List.of("ID", "AUTHENTICATED", "X_TRUST_BOUNDARY", "DATA", "DESCRIPTION",
-            "ENDPOINTS", "EXTERNAL_REFERENCES", "GROUP", "LAST_RISKSCORE", "NAME",
-            "TEXT", "PARENT_SERVICECOMPONENT_ID", "PROJECT_ID", "PROVIDER_ID",
-            "UUID", "VERSION"),
-        """
+            List.of(
+                    "ID",
+                    "AUTHENTICATED",
+                    "X_TRUST_BOUNDARY",
+                    "DATA",
+                    "DESCRIPTION",
+                    "ENDPOINTS",
+                    "EXTERNAL_REFERENCES",
+                    "GROUP",
+                    "LAST_RISKSCORE",
+                    "NAME",
+                    "TEXT",
+                    "PARENT_SERVICECOMPONENT_ID",
+                    "PROJECT_ID",
+                    "PROVIDER_ID",
+                    "UUID",
+                    "VERSION"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'SERVICECOMPONENT', "ID", "UUID"
           FROM "%1$s".src_servicecomponent
@@ -2698,7 +2657,7 @@ public final class TableRegistry {
           LEFT JOIN "%1$s".servicecomponent_canonical_id_map parent_map
             ON parent_map.orig_id = s."PARENT_SERVICECOMPONENT_ID"
         """,
-        """
+            """
         INSERT INTO "SERVICECOMPONENT" (
             "ID"
           , "AUTHENTICATED"
@@ -2734,16 +2693,15 @@ public final class TableRegistry {
              , "UUID"
              , "VERSION"
           FROM "%1$s".tgt_servicecomponent
-        """
-    );
+        """);
 
     /**
      * Source-only v4 {@code REPOSITORY_META_COMPONENT}. No 1:1 v5 counterpart; consumed by
      * the derived {@code PACKAGE_METADATA} transform per schema-changes §7.7.
      */
     private static final TableMigration REPOSITORY_META_COMPONENT = new TableMigration(
-        "REPOSITORY_META_COMPONENT",
-        """
+            "REPOSITORY_META_COMPONENT",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_repository_meta_component (
             "ID"              bigint NOT NULL
           , "LAST_CHECK"      timestamptz NOT NULL
@@ -2754,7 +2712,7 @@ public final class TableRegistry {
           , "REPOSITORY_TYPE" varchar(255) NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "LAST_CHECK"
              , "LATEST_VERSION"
@@ -2765,11 +2723,9 @@ public final class TableRegistry {
           FROM "%s"."REPOSITORY_META_COMPONENT"
          ORDER BY "ID"
         """,
-        List.of("ID", "LAST_CHECK", "LATEST_VERSION", "NAME", "NAMESPACE",
-            "PUBLISHED", "REPOSITORY_TYPE"),
-        null,
-        null
-    );
+            List.of("ID", "LAST_CHECK", "LATEST_VERSION", "NAME", "NAMESPACE", "PUBLISHED", "REPOSITORY_TYPE"),
+            null,
+            null);
 
     /**
      * Derived {@code PACKAGE_METADATA} per schema-changes §7.7 / Liquibase changeset
@@ -2789,10 +2745,8 @@ public final class TableRegistry {
      * same package appears in thousands of components, producing a multi-million-row
      * intermediate result that {@code DISTINCT ON} then has to sort to disk.
      */
-    private static final TableMigration PACKAGE_METADATA = new TableMigration(
-        "PACKAGE_METADATA",
-        null, null, null,
-        """
+    private static final TableMigration PACKAGE_METADATA =
+            new TableMigration("PACKAGE_METADATA", null, null, null, """
         DROP TABLE IF EXISTS "%1$s".tgt_package_metadata;
         CREATE UNLOGGED TABLE "%1$s".tgt_package_metadata (
             "PURL"                        text NOT NULL
@@ -2839,8 +2793,7 @@ public final class TableRegistry {
            AND cu."PURL" NOT LIKE '%%&%%'
            AND cu."PURL" NOT LIKE '%%#%%'
          ORDER BY cu."PURL", rmc."LAST_CHECK" DESC NULLS LAST
-        """,
-        """
+        """, """
         INSERT INTO "PACKAGE_METADATA" (
             "PURL"
           , "LATEST_VERSION"
@@ -2856,8 +2809,7 @@ public final class TableRegistry {
              , "RESOLVED_FROM"
              , "RESOLVED_AT"
           FROM "%1$s".tgt_package_metadata
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code APIKEY}. v4 has already run {@code ApiKeyMigrationChange}, so
@@ -2865,8 +2817,8 @@ public final class TableRegistry {
      * no plaintext column. No UUID, no FK rewrites. v5 IDs are preserved.
      */
     private static final TableMigration APIKEY = new TableMigration(
-        "APIKEY",
-        """
+            "APIKEY",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_apikey (
             "ID"          bigint NOT NULL
           , "COMMENT"     varchar(255)
@@ -2877,7 +2829,7 @@ public final class TableRegistry {
           , "SECRET_HASH" varchar(64) NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "COMMENT"
              , "CREATED"
@@ -2888,8 +2840,8 @@ public final class TableRegistry {
           FROM "%s"."APIKEY"
          ORDER BY "ID"
         """,
-        List.of("ID", "COMMENT", "CREATED", "IS_LEGACY", "LAST_USED", "PUBLIC_ID", "SECRET_HASH"),
-        """
+            List.of("ID", "COMMENT", "CREATED", "IS_LEGACY", "LAST_USED", "PUBLIC_ID", "SECRET_HASH"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_apikey;
         CREATE UNLOGGED TABLE "%1$s".tgt_apikey (
             "ID"          bigint NOT NULL PRIMARY KEY
@@ -2918,7 +2870,7 @@ public final class TableRegistry {
              , "SECRET_HASH"
           FROM "%1$s".src_apikey
         """,
-        """
+            """
         INSERT INTO "APIKEY" (
             "ID"
           , "COMMENT"
@@ -2936,8 +2888,7 @@ public final class TableRegistry {
              , "PUBLIC_ID"
              , "SECRET_HASH"
           FROM "%1$s".tgt_apikey
-        """
-    );
+        """);
 
     /**
      * Pure join migration of {@code APIKEYS_TEAMS}. {@code TEAM_ID} is rewritten through
@@ -2945,20 +2896,16 @@ public final class TableRegistry {
      * composite PK {@code (TEAM_ID, APIKEY_ID)} and the staging tgt enforces it to dedup
      * any v4 duplicates.
      */
-    private static final TableMigration APIKEYS_TEAMS = new TableMigration(
-        "APIKEYS_TEAMS",
-        """
+    private static final TableMigration APIKEYS_TEAMS =
+            new TableMigration("APIKEYS_TEAMS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_apikeys_teams (
             "TEAM_ID"   bigint NOT NULL
           , "APIKEY_ID" bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("APIKEY_ID" AS bigint) AS "APIKEY_ID"
           FROM "%s"."APIKEYS_TEAMS"
-        """,
-        List.of("TEAM_ID", "APIKEY_ID"),
-        """
+        """, List.of("TEAM_ID", "APIKEY_ID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_apikeys_teams;
         CREATE UNLOGGED TABLE "%1$s".tgt_apikeys_teams (
             "TEAM_ID"   bigint NOT NULL
@@ -2970,12 +2917,10 @@ public final class TableRegistry {
           FROM "%1$s".src_apikeys_teams j
           JOIN "%1$s".team_canonical_id_map m ON m.orig_id = j."TEAM_ID"
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "APIKEYS_TEAMS" ("TEAM_ID", "APIKEY_ID")
         SELECT "TEAM_ID", "APIKEY_ID" FROM "%1$s".tgt_apikeys_teams
-        """
-    );
+        """);
 
     /**
      * Pure join migration of {@code TEAMS_PERMISSIONS}. {@code TEAM_ID} is rewritten through
@@ -2985,20 +2930,16 @@ public final class TableRegistry {
      * composite PK {@code (TEAM_ID, PERMISSION_ID)} and the staging tgt enforces it to dedup
      * any v4 duplicates.
      */
-    private static final TableMigration TEAMS_PERMISSIONS = new TableMigration(
-        "TEAMS_PERMISSIONS",
-        """
+    private static final TableMigration TEAMS_PERMISSIONS =
+            new TableMigration("TEAMS_PERMISSIONS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_teams_permissions (
             "TEAM_ID"       bigint NOT NULL
           , "PERMISSION_ID" bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("TEAM_ID" AS bigint) AS "TEAM_ID", CAST("PERMISSION_ID" AS bigint) AS "PERMISSION_ID"
           FROM "%s"."TEAMS_PERMISSIONS"
-        """,
-        List.of("TEAM_ID", "PERMISSION_ID"),
-        """
+        """, List.of("TEAM_ID", "PERMISSION_ID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_teams_permissions;
         CREATE UNLOGGED TABLE "%1$s".tgt_teams_permissions (
             "TEAM_ID"       bigint NOT NULL
@@ -3025,12 +2966,10 @@ public final class TableRegistry {
           END
          WHERE src."NAME" IN ('ACCESS_MANAGEMENT', 'SYSTEM_CONFIGURATION')
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "TEAMS_PERMISSIONS" ("TEAM_ID", "PERMISSION_ID")
         SELECT "TEAM_ID", "PERMISSION_ID" FROM "%1$s".tgt_teams_permissions
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code MAPPEDLDAPGROUP}. {@code TEAM_ID} is rewritten through
@@ -3042,26 +2981,22 @@ public final class TableRegistry {
      * The staging tgt enforces the composite key and {@code DISTINCT ON} keeps {@code MIN(ID)},
      * matching the canonical-ID convention and keeping reruns deterministic.
      */
-    private static final TableMigration MAPPEDLDAPGROUP = new TableMigration(
-        "MAPPEDLDAPGROUP",
-        """
+    private static final TableMigration MAPPEDLDAPGROUP =
+            new TableMigration("MAPPEDLDAPGROUP", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_mappedldapgroup (
             "ID"      bigint NOT NULL
           , "DN"      varchar(1024) NOT NULL
           , "TEAM_ID" bigint NOT NULL
           , "UUID"    varchar(36) NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "DN"
              , CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
              , "UUID"
           FROM "%s"."MAPPEDLDAPGROUP"
          ORDER BY "ID"
-        """,
-        List.of("ID", "DN", "TEAM_ID", "UUID"),
-        """
+        """, List.of("ID", "DN", "TEAM_ID", "UUID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_mappedldapgroup;
         CREATE UNLOGGED TABLE "%1$s".tgt_mappedldapgroup (
             "ID"      bigint NOT NULL PRIMARY KEY
@@ -3084,8 +3019,7 @@ public final class TableRegistry {
           FROM "%1$s".src_mappedldapgroup s
           JOIN "%1$s".team_canonical_id_map tm ON tm.orig_id = s."TEAM_ID"
          ORDER BY tm.canonical_id, s."DN", s."ID"
-        """,
-        """
+        """, """
         INSERT INTO "MAPPEDLDAPGROUP" (
             "ID"
           , "DN"
@@ -3096,8 +3030,7 @@ public final class TableRegistry {
              , "DN"
              , "TEAM_ID"
              , "UUID" FROM "%1$s".tgt_mappedldapgroup
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code MAPPEDOIDCGROUP}. {@code TEAM_ID} is rewritten through
@@ -3111,26 +3044,22 @@ public final class TableRegistry {
      * enforces the composite key and {@code DISTINCT ON} keeps {@code MIN(ID)}, matching the
      * canonical-ID convention and keeping reruns deterministic.
      */
-    private static final TableMigration MAPPEDOIDCGROUP = new TableMigration(
-        "MAPPEDOIDCGROUP",
-        """
+    private static final TableMigration MAPPEDOIDCGROUP =
+            new TableMigration("MAPPEDOIDCGROUP", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_mappedoidcgroup (
             "ID"       bigint NOT NULL
           , "GROUP_ID" bigint NOT NULL
           , "TEAM_ID"  bigint NOT NULL
           , "UUID"     varchar(36) NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID"
              , CAST("GROUP_ID" AS bigint) AS "GROUP_ID"
              , CAST("TEAM_ID" AS bigint) AS "TEAM_ID"
              , "UUID"
           FROM "%s"."MAPPEDOIDCGROUP"
          ORDER BY "ID"
-        """,
-        List.of("ID", "GROUP_ID", "TEAM_ID", "UUID"),
-        """
+        """, List.of("ID", "GROUP_ID", "TEAM_ID", "UUID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_mappedoidcgroup;
         CREATE UNLOGGED TABLE "%1$s".tgt_mappedoidcgroup (
             "ID"       bigint NOT NULL PRIMARY KEY
@@ -3154,8 +3083,7 @@ public final class TableRegistry {
           JOIN "%1$s".team_canonical_id_map     tm ON tm.orig_id = s."TEAM_ID"
           JOIN "%1$s".oidcgroup_canonical_id_map gm ON gm.orig_id = s."GROUP_ID"
          ORDER BY tm.canonical_id, gm.canonical_id, s."ID"
-        """,
-        """
+        """, """
         INSERT INTO "MAPPEDOIDCGROUP" (
             "ID"
           , "GROUP_ID"
@@ -3166,8 +3094,7 @@ public final class TableRegistry {
              , "GROUP_ID"
              , "TEAM_ID"
              , "UUID" FROM "%1$s".tgt_mappedoidcgroup
-        """
-    );
+        """);
 
     /**
      * VULNERABILITY migration. Per schema-changes:
@@ -3182,8 +3109,8 @@ public final class TableRegistry {
      * join tables INNER JOIN this map to drop rows pointing at malformed-UUID vulnerabilities.
      */
     private static final TableMigration VULNERABILITY = new TableMigration(
-        "VULNERABILITY",
-        """
+            "VULNERABILITY",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_vulnerability (
             "ID"                          bigint NOT NULL
           , "CREATED"                     timestamp with time zone
@@ -3222,7 +3149,7 @@ public final class TableRegistry {
           , "VULNERABLEVERSIONS"          varchar(255)
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "CREATED"
              , "CREDITS"
@@ -3261,15 +3188,43 @@ public final class TableRegistry {
           FROM "%s"."VULNERABILITY"
          ORDER BY "ID"
         """,
-        List.of("ID", "CREATED", "CREDITS", "CVSSV2BASESCORE", "CVSSV2EXPLOITSCORE",
-            "CVSSV2IMPACTSCORE", "CVSSV2VECTOR", "CVSSV3BASESCORE", "CVSSV3EXPLOITSCORE",
-            "CVSSV3IMPACTSCORE", "CVSSV3VECTOR", "CVSSV4SCORE", "CVSSV4VECTOR", "CWES",
-            "DESCRIPTION", "DETAIL", "EPSSPERCENTILE", "EPSSSCORE", "FRIENDLYVULNID",
-            "OWASPRRBUSINESSIMPACTSCORE", "OWASPRRLIKELIHOODSCORE",
-            "OWASPRRTECHNICALIMPACTSCORE", "OWASPRRVECTOR", "PATCHEDVERSIONS", "PUBLISHED",
-            "RECOMMENDATION", "REFERENCES", "SEVERITY", "SOURCE", "SUBTITLE", "TITLE",
-            "UPDATED", "UUID", "VULNID", "VULNERABLEVERSIONS"),
-        """
+            List.of(
+                    "ID",
+                    "CREATED",
+                    "CREDITS",
+                    "CVSSV2BASESCORE",
+                    "CVSSV2EXPLOITSCORE",
+                    "CVSSV2IMPACTSCORE",
+                    "CVSSV2VECTOR",
+                    "CVSSV3BASESCORE",
+                    "CVSSV3EXPLOITSCORE",
+                    "CVSSV3IMPACTSCORE",
+                    "CVSSV3VECTOR",
+                    "CVSSV4SCORE",
+                    "CVSSV4VECTOR",
+                    "CWES",
+                    "DESCRIPTION",
+                    "DETAIL",
+                    "EPSSPERCENTILE",
+                    "EPSSSCORE",
+                    "FRIENDLYVULNID",
+                    "OWASPRRBUSINESSIMPACTSCORE",
+                    "OWASPRRLIKELIHOODSCORE",
+                    "OWASPRRTECHNICALIMPACTSCORE",
+                    "OWASPRRVECTOR",
+                    "PATCHEDVERSIONS",
+                    "PUBLISHED",
+                    "RECOMMENDATION",
+                    "REFERENCES",
+                    "SEVERITY",
+                    "SOURCE",
+                    "SUBTITLE",
+                    "TITLE",
+                    "UPDATED",
+                    "UUID",
+                    "VULNID",
+                    "VULNERABLEVERSIONS"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'VULNERABILITY', "ID", "UUID"
           FROM "%1$s".src_vulnerability
@@ -3399,7 +3354,7 @@ public final class TableRegistry {
           FROM "%1$s".src_vulnerability
          WHERE "UUID" ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
         """,
-        """
+            """
         INSERT INTO "VULNERABILITY" (
             "ID"
           , "CREATED"
@@ -3469,8 +3424,7 @@ public final class TableRegistry {
              , "VULNID"
              , "VULNERABLEVERSIONS"
           FROM "%1$s".tgt_vulnerability
-        """
-    );
+        """);
 
     /**
      * VULNERABLESOFTWARE migration. Per schema-changes:
@@ -3487,8 +3441,8 @@ public final class TableRegistry {
      * VULNERABLESOFTWARE_VULNERABILITIES) drop transitively-orphaned rows consistently.
      */
     private static final TableMigration VULNERABLESOFTWARE = new TableMigration(
-        "VULNERABLESOFTWARE",
-        """
+            "VULNERABLESOFTWARE",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_vulnerablesoftware (
             "ID"                    bigint NOT NULL
           , "CPE22"                 varchar(255)
@@ -3519,7 +3473,7 @@ public final class TableRegistry {
           , "VULNERABLE"            boolean NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "CPE22"
              , "CPE23"
@@ -3550,12 +3504,35 @@ public final class TableRegistry {
           FROM "%s"."VULNERABLESOFTWARE"
          ORDER BY "ID"
         """,
-        List.of("ID", "CPE22", "CPE23", "EDITION", "LANGUAGE", "OTHER", "PART", "PRODUCT",
-            "PURL", "PURL_NAME", "PURL_NAMESPACE", "PURL_QUALIFIERS", "PURL_SUBPATH",
-            "PURL_TYPE", "PURL_VERSION", "SWEDITION", "TARGETHW", "TARGETSW", "UPDATE",
-            "UUID", "VENDOR", "VERSION", "VERSIONENDEXCLUDING", "VERSIONENDINCLUDING",
-            "VERSIONSTARTEXCLUDING", "VERSIONSTARTINCLUDING", "VULNERABLE"),
-        """
+            List.of(
+                    "ID",
+                    "CPE22",
+                    "CPE23",
+                    "EDITION",
+                    "LANGUAGE",
+                    "OTHER",
+                    "PART",
+                    "PRODUCT",
+                    "PURL",
+                    "PURL_NAME",
+                    "PURL_NAMESPACE",
+                    "PURL_QUALIFIERS",
+                    "PURL_SUBPATH",
+                    "PURL_TYPE",
+                    "PURL_VERSION",
+                    "SWEDITION",
+                    "TARGETHW",
+                    "TARGETSW",
+                    "UPDATE",
+                    "UUID",
+                    "VENDOR",
+                    "VERSION",
+                    "VERSIONENDEXCLUDING",
+                    "VERSIONENDINCLUDING",
+                    "VERSIONSTARTEXCLUDING",
+                    "VERSIONSTARTINCLUDING",
+                    "VULNERABLE"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'VULNERABLESOFTWARE', "ID", "UUID"
           FROM "%1$s".src_vulnerablesoftware
@@ -3671,7 +3648,7 @@ public final class TableRegistry {
                 WHERE j."VULNERABLESOFTWARE_ID" = s."ID"
            )
         """,
-        """
+            """
         INSERT INTO "VULNERABLESOFTWARE" (
             "ID"
           , "CPE22"
@@ -3729,15 +3706,13 @@ public final class TableRegistry {
              , "VERSIONSTARTINCLUDING"
              , "VULNERABLE"
           FROM "%1$s".tgt_vulnerablesoftware
-        """
-    );
+        """);
 
     /**
      * VULNERABILITYMETRICS migration. Trivial pass-through; no UUID, no probe.
      */
     private static final TableMigration VULNERABILITYMETRICS = new TableMigration(
-        "VULNERABILITYMETRICS",
-        """
+            "VULNERABILITYMETRICS", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_vulnerabilitymetrics (
             "ID"          bigint NOT NULL
           , "COUNT"       integer NOT NULL
@@ -3745,8 +3720,7 @@ public final class TableRegistry {
           , "MONTH"       integer
           , "YEAR"        integer NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "COUNT"
              , "MEASURED_AT"
@@ -3754,9 +3728,7 @@ public final class TableRegistry {
              , "YEAR"
           FROM "%s"."VULNERABILITYMETRICS"
          ORDER BY "ID"
-        """,
-        List.of("ID", "COUNT", "MEASURED_AT", "MONTH", "YEAR"),
-        """
+        """, List.of("ID", "COUNT", "MEASURED_AT", "MONTH", "YEAR"), """
         DROP TABLE IF EXISTS "%1$s".tgt_vulnerabilitymetrics;
         CREATE UNLOGGED TABLE "%1$s".tgt_vulnerabilitymetrics (
             "ID"          bigint NOT NULL PRIMARY KEY
@@ -3778,8 +3750,7 @@ public final class TableRegistry {
              , "MONTH"
              , "YEAR"
           FROM "%1$s".src_vulnerabilitymetrics
-        """,
-        """
+        """, """
         INSERT INTO "VULNERABILITYMETRICS" (
             "ID"
           , "COUNT"
@@ -3793,16 +3764,15 @@ public final class TableRegistry {
              , "MONTH"
              , "YEAR"
           FROM "%1$s".tgt_vulnerabilitymetrics
-        """
-    );
+        """);
 
     /**
      * Source-only mirror of v4 {@code VULNERABILITYALIAS}. Consumed by the derived
      * {@code VULNERABILITY_ALIAS} transform; the wide v4 row has no 1:1 v5 counterpart.
      */
     private static final TableMigration VULNERABILITYALIAS = new TableMigration(
-        "VULNERABILITYALIAS",
-        """
+            "VULNERABILITYALIAS",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_vulnerabilityalias (
             "ID"          bigint NOT NULL
           , "CVE_ID"      varchar(255)
@@ -3816,7 +3786,7 @@ public final class TableRegistry {
           , "UUID"        varchar(36) NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "CVE_ID"
              , "GHSA_ID"
@@ -3830,11 +3800,19 @@ public final class TableRegistry {
           FROM "%s"."VULNERABILITYALIAS"
          ORDER BY "ID"
         """,
-        List.of("ID", "CVE_ID", "GHSA_ID", "GSD_ID", "INTERNAL_ID",
-            "OSV_ID", "SNYK_ID", "SONATYPE_ID", "VULNDB_ID", "UUID"),
-        null,
-        null
-    );
+            List.of(
+                    "ID",
+                    "CVE_ID",
+                    "GHSA_ID",
+                    "GSD_ID",
+                    "INTERNAL_ID",
+                    "OSV_ID",
+                    "SNYK_ID",
+                    "SONATYPE_ID",
+                    "VULNDB_ID",
+                    "UUID"),
+            null,
+            null);
 
     /**
      * Normalizes the wide v4 {@code VULNERABILITYALIAS} into the v5
@@ -3855,10 +3833,8 @@ public final class TableRegistry {
      * the grouping and pair enumeration share a single pass. The follow-on
      * {@link #VULNERABILITY_ALIAS_ASSERTION} entry is load-only.
      */
-    private static final TableMigration VULNERABILITY_ALIAS = new TableMigration(
-        "VULNERABILITY_ALIAS",
-        null, null, null,
-        """
+    private static final TableMigration VULNERABILITY_ALIAS =
+            new TableMigration("VULNERABILITY_ALIAS", null, null, null, """
         DROP TABLE IF EXISTS "%1$s".tgt_vulnerability_alias;
         DROP TABLE IF EXISTS "%1$s".tgt_vulnerability_alias_assertion;
         DROP TABLE IF EXISTS "%1$s".alias_flattened;
@@ -3991,23 +3967,18 @@ public final class TableRegistry {
           JOIN "%1$s".tgt_vulnerability_alias b
             ON a."GROUP_ID" = b."GROUP_ID"
            AND (a."SOURCE", a."VULN_ID") < (b."SOURCE", b."VULN_ID")
-        """,
-        """
+        """, """
         INSERT INTO "VULNERABILITY_ALIAS" ("GROUP_ID", "SOURCE", "VULN_ID")
         SELECT "GROUP_ID", "SOURCE", "VULN_ID"
           FROM "%1$s".tgt_vulnerability_alias
-        """
-    );
+        """);
 
     /**
      * Load-only sibling of {@link #VULNERABILITY_ALIAS}. The assertion staging table is
      * produced by the alias transform; this entry just copies it into the v5 table.
      */
-    private static final TableMigration VULNERABILITY_ALIAS_ASSERTION = new TableMigration(
-        "VULNERABILITY_ALIAS_ASSERTION",
-        null, null, null,
-        null,
-        """
+    private static final TableMigration VULNERABILITY_ALIAS_ASSERTION =
+            new TableMigration("VULNERABILITY_ALIAS_ASSERTION", null, null, null, null, """
         INSERT INTO "VULNERABILITY_ALIAS_ASSERTION"
             ("ASSERTER", "VULN_SOURCE", "VULN_ID", "ALIAS_SOURCE", "ALIAS_ID")
         SELECT "ASSERTER"
@@ -4016,8 +3987,7 @@ public final class TableRegistry {
              , "ALIAS_SOURCE"
              , "ALIAS_ID"
           FROM "%1$s".tgt_vulnerability_alias_assertion
-        """
-    );
+        """);
 
     /**
      * Pure join migration of {@code COMPONENTS_VULNERABILITIES}. Both sides are rewritten
@@ -4026,19 +3996,15 @@ public final class TableRegistry {
      * key, so the staging tgt uses it as PK with {@code ON CONFLICT DO NOTHING}.
      */
     private static final TableMigration COMPONENTS_VULNERABILITIES = new TableMigration(
-        "COMPONENTS_VULNERABILITIES",
-        """
+            "COMPONENTS_VULNERABILITIES", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_components_vulnerabilities (
             "COMPONENT_ID"     bigint NOT NULL
           , "VULNERABILITY_ID" bigint NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID", CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID"
           FROM "%s"."COMPONENTS_VULNERABILITIES"
-        """,
-        List.of("COMPONENT_ID", "VULNERABILITY_ID"),
-        """
+        """, List.of("COMPONENT_ID", "VULNERABILITY_ID"), """
         DROP TABLE IF EXISTS "%1$s".tgt_components_vulnerabilities;
         CREATE UNLOGGED TABLE "%1$s".tgt_components_vulnerabilities (
             "COMPONENT_ID"     bigint NOT NULL
@@ -4051,12 +4017,10 @@ public final class TableRegistry {
           JOIN "%1$s".component_canonical_id_map cm ON cm.orig_id = j."COMPONENT_ID"
           JOIN "%1$s".vulnerability_canonical_id_map vm ON vm.orig_id = j."VULNERABILITY_ID"
         ON CONFLICT DO NOTHING
-        """,
-        """
+        """, """
         INSERT INTO "COMPONENTS_VULNERABILITIES" ("COMPONENT_ID", "VULNERABILITY_ID")
         SELECT "COMPONENT_ID", "VULNERABILITY_ID" FROM "%1$s".tgt_components_vulnerabilities
-        """
-    );
+        """);
 
     /**
      * Pure join migration of {@code SERVICECOMPONENTS_VULNERABILITIES}. Both sides are
@@ -4066,19 +4030,19 @@ public final class TableRegistry {
      * on the staging tgt is sufficient for dedup.
      */
     private static final TableMigration SERVICECOMPONENTS_VULNERABILITIES = new TableMigration(
-        "SERVICECOMPONENTS_VULNERABILITIES",
-        """
+            "SERVICECOMPONENTS_VULNERABILITIES",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_servicecomponents_vulnerabilities (
             "VULNERABILITY_ID"    bigint NOT NULL
           , "SERVICECOMPONENT_ID" bigint NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID", CAST("SERVICECOMPONENT_ID" AS bigint) AS "SERVICECOMPONENT_ID"
           FROM "%s"."SERVICECOMPONENTS_VULNERABILITIES"
         """,
-        List.of("VULNERABILITY_ID", "SERVICECOMPONENT_ID"),
-        """
+            List.of("VULNERABILITY_ID", "SERVICECOMPONENT_ID"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_servicecomponents_vulnerabilities;
         CREATE UNLOGGED TABLE "%1$s".tgt_servicecomponents_vulnerabilities (
             "VULNERABILITY_ID"    bigint NOT NULL
@@ -4092,11 +4056,10 @@ public final class TableRegistry {
           JOIN "%1$s".servicecomponent_canonical_id_map sm ON sm.orig_id = j."SERVICECOMPONENT_ID"
         ON CONFLICT DO NOTHING
         """,
-        """
+            """
         INSERT INTO "SERVICECOMPONENTS_VULNERABILITIES" ("VULNERABILITY_ID", "SERVICECOMPONENT_ID")
         SELECT "VULNERABILITY_ID", "SERVICECOMPONENT_ID" FROM "%1$s".tgt_servicecomponents_vulnerabilities
-        """
-    );
+        """);
 
     /**
      * Pure join migration of {@code VULNERABLESOFTWARE_VULNERABILITIES}. Both sides are
@@ -4106,19 +4069,19 @@ public final class TableRegistry {
      * on the staging tgt is sufficient for dedup.
      */
     private static final TableMigration VULNERABLESOFTWARE_VULNERABILITIES = new TableMigration(
-        "VULNERABLESOFTWARE_VULNERABILITIES",
-        """
+            "VULNERABLESOFTWARE_VULNERABILITIES",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_vulnerablesoftware_vulnerabilities (
             "VULNERABILITY_ID"      bigint NOT NULL
           , "VULNERABLESOFTWARE_ID" bigint NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("VULNERABILITY_ID" AS bigint) AS "VULNERABILITY_ID", CAST("VULNERABLESOFTWARE_ID" AS bigint) AS "VULNERABLESOFTWARE_ID"
           FROM "%s"."VULNERABLESOFTWARE_VULNERABILITIES"
         """,
-        List.of("VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"),
-        """
+            List.of("VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_vulnerablesoftware_vulnerabilities;
         CREATE UNLOGGED TABLE "%1$s".tgt_vulnerablesoftware_vulnerabilities (
             "VULNERABILITY_ID"      bigint NOT NULL
@@ -4132,12 +4095,11 @@ public final class TableRegistry {
           JOIN "%1$s".vulnerablesoftware_canonical_id_map sm ON sm.orig_id = j."VULNERABLESOFTWARE_ID"
         ON CONFLICT DO NOTHING
         """,
-        """
+            """
         INSERT INTO "VULNERABLESOFTWARE_VULNERABILITIES" ("VULNERABILITY_ID", "VULNERABLESOFTWARE_ID")
         SELECT "VULNERABILITY_ID", "VULNERABLESOFTWARE_ID"
           FROM "%1$s".tgt_vulnerablesoftware_vulnerabilities
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code AFFECTEDVERSIONATTRIBUTION}. v5 drops the {@code UUID} column
@@ -4148,8 +4110,8 @@ public final class TableRegistry {
      * v4 IDs are preserved.
      */
     private static final TableMigration AFFECTEDVERSIONATTRIBUTION = new TableMigration(
-        "AFFECTEDVERSIONATTRIBUTION",
-        """
+            "AFFECTEDVERSIONATTRIBUTION",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_affectedversionattribution (
             "ID"                 bigint NOT NULL
           , "FIRST_SEEN"         timestamptz NOT NULL
@@ -4160,7 +4122,7 @@ public final class TableRegistry {
           , "VULNERABLE_SOFTWARE" bigint NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "FIRST_SEEN"
              , "LAST_SEEN"
@@ -4171,8 +4133,8 @@ public final class TableRegistry {
           FROM "%s"."AFFECTEDVERSIONATTRIBUTION"
          ORDER BY "ID"
         """,
-        List.of("ID", "FIRST_SEEN", "LAST_SEEN", "SOURCE", "UUID", "VULNERABILITY", "VULNERABLE_SOFTWARE"),
-        """
+            List.of("ID", "FIRST_SEEN", "LAST_SEEN", "SOURCE", "UUID", "VULNERABILITY", "VULNERABLE_SOFTWARE"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_affectedversionattribution;
         CREATE UNLOGGED TABLE "%1$s".tgt_affectedversionattribution (
             "ID"                  bigint NOT NULL PRIMARY KEY
@@ -4200,7 +4162,7 @@ public final class TableRegistry {
           JOIN "%1$s".vulnerability_canonical_id_map vm ON vm.orig_id = a."VULNERABILITY"
           JOIN "%1$s".vulnerablesoftware_canonical_id_map sm ON sm.orig_id = a."VULNERABLE_SOFTWARE"
         """,
-        """
+            """
         INSERT INTO "AFFECTEDVERSIONATTRIBUTION" (
             "ID"
           , "FIRST_SEEN"
@@ -4216,8 +4178,7 @@ public final class TableRegistry {
              , "VULNERABILITY"
              , "VULNERABLE_SOFTWARE"
           FROM "%1$s".tgt_affectedversionattribution
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code BOM}. UUID converts to native {@code uuid}; malformed-UUID rows
@@ -4227,8 +4188,8 @@ public final class TableRegistry {
      * column, NULL-filled on import (schema-changes §8). v4 IDs are preserved.
      */
     private static final TableMigration BOM = new TableMigration(
-        "BOM",
-        """
+            "BOM",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_bom (
             "ID"            bigint NOT NULL
           , "BOM_FORMAT"    varchar(255)
@@ -4240,7 +4201,7 @@ public final class TableRegistry {
           , "UUID"          varchar(36) NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "BOM_FORMAT"
              , "BOM_VERSION"
@@ -4252,9 +4213,16 @@ public final class TableRegistry {
           FROM "%s"."BOM"
          ORDER BY "ID"
         """,
-        List.of("ID", "BOM_FORMAT", "BOM_VERSION", "IMPORTED", "PROJECT_ID",
-            "SERIAL_NUMBER", "SPEC_VERSION", "UUID"),
-        """
+            List.of(
+                    "ID",
+                    "BOM_FORMAT",
+                    "BOM_VERSION",
+                    "IMPORTED",
+                    "PROJECT_ID",
+                    "SERIAL_NUMBER",
+                    "SPEC_VERSION",
+                    "UUID"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'BOM', "ID", "UUID"
           FROM "%1$s".src_bom
@@ -4297,7 +4265,7 @@ public final class TableRegistry {
           JOIN "%1$s".project_canonical_id_map pm ON pm.orig_id = b."PROJECT_ID"
          WHERE b."UUID" ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
         """,
-        """
+            """
         INSERT INTO "BOM" (
             "ID"
           , "BOM_FORMAT"
@@ -4319,8 +4287,7 @@ public final class TableRegistry {
              , "UUID"
              , "GENERATED"
           FROM "%1$s".tgt_bom
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code VEX}. UUID converts to native {@code uuid}; malformed-UUID rows
@@ -4329,8 +4296,8 @@ public final class TableRegistry {
      * project was excluded for a malformed UUID. v4 IDs are preserved.
      */
     private static final TableMigration VEX = new TableMigration(
-        "VEX",
-        """
+            "VEX",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_vex (
             "ID"            bigint NOT NULL
           , "IMPORTED"      timestamptz NOT NULL
@@ -4342,7 +4309,7 @@ public final class TableRegistry {
           , "VEX_VERSION"   integer
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "IMPORTED"
              , CAST("PROJECT_ID" AS bigint) AS "PROJECT_ID"
@@ -4354,9 +4321,16 @@ public final class TableRegistry {
           FROM "%s"."VEX"
          ORDER BY "ID"
         """,
-        List.of("ID", "IMPORTED", "PROJECT_ID", "SERIAL_NUMBER", "SPEC_VERSION",
-            "UUID", "VEX_FORMAT", "VEX_VERSION"),
-        """
+            List.of(
+                    "ID",
+                    "IMPORTED",
+                    "PROJECT_ID",
+                    "SERIAL_NUMBER",
+                    "SPEC_VERSION",
+                    "UUID",
+                    "VEX_FORMAT",
+                    "VEX_VERSION"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'VEX', "ID", "UUID"
           FROM "%1$s".src_vex
@@ -4396,7 +4370,7 @@ public final class TableRegistry {
           JOIN "%1$s".project_canonical_id_map pm ON pm.orig_id = v."PROJECT_ID"
          WHERE v."UUID" ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
         """,
-        """
+            """
         INSERT INTO "VEX" (
             "ID"
           , "IMPORTED"
@@ -4416,8 +4390,7 @@ public final class TableRegistry {
              , "VEX_FORMAT"
              , "VEX_VERSION"
           FROM "%1$s".tgt_vex
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code FINDINGATTRIBUTION} with 3-column dedup on
@@ -4430,8 +4403,8 @@ public final class TableRegistry {
      * {@code ATTRIBUTED_ON} (then highest ID). v4 IDs are preserved.
      */
     private static final TableMigration FINDINGATTRIBUTION = new TableMigration(
-        "FINDINGATTRIBUTION",
-        """
+            "FINDINGATTRIBUTION",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_findingattribution (
             "ID"               bigint NOT NULL
           , "ALT_ID"           varchar(255)
@@ -4444,7 +4417,7 @@ public final class TableRegistry {
           , "VULNERABILITY_ID" bigint NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "ALT_ID"
              , "ANALYZERIDENTITY"
@@ -4457,9 +4430,17 @@ public final class TableRegistry {
           FROM "%s"."FINDINGATTRIBUTION"
          ORDER BY "ID"
         """,
-        List.of("ID", "ALT_ID", "ANALYZERIDENTITY", "ATTRIBUTED_ON", "COMPONENT_ID",
-            "PROJECT_ID", "REFERENCE_URL", "UUID", "VULNERABILITY_ID"),
-        """
+            List.of(
+                    "ID",
+                    "ALT_ID",
+                    "ANALYZERIDENTITY",
+                    "ATTRIBUTED_ON",
+                    "COMPONENT_ID",
+                    "PROJECT_ID",
+                    "REFERENCE_URL",
+                    "UUID",
+                    "VULNERABILITY_ID"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_findingattribution;
         CREATE UNLOGGED TABLE "%1$s".tgt_findingattribution (
             "ID"                  bigint NOT NULL PRIMARY KEY
@@ -4514,7 +4495,7 @@ public final class TableRegistry {
           ) ranked
          WHERE rn = 1
         """,
-        """
+            """
         INSERT INTO "FINDINGATTRIBUTION" (
             "ID"
           , "ALT_ID"
@@ -4538,8 +4519,7 @@ public final class TableRegistry {
              , "MATCHING_PERCENTAGE"
              , "DELETED_AT"
           FROM "%1$s".tgt_findingattribution
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code POLICYVIOLATION} with 3-column dedup on
@@ -4551,8 +4531,8 @@ public final class TableRegistry {
      * {@code TIMESTAMP} (then highest ID). v4 IDs are preserved.
      */
     private static final TableMigration POLICYVIOLATION = new TableMigration(
-        "POLICYVIOLATION",
-        """
+            "POLICYVIOLATION",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_policyviolation (
             "ID"                 bigint NOT NULL
           , "COMPONENT_ID"       bigint NOT NULL
@@ -4564,7 +4544,7 @@ public final class TableRegistry {
           , "UUID"               varchar(36) NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
              , CAST("POLICYCONDITION_ID" AS bigint) AS "POLICYCONDITION_ID"
@@ -4576,9 +4556,8 @@ public final class TableRegistry {
           FROM "%s"."POLICYVIOLATION"
          ORDER BY "ID"
         """,
-        List.of("ID", "COMPONENT_ID", "POLICYCONDITION_ID", "PROJECT_ID",
-            "TEXT", "TIMESTAMP", "TYPE", "UUID"),
-        """
+            List.of("ID", "COMPONENT_ID", "POLICYCONDITION_ID", "PROJECT_ID", "TEXT", "TIMESTAMP", "TYPE", "UUID"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'POLICYVIOLATION', "ID", "UUID"
           FROM "%1$s".src_policyviolation
@@ -4633,7 +4612,7 @@ public final class TableRegistry {
           ) ranked
          WHERE rn = 1
         """,
-        """
+            """
         INSERT INTO "POLICYVIOLATION" (
             "ID"
           , "COMPONENT_ID"
@@ -4653,8 +4632,7 @@ public final class TableRegistry {
              , "TYPE"
              , "UUID"
           FROM "%1$s".tgt_policyviolation
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code ANALYSIS}. {@code COMPONENT_ID}, {@code PROJECT_ID},
@@ -4665,8 +4643,8 @@ public final class TableRegistry {
      * as additive columns, NULL-filled on import (schema-changes §8). v4 IDs are preserved.
      */
     private static final TableMigration ANALYSIS = new TableMigration(
-        "ANALYSIS",
-        """
+            "ANALYSIS",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_analysis (
             "ID"               bigint NOT NULL
           , "DETAILS"          text
@@ -4679,7 +4657,7 @@ public final class TableRegistry {
           , "VULNERABILITY_ID" bigint NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "DETAILS"
              , "JUSTIFICATION"
@@ -4692,9 +4670,17 @@ public final class TableRegistry {
           FROM "%s"."ANALYSIS"
          ORDER BY "ID"
         """,
-        List.of("ID", "DETAILS", "JUSTIFICATION", "RESPONSE", "STATE",
-            "COMPONENT_ID", "PROJECT_ID", "SUPPRESSED", "VULNERABILITY_ID"),
-        """
+            List.of(
+                    "ID",
+                    "DETAILS",
+                    "JUSTIFICATION",
+                    "RESPONSE",
+                    "STATE",
+                    "COMPONENT_ID",
+                    "PROJECT_ID",
+                    "SUPPRESSED",
+                    "VULNERABILITY_ID"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_analysis;
         CREATE UNLOGGED TABLE "%1$s".tgt_analysis (
             "ID"                      bigint NOT NULL PRIMARY KEY
@@ -4762,7 +4748,7 @@ public final class TableRegistry {
           JOIN "%1$s".project_canonical_id_map pm ON pm.orig_id = a."PROJECT_ID"
           JOIN "%1$s".vulnerability_canonical_id_map vm ON vm.orig_id = a."VULNERABILITY_ID"
         """,
-        """
+            """
         INSERT INTO "ANALYSIS" (
             "ID"
           , "DETAILS"
@@ -4804,8 +4790,7 @@ public final class TableRegistry {
              , "SEVERITY"::severity
              , "VULNERABILITY_POLICY_ID"
           FROM "%1$s".tgt_analysis
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code ANALYSISCOMMENT}. {@code ANALYSIS_ID} passes through (ANALYSIS
@@ -4813,8 +4798,7 @@ public final class TableRegistry {
      * INNER JOIN against {@code tgt_analysis}. v4 IDs are preserved.
      */
     private static final TableMigration ANALYSISCOMMENT = new TableMigration(
-        "ANALYSISCOMMENT",
-        """
+            "ANALYSISCOMMENT", """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_analysiscomment (
             "ID"          bigint NOT NULL
           , "ANALYSIS_ID" bigint NOT NULL
@@ -4822,8 +4806,7 @@ public final class TableRegistry {
           , "COMMENTER"   varchar(255)
           , "TIMESTAMP"   timestamptz NOT NULL
         )
-        """,
-        """
+        """, """
         SELECT CAST("ID" AS bigint) AS "ID"
              , CAST("ANALYSIS_ID" AS bigint) AS "ANALYSIS_ID"
              , "COMMENT"
@@ -4831,9 +4814,7 @@ public final class TableRegistry {
              , "TIMESTAMP"
           FROM "%s"."ANALYSISCOMMENT"
          ORDER BY "ID"
-        """,
-        List.of("ID", "ANALYSIS_ID", "COMMENT", "COMMENTER", "TIMESTAMP"),
-        """
+        """, List.of("ID", "ANALYSIS_ID", "COMMENT", "COMMENTER", "TIMESTAMP"), """
         DROP TABLE IF EXISTS "%1$s".tgt_analysiscomment;
         CREATE UNLOGGED TABLE "%1$s".tgt_analysiscomment (
             "ID"          bigint NOT NULL PRIMARY KEY
@@ -4856,8 +4837,7 @@ public final class TableRegistry {
              , c."TIMESTAMP"
           FROM "%1$s".src_analysiscomment c
           JOIN "%1$s".tgt_analysis a ON a."ID" = c."ANALYSIS_ID"
-        """,
-        """
+        """, """
         INSERT INTO "ANALYSISCOMMENT" (
             "ID"
           , "ANALYSIS_ID"
@@ -4871,8 +4851,7 @@ public final class TableRegistry {
              , "COMMENTER"
              , "TIMESTAMP"
           FROM "%1$s".tgt_analysiscomment
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code VIOLATIONANALYSIS}. {@code COMPONENT_ID} and {@code PROJECT_ID}
@@ -4883,8 +4862,8 @@ public final class TableRegistry {
      * v4 IDs are preserved.
      */
     private static final TableMigration VIOLATIONANALYSIS = new TableMigration(
-        "VIOLATIONANALYSIS",
-        """
+            "VIOLATIONANALYSIS",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_violationanalysis (
             "ID"                 bigint NOT NULL
           , "STATE"              varchar(255) NOT NULL
@@ -4894,7 +4873,7 @@ public final class TableRegistry {
           , "SUPPRESSED"         boolean NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "STATE"
              , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
@@ -4904,8 +4883,8 @@ public final class TableRegistry {
           FROM "%s"."VIOLATIONANALYSIS"
          ORDER BY "ID"
         """,
-        List.of("ID", "STATE", "COMPONENT_ID", "POLICYVIOLATION_ID", "PROJECT_ID", "SUPPRESSED"),
-        """
+            List.of("ID", "STATE", "COMPONENT_ID", "POLICYVIOLATION_ID", "PROJECT_ID", "SUPPRESSED"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_violationanalysis;
         CREATE UNLOGGED TABLE "%1$s".tgt_violationanalysis (
             "ID"                 bigint NOT NULL PRIMARY KEY
@@ -4934,7 +4913,7 @@ public final class TableRegistry {
           LEFT JOIN "%1$s".component_canonical_id_map cm ON cm.orig_id = v."COMPONENT_ID"
           LEFT JOIN "%1$s".project_canonical_id_map pm ON pm.orig_id = v."PROJECT_ID"
         """,
-        """
+            """
         INSERT INTO "VIOLATIONANALYSIS" (
             "ID"
           , "STATE"
@@ -4950,8 +4929,7 @@ public final class TableRegistry {
              , "PROJECT_ID"
              , "SUPPRESSED"
           FROM "%1$s".tgt_violationanalysis
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code VIOLATIONANALYSISCOMMENT}. {@code VIOLATIONANALYSIS_ID} passes
@@ -4959,8 +4937,8 @@ public final class TableRegistry {
      * against {@code tgt_violationanalysis}. v4 IDs are preserved.
      */
     private static final TableMigration VIOLATIONANALYSISCOMMENT = new TableMigration(
-        "VIOLATIONANALYSISCOMMENT",
-        """
+            "VIOLATIONANALYSISCOMMENT",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_violationanalysiscomment (
             "ID"                   bigint NOT NULL
           , "COMMENT"              text NOT NULL
@@ -4969,7 +4947,7 @@ public final class TableRegistry {
           , "VIOLATIONANALYSIS_ID" bigint NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "COMMENT"
              , "COMMENTER"
@@ -4978,8 +4956,8 @@ public final class TableRegistry {
           FROM "%s"."VIOLATIONANALYSISCOMMENT"
          ORDER BY "ID"
         """,
-        List.of("ID", "COMMENT", "COMMENTER", "TIMESTAMP", "VIOLATIONANALYSIS_ID"),
-        """
+            List.of("ID", "COMMENT", "COMMENTER", "TIMESTAMP", "VIOLATIONANALYSIS_ID"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_violationanalysiscomment;
         CREATE UNLOGGED TABLE "%1$s".tgt_violationanalysiscomment (
             "ID"                   bigint NOT NULL PRIMARY KEY
@@ -5003,7 +4981,7 @@ public final class TableRegistry {
           FROM "%1$s".src_violationanalysiscomment c
           JOIN "%1$s".tgt_violationanalysis v ON v."ID" = c."VIOLATIONANALYSIS_ID"
         """,
-        """
+            """
         INSERT INTO "VIOLATIONANALYSISCOMMENT" (
             "ID"
           , "COMMENT"
@@ -5017,8 +4995,7 @@ public final class TableRegistry {
              , "TIMESTAMP"
              , "VIOLATIONANALYSIS_ID"
           FROM "%1$s".tgt_violationanalysiscomment
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code CONFIGPROPERTY} per schema-changes §5.9 and §7.8. Applies the
@@ -5027,8 +5004,8 @@ public final class TableRegistry {
      * {@code PROPERTYTYPE} is outside the v5 enum. v4 ID is preserved.
      */
     private static final TableMigration CONFIGPROPERTY = new TableMigration(
-        "CONFIGPROPERTY",
-        """
+            "CONFIGPROPERTY",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_configproperty (
             "ID"            bigint NOT NULL
           , "DESCRIPTION"   varchar(255)
@@ -5038,7 +5015,7 @@ public final class TableRegistry {
           , "PROPERTYVALUE" text
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "DESCRIPTION"
              , "GROUPNAME"
@@ -5048,8 +5025,8 @@ public final class TableRegistry {
           FROM "%s"."CONFIGPROPERTY"
          ORDER BY "ID"
         """,
-        List.of("ID", "DESCRIPTION", "GROUPNAME", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE"),
-        """
+            List.of("ID", "DESCRIPTION", "GROUPNAME", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_configproperty;
         CREATE UNLOGGED TABLE "%1$s".tgt_configproperty (
             "ID"            bigint NOT NULL PRIMARY KEY
@@ -5079,7 +5056,7 @@ public final class TableRegistry {
           FROM wiped
          WHERE "PROPERTYTYPE" IN ('BOOLEAN', 'INTEGER', 'NUMBER', 'STRING', 'TIMESTAMP', 'URL', 'UUID')
         """,
-        """
+            """
         INSERT INTO "CONFIGPROPERTY"
             ("ID", "DESCRIPTION", "GROUPNAME", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE")
         SELECT "ID"
@@ -5089,8 +5066,7 @@ public final class TableRegistry {
              , "PROPERTYTYPE"
              , "PROPERTYVALUE"
           FROM "%1$s".tgt_configproperty
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code PROJECT_PROPERTY} with PROJECT_ID rewrite through
@@ -5099,8 +5075,8 @@ public final class TableRegistry {
      * UUID column on this table.
      */
     private static final TableMigration PROJECT_PROPERTY = new TableMigration(
-        "PROJECT_PROPERTY",
-        """
+            "PROJECT_PROPERTY",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_project_property (
             "ID"            bigint NOT NULL
           , "DESCRIPTION"   varchar(255)
@@ -5111,7 +5087,7 @@ public final class TableRegistry {
           , "PROPERTYVALUE" varchar(1024)
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "DESCRIPTION"
              , "GROUPNAME"
@@ -5122,8 +5098,8 @@ public final class TableRegistry {
           FROM "%s"."PROJECT_PROPERTY"
          ORDER BY "ID"
         """,
-        List.of("ID", "DESCRIPTION", "GROUPNAME", "PROJECT_ID", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE"),
-        """
+            List.of("ID", "DESCRIPTION", "GROUPNAME", "PROJECT_ID", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_project_property;
         CREATE UNLOGGED TABLE "%1$s".tgt_project_property (
             "ID"            bigint NOT NULL PRIMARY KEY
@@ -5157,7 +5133,7 @@ public final class TableRegistry {
           FROM rewritten
          WHERE "PROPERTYTYPE" IN ('BOOLEAN', 'INTEGER', 'NUMBER', 'STRING', 'TIMESTAMP', 'URL', 'UUID')
         """,
-        """
+            """
         INSERT INTO "PROJECT_PROPERTY"
             ("ID", "DESCRIPTION", "GROUPNAME", "PROJECT_ID", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE")
         SELECT "ID"
@@ -5168,8 +5144,7 @@ public final class TableRegistry {
              , "PROPERTYTYPE"
              , "PROPERTYVALUE"
           FROM "%1$s".tgt_project_property
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code COMPONENT_PROPERTY} with COMPONENT_ID rewrite through
@@ -5179,8 +5154,8 @@ public final class TableRegistry {
      * probe and are excluded.
      */
     private static final TableMigration COMPONENT_PROPERTY = new TableMigration(
-        "COMPONENT_PROPERTY",
-        """
+            "COMPONENT_PROPERTY",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_component_property (
             "ID"            bigint NOT NULL
           , "COMPONENT_ID"  bigint NOT NULL
@@ -5192,7 +5167,7 @@ public final class TableRegistry {
           , "UUID"          varchar(36) NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
              , "DESCRIPTION"
@@ -5204,9 +5179,16 @@ public final class TableRegistry {
           FROM "%s"."COMPONENT_PROPERTY"
          ORDER BY "ID"
         """,
-        List.of("ID", "COMPONENT_ID", "DESCRIPTION", "GROUPNAME", "PROPERTYNAME",
-            "PROPERTYTYPE", "PROPERTYVALUE", "UUID"),
-        """
+            List.of(
+                    "ID",
+                    "COMPONENT_ID",
+                    "DESCRIPTION",
+                    "GROUPNAME",
+                    "PROPERTYNAME",
+                    "PROPERTYTYPE",
+                    "PROPERTYVALUE",
+                    "UUID"),
+            """
         INSERT INTO "%1$s".probe_invalid_uuids (table_name, orig_id, bad_uuid)
         SELECT 'COMPONENT_PROPERTY', "ID", "UUID"
           FROM "%1$s".src_component_property
@@ -5251,7 +5233,7 @@ public final class TableRegistry {
           FROM rewritten
          WHERE "PROPERTYTYPE" IN ('BOOLEAN', 'INTEGER', 'NUMBER', 'STRING', 'TIMESTAMP', 'URL', 'UUID')
         """,
-        """
+            """
         INSERT INTO "COMPONENT_PROPERTY"
             ("ID", "COMPONENT_ID", "DESCRIPTION", "GROUPNAME", "PROPERTYNAME",
              "PROPERTYTYPE", "PROPERTYVALUE", "UUID")
@@ -5264,8 +5246,7 @@ public final class TableRegistry {
              , "PROPERTYVALUE"
              , "UUID"
           FROM "%1$s".tgt_component_property
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code DEPENDENCYMETRICS} with retention filtering, composite-key
@@ -5278,8 +5259,8 @@ public final class TableRegistry {
      * Tiebreaker for composite-key dedup keeps {@code MAX(ID)}.
      */
     private static final TableMigration DEPENDENCYMETRICS = new TableMigration(
-        "DEPENDENCYMETRICS",
-        """
+            "DEPENDENCYMETRICS",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_dependencymetrics (
             "ID"                                     bigint NOT NULL
           , "COMPONENT_ID"                           bigint NOT NULL
@@ -5314,7 +5295,7 @@ public final class TableRegistry {
           , "VULNERABILITIES"                        integer NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , CAST("COMPONENT_ID" AS bigint) AS "COMPONENT_ID"
              , "CRITICAL"
@@ -5349,19 +5330,39 @@ public final class TableRegistry {
           FROM "%s"."DEPENDENCYMETRICS"
          ORDER BY "ID"
         """,
-        List.of("ID", "COMPONENT_ID", "CRITICAL", "FINDINGS_AUDITED", "FINDINGS_TOTAL",
-            "FINDINGS_UNAUDITED", "FIRST_OCCURRENCE", "HIGH", "RISKSCORE",
-            "LAST_OCCURRENCE", "LOW", "MEDIUM",
-            "POLICYVIOLATIONS_AUDITED", "POLICYVIOLATIONS_FAIL", "POLICYVIOLATIONS_INFO",
-            "POLICYVIOLATIONS_LICENSE_AUDITED", "POLICYVIOLATIONS_LICENSE_TOTAL",
-            "POLICYVIOLATIONS_LICENSE_UNAUDITED",
-            "POLICYVIOLATIONS_OPERATIONAL_AUDITED", "POLICYVIOLATIONS_OPERATIONAL_TOTAL",
-            "POLICYVIOLATIONS_OPERATIONAL_UNAUDITED",
-            "POLICYVIOLATIONS_SECURITY_AUDITED", "POLICYVIOLATIONS_SECURITY_TOTAL",
-            "POLICYVIOLATIONS_SECURITY_UNAUDITED",
-            "POLICYVIOLATIONS_TOTAL", "POLICYVIOLATIONS_UNAUDITED", "POLICYVIOLATIONS_WARN",
-            "PROJECT_ID", "SUPPRESSED", "UNASSIGNED_SEVERITY", "VULNERABILITIES"),
-        """
+            List.of(
+                    "ID",
+                    "COMPONENT_ID",
+                    "CRITICAL",
+                    "FINDINGS_AUDITED",
+                    "FINDINGS_TOTAL",
+                    "FINDINGS_UNAUDITED",
+                    "FIRST_OCCURRENCE",
+                    "HIGH",
+                    "RISKSCORE",
+                    "LAST_OCCURRENCE",
+                    "LOW",
+                    "MEDIUM",
+                    "POLICYVIOLATIONS_AUDITED",
+                    "POLICYVIOLATIONS_FAIL",
+                    "POLICYVIOLATIONS_INFO",
+                    "POLICYVIOLATIONS_LICENSE_AUDITED",
+                    "POLICYVIOLATIONS_LICENSE_TOTAL",
+                    "POLICYVIOLATIONS_LICENSE_UNAUDITED",
+                    "POLICYVIOLATIONS_OPERATIONAL_AUDITED",
+                    "POLICYVIOLATIONS_OPERATIONAL_TOTAL",
+                    "POLICYVIOLATIONS_OPERATIONAL_UNAUDITED",
+                    "POLICYVIOLATIONS_SECURITY_AUDITED",
+                    "POLICYVIOLATIONS_SECURITY_TOTAL",
+                    "POLICYVIOLATIONS_SECURITY_UNAUDITED",
+                    "POLICYVIOLATIONS_TOTAL",
+                    "POLICYVIOLATIONS_UNAUDITED",
+                    "POLICYVIOLATIONS_WARN",
+                    "PROJECT_ID",
+                    "SUPPRESSED",
+                    "UNASSIGNED_SEVERITY",
+                    "VULNERABILITIES"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_dependencymetrics;
         CREATE UNLOGGED TABLE "%1$s".tgt_dependencymetrics (
             "COMPONENT_ID"                           bigint NOT NULL
@@ -5502,7 +5503,7 @@ public final class TableRegistry {
           ) ranked
          WHERE rn = 1
         """,
-        """
+            """
         INSERT INTO "DEPENDENCYMETRICS" (
             "COMPONENT_ID"
           , "CRITICAL"
@@ -5566,8 +5567,7 @@ public final class TableRegistry {
              , "UNASSIGNED_SEVERITY"
              , "VULNERABILITIES"
           FROM "%1$s".tgt_dependencymetrics
-        """
-    );
+        """);
 
     /**
      * 1:1 migration of {@code PROJECTMETRICS} with retention filtering, composite-key
@@ -5579,8 +5579,8 @@ public final class TableRegistry {
      * dedup keeps {@code MAX(ID)}.
      */
     private static final TableMigration PROJECTMETRICS = new TableMigration(
-        "PROJECTMETRICS",
-        """
+            "PROJECTMETRICS",
+            """
         CREATE UNLOGGED TABLE IF NOT EXISTS "%s".src_projectmetrics (
             "ID"                                     bigint NOT NULL
           , "COLLECTION_LOGIC"                       varchar(255)
@@ -5618,7 +5618,7 @@ public final class TableRegistry {
           , "VULNERABLECOMPONENTS"                   integer NOT NULL
         )
         """,
-        """
+            """
         SELECT CAST("ID" AS bigint) AS "ID"
              , "COLLECTION_LOGIC"
              , "COLLECTION_LOGIC_CHANGED"
@@ -5656,21 +5656,42 @@ public final class TableRegistry {
           FROM "%s"."PROJECTMETRICS"
          ORDER BY "ID"
         """,
-        List.of("ID", "COLLECTION_LOGIC", "COLLECTION_LOGIC_CHANGED",
-            "COMPONENTS", "CRITICAL", "FINDINGS_AUDITED", "FINDINGS_TOTAL",
-            "FINDINGS_UNAUDITED", "FIRST_OCCURRENCE", "HIGH", "RISKSCORE",
-            "LAST_OCCURRENCE", "LOW", "MEDIUM",
-            "POLICYVIOLATIONS_AUDITED", "POLICYVIOLATIONS_FAIL", "POLICYVIOLATIONS_INFO",
-            "POLICYVIOLATIONS_LICENSE_AUDITED", "POLICYVIOLATIONS_LICENSE_TOTAL",
-            "POLICYVIOLATIONS_LICENSE_UNAUDITED",
-            "POLICYVIOLATIONS_OPERATIONAL_AUDITED", "POLICYVIOLATIONS_OPERATIONAL_TOTAL",
-            "POLICYVIOLATIONS_OPERATIONAL_UNAUDITED",
-            "POLICYVIOLATIONS_SECURITY_AUDITED", "POLICYVIOLATIONS_SECURITY_TOTAL",
-            "POLICYVIOLATIONS_SECURITY_UNAUDITED",
-            "POLICYVIOLATIONS_TOTAL", "POLICYVIOLATIONS_UNAUDITED", "POLICYVIOLATIONS_WARN",
-            "PROJECT_ID", "SUPPRESSED", "UNASSIGNED_SEVERITY",
-            "VULNERABILITIES", "VULNERABLECOMPONENTS"),
-        """
+            List.of(
+                    "ID",
+                    "COLLECTION_LOGIC",
+                    "COLLECTION_LOGIC_CHANGED",
+                    "COMPONENTS",
+                    "CRITICAL",
+                    "FINDINGS_AUDITED",
+                    "FINDINGS_TOTAL",
+                    "FINDINGS_UNAUDITED",
+                    "FIRST_OCCURRENCE",
+                    "HIGH",
+                    "RISKSCORE",
+                    "LAST_OCCURRENCE",
+                    "LOW",
+                    "MEDIUM",
+                    "POLICYVIOLATIONS_AUDITED",
+                    "POLICYVIOLATIONS_FAIL",
+                    "POLICYVIOLATIONS_INFO",
+                    "POLICYVIOLATIONS_LICENSE_AUDITED",
+                    "POLICYVIOLATIONS_LICENSE_TOTAL",
+                    "POLICYVIOLATIONS_LICENSE_UNAUDITED",
+                    "POLICYVIOLATIONS_OPERATIONAL_AUDITED",
+                    "POLICYVIOLATIONS_OPERATIONAL_TOTAL",
+                    "POLICYVIOLATIONS_OPERATIONAL_UNAUDITED",
+                    "POLICYVIOLATIONS_SECURITY_AUDITED",
+                    "POLICYVIOLATIONS_SECURITY_TOTAL",
+                    "POLICYVIOLATIONS_SECURITY_UNAUDITED",
+                    "POLICYVIOLATIONS_TOTAL",
+                    "POLICYVIOLATIONS_UNAUDITED",
+                    "POLICYVIOLATIONS_WARN",
+                    "PROJECT_ID",
+                    "SUPPRESSED",
+                    "UNASSIGNED_SEVERITY",
+                    "VULNERABILITIES",
+                    "VULNERABLECOMPONENTS"),
+            """
         DROP TABLE IF EXISTS "%1$s".tgt_projectmetrics;
         CREATE UNLOGGED TABLE "%1$s".tgt_projectmetrics (
             "COMPONENTS"                             integer NOT NULL
@@ -5814,7 +5835,7 @@ public final class TableRegistry {
           ) ranked
          WHERE rn = 1
         """,
-        """
+            """
         INSERT INTO "PROJECTMETRICS" (
             "COMPONENTS"
           , "CRITICAL"
@@ -5880,103 +5901,100 @@ public final class TableRegistry {
              , "VULNERABILITIES"
              , "VULNERABLECOMPONENTS"
           FROM "%1$s".tgt_projectmetrics
-        """
-    );
+        """);
 
     /**
      * Load order. Respects v5 FK dependencies per pipeline design §9.
      */
     private static final List<TableMigration> ALL = List.of(
-        // Reference / leaf tables
-        LICENSE,
-        LICENSEGROUP,
-        LICENSEGROUP_LICENSE,
-        TEAM,
-        TAG,
-        OIDCGROUP,
-        REPOSITORY,
-        // Legacy user sources (no v5 counterpart, consumed by USER consolidation)
-        LDAPUSER,
-        MANAGEDUSER,
-        OIDCUSER,
-        LDAPUSERS_TEAMS,
-        MANAGEDUSERS_TEAMS,
-        OIDCUSERS_TEAMS,
-        // Derived consolidations
-        USER_CONSOLIDATED,
-        USERS_TEAMS,
-        // PERMISSION mapping and the consolidated USERS_PERMISSIONS join
-        PERMISSION,
-        LDAPUSERS_PERMISSIONS,
-        MANAGEDUSERS_PERMISSIONS,
-        OIDCUSERS_PERMISSIONS,
-        USERS_PERMISSIONS,
-        // PROJECT and its derived closure
-        PROJECT,
-        PROJECT_HIERARCHY,
-        PROJECT_METADATA,
-        PROJECT_ACCESS_TEAMS,
-        PROJECT_ACCESS_USERS,
-        PROJECTS_TAGS,
-        REPOSITORY_META_COMPONENT,
-        COMPONENT,
-        SERVICECOMPONENT,
-        PACKAGE_METADATA,
-        // API keys and team-scoped adjuncts (FK order: APIKEY -> APIKEYS_TEAMS;
-        // TEAMS_PERMISSIONS -> TEAM + PERMISSION; MAPPEDLDAPGROUP -> TEAM;
-        // MAPPEDOIDCGROUP -> TEAM + OIDCGROUP)
-        APIKEY,
-        APIKEYS_TEAMS,
-        TEAMS_PERMISSIONS,
-        MAPPEDLDAPGROUP,
-        MAPPEDOIDCGROUP,
-        // Vulnerability family (peers; downstream join tables come later)
-        VULNERABILITY,
-        VULNERABLESOFTWARE,
-        VULNERABILITYMETRICS,
-        VULNERABILITYALIAS,
-        VULNERABILITY_ALIAS,
-        VULNERABILITY_ALIAS_ASSERTION,
-        // Vulnerability join tables (FK-dependent on COMPONENT + VULNERABILITY + VULNERABLESOFTWARE)
-        COMPONENTS_VULNERABILITIES,
-        SERVICECOMPONENTS_VULNERABILITIES,
-        VULNERABLESOFTWARE_VULNERABILITIES,
-        AFFECTEDVERSIONATTRIBUTION,
-        // BOM / VEX (FK-dependent on PROJECT)
-        BOM,
-        VEX,
-        // Notification chain (FK order: publisher -> rule -> join tables)
-        NOTIFICATIONPUBLISHER,
-        NOTIFICATIONRULE,
-        NOTIFICATIONRULE_TAGS,
-        NOTIFICATIONRULE_TEAMS,
-        NOTIFICATIONRULE_PROJECTS,
-        // Policy chain (FK order: POLICY -> POLICYCONDITION, POLICY_TAGS, POLICY_PROJECTS)
-        POLICY,
-        POLICYCONDITION,
-        POLICY_TAGS,
-        POLICY_PROJECTS,
-        // Findings chain (FK order: FINDINGATTRIBUTION, POLICYVIOLATION, ANALYSIS,
-        // ANALYSISCOMMENT, VIOLATIONANALYSIS, VIOLATIONANALYSISCOMMENT)
-        FINDINGATTRIBUTION,
-        POLICYVIOLATION,
-        ANALYSIS,
-        ANALYSISCOMMENT,
-        VIOLATIONANALYSIS,
-        VIOLATIONANALYSISCOMMENT,
-        // Property tables (FK order: CONFIGPROPERTY standalone; PROJECT_PROPERTY ← PROJECT;
-        // COMPONENT_PROPERTY ← COMPONENT)
-        CONFIGPROPERTY,
-        PROJECT_PROPERTY,
-        COMPONENT_PROPERTY,
-        // Metrics tables (FK order: PROJECTMETRICS ← PROJECT; DEPENDENCYMETRICS ← COMPONENT + PROJECT).
-        // Partitions are pre-created in LoadPhase.preLoad().
-        PROJECTMETRICS,
-        DEPENDENCYMETRICS
-    );
+            // Reference / leaf tables
+            LICENSE,
+            LICENSEGROUP,
+            LICENSEGROUP_LICENSE,
+            TEAM,
+            TAG,
+            OIDCGROUP,
+            REPOSITORY,
+            // Legacy user sources (no v5 counterpart, consumed by USER consolidation)
+            LDAPUSER,
+            MANAGEDUSER,
+            OIDCUSER,
+            LDAPUSERS_TEAMS,
+            MANAGEDUSERS_TEAMS,
+            OIDCUSERS_TEAMS,
+            // Derived consolidations
+            USER_CONSOLIDATED,
+            USERS_TEAMS,
+            // PERMISSION mapping and the consolidated USERS_PERMISSIONS join
+            PERMISSION,
+            LDAPUSERS_PERMISSIONS,
+            MANAGEDUSERS_PERMISSIONS,
+            OIDCUSERS_PERMISSIONS,
+            USERS_PERMISSIONS,
+            // PROJECT and its derived closure
+            PROJECT,
+            PROJECT_HIERARCHY,
+            PROJECT_METADATA,
+            PROJECT_ACCESS_TEAMS,
+            PROJECT_ACCESS_USERS,
+            PROJECTS_TAGS,
+            REPOSITORY_META_COMPONENT,
+            COMPONENT,
+            SERVICECOMPONENT,
+            PACKAGE_METADATA,
+            // API keys and team-scoped adjuncts (FK order: APIKEY -> APIKEYS_TEAMS;
+            // TEAMS_PERMISSIONS -> TEAM + PERMISSION; MAPPEDLDAPGROUP -> TEAM;
+            // MAPPEDOIDCGROUP -> TEAM + OIDCGROUP)
+            APIKEY,
+            APIKEYS_TEAMS,
+            TEAMS_PERMISSIONS,
+            MAPPEDLDAPGROUP,
+            MAPPEDOIDCGROUP,
+            // Vulnerability family (peers; downstream join tables come later)
+            VULNERABILITY,
+            VULNERABLESOFTWARE,
+            VULNERABILITYMETRICS,
+            VULNERABILITYALIAS,
+            VULNERABILITY_ALIAS,
+            VULNERABILITY_ALIAS_ASSERTION,
+            // Vulnerability join tables (FK-dependent on COMPONENT + VULNERABILITY + VULNERABLESOFTWARE)
+            COMPONENTS_VULNERABILITIES,
+            SERVICECOMPONENTS_VULNERABILITIES,
+            VULNERABLESOFTWARE_VULNERABILITIES,
+            AFFECTEDVERSIONATTRIBUTION,
+            // BOM / VEX (FK-dependent on PROJECT)
+            BOM,
+            VEX,
+            // Notification chain (FK order: publisher -> rule -> join tables)
+            NOTIFICATIONPUBLISHER,
+            NOTIFICATIONRULE,
+            NOTIFICATIONRULE_TAGS,
+            NOTIFICATIONRULE_TEAMS,
+            NOTIFICATIONRULE_PROJECTS,
+            // Policy chain (FK order: POLICY -> POLICYCONDITION, POLICY_TAGS, POLICY_PROJECTS)
+            POLICY,
+            POLICYCONDITION,
+            POLICY_TAGS,
+            POLICY_PROJECTS,
+            // Findings chain (FK order: FINDINGATTRIBUTION, POLICYVIOLATION, ANALYSIS,
+            // ANALYSISCOMMENT, VIOLATIONANALYSIS, VIOLATIONANALYSISCOMMENT)
+            FINDINGATTRIBUTION,
+            POLICYVIOLATION,
+            ANALYSIS,
+            ANALYSISCOMMENT,
+            VIOLATIONANALYSIS,
+            VIOLATIONANALYSISCOMMENT,
+            // Property tables (FK order: CONFIGPROPERTY standalone; PROJECT_PROPERTY ← PROJECT;
+            // COMPONENT_PROPERTY ← COMPONENT)
+            CONFIGPROPERTY,
+            PROJECT_PROPERTY,
+            COMPONENT_PROPERTY,
+            // Metrics tables (FK order: PROJECTMETRICS ← PROJECT; DEPENDENCYMETRICS ← COMPONENT + PROJECT).
+            // Partitions are pre-created in LoadPhase.preLoad().
+            PROJECTMETRICS,
+            DEPENDENCYMETRICS);
 
-    private TableRegistry() {
-    }
+    private TableRegistry() {}
 
     public static List<TableMigration> all() {
         return ALL;

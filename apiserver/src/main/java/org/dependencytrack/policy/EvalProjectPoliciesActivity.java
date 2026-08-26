@@ -56,5 +56,4 @@ public final class EvalProjectPoliciesActivity implements Activity<EvalProjectPo
 
         return null;
     }
-
 }

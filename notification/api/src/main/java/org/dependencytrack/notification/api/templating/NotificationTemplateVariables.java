@@ -58,7 +58,5 @@ public final class NotificationTemplateVariables {
      */
     public static final String SUBJECT_JSON = "subjectJson";
 
-    private NotificationTemplateVariables() {
-    }
-
+    private NotificationTemplateVariables() {}
 }

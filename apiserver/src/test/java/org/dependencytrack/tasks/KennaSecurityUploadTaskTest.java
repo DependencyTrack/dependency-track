@@ -95,28 +95,23 @@ class KennaSecurityUploadTaskTest extends PersistenceCapableTest {
 
         qm.addVulnerability(vuln, component, "internal");
 
-        qm.createProjectProperty(project, "integrations", "kenna.asset.external_id",
-                "666", IConfigProperty.PropertyType.STRING, null);
+        qm.createProjectProperty(
+                project, "integrations", "kenna.asset.external_id", "666", IConfigProperty.PropertyType.STRING, null);
 
         stubFor(post(urlPathEqualTo("/connectors/foo/data_file"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody(/* language=JSON */ """
+                .willReturn(aResponse().withStatus(200).withBody(/* language=JSON */ """
                                 {
                                   "success": "true"
                                 }
                                 """)));
 
         final var task = new KennaSecurityUploadTask(
-                HttpClient.newHttpClient(),
-                new TestSecretManager(Map.of("kennaTokenSecretName", "token")));
+                HttpClient.newHttpClient(), new TestSecretManager(Map.of("kennaTokenSecretName", "token")));
         task.run();
 
         verify(postRequestedFor(urlPathEqualTo("/connectors/foo/data_file"))
                 .withHeader("X-Risk-Token", equalTo("token"))
-                .withAnyRequestBodyPart(aMultipart()
-                        .withName("file")
-                        .withBody(equalToJson("""
+                .withAnyRequestBodyPart(aMultipart().withName("file").withBody(equalToJson("""
                                 {
                                   "skip_autoclose": false,
                                   "assets": [
@@ -145,5 +140,4 @@ class KennaSecurityUploadTaskTest extends PersistenceCapableTest {
                                 }
                                 """))));
     }
-
 }

@@ -90,11 +90,12 @@ class ProjectLastAnalysisDaoTest extends PersistenceCapableTest {
         final var project = new Project();
         project.setName("acme-app");
         qm.persist(project);
-        dao.recordAttempt(new long[]{project.getId()}, Instant.now().minus(Duration.ofDays(3)));
+        dao.recordAttempt(new long[] {project.getId()}, Instant.now().minus(Duration.ofDays(3)));
 
         project.setInactiveSince(new Date());
         qm.persist(project);
-        assertThat(dao.getProjectsDue(Instant.now().minus(MAX_ANALYSIS_AGE), 10)).isEmpty();
+        assertThat(dao.getProjectsDue(Instant.now().minus(MAX_ANALYSIS_AGE), 10))
+                .isEmpty();
 
         project.setInactiveSince(null);
         qm.persist(project);
@@ -118,9 +119,9 @@ class ProjectLastAnalysisDaoTest extends PersistenceCapableTest {
         qm.persist(projectC);
 
         final Instant now = Instant.now();
-        dao.recordAttempt(new long[]{projectA.getId()}, now.minus(Duration.ofDays(3)));
-        dao.recordAttempt(new long[]{projectB.getId()}, now.minus(Duration.ofDays(5)));
-        dao.recordAttempt(new long[]{projectC.getId()}, now.minus(Duration.ofDays(4)));
+        dao.recordAttempt(new long[] {projectA.getId()}, now.minus(Duration.ofDays(3)));
+        dao.recordAttempt(new long[] {projectB.getId()}, now.minus(Duration.ofDays(5)));
+        dao.recordAttempt(new long[] {projectC.getId()}, now.minus(Duration.ofDays(4)));
 
         assertThat(dao.getProjectsDue(Instant.now().minus(MAX_ANALYSIS_AGE), 10))
                 .extracting(ProjectDueForAnalysis::uuid)
@@ -137,7 +138,7 @@ class ProjectLastAnalysisDaoTest extends PersistenceCapableTest {
         projectB.setName("acme-app-b");
         qm.persist(projectB);
 
-        dao.recordAttempt(new long[]{projectA.getId()}, Instant.now());
+        dao.recordAttempt(new long[] {projectA.getId()}, Instant.now());
 
         assertThat(dao.getProjectsDue(Instant.now().minus(MAX_ANALYSIS_AGE), 10))
                 .extracting(ProjectDueForAnalysis::uuid)
@@ -171,7 +172,8 @@ class ProjectLastAnalysisDaoTest extends PersistenceCapableTest {
         projectB.setName("acme-app-b");
         qm.persist(projectB);
 
-        assertThat(dao.recordAttempt(new long[]{projectA.getId()}, Instant.now())).isEqualTo(1);
+        assertThat(dao.recordAttempt(new long[] {projectA.getId()}, Instant.now()))
+                .isEqualTo(1);
 
         assertThat(dao.getProjectsDue(Instant.now().minus(MAX_ANALYSIS_AGE), 10))
                 .extracting(ProjectDueForAnalysis::uuid)
@@ -204,7 +206,4 @@ class ProjectLastAnalysisDaoTest extends PersistenceCapableTest {
 
         assertThat(dao.recordAttempt(inactiveProject.getUuid(), Instant.now())).isZero();
     }
-
-
-
 }

@@ -33,8 +33,7 @@ final class TrivyModelConverter {
 
     private static final Pattern CWE_PATTERN = Pattern.compile("CWE-(\\d+)");
 
-    private TrivyModelConverter() {
-    }
+    private TrivyModelConverter() {}
 
     static Vulnerability.Builder convert(trivy.proto.common.Vulnerability trivyVuln) {
         final var vulnBuilder = Vulnerability.newBuilder();
@@ -72,9 +71,7 @@ final class TrivyModelConverter {
         // References as advisories
         for (final String ref : trivyVuln.getReferencesList()) {
             vulnBuilder.addAdvisories(
-                    org.cyclonedx.proto.v1_7.Advisory.newBuilder()
-                            .setUrl(ref)
-                            .build());
+                    org.cyclonedx.proto.v1_7.Advisory.newBuilder().setUrl(ref).build());
         }
 
         // Title as property
@@ -163,5 +160,4 @@ final class TrivyModelConverter {
                     .build());
         }
     }
-
 }

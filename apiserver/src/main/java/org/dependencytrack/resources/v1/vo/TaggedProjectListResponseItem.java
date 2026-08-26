@@ -30,7 +30,10 @@ import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record TaggedProjectListResponseItem(
-        @Schema(description = "UUID of the project", requiredMode = REQUIRED) UUID uuid,
-        @Schema(description = "Name of the project", requiredMode = REQUIRED) String name,
-        @Schema(description = "Version of the project") String version) {
-}
+        @Schema(description = "UUID of the project", requiredMode = REQUIRED)
+        UUID uuid,
+
+        @Schema(description = "Name of the project", requiredMode = REQUIRED)
+        String name,
+
+        @Schema(description = "Version of the project") String version) {}

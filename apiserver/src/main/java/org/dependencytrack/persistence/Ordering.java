@@ -26,5 +26,4 @@ public record Ordering(String by, OrderDirection direction) {
     public Ordering(final AlpineRequest alpineRequest) {
         this(alpineRequest.getOrderBy(), alpineRequest.getOrderDirection());
     }
-
 }

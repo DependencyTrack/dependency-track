@@ -24,16 +24,12 @@
         <artifactId>datanucleus-plugin-parent</artifactId>
         <version>5.1.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>datanucleus-plugin</artifactId>
     <packaging>jar</packaging>
-
     <name>Support :: DataNucleus Plugin :: Plugin</name>
-
     <properties>
         <project.parentBaseDir>${project.basedir}/../../..</project.parentBaseDir>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.datanucleus</groupId>
@@ -45,13 +41,11 @@
             <artifactId>datanucleus-rdbms</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>com.fasterxml.uuid</groupId>
             <artifactId>java-uuid-generator</artifactId>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -61,27 +55,23 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Bundle-SymbolicName>org.dependencytrack.support.datanucleus;singleton:=true
-                        </Bundle-SymbolicName>
-                        <Import-Package>
-                            org.datanucleus.store.rdbms*;version="${lib.datanucleus-rdbms.version}";resolution:=optional,
+                        <Bundle-SymbolicName>org.dependencytrack.support.datanucleus;singleton:=true</Bundle-SymbolicName>
+                        <Import-Package>org.datanucleus.store.rdbms*;version="${lib.datanucleus-rdbms.version}";resolution:=optional,
                             org.datanucleus*;version="${lib.datanucleus-core.version}",
-                            *;resolution:=optional
-                        </Import-Package>
+                            *;resolution:=optional</Import-Package>
                         <Export-Package>org.dependencytrack.support.datanucleus*</Export-Package>
                     </instructions>
                 </configuration>
                 <executions>
                     <execution>
                         <id>bundle-manifest</id>
-                        <phase>process-classes</phase>
                         <goals>
                             <goal>manifest</goal>
                         </goals>
+                        <phase>process-classes</phase>
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -94,5 +84,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

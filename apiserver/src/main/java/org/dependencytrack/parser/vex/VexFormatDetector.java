@@ -18,8 +18,8 @@
  */
 package org.dependencytrack.parser.vex;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.core.JsonToken;
+import org.dependencytrack.common.Mappers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +37,9 @@ import java.io.IOException;
  *     specification points to the OpenVEX context definition at {@code https://openvex.dev/ns}.</li>
  * </ul>
  *
+ * <p>Detection is performed as soon as one of the identifying fields is encountered, without reading
+ * or buffering the remainder of the document.
+ *
  * @since 5.7.0
  */
 public final class VexFormatDetector {
@@ -50,10 +53,10 @@ public final class VexFormatDetector {
      */
     private static final String OPENVEX_CONTEXT_URI = "openvex.dev/ns";
 
+    private static final String OPENVEX_CONTEXT_FIELD = "@context";
+
     private static final String CYCLONEDX_BOM_FORMAT_FIELD = "bomFormat";
     private static final String CYCLONEDX_BOM_FORMAT_VALUE = "CycloneDX";
-
-    private static final JsonMapper JSON_MAPPER = new JsonMapper();
 
     private VexFormatDetector() {
     }
@@ -70,34 +73,42 @@ public final class VexFormatDetector {
             return VexFormat.CYCLONEDX;
         }
 
-        final JsonNode rootNode;
-        try {
-            rootNode = JSON_MAPPER.readTree(vexBytes);
+        try (final var jsonParser = Mappers.jsonMapper().createParser(vexBytes)) {
+            if (jsonParser.nextToken() != JsonToken.START_OBJECT) {
+                throw new UnknownVexFormatException("""
+                        Unable to identify the uploaded document as either CycloneDX or OpenVEX. \
+                        Expected the document to be a JSON object, but it is not\
+                        """);
+            }
+
+            while (jsonParser.nextToken() != null) {
+                if (jsonParser.currentToken() != JsonToken.FIELD_NAME) {
+                    continue;
+                }
+
+                final String fieldName = jsonParser.currentName();
+                if (CYCLONEDX_BOM_FORMAT_FIELD.equals(fieldName)) {
+                    if (jsonParser.nextToken() == JsonToken.VALUE_STRING
+                            && CYCLONEDX_BOM_FORMAT_VALUE.equalsIgnoreCase(jsonParser.getValueAsString())) {
+                        return VexFormat.CYCLONEDX;
+                    }
+                } else if (OPENVEX_CONTEXT_FIELD.equals(fieldName)) {
+                    if (jsonParser.nextToken() == JsonToken.VALUE_STRING
+                            && jsonParser.getValueAsString().contains(OPENVEX_CONTEXT_URI)) {
+                        return VexFormat.OPENVEX;
+                    }
+                }
+
+                jsonParser.skipChildren();
+            }
+        } catch (UnknownVexFormatException e) {
+            throw e;
         } catch (IOException e) {
             LOGGER.debug("Failed to parse VEX as JSON", e);
             throw new UnknownVexFormatException("""
                     Unable to identify the uploaded document as either CycloneDX or OpenVEX. \
                     The document is neither XML nor valid JSON\
                     """, e);
-        }
-
-        if (!rootNode.isObject()) {
-            throw new UnknownVexFormatException("""
-                    Unable to identify the uploaded document as either CycloneDX or OpenVEX. \
-                    Expected the document to be a JSON object, but it is not\
-                    """);
-        }
-
-        final JsonNode bomFormatNode = rootNode.get(CYCLONEDX_BOM_FORMAT_FIELD);
-        if (bomFormatNode != null && bomFormatNode.isTextual()
-                && CYCLONEDX_BOM_FORMAT_VALUE.equalsIgnoreCase(bomFormatNode.asText())) {
-            return VexFormat.CYCLONEDX;
-        }
-
-        final JsonNode contextNode = rootNode.get("@context");
-        if (contextNode != null && contextNode.isTextual()
-                && contextNode.asText().contains(OPENVEX_CONTEXT_URI)) {
-            return VexFormat.OPENVEX;
         }
 
         throw new UnknownVexFormatException("""

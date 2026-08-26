@@ -32,7 +32,7 @@ import org.dependencytrack.model.Vex;
 import org.dependencytrack.notification.JdoNotificationEmitter;
 import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.parser.cyclonedx.CycloneDXVexImporter;
-import org.dependencytrack.parser.openvex.OpenVexDocument;
+import org.dependencytrack.parser.openvex.model.Openvex;
 import org.dependencytrack.parser.openvex.OpenVexImporter;
 import org.dependencytrack.parser.openvex.OpenVexParseException;
 import org.dependencytrack.parser.openvex.OpenVexParser;
@@ -158,21 +158,21 @@ public final class ImportVexActivity implements Activity<ImportVexArg, Void> {
     }
 
     private static void importOpenVex(final QueryManager qm, final Vex vex, final Project project, final byte[] vexBytes) {
-        final OpenVexDocument document;
+        final Openvex document;
         try {
             document = OpenVexParser.parse(vexBytes);
         } catch (OpenVexParseException e) {
             throw new TerminalApplicationFailureException("Failed to parse VEX", e);
         }
         vex.setVexFormat(Vex.Format.OPENVEX);
-        vex.setSpecVersion(document.specVersion());
-        vex.setVexVersion(document.version());
+        vex.setSpecVersion(OpenVexParser.specVersion(document));
+        vex.setVexVersion(document.getVersion());
 
         // OpenVEX documents have no serial number; their identity is conveyed by the "@id" IRI instead.
         vex.setSerialNumber(null);
 
         qm.runInTransaction(() -> new OpenVexImporter().applyVex(qm, document, project));
-        LOGGER.info("Completed processing of OpenVEX document {}", document.id());
+        LOGGER.info("Completed processing of OpenVEX document {}", document.getId());
     }
 
 }

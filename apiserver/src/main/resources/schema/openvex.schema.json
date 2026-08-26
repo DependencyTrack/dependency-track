@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openvex.dev/ns/v0.2.0/openvex-v0.2.0.schema.json",
+  "title": "OpenVEX Document",
+  "description": "JSON Schema for OpenVEX v0.2.0 documents, as defined by https://github.com/openvex/spec/blob/main/OPENVEX-SPEC.md",
+  "type": "object",
+  "required": [
+    "@context",
+    "@id",
+    "author",
+    "timestamp",
+    "version",
+    "statements"
+  ],
+  "properties": {
+    "@context": {
+      "$comment": "The JSON-LD context identifies both the format and the specification version.",
+      "type": "string",
+      "const": "https://openvex.dev/ns/v0.2.0"
+    },
+    "@id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tooling": {
+      "type": "string"
+    },
+    "supplier": {
+      "type": "string"
+    },
+    "statements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/statement"
+      }
+    }
+  },
+  "$defs": {
+    "statement": {
+      "type": "object",
+      "required": [
+        "vulnerability",
+        "status"
+      ],
+      "properties": {
+        "@id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "vulnerability": {
+          "$ref": "#/$defs/vulnerability"
+        },
+        "products": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        },
+        "status": {
+          "enum": [
+            "not_affected",
+            "affected",
+            "fixed",
+            "under_investigation"
+          ]
+        },
+        "justification": {
+          "enum": [
+            "component_not_present",
+            "vulnerable_code_not_present",
+            "vulnerable_code_not_in_execute_path",
+            "vulnerable_code_cannot_be_controlled_by_adversary",
+            "inline_mitigations_already_exist"
+          ]
+        },
+        "impact_statement": {
+          "type": "string"
+        },
+        "action_statement": {
+          "type": "string"
+        },
+        "action_statement_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "supplier": {
+          "type": "string"
+        },
+        "status_notes": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "$comment": "A not_affected statement must inform WHY the product is not affected.",
+          "if": {
+            "properties": {
+              "status": {
+                "const": "not_affected"
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "justification"
+                ]
+              },
+              {
+                "required": [
+                  "impact_statement"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "$comment": "An affected statement must describe the recommended action.",
+          "if": {
+            "properties": {
+              "status": {
+                "const": "affected"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "action_statement"
+            ]
+          }
+        }
+      ]
+    },
+    "vulnerability": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "@id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string"
+        },
+        "identifiers": {
+          "type": "object",
+          "properties": {
+            "purl": {
+              "type": "string",
+              "minLength": 1
+            },
+            "cpe22": {
+              "type": "string",
+              "minLength": 1
+            },
+            "cpe23": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "hashes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "subcomponents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        }
+      }
+    }
+  }
+}

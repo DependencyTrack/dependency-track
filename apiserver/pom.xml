@@ -335,6 +335,12 @@
             <artifactId>cyclonedx-core-java</artifactId>
         </dependency>
 
+        <!-- JSON Schema validation of e.g. OpenVEX documents -->
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>json-schema-validator</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
@@ -560,6 +566,31 @@
                                     "project.build.uuid",
                                     java.util.UUID.randomUUID().toString());
                             </source>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jsonschema2pojo</groupId>
+                <artifactId>jsonschema2pojo-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>openvex-schema</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <formatTypeMapping>
+                                <!-- Timestamps remain plain strings; their validity is verified by OpenVexParser,
+                                     because format assertions are annotation-only in the 2020-12 dialect. -->
+                                <date-time>java.lang.String</date-time>
+                            </formatTypeMapping>
+                            <sourceDirectory>${basedir}/src/main/resources/schema/openvex.schema.json</sourceDirectory>
+                            <targetPackage>org.dependencytrack.parser.openvex.model</targetPackage>
+                            <generateBuilders>true</generateBuilders>
+                            <includeAdditionalProperties>false</includeAdditionalProperties>
                         </configuration>
                     </execution>
                 </executions>

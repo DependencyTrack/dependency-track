@@ -27,7 +27,11 @@ import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
+import org.dependencytrack.parser.openvex.model.Openvex;
+import org.dependencytrack.parser.openvex.model.Statement;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -38,88 +42,29 @@ class OpenVexImporterTest extends PersistenceCapableTest {
 
     private final OpenVexImporter vexImporter = new OpenVexImporter();
 
-    @Test
-    void shouldMapEverySupportedStatusToAnalysisState() {
-        record StatusMappingCase(
-                String statusLabel,
-                AnalysisState expectedState,
-                boolean expectedSuppression) {
-        }
-
-        // Suppression follows the same policy as CycloneDX VEX imports:
-        // FALSE_POSITIVE, NOT_AFFECTED, and RESOLVED states are considered suppressed.
-        final var cases = List.of(
-                new StatusMappingCase("not_affected", AnalysisState.NOT_AFFECTED, true),
-                new StatusMappingCase("affected", AnalysisState.EXPLOITABLE, false),
-                new StatusMappingCase("fixed", AnalysisState.RESOLVED, true),
-                new StatusMappingCase("under_investigation", AnalysisState.IN_TRIAGE, false));
-
-        int vulnCounter = 0;
-        for (final var caseDefinition : cases) {
-            final Project project = qm.createProject("acme-app-" + vulnCounter, null, "1.0", null, null, null, null, false);
-            final Component component = createComponent(project, "acme-lib", "pkg:maven/com.acme/acme-lib@1.0.0");
-            final Vulnerability vulnerability = createFinding(project, component, "CVE-2099-%04d".formatted(vulnCounter++));
-
-            vexImporter.applyVex(qm, parseDocument(documentWithStatement("""
-                    "vulnerability": { "name": "%s" },
-                    "products": [{ "@id": "pkg:maven/com.acme/acme-lib@1.0.0", "identifiers": { "purl": "pkg:maven/com.acme/acme-lib@1.0.0" } }],
-                    "status": "%s",
-                    %s"""
-                    .formatted(vulnerability.getVulnId(), caseDefinition.statusLabel(),
-                            switch (caseDefinition.expectedState()) {
-                                // Both statuses require additional fields per specification.
-                                case NOT_AFFECTED -> "\"justification\": \"component_not_present\"";
-                                case EXPLOITABLE -> "\"action_statement\": \"Upgrade immediately\"";
-                                default -> "\"irrelevant\": true";
-                            }))), project);
-
-            assertThat(qm.getAnalysis(component, vulnerability))
-                    .as("Status %s must map to %s", caseDefinition.statusLabel(), caseDefinition.expectedState())
-                    .extracting(Analysis::getAnalysisState, Analysis::isSuppressed)
-                    .containsExactly(caseDefinition.expectedState(), caseDefinition.expectedSuppression());
-        }
+    @ParameterizedTest
+    @CsvSource({
+            "NOT_AFFECTED,        NOT_AFFECTED, true",
+            "AFFECTED,            EXPLOITABLE,  false",
+            "FIXED,               RESOLVED,     true",
+            "UNDER_INVESTIGATION, IN_TRIAGE,    false"})
+    void testStatusMapping(Statement.Status status, AnalysisState expectedState, boolean expectedSuppression) {
+        final var mappedState = OpenVexImporter.mapStatus(status);
+        assertThat(mappedState).isEqualTo(expectedState);
+        assertThat(OpenVexImporter.isSuppressed(mappedState)).isEqualTo(expectedSuppression);
     }
 
-    @Test
-    void shouldMapJustificationsWithDependencyTrackEquivalent() {
-        record JustificationMappingCase(String justificationLabel, AnalysisJustification expectedJustification) {
-        }
-
-        final var cases = List.of(
-                new JustificationMappingCase("component_not_present", AnalysisJustification.CODE_NOT_PRESENT),
-                new JustificationMappingCase("vulnerable_code_not_present", AnalysisJustification.CODE_NOT_PRESENT),
-                new JustificationMappingCase("vulnerable_code_not_in_execute_path", AnalysisJustification.CODE_NOT_REACHABLE),
-                new JustificationMappingCase("inline_mitigations_already_exist", AnalysisJustification.PROTECTED_BY_MITIGATING_CONTROL),
-                new JustificationMappingCase("vulnerable_code_cannot_be_controlled_by_adversary", null));
-
-        int vulnCounter = 100;
-        for (final var caseDefinition : cases) {
-            final Project project = qm.createProject("acme-app-" + vulnCounter, null, "1.0", null, null, null, null, false);
-            final Component component = createComponent(project, "acme-lib", "pkg:maven/com.acme/acme-lib@1.0.0");
-            final Vulnerability vulnerability = createFinding(project, component, "CVE-2099-%04d".formatted(vulnCounter++));
-
-            vexImporter.applyVex(qm, parseDocument(documentWithStatement("""
-                    "vulnerability": { "name": "%s" },
-                    "products": [{ "@id": "pkg:maven/com.acme/acme-lib@1.0.0", "identifiers": { "purl": "pkg:maven/com.acme/acme-lib@1.0.0" } }],
-                    "status": "not_affected",
-                    "justification": "%s\"""".formatted(vulnerability.getVulnId(), caseDefinition.justificationLabel()))), project);
-
-            final Analysis analysis = qm.getAnalysis(component, vulnerability);
-            assertThat(analysis).isNotNull();
-            assertThat(analysis.getAnalysisJustification())
-                    .as("Justification %s must map to %s",
-                            caseDefinition.justificationLabel(), caseDefinition.expectedJustification())
-                    .isEqualTo(caseDefinition.expectedJustification() != null
-                            ? caseDefinition.expectedJustification()
-                            // Dependency-Track records NOT_SET where no justification applies.
-                            : AnalysisJustification.NOT_SET);
-            if (caseDefinition.expectedJustification() != null) {
-                assertThat(analysis.getAnalysisComments())
-                        .extracting(AnalysisComment::getComment)
-                        .contains("Justification: %s → %s".formatted(
-                                AnalysisJustification.NOT_SET, caseDefinition.expectedJustification()));
-            }
-        }
+    @ParameterizedTest
+    @CsvSource(nullValues = "null", value = {
+            "COMPONENT_NOT_PRESENT,                             CODE_NOT_PRESENT",
+            "VULNERABLE_CODE_NOT_PRESENT,                       CODE_NOT_PRESENT",
+            "VULNERABLE_CODE_NOT_IN_EXECUTE_PATH,               CODE_NOT_REACHABLE",
+            "INLINE_MITIGATIONS_ALREADY_EXIST,                  PROTECTED_BY_MITIGATING_CONTROL",
+            "VULNERABLE_CODE_CANNOT_BE_CONTROLLED_BY_ADVERSARY, null"})
+    void testJustificationMapping(Statement.Justification justification,
+            AnalysisJustification expectedJustification) {
+        final var mappedJustification = OpenVexImporter.mapJustification(justification);
+        assertThat(mappedJustification).isEqualTo(expectedJustification);
     }
 
     @Test
@@ -439,6 +384,130 @@ class OpenVexImporterTest extends PersistenceCapableTest {
     }
 
     @Test
+    void shouldSkipStatementWithoutProducts() {
+        final Project project = createProject();
+        final Component component = createComponent(project, "acme-lib", "pkg:maven/com.acme/acme-lib@1.0.0");
+        final Vulnerability vulnerability = createFinding(project, component, "CVE-2099-0001");
+
+        vexImporter.applyVex(qm, parseDocument(documentWithStatement("""
+                "vulnerability": { "name": "CVE-2099-0001" },
+                "status": "fixed"
+                """)), project);
+
+        assertThat(qm.getAnalysis(component, vulnerability)).isNull();
+        assertThat(getAnalyses(project)).isEmpty();
+    }
+
+    @Test
+    void shouldNotMatchComponentWhenQualifiersDiffer() {
+        final Project project = createProject();
+        final Component component =
+                createComponent(project, "acme-lib", "pkg:apk/wolfi/git@2.39.0-r1?arch=x86_64");
+        final Vulnerability vulnerability = createFinding(project, component, "CVE-2099-0001");
+
+        vexImporter.applyVex(qm, parseDocument(documentWithStatement("""
+                "vulnerability": { "name": "CVE-2099-0001" },
+                "products": [{ "@id": "pkg:apk/wolfi/git@2.39.0-r1?arch=armv7" }],
+                "status": "fixed"
+                """)), project);
+
+        // Same package coordinates, but different qualifiers: per the matching rules of the
+        // go-vex reference implementation, this must NOT be treated as a match.
+        assertThat(qm.getAnalysis(component, vulnerability)).isNull();
+        assertThat(getAnalyses(project)).isEmpty();
+    }
+
+    @Test
+    void shouldMatchComponentWithIdenticalQualifiers() {
+        final Project project = createProject();
+        final Component component =
+                createComponent(project, "acme-lib", "pkg:apk/wolfi/git@2.39.0-r1?arch=x86_64");
+        final Vulnerability vulnerability = createFinding(project, component, "CVE-2099-0001");
+
+        vexImporter.applyVex(qm, parseDocument(documentWithStatement("""
+                "vulnerability": { "name": "CVE-2099-0001" },
+                "products": [{ "@id": "pkg:apk/wolfi/git@2.39.0-r1?arch=x86_64" }],
+                "status": "fixed"
+                """)), project);
+
+        assertThat(qm.getAnalysis(component, vulnerability))
+                .extracting(Analysis::getAnalysisState, Analysis::isSuppressed)
+                .containsExactly(AnalysisState.RESOLVED, true);
+    }
+
+    @Test
+    void shouldApplyStatementToMatchingSubcomponent() {
+        final Project project = createProject();
+        final Component app = createComponent(project, "acme-app", "pkg:maven/com.acme/acme-app@1.0.0");
+        final Component lib = createComponent(project, "acme-lib", "pkg:maven/com.acme/acme-lib@1.0.0");
+        final Component orphan = createComponent(project, "acme-orphan", "pkg:maven/com.acme/acme-orphan@1.0.0");
+        createDependency(app, lib);
+
+        final Vulnerability vulnApp = createFinding(project, app, "CVE-2099-0001");
+        final Vulnerability vulnOrphan = createFinding(project, orphan, "CVE-2099-0002");
+
+        // The vulnerability originates in acme-lib, which is included by acme-app, but not by
+        // acme-orphan. Only the product including the subcomponent must remain a target.
+        vexImporter.applyVex(qm, parseDocument(documentWithStatement("""
+                "vulnerability": { "name": "CVE-2099-0001" },
+                "products": [
+                  {
+                    "@id": "pkg:maven/com.acme/acme-app@1.0.0",
+                    "subcomponents": [{ "@id": "pkg:maven/com.acme/acme-lib@1.0.0" }]
+                  },
+                  {
+                    "@id": "pkg:maven/com.acme/acme-orphan@1.0.0",
+                    "subcomponents": [{ "@id": "pkg:maven/com.acme/acme-lib@1.0.0" }]
+                  }
+                ],
+                "status": "fixed"
+                """)), project);
+
+        assertThat(qm.getAnalysis(app, vulnApp))
+                .extracting(Analysis::getAnalysisState, Analysis::isSuppressed)
+                .containsExactly(AnalysisState.RESOLVED, true);
+        assertThat(qm.getAnalysis(orphan, vulnOrphan)).isNull();
+    }
+
+    @Test
+    void shouldApplyStatementWhenSubcomponentMatchesDirectly() {
+        final Project project = createProject();
+        final Component app = createComponent(project, "acme-app", "pkg:maven/com.acme/acme-app@1.0.0");
+        final Vulnerability vulnerability = createFinding(project, app, "CVE-2099-0001");
+
+        vexImporter.applyVex(qm, parseDocument(documentWithStatement("""
+                "vulnerability": { "name": "CVE-2099-0001" },
+                "products": [{
+                  "@id": "pkg:maven/com.acme/acme-app@1.0.0",
+                  "subcomponents": [{ "@id": "pkg:maven/com.acme/acme-app@1.0.0" }]
+                }],
+                "status": "fixed"
+                """)), project);
+
+        assertThat(qm.getAnalysis(app, vulnerability)).isNotNull();
+    }
+
+    @Test
+    void shouldSkipStatementWhenSubcomponentNotFound() {
+        final Project project = createProject();
+        final Component app = createComponent(project, "acme-app", "pkg:maven/com.acme/acme-app@1.0.0");
+        final Vulnerability vulnerability = createFinding(project, app, "CVE-2099-0001");
+
+        vexImporter.applyVex(qm, parseDocument(documentWithStatement("""
+                "vulnerability": { "name": "CVE-2099-0001" },
+                "products": [{
+                  "@id": "pkg:maven/com.acme/acme-app@1.0.0",
+                  "subcomponents": [{ "@id": "pkg:maven/org.other/not-in-project@9.9.9" }]
+                }],
+                "status": "fixed"
+                """)), project);
+
+        // An unresolvable subcomponent must not cause analyses anywhere else.
+        assertThat(qm.getAnalysis(app, vulnerability)).isNull();
+        assertThat(getAnalyses(project)).isEmpty();
+    }
+
+    @Test
     void shouldPreserveImpactAndActionStatementsInDetails() {
         final Project project = createProject();
         final Component component = createComponent(project, "acme-lib", "pkg:maven/com.acme/acme-lib@1.0.0");
@@ -449,14 +518,19 @@ class OpenVexImporterTest extends PersistenceCapableTest {
                 "products": [{ "@id": "pkg:maven/com.acme/acme-lib@1.0.0" }],
                 "status": "not_affected",
                 "justification": "vulnerable_code_not_in_execute_path",
-                "impact_statement": "The vulnerable code path is never executed"
+                "impact_statement": "The vulnerable code path is never executed",
+                "status_notes": "Determined by static analysis"
                 """)), project);
 
         final Analysis analysis = qm.getAnalysis(component, vulnerability);
-        assertThat(analysis.getAnalysisDetails()).isEqualTo("The vulnerable code path is never executed");
+        assertThat(analysis.getAnalysisDetails()).isEqualTo("""
+                The vulnerable code path is never executed
+
+                Determined by static analysis""");
         assertThat(analysis.getAnalysisComments())
                 .extracting(AnalysisComment::getComment)
-                .contains("Details: The vulnerable code path is never executed");
+                .anySatisfy(comment -> assertThat(comment).startsWith(
+                        "Details: The vulnerable code path is never executed"));
     }
 
     @Test
@@ -465,8 +539,9 @@ class OpenVexImporterTest extends PersistenceCapableTest {
         final Component component = createComponent(project, "acme-lib", "pkg:maven/com.acme/acme-lib@1.0.0");
         final Vulnerability vulnerability = createFinding(project, component, "CVE-2099-0001");
 
-        // Statements are applied in document order. Later statements override earlier ones,
-        // consistent with the specification's notion of documents being sequences of statements.
+        // Statements are applied in chronological order of their timestamps. Later statements
+        // override earlier ones, consistent with the specification's notion of documents being
+        // sequences of statements.
         vexImporter.applyVex(qm, parseDocument(/* language=JSON */ """
                 {
                   "@context": "https://openvex.dev/ns/v0.2.0",
@@ -483,6 +558,7 @@ class OpenVexImporterTest extends PersistenceCapableTest {
                       "action_statement": "No fix available yet"
                     },
                     {
+                      "timestamp": "2023-01-08T19:02:03-06:00",
                       "vulnerability": { "name": "CVE-2099-0001" },
                       "products": [{ "@id": "pkg:maven/com.acme/acme-lib@1.0.0" }],
                       "status": "fixed"
@@ -493,6 +569,45 @@ class OpenVexImporterTest extends PersistenceCapableTest {
 
         final Analysis analysis = qm.getAnalysis(component, vulnerability);
         assertThat(analysis)
+                .extracting(Analysis::getAnalysisState, Analysis::isSuppressed)
+                .containsExactly(AnalysisState.RESOLVED, true);
+    }
+
+    @Test
+    void shouldApplyStatementsInTimestampOrderWhenPublishedOutOfOrder() {
+        final Project project = createProject();
+        final Component component = createComponent(project, "acme-lib", "pkg:maven/com.acme/acme-lib@1.0.0");
+        final Vulnerability vulnerability = createFinding(project, component, "CVE-2099-0001");
+
+        // The newer verdict ("fixed") appears first in the document, followed by the stale
+        // verdict ("affected"). Applying in document order would let the stale verdict win;
+        // chronological application must let the newer verdict override it.
+        vexImporter.applyVex(qm, parseDocument(/* language=JSON */ """
+                {
+                  "@context": "https://openvex.dev/ns/v0.2.0",
+                  "@id": "https://openvex.dev/docs/example/vex-9fb3463de1b57",
+                  "author": "Wolfi J Inkinson",
+                  "timestamp": "2024-06-01T12:00:00Z",
+                  "version": 1,
+                  "statements": [
+                    {
+                      "timestamp": "2024-05-02T09:00:00Z",
+                      "vulnerability": { "name": "CVE-2099-0001" },
+                      "products": [{ "@id": "pkg:maven/com.acme/acme-lib@1.0.0" }],
+                      "status": "fixed"
+                    },
+                    {
+                      "timestamp": "2024-04-01T09:00:00Z",
+                      "vulnerability": { "name": "CVE-2099-0001" },
+                      "products": [{ "@id": "pkg:maven/com.acme/acme-lib@1.0.0" }],
+                      "status": "affected",
+                      "action_statement": "No fix available yet"
+                    }
+                  ]
+                }
+                """), project);
+
+        assertThat(qm.getAnalysis(component, vulnerability))
                 .extracting(Analysis::getAnalysisState, Analysis::isSuppressed)
                 .containsExactly(AnalysisState.RESOLVED, true);
     }
@@ -531,6 +646,11 @@ class OpenVexImporterTest extends PersistenceCapableTest {
         return qm.createComponent(component, false);
     }
 
+    private void createDependency(final Component parent, final Component child) {
+        parent.setDirectDependencies("[{\"uuid\": \"%s\"}]".formatted(child.getUuid()));
+        qm.persist(parent);
+    }
+
     private Vulnerability createFinding(final Project project, final Component component, final String vulnId) {
         var vulnerability = new Vulnerability();
         vulnerability.setVulnId(vulnId);
@@ -561,7 +681,7 @@ class OpenVexImporterTest extends PersistenceCapableTest {
                 """.formatted(statementFields);
     }
 
-    private static OpenVexDocument parseDocument(final String json) {
+    private static Openvex parseDocument(final String json) {
         return OpenVexParser.parse(json.getBytes(StandardCharsets.UTF_8));
     }
 

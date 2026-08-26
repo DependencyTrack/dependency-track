@@ -18,6 +18,8 @@
  */
 package org.dependencytrack.parser.openvex;
 
+import org.dependencytrack.parser.openvex.model.Openvex;
+import org.dependencytrack.parser.openvex.model.Statement;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -29,7 +31,7 @@ class OpenVexParserTest {
 
     @Test
     void shouldParseMinimalValidDocument() {
-        final OpenVexDocument document = parse(/* language=JSON */ """
+        final Openvex document = parse(/* language=JSON */ """
                 {
                   "@context": "https://openvex.dev/ns/v0.2.0",
                   "@id": "https://openvex.dev/docs/example/vex-9fb3463de1b57",
@@ -51,27 +53,27 @@ class OpenVexParserTest {
                 }
                 """);
 
-        assertThat(document.context()).isEqualTo("https://openvex.dev/ns/v0.2.0");
-        assertThat(document.specVersion()).isEqualTo("0.2.0");
-        assertThat(document.id()).isEqualTo("https://openvex.dev/docs/example/vex-9fb3463de1b57");
-        assertThat(document.author()).isEqualTo("Wolfi J Inkinson");
-        assertThat(document.role()).isEqualTo("Document Creator");
-        assertThat(document.timestamp()).isEqualTo("2023-01-08T18:02:03.647787998-06:00");
-        assertThat(document.version()).isEqualTo(1);
-        assertThat(document.tooling()).isNull();
-        assertThat(document.statements()).hasSize(1);
+        assertThat(document.getContext()).isEqualTo("https://openvex.dev/ns/v0.2.0");
+        assertThat(OpenVexParser.specVersion(document)).isEqualTo("0.2.0");
+        assertThat(document.getId()).isEqualTo("https://openvex.dev/docs/example/vex-9fb3463de1b57");
+        assertThat(document.getAuthor()).isEqualTo("Wolfi J Inkinson");
+        assertThat(document.getRole()).isEqualTo("Document Creator");
+        assertThat(document.getTimestamp()).isEqualTo("2023-01-08T18:02:03.647787998-06:00");
+        assertThat(document.getVersion()).isEqualTo(1);
+        assertThat(document.getTooling()).isNull();
+        assertThat(document.getStatements()).hasSize(1);
 
-        final var statement = document.statements().getFirst();
-        assertThat(statement.vulnerability().name()).isEqualTo("CVE-2023-12345");
-        assertThat(statement.status()).isEqualTo(OpenVexDocument.Status.FIXED);
-        assertThat(statement.products()).hasSize(1);
-        assertThat(statement.products().getFirst().id())
+        final var statement = document.getStatements().getFirst();
+        assertThat(statement.getVulnerability().getName()).isEqualTo("CVE-2023-12345");
+        assertThat(statement.getStatus()).isEqualTo(Statement.Status.FIXED);
+        assertThat(statement.getProducts()).hasSize(1);
+        assertThat(statement.getProducts().getFirst().getId())
                 .isEqualTo("pkg:apk/wolfi/git@2.39.0-r1?arch=armv7");
     }
 
     @Test
     void shouldParseDocumentWithMultipleStatements() {
-        final OpenVexDocument document = parse(/* language=JSON */ """
+        final Openvex document = parse(/* language=JSON */ """
                 {
                   "@context": "https://openvex.dev/ns/v0.2.0",
                   "@id": "https://openvex.dev/docs/example/vex-9fb3463de1b57",
@@ -98,15 +100,16 @@ class OpenVexParserTest {
                 }
                 """);
 
-        assertThat(document.statements()).hasSize(2);
-        assertThat(document.statements().get(0).status())
-                .isEqualTo(OpenVexDocument.Status.UNDER_INVESTIGATION);
-        assertThat(document.statements().get(1).products()).hasSize(2);
+        assertThat(document.getStatements()).hasSize(2);
+        assertThat(document.getStatements().get(0).getTimestamp()).isEqualTo("2023-01-08T18:02:03-06:00");
+        assertThat(document.getStatements().get(0).getStatus())
+                .isEqualTo(Statement.Status.UNDER_INVESTIGATION);
+        assertThat(document.getStatements().get(1).getProducts()).hasSize(2);
     }
 
     @Test
     void shouldParseVulnerabilityWithAliasesAndDescription() {
-        final OpenVexDocument document = parse(minimalDoc("""
+        final Openvex document = parse(minimalDoc("""
                 "vulnerability": {
                    "@id": "https://nvd.nist.gov/vuln/detail/CVE-2021-44228",
                    "name": "CVE-2021-44228",
@@ -116,16 +119,16 @@ class OpenVexParserTest {
                  "products": [{"@id": "pkg:apk/wolfi/git@2.39.0-r1"}],
                  "status": "fixed" """));
 
-        final var vulnerability = document.statements().getFirst().vulnerability();
-        assertThat(vulnerability.name()).isEqualTo("CVE-2021-44228");
-        assertThat(vulnerability.description()).isEqualTo("Remote code injection in Log4j");
-        assertThat(vulnerability.aliases()).containsExactly(
+        final var vulnerability = document.getStatements().getFirst().getVulnerability();
+        assertThat(vulnerability.getName()).isEqualTo("CVE-2021-44228");
+        assertThat(vulnerability.getDescription()).isEqualTo("Remote code injection in Log4j");
+        assertThat(vulnerability.getAliases()).containsExactly(
                 "GHSA-jfh8-c2jp-5v3q", "SNYK-JAVA-ORGAPACHELOGGINGLOG4J-2314721");
     }
 
     @Test
     void shouldParseProductWithIdentifiers() {
-        final OpenVexDocument document = parse(minimalDoc("""
+        final Openvex document = parse(minimalDoc("""
                 "vulnerability": {"name": "CVE-2023-12345"},
                  "products": [
                    {
@@ -139,15 +142,15 @@ class OpenVexParserTest {
                  ],
                  "status": "fixed" """));
 
-        final var identifiers = document.statements().getFirst().products().getFirst().identifiers();
-        assertThat(identifiers.purl()).isEqualTo("pkg:maven/org.apache.logging.log4j/log4j-core@2.4");
-        assertThat(identifiers.cpe22()).isEqualTo("cpe:/a:apache:log4j:2.4:-");
-        assertThat(identifiers.cpe23()).isEqualTo("cpe:2.3:a:apache:log4j:2.4:-:*:*:*:*:*:*");
+        final var identifiers = document.getStatements().getFirst().getProducts().getFirst().getIdentifiers();
+        assertThat(identifiers.getPurl()).isEqualTo("pkg:maven/org.apache.logging.log4j/log4j-core@2.4");
+        assertThat(identifiers.getCpe22()).isEqualTo("cpe:/a:apache:log4j:2.4:-");
+        assertThat(identifiers.getCpe23()).isEqualTo("cpe:2.3:a:apache:log4j:2.4:-:*:*:*:*:*:*");
     }
 
     @Test
     void shouldTolerateUnknownFields() {
-        final OpenVexDocument document = parse(/* language=JSON */ """
+        final Openvex document = parse(/* language=JSON */ """
                 {
                   "@context": "https://openvex.dev/ns/v0.2.0",
                   "@id": "https://openvex.dev/docs/example/vex-9fb3463de1b57",
@@ -180,8 +183,9 @@ class OpenVexParserTest {
                 }
                 """);
 
-        assertThat(document.statements()).hasSize(1);
-        assertThat(document.statements().getFirst().actionStatement()).isEqualTo("Upgrade to version 2.40.0");
+        assertThat(document.getStatements()).hasSize(1);
+        assertThat(document.getStatements().getFirst().getStatusNotes()).isEqualTo("Determined by scanning");
+        assertThat(document.getStatements().getFirst().getActionStatement()).isEqualTo("Upgrade to version 2.40.0");
     }
 
     @Test
@@ -205,12 +209,12 @@ class OpenVexParserTest {
                 .isInstanceOf(OpenVexParseException.class)
                 .hasMessageContaining("not a valid OpenVEX document")
                 .satisfies(e -> assertThat(((OpenVexParseException) e).getValidationErrors()).contains(
-                        "/@context: Required field is missing",
-                        "/@id: Required field is missing",
-                        "/author: Required field is missing",
-                        "/timestamp: Required field is missing",
-                        "/version: Required field is missing",
-                        "/statements: Required field is missing"));
+                        "required property '@context' not found",
+                        "required property '@id' not found",
+                        "required property 'author' not found",
+                        "required property 'timestamp' not found",
+                        "required property 'version' not found",
+                        "required property 'statements' not found"));
     }
 
     @Test
@@ -222,7 +226,7 @@ class OpenVexParserTest {
                 .isInstanceOf(OpenVexParseException.class)
                 .satisfies(e -> assertThat(((OpenVexParseException) e).getValidationErrors())
                         .anySatisfy(error -> assertThat(error)
-                                .startsWith("/@context: Unsupported OpenVEX specification version")));
+                                .contains("'https://openvex.dev/ns/v0.2.0'")));
     }
 
     @Test
@@ -231,12 +235,15 @@ class OpenVexParserTest {
                 .getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(OpenVexParseException.class)
                 .satisfies(e -> assertThat(((OpenVexParseException) e).getValidationErrors())
-                        .containsExactly("/statements: Must contain at least one statement"));
+                        .anySatisfy(error -> assertThat(error)
+                                .contains("/statements")
+                                .contains("at least 1")));
     }
 
     @Test
     void shouldFailForInvalidTimestamp() {
-        assertThatThrownBy(() -> OpenVexParser.parse(minimalDocWithoutStatements()
+        assertThatThrownBy(() -> OpenVexParser.parse(minimalDoc(
+                "\"vulnerability\": {\"name\": \"CVE-2023-12345\"}, \"products\": [{\"@id\": \"pkg:x/y@1\"}], \"status\": \"fixed\"")
                 .replace("\"timestamp\": \"2023-01-08T18:02:03-06:00\"", "\"timestamp\": \"not-a-date\"")
                 .getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(OpenVexParseException.class)
@@ -251,7 +258,9 @@ class OpenVexParserTest {
                 .getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(OpenVexParseException.class)
                 .satisfies(e -> assertThat(((OpenVexParseException) e).getValidationErrors())
-                        .contains("/version: Version must be greater than zero, but was 0"));
+                        .anySatisfy(error -> assertThat(error)
+                                .contains("/version")
+                                .contains("minimum value of 1")));
     }
 
     @Test
@@ -261,7 +270,9 @@ class OpenVexParserTest {
                 .getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(OpenVexParseException.class)
                 .satisfies(e -> assertThat(((OpenVexParseException) e).getValidationErrors())
-                        .contains("/statements/0/status: Required field is missing"));
+                        .anySatisfy(error -> assertThat(error)
+                                .startsWith("/statements/0")
+                                .contains("required property 'status' not found")));
     }
 
     @Test
@@ -274,8 +285,10 @@ class OpenVexParserTest {
                 .getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(OpenVexParseException.class)
                 .satisfies(e -> assertThat(((OpenVexParseException) e).getValidationErrors())
-                        .contains("/statements/0/status: Unsupported status \"resolved\"; Supported values are "
-                                + "[not_affected, affected, fixed, under_investigation]"));
+                        .anySatisfy(error -> assertThat(error)
+                                .startsWith("/statements/0/status")
+                                .contains("does not have a value in the enumeration",
+                                        "\"not_affected\"", "\"affected\"", "\"fixed\"", "\"under_investigation\"")));
     }
 
     @Test
@@ -284,17 +297,15 @@ class OpenVexParserTest {
                 """
                         "vulnerability": {"name": "CVE-2023-12345"}, \
                         "products": [{"@id": "pkg:x/y@1"}], \
-                        "status": "not_affected", \
+                        "status": "fixed", \
                         "justification": "code_not_present\"""")
                 .getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(OpenVexParseException.class)
                 .satisfies(e -> assertThat(((OpenVexParseException) e).getValidationErrors())
-                        .contains("""
-                                /statements/0/justification: Unsupported justification "code_not_present"; \
-                                Supported values are [component_not_present, vulnerable_code_not_present, \
-                                vulnerable_code_not_in_execute_path, vulnerable_code_cannot_be_controlled_by_adversary, \
-                                inline_mitigations_already_exist]"""
-                                .replace("\n", "")));
+                        .anySatisfy(error -> assertThat(error)
+                                .startsWith("/statements/0/justification")
+                                .contains("code_not_present")
+                                .contains("component_not_present")));
     }
 
     @Test
@@ -304,23 +315,22 @@ class OpenVexParserTest {
                 .getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(OpenVexParseException.class)
                 .satisfies(e -> assertThat(((OpenVexParseException) e).getValidationErrors())
-                        .contains("/statements/0: Either \"justification\" or \"impact_statement\" must be provided "
-                                + "when using status \"not_affected\""));
+                        .anySatisfy(error -> assertThat(error).startsWith("/statements/0")));
     }
 
     @Test
     void shouldAcceptNotAffectedWithImpactStatementOnly() {
-        final OpenVexDocument document = parse(minimalDoc(
+        final Openvex document = parse(minimalDoc(
                 """
                         "vulnerability": {"name": "CVE-2023-12345"}, \
                         "products": [{"@id": "pkg:x/y@1"}], \
                         "status": "not_affected", \
                         "impact_statement": "Not exploitable as shipped\""""));
 
-        assertThat(document.statements().getFirst().status())
-                .isEqualTo(OpenVexDocument.Status.NOT_AFFECTED);
-        assertThat(document.statements().getFirst().justification()).isNull();
-        assertThat(document.statements().getFirst().impactStatement()).isEqualTo("Not exploitable as shipped");
+        assertThat(document.getStatements().getFirst().getStatus())
+                .isEqualTo(Statement.Status.NOT_AFFECTED);
+        assertThat(document.getStatements().getFirst().getJustification()).isNull();
+        assertThat(document.getStatements().getFirst().getImpactStatement()).isEqualTo("Not exploitable as shipped");
     }
 
     @Test
@@ -330,7 +340,20 @@ class OpenVexParserTest {
                 .getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(OpenVexParseException.class)
                 .satisfies(e -> assertThat(((OpenVexParseException) e).getValidationErrors())
-                        .contains("/statements/0: \"action_statement\" must be provided when using status \"affected\""));
+                        .anySatisfy(error -> assertThat(error)
+                                .startsWith("/statements/0")
+                                .contains("required property 'action_statement' not found")));
+    }
+
+    @Test
+    void shouldParseStatementWithoutProducts() {
+        final Openvex document = parse(minimalDoc(
+                "\"vulnerability\": {\"name\": \"CVE-2023-12345\"}, \"status\": \"fixed\""));
+
+        assertThat(document.getStatements()).hasSize(1);
+        assertThat(document.getStatements().getFirst().getStatus())
+                .isEqualTo(Statement.Status.FIXED);
+        assertThat(document.getStatements().getFirst().getProducts()).isEmpty();
     }
 
     @Test
@@ -340,7 +363,9 @@ class OpenVexParserTest {
                 .getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(OpenVexParseException.class)
                 .satisfies(e -> assertThat(((OpenVexParseException) e).getValidationErrors())
-                        .contains("/statements/0/products: Must contain at least one product"));
+                        .anySatisfy(error -> assertThat(error)
+                                .startsWith("/statements/0/products")
+                                .contains("at least 1")));
     }
 
     @Test
@@ -350,10 +375,12 @@ class OpenVexParserTest {
                 .getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(OpenVexParseException.class)
                 .satisfies(e -> assertThat(((OpenVexParseException) e).getValidationErrors())
-                        .contains("/statements/0/vulnerability/name: Required field is missing"));
+                        .anySatisfy(error -> assertThat(error)
+                                .startsWith("/statements/0/vulnerability")
+                                .contains("required property 'name' not found")));
     }
 
-    private static OpenVexDocument parse(final String json) {
+    private static Openvex parse(final String json) {
         return OpenVexParser.parse(json.getBytes(StandardCharsets.UTF_8));
     }
 

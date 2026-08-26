@@ -20,5 +20,4 @@ package org.dependencytrack.dex.engine.persistence.command;
 
 import java.time.Duration;
 
-public record PollWorkflowTaskCommand(String workflowName, Duration lockTimeout) {
-}
+public record PollWorkflowTaskCommand(String workflowName, Duration lockTimeout) {}

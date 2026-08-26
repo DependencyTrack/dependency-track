@@ -50,28 +50,32 @@ final class PostgresExtractor implements SourceExtractor {
     }
 
     @Override
-    public long extract(final TableMigration table, final String stagingSchema,
-                        final Jdbi target, final long sampleLimit) throws Exception {
+    public long extract(
+            final TableMigration table, final String stagingSchema, final Jdbi target, final long sampleLimit)
+            throws Exception {
         try (Connection src = Connections.openSource(source)) {
             src.setAutoCommit(false);
             return streamCopy(src, table, stagingSchema, target, sampleLimit);
         }
     }
 
-    private long streamCopy(final Connection src, final TableMigration table,
-                            final String stagingSchema, final Jdbi target,
-                            final long sampleLimit) throws Exception {
+    private long streamCopy(
+            final Connection src,
+            final TableMigration table,
+            final String stagingSchema,
+            final Jdbi target,
+            final long sampleLimit)
+            throws Exception {
         final String renderedSelect = table.extractSelect().formatted(sourceSchema);
-        final String selectSql = sampleLimit == Long.MAX_VALUE
-            ? renderedSelect
-            : renderedSelect + " LIMIT " + sampleLimit;
+        final String selectSql =
+                sampleLimit == Long.MAX_VALUE ? renderedSelect : renderedSelect + " LIMIT " + sampleLimit;
         final String srcCopySql = "COPY (" + selectSql + ") TO STDOUT WITH (FORMAT BINARY)";
         final String quotedCols = table.extractColumns().stream()
-            .map(c -> "\"" + c + "\"")
-            .reduce((a, b) -> a + ", " + b)
-            .orElseThrow();
+                .map(c -> "\"" + c + "\"")
+                .reduce((a, b) -> a + ", " + b)
+                .orElseThrow();
         final String tgtCopySql = "COPY \"%s\".src_%s (%s) FROM STDIN WITH (FORMAT BINARY)"
-            .formatted(stagingSchema, table.name(), quotedCols);
+                .formatted(stagingSchema, table.name(), quotedCols);
 
         final PipedInputStream pipeIn = new PipedInputStream(1 << 16);
         final PipedOutputStream pipeOut = new PipedOutputStream(pipeIn);

@@ -31,5 +31,4 @@ interface GitHubTokenProvider {
      * change between calls (App installation tokens are refreshed on access).
      */
     String currentToken();
-
 }

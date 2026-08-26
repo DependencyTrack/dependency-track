@@ -69,24 +69,23 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
         @ValueSource(ints = {200, 402, 429})
         void shouldPassForSuccessStatusCodes(int statusCode, WireMockRuntimeInfo wmRuntimeInfo) {
             stubFor(post(urlPathEqualTo("/api/v3/component-report"))
-                    .willReturn(aResponse()
-                            .withStatus(statusCode)
-                            .withBody("[]")));
+                    .willReturn(aResponse().withStatus(statusCode).withBody("[]")));
 
             final OssIndexVulnAnalyzerFactory factory = createFactory();
             final OssIndexVulnAnalyzerConfigV1 config = createConfig(wmRuntimeInfo);
             final ExtensionTestResult result = factory.test(config);
 
             assertThat(result.isFailed()).isFalse();
-            assertThat(result.checks()).satisfiesExactly(
-                    check -> {
-                        assertThat(check.name()).isEqualTo("connection");
-                        assertThat(check.status()).isEqualTo(Status.PASSED);
-                    },
-                    check -> {
-                        assertThat(check.name()).isEqualTo("authentication");
-                        assertThat(check.status()).isEqualTo(Status.PASSED);
-                    });
+            assertThat(result.checks())
+                    .satisfiesExactly(
+                            check -> {
+                                assertThat(check.name()).isEqualTo("connection");
+                                assertThat(check.status()).isEqualTo(Status.PASSED);
+                            },
+                            check -> {
+                                assertThat(check.name()).isEqualTo("authentication");
+                                assertThat(check.status()).isEqualTo(Status.PASSED);
+                            });
         }
 
         @Test
@@ -99,16 +98,17 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
             final ExtensionTestResult result = factory.test(config);
 
             assertThat(result.isFailed()).isTrue();
-            assertThat(result.checks()).satisfiesExactly(
-                    check -> {
-                        assertThat(check.name()).isEqualTo("connection");
-                        assertThat(check.status()).isEqualTo(Status.PASSED);
-                    },
-                    check -> {
-                        assertThat(check.name()).isEqualTo("authentication");
-                        assertThat(check.status()).isEqualTo(Status.FAILED);
-                        assertThat(check.message()).contains("401");
-                    });
+            assertThat(result.checks())
+                    .satisfiesExactly(
+                            check -> {
+                                assertThat(check.name()).isEqualTo("connection");
+                                assertThat(check.status()).isEqualTo(Status.PASSED);
+                            },
+                            check -> {
+                                assertThat(check.name()).isEqualTo("authentication");
+                                assertThat(check.status()).isEqualTo(Status.FAILED);
+                                assertThat(check.message()).contains("401");
+                            });
         }
 
         @Test
@@ -121,46 +121,44 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
             final ExtensionTestResult result = factory.test(config);
 
             assertThat(result.isFailed()).isTrue();
-            assertThat(result.checks()).satisfiesExactly(
-                    check -> {
-                        assertThat(check.name()).isEqualTo("connection");
-                        assertThat(check.status()).isEqualTo(Status.FAILED);
-                        assertThat(check.message()).contains("500");
-                    },
-                    check -> {
-                        assertThat(check.name()).isEqualTo("authentication");
-                        assertThat(check.status()).isEqualTo(Status.SKIPPED);
-                    });
+            assertThat(result.checks())
+                    .satisfiesExactly(
+                            check -> {
+                                assertThat(check.name()).isEqualTo("connection");
+                                assertThat(check.status()).isEqualTo(Status.FAILED);
+                                assertThat(check.message()).contains("500");
+                            },
+                            check -> {
+                                assertThat(check.name()).isEqualTo("authentication");
+                                assertThat(check.status()).isEqualTo(Status.SKIPPED);
+                            });
         }
 
         @Test
         void shouldSkipAllChecksWhenDisabled() {
             final OssIndexVulnAnalyzerFactory factory = createFactory();
-            final var config = new OssIndexVulnAnalyzerConfigV1()
-                    .withEnabled(false);
+            final var config = new OssIndexVulnAnalyzerConfigV1().withEnabled(false);
 
             final ExtensionTestResult result = factory.test(config);
 
             assertThat(result.isFailed()).isFalse();
-            assertThat(result.checks()).satisfiesExactly(
-                    check -> {
-                        assertThat(check.name()).isEqualTo("connection");
-                        assertThat(check.status()).isEqualTo(Status.SKIPPED);
-                    },
-                    check -> {
-                        assertThat(check.name()).isEqualTo("authentication");
-                        assertThat(check.status()).isEqualTo(Status.SKIPPED);
-                    });
+            assertThat(result.checks())
+                    .satisfiesExactly(
+                            check -> {
+                                assertThat(check.name()).isEqualTo("connection");
+                                assertThat(check.status()).isEqualTo(Status.SKIPPED);
+                            },
+                            check -> {
+                                assertThat(check.name()).isEqualTo("authentication");
+                                assertThat(check.status()).isEqualTo(Status.SKIPPED);
+                            });
         }
 
         @Test
         void shouldFailConnectionOnConnectionError() {
             final var factory = new OssIndexVulnAnalyzerFactory();
             final var configRegistry = new MockConfigRegistry(
-                    Map.of("allow-local-connections", "true"),
-                    factory.runtimeConfigSpec(),
-                    null,
-                    null);
+                    Map.of("allow-local-connections", "true"), factory.runtimeConfigSpec(), null, null);
             factory.init(createServiceRegistry(configRegistry));
 
             final var config = new OssIndexVulnAnalyzerConfigV1()
@@ -172,15 +170,16 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
             final ExtensionTestResult result = factory.test(config);
 
             assertThat(result.isFailed()).isTrue();
-            assertThat(result.checks()).satisfiesExactly(
-                    check -> {
-                        assertThat(check.name()).isEqualTo("connection");
-                        assertThat(check.status()).isEqualTo(Status.FAILED);
-                    },
-                    check -> {
-                        assertThat(check.name()).isEqualTo("authentication");
-                        assertThat(check.status()).isEqualTo(Status.SKIPPED);
-                    });
+            assertThat(result.checks())
+                    .satisfiesExactly(
+                            check -> {
+                                assertThat(check.name()).isEqualTo("connection");
+                                assertThat(check.status()).isEqualTo(Status.FAILED);
+                            },
+                            check -> {
+                                assertThat(check.name()).isEqualTo("authentication");
+                                assertThat(check.status()).isEqualTo(Status.SKIPPED);
+                            });
         }
 
         @Test
@@ -198,8 +197,8 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
             final ExtensionTestResult result = factory.test(config);
             assertThat(result.isFailed()).isFalse();
 
-            final String expected = "Basic " + Base64.getEncoder().encodeToString(
-                    "foo@example.com:test-token".getBytes(StandardCharsets.UTF_8));
+            final String expected = "Basic "
+                    + Base64.getEncoder().encodeToString("foo@example.com:test-token".getBytes(StandardCharsets.UTF_8));
             verify(postRequestedFor(urlPathEqualTo("/api/v3/component-report"))
                     .withHeader("Authorization", equalTo(expected)));
         }
@@ -225,11 +224,8 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
         @Test
         void shouldFailConnectionForLocalAddress() {
             final var factory = new OssIndexVulnAnalyzerFactory();
-            final var configRegistry = new MockConfigRegistry(
-                    Collections.emptyMap(),
-                    factory.runtimeConfigSpec(),
-                    null,
-                    null);
+            final var configRegistry =
+                    new MockConfigRegistry(Collections.emptyMap(), factory.runtimeConfigSpec(), null, null);
             factory.init(createServiceRegistry(configRegistry));
 
             final var config = new OssIndexVulnAnalyzerConfigV1()
@@ -241,16 +237,17 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
             final ExtensionTestResult result = factory.test(config);
 
             assertThat(result.isFailed()).isTrue();
-            assertThat(result.checks()).satisfiesExactly(
-                    check -> {
-                        assertThat(check.name()).isEqualTo("connection");
-                        assertThat(check.status()).isEqualTo(Status.FAILED);
-                        assertThat(check.message()).contains("local address");
-                    },
-                    check -> {
-                        assertThat(check.name()).isEqualTo("authentication");
-                        assertThat(check.status()).isEqualTo(Status.SKIPPED);
-                    });
+            assertThat(result.checks())
+                    .satisfiesExactly(
+                            check -> {
+                                assertThat(check.name()).isEqualTo("connection");
+                                assertThat(check.status()).isEqualTo(Status.FAILED);
+                                assertThat(check.message()).contains("local address");
+                            },
+                            check -> {
+                                assertThat(check.name()).isEqualTo("authentication");
+                                assertThat(check.status()).isEqualTo(Status.SKIPPED);
+                            });
         }
 
         private OssIndexVulnAnalyzerFactory createFactory() {
@@ -258,11 +255,8 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
 
             final var effectiveDeploymentConfigs = Map.of("allow-local-connections", "true");
 
-            final var configRegistry = new MockConfigRegistry(
-                    effectiveDeploymentConfigs,
-                    factory.runtimeConfigSpec(),
-                    null,
-                    null);
+            final var configRegistry =
+                    new MockConfigRegistry(effectiveDeploymentConfigs, factory.runtimeConfigSpec(), null, null);
             factory.init(createServiceRegistry(configRegistry));
             return factory;
         }
@@ -282,7 +276,6 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
                     .withUsername("foo@example.com")
                     .withApiToken("test-token");
         }
-
     }
 
     @Nested
@@ -353,14 +346,10 @@ class OssIndexVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnA
             try (final var factory = new OssIndexVulnAnalyzerFactory()) {
                 final RuntimeConfigSpec spec = factory.runtimeConfigSpec();
                 final var config = (OssIndexVulnAnalyzerConfigV1) spec.defaultConfig();
-                config.withEnabled(true)
-                        .withUsername("foo@example.com")
-                        .withApiToken("test-token");
+                config.withEnabled(true).withUsername("foo@example.com").withApiToken("test-token");
 
                 assertThatNoException().isThrownBy(() -> spec.validator().validate(config));
             }
         }
-
     }
-
 }

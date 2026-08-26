@@ -53,7 +53,8 @@ class PebbleNotificationTemplateRendererTest {
                         """.formatted(BASE_URL),
                 Map.of("frontendUri", "/vulnerabilities/GITHUB/GHSA-45gg-vh54-h5m9/affectedProjects"));
 
-        assertThat(rendered.content()).isEqualTo("""
+        assertThat(rendered.content())
+                .isEqualTo("""
                 Vulnerability URL: %s/vulnerability/?source=GITHUB&vulnId=GHSA-45gg-vh54-h5m9
                 Component URL:     %s/component/?uuid=a0f76ff1-4f7b-4c97-af53-a39629a4d18c
                 Project URL:       %s/projects/24593709-c6f4-4341-b8b4-852b8379a61e
@@ -72,10 +73,7 @@ class PebbleNotificationTemplateRendererTest {
 
     @Test
     void shouldLeaveNullBaseUrlAsNull() {
-        final RenderedNotificationTemplate rendered = render(
-                null,
-                "%1$s=[{{ %1$s }}]".formatted(BASE_URL),
-                Map.of());
+        final RenderedNotificationTemplate rendered = render(null, "%1$s=[{{ %1$s }}]".formatted(BASE_URL), Map.of());
 
         // Pebble renders null variables as empty strings.
         assertThat(rendered.content()).isEqualTo("%s=[]".formatted(BASE_URL));
@@ -83,22 +81,16 @@ class PebbleNotificationTemplateRendererTest {
 
     @Test
     void shouldLeaveEmptyBaseUrlEmpty() {
-        final RenderedNotificationTemplate rendered = render(
-                "",
-                "%1$s=[{{ %1$s }}]".formatted(BASE_URL),
-                Map.of());
+        final RenderedNotificationTemplate rendered = render("", "%1$s=[{{ %1$s }}]".formatted(BASE_URL), Map.of());
 
         assertThat(rendered.content()).isEqualTo("%s=[]".formatted(BASE_URL));
     }
 
     private static RenderedNotificationTemplate render(
-            String baseUrl,
-            String templateContent,
-            Map<String, Object> additionalContext) {
-        final NotificationTemplateRenderer renderer =
-                new PebbleNotificationTemplateRendererFactory(
+            String baseUrl, String templateContent, Map<String, Object> additionalContext) {
+        final NotificationTemplateRenderer renderer = new PebbleNotificationTemplateRendererFactory(
                         Map.of(BASE_URL, () -> baseUrl))
-                        .createRenderer(new NotificationTemplate(templateContent, "text/plain"));
+                .createRenderer(new NotificationTemplate(templateContent, "text/plain"));
 
         final RenderedNotificationTemplate rendered = renderer.render(
                 Notification.newBuilder()
@@ -109,5 +101,4 @@ class PebbleNotificationTemplateRendererTest {
         assertThat(rendered).isNotNull();
         return rendered;
     }
-
 }

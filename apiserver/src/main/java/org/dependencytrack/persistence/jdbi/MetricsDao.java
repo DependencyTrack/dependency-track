@@ -196,8 +196,7 @@ public interface MetricsDao extends SqlObject {
     default void refreshVulnerabilityMetrics() {
         if (!getHandle().isInTransaction()) {
             // Required so SET LOCAL doesn't silently no-op.
-            throw new IllegalStateException(
-                    "refreshVulnerabilityMetrics must run inside a transaction");
+            throw new IllegalStateException("refreshVulnerabilityMetrics must run inside a transaction");
         }
 
         // NB: All other metrics operations explicitly cast timestamps to UTC
@@ -430,13 +429,10 @@ public interface MetricsDao extends SqlObject {
              ORDER BY date_range.metrics_date
             """)
     @RegisterBeanMapper(ProjectMetrics.class)
-    List<ProjectMetrics> getCollectionProjectMetricsSince(
-            @Bind long projectId,
-            @Bind Instant since);
+    List<ProjectMetrics> getCollectionProjectMetricsSince(@Bind long projectId, @Bind Instant since);
 
     default @Nullable ProjectMetrics getMostRecentCollectionProjectMetrics(long projectId) {
-        final List<ProjectMetrics> metrics =
-                getMostRecentCollectionProjectMetrics(List.of(projectId));
+        final List<ProjectMetrics> metrics = getMostRecentCollectionProjectMetrics(List.of(projectId));
         return !metrics.isEmpty() ? metrics.getFirst() : null;
     }
 
@@ -612,14 +608,14 @@ public interface MetricsDao extends SqlObject {
                     target_date := today_utc + day_offset;
                     next_date := target_date + 1;
                     partition_suffix := to_char(target_date, 'YYYYMMDD');
-            
+
                     FOREACH table_name IN ARRAY metric_tables
                     LOOP
                         partition_name := format('%s_%s', table_name, partition_suffix);
                         SELECT EXISTS (
                             SELECT 1 FROM pg_class WHERE relname = partition_name
                         ) INTO partition_exists;
-            
+
                         IF NOT partition_exists THEN
                             EXECUTE format(
                                 'CREATE TABLE IF NOT EXISTS %I (LIKE %I INCLUDING ALL);',
@@ -651,14 +647,12 @@ public interface MetricsDao extends SqlObject {
     List<String> getExpiredPartitions(@Bind String parentTable, @Bind int retentionDays);
 
     default int deleteProjectMetricsForRetentionDuration(Duration retentionDuration) {
-        final List<String> expired = getExpiredPartitions(
-                "\"PROJECTMETRICS\"", (int) retentionDuration.toDays());
+        final List<String> expired = getExpiredPartitions("\"PROJECTMETRICS\"", (int) retentionDuration.toDays());
         return dropPartitions("\"PROJECTMETRICS\"", expired);
     }
 
     default int deleteComponentMetricsForRetentionDuration(Duration retentionDuration) {
-        final List<String> expired = getExpiredPartitions(
-                "\"DEPENDENCYMETRICS\"", (int) retentionDuration.toDays());
+        final List<String> expired = getExpiredPartitions("\"DEPENDENCYMETRICS\"", (int) retentionDuration.toDays());
         return dropPartitions("\"DEPENDENCYMETRICS\"", expired);
     }
 
@@ -675,7 +669,8 @@ public interface MetricsDao extends SqlObject {
                 });
             } else {
                 getHandle()
-                        .createUpdate("ALTER TABLE %s DETACH PARTITION %s CONCURRENTLY".formatted(parentTable, partition))
+                        .createUpdate(
+                                "ALTER TABLE %s DETACH PARTITION %s CONCURRENTLY".formatted(parentTable, partition))
                         // Exempt from global query timeout b/c detachment has to wait for all
                         // transactions accessing the partition to complete.
                         .configure(SqlStatements.class, cfg -> cfg.setQueryTimeout(0))
@@ -688,7 +683,8 @@ public interface MetricsDao extends SqlObject {
     }
 
     default boolean isPartitionDetachPending(String parentTable, String partition) {
-        return getHandle().createQuery("""
+        return getHandle()
+                .createQuery("""
                         SELECT inhdetachpending
                           FROM pg_inherits
                           WHERE inhparent = CAST(:parentTable AS regclass)

@@ -76,47 +76,26 @@ public record RetryPolicy(
 
     public RetryPolicy withInitialDelay(final Duration initialDelay) {
         return new RetryPolicy(
-                initialDelay,
-                this.delayMultiplier,
-                this.delayRandomizationFactor,
-                this.maxDelay,
-                this.maxAttempts);
+                initialDelay, this.delayMultiplier, this.delayRandomizationFactor, this.maxDelay, this.maxAttempts);
     }
 
     public RetryPolicy withDelayMultiplier(final double delayMultiplier) {
         return new RetryPolicy(
-                this.initialDelay,
-                delayMultiplier,
-                this.delayRandomizationFactor,
-                this.maxDelay,
-                this.maxAttempts);
+                this.initialDelay, delayMultiplier, this.delayRandomizationFactor, this.maxDelay, this.maxAttempts);
     }
 
     public RetryPolicy withDelayRandomizationFactor(final double delayRandomizationFactor) {
         return new RetryPolicy(
-                this.initialDelay,
-                this.delayMultiplier,
-                delayRandomizationFactor,
-                this.maxDelay,
-                this.maxAttempts);
+                this.initialDelay, this.delayMultiplier, delayRandomizationFactor, this.maxDelay, this.maxAttempts);
     }
 
     public RetryPolicy withMaxDelay(final Duration maxDelay) {
         return new RetryPolicy(
-                this.initialDelay,
-                this.delayMultiplier,
-                this.delayRandomizationFactor,
-                maxDelay,
-                this.maxAttempts);
+                this.initialDelay, this.delayMultiplier, this.delayRandomizationFactor, maxDelay, this.maxAttempts);
     }
 
     public RetryPolicy withMaxAttempts(final int maxAttempts) {
         return new RetryPolicy(
-                this.initialDelay,
-                this.delayMultiplier,
-                this.delayRandomizationFactor,
-                this.maxDelay,
-                maxAttempts);
+                this.initialDelay, this.delayMultiplier, this.delayRandomizationFactor, this.maxDelay, maxAttempts);
     }
-
 }

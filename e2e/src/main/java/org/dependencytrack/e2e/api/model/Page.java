@@ -20,5 +20,4 @@ package org.dependencytrack.e2e.api.model;
 
 import java.util.List;
 
-public record Page<T>(List<T> items) {
-}
+public record Page<T>(List<T> items) {}

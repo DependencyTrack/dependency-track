@@ -72,7 +72,8 @@ final class HealthHandler implements HttpHandler {
                     .findFirst()
                     .orElse(HealthCheckResponse.Status.UP);
 
-            final var responseJson = Mappers.jsonMapper().createObjectNode()
+            final var responseJson = Mappers.jsonMapper()
+                    .createObjectNode()
                     .put("status", overallStatus.name())
                     .putPOJO("checks", checkResponses);
 
@@ -105,5 +106,4 @@ final class HealthHandler implements HttpHandler {
         return checkClass.isAnnotationPresent(Startup.class)
                 && (requestedType == HealthCheckType.ALL || requestedType == HealthCheckType.STARTUP);
     }
-
 }

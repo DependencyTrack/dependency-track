@@ -29,5 +29,4 @@ public interface IntegrationPoint {
      * A description of the integration point.
      */
     String description();
-
 }

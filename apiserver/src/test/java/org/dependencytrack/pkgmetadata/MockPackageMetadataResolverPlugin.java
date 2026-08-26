@@ -68,13 +68,10 @@ final class MockPackageMetadataResolverPlugin implements Plugin {
 
         @Override
         public @Nullable PackageMetadata resolve(
-                PackageURL purl,
-                @Nullable PackageRepository repository,
-                @Nullable PackageArtifactMetadata prior) {
+                PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior) {
             lastSeenPriorRef.set(prior);
             return resolveFnRef.get().apply(purl);
         }
-
     }
 
     private static final class MockPackageMetadataResolverFactory implements PackageMetadataResolverFactory {
@@ -105,8 +102,7 @@ final class MockPackageMetadataResolverPlugin implements Plugin {
         }
 
         @Override
-        public void init(@NonNull ServiceRegistry serviceRegistry) {
-        }
+        public void init(@NonNull ServiceRegistry serviceRegistry) {}
 
         @Override
         public @NonNull PackageMetadataResolver create() {
@@ -145,7 +141,5 @@ final class MockPackageMetadataResolverPlugin implements Plugin {
         public boolean requiresRepository() {
             return false;
         }
-
     }
-
 }

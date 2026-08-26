@@ -38,10 +38,7 @@ public final class DatabaseCacheProvider implements CacheProvider {
     private final DataSourceRegistry dataSourceRegistry;
     private final MeterRegistry meterRegistry;
 
-    DatabaseCacheProvider(
-            Config config,
-            DataSourceRegistry dataSourceRegistry,
-            MeterRegistry meterRegistry) {
+    DatabaseCacheProvider(Config config, DataSourceRegistry dataSourceRegistry, MeterRegistry meterRegistry) {
         this.config = config;
         this.dataSourceRegistry = dataSourceRegistry;
         this.meterRegistry = meterRegistry;
@@ -59,23 +56,19 @@ public final class DatabaseCacheProvider implements CacheProvider {
 
     @Override
     public CacheManager create() {
-        final String dataSourceName = config.getValue(
-                "dt.cache.provider.database.datasource.name", String.class);
+        final String dataSourceName = config.getValue("dt.cache.provider.database.datasource.name", String.class);
         final DataSource dataSource = dataSourceRegistry.get(dataSourceName);
 
         final var maintenanceWorker = new DatabaseCacheMaintenanceWorker(
                 dataSource,
-                config
-                        .getOptionalValue("dt.cache.provider.database.maintenance.initial-delay-ms", long.class)
+                config.getOptionalValue("dt.cache.provider.database.maintenance.initial-delay-ms", long.class)
                         .map(Duration::ofMillis)
                         .orElse(Duration.ofMinutes(1)),
-                config
-                        .getOptionalValue("dt.cache.provider.database.maintenance.interval-ms", long.class)
+                config.getOptionalValue("dt.cache.provider.database.maintenance.interval-ms", long.class)
                         .map(Duration::ofMillis)
                         .orElse(Duration.ofMinutes(5)));
         maintenanceWorker.start();
 
         return new DatabaseCacheManager(config, dataSource, meterRegistry, maintenanceWorker);
     }
-
 }

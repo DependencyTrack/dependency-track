@@ -19,11 +19,9 @@
 package org.dependencytrack.notification;
 
 public enum NotificationLevel {
-
     INFORMATIONAL,
 
     WARNING,
 
     ERROR
-
 }

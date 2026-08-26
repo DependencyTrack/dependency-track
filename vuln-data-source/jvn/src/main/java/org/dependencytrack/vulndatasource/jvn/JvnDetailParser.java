@@ -44,8 +44,7 @@ final class JvnDetailParser {
 
     private static final Pattern CWE_ID = Pattern.compile("CWE-(\\d+)");
 
-    private JvnDetailParser() {
-    }
+    private JvnDetailParser() {}
 
     /** Drains a whole feed into a list; intended for tests — production code streams instead. */
     static List<JvnAdvisory> parse(final InputStream xml) {
@@ -74,8 +73,7 @@ final class JvnDetailParser {
         // "Recommendation"). Navigate the section explicitly so the unrelated <HistoryItem>
         // <Description> is not picked up.
         final String detail = data != null ? joinItemDescriptions(data, "Impact", "ImpactItem") : null;
-        final String recommendation =
-                data != null ? joinItemDescriptions(data, "Solution", "SolutionItem") : null;
+        final String recommendation = data != null ? joinItemDescriptions(data, "Solution", "SolutionItem") : null;
 
         final var cweIds = new ArrayList<Integer>();
         final var referenceUrls = new ArrayList<String>();
@@ -111,10 +109,7 @@ final class JvnDetailParser {
                 }
             }
             affected.add(new JvnAdvisory.AffectedProduct(
-                    firstText(item, "Name"),
-                    firstText(item, "ProductName"),
-                    cpe.trim(),
-                    List.copyOf(versionTexts)));
+                    firstText(item, "Name"), firstText(item, "ProductName"), cpe.trim(), List.copyOf(versionTexts)));
         }
 
         final var cvssList = new ArrayList<JvnAdvisory.Cvss>();

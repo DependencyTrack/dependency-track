@@ -48,8 +48,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 class DataSourceRegistryTest {
 
     @Container
-    private static final PostgreSQLContainer postgresContainer =
-            new PostgreSQLContainer("postgres:14-alpine");
+    private static final PostgreSQLContainer postgresContainer = new PostgreSQLContainer("postgres:14-alpine");
 
     private DataSourceRegistry registry;
 
@@ -139,8 +138,8 @@ class DataSourceRegistryTest {
 
         final DataSource dataSource = registry.getDefault();
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             PreparedStatement preparedStatement = connection.prepareStatement("SELECT 1")) {
+                Statement statement = connection.createStatement();
+                PreparedStatement preparedStatement = connection.prepareStatement("SELECT 1")) {
             assertThat(statement.getQueryTimeout()).isEqualTo(60);
             assertThat(preparedStatement.getQueryTimeout()).isEqualTo(60);
         }
@@ -157,7 +156,7 @@ class DataSourceRegistryTest {
 
         final DataSource dataSource = registry.getDefault();
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
+                Statement statement = connection.createStatement()) {
             assertThat(statement.getQueryTimeout()).isZero();
         }
     }
@@ -173,7 +172,7 @@ class DataSourceRegistryTest {
 
         final DataSource dataSource = registry.getDefault();
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
+                Statement statement = connection.createStatement()) {
             assertThatExceptionOfType(SQLException.class)
                     .isThrownBy(() -> statement.execute("SELECT PG_SLEEP(2)"))
                     .satisfies(e -> assertThat(e.getSQLState()).isEqualTo("57014"));
@@ -191,7 +190,7 @@ class DataSourceRegistryTest {
 
         final DataSource dataSource = registry.getDefault();
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
+                Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(0);
             assertThat(statement.execute("SELECT PG_SLEEP(1.1)")).isTrue();
         }
@@ -208,7 +207,7 @@ class DataSourceRegistryTest {
         final DataSource dataSource = registry.getDefault();
         final Integer queryTimeout = QueryTimeout.bypassing(() -> {
             try (Connection connection = dataSource.getConnection();
-                 Statement statement = connection.createStatement()) {
+                    Statement statement = connection.createStatement()) {
                 return statement.getQueryTimeout();
             }
         });
@@ -230,24 +229,20 @@ class DataSourceRegistryTest {
 
         final Integer bypassedTimeout = QueryTimeout.bypassing(() -> {
             try (Connection connection = dataSource.getConnection();
-                 Statement statement = connection.createStatement()) {
+                    Statement statement = connection.createStatement()) {
                 return statement.getQueryTimeout();
             }
         });
         assertThat(bypassedTimeout).isZero();
 
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
+                Statement statement = connection.createStatement()) {
             assertThat(statement.getQueryTimeout()).isEqualTo(60);
         }
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "dt.datasource.url",
-            "dt.datasource.pool.max-size",
-            "dt.datasource.pool.min-idle"
-    })
+    @ValueSource(strings = {"dt.datasource.url", "dt.datasource.pool.max-size", "dt.datasource.pool.min-idle"})
     void shouldThrowWhenRequiredPropertiesAreMissing(final String propertyToOmit) {
         final var validConfig = new HashMap<>(Map.ofEntries(
                 Map.entry("dt.datasource.url", postgresContainer.getJdbcUrl()),
@@ -261,8 +256,6 @@ class DataSourceRegistryTest {
 
         MemoryConfigSource.setProperties(validConfig);
 
-        assertThatExceptionOfType(NoSuchElementException.class)
-                .isThrownBy(() -> registry.getDefault());
+        assertThatExceptionOfType(NoSuchElementException.class).isThrownBy(() -> registry.getDefault());
     }
-
 }

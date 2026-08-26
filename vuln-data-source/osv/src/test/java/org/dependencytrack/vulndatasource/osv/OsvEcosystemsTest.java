@@ -33,55 +33,56 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OsvEcosystemsTest {
 
     @ParameterizedTest
-    @CsvSource(value = {
-            "Debian:7, DebianDistribution, debian-7",
-            "Debian:11, DebianDistribution, debian-11",
-            "Debian:sid, DebianDistribution, debian-sid",
-            "Debian:wheezy, DebianDistribution, debian-7",
-            "Debian:bullseye, DebianDistribution, debian-11",
-            "debian:11, DebianDistribution, debian-11",
-            "Ubuntu:22.04, UbuntuDistribution, ubuntu-22.04",
-            "Ubuntu:20.04, UbuntuDistribution, ubuntu-20.04",
-            "Ubuntu:jammy, UbuntuDistribution, ubuntu-22.04",
-            "Ubuntu:focal, UbuntuDistribution, ubuntu-20.04",
-            "ubuntu:22.04, UbuntuDistribution, ubuntu-22.04",
-            "Ubuntu:16.04:LTS, UbuntuDistribution, ubuntu-16.04",
-            "Ubuntu:22.04:LTS, UbuntuDistribution, ubuntu-22.04",
-            "Ubuntu:14.04:LTS, UbuntuDistribution, ubuntu-14.04",
-            "Alpine:v3.5, AlpineDistribution, alpine-3.5",
-            "Alpine:v3.16, AlpineDistribution, alpine-3.16",
-            "Alpine:v3.22, AlpineDistribution, alpine-3.22",
-            "alpine:v3.18, AlpineDistribution, alpine-3.18",
-            "Alpine:3.16, AlpineDistribution, alpine-3.16",
-            // Red Hat RHEL streams:
-            "Red Hat:enterprise_linux:8::appstream, RedHatDistribution, redhat-8",
-            "Red Hat:enterprise_linux:9::baseos, RedHatDistribution, redhat-9",
-            "Red Hat:enterprise_linux:7::server, RedHatDistribution, redhat-7",
-            "Red Hat:enterprise_linux:5::as, RedHatDistribution, redhat-5",
-            "Red Hat:enterprise_linux_eus:10.0, RedHatDistribution, redhat-10",
-            "Red Hat:rhel_aus:8.4::appstream, RedHatDistribution, redhat-8",
-            "Red Hat:rhel_eus:9.2::baseos, RedHatDistribution, redhat-9",
-            "Red Hat:rhel_e4s:8.2, RedHatDistribution, redhat-8",
-            "Red Hat:rhel_tus:8.6::appstream, RedHatDistribution, redhat-8",
-            "Red Hat:rhel_els:7, RedHatDistribution, redhat-7",
-            "Red Hat:rhel_extras:6, RedHatDistribution, redhat-6",
-            "red hat:enterprise_linux:9, RedHatDistribution, redhat-9",
-            // Red Hat non-RHEL products:
-            "Red Hat:satellite:6.13::el8, RedHatDistribution, redhat-8",
-            "Red Hat:openshift:4.12::el9, RedHatDistribution, redhat-9",
-            "Red Hat:openshift:4.8::el10, RedHatDistribution, redhat-10",
-            "Red Hat:jboss_enterprise_application_platform:7.4::el8, RedHatDistribution, redhat-8",
-            "Red Hat:ceph_storage:6.1::el9, RedHatDistribution, redhat-9",
-            "Red Hat:openstack:17.1::el8, RedHatDistribution, redhat-8",
-            "Red Hat:red_hat_single_sign_on:7::el6, RedHatDistribution, redhat-6",
-            "Red Hat:ansible_automation_platform:2.5::el9, RedHatDistribution, redhat-9",
-            // Red Hat rhel_* products that put their own version in the version field but
-            // expose the RHEL major version via the edition:
-            "Red Hat:rhel_software_collections:3::el7, RedHatDistribution, redhat-7",
-            "Red Hat:rhel_dotnet:6.0::el7, RedHatDistribution, redhat-7",
-            // Red Hat Edition with trailing variant suffix:
-            "Red Hat:satellite:6.16::el8_sat, RedHatDistribution, redhat-8",
-    })
+    @CsvSource(
+            value = {
+                "Debian:7, DebianDistribution, debian-7",
+                "Debian:11, DebianDistribution, debian-11",
+                "Debian:sid, DebianDistribution, debian-sid",
+                "Debian:wheezy, DebianDistribution, debian-7",
+                "Debian:bullseye, DebianDistribution, debian-11",
+                "debian:11, DebianDistribution, debian-11",
+                "Ubuntu:22.04, UbuntuDistribution, ubuntu-22.04",
+                "Ubuntu:20.04, UbuntuDistribution, ubuntu-20.04",
+                "Ubuntu:jammy, UbuntuDistribution, ubuntu-22.04",
+                "Ubuntu:focal, UbuntuDistribution, ubuntu-20.04",
+                "ubuntu:22.04, UbuntuDistribution, ubuntu-22.04",
+                "Ubuntu:16.04:LTS, UbuntuDistribution, ubuntu-16.04",
+                "Ubuntu:22.04:LTS, UbuntuDistribution, ubuntu-22.04",
+                "Ubuntu:14.04:LTS, UbuntuDistribution, ubuntu-14.04",
+                "Alpine:v3.5, AlpineDistribution, alpine-3.5",
+                "Alpine:v3.16, AlpineDistribution, alpine-3.16",
+                "Alpine:v3.22, AlpineDistribution, alpine-3.22",
+                "alpine:v3.18, AlpineDistribution, alpine-3.18",
+                "Alpine:3.16, AlpineDistribution, alpine-3.16",
+                // Red Hat RHEL streams:
+                "Red Hat:enterprise_linux:8::appstream, RedHatDistribution, redhat-8",
+                "Red Hat:enterprise_linux:9::baseos, RedHatDistribution, redhat-9",
+                "Red Hat:enterprise_linux:7::server, RedHatDistribution, redhat-7",
+                "Red Hat:enterprise_linux:5::as, RedHatDistribution, redhat-5",
+                "Red Hat:enterprise_linux_eus:10.0, RedHatDistribution, redhat-10",
+                "Red Hat:rhel_aus:8.4::appstream, RedHatDistribution, redhat-8",
+                "Red Hat:rhel_eus:9.2::baseos, RedHatDistribution, redhat-9",
+                "Red Hat:rhel_e4s:8.2, RedHatDistribution, redhat-8",
+                "Red Hat:rhel_tus:8.6::appstream, RedHatDistribution, redhat-8",
+                "Red Hat:rhel_els:7, RedHatDistribution, redhat-7",
+                "Red Hat:rhel_extras:6, RedHatDistribution, redhat-6",
+                "red hat:enterprise_linux:9, RedHatDistribution, redhat-9",
+                // Red Hat non-RHEL products:
+                "Red Hat:satellite:6.13::el8, RedHatDistribution, redhat-8",
+                "Red Hat:openshift:4.12::el9, RedHatDistribution, redhat-9",
+                "Red Hat:openshift:4.8::el10, RedHatDistribution, redhat-10",
+                "Red Hat:jboss_enterprise_application_platform:7.4::el8, RedHatDistribution, redhat-8",
+                "Red Hat:ceph_storage:6.1::el9, RedHatDistribution, redhat-9",
+                "Red Hat:openstack:17.1::el8, RedHatDistribution, redhat-8",
+                "Red Hat:red_hat_single_sign_on:7::el6, RedHatDistribution, redhat-6",
+                "Red Hat:ansible_automation_platform:2.5::el9, RedHatDistribution, redhat-9",
+                // Red Hat rhel_* products that put their own version in the version field but
+                // expose the RHEL major version via the edition:
+                "Red Hat:rhel_software_collections:3::el7, RedHatDistribution, redhat-7",
+                "Red Hat:rhel_dotnet:6.0::el7, RedHatDistribution, redhat-7",
+                // Red Hat Edition with trailing variant suffix:
+                "Red Hat:satellite:6.16::el8_sat, RedHatDistribution, redhat-8",
+            })
     void shouldResolve(String ecosystem, String expectedType, String expectedQualifier) {
         final OsDistribution distro = OsvEcosystems.toOsDistribution(ecosystem);
         assertThat(distro).isNotNull();
@@ -102,13 +103,14 @@ class OsvEcosystemsTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "Red Hat:",
-            "Red Hat:enterprise_linux",
-            "Red Hat:not a cpe",
-            "Red Hat:satellite:6.13",
-            "Red Hat:openshift:4.12::fastdatapath",
-    })
+    @ValueSource(
+            strings = {
+                "Red Hat:",
+                "Red Hat:enterprise_linux",
+                "Red Hat:not a cpe",
+                "Red Hat:satellite:6.13",
+                "Red Hat:openshift:4.12::fastdatapath",
+            })
     void shouldReturnNullForInvalidRedHatEcosystem(String ecosystem) {
         assertThat(OsvEcosystems.toOsDistribution(ecosystem)).isNull();
     }
@@ -160,5 +162,4 @@ class OsvEcosystemsTest {
         assertThat(distro).isInstanceOf(AlpineDistribution.class);
         assertThat(distro.purlQualifierValue()).isEqualTo("alpine-3.16");
     }
-
 }

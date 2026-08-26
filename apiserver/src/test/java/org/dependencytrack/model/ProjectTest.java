@@ -34,7 +34,15 @@ public class ProjectTest extends PersistenceCapableTest {
     public void testProjectPersistence() {
         Project p1 = qm.createProject("Example Project 1", "Description 1", "1.0", null, null, null, null, false);
         Project p2 = qm.createProject("Example Project 2", "Description 2", "1.1", null, null, null, null, false);
-        Bom bom = qm.createBom(p1, new Date(), Bom.Format.CYCLONEDX, "1.1", 1, UUID.randomUUID().toString(), UUID.randomUUID(), null);
+        Bom bom = qm.createBom(
+                p1,
+                new Date(),
+                Bom.Format.CYCLONEDX,
+                "1.1",
+                1,
+                UUID.randomUUID().toString(),
+                UUID.randomUUID(),
+                null);
 
         Assertions.assertEquals("Example Project 1", p1.getName());
         Assertions.assertEquals("Example Project 2", p2.getName());
@@ -84,5 +92,4 @@ public class ProjectTest extends PersistenceCapableTest {
         assertThatExceptionOfType(JDOObjectNotFoundException.class)
                 .isThrownBy(() -> qm.getObjectById(Project.class, childProject.getId()));
     }
-
 }

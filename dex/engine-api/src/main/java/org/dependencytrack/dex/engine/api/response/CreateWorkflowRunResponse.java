@@ -20,5 +20,4 @@ package org.dependencytrack.dex.engine.api.response;
 
 import java.util.UUID;
 
-public record CreateWorkflowRunResponse(UUID requestId, UUID runId) {
-}
+public record CreateWorkflowRunResponse(UUID requestId, UUID runId) {}

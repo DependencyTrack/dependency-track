@@ -50,9 +50,7 @@ public record CountWorkflowRunsRequest(
     }
 
     public CountWorkflowRunsRequest(
-            @Nullable String workflowName,
-            @Nullable Set<WorkflowRunStatus> statuses,
-            int limit) {
+            @Nullable String workflowName, @Nullable Set<WorkflowRunStatus> statuses, int limit) {
         this(workflowName, statuses, null, limit);
     }
 
@@ -64,5 +62,4 @@ public record CountWorkflowRunsRequest(
         final WorkflowSpec spec = WorkflowSpecs.of(workflowClass);
         this(spec.name(), statuses, labels, limit);
     }
-
 }

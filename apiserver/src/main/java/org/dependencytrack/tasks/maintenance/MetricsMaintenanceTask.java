@@ -61,5 +61,4 @@ public final class MetricsMaintenanceTask implements Runnable {
             LOGGER.info("Dropped {} project metrics partition(s)", numDeletedProject);
         }
     }
-
 }

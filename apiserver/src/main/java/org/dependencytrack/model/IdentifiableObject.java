@@ -56,5 +56,4 @@ public class IdentifiableObject implements Serializable {
             return false;
         }
     }
-
 }

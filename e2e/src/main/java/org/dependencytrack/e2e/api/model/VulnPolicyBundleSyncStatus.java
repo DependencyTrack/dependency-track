@@ -24,5 +24,4 @@ public record VulnPolicyBundleSyncStatus(
         String status,
         @JsonProperty("started_at") Long startedAt,
         @JsonProperty("completed_at") Long completedAt,
-        @JsonProperty("failure_reason") String failureReason) {
-}
+        @JsonProperty("failure_reason") String failureReason) {}

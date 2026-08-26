@@ -62,9 +62,7 @@ class NvdVulnDataSourceTest {
     @Test
     void shouldIterateCvesFromModifiedFeed(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("""
+                .willReturn(aResponse().withStatus(200).withBody("""
                                 lastModifiedDate:2024-01-01T00:00:00.000Z
                                 sha256:0000000000000000000000000000000000000000000000000000000000000000
                                 """)));
@@ -128,12 +126,12 @@ class NvdVulnDataSourceTest {
     @Test
     void shouldSkipCvesBelowWatermark(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
         kvStore = new MockKeyValueStore();
-        kvStore.put("watermark", String.valueOf(Instant.parse("2024-06-01T00:00:00Z").toEpochMilli()));
+        kvStore.put(
+                "watermark",
+                String.valueOf(Instant.parse("2024-06-01T00:00:00Z").toEpochMilli()));
 
         stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("""
+                .willReturn(aResponse().withStatus(200).withBody("""
                                 lastModifiedDate:2025-01-01T00:00:00.000Z
                                 sha256:0000000000000000000000000000000000000000000000000000000000000000
                                 """)));
@@ -165,10 +163,8 @@ class NvdVulnDataSourceTest {
                                 }
                                 """))));
 
-        dataSource = createDataSource(
-                wmRuntimeInfo.getHttpBaseUrl(),
-                kvStore,
-                List.of(new NvdDataFeed.ModifiedDataFeed()));
+        dataSource =
+                createDataSource(wmRuntimeInfo.getHttpBaseUrl(), kvStore, List.of(new NvdDataFeed.ModifiedDataFeed()));
 
         assertThat(dataSource.hasNext()).isTrue();
         assertThat(dataSource.next().getVulnerabilities(0).getId()).isEqualTo("CVE-2024-0002");
@@ -178,22 +174,16 @@ class NvdVulnDataSourceTest {
     @Test
     void shouldSkipFeedWhenDigestUnchanged(WireMockRuntimeInfo wmRuntimeInfo) {
         kvStore = new MockKeyValueStore();
-        kvStore.put(
-                "feed-digest:modified",
-                "0000000000000000000000000000000000000000000000000000000000000000");
+        kvStore.put("feed-digest:modified", "0000000000000000000000000000000000000000000000000000000000000000");
 
         stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("""
+                .willReturn(aResponse().withStatus(200).withBody("""
                                 lastModifiedDate:2024-01-01T00:00:00.000Z
                                 sha256:0000000000000000000000000000000000000000000000000000000000000000
                                 """)));
 
-        dataSource = createDataSource(
-                wmRuntimeInfo.getHttpBaseUrl(),
-                kvStore,
-                List.of(new NvdDataFeed.ModifiedDataFeed()));
+        dataSource =
+                createDataSource(wmRuntimeInfo.getHttpBaseUrl(), kvStore, List.of(new NvdDataFeed.ModifiedDataFeed()));
 
         assertThat(dataSource.hasNext()).isFalse();
         verify(0, getRequestedFor(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz")));
@@ -202,20 +192,18 @@ class NvdVulnDataSourceTest {
     @Test
     void shouldSkipFeedWhenBelowWatermark(WireMockRuntimeInfo wmRuntimeInfo) {
         kvStore = new MockKeyValueStore();
-        kvStore.put("watermark", String.valueOf(Instant.parse("2024-06-01T00:00:00Z").toEpochMilli()));
+        kvStore.put(
+                "watermark",
+                String.valueOf(Instant.parse("2024-06-01T00:00:00Z").toEpochMilli()));
 
         stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("""
+                .willReturn(aResponse().withStatus(200).withBody("""
                                 lastModifiedDate:2024-01-01T00:00:00.000Z
                                 sha256:0000000000000000000000000000000000000000000000000000000000000000
                                 """)));
 
-        dataSource = createDataSource(
-                wmRuntimeInfo.getHttpBaseUrl(),
-                kvStore,
-                List.of(new NvdDataFeed.ModifiedDataFeed()));
+        dataSource =
+                createDataSource(wmRuntimeInfo.getHttpBaseUrl(), kvStore, List.of(new NvdDataFeed.ModifiedDataFeed()));
 
         assertThat(dataSource.hasNext()).isFalse();
         verify(0, getRequestedFor(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.json.gz")));
@@ -226,9 +214,7 @@ class NvdVulnDataSourceTest {
         kvStore = new MockKeyValueStore();
 
         stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("""
+                .willReturn(aResponse().withStatus(200).withBody("""
                                 lastModifiedDate:2024-01-01T00:00:00.000Z
                                 sha256:0000000000000000000000000000000000000000000000000000000000000000
                                 """)));
@@ -252,10 +238,8 @@ class NvdVulnDataSourceTest {
                                 }
                                 """))));
 
-        dataSource = createDataSource(
-                wmRuntimeInfo.getHttpBaseUrl(),
-                kvStore,
-                List.of(new NvdDataFeed.ModifiedDataFeed()));
+        dataSource =
+                createDataSource(wmRuntimeInfo.getHttpBaseUrl(), kvStore, List.of(new NvdDataFeed.ModifiedDataFeed()));
 
         final Bom bov = dataSource.next();
         dataSource.markProcessed(bov);
@@ -264,7 +248,8 @@ class NvdVulnDataSourceTest {
         dataSource.close();
         dataSource = null;
 
-        final long expectedMillis = Timestamps.toMillis(bov.getVulnerabilities(0).getUpdated());
+        final long expectedMillis =
+                Timestamps.toMillis(bov.getVulnerabilities(0).getUpdated());
         assertThat(kvStore.get("watermark").value()).isEqualTo(String.valueOf(expectedMillis));
     }
 
@@ -273,9 +258,7 @@ class NvdVulnDataSourceTest {
         kvStore = new MockKeyValueStore();
 
         stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("""
+                .willReturn(aResponse().withStatus(200).withBody("""
                                 lastModifiedDate:2024-01-01T00:00:00.000Z
                                 sha256:0000000000000000000000000000000000000000000000000000000000000000
                                 """)));
@@ -299,10 +282,8 @@ class NvdVulnDataSourceTest {
                                 }
                                 """))));
 
-        dataSource = createDataSource(
-                wmRuntimeInfo.getHttpBaseUrl(),
-                kvStore,
-                List.of(new NvdDataFeed.ModifiedDataFeed()));
+        dataSource =
+                createDataSource(wmRuntimeInfo.getHttpBaseUrl(), kvStore, List.of(new NvdDataFeed.ModifiedDataFeed()));
 
         while (dataSource.hasNext()) {
             dataSource.next();
@@ -330,9 +311,7 @@ class NvdVulnDataSourceTest {
     @Test
     void shouldThrowWhenFeedDownloadNotOk(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlEqualTo("/json/cve/2.0/nvdcve-2.0-modified.meta"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("""
+                .willReturn(aResponse().withStatus(200).withBody("""
                                 lastModifiedDate:2024-01-01T00:00:00.000Z
                                 sha256:0000000000000000000000000000000000000000000000000000000000000000
                                 """)));
@@ -347,31 +326,19 @@ class NvdVulnDataSourceTest {
     }
 
     private NvdVulnDataSource createDataSource(String feedsUrl) {
-        return createDataSource(
-                feedsUrl,
-                new MockKeyValueStore(),
-                List.of(new NvdDataFeed.ModifiedDataFeed()));
+        return createDataSource(feedsUrl, new MockKeyValueStore(), List.of(new NvdDataFeed.ModifiedDataFeed()));
     }
 
-    private NvdVulnDataSource createDataSource(
-            String feedsUrl,
-            MockKeyValueStore kvStore,
-            List<NvdDataFeed> feeds) {
+    private NvdVulnDataSource createDataSource(String feedsUrl, MockKeyValueStore kvStore, List<NvdDataFeed> feeds) {
         this.kvStore = kvStore;
         final var watermarkManager = new WatermarkManager(
-                kvStore,
-                feeds.stream().map(NvdDataFeed::name).toList());
+                kvStore, feeds.stream().map(NvdDataFeed::name).toList());
         final ObjectMapper objectMapper = new ObjectMapper()
                 .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, true)
                 .configure(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature(), true)
                 .registerModule(new JavaTimeModule());
 
-        return new NvdVulnDataSource(
-                watermarkManager,
-                objectMapper,
-                HttpClient.newHttpClient(),
-                feedsUrl,
-                feeds);
+        return new NvdVulnDataSource(watermarkManager, objectMapper, HttpClient.newHttpClient(), feedsUrl, feeds);
     }
 
     private static byte[] gzip(String content) throws Exception {
@@ -382,5 +349,4 @@ class NvdVulnDataSourceTest {
 
         return out.toByteArray();
     }
-
 }

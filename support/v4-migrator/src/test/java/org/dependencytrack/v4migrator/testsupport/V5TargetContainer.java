@@ -38,9 +38,9 @@ public final class V5TargetContainer implements AutoCloseable {
 
     public V5TargetContainer() {
         this.container = new PostgreSQLContainer<>(IMAGE)
-            .withDatabaseName("dtrackv5")
-            .withUsername("dt")
-            .withPassword("dt");
+                .withDatabaseName("dtrackv5")
+                .withUsername("dt")
+                .withPassword("dt");
     }
 
     public V5TargetContainer start() {
@@ -66,11 +66,13 @@ public final class V5TargetContainer implements AutoCloseable {
     }
 
     public DataSource dataSource() {
-        return new org.postgresql.ds.PGSimpleDataSource() {{
-            setUrl(container.getJdbcUrl());
-            setUser(container.getUsername());
-            setPassword(container.getPassword());
-        }};
+        return new org.postgresql.ds.PGSimpleDataSource() {
+            {
+                setUrl(container.getJdbcUrl());
+                setUser(container.getUsername());
+                setPassword(container.getPassword());
+            }
+        };
     }
 
     public Jdbi jdbi() {

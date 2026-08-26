@@ -58,7 +58,6 @@ import java.util.regex.Pattern;
 public class VersionDistance implements Comparable<VersionDistance>, Serializable {
     private static final Logger LOGGER = LoggerFactory.getLogger(VersionDistance.class);
 
-
     private static final long serialVersionUID = 1L;
 
     private static final String GROUP_EPOCH = "epoch";
@@ -68,12 +67,10 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
 
     private static final Pattern DISTANCE_PATTERN = Pattern.compile(
             // Optional epoch part: numbers before the first : sign.
-            "^(?:(?<" + GROUP_EPOCH + ">\\d+):)?" +
-                    "(?<" + GROUP_MAJOR + ">\\?|\\d+)" +
-                    "(?:\\.(?<" + GROUP_MINOR + ">\\?|\\d+))?" +
-                    "(?:\\.(?<" + GROUP_PATCH + ">\\?|\\d+))?" +
-                    "$"
-    );
+            "^(?:(?<" + GROUP_EPOCH + ">\\d+):)?" + "(?<"
+                    + GROUP_MAJOR + ">\\?|\\d+)" + "(?:\\.(?<"
+                    + GROUP_MINOR + ">\\?|\\d+))?" + "(?:\\.(?<"
+                    + GROUP_PATCH + ">\\?|\\d+))?" + "$");
 
     // Semver-like version:any numbers parts without characters appended, with optial leading v.
     // Optionally appended with label and/or build metadata
@@ -83,11 +80,11 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
             "^(?:(?<" + GROUP_EPOCH + ">.*):)?"
                     // Version part: at least major version (numeric), optionally minor (numeric)
                     // or patch (numeric) version. Ignore the rest.
-                    + "v?(?<" + GROUP_MAJOR + ">\\d+[a-z]*)?(?:\\.(?<" + GROUP_MINOR + ">\\d+[a-z]*))?(?:\\.(?<" + GROUP_PATCH + ">\\d+[a-z]*))?"
+                    + "v?(?<" + GROUP_MAJOR + ">\\d+[a-z]*)?(?:\\.(?<" + GROUP_MINOR + ">\\d+[a-z]*))?(?:\\.(?<"
+                    + GROUP_PATCH + ">\\d+[a-z]*))?"
                     // Build numbers, labels and build metadata.
                     + ".*$",
-            Pattern.CASE_INSENSITIVE
-    );
+            Pattern.CASE_INSENSITIVE);
 
     private int epoch;
     private int major;
@@ -106,13 +103,16 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
 
     private void validate() throws IllegalArgumentException {
         if ((epoch != 0) && ((major >= 0) || (minor >= 0) || (patch >= 0))) {
-            throw new IllegalArgumentException("Only the most significant number can be greater than 0, more significant parts cannot be ?");
+            throw new IllegalArgumentException(
+                    "Only the most significant number can be greater than 0, more significant parts cannot be ?");
         }
         if ((major != 0) && ((minor >= 0) || (patch >= 0))) {
-            throw new IllegalArgumentException("Only the most significant number can be greater than 0, more significant parts cannot be ?");
+            throw new IllegalArgumentException(
+                    "Only the most significant number can be greater than 0, more significant parts cannot be ?");
         }
         if ((minor != 0) && (patch >= 0)) {
-            throw new IllegalArgumentException("Only the most significant number can be greater than 0, more significant parts cannot be ?");
+            throw new IllegalArgumentException(
+                    "Only the most significant number can be greater than 0, more significant parts cannot be ?");
         }
     }
 
@@ -263,7 +263,10 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
         }
         VersionDistance versionDistance = (VersionDistance) o;
         // field comparison
-        return versionDistance.getEpoch() == epoch && versionDistance.getMajor() == major && versionDistance.getMinor() == minor && versionDistance.getPatch() == patch;
+        return versionDistance.getEpoch() == epoch
+                && versionDistance.getMajor() == major
+                && versionDistance.getMinor() == minor
+                && versionDistance.getPatch() == patch;
     }
 
     @Override
@@ -298,7 +301,8 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
 
     @Override
     public String toString() {
-        return epoch + ":" + (major < 0 ? "?" : major) + "." + (minor < 0 ? "?" : minor) + "." + (patch < 0 ? "?" : patch);
+        return epoch + ":" + (major < 0 ? "?" : major) + "." + (minor < 0 ? "?" : minor) + "."
+                + (patch < 0 ? "?" : patch);
     }
 
     /**
@@ -361,7 +365,10 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
         throw new NumberFormatException("Incompatible versions: " + version1 + ", " + version2);
     }
 
-    public static boolean matches(final PolicyCondition.Operator operator, final VersionDistance policyDistance, final VersionDistance versionDistance) {
+    public static boolean matches(
+            final PolicyCondition.Operator operator,
+            final VersionDistance policyDistance,
+            final VersionDistance versionDistance) {
         return switch (operator) {
             case NUMERIC_GREATER_THAN -> versionDistance.compareTo(policyDistance) > 0;
             case NUMERIC_GREATER_THAN_OR_EQUAL -> versionDistance.compareTo(policyDistance) >= 0;
@@ -384,7 +391,10 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
      * @param versionDistance         the {@link VersionDistance} to evalue
      * @return true if the condition is true for the components versionDistance, false otherwise
      */
-    public static boolean evaluate(final org.dependencytrack.proto.policy.v1.VersionDistance policyConditionValue, final String policyConditionOperator, final VersionDistance versionDistance) {
+    public static boolean evaluate(
+            final org.dependencytrack.proto.policy.v1.VersionDistance policyConditionValue,
+            final String policyConditionOperator,
+            final VersionDistance versionDistance) {
         final var operator = PolicyCondition.Operator.valueOf(policyConditionOperator);
         final var value = policyConditionValue;
 
@@ -403,13 +413,12 @@ public class VersionDistance implements Comparable<VersionDistance>, Serializabl
             if (versionDistanceList.isEmpty()) {
                 versionDistanceList.add(new VersionDistance(0, 0, 0));
             }
-            return versionDistanceList.stream().reduce(
-                    false,
-                    (latest, current) -> latest || matches(operator, current, versionDistance),
-                    Boolean::logicalOr
-            );
+            return versionDistanceList.stream()
+                    .reduce(
+                            false,
+                            (latest, current) -> latest || matches(operator, current, versionDistance),
+                            Boolean::logicalOr);
         }
         return false;
-
     }
 }

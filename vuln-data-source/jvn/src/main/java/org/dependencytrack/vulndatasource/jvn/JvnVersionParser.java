@@ -60,20 +60,16 @@ import java.util.regex.Pattern;
 public final class JvnVersionParser {
 
     /** Outcome of parsing a JVN version expression. */
-    public sealed interface Result permits ExactVersion, VersionRange, Unparseable {
-    }
+    public sealed interface Result permits ExactVersion, VersionRange, Unparseable {}
 
     /** A single, exact affected version. */
-    public record ExactVersion(String version) implements Result {
-    }
+    public record ExactVersion(String version) implements Result {}
 
     /** A structured affected-version range. */
-    public record VersionRange(Vers vers) implements Result {
-    }
+    public record VersionRange(Vers vers) implements Result {}
 
     /** The expression could not be interpreted; caller should degrade to product-level. */
-    public record Unparseable(String reason) implements Result {
-    }
+    public record Unparseable(String reason) implements Result {}
 
     // A version token: starts with an alphanumeric, may contain '.', '_', '-' and alphanumerics.
     // Covers semver (1.2.3), zero-padded (02.004.001.000) and Hitachi-style (11-40, 06-50-a).
@@ -86,8 +82,7 @@ public final class JvnVersionParser {
     private static final Pattern AND_BEFORE = Pattern.compile("(" + V + ")\\s*およびそれ以前");
     private static final Pattern AND_AFTER = Pattern.compile("(" + V + ")\\s*およびそれ以降");
     // "X から Y (まで)" or "X 〜 Y" (wave dash) — inclusive range.
-    private static final Pattern FROM_TO =
-            Pattern.compile("(" + V + ")\\s*(?:から|[〜～~])\\s*(" + V + ")\\s*(?:まで)?");
+    private static final Pattern FROM_TO = Pattern.compile("(" + V + ")\\s*(?:から|[〜～~])\\s*(" + V + ")\\s*(?:まで)?");
     private static final Pattern SINGLE = Pattern.compile("^\\s*(" + V + ")\\s*$");
     // Cisco-style version strings ("11.1(15)ca", "12.0(3.4)T1") carry a parenthesized build
     // number inside the version. NVD stores these verbatim as CPE version values, so they are
@@ -96,8 +91,7 @@ public final class JvnVersionParser {
             Pattern.compile("^\\s*(\\d[\\d.]*\\([0-9A-Za-z.]+\\)[0-9A-Za-z]*)\\s*$");
 
     // JVN spells "all versions" out in Japanese instead of using a range expression.
-    private static final Pattern ALL_VERSIONS =
-            Pattern.compile("^(?:すべてのバージョン|全てのバージョン|全バージョン)$");
+    private static final Pattern ALL_VERSIONS = Pattern.compile("^(?:すべてのバージョン|全てのバージョン|全バージョン)$");
 
     // Platform/edition/packaging words that JVN appends to version texts but that carry no
     // version information (NVD encodes them in separate CPE attributes). Only these are
@@ -106,15 +100,14 @@ public final class JvnVersionParser {
             "x86(?:[-_]64)?|x64|amd64|ia64|arm64|itanium|sparc|client|server|desktop|workstation"
                     + "|es|as|ws|core|editions?|installation|installed";
     private static final Pattern TRAILING_PAREN_QUALIFIER = Pattern.compile(
-            "\\s*[（(][^（）()]*(?:\\b(?:" + QUALIFIER_WORDS + ")\\b"
-                    + "|ビット|エディション|インストール|販売|版)[^（）()]*[）)]\\s*$",
+            "\\s*[（(][^（）()]*(?:\\b(?:" + QUALIFIER_WORDS + ")\\b" + "|ビット|エディション|インストール|販売|版)[^（）()]*[）)]\\s*$",
             Pattern.CASE_INSENSITIVE);
     // "… for x64-based Systems", "… for 32-bit systems SP2", "… for 64-bit editions".
-    private static final Pattern TRAILING_PLATFORM_PHRASE = Pattern.compile(
-            "\\s+for\\s+[\\w -]*(?:systems?|editions?)(\\s+SP\\d+)?\\s*$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRAILING_PLATFORM_PHRASE =
+            Pattern.compile("\\s+for\\s+[\\w -]*(?:systems?|editions?)(\\s+SP\\d+)?\\s*$", Pattern.CASE_INSENSITIVE);
     // Bare trailing qualifier tokens: "12.04 LTS", "11 Express", "2013 SP1", "2013 RT".
-    private static final Pattern TRAILING_QUALIFIER_TOKEN = Pattern.compile(
-            "\\s+(?:LTS|RT|Express|Gold|Editions?|SP\\d+)\\s*$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TRAILING_QUALIFIER_TOKEN =
+            Pattern.compile("\\s+(?:LTS|RT|Express|Gold|Editions?|SP\\d+)\\s*$", Pattern.CASE_INSENSITIVE);
     // Leading qualifier words in front of the version value: "Version 1809" (left over after
     // stripping "for x64-based Systems"), "- Standard Edition Version 4", "LTSC 2021".
     private static final Pattern LEADING_QUALIFIER_WORDS = Pattern.compile(
@@ -122,8 +115,7 @@ public final class JvnVersionParser {
                     + "(?:Edition )?(?:Version |LTSC )",
             Pattern.CASE_INSENSITIVE);
 
-    private JvnVersionParser() {
-    }
+    private JvnVersionParser() {}
 
     /**
      * @param rawText The JVN {@code VersionNumber} text.

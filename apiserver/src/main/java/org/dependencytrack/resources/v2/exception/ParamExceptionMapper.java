@@ -18,10 +18,11 @@
  */
 package org.dependencytrack.resources.v2.exception;
 
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.model.ConstraintViolationError;
 import org.dependencytrack.api.v2.model.InvalidRequestProblemDetails;
 import org.glassfish.jersey.server.ParamException;
+
+import jakarta.ws.rs.ext.Provider;
 
 import java.util.List;
 
@@ -29,7 +30,8 @@ import java.util.List;
  * @since 5.0.0
  */
 @Provider
-public final class ParamExceptionMapper extends ProblemDetailsExceptionMapper<ParamException, InvalidRequestProblemDetails> {
+public final class ParamExceptionMapper
+        extends ProblemDetailsExceptionMapper<ParamException, InvalidRequestProblemDetails> {
 
     @Override
     InvalidRequestProblemDetails map(ParamException exception) {
@@ -37,12 +39,10 @@ public final class ParamExceptionMapper extends ProblemDetailsExceptionMapper<Pa
                 .status(400)
                 .title("Bad Request")
                 .detail("The request could not be processed because it failed validation.")
-                .errors(List.of(
-                        ConstraintViolationError.builder()
-                                .path(exception.getParameterName())
-                                .message("Invalid parameter value.")
-                                .build()))
+                .errors(List.of(ConstraintViolationError.builder()
+                        .path(exception.getParameterName())
+                        .message("Invalid parameter value.")
+                        .build()))
                 .build();
     }
-
 }

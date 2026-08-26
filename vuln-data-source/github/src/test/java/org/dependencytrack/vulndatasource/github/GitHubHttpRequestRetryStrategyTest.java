@@ -142,7 +142,8 @@ class GitHubHttpRequestRetryStrategyTest {
         final var httpResponse = new BasicHttpResponse(429);
         httpResponse.addHeader("x-ratelimit-remaining", 0);
         httpResponse.addHeader("x-ratelimit-limit", 666);
-        httpResponse.setHeader("x-ratelimit-reset", Instant.now().plusSeconds(/* 3min */ 180).getEpochSecond());
+        httpResponse.setHeader(
+                "x-ratelimit-reset", Instant.now().plusSeconds(/* 3min */ 180).getEpochSecond());
         final var httpContext = HttpClientContext.create();
 
         final var retryStrategy = new GitHubHttpRequestRetryStrategy();
@@ -155,7 +156,9 @@ class GitHubHttpRequestRetryStrategyTest {
         final var httpResponse = new BasicHttpResponse(429);
         httpResponse.addHeader("x-ratelimit-remaining", 0);
         httpResponse.addHeader("x-ratelimit-limit", 666);
-        httpResponse.setHeader("x-ratelimit-reset", Instant.now().plusSeconds(/* 3min 1sec */ 181).getEpochSecond());
+        httpResponse.setHeader(
+                "x-ratelimit-reset",
+                Instant.now().plusSeconds(/* 3min 1sec */ 181).getEpochSecond());
         final var httpContext = HttpClientContext.create();
 
         final var retryStrategy = new GitHubHttpRequestRetryStrategy();
@@ -179,7 +182,8 @@ class GitHubHttpRequestRetryStrategyTest {
         final var httpResponse = new BasicHttpResponse(429);
         httpResponse.addHeader("x-ratelimit-remaining", 0);
         httpResponse.addHeader("x-ratelimit-limit", 666);
-        httpResponse.addHeader("x-ratelimit-reset", Instant.now().plusSeconds(66).getEpochSecond());
+        httpResponse.addHeader(
+                "x-ratelimit-reset", Instant.now().plusSeconds(66).getEpochSecond());
         final var httpContext = HttpClientContext.create();
 
         final var retryStrategy = new GitHubHttpRequestRetryStrategy();
@@ -196,5 +200,4 @@ class GitHubHttpRequestRetryStrategyTest {
         final TimeValue retryDelay = retryStrategy.getRetryInterval(httpResponse, 1, httpContext);
         assertThat(retryDelay.toSeconds()).isEqualTo(1);
     }
-
 }

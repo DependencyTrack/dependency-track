@@ -53,7 +53,8 @@ class FortifySscUploaderTest extends PersistenceCapableTest {
     void testIntegrationMetadata() {
         FortifySscUploader extension = new FortifySscUploader(httpClient, new TestSecretManager());
         Assertions.assertEquals("Fortify SSC", extension.name());
-        Assertions.assertEquals("Pushes Dependency-Track findings to Software Security Center", extension.description());
+        Assertions.assertEquals(
+                "Pushes Dependency-Track findings to Software Security Center", extension.description());
     }
 
     @Test
@@ -63,8 +64,7 @@ class FortifySscUploaderTest extends PersistenceCapableTest {
                 FORTIFY_SSC_ENABLED.getPropertyName(),
                 "true",
                 IConfigProperty.PropertyType.BOOLEAN,
-                null
-        );
+                null);
         Project project = qm.createProject("ACME Example", null, "1.0", null, null, null, null, false);
         qm.createProjectProperty(
                 project,
@@ -72,8 +72,7 @@ class FortifySscUploaderTest extends PersistenceCapableTest {
                 "fortify.ssc.applicationId",
                 "12345",
                 IConfigProperty.PropertyType.STRING,
-                null
-        );
+                null);
         FortifySscUploader extension = new FortifySscUploader(httpClient, new TestSecretManager());
         extension.setQueryManager(qm);
         Assertions.assertTrue(extension.isEnabled());

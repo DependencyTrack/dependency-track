@@ -36,8 +36,7 @@ import java.util.concurrent.TimeUnit;
  */
 final class DataSourceFactory {
 
-    private DataSourceFactory() {
-    }
+    private DataSourceFactory() {}
 
     static DataSource createDataSource(DataSourceConfig config) {
         final DataSource dataSource = createDataSourceInternal(config);
@@ -46,10 +45,9 @@ final class DataSourceFactory {
         if (queryTimeoutMillis <= 0) {
             return dataSource;
         }
-        
+
         return new QueryTimeoutDataSource(
-                dataSource,
-                Math.toIntExact(Math.max(1, TimeUnit.MILLISECONDS.toSeconds(queryTimeoutMillis))));
+                dataSource, Math.toIntExact(Math.max(1, TimeUnit.MILLISECONDS.toSeconds(queryTimeoutMillis))));
     }
 
     private static DataSource createDataSourceInternal(DataSourceConfig config) {
@@ -108,5 +106,4 @@ final class DataSourceFactory {
 
         return config.getPassword();
     }
-
 }

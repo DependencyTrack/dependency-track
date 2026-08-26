@@ -23,5 +23,4 @@ interface ActivityHeartbeatRegistration extends AutoCloseable {
 
     @Override
     void close();
-
 }

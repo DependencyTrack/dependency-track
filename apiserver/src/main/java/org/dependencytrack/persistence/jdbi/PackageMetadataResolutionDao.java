@@ -66,5 +66,4 @@ public final class PackageMetadataResolutionDao {
                 .bind("statuses", statuses)
                 .execute();
     }
-
 }

@@ -59,7 +59,6 @@ public record MakeViolationAnalysisCommand(
          * Do not emit any {@link Group#GROUP_PROJECT_AUDIT_CHANGE} notifications.
          */
         OMIT_NOTIFICATION
-
     }
 
     public MakeViolationAnalysisCommand {
@@ -73,23 +72,27 @@ public record MakeViolationAnalysisCommand(
     }
 
     public MakeViolationAnalysisCommand withState(final ViolationAnalysisState state) {
-        return new MakeViolationAnalysisCommand(this.component, this.violation, state, this.suppress, this.commenter, this.comment, this.options);
+        return new MakeViolationAnalysisCommand(
+                this.component, this.violation, state, this.suppress, this.commenter, this.comment, this.options);
     }
 
     public MakeViolationAnalysisCommand withSuppress(final Boolean suppress) {
-        return new MakeViolationAnalysisCommand(this.component, this.violation, this.state, suppress, this.commenter, this.comment, this.options);
+        return new MakeViolationAnalysisCommand(
+                this.component, this.violation, this.state, suppress, this.commenter, this.comment, this.options);
     }
 
     public MakeViolationAnalysisCommand withCommenter(final String commenter) {
-        return new MakeViolationAnalysisCommand(this.component, this.violation, this.state, this.suppress, commenter, this.comment, this.options);
+        return new MakeViolationAnalysisCommand(
+                this.component, this.violation, this.state, this.suppress, commenter, this.comment, this.options);
     }
 
     public MakeViolationAnalysisCommand withComment(final String comment) {
-        return new MakeViolationAnalysisCommand(this.component, this.violation, this.state, this.suppress, this.commenter, comment, this.options);
+        return new MakeViolationAnalysisCommand(
+                this.component, this.violation, this.state, this.suppress, this.commenter, comment, this.options);
     }
 
     public MakeViolationAnalysisCommand withOptions(final Set<Option> options) {
-        return new MakeViolationAnalysisCommand(this.component, this.violation, this.state, this.suppress, this.commenter, this.comment, options);
+        return new MakeViolationAnalysisCommand(
+                this.component, this.violation, this.state, this.suppress, this.commenter, this.comment, options);
     }
-
 }

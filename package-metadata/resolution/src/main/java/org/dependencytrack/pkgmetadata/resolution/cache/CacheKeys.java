@@ -33,8 +33,7 @@ import java.util.StringJoiner;
  */
 public final class CacheKeys {
 
-    private CacheKeys() {
-    }
+    private CacheKeys() {}
 
     public static String build(String... segments) {
         return String.join(":", segments);
@@ -83,12 +82,8 @@ public final class CacheKeys {
             throw new IllegalStateException(e);
         }
 
-        final String username = repository.username() != null
-                ? repository.username()
-                : "";
-        final String password = repository.password() != null
-                ? repository.password()
-                : "";
+        final String username = repository.username() != null ? repository.username() : "";
+        final String password = repository.password() != null ? repository.password() : "";
 
         digest.update(username.getBytes(StandardCharsets.UTF_8));
         digest.update((byte) ':');
@@ -96,5 +91,4 @@ public final class CacheKeys {
 
         return HexFormat.of().formatHex(digest.digest(), 0, 8);
     }
-
 }

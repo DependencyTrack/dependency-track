@@ -19,25 +19,25 @@
 package org.dependencytrack.filters;
 
 import alpine.server.auth.AuthenticationNotRequired;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DeprecationResponseFilterTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig()
-                    .register(DeprecationResponseFilter.class)
-                    .register(NotDeprecatedResource.class)
-                    .register(DeprecatedClassResource.class));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig()
+            .register(DeprecationResponseFilter.class)
+            .register(NotDeprecatedResource.class)
+            .register(DeprecatedClassResource.class));
 
     @Test
     void shouldNotSetHeaderWhenMethodIsNotDeprecated() {
@@ -96,7 +96,6 @@ public class DeprecationResponseFilterTest {
         public Response legacyBroken() {
             throw new WebApplicationException(Response.status(418).build());
         }
-
     }
 
     @Deprecated
@@ -109,7 +108,5 @@ public class DeprecationResponseFilterTest {
         public Response anything() {
             return Response.ok().build();
         }
-
     }
-
 }

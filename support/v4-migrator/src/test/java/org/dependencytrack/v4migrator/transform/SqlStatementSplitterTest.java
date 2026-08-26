@@ -29,10 +29,7 @@ class SqlStatementSplitterTest {
     @Test
     void splitsTopLevelSemicolons() {
         final List<String> stmts = SqlStatementSplitter.split("CREATE TABLE t (id int); INSERT INTO t VALUES (1);");
-        assertThat(stmts).containsExactly(
-            "CREATE TABLE t (id int)",
-            "INSERT INTO t VALUES (1)"
-        );
+        assertThat(stmts).containsExactly("CREATE TABLE t (id int)", "INSERT INTO t VALUES (1)");
     }
 
     @Test

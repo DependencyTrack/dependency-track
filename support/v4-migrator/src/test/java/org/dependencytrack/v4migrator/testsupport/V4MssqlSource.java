@@ -38,8 +38,7 @@ import java.util.function.Consumer;
  */
 public final class V4MssqlSource implements AutoCloseable {
 
-    private static final DockerImageName IMAGE =
-        DockerImageName.parse("mcr.microsoft.com/mssql/server:2022-latest")
+    private static final DockerImageName IMAGE = DockerImageName.parse("mcr.microsoft.com/mssql/server:2022-latest")
             .asCompatibleSubstituteFor("mcr.microsoft.com/mssql/server");
 
     private static final String SCHEMA_RESOURCE = "/v4-schema.mssql.sql";
@@ -71,21 +70,24 @@ public final class V4MssqlSource implements AutoCloseable {
         final ExecResult result;
         try {
             result = container.execInContainer(
-                "/opt/mssql-tools18/bin/sqlcmd",
-                "-S", "localhost",
-                "-U", container.getUsername(),
-                "-P", container.getPassword(),
-                "-C",
-                "-b",
-                "-i", "/tmp/v4-schema.sql"
-            );
+                    "/opt/mssql-tools18/bin/sqlcmd",
+                    "-S",
+                    "localhost",
+                    "-U",
+                    container.getUsername(),
+                    "-P",
+                    container.getPassword(),
+                    "-C",
+                    "-b",
+                    "-i",
+                    "/tmp/v4-schema.sql");
         } catch (IOException | InterruptedException e) {
             throw new IllegalStateException("sqlcmd invocation failed", e);
         }
         if (result.getExitCode() != 0) {
             throw new IllegalStateException("sqlcmd exited " + result.getExitCode()
-                + "\nstdout:\n" + result.getStdout()
-                + "\nstderr:\n" + result.getStderr());
+                    + "\nstdout:\n" + result.getStdout()
+                    + "\nstderr:\n" + result.getStderr());
         }
     }
 

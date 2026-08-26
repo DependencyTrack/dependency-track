@@ -26,5 +26,4 @@ class SnykVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnAnaly
     SnykVulnAnalyzerFactoryTest() {
         super(SnykVulnAnalyzerFactory.class);
     }
-
 }

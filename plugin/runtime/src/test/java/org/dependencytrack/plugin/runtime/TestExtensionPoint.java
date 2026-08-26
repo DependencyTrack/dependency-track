@@ -25,5 +25,4 @@ import org.dependencytrack.plugin.api.ExtensionPointSpec;
 public interface TestExtensionPoint extends ExtensionPoint {
 
     String test();
-
 }

@@ -45,5 +45,4 @@ public class MdcScope implements Closeable {
     public void close() {
         mdcCloseables.forEach(MDCCloseable::close);
     }
-
 }

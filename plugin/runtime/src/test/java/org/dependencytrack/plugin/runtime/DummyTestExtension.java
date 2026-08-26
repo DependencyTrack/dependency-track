@@ -32,5 +32,4 @@ class DummyTestExtension implements TestExtensionPoint {
     public String test() {
         return deploymentConfigValue;
     }
-
 }

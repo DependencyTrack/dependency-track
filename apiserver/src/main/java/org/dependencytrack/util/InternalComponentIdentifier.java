@@ -48,7 +48,6 @@ public class InternalComponentIdentifier {
         private boolean hasPattern() {
             return groupPattern != null || namePattern != null;
         }
-
     }
 
     private Patterns patterns;
@@ -98,16 +97,11 @@ public class InternalComponentIdentifier {
         try (final var qm = new QueryManager()) {
             final ConfigProperty groupsRegexProperty = qm.getConfigProperty(
                     INTERNAL_COMPONENTS_GROUPS_REGEX.getGroupName(),
-                    INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyName()
-            );
+                    INTERNAL_COMPONENTS_GROUPS_REGEX.getPropertyName());
             final ConfigProperty namesRegexProperty = qm.getConfigProperty(
-                    INTERNAL_COMPONENTS_NAMES_REGEX.getGroupName(),
-                    INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyName()
-            );
+                    INTERNAL_COMPONENTS_NAMES_REGEX.getGroupName(), INTERNAL_COMPONENTS_NAMES_REGEX.getPropertyName());
             final ConfigProperty matchModeProperty = qm.getConfigProperty(
-                    INTERNAL_COMPONENTS_MATCH_MODE.getGroupName(),
-                    INTERNAL_COMPONENTS_MATCH_MODE.getPropertyName()
-            );
+                    INTERNAL_COMPONENTS_MATCH_MODE.getGroupName(), INTERNAL_COMPONENTS_MATCH_MODE.getPropertyName());
 
             return new Patterns(
                     tryCompilePattern(groupsRegexProperty).orElse(null),
@@ -115,8 +109,7 @@ public class InternalComponentIdentifier {
                     Optional.ofNullable(matchModeProperty)
                             .map(ConfigProperty::getPropertyValue)
                             .map(StringUtils::trimToNull)
-                            .orElse(INTERNAL_COMPONENTS_MATCH_MODE.getDefaultPropertyValue())
-            );
+                            .orElse(INTERNAL_COMPONENTS_MATCH_MODE.getDefaultPropertyValue()));
         }
     }
 
@@ -126,5 +119,4 @@ public class InternalComponentIdentifier {
                 .map(StringUtils::trimToNull)
                 .map(Pattern::compile);
     }
-
 }

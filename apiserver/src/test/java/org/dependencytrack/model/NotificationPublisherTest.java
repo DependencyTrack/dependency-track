@@ -23,21 +23,21 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-public class NotificationPublisherTest { 
+public class NotificationPublisherTest {
 
     @Test
     public void testId() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setId(111);
         Assertions.assertEquals(111L, publisher.getId());
-    } 
+    }
 
     @Test
     public void testName() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setName("My Publisher");
         Assertions.assertEquals("My Publisher", publisher.getName());
-    } 
+    }
 
     @Test
     public void testDescription() {
@@ -51,21 +51,21 @@ public class NotificationPublisherTest {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setTemplate("{ \"config\": \"configured\" }");
         Assertions.assertEquals("{ \"config\": \"configured\" }", publisher.getTemplate());
-    } 
+    }
 
     @Test
     public void testTemplateMimeType() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setTemplateMimeType("application/json");
         Assertions.assertEquals("application/json", publisher.getTemplateMimeType());
-    } 
+    }
 
     @Test
     public void testDefaultPublisher() {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setDefaultPublisher(true);
         Assertions.assertTrue(publisher.isDefaultPublisher());
-    } 
+    }
 
     @Test
     public void testUuid() {
@@ -73,5 +73,5 @@ public class NotificationPublisherTest {
         NotificationPublisher publisher = new NotificationPublisher();
         publisher.setUuid(uuid);
         Assertions.assertEquals(uuid.toString(), publisher.getUuid().toString());
-    } 
+    }
 }

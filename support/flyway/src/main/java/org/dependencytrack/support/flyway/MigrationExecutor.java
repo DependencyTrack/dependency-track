@@ -90,5 +90,4 @@ public class MigrationExecutor {
     public void execute() {
         flyway.migrate();
     }
-
 }

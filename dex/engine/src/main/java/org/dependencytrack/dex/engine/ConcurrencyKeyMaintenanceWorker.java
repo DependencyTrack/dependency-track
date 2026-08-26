@@ -62,21 +62,15 @@ final class ConcurrencyKeyMaintenanceWorker implements Closeable {
         this.leadershipSupplier = leadershipSupplier;
         this.repairIntervalMillis = repairInterval.toMillis();
         this.onWakeupsRepaired = onWakeupsRepaired;
-        this.repairedWakeupsCounter = Counter
-                .builder("dt.dex.engine.workflow.concurrency.key.wakeups.repaired")
+        this.repairedWakeupsCounter = Counter.builder("dt.dex.engine.workflow.concurrency.key.wakeups.repaired")
                 .register(meterRegistry);
     }
 
     void start() {
         executor = Executors.newSingleThreadScheduledExecutor(
-                Thread.ofPlatform()
-                        .name(getClass().getSimpleName())
-                        .factory());
+                Thread.ofPlatform().name(getClass().getSimpleName()).factory());
         executor.scheduleAtFixedRate(
-                this::maybeRepair,
-                /* initialDelay */ 0,
-                repairIntervalMillis,
-                TimeUnit.MILLISECONDS);
+                this::maybeRepair, /* initialDelay */ 0, repairIntervalMillis, TimeUnit.MILLISECONDS);
     }
 
     void nudge() {
@@ -124,8 +118,7 @@ final class ConcurrencyKeyMaintenanceWorker implements Closeable {
         // The wakeup table is unlogged so it can be truncated by database
         // crash or standby promotion. Detect this by absense of our truncation
         // marker sentinel row.
-        final boolean tableWasTruncated = jdbi.withHandle(handle -> handle
-                .createQuery("""
+        final boolean tableWasTruncated = jdbi.withHandle(handle -> handle.createQuery("""
                         select not exists(
                           select 1
                             from dex_workflow_concurrency_key_wakeup
@@ -141,14 +134,12 @@ final class ConcurrencyKeyMaintenanceWorker implements Closeable {
         // A new leader node starts with zero knowledge about the backlog.
         final boolean crashRecovery = leadershipAcquired || tableWasTruncated;
 
-        final List<String> queueNames = jdbi.withHandle(handle -> handle
-                .createQuery("""
+        final List<String> queueNames = jdbi.withHandle(
+                handle -> handle.createQuery("""
                         select name
                           from dex_workflow_task_queue
                          where status = 'ACTIVE'
-                        """)
-                .mapTo(String.class)
-                .list());
+                        """).mapTo(String.class).list());
 
         boolean repaired = false;
         for (final String queueName : queueNames) {
@@ -157,13 +148,11 @@ final class ConcurrencyKeyMaintenanceWorker implements Closeable {
             }
 
             try (var _ = MDC.putCloseable("queueName", queueName)) {
-                repaired |= jdbi.inTransaction(
-                        handle -> repairQueue(handle, queueName, crashRecovery));
+                repaired |= jdbi.inTransaction(handle -> repairQueue(handle, queueName, crashRecovery));
             }
         }
 
-        jdbi.useTransaction(handle -> handle
-                .createUpdate("""
+        jdbi.useTransaction(handle -> handle.createUpdate("""
                         insert into dex_workflow_concurrency_key_wakeup (queue_name, concurrency_key)
                         values (:truncationMarker, :truncationMarker)
                         on conflict (queue_name, concurrency_key) do nothing
@@ -193,8 +182,7 @@ final class ConcurrencyKeyMaintenanceWorker implements Closeable {
         // The repair queries can genuinely run longer, especially on crash recovery.
         final int queryTimeoutSeconds = Math.toIntExact(TimeUnit.MINUTES.toSeconds(5));
 
-        final int keyedRunBacklog = handle
-                .createQuery("""
+        final int keyedRunBacklog = handle.createQuery("""
                         select count(*)
                           from (
                             select 1
@@ -209,8 +197,7 @@ final class ConcurrencyKeyMaintenanceWorker implements Closeable {
                 .mapTo(Integer.class)
                 .one();
 
-        final Query repairQuery = handle
-                .createQuery("""
+        final Query repairQuery = handle.createQuery("""
                         with
                         <#if largeKeyedRunBacklog>
                         -- Identify the highest priority CREATED run per concurrency key.
@@ -345,17 +332,17 @@ final class ConcurrencyKeyMaintenanceWorker implements Closeable {
         }
 
         return repairQuery
-                .map((rs, _) -> {
-                    final long repairedCount = rs.getLong("repaired_count");
-                    if (repairedCount > 0 && !crashRecovery) {
-                        // Outside of crash recovery, every repair means a write path failed
-                        // to leave a hint, which is a defect we should know about.
-                        repairedWakeupsCounter.increment(repairedCount);
-                        LOGGER.warn("Repaired {} missing concurrency key wakeups", repairedCount);
-                    }
-                    return repairedCount;
-                })
-                .one() > 0;
+                        .map((rs, _) -> {
+                            final long repairedCount = rs.getLong("repaired_count");
+                            if (repairedCount > 0 && !crashRecovery) {
+                                // Outside of crash recovery, every repair means a write path failed
+                                // to leave a hint, which is a defect we should know about.
+                                repairedWakeupsCounter.increment(repairedCount);
+                                LOGGER.warn("Repaired {} missing concurrency key wakeups", repairedCount);
+                            }
+                            return repairedCount;
+                        })
+                        .one()
+                > 0;
     }
-
 }

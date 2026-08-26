@@ -57,32 +57,29 @@ class BomUploadSnykAnalysisE2ET extends AbstractE2ET {
 
     @Override
     protected void customizeApiServerContainer(GenericContainer<?> container) {
-        container
-                .withEnv("DT_SECRET_MANAGEMENT_PROVIDER", "env")
-                .withEnv("DT_SECRET_SNYK_API_TOKEN", snykApiToken);
+        container.withEnv("DT_SECRET_MANAGEMENT_PROVIDER", "env").withEnv("DT_SECRET_SNYK_API_TOKEN", snykApiToken);
     }
 
     @Test
     void test() throws Exception {
         logger.info("Disabling internal vuln analyzer");
         apiClient.updateExtensionConfig(
-                "vuln-analyzer",
-                "internal",
-                new UpdateExtensionConfigRequest(Map.of("enabled", false)));
+                "vuln-analyzer", "internal", new UpdateExtensionConfigRequest(Map.of("enabled", false)));
 
         logger.info("Configuring Snyk vuln analyzer");
         apiClient.updateExtensionConfig(
                 "vuln-analyzer",
                 "snyk",
-                new UpdateExtensionConfigRequest(
-                        Map.ofEntries(
-                                Map.entry("enabled", true),
-                                Map.entry("apiUrl", "https://api.snyk.io"),
-                                Map.entry("orgId", snykOrgId),
-                                Map.entry("apiToken", "SNYK_API_TOKEN"))));
+                new UpdateExtensionConfigRequest(Map.ofEntries(
+                        Map.entry("enabled", true),
+                        Map.entry("apiUrl", "https://api.snyk.io"),
+                        Map.entry("orgId", snykOrgId),
+                        Map.entry("apiToken", "SNYK_API_TOKEN"))));
 
         // Parse and base64 encode a BOM.
-        final byte[] bomBytes = getClass().getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json").readAllBytes();
+        final byte[] bomBytes = getClass()
+                .getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json")
+                .readAllBytes();
         final String bomBase64 = Base64.getEncoder().encodeToString(bomBytes);
 
         // Upload the BOM
@@ -94,7 +91,8 @@ class BomUploadSnykAnalysisE2ET extends AbstractE2ET {
                 .atMost(Duration.ofSeconds(30))
                 .pollDelay(Duration.ofMillis(250))
                 .untilAsserted(() -> {
-                    final EventProcessingResponse processingResponse = apiClient.isEventBeingProcessed(response.token());
+                    final EventProcessingResponse processingResponse =
+                            apiClient.isEventBeingProcessed(response.token());
                     assertThat(processingResponse.processing()).isFalse();
                 });
 
@@ -103,16 +101,11 @@ class BomUploadSnykAnalysisE2ET extends AbstractE2ET {
 
         // Ensure that vulnerabilities have been reported correctly.
         final List<Finding> findings = apiClient.getFindings(project.uuid(), false);
-        assertThat(findings)
-                .hasSizeGreaterThan(1)
-                .allSatisfy(
-                        finding -> {
-                            assertThat(finding.vulnerability().vulnId()).startsWith("SNYK-");
-                            assertThat(finding.vulnerability().source()).isEqualTo("SNYK");
-                            assertThat(finding.attribution().analyzerIdentity()).isEqualTo("snyk");
-                            assertThat(finding.attribution().attributedOn()).isNotBlank();
-                        }
-                );
+        assertThat(findings).hasSizeGreaterThan(1).allSatisfy(finding -> {
+            assertThat(finding.vulnerability().vulnId()).startsWith("SNYK-");
+            assertThat(finding.vulnerability().source()).isEqualTo("SNYK");
+            assertThat(finding.attribution().analyzerIdentity()).isEqualTo("snyk");
+            assertThat(finding.attribution().attributedOn()).isNotBlank();
+        });
     }
-
 }

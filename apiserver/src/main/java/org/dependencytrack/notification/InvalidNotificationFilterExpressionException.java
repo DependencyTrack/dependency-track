@@ -27,8 +27,7 @@ import java.util.List;
  */
 public final class InvalidNotificationFilterExpressionException extends RuntimeException {
 
-    public record Error(int line, int column, String message) {
-    }
+    public record Error(int line, int column, String message) {}
 
     private final List<Error> errors;
 
@@ -36,9 +35,7 @@ public final class InvalidNotificationFilterExpressionException extends RuntimeE
         super(message);
         this.errors = celIssues.stream()
                 .map(e -> new Error(
-                        e.getSourceLocation().getLine(),
-                        e.getSourceLocation().getColumn(),
-                        e.getMessage()))
+                        e.getSourceLocation().getLine(), e.getSourceLocation().getColumn(), e.getMessage()))
                 .toList();
     }
 
@@ -50,5 +47,4 @@ public final class InvalidNotificationFilterExpressionException extends RuntimeE
     public List<Error> getErrors() {
         return errors;
     }
-
 }

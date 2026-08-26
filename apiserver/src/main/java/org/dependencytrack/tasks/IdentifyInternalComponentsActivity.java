@@ -84,9 +84,15 @@ public final class IdentifyInternalComponentsActivity implements Activity<Void, 
 
                 if (component.isInternal() != internal) {
                     if (internal) {
-                        LOGGER.info("Component {} ({}) was identified to be internal. It was previously not an internal component.", coordinates, component.getUuid());
+                        LOGGER.info(
+                                "Component {} ({}) was identified to be internal. It was previously not an internal component.",
+                                coordinates,
+                                component.getUuid());
                     } else {
-                        LOGGER.info("Component {} ({}) was previously identified as internal. It is no longer identified as internal.", coordinates, component.getUuid());
+                        LOGGER.info(
+                                "Component {} ({}) was previously identified as internal. It is no longer identified as internal.",
+                                coordinates,
+                                component.getUuid());
                     }
 
                     changedInternalStatusByComponentId.put(component.getId(), internal);
@@ -100,7 +106,10 @@ public final class IdentifyInternalComponentsActivity implements Activity<Void, 
             components = fetchNextComponentsPage(lastId);
         }
 
-        LOGGER.info("Internal component identification completed in {}", DateFormatUtils.format(Duration.between(startTime, Instant.now()).toMillis(), "mm:ss:SS"));
+        LOGGER.info(
+                "Internal component identification completed in {}",
+                DateFormatUtils.format(
+                        Duration.between(startTime, Instant.now()).toMillis(), "mm:ss:SS"));
         return null;
     }
 
@@ -108,7 +117,9 @@ public final class IdentifyInternalComponentsActivity implements Activity<Void, 
         return withJdbiHandle(handle -> handle.createQuery("""
                         SELECT EXISTS(SELECT 1 FROM "COMPONENT" WHERE "INTERNAL")
                         """)
-                .define(ATTRIBUTE_QUERY_NAME, "%s#internalComponentsExist".formatted(getClass().getSimpleName()))
+                .define(
+                        ATTRIBUTE_QUERY_NAME,
+                        "%s#internalComponentsExist".formatted(getClass().getSimpleName()))
                 .mapTo(Boolean.class)
                 .one());
     }
@@ -129,7 +140,9 @@ public final class IdentifyInternalComponentsActivity implements Activity<Void, 
                          FETCH NEXT 1000 ROWS ONLY
                         """)
                 .configure(SqlStatements.class, cfg -> cfg.setUnusedBindingAllowed(true))
-                .define(ATTRIBUTE_QUERY_NAME, "%s#fetchNextComponentsPage".formatted(getClass().getSimpleName()))
+                .define(
+                        ATTRIBUTE_QUERY_NAME,
+                        "%s#fetchNextComponentsPage".formatted(getClass().getSimpleName()))
                 .bind("lastId", lastId)
                 .defineNamedBindings()
                 .mapToBean(Component.class)
@@ -154,10 +167,10 @@ public final class IdentifyInternalComponentsActivity implements Activity<Void, 
                 batch.add();
             });
 
-            batch
-                    .define(ATTRIBUTE_QUERY_NAME, "%s#updateInternalStatuses".formatted(getClass().getSimpleName()))
+            batch.define(
+                            ATTRIBUTE_QUERY_NAME,
+                            "%s#updateInternalStatuses".formatted(getClass().getSimpleName()))
                     .execute();
         });
     }
-
 }

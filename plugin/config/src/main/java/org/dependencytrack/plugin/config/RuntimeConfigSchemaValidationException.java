@@ -32,8 +32,8 @@ public final class RuntimeConfigSchemaValidationException extends InvalidRuntime
     private final Collection<Error> validationErrors;
 
     public RuntimeConfigSchemaValidationException(Collection<Error> validationErrors) {
-        super("Runtime config is invalid: [%s]".formatted(
-                validationErrors.stream()
+        super("Runtime config is invalid: [%s]"
+                .formatted(validationErrors.stream()
                         .map(error -> "%s: %s".formatted(error.getInstanceLocation(), error.getMessage()))
                         .collect(Collectors.joining(", "))));
         this.validationErrors = validationErrors;
@@ -42,5 +42,4 @@ public final class RuntimeConfigSchemaValidationException extends InvalidRuntime
     public Collection<Error> getValidationErrors() {
         return validationErrors;
     }
-
 }

@@ -43,17 +43,12 @@ record JvnAdvisory(
 
     /** An affected product: a single (product-level) CPE plus its Japanese version expressions. */
     record AffectedProduct(
-            @Nullable String vendor,
-            @Nullable String productName,
-            String cpe22,
-            List<String> versionTexts) {
-    }
+            @Nullable String vendor, @Nullable String productName, String cpe22, List<String> versionTexts) {}
 
     /** A CVSS rating attached to the advisory. */
     record Cvss(
             @Nullable String version,
             @Nullable String severity,
             @Nullable Double baseScore,
-            @Nullable String vector) {
-    }
+            @Nullable String vector) {}
 }

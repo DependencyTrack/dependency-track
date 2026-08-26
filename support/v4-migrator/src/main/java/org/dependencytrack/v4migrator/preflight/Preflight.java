@@ -71,8 +71,8 @@ public final class Preflight {
         this(targetJdbi, source, options, Mode.DEFAULT);
     }
 
-    public Preflight(final Jdbi targetJdbi, final @Nullable SourceOptions source, final GlobalOptions options,
-                     final Mode mode) {
+    public Preflight(
+            final Jdbi targetJdbi, final @Nullable SourceOptions source, final GlobalOptions options, final Mode mode) {
         this.targetJdbi = targetJdbi;
         this.source = source;
         this.options = options;
@@ -117,10 +117,10 @@ public final class Preflight {
 
     private void checkTargetVersion(final List<String> failures) {
         try {
-            final Integer major = targetJdbi.withHandle(h ->
-                h.createQuery("SELECT current_setting('server_version_num')::int / 10000")
-                    .mapTo(Integer.class)
-                    .one());
+            final Integer major = targetJdbi.withHandle(
+                    h -> h.createQuery("SELECT current_setting('server_version_num')::int / 10000")
+                            .mapTo(Integer.class)
+                            .one());
             if (major < 13) {
                 failures.add("Target PostgreSQL must be version 13 or newer (gen_random_uuid); found " + major);
             }
@@ -141,8 +141,7 @@ public final class Preflight {
         final List<String> found = new ArrayList<>();
         for (final String table : v4Markers) {
             try {
-                final boolean present = targetJdbi.withHandle(h ->
-                    h.createQuery("SELECT to_regclass(:t) IS NOT NULL")
+                final boolean present = targetJdbi.withHandle(h -> h.createQuery("SELECT to_regclass(:t) IS NOT NULL")
                         .bind("t", table)
                         .mapTo(Boolean.class)
                         .one());
@@ -156,20 +155,20 @@ public final class Preflight {
         }
         if (!found.isEmpty()) {
             failures.add("Target appears to be a v4 Dependency-Track database (found: "
-                + String.join(", ", found) + "). Bootstrap requires a fresh database; "
-                + "did you accidentally point --target at your v4 source?");
+                    + String.join(", ", found) + "). Bootstrap requires a fresh database; "
+                    + "did you accidentally point --target at your v4 source?");
         }
     }
 
     private void checkTargetExtensions(final List<String> failures) {
         try {
-            final boolean trgm = targetJdbi.withHandle(h ->
-                h.createQuery("SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm')")
-                    .mapTo(Boolean.class)
-                    .one());
+            final boolean trgm = targetJdbi.withHandle(
+                    h -> h.createQuery("SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm')")
+                            .mapTo(Boolean.class)
+                            .one());
             if (!trgm) {
                 failures.add("Target is missing the pg_trgm extension. The v5 schema bootstrap installs it; "
-                    + "ensure the schema is applied before running the migrator.");
+                        + "ensure the schema is applied before running the migrator.");
             }
         } catch (final RuntimeException e) {
             failures.add("Could not enumerate target PostgreSQL extensions: " + e.getMessage());
@@ -185,17 +184,15 @@ public final class Preflight {
      */
     private boolean isV5SchemaApplied(final List<String> failures) {
         try {
-            final boolean present = targetJdbi.withHandle(h ->
-                h.createQuery("""
+            final boolean present = targetJdbi.withHandle(
+                    h -> h.createQuery("""
                         SELECT EXISTS (
                             SELECT 1 FROM information_schema.tables
                              WHERE table_name = 'flyway_schema_history')
-                        """)
-                    .mapTo(Boolean.class)
-                    .one());
+                        """).mapTo(Boolean.class).one());
             if (!present) {
                 failures.add("Target has no flyway_schema_history; run "
-                    + "'v4-migrator bootstrap' against this database first to apply the v5 schema.");
+                        + "'v4-migrator bootstrap' against this database first to apply the v5 schema.");
             }
             return present;
         } catch (final RuntimeException e) {
@@ -206,18 +203,15 @@ public final class Preflight {
 
     private void checkFlywayHead(final List<String> failures) {
         try {
-            final String head = targetJdbi.withHandle(h ->
-                h.createQuery("""
+            final String head = targetJdbi.withHandle(
+                    h -> h.createQuery("""
                         SELECT version
                           FROM flyway_schema_history
                          WHERE success = TRUE
                            AND version IS NOT NULL
                          ORDER BY installed_rank DESC
                          LIMIT 1
-                        """)
-                    .mapTo(String.class)
-                    .findOne()
-                    .orElse(null));
+                        """).mapTo(String.class).findOne().orElse(null));
             if (head == null) {
                 failures.add("Target flyway_schema_history is empty; run 'v4-migrator bootstrap' first.");
             } else if (!EXPECTED_FLYWAY_HEAD.equals(head)) {
@@ -234,18 +228,15 @@ public final class Preflight {
      * (default permissions) is permitted.
      */
     private void checkTargetEmpty(final List<String> failures) {
-        final String[] mustBeEmpty = {
-            "\"PROJECT\"", "\"COMPONENT\"", "\"VULNERABILITY\"", "\"BOM\"", "\"USER\""
-        };
+        final String[] mustBeEmpty = {"\"PROJECT\"", "\"COMPONENT\"", "\"VULNERABILITY\"", "\"BOM\"", "\"USER\""};
         for (final String table : mustBeEmpty) {
             try {
-                final Long count = targetJdbi.withHandle(h ->
-                    h.createQuery("SELECT count(*) FROM " + table)
+                final Long count = targetJdbi.withHandle(h -> h.createQuery("SELECT count(*) FROM " + table)
                         .mapTo(Long.class)
                         .one());
                 if (count > 0) {
                     failures.add("Target table " + table + " is not empty (count=" + count
-                        + "). Refusing to run against a populated v5 cluster.");
+                            + "). Refusing to run against a populated v5 cluster.");
                 }
             } catch (final RuntimeException e) {
                 failures.add("Could not count " + table + ": " + e.getMessage());
@@ -260,8 +251,7 @@ public final class Preflight {
 
     private void recommendSetting(final String name, final long minimum, final List<String> warnings) {
         try {
-            final String raw = targetJdbi.withHandle(h ->
-                h.createQuery("SELECT current_setting(:name, TRUE)")
+            final String raw = targetJdbi.withHandle(h -> h.createQuery("SELECT current_setting(:name, TRUE)")
                     .bind("name", name)
                     .mapTo(String.class)
                     .findOne()
@@ -273,7 +263,7 @@ public final class Preflight {
                 final int val = Integer.parseInt(raw);
                 if (val < minimum) {
                     warnings.add("max_locks_per_transaction=" + val
-                        + " may be insufficient for metrics partition attaches. Recommended: ≥ " + minimum + ".");
+                            + " may be insufficient for metrics partition attaches. Recommended: ≥ " + minimum + ".");
                 }
                 return;
             }
@@ -281,7 +271,7 @@ public final class Preflight {
             final Long bytes = parsePgSizeSetting(raw);
             if (bytes != null && bytes < minimum) {
                 warnings.add(name + "=" + raw + " may produce WAL pressure during load. Recommended: ≥ "
-                    + (minimum / (1024 * 1024 * 1024)) + "GB.");
+                        + (minimum / (1024 * 1024 * 1024)) + "GB.");
             }
         } catch (final RuntimeException e) {
             // Non-fatal; preflight warnings are advisory.
@@ -311,14 +301,13 @@ public final class Preflight {
 
     private void checkStagingSchemaState(final List<String> failures) {
         try {
-            final Boolean exists = targetJdbi.withHandle(h ->
-                h.createQuery("SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = :name)")
+            final Boolean exists = targetJdbi.withHandle(h -> h.createQuery(
+                            "SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = :name)")
                     .bind("name", options.stagingSchema)
                     .mapTo(Boolean.class)
                     .one());
             if (Boolean.TRUE.equals(exists)) {
-                final Boolean stateTable = targetJdbi.withHandle(h ->
-                    h.createQuery("""
+                final Boolean stateTable = targetJdbi.withHandle(h -> h.createQuery("""
                             SELECT EXISTS (
                                 SELECT 1 FROM information_schema.tables
                                 WHERE table_schema = :s AND table_name = 'migration_state')
@@ -327,8 +316,9 @@ public final class Preflight {
                         .mapTo(Boolean.class)
                         .one());
                 if (!Boolean.TRUE.equals(stateTable)) {
-                    failures.add("Staging schema '" + options.stagingSchema
-                        + "' exists but does not contain migration_state. Drop the schema or pick a different one.");
+                    failures.add(
+                            "Staging schema '" + options.stagingSchema
+                                    + "' exists but does not contain migration_state. Drop the schema or pick a different one.");
                 }
             }
         } catch (final RuntimeException e) {
@@ -353,19 +343,21 @@ public final class Preflight {
         }
     }
 
-    private static void checkSourceSchemaMarker(final Connection conn, final SourceFlavor flavor,
-                                                final String schema, final List<String> failures) {
-        final String sql = switch (flavor) {
-            case POSTGRESQL -> "SELECT to_regclass('\"%s\".\"PROJECT\"') IS NOT NULL".formatted(schema);
-            case MSSQL -> "SELECT CASE WHEN OBJECT_ID('\"%s\".\"PROJECT\"','U') IS NOT NULL THEN 1 ELSE 0 END"
-                .formatted(schema);
-        };
+    private static void checkSourceSchemaMarker(
+            final Connection conn, final SourceFlavor flavor, final String schema, final List<String> failures) {
+        final String sql =
+                switch (flavor) {
+                    case POSTGRESQL -> "SELECT to_regclass('\"%s\".\"PROJECT\"') IS NOT NULL".formatted(schema);
+                    case MSSQL ->
+                        "SELECT CASE WHEN OBJECT_ID('\"%s\".\"PROJECT\"','U') IS NOT NULL THEN 1 ELSE 0 END"
+                                .formatted(schema);
+                };
         try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             final boolean present = rs.next() && rs.getBoolean(1);
             if (!present) {
-                failures.add("Source database does not contain expected v4 table PROJECT; "
-                    + "wrong database or schema?");
+                failures.add(
+                        "Source database does not contain expected v4 table PROJECT; " + "wrong database or schema?");
             }
         } catch (final SQLException e) {
             failures.add("Could not inspect source schema: " + e.getMessage());

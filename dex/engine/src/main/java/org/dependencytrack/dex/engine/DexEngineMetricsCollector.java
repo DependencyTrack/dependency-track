@@ -67,32 +67,26 @@ final class DexEngineMetricsCollector implements Closeable {
         this.leadershipSupplier = leadershipSupplier;
         this.initialDelay = initialDelay;
         this.interval = interval;
-        this.runCountGauge = MultiGauge
-                .builder("dt.dex.engine.workflow.runs.current")
+        this.runCountGauge = MultiGauge.builder("dt.dex.engine.workflow.runs.current")
                 .description("Current number of workflow runs by name and status (non-terminal only)")
                 .register(meterRegistry);
-        this.workflowTaskQueueCapacityGauge = MultiGauge
-                .builder("dt.dex.engine.workflow.task.queue.capacity")
+        this.workflowTaskQueueCapacityGauge = MultiGauge.builder("dt.dex.engine.workflow.task.queue.capacity")
                 .description("Capacity of workflow task queues by name")
                 .register(meterRegistry);
-        this.workflowTaskQueueDepthGauge = MultiGauge
-                .builder("dt.dex.engine.workflow.task.queue.depth")
+        this.workflowTaskQueueDepthGauge = MultiGauge.builder("dt.dex.engine.workflow.task.queue.depth")
                 .description("Depth of workflow task queues by name")
                 .register(meterRegistry);
-        this.activityTaskQueueCapacityGauge = MultiGauge
-                .builder("dt.dex.engine.activity.task.queue.capacity")
+        this.activityTaskQueueCapacityGauge = MultiGauge.builder("dt.dex.engine.activity.task.queue.capacity")
                 .description("Capacity of activity task queues by name")
                 .register(meterRegistry);
-        this.activityTaskQueueDepthGauge = MultiGauge
-                .builder("dt.dex.engine.activity.task.queue.depth")
+        this.activityTaskQueueDepthGauge = MultiGauge.builder("dt.dex.engine.activity.task.queue.depth")
                 .description("Depth of activity task queues by name")
                 .register(meterRegistry);
-        this.activityTaskQueueBacklogGauge = MultiGauge
-                .builder("dt.dex.engine.activity.task.queue.backlog")
-                .description("Approximate count of unqueued, ready-to-schedule activity tasks per queue (capped at %d)".formatted(ACTIVITY_TASK_QUEUE_BACKLOG_COUNT_CAP))
+        this.activityTaskQueueBacklogGauge = MultiGauge.builder("dt.dex.engine.activity.task.queue.backlog")
+                .description("Approximate count of unqueued, ready-to-schedule activity tasks per queue (capped at %d)"
+                        .formatted(ACTIVITY_TASK_QUEUE_BACKLOG_COUNT_CAP))
                 .register(meterRegistry);
-        this.activityTaskQueueBacklogAgeGauge = MultiGauge
-                .builder("dt.dex.engine.activity.task.queue.backlog.age")
+        this.activityTaskQueueBacklogAgeGauge = MultiGauge.builder("dt.dex.engine.activity.task.queue.backlog.age")
                 .description("Age of the oldest unqueued, ready-to-schedule activity task per queue")
                 .baseUnit("seconds")
                 .register(meterRegistry);
@@ -104,9 +98,7 @@ final class DexEngineMetricsCollector implements Closeable {
         }
 
         executor = Executors.newSingleThreadScheduledExecutor(
-                Thread.ofPlatform()
-                        .name(getClass().getSimpleName())
-                        .factory());
+                Thread.ofPlatform().name(getClass().getSimpleName()).factory());
         executor.scheduleAtFixedRate(
                 () -> {
                     try {
@@ -160,9 +152,7 @@ final class DexEngineMetricsCollector implements Closeable {
     }
 
     private void collectRunMetrics() {
-        final List<MultiGauge.Row<Number>> runStatusRows = jdbi.withHandle(
-                handle -> handle
-                        .createQuery("""
+        final List<MultiGauge.Row<Number>> runStatusRows = jdbi.withHandle(handle -> handle.createQuery("""
                                 select workflow_name
                                      , status
                                      , count(*)
@@ -171,83 +161,67 @@ final class DexEngineMetricsCollector implements Closeable {
                                  group by workflow_name
                                         , status
                                 """)
-                        .map((rs, _) -> MultiGauge.Row.of(
-                                Tags.of(
-                                        Tag.of("workflowName", rs.getString(1)),
-                                        Tag.of("status", rs.getString(2).toLowerCase())),
-                                rs.getLong(3)))
-                        .list());
+                .map((rs, _) -> MultiGauge.Row.of(
+                        Tags.of(
+                                Tag.of("workflowName", rs.getString(1)),
+                                Tag.of("status", rs.getString(2).toLowerCase())),
+                        rs.getLong(3)))
+                .list());
         runCountGauge.register(runStatusRows, /* overwrite */ true);
     }
 
     private void collectWorkflowTaskQueueMetrics() {
-        final List<MultiGauge.Row<Number>> workflowTaskQueueCapacityRows = jdbi.withHandle(
-                handle -> handle
-                        .createQuery("""
+        final List<MultiGauge.Row<Number>> workflowTaskQueueCapacityRows =
+                jdbi.withHandle(handle -> handle.createQuery("""
                                 select name
                                      , capacity
                                   from dex_workflow_task_queue
                                 """)
-                        .map((rs, _) -> MultiGauge.Row.of(
-                                Tags.of(Tag.of("queueName", rs.getString(1))),
-                                rs.getLong(2)))
+                        .map((rs, _) -> MultiGauge.Row.of(Tags.of(Tag.of("queueName", rs.getString(1))), rs.getLong(2)))
                         .list());
         workflowTaskQueueCapacityGauge.register(workflowTaskQueueCapacityRows, /* overwrite */ true);
 
-        final List<MultiGauge.Row<Number>> workflowTaskQueueDepthRows = jdbi.withHandle(
-                handle -> handle
-                        .createQuery("""
+        final List<MultiGauge.Row<Number>> workflowTaskQueueDepthRows =
+                jdbi.withHandle(handle -> handle.createQuery("""
                                 select queue_name
                                      , count(*)
                                   from dex_workflow_task
                                  group by queue_name
                                 """)
-                        .map((rs, _) -> MultiGauge.Row.of(
-                                Tags.of(Tag.of("queueName", rs.getString(1))),
-                                rs.getLong(2)))
+                        .map((rs, _) -> MultiGauge.Row.of(Tags.of(Tag.of("queueName", rs.getString(1))), rs.getLong(2)))
                         .list());
         workflowTaskQueueDepthGauge.register(workflowTaskQueueDepthRows, /* overwrite */ true);
     }
 
     private void collectActivityTaskQueueMetrics() {
-        final List<MultiGauge.Row<Number>> activityTaskQueueCapacityRows = jdbi.withHandle(
-                handle -> handle
-                        .createQuery("""
+        final List<MultiGauge.Row<Number>> activityTaskQueueCapacityRows =
+                jdbi.withHandle(handle -> handle.createQuery("""
                                 select name
                                      , capacity
                                   from dex_activity_task_queue
                                 """)
-                        .map((rs, _) -> MultiGauge.Row.of(
-                                Tags.of(Tag.of("queueName", rs.getString(1))),
-                                rs.getLong(2)))
+                        .map((rs, _) -> MultiGauge.Row.of(Tags.of(Tag.of("queueName", rs.getString(1))), rs.getLong(2)))
                         .list());
         activityTaskQueueCapacityGauge.register(activityTaskQueueCapacityRows, /* overwrite */ true);
 
-        final List<MultiGauge.Row<Number>> activityTaskQueueDepthRows = jdbi.withHandle(
-                handle -> handle
-                        .createQuery("""
+        final List<MultiGauge.Row<Number>> activityTaskQueueDepthRows =
+                jdbi.withHandle(handle -> handle.createQuery("""
                                 select queue_name
                                      , count(*)
                                   from dex_activity_task
                                  where status = 'QUEUED'
                                  group by queue_name
                                 """)
-                        .map((rs, _) -> MultiGauge.Row.of(
-                                Tags.of(Tag.of("queueName", rs.getString(1))),
-                                rs.getLong(2)))
+                        .map((rs, _) -> MultiGauge.Row.of(Tags.of(Tag.of("queueName", rs.getString(1))), rs.getLong(2)))
                         .list());
         activityTaskQueueDepthGauge.register(activityTaskQueueDepthRows, /* overwrite */ true);
     }
 
     public record TaskQueueBacklogRow(
-            String queueName,
-            long backlog,
-            @Nullable Duration age) {
-    }
+            String queueName, long backlog, @Nullable Duration age) {}
 
     private void collectActivityTaskQueueBacklogMetrics() {
-        final List<TaskQueueBacklogRow> rows = jdbi.withHandle(handle -> handle
-                .createQuery("""
+        final List<TaskQueueBacklogRow> rows = jdbi.withHandle(handle -> handle.createQuery("""
                         select tq.name as queue_name
                              , coalesce((
                                  select count(*)
@@ -292,5 +266,4 @@ final class DexEngineMetricsCollector implements Closeable {
         activityTaskQueueBacklogGauge.register(backlogRows, /* overwrite */ true);
         activityTaskQueueBacklogAgeGauge.register(ageRows, /* overwrite */ true);
     }
-
 }

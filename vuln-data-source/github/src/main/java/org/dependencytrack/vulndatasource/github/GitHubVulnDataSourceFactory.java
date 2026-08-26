@@ -83,7 +83,9 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
     @Override
     public boolean isDataSourceEnabled() {
         requireNonNull(configRegistry, "configRegistry must not be null");
-        return configRegistry.getRuntimeConfig(GithubVulnDataSourceConfigV1.class).isEnabled();
+        return configRegistry
+                .getRuntimeConfig(GithubVulnDataSourceConfigV1.class)
+                .isEnabled();
     }
 
     @Override
@@ -157,13 +159,13 @@ final class GitHubVulnDataSourceFactory implements VulnDataSourceFactory, Runtim
                 throw new InvalidRuntimeConfigException(
                         "No authentication configured; provide an API Token or GitHub App credentials");
             }
-            if (hasApp && (config.getAppId() == null
-                    || config.getInstallationId() == null
-                    || config.getAppPrivateKey() == null)) {
+            if (hasApp
+                    && (config.getAppId() == null
+                            || config.getInstallationId() == null
+                            || config.getAppPrivateKey() == null)) {
                 throw new InvalidRuntimeConfigException(
                         "GitHub App authentication requires App ID, Installation ID and App Private Key");
             }
         });
     }
-
 }

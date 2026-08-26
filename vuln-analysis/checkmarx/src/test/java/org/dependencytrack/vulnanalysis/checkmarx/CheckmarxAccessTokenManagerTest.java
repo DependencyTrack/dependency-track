@@ -47,9 +47,7 @@ class CheckmarxAccessTokenManagerTest {
     @BeforeEach
     void beforeEach(WireMockRuntimeInfo wmRuntimeInfo) {
         apiBaseUrl = URI.create(wmRuntimeInfo.getHttpBaseUrl());
-        tokenManager = new CheckmarxAccessTokenManager(
-                HttpClient.newHttpClient(),
-                new ObjectMapper());
+        tokenManager = new CheckmarxAccessTokenManager(HttpClient.newHttpClient(), new ObjectMapper());
     }
 
     @Test
@@ -138,9 +136,7 @@ class CheckmarxAccessTokenManagerTest {
     @Test
     void shouldThrowOnTokenEndpointError() {
         stubFor(post(urlPathEqualTo("/auth/realms/bad-id/protocol/openid-connect/token"))
-                .willReturn(aResponse()
-                        .withStatus(401)
-                        .withBody("Unauthorized")));
+                .willReturn(aResponse().withStatus(401).withBody("Unauthorized")));
 
         assertThatThrownBy(() -> tokenManager.getAccessToken(apiBaseUrl, "bad-id", "bad-key"))
                 .isInstanceOf(IOException.class)

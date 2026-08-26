@@ -39,10 +39,14 @@ public record ConciseLicenseResponse(
         @Schema(description = "Whether the license is FSF libre", requiredMode = Schema.RequiredMode.REQUIRED)
         boolean isFsfLibre,
 
-        @Schema(description = "Whether the licenseId has been deprecated by SPDX", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(
+                description = "Whether the licenseId has been deprecated by SPDX",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         boolean isDeprecatedLicenseId,
 
-        @Schema(description = "Whether the license is a custom license created by a user", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(
+                description = "Whether the license is a custom license created by a user",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         boolean isCustomLicense,
 
         @Schema(description = "UUID of the license", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -58,5 +62,4 @@ public record ConciseLicenseResponse(
                 license.isCustomLicense(),
                 license.getUuid());
     }
-
 }

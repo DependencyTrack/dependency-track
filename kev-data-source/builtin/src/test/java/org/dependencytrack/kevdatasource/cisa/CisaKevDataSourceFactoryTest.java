@@ -37,7 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-class CisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull KevDataSource, @NonNull CisaKevDataSourceFactory> {
+class CisaKevDataSourceFactoryTest
+        extends AbstractExtensionFactoryTest<@NonNull KevDataSource, @NonNull CisaKevDataSourceFactory> {
 
     protected CisaKevDataSourceFactoryTest() {
         super(CisaKevDataSourceFactory.class);
@@ -63,8 +64,9 @@ class CisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
         final CisaKevDataSourceConfigV1 config = defaultRuntimeConfig();
 
         assertThat(config.isEnabled()).isTrue();
-        assertThat(config.getFeedUrl()).isEqualTo(URI.create(
-                "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"));
+        assertThat(config.getFeedUrl())
+                .isEqualTo(URI.create(
+                        "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"));
     }
 
     @Test
@@ -97,10 +99,9 @@ class CisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
         final CisaKevDataSourceConfigV1 config = defaultRuntimeConfig();
         config.setEnabled(isEnabled);
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
 
         assertThat(factory.isEnabled()).isEqualTo(isEnabled);
     }
@@ -110,13 +111,11 @@ class CisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
         final CisaKevDataSourceConfigV1 config = defaultRuntimeConfig();
         config.setEnabled(false);
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
 
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(factory::create);
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
     }
 
     @Test
@@ -124,10 +123,9 @@ class CisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
         final CisaKevDataSourceConfigV1 config = defaultRuntimeConfig();
         config.setEnabled(true);
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
 
         try (final KevDataSource dataSource = factory.create()) {
             assertThat(dataSource).isInstanceOf(CisaKevDataSource.class);
@@ -141,7 +139,7 @@ class CisaKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
     @SuppressWarnings("unchecked")
     private void validate(CisaKevDataSourceConfigV1 config) {
         ((RuntimeConfigValidator<CisaKevDataSourceConfigV1>)
-                factory.runtimeConfigSpec().validator()).validate(config);
+                        factory.runtimeConfigSpec().validator())
+                .validate(config);
     }
-
 }

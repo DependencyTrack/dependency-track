@@ -63,12 +63,8 @@ public final class MavenPackageMetadataResolverFactory implements PackageMetadat
 
         try {
             final Map<String, String> origQualifiers = purl.getQualifiers();
-            final String type = origQualifiers != null
-                    ? origQualifiers.getOrDefault("type", "jar")
-                    : "jar";
-            final String classifier = origQualifiers != null
-                    ? origQualifiers.get("classifier")
-                    : null;
+            final String type = origQualifiers != null ? origQualifiers.getOrDefault("type", "jar") : "jar";
+            final String classifier = origQualifiers != null ? origQualifiers.get("classifier") : null;
             final var builder = PackageURLBuilder.aPackageURL()
                     .withType(purl.getType())
                     .withNamespace(purl.getNamespace())
@@ -100,5 +96,4 @@ public final class MavenPackageMetadataResolverFactory implements PackageMetadat
     public PackageMetadataResolver create() {
         return new MavenPackageMetadataResolver(requireNonNull(cachingHttpClient));
     }
-
 }

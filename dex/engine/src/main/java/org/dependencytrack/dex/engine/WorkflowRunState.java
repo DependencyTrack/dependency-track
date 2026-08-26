@@ -99,9 +99,7 @@ final class WorkflowRunState {
     private @Nullable Instant completedAt;
     private boolean continuedAsNew;
 
-    WorkflowRunState(
-            final UUID id,
-            final List<WorkflowEvent> eventHistory) {
+    WorkflowRunState(final UUID id, final List<WorkflowEvent> eventHistory) {
         this.id = id;
         this.eventHistory = new ArrayList<>(eventHistory.size());
         this.newEvents = new ArrayList<>();
@@ -263,8 +261,8 @@ final class WorkflowRunState {
                     final String nextEventStr = DebugFormat.singleLine().toString(event);
 
                     throw new IllegalStateException(
-                            "%s/%s: Duplicate RunCreated event; Previous event is: %s; New event is: %s".formatted(
-                                    this.workflowName, this.id, previousEventStr, nextEventStr));
+                            "%s/%s: Duplicate RunCreated event; Previous event is: %s; New event is: %s"
+                                    .formatted(this.workflowName, this.id, previousEventStr, nextEventStr));
                 }
                 parentId = event.getRunCreated().hasParentRun()
                         ? UUID.fromString(event.getRunCreated().getParentRun().getId())
@@ -295,8 +293,8 @@ final class WorkflowRunState {
                     final String nextEventStr = DebugFormat.singleLine().toString(event);
 
                     throw new IllegalStateException(
-                            "%s/%s: Duplicate RunStarted event; Previous event is: %s; New event is: %s".formatted(
-                                    this.workflowName, this.id, previousEventStr, nextEventStr));
+                            "%s/%s: Duplicate RunStarted event; Previous event is: %s; New event is: %s"
+                                    .formatted(this.workflowName, this.id, previousEventStr, nextEventStr));
                 }
                 startedEvent = event;
                 setStatus(WorkflowRunStatus.RUNNING);
@@ -308,11 +306,12 @@ final class WorkflowRunState {
                     final String nextEventStr = DebugFormat.singleLine().toString(event);
 
                     throw new IllegalStateException(
-                            "%s/%s: Duplicate RunCompleted event; Previous event is: %s; Next event is: %s".formatted(
-                                    this.workflowName, this.id, previousEventStr, nextEventStr));
+                            "%s/%s: Duplicate RunCompleted event; Previous event is: %s; Next event is: %s"
+                                    .formatted(this.workflowName, this.id, previousEventStr, nextEventStr));
                 }
                 completedEvent = event;
-                setStatus(WorkflowRunStatus.fromProto(completedEvent.getRunCompleted().getStatus()));
+                setStatus(WorkflowRunStatus.fromProto(
+                        completedEvent.getRunCompleted().getStatus()));
                 customStatus = event.getRunCompleted().hasCustomStatus()
                         ? event.getRunCompleted().getCustomStatus()
                         : null;
@@ -329,10 +328,7 @@ final class WorkflowRunState {
             case ACTIVITY_TASK_CREATED -> {
                 pendingActivityTaskIdByEventId.put(
                         event.getId(),
-                        new ActivityTaskId(
-                                event.getActivityTaskCreated().getQueueName(),
-                                this.id,
-                                event.getId()));
+                        new ActivityTaskId(event.getActivityTaskCreated().getQueueName(), this.id, event.getId()));
             }
             case ACTIVITY_TASK_COMPLETED -> {
                 final int createdEventId = event.getActivityTaskCompleted().getActivityTaskCreatedEventId();
@@ -395,25 +391,23 @@ final class WorkflowRunState {
             final RunCreated.ParentRun parentRun = createdEvent.getRunCreated().getParentRun();
             final var parentRunId = UUID.fromString(parentRun.getId());
 
-            final var childRunEventBuilder = WorkflowEvent.newBuilder()
-                    .setId(-1)
-                    .setTimestamp(Timestamps.now());
+            final var childRunEventBuilder =
+                    WorkflowEvent.newBuilder().setId(-1).setTimestamp(Timestamps.now());
             if (command.status() == WorkflowRunStatus.COMPLETED) {
-                final var childRunCompletedBuilder = ChildRunCompleted.newBuilder()
-                        .setChildRunCreatedEventId(parentRun.getChildRunCreatedEventId());
+                final var childRunCompletedBuilder =
+                        ChildRunCompleted.newBuilder().setChildRunCreatedEventId(parentRun.getChildRunCreatedEventId());
                 if (command.result() != null) {
                     childRunCompletedBuilder.setResult(command.result());
                 }
-                childRunEventBuilder.setChildRunCompleted(
-                        childRunCompletedBuilder.build());
-            } else if (command.status() == WorkflowRunStatus.CANCELLED || command.status() == WorkflowRunStatus.FAILED) {
-                final var childRunFailedBuilder = ChildRunFailed.newBuilder()
-                        .setChildRunCreatedEventId(parentRun.getChildRunCreatedEventId());
+                childRunEventBuilder.setChildRunCompleted(childRunCompletedBuilder.build());
+            } else if (command.status() == WorkflowRunStatus.CANCELLED
+                    || command.status() == WorkflowRunStatus.FAILED) {
+                final var childRunFailedBuilder =
+                        ChildRunFailed.newBuilder().setChildRunCreatedEventId(parentRun.getChildRunCreatedEventId());
                 if (command.failure() != null) {
                     childRunFailedBuilder.setFailure(command.failure());
                 }
-                childRunEventBuilder.setChildRunFailed(
-                        childRunFailedBuilder.build());
+                childRunEventBuilder.setChildRunFailed(childRunFailedBuilder.build());
             } else {
                 throw new IllegalStateException("Unexpected command status: " + command.status());
             }
@@ -422,8 +416,8 @@ final class WorkflowRunState {
         }
 
         // Record completion of the run in the history.
-        final var subjectBuilder = RunCompleted.newBuilder()
-                .setStatus(command.status().toProto());
+        final var subjectBuilder =
+                RunCompleted.newBuilder().setStatus(command.status().toProto());
         if (command.customStatus() != null) {
             subjectBuilder.setCustomStatus(command.customStatus());
         }
@@ -470,29 +464,26 @@ final class WorkflowRunState {
         this.newEvents.clear();
         this.pendingActivityTaskCreatedEvents.clear();
         this.pendingMessages.clear();
-        this.pendingMessages.add(
-                new WorkflowMessage(
-                        this.id,
-                        WorkflowEvent.newBuilder()
-                                .setId(-1)
-                                .setTimestamp(Timestamps.now())
-                                .setRunCreated(newRunCreatedBuilder)
-                                .build()));
+        this.pendingMessages.add(new WorkflowMessage(
+                this.id,
+                WorkflowEvent.newBuilder()
+                        .setId(-1)
+                        .setTimestamp(Timestamps.now())
+                        .setRunCreated(newRunCreatedBuilder)
+                        .build()));
     }
 
     private void processRecordSideEffectResultCommand(final RecordSideEffectResultCommand command) {
-        final var subjectBuilder = SideEffectExecuted.newBuilder()
-                .setName(command.name());
+        final var subjectBuilder = SideEffectExecuted.newBuilder().setName(command.name());
         if (command.result() != null) {
             subjectBuilder.setResult(command.result());
         }
 
-        applyEvent(
-                WorkflowEvent.newBuilder()
-                        .setId(command.eventId())
-                        .setTimestamp(Timestamps.now())
-                        .setSideEffectExecuted(subjectBuilder.build())
-                        .build());
+        applyEvent(WorkflowEvent.newBuilder()
+                .setId(command.eventId())
+                .setTimestamp(Timestamps.now())
+                .setSideEffectExecuted(subjectBuilder.build())
+                .build());
     }
 
     private void processCreateActivityTaskCommand(final CreateActivityTaskCommand command) {
@@ -516,7 +507,6 @@ final class WorkflowRunState {
 
     private void processCreateChildRunCommand(final CreateChildRunCommand command) {
         final UUID childRunId = timeBasedEpochRandomGenerator().generate();
-
 
         final var childRunCreatedBuilder = ChildRunCreated.newBuilder()
                 .setId(childRunId.toString())
@@ -564,14 +554,13 @@ final class WorkflowRunState {
                         .build(),
                 /* isNew */ true);
 
-        pendingMessages.add(
-                new WorkflowMessage(
-                        childRunId,
-                        WorkflowEvent.newBuilder()
-                                .setId(-1)
-                                .setTimestamp(Timestamps.now())
-                                .setRunCreated(runCreatedBuilder.build())
-                                .build()));
+        pendingMessages.add(new WorkflowMessage(
+                childRunId,
+                WorkflowEvent.newBuilder()
+                        .setId(-1)
+                        .setTimestamp(Timestamps.now())
+                        .setRunCreated(runCreatedBuilder.build())
+                        .build()));
     }
 
     private void processCreateTimerCommand(final CreateTimerCommand command) {
@@ -588,18 +577,16 @@ final class WorkflowRunState {
                         .build(),
                 /* isNew */ true);
 
-        pendingMessages.add(
-                new WorkflowMessage(
-                        this.id,
-                        WorkflowEvent.newBuilder()
-                                .setId(command.elapsedEventId())
-                                .setTimestamp(elapseAt)
-                                .setTimerElapsed(
-                                        TimerElapsed.newBuilder()
-                                                .setTimerCreatedEventId(command.eventId())
-                                                .build())
-                                .build(),
-                        command.elapseAt()));
+        pendingMessages.add(new WorkflowMessage(
+                this.id,
+                WorkflowEvent.newBuilder()
+                        .setId(command.elapsedEventId())
+                        .setTimestamp(elapseAt)
+                        .setTimerElapsed(TimerElapsed.newBuilder()
+                                .setTimerCreatedEventId(command.eventId())
+                                .build())
+                        .build(),
+                command.elapseAt()));
     }
 
     private WorkflowEvent createdEvent() {
@@ -612,8 +599,6 @@ final class WorkflowRunState {
             return;
         }
 
-        throw new IllegalStateException(
-                "Can not transition from state %s to %s".formatted(this.status, newStatus));
+        throw new IllegalStateException("Can not transition from state %s to %s".formatted(this.status, newStatus));
     }
-
 }

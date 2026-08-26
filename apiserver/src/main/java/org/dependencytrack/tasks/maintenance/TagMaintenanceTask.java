@@ -41,20 +41,17 @@ public final class TagMaintenanceTask extends AbstractBatchingMaintenanceTask {
 
     @Override
     public void run() {
-        final boolean deleteUnusedEnabled = withJdbiHandle(handle -> handle
-                .attach(ConfigPropertyDao.class)
-                .getValue(MAINTENANCE_TAGS_DELETE_UNUSED, Boolean.class));
+        final boolean deleteUnusedEnabled = withJdbiHandle(handle ->
+                handle.attach(ConfigPropertyDao.class).getValue(MAINTENANCE_TAGS_DELETE_UNUSED, Boolean.class));
         if (!deleteUnusedEnabled) {
             LOGGER.debug("Unused tag deletion is disabled; nothing to do");
             return;
         }
 
-        final int deleted = runBatched(
-                BATCH_SIZE,
-                handle -> handle.attach(TagDao.class).deleteUnused(BATCH_SIZE));
+        final int deleted =
+                runBatched(BATCH_SIZE, handle -> handle.attach(TagDao.class).deleteUnused(BATCH_SIZE));
         if (deleted > 0) {
             LOGGER.info("Deleted {} unused tags", deleted);
         }
     }
-
 }

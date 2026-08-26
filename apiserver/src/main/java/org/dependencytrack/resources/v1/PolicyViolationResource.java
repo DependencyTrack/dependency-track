@@ -48,6 +48,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
 import javax.jdo.FetchPlan;
 import javax.jdo.PersistenceManager;
 import java.util.Collection;
@@ -62,49 +63,49 @@ import java.util.Map;
  */
 @Path("/v1/violation")
 @Tag(name = "violation")
-@SecurityRequirements({
-        @SecurityRequirement(name = "ApiKeyAuth"),
-        @SecurityRequirement(name = "BearerAuth")
-})
+@SecurityRequirements({@SecurityRequirement(name = "ApiKeyAuth"), @SecurityRequirement(name = "BearerAuth")})
 public class PolicyViolationResource extends AbstractApiResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns a list of all policy violations for the entire portfolio",
-            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
-    )
+            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>")
     @PaginatedApi
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "A list of all policy violations for the entire portfolio",
-                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A list of all policy violations for the entire portfolio",
+                        headers =
+                                @Header(
+                                        name = TOTAL_COUNT_HEADER,
+                                        description = "The total number of policy violations",
+                                        schema = @Schema(format = "integer")),
+                        content =
+                                @Content(
+                                        array =
+                                                @ArraySchema(
+                                                        schema = @Schema(implementation = PolicyViolation.class)))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized")
+            })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
-    public Response getViolations(@Parameter(description = "Optionally includes suppressed violations")
-                                      @QueryParam("suppressed") boolean suppressed,
-                                  @Parameter(description = "Optionally includes inactive projects")
-                                      @QueryParam("showInactive") boolean showInactive,
-                                  @Parameter(description = "Filter by violation state")
-                                      @QueryParam("violationState") String violationState,
-                                  @Parameter(description = "Filter by risk type")
-                                      @QueryParam("riskType") String riskType,
-                                  @Parameter(description = "Filter by policy")
-                                      @QueryParam("policy") String policy,
-                                  @Parameter(description = "Filter by analysis state")
-                                      @QueryParam("analysisState") String analysisState,
-                                  @Parameter(description = "Filter occurred on from")
-                                      @QueryParam("occurredOnDateFrom") String occurredOnDateFrom,
-                                  @Parameter(description = "Filter occurred on to")
-                                      @QueryParam("occurredOnDateTo") String occurredOnDateTo,
-                                  @Parameter(description = "Filter the text input in these fields")
-                                      @QueryParam("textSearchField") String textSearchField,
-                                  @Parameter(description = "Filter by this text input")
-                                      @QueryParam("textSearchInput") String textSearchInput) {
+    public Response getViolations(
+            @Parameter(description = "Optionally includes suppressed violations") @QueryParam("suppressed")
+                    boolean suppressed,
+            @Parameter(description = "Optionally includes inactive projects") @QueryParam("showInactive")
+                    boolean showInactive,
+            @Parameter(description = "Filter by violation state") @QueryParam("violationState") String violationState,
+            @Parameter(description = "Filter by risk type") @QueryParam("riskType") String riskType,
+            @Parameter(description = "Filter by policy") @QueryParam("policy") String policy,
+            @Parameter(description = "Filter by analysis state") @QueryParam("analysisState") String analysisState,
+            @Parameter(description = "Filter occurred on from") @QueryParam("occurredOnDateFrom")
+                    String occurredOnDateFrom,
+            @Parameter(description = "Filter occurred on to") @QueryParam("occurredOnDateTo") String occurredOnDateTo,
+            @Parameter(description = "Filter the text input in these fields") @QueryParam("textSearchField")
+                    String textSearchField,
+            @Parameter(description = "Filter by this text input") @QueryParam("textSearchInput")
+                    String textSearchInput) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             Map<String, String> filters = new HashMap<>();
             filters.put("violationState", violationState);
@@ -127,28 +128,44 @@ public class PolicyViolationResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns a list of all policy violations for a specific project",
-            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
-    )
+            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>")
     @PaginatedApi
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "A list of all policy violations for a specific project",
-                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "The project could not be found")
-    })
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A list of all policy violations for a specific project",
+                        headers =
+                                @Header(
+                                        name = TOTAL_COUNT_HEADER,
+                                        description = "The total number of policy violations",
+                                        schema = @Schema(format = "integer")),
+                        content =
+                                @Content(
+                                        array =
+                                                @ArraySchema(
+                                                        schema = @Schema(implementation = PolicyViolation.class)))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(responseCode = "404", description = "The project could not be found")
+            })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
-    public Response getViolationsByProject(@Parameter(description = "The UUID of the project", schema = @Schema(type = "string", format = "uuid"), required = true)
-                                           @PathParam("uuid") @ValidUuid String uuid,
-                                           @Parameter(description = "Optionally includes suppressed violations")
-                                           @QueryParam("suppressed") boolean suppressed) {
+    public Response getViolationsByProject(
+            @Parameter(
+                            description = "The UUID of the project",
+                            schema = @Schema(type = "string", format = "uuid"),
+                            required = true)
+                    @PathParam("uuid")
+                    @ValidUuid
+                    String uuid,
+            @Parameter(description = "Optionally includes suppressed violations") @QueryParam("suppressed")
+                    boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Project project = qm.getObjectByUuid(Project.class, uuid);
             if (project != null) {
@@ -158,7 +175,9 @@ public class PolicyViolationResource extends AbstractApiResource {
                         .header(TOTAL_COUNT_HEADER, result.getTotal())
                         .build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The project could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The project could not be found.")
+                        .build();
             }
         }
     }
@@ -168,28 +187,44 @@ public class PolicyViolationResource extends AbstractApiResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Returns a list of all policy violations for a specific component",
-            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>"
-    )
+            description = "<p>Requires permission <strong>VIEW_POLICY_VIOLATION</strong></p>")
     @PaginatedApi
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "A list of all policy violations for a specific component",
-                    headers = @Header(name = TOTAL_COUNT_HEADER, description = "The total number of policy violations", schema = @Schema(format = "integer")),
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = PolicyViolation.class)))
-            ),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
-            @ApiResponse(
-                    responseCode = "403",
-                    description = "Access to the requested project is forbidden",
-                    content = @Content(schema = @Schema(implementation = ProblemDetails.class), mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
-            @ApiResponse(responseCode = "404", description = "The component could not be found")
-    })
+    @ApiResponses(
+            value = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "A list of all policy violations for a specific component",
+                        headers =
+                                @Header(
+                                        name = TOTAL_COUNT_HEADER,
+                                        description = "The total number of policy violations",
+                                        schema = @Schema(format = "integer")),
+                        content =
+                                @Content(
+                                        array =
+                                                @ArraySchema(
+                                                        schema = @Schema(implementation = PolicyViolation.class)))),
+                @ApiResponse(responseCode = "401", description = "Unauthorized"),
+                @ApiResponse(
+                        responseCode = "403",
+                        description = "Access to the requested project is forbidden",
+                        content =
+                                @Content(
+                                        schema = @Schema(implementation = ProblemDetails.class),
+                                        mediaType = ProblemDetails.MEDIA_TYPE_JSON)),
+                @ApiResponse(responseCode = "404", description = "The component could not be found")
+            })
     @PermissionRequired(Permissions.Constants.VIEW_POLICY_VIOLATION)
-    public Response getViolationsByComponent(@Parameter(description = "The UUID of the component", schema = @Schema(type = "string", format = "uuid"), required = true)
-                                             @PathParam("uuid") @ValidUuid String uuid,
-                                             @Parameter(description = "Optionally includes suppressed violations")
-                                             @QueryParam("suppressed") boolean suppressed) {
+    public Response getViolationsByComponent(
+            @Parameter(
+                            description = "The UUID of the component",
+                            schema = @Schema(type = "string", format = "uuid"),
+                            required = true)
+                    @PathParam("uuid")
+                    @ValidUuid
+                    String uuid,
+            @Parameter(description = "Optionally includes suppressed violations") @QueryParam("suppressed")
+                    boolean suppressed) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final Component component = qm.getObjectByUuid(Component.class, uuid);
             if (component != null) {
@@ -199,7 +234,9 @@ public class PolicyViolationResource extends AbstractApiResource {
                         .header(TOTAL_COUNT_HEADER, result.getTotal())
                         .build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND).entity("The component could not be found.").build();
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("The component could not be found.")
+                        .build();
             }
         }
     }
@@ -215,11 +252,11 @@ public class PolicyViolationResource extends AbstractApiResource {
      * @return A detached {@link Collection} of {@link PolicyViolation}s
      * @see <a href="https://github.com/DependencyTrack/dependency-track/issues/2043">GitHub issue</a>
      */
-    private Collection<PolicyViolation> detachViolations(final QueryManager qm, final Collection<PolicyViolation> violations) {
+    private Collection<PolicyViolation> detachViolations(
+            final QueryManager qm, final Collection<PolicyViolation> violations) {
         final PersistenceManager pm = qm.getPersistenceManager();
         pm.getFetchPlan().setMaxFetchDepth(2); // Ensure policy is included
         pm.getFetchPlan().setDetachmentOptions(FetchPlan.DETACH_LOAD_FIELDS);
         return qm.getPersistenceManager().detachCopyAll(violations);
     }
-
 }

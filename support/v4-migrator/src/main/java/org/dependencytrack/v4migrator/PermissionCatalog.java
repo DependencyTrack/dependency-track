@@ -86,8 +86,7 @@ public final class PermissionCatalog {
         ON CONFLICT ("NAME") DO NOTHING
         """;
 
-    private PermissionCatalog() {
-    }
+    private PermissionCatalog() {}
 
     public static int seed(final Jdbi target) {
         return target.withHandle(h -> h.execute(SEED_SQL));

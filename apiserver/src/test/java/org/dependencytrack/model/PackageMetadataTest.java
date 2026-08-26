@@ -34,5 +34,4 @@ class PackageMetadataTest {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> new PackageMetadata(purl, "2.0.0", null, Instant.now(), null, null));
     }
-
 }

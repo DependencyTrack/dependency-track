@@ -109,7 +109,13 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
                 er.setUrl("https://github.com/thinkcmf/thinkcmf/issues/736");
                 component.setExternalReferences(List.of(er));
             }
-            component.setPurl(new PackageURL(RepositoryType.MAVEN.toString(), "component-group", "component-name-" + i, String.valueOf(i) + ".0", null, null));
+            component.setPurl(new PackageURL(
+                    RepositoryType.MAVEN.toString(),
+                    "component-group",
+                    "component-name-" + i,
+                    String.valueOf(i) + ".0",
+                    null,
+                    null));
             component = qm.createComponent(component, false);
             // direct depencencies
             if (i < 100) {
@@ -129,7 +135,14 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
                 artifactMetadataList.add(new PackageArtifactMetadata(
                         component.getPurl(),
                         PurlUtil.silentPurlPackageOnly(component.getPurl()),
-                        null, null, null, null, null, null, null, Instant.now()));
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        Instant.now()));
             } else if (i < 500) {
                 // 300 recent components, 25 of these are direct dependencies
                 metadataList.add(new PackageMetadata(
@@ -142,7 +155,14 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
                 artifactMetadataList.add(new PackageArtifactMetadata(
                         component.getPurl(),
                         PurlUtil.silentPurlPackageOnly(component.getPurl()),
-                        null, null, null, null, null, null, null, Instant.now()));
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        Instant.now()));
             } else {
                 // 500 components with no metadata, all transitive dependencies
             }
@@ -171,9 +191,11 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
         project.setPurl("projectPurl");
         project.setSwidTagId("projectSwidTagId");
         List<OrganizationalContact> authors = new ArrayList<>();
-        authors.add(new OrganizationalContact() {{
-            setName("projectAuthor");
-        }});
+        authors.add(new OrganizationalContact() {
+            {
+                setName("projectAuthor");
+            }
+        });
         project.setAuthors(authors);
         project.setDescription("projectDescription");
         project.setDirectDependencies("[{\"uuid\":\"7e5f6465-d2f2-424f-b1a4-68d186fa2b46\"}]");
@@ -199,9 +221,11 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
         component.setGroup("componentGroup");
         component.setName("componentName");
         List<OrganizationalContact> componentAuthors = new ArrayList<>();
-        componentAuthors.add(new OrganizationalContact() {{
-            setName("componentAuthor");
-        }});
+        componentAuthors.add(new OrganizationalContact() {
+            {
+                setName("componentAuthor");
+            }
+        });
         component.setAuthors(componentAuthors);
         component.setVersion("1.0");
         component.setDescription("componentDescription");
@@ -238,8 +262,8 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
         qm.persist(component);
 
         useJdbiHandle(handle -> {
-            new PackageMetadataDao(handle).upsertAll(List.of(
-                    new PackageMetadata(
+            new PackageMetadataDao(handle)
+                    .upsertAll(List.of(new PackageMetadata(
                             new PackageURL("pkg:maven/a/b"),
                             "2.0",
                             Instant.ofEpochMilli(220),
@@ -247,13 +271,17 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
                             null,
                             null)));
 
-            new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                    new PackageArtifactMetadata(
+            new PackageArtifactMetadataDao(handle)
+                    .upsertAll(List.of(new PackageArtifactMetadata(
                             new PackageURL("pkg:maven/a/b@1.0"),
                             new PackageURL("pkg:maven/a/b"),
-                            null, null, null, null,
+                            null,
+                            null,
+                            null,
+                            null,
                             Instant.ofEpochMilli(222),
-                            null, null,
+                            null,
+                            null,
                             Instant.now())));
         });
 
@@ -277,9 +305,10 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
         for (int i = 0; i < 10; i++) {
             Component component = new Component();
             component.setProject(project);
-            component.setName("component-name-"+i);
-            component.setVersion(String.valueOf(i)+".0");
-            component.setPurl(new PackageURL(RepositoryType.PYPI.toString(), null, "component-name-"+i , String.valueOf(i)+".0", null, null));
+            component.setName("component-name-" + i);
+            component.setVersion(String.valueOf(i) + ".0");
+            component.setPurl(new PackageURL(
+                    RepositoryType.PYPI.toString(), null, "component-name-" + i, String.valueOf(i) + ".0", null, null));
             component = qm.createComponent(component, false);
             // direct depencencies
             if (i < 4) {
@@ -290,7 +319,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
             if ((i < 7)) {
                 metadataList.add(new PackageMetadata(
                         PurlUtil.silentPurlPackageOnly(component.getPurl()),
-                        String.valueOf(i+1)+".0",
+                        String.valueOf(i + 1) + ".0",
                         null,
                         Instant.now(),
                         null,
@@ -298,7 +327,7 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
             } else {
                 metadataList.add(new PackageMetadata(
                         PurlUtil.silentPurlPackageOnly(component.getPurl()),
-                        String.valueOf(i)+".0",
+                        String.valueOf(i) + ".0",
                         null,
                         Instant.now(),
                         null,
@@ -307,7 +336,14 @@ public class ComponentQueryManangerPostgresTest extends PersistenceCapableTest {
             artifactMetadataList.add(new PackageArtifactMetadata(
                     component.getPurl(),
                     PurlUtil.silentPurlPackageOnly(component.getPurl()),
-                    null, null, null, null, null, null, null, Instant.now()));
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    Instant.now()));
         }
         useJdbiHandle(handle -> {
             new PackageMetadataDao(handle).upsertAll(metadataList);

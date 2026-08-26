@@ -19,9 +19,6 @@
 package org.dependencytrack.resources.v2;
 
 import com.github.packageurl.PackageURL;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import org.apache.http.HttpStatus;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
@@ -39,6 +36,10 @@ import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -52,8 +53,7 @@ import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 public class ComponentsResourceTest extends ResourceTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig());
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig());
 
     @Test
     public void createComponentTest() {
@@ -575,8 +575,7 @@ public class ComponentsResourceTest extends ResourceTest {
     public void listComponentsWithInvalidProjectStateTest() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
-        final Response response = jersey
-                .target("/components")
+        final Response response = jersey.target("/components")
                 .queryParam("project_state", "invalid")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -602,8 +601,7 @@ public class ComponentsResourceTest extends ResourceTest {
     public void shouldReturn400WhenSortByFieldIsNotSupported() {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
 
-        final Response response = jersey
-                .target("/components")
+        final Response response = jersey.target("/components")
                 .queryParam("sort_by", "invalid_field")
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -662,8 +660,7 @@ public class ComponentsResourceTest extends ResourceTest {
         inactiveNotLatest.setName("inactiveNotLatest");
         qm.persist(inactiveNotLatest);
 
-        Response response = jersey
-                .target("/components")
+        Response response = jersey.target("/components")
                 .queryParam("project_state", "ACTIVE")
                 .queryParam("limit", 10)
                 .request()
@@ -675,8 +672,7 @@ public class ComponentsResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactlyInAnyOrder("activeLatest", "activeNotLatest");
 
-        response = jersey
-                .target("/components")
+        response = jersey.target("/components")
                 .queryParam("project_state", "INACTIVE")
                 .queryParam("limit", 10)
                 .request()
@@ -688,8 +684,7 @@ public class ComponentsResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactlyInAnyOrder("inactiveLatest", "inactiveNotLatest");
 
-        response = jersey
-                .target("/components")
+        response = jersey.target("/components")
                 .queryParam("project_latest_version", "true")
                 .queryParam("limit", 10)
                 .request()
@@ -701,8 +696,7 @@ public class ComponentsResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactlyInAnyOrder("activeLatest", "inactiveLatest");
 
-        response = jersey
-                .target("/components")
+        response = jersey.target("/components")
                 .queryParam("project_latest_version", "false")
                 .queryParam("limit", 10)
                 .request()
@@ -714,8 +708,7 @@ public class ComponentsResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactlyInAnyOrder("activeNotLatest", "inactiveNotLatest");
 
-        response = jersey
-                .target("/components")
+        response = jersey.target("/components")
                 .queryParam("project_state", "ACTIVE")
                 .queryParam("project_latest_version", "false")
                 .queryParam("limit", 10)
@@ -728,8 +721,7 @@ public class ComponentsResourceTest extends ResourceTest {
                 .isArray()
                 .containsExactly("activeNotLatest");
 
-        response = jersey
-                .target("/components")
+        response = jersey.target("/components")
                 .queryParam("limit", 10)
                 .request()
                 .header(X_API_KEY, apiKey)
@@ -753,8 +745,8 @@ public class ComponentsResourceTest extends ResourceTest {
         qm.createComponent(component, false);
 
         final Instant resolvedAt = Instant.ofEpochMilli(1_700_000_000_000L);
-        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
-                new PackageMetadata(
+        useJdbiHandle(handle -> new PackageMetadataDao(handle)
+                .upsertAll(List.of(new PackageMetadata(
                         new PackageURL("maven", "test", "comp", null, null, null),
                         "2.0",
                         null,
@@ -793,10 +785,10 @@ public class ComponentsResourceTest extends ResourceTest {
         final Instant resolvedAt = Instant.ofEpochMilli(1_700_000_000_000L);
         final Instant publishedAt = Instant.ofEpochMilli(1_600_000_000_000L);
         final var packagePurl = new PackageURL("maven", "test", "comp", null, null, null);
-        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
-                new PackageMetadata(packagePurl, null, null, resolvedAt, null, null))));
-        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                new PackageArtifactMetadata(
+        useJdbiHandle(handle -> new PackageMetadataDao(handle)
+                .upsertAll(List.of(new PackageMetadata(packagePurl, null, null, resolvedAt, null, null))));
+        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle)
+                .upsertAll(List.of(new PackageArtifactMetadata(
                         new PackageURL("maven", "test", "comp", "1.0", null, null),
                         packagePurl,
                         null,
@@ -808,8 +800,7 @@ public class ComponentsResourceTest extends ResourceTest {
                         "central",
                         resolvedAt))));
 
-        final Response response = jersey
-                .target("/components")
+        final Response response = jersey.target("/components")
                 .queryParam("expand", "package_artifact_metadata")
                 .queryParam("limit", 10)
                 .request()
@@ -847,34 +838,34 @@ public class ComponentsResourceTest extends ResourceTest {
         assertThat(c1).isNotNull();
         assertThat(c2).isNotNull();
 
-        final Response from = jersey
-                .target("/components")
+        final Response from = jersey.target("/components")
                 .queryParam("package_artifact_published_since", t1)
                 .queryParam("limit", 10)
-                .request().header(X_API_KEY, apiKey).get();
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
         assertThat(from.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(from))
                 .inPath("$.items[*].name")
                 .isArray()
                 .containsExactlyInAnyOrder("c1", "c2");
 
-        final Response to = jersey
-                .target("/components")
+        final Response to = jersey.target("/components")
                 .queryParam("package_artifact_published_before", t2)
                 .queryParam("limit", 10)
-                .request().header(X_API_KEY, apiKey).get();
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
         assertThat(to.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(to))
-                .inPath("$.items[*].name")
-                .isArray()
-                .containsExactlyInAnyOrder("c0", "c1");
+        assertThatJson(getPlainTextBody(to)).inPath("$.items[*].name").isArray().containsExactlyInAnyOrder("c0", "c1");
 
-        final Response range = jersey
-                .target("/components")
+        final Response range = jersey.target("/components")
                 .queryParam("package_artifact_published_since", t1)
                 .queryParam("package_artifact_published_before", t2)
                 .queryParam("limit", 10)
-                .request().header(X_API_KEY, apiKey).get();
+                .request()
+                .header(X_API_KEY, apiKey)
+                .get();
         assertThat(range.getStatus()).isEqualTo(200);
         assertThatJson(getPlainTextBody(range))
                 .inPath("$.items[*].name")
@@ -912,17 +903,14 @@ public class ComponentsResourceTest extends ResourceTest {
             dao.createDependencyMetrics(metrics);
         });
 
-        final Response response = jersey
-                .target("/components")
+        final Response response = jersey.target("/components")
                 .queryParam("expand", "metrics")
                 .queryParam("limit", 10)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response))
-                .inPath("$.items[0].metrics")
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response)).inPath("$.items[0].metrics").isEqualTo(/* language=JSON */ """
                         {
                           "critical": 1,
                           "high": 2,
@@ -955,7 +943,8 @@ public class ComponentsResourceTest extends ResourceTest {
                         """);
     }
 
-    private Component createComponentWithPublishedAt(final Project project, final String name, final Instant publishedAt) throws Exception {
+    private Component createComponentWithPublishedAt(
+            final Project project, final String name, final Instant publishedAt) throws Exception {
         final var component = new Component();
         component.setProject(project);
         component.setName(name);
@@ -964,10 +953,10 @@ public class ComponentsResourceTest extends ResourceTest {
 
         final var packagePurl = new PackageURL("maven", "test", name, null, null, null);
         final Instant resolvedAt = Instant.ofEpochMilli(1_700_000_000_000L);
-        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
-                new PackageMetadata(packagePurl, null, null, resolvedAt, null, null))));
-        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                new PackageArtifactMetadata(
+        useJdbiHandle(handle -> new PackageMetadataDao(handle)
+                .upsertAll(List.of(new PackageMetadata(packagePurl, null, null, resolvedAt, null, null))));
+        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle)
+                .upsertAll(List.of(new PackageArtifactMetadata(
                         new PackageURL("maven", "test", name, "1.0", null, null),
                         packagePurl,
                         null,

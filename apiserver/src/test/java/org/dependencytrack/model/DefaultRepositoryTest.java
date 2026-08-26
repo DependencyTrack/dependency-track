@@ -30,13 +30,10 @@ public class DefaultRepositoryTest {
 
     @Test
     public void shouldNotHaveDuplicateResolutionOrdersPerType() {
-        final Map<RepositoryType, List<Integer>> defaultRepoByType =
-                Arrays.stream(DefaultRepository.values()).collect(
-                        Collectors.groupingBy(
-                                DefaultRepository::getType,
-                                Collectors.mapping(
-                                        DefaultRepository::getResolutionOrder,
-                                        Collectors.toList())));
+        final Map<RepositoryType, List<Integer>> defaultRepoByType = Arrays.stream(DefaultRepository.values())
+                .collect(Collectors.groupingBy(
+                        DefaultRepository::getType,
+                        Collectors.mapping(DefaultRepository::getResolutionOrder, Collectors.toList())));
 
         final var softAsserts = new SoftAssertions();
         for (final RepositoryType type : RepositoryType.values()) {
@@ -48,5 +45,4 @@ public class DefaultRepositoryTest {
 
         softAsserts.assertAll();
     }
-
 }

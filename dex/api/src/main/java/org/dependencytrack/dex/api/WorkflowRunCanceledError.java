@@ -28,5 +28,4 @@ public final class WorkflowRunCanceledError extends WorkflowRunError {
     public WorkflowRunCanceledError(final @Nullable String message) {
         super(message);
     }
-
 }

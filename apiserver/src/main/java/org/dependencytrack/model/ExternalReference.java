@@ -51,12 +51,13 @@ public class ExternalReference implements Serializable {
     private String url;
 
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The comment may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The comment may only contain printable characters")
     @JsonView(JsonViews.MetadataTools.class)
     private String comment;
 
-    public ExternalReference() {
-    }
+    public ExternalReference() {}
 
     public ExternalReference(org.cyclonedx.model.ExternalReference.Type type, String url, String comment) {
         this.type = type;
@@ -94,9 +95,7 @@ public class ExternalReference implements Serializable {
             return false;
         }
 
-        return type == that.type
-                && Objects.equals(url, that.url)
-                && Objects.equals(comment, that.comment);
+        return type == that.type && Objects.equals(url, that.url) && Objects.equals(comment, that.comment);
     }
 
     @Override
@@ -112,5 +111,4 @@ public class ExternalReference implements Serializable {
                 .add("comment='" + comment + "'")
                 .toString();
     }
-
 }

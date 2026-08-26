@@ -25,5 +25,4 @@ public interface KevDataSourceFactory extends ExtensionFactory<KevDataSource> {
 
     /// @return Whether the data source provided by this factory is enabled.
     boolean isEnabled();
-
 }

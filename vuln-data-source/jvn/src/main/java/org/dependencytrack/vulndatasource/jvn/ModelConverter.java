@@ -61,8 +61,7 @@ final class ModelConverter {
     private static final String TITLE_PROPERTY = "dependency-track:vuln:title";
     private static final String VERS_SCHEME = "generic";
 
-    private ModelConverter() {
-    }
+    private ModelConverter() {}
 
     static Bom convert(final JvnAdvisory advisory) {
         // Store every JVN advisory as-is under the JVN source, keyed by its JVNDB id. No CVE->NVD
@@ -82,9 +81,8 @@ final class ModelConverter {
             vulnBuilder.setRecommendation(advisory.recommendation());
         }
         if (advisory.title() != null && !advisory.title().isBlank()) {
-            vulnBuilder.addProperties(Property.newBuilder()
-                    .setName(TITLE_PROPERTY)
-                    .setValue(advisory.title()));
+            vulnBuilder.addProperties(
+                    Property.newBuilder().setName(TITLE_PROPERTY).setValue(advisory.title()));
         }
         if (!advisory.cweIds().isEmpty()) {
             vulnBuilder.addAllCwes(advisory.cweIds());
@@ -93,7 +91,8 @@ final class ModelConverter {
             vulnBuilder.setPublished(Timestamps.fromMillis(advisory.datePublic().toEpochMilli()));
         }
         if (advisory.dateLastUpdated() != null) {
-            vulnBuilder.setUpdated(Timestamps.fromMillis(advisory.dateLastUpdated().toEpochMilli()));
+            vulnBuilder.setUpdated(
+                    Timestamps.fromMillis(advisory.dateLastUpdated().toEpochMilli()));
         }
 
         final var componentByCpe = new HashMap<String, Component>();
@@ -117,13 +116,15 @@ final class ModelConverter {
                 continue;
             }
 
-            final Component component = componentByCpe.computeIfAbsent(cpe23, ref -> Component.newBuilder()
-                    .setBomRef(UUID.nameUUIDFromBytes(ref.getBytes()).toString())
-                    .setType(determineComponentType(cpe))
-                    .setPublisher(cpe.getVendor())
-                    .setName(cpe.getProduct())
-                    .setCpe(ref)
-                    .build());
+            final Component component = componentByCpe.computeIfAbsent(
+                    cpe23,
+                    ref -> Component.newBuilder()
+                            .setBomRef(UUID.nameUUIDFromBytes(ref.getBytes()).toString())
+                            .setType(determineComponentType(cpe))
+                            .setPublisher(cpe.getVendor())
+                            .setName(cpe.getProduct())
+                            .setCpe(ref)
+                            .build());
 
             final VulnerabilityAffects.Builder affectsBuilder = affectsBuilderByBomRef.computeIfAbsent(
                     component.getBomRef(),
@@ -144,7 +145,8 @@ final class ModelConverter {
                 .addAllComponents(components)
                 .addVulnerabilities(vulnBuilder.addAllAffects(affects).build());
         for (final String url : advisory.referenceUrls()) {
-            bomBuilder.addExternalReferences(ExternalReference.newBuilder().setUrl(url).build());
+            bomBuilder.addExternalReferences(
+                    ExternalReference.newBuilder().setUrl(url).build());
         }
         return bomBuilder.build();
     }
@@ -160,22 +162,26 @@ final class ModelConverter {
             switch (result) {
                 case JvnVersionParser.ExactVersion exact -> {
                     if (!hasVersion(affectsBuilder, exact.version())) {
-                        affectsBuilder.addVersions(VulnerabilityAffectedVersions.newBuilder()
-                                .setVersion(exact.version()));
+                        affectsBuilder.addVersions(
+                                VulnerabilityAffectedVersions.newBuilder().setVersion(exact.version()));
                     }
                     anyStructured = true;
                 }
                 case JvnVersionParser.VersionRange range -> {
                     final String vers = range.vers().toString();
                     if (!hasRange(affectsBuilder, vers)) {
-                        affectsBuilder.addVersions(VulnerabilityAffectedVersions.newBuilder()
-                                .setRange(vers));
+                        affectsBuilder.addVersions(
+                                VulnerabilityAffectedVersions.newBuilder().setRange(vers));
                     }
                     anyStructured = true;
                 }
                 case JvnVersionParser.Unparseable unparseable ->
-                        LOGGER.debug("Unparseable version '{}' for {} ({}): {}",
-                                versionText, product.cpe22(), advisory.jvnDbId(), unparseable.reason());
+                    LOGGER.debug(
+                            "Unparseable version '{}' for {} ({}): {}",
+                            versionText,
+                            product.cpe22(),
+                            advisory.jvnDbId(),
+                            unparseable.reason());
             }
         }
 
@@ -188,7 +194,8 @@ final class ModelConverter {
                     .build()
                     .toString();
             if (!hasRange(affectsBuilder, wildcard)) {
-                affectsBuilder.addVersions(VulnerabilityAffectedVersions.newBuilder().setRange(wildcard));
+                affectsBuilder.addVersions(
+                        VulnerabilityAffectedVersions.newBuilder().setRange(wildcard));
             }
         }
     }

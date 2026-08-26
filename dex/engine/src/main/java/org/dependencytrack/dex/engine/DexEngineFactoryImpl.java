@@ -28,5 +28,4 @@ public final class DexEngineFactoryImpl implements DexEngineFactory {
     public DexEngine create(final DexEngineConfig config) {
         return new DexEngineImpl(config);
     }
-
 }

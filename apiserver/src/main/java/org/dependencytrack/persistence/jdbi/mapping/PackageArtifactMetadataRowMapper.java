@@ -67,5 +67,4 @@ public final class PackageArtifactMetadataRowMapper implements RowMapper<Package
                 rs.getString("RESOLVED_FROM"),
                 instantColumnMapper.map(rs, "RESOLVED_AT", ctx));
     }
-
 }

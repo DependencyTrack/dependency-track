@@ -75,10 +75,8 @@ final class DatabaseCacheManager implements CacheManager {
         final var cache = new DatabaseCache(name, cacheConfig.ttl(), dataSource);
         maintenanceWorker.registerCache(cache);
 
-        new DatabaseCacheMeterBinder(cache, name)
-                .bindTo(meterRegistry);
+        new DatabaseCacheMeterBinder(cache, name).bindTo(meterRegistry);
 
         return cache;
     }
-
 }

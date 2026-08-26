@@ -40,9 +40,7 @@ class JvnAdvisorySourceTest {
         final int end = fixtureXml.indexOf("</Vulinfo>") + "</Vulinfo>".length();
         final String vulinfo = fixtureXml.substring(start, end);
         final String secondVulinfo = vulinfo.replace("JVNDB-2026-022538", "JVNDB-2026-999999");
-        final String doubledXml = fixtureXml.substring(0, end)
-                + secondVulinfo
-                + fixtureXml.substring(end);
+        final String doubledXml = fixtureXml.substring(0, end) + secondVulinfo + fixtureXml.substring(end);
 
         try (final var source = new JvnAdvisorySource(inputStream(doubledXml))) {
             assertTrue(source.hasNext());

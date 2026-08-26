@@ -24,20 +24,15 @@
         <artifactId>dependency-track-parent</artifactId>
         <version>5.1.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>notification-parent</artifactId>
     <packaging>pom</packaging>
-
     <name>Notification :: Parent</name>
-
     <modules>
         <module>api</module>
         <module>publishing</module>
         <module>templating</module>
     </modules>
-
     <properties>
         <project.parentBaseDir>${project.basedir}/..</project.parentBaseDir>
     </properties>
-
 </project>

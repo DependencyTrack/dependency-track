@@ -35,5 +35,4 @@ public record PackageRepository(
         requireNonNull(name, "name must not be null");
         requireNonNull(url, "url must not be null");
     }
-
 }

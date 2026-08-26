@@ -75,21 +75,24 @@ public class KennaDataTransformer {
     public void process(final Project project, final String externalId) {
         final ObjectNode kdiAsset = generateKdiAsset(project, externalId);
         final ArrayNode vulns = Mappers.jsonMapper().createArrayNode();
-        final List<Finding> findings = withJdbiHandle(handle ->
-                handle.attach(FindingDao.class).getFindings(project.getId(), false));
-        for (final Finding finding: findings) {
+        final List<Finding> findings =
+                withJdbiHandle(handle -> handle.attach(FindingDao.class).getFindings(project.getId(), false));
+        for (final Finding finding : findings) {
             final Map<String, Object> analysis = finding.getAnalysis();
             final Object suppressed = finding.getAnalysis().get("isSuppressed");
             if (suppressed instanceof Boolean) {
-                final boolean isSuppressed = (Boolean)analysis.get("isSuppressed");
+                final boolean isSuppressed = (Boolean) analysis.get("isSuppressed");
                 if (isSuppressed) {
                     continue;
                 }
             }
-            final Vulnerability vulnerability = qm.getObjectByUuid(Vulnerability.class, (UUID) finding.getVulnerability().get("uuid"));
-            //final Component component = qm.getObjectByUuid(Component.class, (String)finding.getComponent().get("uuid"));
-            final String stateString = (String)finding.getAnalysis().get("state");
-            final AnalysisState analysisState = (stateString != null) ? AnalysisState.valueOf(stateString) : AnalysisState.NOT_SET;
+            final Vulnerability vulnerability = qm.getObjectByUuid(
+                    Vulnerability.class, (UUID) finding.getVulnerability().get("uuid"));
+            // final Component component = qm.getObjectByUuid(Component.class,
+            // (String)finding.getComponent().get("uuid"));
+            final String stateString = (String) finding.getAnalysis().get("state");
+            final AnalysisState analysisState =
+                    (stateString != null) ? AnalysisState.valueOf(stateString) : AnalysisState.NOT_SET;
             final ObjectNode kdiVuln = generateKdiVuln(vulnerability, analysisState);
             vulns.add(kdiVuln);
             portfolioVulnerabilities.put(generateScannerIdentifier(vulnerability), vulnerability);
@@ -112,14 +115,15 @@ public class KennaDataTransformer {
      */
     private ObjectNode generateKdiAsset(final Project project, final String externalId) {
         final ObjectNode asset = Mappers.jsonMapper().createObjectNode();
-        final String application = (project.getVersion() == null) ? project.getName() : project.getName() + " " + project.getVersion();
+        final String application =
+                (project.getVersion() == null) ? project.getName() : project.getName() + " " + project.getVersion();
         asset.put("application", application);
         asset.put("external_id", externalId);
         // If the project has tags, add them to the KDI
         final Set<Tag> tags = project.getTags();
         if (tags != null && !tags.isEmpty()) {
             final ArrayNode tagsNode = asset.putArray("tags");
-            for (final Tag tag: tags) {
+            for (final Tag tag : tags) {
                 tagsNode.add(tag.getName());
             }
         }
@@ -161,7 +165,7 @@ public class KennaDataTransformer {
                 scannerScore = 3;
             }
             vuln.put("scanner_score", scannerScore);
-            if (! Vulnerability.Source.NVD.name().equals(vulnerability.getSource())) {
+            if (!Vulnerability.Source.NVD.name().equals(vulnerability.getSource())) {
                 // If the vulnerability is not a CVE, then we need to override the score
                 // to force Kenna to use this, otherwise the score will be 0.
                 vuln.put("override_score", scannerScore * 10);

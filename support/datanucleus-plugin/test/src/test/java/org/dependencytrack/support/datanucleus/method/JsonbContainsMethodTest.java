@@ -123,5 +123,4 @@ class JsonbContainsMethodTest extends AbstractTest {
                         Cannot invoke jsonbContains with argument of type \
                         org.datanucleus.store.rdbms.sql.expression.IntegerLiteral""");
     }
-
 }

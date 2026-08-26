@@ -67,8 +67,7 @@ final class VulnDbVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeCon
         configRegistry = serviceRegistry.require(ConfigRegistry.class);
         cacheManager = serviceRegistry.require(CacheManager.class);
         httpClient = serviceRegistry.require(HttpClient.class);
-        objectMapper = new ObjectMapper()
-                .disable(FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
     @Override
@@ -93,10 +92,7 @@ final class VulnDbVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeCon
                 config.getApiUrl());
 
         return new VulnDbVulnAnalyzer(
-                cacheManager.getCache("results"),
-                objectMapper,
-                apiClient,
-                config.isAliasSyncEnabled());
+                cacheManager.getCache("results"), objectMapper, apiClient, config.isAliasSyncEnabled());
     }
 
     @Override
@@ -131,5 +127,4 @@ final class VulnDbVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeCon
                     }
                 });
     }
-
 }

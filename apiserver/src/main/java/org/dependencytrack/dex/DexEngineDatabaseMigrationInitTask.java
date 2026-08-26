@@ -61,5 +61,4 @@ public final class DexEngineDatabaseMigrationInitTask implements InitTask {
         final DataSource dataSource = dataSourceRegistry.get(dataSourceName);
         new MigrationExecutor(dataSource).execute();
     }
-
 }

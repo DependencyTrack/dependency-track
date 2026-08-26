@@ -41,5 +41,4 @@ class RepositoryMetaComponentTest {
         assertThat(repoMetaComponent.getLastCheck()).isNotNull();
         assertThat(repoMetaComponent.getLatestVersionPublishedAt()).isNotNull();
     }
-
 }

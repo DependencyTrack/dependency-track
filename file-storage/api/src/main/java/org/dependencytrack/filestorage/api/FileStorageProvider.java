@@ -30,5 +30,4 @@ public interface FileStorageProvider {
     String name();
 
     FileStorage create(Config config, ProxySelector proxySelector);
-
 }

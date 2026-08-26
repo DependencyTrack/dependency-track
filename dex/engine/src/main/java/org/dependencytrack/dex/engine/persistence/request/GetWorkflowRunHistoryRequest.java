@@ -20,5 +20,4 @@ package org.dependencytrack.dex.engine.persistence.request;
 
 import java.util.UUID;
 
-public record GetWorkflowRunHistoryRequest(UUID runId, int offset) {
-}
+public record GetWorkflowRunHistoryRequest(UUID runId, int offset) {}

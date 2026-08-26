@@ -45,20 +45,16 @@ public final class UpdatePortfolioMetricsWorkflow implements Workflow<Void, Void
 
     @Override
     public @Nullable Void execute(WorkflowContext<Void> ctx, @Nullable Void arg) throws Exception {
-        final FetchProjectMetricsUpdateCandidatesRes fetchResult = ctx
-                .activity(FetchProjectMetricsUpdateCandidatesActivity.class)
+        final FetchProjectMetricsUpdateCandidatesRes fetchResult = ctx.activity(
+                        FetchProjectMetricsUpdateCandidatesActivity.class)
                 .call()
                 .await();
 
-        final List<String> projectUuids = fetchResult != null
-                ? fetchResult.getProjectUuidsList()
-                : List.of();
+        final List<String> projectUuids = fetchResult != null ? fetchResult.getProjectUuidsList() : List.of();
 
         if (projectUuids.isEmpty()) {
             ctx.logger().info("No more projects due for metrics update; Refreshing portfolio metrics");
-            ctx.activity(RefreshGlobalPortfolioMetricsActivity.class)
-                    .call()
-                    .await();
+            ctx.activity(RefreshGlobalPortfolioMetricsActivity.class).call().await();
             return null;
         }
 
@@ -66,12 +62,13 @@ public final class UpdatePortfolioMetricsWorkflow implements Workflow<Void, Void
 
         final var awaitableByProjectUuid = new LinkedHashMap<String, Awaitable<Void>>();
         for (final String projectUuid : projectUuids) {
-            awaitableByProjectUuid.put(projectUuid, ctx
-                    .activity(UpdateProjectMetricsActivity.class)
-                    .call(new ActivityCallOptions<UpdateProjectMetricsArg>()
-                            .withArgument(UpdateProjectMetricsArg.newBuilder()
-                                    .setProjectUuid(projectUuid)
-                                    .build())));
+            awaitableByProjectUuid.put(
+                    projectUuid,
+                    ctx.activity(UpdateProjectMetricsActivity.class)
+                            .call(new ActivityCallOptions<UpdateProjectMetricsArg>()
+                                    .withArgument(UpdateProjectMetricsArg.newBuilder()
+                                            .setProjectUuid(projectUuid)
+                                            .build())));
         }
 
         for (final var entry : awaitableByProjectUuid.entrySet()) {
@@ -91,5 +88,4 @@ public final class UpdatePortfolioMetricsWorkflow implements Workflow<Void, Void
         ctx.continueAsNew(new ContinueAsNewOptions<>());
         return null;
     }
-
 }

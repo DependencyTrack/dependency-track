@@ -55,6 +55,11 @@ final class SnykVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfi
     }
 
     @Override
+    public String displayName() {
+        return "Snyk";
+    }
+
+    @Override
     public Class<? extends VulnAnalyzer> extensionClass() {
         return SnykVulnAnalyzer.class;
     }

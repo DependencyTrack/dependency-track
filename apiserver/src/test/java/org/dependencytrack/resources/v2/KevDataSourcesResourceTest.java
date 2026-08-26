@@ -456,6 +456,11 @@ class KevDataSourcesResourceTest extends ResourceTest {
         }
 
         @Override
+        public @NonNull String displayName() {
+            return name;
+        }
+
+        @Override
         public @NonNull Class<? extends KevDataSource> extensionClass() {
             return DummyKevDataSource.class;
         }

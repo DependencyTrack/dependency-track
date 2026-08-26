@@ -166,8 +166,8 @@ class NotificationPublisherResourceTest extends ResourceTest {
                             "uuid": "${json-unit.any-string}"
                           },
                           {
-                            "name": "Msteams",
-                            "description": "Default Msteams publisher",
+                            "name": "Microsoft Teams",
+                            "description": "Default Microsoft Teams publisher",
                             "extensionName": "msteams",
                             "template": "${json-unit.any-string}",
                             "templateMimeType": "${json-unit.any-string}",

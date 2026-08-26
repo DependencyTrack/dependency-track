@@ -45,6 +45,11 @@ public final class ComposerPackageMetadataResolverFactory implements PackageMeta
     }
 
     @Override
+    public String displayName() {
+        return "Composer";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return ComposerPackageMetadataResolver.class;
     }

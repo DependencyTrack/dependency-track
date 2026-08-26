@@ -80,6 +80,11 @@ public final class MockVulnAnalyzerPlugin implements Plugin {
         }
 
         @Override
+        public @NonNull String displayName() {
+            return "Mock";
+        }
+
+        @Override
         public @NonNull Class<? extends VulnAnalyzer> extensionClass() {
             return MockVulnAnalyzer.class;
         }

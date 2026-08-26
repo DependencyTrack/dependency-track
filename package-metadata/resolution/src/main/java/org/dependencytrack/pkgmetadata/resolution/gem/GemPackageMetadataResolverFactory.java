@@ -45,6 +45,11 @@ public final class GemPackageMetadataResolverFactory implements PackageMetadataR
     }
 
     @Override
+    public String displayName() {
+        return "RubyGems";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return GemPackageMetadataResolver.class;
     }

@@ -43,6 +43,11 @@ public final class MavenPackageMetadataResolverFactory implements PackageMetadat
     }
 
     @Override
+    public String displayName() {
+        return "Maven";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return MavenPackageMetadataResolver.class;
     }

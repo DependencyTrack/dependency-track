@@ -72,6 +72,11 @@ final class NvdVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     @Override
+    public String displayName() {
+        return "NVD";
+    }
+
+    @Override
     public Class<? extends VulnDataSource> extensionClass() {
         return NvdVulnDataSource.class;
     }

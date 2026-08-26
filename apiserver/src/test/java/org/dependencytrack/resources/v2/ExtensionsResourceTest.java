@@ -148,7 +148,7 @@ class ExtensionsResourceTest extends ResourceTest {
                     },
                     {
                       "name": "non-configurable-extension",
-                      "display_name": "non-configurable-extension",
+                      "display_name": "Non-configurable Extension",
                       "configurable": false,
                       "testable": false
                     }
@@ -623,7 +623,7 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public RuntimeConfigSpec runtimeConfigSpec() {
+        public @NonNull RuntimeConfigSpec runtimeConfigSpec() {
             final var defaultConfig = new DummyRuntimeConfig("test", null);
             return RuntimeConfigSpec.of(
                     defaultConfig,
@@ -651,11 +651,11 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(ServiceRegistry serviceRegistry) {
+        public void init(@NonNull ServiceRegistry serviceRegistry) {
         }
 
         @Override
-        public DummyExtensionPoint create() {
+        public @NonNull DummyExtensionPoint create() {
             return new DummyExtension();
         }
 
@@ -664,12 +664,17 @@ class ExtensionsResourceTest extends ResourceTest {
     private static class NonConfigurableExtensionFactory implements ExtensionFactory<DummyExtensionPoint> {
 
         @Override
-        public String extensionName() {
+        public @NonNull String extensionName() {
             return "non-configurable-extension";
         }
 
         @Override
-        public Class<? extends DummyExtensionPoint> extensionClass() {
+        public @NonNull String displayName() {
+            return "Non-configurable Extension";
+        }
+
+        @Override
+        public @NonNull Class<? extends DummyExtensionPoint> extensionClass() {
             return DummyExtension.class;
         }
 
@@ -679,11 +684,11 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(ServiceRegistry serviceRegistry) {
+        public void init(@NonNull ServiceRegistry serviceRegistry) {
         }
 
         @Override
-        public DummyExtensionPoint create() {
+        public @NonNull DummyExtensionPoint create() {
             return new DummyExtension();
         }
 
@@ -700,7 +705,12 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public Class<? extends DummyExtensionPoint> extensionClass() {
+        public @NonNull String displayName() {
+            return "Testable Extension";
+        }
+
+        @Override
+        public @NonNull Class<? extends DummyExtensionPoint> extensionClass() {
             return DummyExtension.class;
         }
 
@@ -710,16 +720,16 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(ServiceRegistry serviceRegistry) {
+        public void init(@NonNull ServiceRegistry serviceRegistry) {
         }
 
         @Override
-        public DummyExtensionPoint create() {
+        public @NonNull DummyExtensionPoint create() {
             return new DummyExtension();
         }
 
         @Override
-        public ExtensionTestResult test(@Nullable RuntimeConfig runtimeConfig) {
+        public @NonNull ExtensionTestResult test(@Nullable RuntimeConfig runtimeConfig) {
             final var testConfig = (TestableRuntimeConfig) runtimeConfig;
             if ("PASSED".equals(testConfig.outcome())) {
                 return ExtensionTestResult.ofChecks("name").pass("name");
@@ -729,7 +739,7 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public @Nullable RuntimeConfigSpec runtimeConfigSpec() {
+        public @NonNull RuntimeConfigSpec runtimeConfigSpec() {
             final var defaultConfig = new TestableRuntimeConfig(null);
             return RuntimeConfigSpec.of(
                     defaultConfig,
@@ -757,12 +767,17 @@ class ExtensionsResourceTest extends ResourceTest {
     private static class ExtensionWithValidatorFactory implements ExtensionFactory<DummyExtensionPoint>, RuntimeConfigurable, Testable {
 
         @Override
-        public String extensionName() {
+        public @NonNull String extensionName() {
             return "extension-with-validator";
         }
 
         @Override
-        public Class<? extends DummyExtensionPoint> extensionClass() {
+        public @NonNull String displayName() {
+            return "Extension With Validator";
+        }
+
+        @Override
+        public @NonNull Class<? extends DummyExtensionPoint> extensionClass() {
             return DummyExtension.class;
         }
 
@@ -772,11 +787,11 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(ServiceRegistry serviceRegistry) {
+        public void init(@NonNull ServiceRegistry serviceRegistry) {
         }
 
         @Override
-        public @Nullable RuntimeConfigSpec runtimeConfigSpec() {
+        public @NonNull RuntimeConfigSpec runtimeConfigSpec() {
             final var defaultConfig = new TestableRuntimeConfig(null);
             return RuntimeConfigSpec.of(
                     defaultConfig,
@@ -804,12 +819,12 @@ class ExtensionsResourceTest extends ResourceTest {
         }
 
         @Override
-        public ExtensionTestResult test(@Nullable RuntimeConfig runtimeConfig) {
+        public @NonNull ExtensionTestResult test(@Nullable RuntimeConfig runtimeConfig) {
             return ExtensionTestResult.ofChecks("name").pass("name");
         }
 
         @Override
-        public DummyExtensionPoint create() {
+        public @NonNull DummyExtensionPoint create() {
             return new DummyExtension();
         }
 

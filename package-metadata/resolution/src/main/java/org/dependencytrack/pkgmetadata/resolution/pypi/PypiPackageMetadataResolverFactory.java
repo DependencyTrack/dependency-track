@@ -46,6 +46,11 @@ public final class PypiPackageMetadataResolverFactory implements PackageMetadata
     }
 
     @Override
+    public String displayName() {
+        return "PyPI";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return PypiPackageMetadataResolver.class;
     }

@@ -45,6 +45,11 @@ public final class GithubPackageMetadataResolverFactory implements PackageMetada
     }
 
     @Override
+    public String displayName() {
+        return "GitHub";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return GithubPackageMetadataResolver.class;
     }

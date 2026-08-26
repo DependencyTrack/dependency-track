@@ -74,7 +74,7 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
 
         // Find the webhook notification publisher.
         final NotificationPublisher webhookPublisher = publishers.stream()
-                .filter(publisher -> publisher.name().equals("Webhook"))
+                .filter(publisher -> publisher.extensionName().equals("webhook"))
                 .findAny()
                 .orElseThrow(() -> new AssertionError("Unable to find webhook notification publisher"));
 

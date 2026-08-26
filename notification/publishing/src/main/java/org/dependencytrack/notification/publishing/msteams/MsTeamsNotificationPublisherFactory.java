@@ -45,6 +45,11 @@ public final class MsTeamsNotificationPublisherFactory implements NotificationPu
     }
 
     @Override
+    public String displayName() {
+        return "Microsoft Teams";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return MsTeamsNotificationPublisher.class;
     }

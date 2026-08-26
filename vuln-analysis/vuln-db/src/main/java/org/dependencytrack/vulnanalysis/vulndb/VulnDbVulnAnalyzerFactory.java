@@ -53,6 +53,11 @@ final class VulnDbVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeCon
     }
 
     @Override
+    public String displayName() {
+        return "VulnDB";
+    }
+
+    @Override
     public Class<? extends VulnAnalyzer> extensionClass() {
         return VulnDbVulnAnalyzer.class;
     }

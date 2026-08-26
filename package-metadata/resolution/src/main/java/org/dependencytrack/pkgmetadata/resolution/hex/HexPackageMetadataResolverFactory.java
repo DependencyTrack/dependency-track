@@ -45,6 +45,11 @@ public final class HexPackageMetadataResolverFactory implements PackageMetadataR
     }
 
     @Override
+    public String displayName() {
+        return "Hex";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return HexPackageMetadataResolver.class;
     }

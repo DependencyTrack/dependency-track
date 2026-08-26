@@ -46,6 +46,11 @@ public final class NpmPackageMetadataResolverFactory implements PackageMetadataR
     }
 
     @Override
+    public String displayName() {
+        return "npm";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return NpmPackageMetadataResolver.class;
     }

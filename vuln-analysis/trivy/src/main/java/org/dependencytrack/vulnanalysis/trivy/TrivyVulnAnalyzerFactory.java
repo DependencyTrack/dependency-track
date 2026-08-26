@@ -44,6 +44,11 @@ final class TrivyVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConf
     }
 
     @Override
+    public String displayName() {
+        return "Trivy";
+    }
+
+    @Override
     public Class<? extends VulnAnalyzer> extensionClass() {
         return TrivyVulnAnalyzer.class;
     }

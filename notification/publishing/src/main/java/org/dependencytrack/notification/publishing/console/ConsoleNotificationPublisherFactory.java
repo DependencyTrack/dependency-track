@@ -50,6 +50,11 @@ public final class ConsoleNotificationPublisherFactory implements NotificationPu
     }
 
     @Override
+    public String displayName() {
+        return "Console";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return ConsoleNotificationPublisher.class;
     }

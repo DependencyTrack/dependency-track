@@ -70,6 +70,11 @@ final class OssIndexVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeC
     }
 
     @Override
+    public String displayName() {
+        return "Sonatype OSS Index";
+    }
+
+    @Override
     public Class<? extends VulnAnalyzer> extensionClass() {
         return OssIndexVulnAnalyzer.class;
     }

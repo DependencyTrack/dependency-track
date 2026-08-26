@@ -45,6 +45,11 @@ public final class GoModulesPackageMetadataResolverFactory implements PackageMet
     }
 
     @Override
+    public String displayName() {
+        return "Go Modules";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return GoModulesPackageMetadataResolver.class;
     }

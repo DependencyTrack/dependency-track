@@ -95,6 +95,11 @@ final class MockPackageMetadataResolverPlugin implements Plugin {
         }
 
         @Override
+        public @NonNull String displayName() {
+            return "Mock";
+        }
+
+        @Override
         public @NonNull Class<? extends PackageMetadataResolver> extensionClass() {
             return MockPackageMetadataResolver.class;
         }
@@ -104,7 +109,7 @@ final class MockPackageMetadataResolverPlugin implements Plugin {
         }
 
         @Override
-        public PackageMetadataResolver create() {
+        public @NonNull PackageMetadataResolver create() {
             return new MockPackageMetadataResolver(resolveFnRef, lastSeenPriorRef);
         }
 

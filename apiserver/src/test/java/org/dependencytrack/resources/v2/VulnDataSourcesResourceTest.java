@@ -42,6 +42,7 @@ import org.dependencytrack.vulndatasource.VulnDataSourceMirrorService;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -386,12 +387,17 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         }
 
         @Override
-        public String extensionName() {
+        public @NonNull String extensionName() {
             return name;
         }
 
         @Override
-        public Class<? extends VulnDataSource> extensionClass() {
+        public @NonNull String displayName() {
+            return name;
+        }
+
+        @Override
+        public @NonNull Class<? extends VulnDataSource> extensionClass() {
             return DummyVulnDataSource.class;
         }
 
@@ -401,7 +407,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         }
 
         @Override
-        public void init(final ServiceRegistry serviceRegistry) {
+        public void init(@NonNull ServiceRegistry serviceRegistry) {
         }
 
         @Override
@@ -410,7 +416,7 @@ class VulnDataSourcesResourceTest extends ResourceTest {
         }
 
         @Override
-        public VulnDataSource create() {
+        public @NonNull VulnDataSource create() {
             throw new UnsupportedOperationException();
         }
 

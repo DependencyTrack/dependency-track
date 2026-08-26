@@ -31,6 +31,7 @@ import org.dependencytrack.persistence.jdbi.JdbiFactory;
 import org.dependencytrack.plugin.api.ServiceRegistry;
 import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorKevDataSourceArg;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -215,12 +216,17 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public String extensionName() {
+        public @NonNull String extensionName() {
             return name;
         }
 
         @Override
-        public Class<? extends KevDataSource> extensionClass() {
+        public @NonNull String displayName() {
+            return name;
+        }
+
+        @Override
+        public @NonNull Class<? extends KevDataSource> extensionClass() {
             return TestKevDataSource.class;
         }
 
@@ -230,11 +236,11 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(ServiceRegistry serviceRegistry) {
+        public void init(@NonNull ServiceRegistry serviceRegistry) {
         }
 
         @Override
-        public KevDataSource create() {
+        public @NonNull KevDataSource create() {
             return dataSourceSupplier.get();
         }
 
@@ -254,12 +260,17 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public String extensionName() {
+        public @NonNull String extensionName() {
             return name;
         }
 
         @Override
-        public Class<? extends KevDataSource> extensionClass() {
+        public @NonNull String displayName() {
+            return name;
+        }
+
+        @Override
+        public @NonNull Class<? extends KevDataSource> extensionClass() {
             return TestKevDataSource.class;
         }
 
@@ -269,11 +280,11 @@ class MirrorKevDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(ServiceRegistry serviceRegistry) {
+        public void init(@NonNull ServiceRegistry serviceRegistry) {
         }
 
         @Override
-        public KevDataSource create() {
+        public @NonNull KevDataSource create() {
             throw new UnsupportedOperationException();
         }
 

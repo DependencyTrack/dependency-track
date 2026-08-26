@@ -45,6 +45,11 @@ public final class MattermostNotificationPublisherFactory implements Notificatio
     }
 
     @Override
+    public String displayName() {
+        return "Mattermost";
+    }
+
+    @Override
     public Class<? extends NotificationPublisher> extensionClass() {
         return MattermostNotificationPublisher.class;
     }

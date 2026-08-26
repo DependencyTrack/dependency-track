@@ -49,6 +49,11 @@ public final class CheckmarxVulnAnalyzerFactory implements VulnAnalyzerFactory, 
     }
 
     @Override
+    public String displayName() {
+        return "Checkmarx SCA";
+    }
+
+    @Override
     public Class<? extends VulnAnalyzer> extensionClass() {
         return CheckmarxVulnAnalyzer.class;
     }

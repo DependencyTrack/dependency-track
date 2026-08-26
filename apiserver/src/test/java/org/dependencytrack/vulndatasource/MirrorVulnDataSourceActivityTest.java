@@ -33,6 +33,7 @@ import org.dependencytrack.plugin.runtime.PluginManager;
 import org.dependencytrack.proto.internal.workflow.v1.MirrorVulnDataSourceArg;
 import org.dependencytrack.vulndatasource.api.VulnDataSource;
 import org.dependencytrack.vulndatasource.api.VulnDataSourceFactory;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -1617,12 +1618,17 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public String extensionName() {
+        public @NonNull String extensionName() {
             return name;
         }
 
         @Override
-        public Class<? extends VulnDataSource> extensionClass() {
+        public @NonNull String displayName() {
+            return name;
+        }
+
+        @Override
+        public @NonNull Class<? extends VulnDataSource> extensionClass() {
             return TestVulnDataSource.class;
         }
 
@@ -1632,11 +1638,11 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(ServiceRegistry serviceRegistry) {
+        public void init(@NonNull ServiceRegistry serviceRegistry) {
         }
 
         @Override
-        public VulnDataSource create() {
+        public @NonNull VulnDataSource create() {
             return dataSourceSupplier.get();
         }
 
@@ -1670,12 +1676,17 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public String extensionName() {
+        public @NonNull String extensionName() {
             return name;
         }
 
         @Override
-        public Class<? extends VulnDataSource> extensionClass() {
+        public @NonNull String displayName() {
+            return name;
+        }
+
+        @Override
+        public @NonNull Class<? extends VulnDataSource> extensionClass() {
             return TestVulnDataSource.class;
         }
 
@@ -1685,11 +1696,11 @@ class MirrorVulnDataSourceActivityTest extends PersistenceCapableTest {
         }
 
         @Override
-        public void init(ServiceRegistry serviceRegistry) {
+        public void init(@NonNull ServiceRegistry serviceRegistry) {
         }
 
         @Override
-        public VulnDataSource create() {
+        public @NonNull VulnDataSource create() {
             throw new UnsupportedOperationException();
         }
 

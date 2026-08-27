@@ -798,8 +798,8 @@
                         <pushChanges>true</pushChanges>
                         <localCheckout>true</localCheckout>
                         <releaseProfiles>quick</releaseProfiles>
-                        <preparationGoals>clean verify -Pquick</preparationGoals>
-                        <completionGoals>clean</completionGoals>
+                        <preparationGoals>clean verify spotless:apply -Pquick</preparationGoals>
+                        <completionGoals>clean spotless:apply</completionGoals>
                         <signTag>false</signTag>
                     </configuration>
                 </plugin>
@@ -836,17 +836,17 @@
                         <phase>validate</phase>
                         <configuration>
                             <rules>
-                                <banDuplicatePomDependencyVersions />
-                                <reactorModuleConvergence />
+                                <banDuplicatePomDependencyVersions/>
+                                <reactorModuleConvergence/>
                                 <requireJavaVersion>
                                     <version>[25,)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
                                     <version>[3.9,)</version>
                                 </requireMavenVersion>
-                                <requireNoRepositories />
-                                <requirePluginVersions />
-                                <requireUpperBoundDeps />
+                                <requireNoRepositories/>
+                                <requirePluginVersions/>
+                                <requireUpperBoundDeps/>
                             </rules>
                         </configuration>
                     </execution>
@@ -866,9 +866,9 @@
                         <importOrder>
                             <order>,jakarta,javax|java,\#</order>
                         </importOrder>
-                        <removeUnusedImports />
-                        <forbidWildcardImports />
-                        <forbidModuleImports />
+                        <removeUnusedImports/>
+                        <forbidWildcardImports/>
+                        <forbidModuleImports/>
                     </java>
                     <pom>
                         <licenseHeader>

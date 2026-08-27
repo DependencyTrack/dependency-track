@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>dependency-track-parent</artifactId>
-        <version>5.1.0</version>
+        <version>5.1.1-SNAPSHOT</version>
     </parent>
     <artifactId>apiserver</artifactId>
     <packaging>jar</packaging>
@@ -686,7 +686,7 @@
                         <phase>prepare-package</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.build.directory}/bom.json" tofile="${project.build.outputDirectory}/static/.well-known/sbom" />
+                                <copy file="${project.build.directory}/bom.json" tofile="${project.build.outputDirectory}/static/.well-known/sbom"/>
                             </target>
                             <skip>${cyclonedx.skip}</skip>
                         </configuration>

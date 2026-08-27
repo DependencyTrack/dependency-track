@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>datanucleus-plugin-parent</artifactId>
-        <version>5.1.0</version>
+        <version>5.1.1-SNAPSHOT</version>
     </parent>
     <artifactId>datanucleus-plugin-test</artifactId>
     <packaging>jar</packaging>

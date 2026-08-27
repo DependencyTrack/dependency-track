@@ -19,7 +19,7 @@ BASE_REF ?= origin/main
 BUF_FORMAT_FLAGS := --exclude-path support/cyclonedx-proto/src/main/proto/org/cyclonedx/v1_7/cyclonedx.proto
 MIGRATION_DIR := migration/src/main/resources/org/dependencytrack/migration
 DEX_MIGRATION_DIR := dex/engine-migration/src/main/resources/org/dependencytrack/dex/engine/migration
-SQUAWK_IMAGE := ghcr.io/sbdchd/squawk:2.58.0
+SQUAWK_IMAGE := ghcr.io/sbdchd/squawk:2.63.0@sha256:e3b8e534994ad714ec3ca1017f7e80ecb8f8a15b161b8c6eb25303eced5da3ab
 
 MVN := $(shell command -v mvn 2>/dev/null)
 MVND := $(shell command -v mvnd 2>/dev/null)

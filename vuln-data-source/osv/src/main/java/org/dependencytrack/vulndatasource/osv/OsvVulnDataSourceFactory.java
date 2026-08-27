@@ -56,6 +56,11 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     @Override
+    public String displayName() {
+        return "OSV";
+    }
+
+    @Override
     public Class<? extends VulnDataSource> extensionClass() {
         return OsvVulnDataSource.class;
     }
@@ -70,8 +75,7 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         this.configRegistry = serviceRegistry.require(ConfigRegistry.class);
         this.kvStore = serviceRegistry.require(KeyValueStore.class);
         this.httpClient = serviceRegistry.require(HttpClient.class);
-        this.objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule());
+        this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     @Override
@@ -84,8 +88,8 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
                 .withDataUrl(URI.create("https://storage.googleapis.com/osv-vulnerabilities"))
                 .withEcosystems(Set.of("Go", "Maven", "npm", "NuGet", "PyPI"));
 
-        final var defaultConfig = new OsvVulnDataSourceConfigV1()
-                .withSources(new LinkedHashSet<>(Set.of(defaultSource)));
+        final var defaultConfig =
+                new OsvVulnDataSourceConfigV1().withSources(new LinkedHashSet<>(Set.of(defaultSource)));
 
         return RuntimeConfigSpec.of(defaultConfig, (OsvVulnDataSourceConfigV1 config) -> {
             for (final var source : config.getSources()) {
@@ -108,7 +112,8 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     @Override
     public boolean isDataSourceEnabled() {
         requireNonNull(configRegistry, "configRegistry must not be null");
-        return !enabledSources(configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class)).isEmpty();
+        return !enabledSources(configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class))
+                .isEmpty();
     }
 
     @Override
@@ -118,7 +123,8 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
         requireNonNull(objectMapper, "objectMapper must not be null");
         requireNonNull(httpClient, "httpClient must not be null");
 
-        final List<OsvSourceConfigV1> sources = enabledSources(configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class));
+        final List<OsvSourceConfigV1> sources =
+                enabledSources(configRegistry.getRuntimeConfig(OsvVulnDataSourceConfigV1.class));
         if (sources.isEmpty()) {
             throw new IllegalStateException("Vulnerability data source is disabled and cannot be created");
         }
@@ -142,8 +148,6 @@ final class OsvVulnDataSourceFactory implements VulnDataSourceFactory, RuntimeCo
     }
 
     private List<OsvSourceConfigV1> enabledSources(final OsvVulnDataSourceConfigV1 config) {
-        return config.getSources().stream()
-                .filter(OsvSourceConfigV1::isEnabled)
-                .toList();
+        return config.getSources().stream().filter(OsvSourceConfigV1::isEnabled).toList();
     }
 }

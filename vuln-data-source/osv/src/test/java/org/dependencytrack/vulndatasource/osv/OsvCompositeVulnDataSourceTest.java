@@ -37,11 +37,13 @@ class OsvCompositeVulnDataSourceTest {
 
     @Test
     void shouldMirrorAllSources() {
-        final Bom BOV_A = Bom.newBuilder().addVulnerabilities(Vulnerability.newBuilder()
-                .setId("CVE-A").build()).build();
+        final Bom BOV_A = Bom.newBuilder()
+                .addVulnerabilities(Vulnerability.newBuilder().setId("CVE-A").build())
+                .build();
 
-        final Bom BOV_B = Bom.newBuilder().addVulnerabilities(Vulnerability.newBuilder()
-                .setId("CVE-B").build()).build();
+        final Bom BOV_B = Bom.newBuilder()
+                .addVulnerabilities(Vulnerability.newBuilder().setId("CVE-B").build())
+                .build();
 
         final var dataSourceA = mock(OsvVulnDataSource.class);
         doReturn(true, false).when(dataSourceA).hasNext();
@@ -52,7 +54,6 @@ class OsvCompositeVulnDataSourceTest {
         doReturn(BOV_B).when(dataSourceB).next();
 
         final var bovs = new ArrayList<Bom>();
-
 
         try (var dataSource = new OsvCompositeVulnDataSource(List.of(dataSourceA, dataSourceB))) {
             while (dataSource.hasNext()) {
@@ -73,7 +74,8 @@ class OsvCompositeVulnDataSourceTest {
     void markProcessedShouldThrowWhenNothingToProcess() {
         final var compositeDataSource = new OsvCompositeVulnDataSource(List.of(mock(OsvVulnDataSource.class)));
         assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(() -> compositeDataSource.markProcessed(Bom.newBuilder().build()))
+                .isThrownBy(
+                        () -> compositeDataSource.markProcessed(Bom.newBuilder().build()))
                 .withMessage("No current data source to mark processed");
     }
 }

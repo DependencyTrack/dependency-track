@@ -49,10 +49,8 @@ final class WatermarkStore {
     }
 
     Map<String, WatermarkRecord> getForEcosystems(final Collection<String> ecosystems) {
-        final Map<String, String> ecosystemByKey = ecosystems.stream()
-                .collect(Collectors.toMap(
-                        this::getKey,
-                        Function.identity()));
+        final Map<String, String> ecosystemByKey =
+                ecosystems.stream().collect(Collectors.toMap(this::getKey, Function.identity()));
 
         final Map<String, KeyValueStore.Entry> kvEntryByKey = kvStore.getMany(ecosystemByKey.keySet());
         if (kvEntryByKey.isEmpty()) {

@@ -37,7 +37,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-class OsvVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull VulnDataSource, @NonNull OsvVulnDataSourceFactory> {
+class OsvVulnDataSourceFactoryTest
+        extends AbstractExtensionFactoryTest<@NonNull VulnDataSource, @NonNull OsvVulnDataSourceFactory> {
 
     protected OsvVulnDataSourceFactoryTest() {
         super(OsvVulnDataSourceFactory.class);
@@ -85,8 +86,7 @@ class OsvVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
         final OsvVulnDataSourceConfigV1 config = defaultConfig();
         config.getSources().forEach(source -> source.setEnabled(false));
         initFactory(config);
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(factory::create);
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
     }
 
     @Test
@@ -104,20 +104,22 @@ class OsvVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
     void createShouldReturnDataSourcePerEnabledSource() {
         final OsvVulnDataSourceConfigV1 config = defaultConfig();
         config.getSources().forEach(source -> source.setEnabled(true));
-        config.getSources().add(new OsvSourceConfigV1()
-                .withName("Chainguard")
-                .withEnabled(true)
-                .withIncrementalMirroringEnabled(true)
-                .withAliasSyncEnabled(false)
-                .withDataUrl(URI.create("https://chainguard.com/osv-vulnerabilities"))
-                .withEcosystems(Set.of("Maven")));
-        config.getSources().add(new OsvSourceConfigV1()
-                .withName("Red Hat")
-                .withEnabled(false)
-                .withIncrementalMirroringEnabled(false)
-                .withAliasSyncEnabled(false)
-                .withDataUrl(URI.create("https://redhat.com/osv-vulnerabilities"))
-                .withEcosystems(Set.of("Go")));
+        config.getSources()
+                .add(new OsvSourceConfigV1()
+                        .withName("Chainguard")
+                        .withEnabled(true)
+                        .withIncrementalMirroringEnabled(true)
+                        .withAliasSyncEnabled(false)
+                        .withDataUrl(URI.create("https://chainguard.com/osv-vulnerabilities"))
+                        .withEcosystems(Set.of("Maven")));
+        config.getSources()
+                .add(new OsvSourceConfigV1()
+                        .withName("Red Hat")
+                        .withEnabled(false)
+                        .withIncrementalMirroringEnabled(false)
+                        .withAliasSyncEnabled(false)
+                        .withDataUrl(URI.create("https://redhat.com/osv-vulnerabilities"))
+                        .withEcosystems(Set.of("Go")));
         initFactory(config);
         final VulnDataSource dataSource = factory.create();
         assertThat(dataSource).isNotNull();
@@ -136,7 +138,8 @@ class OsvVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
         try (VulnDataSource dataSource = factory.create()) {
             assertThat(((OsvCompositeVulnDataSource) dataSource).getDataSources())
                     .singleElement()
-                    .satisfies(source -> assertThat(source.getWatermarkManager()).isNull());
+                    .satisfies(
+                            source -> assertThat(source.getWatermarkManager()).isNull());
         }
     }
 
@@ -151,7 +154,8 @@ class OsvVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
         try (VulnDataSource dataSource = factory.create()) {
             assertThat(((OsvCompositeVulnDataSource) dataSource).getDataSources())
                     .singleElement()
-                    .satisfies(source -> assertThat(source.getWatermarkManager()).isNotNull());
+                    .satisfies(
+                            source -> assertThat(source.getWatermarkManager()).isNotNull());
         }
     }
 
@@ -164,10 +168,9 @@ class OsvVulnDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull
     }
 
     private void initFactory(final ConfigRegistry configRegistry) {
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, configRegistry)
-                        .register(HttpClient.class, HttpClient.newHttpClient())
-                        .register(KeyValueStore.class, new MockKeyValueStore()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, configRegistry)
+                .register(HttpClient.class, HttpClient.newHttpClient())
+                .register(KeyValueStore.class, new MockKeyValueStore()));
     }
 }

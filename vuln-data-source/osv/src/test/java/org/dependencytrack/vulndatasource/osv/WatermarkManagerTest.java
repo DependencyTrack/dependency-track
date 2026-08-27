@@ -35,9 +35,12 @@ class WatermarkManagerTest {
     @Test
     void createShouldInitializeWatermarkWhenAvailable() {
         kvStore.putMany(Map.ofEntries(
-                Map.entry("watermark/default/maven", String.valueOf(Instant.ofEpochSecond(666).toEpochMilli())),
-                Map.entry("watermark/default/npm", String.valueOf(Instant.ofEpochSecond(555).toEpochMilli()))
-        ));
+                Map.entry(
+                        "watermark/default/maven",
+                        String.valueOf(Instant.ofEpochSecond(666).toEpochMilli())),
+                Map.entry(
+                        "watermark/default/npm",
+                        String.valueOf(Instant.ofEpochSecond(555).toEpochMilli()))));
 
         final var watermarkManager = new WatermarkManager("default", List.of("maven", "npm"), kvStore);
         assertThat(watermarkManager).isNotNull();
@@ -65,7 +68,9 @@ class WatermarkManagerTest {
 
     @Test
     void shouldAdvanceWatermarkWhenInitialWatermarkIsEarlier() {
-        kvStore.put("watermark/default/maven", String.valueOf(Instant.ofEpochSecond(666).toEpochMilli()));
+        kvStore.put(
+                "watermark/default/maven",
+                String.valueOf(Instant.ofEpochSecond(666).toEpochMilli()));
 
         final var watermarkManager = new WatermarkManager("default", List.of("maven"), kvStore);
 

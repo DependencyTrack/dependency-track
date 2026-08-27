@@ -39,11 +39,9 @@ final class OsvCompositeVulnDataSource implements VulnDataSource {
     private @Nullable OsvVulnDataSource currentDataSource;
     private int currentDataSourceIndex;
 
-    OsvCompositeVulnDataSource(
-            final List<OsvVulnDataSource> dataSources) {
+    OsvCompositeVulnDataSource(final List<OsvVulnDataSource> dataSources) {
         this.dataSources = requireNonNull(dataSources, "dataSources must not be null");
     }
-
 
     @Override
     public boolean hasNext() {
@@ -51,7 +49,7 @@ final class OsvCompositeVulnDataSource implements VulnDataSource {
             if (dataSources.get(currentDataSourceIndex).hasNext()) {
                 return true;
             }
-            currentDataSourceIndex ++;
+            currentDataSourceIndex++;
         }
         return false;
     }

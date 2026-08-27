@@ -39,13 +39,9 @@ final class WatermarkManager {
     private final Map<String, WatermarkRecord> pendingRecordByEcosystem;
     private final Map<String, WatermarkRecord> committedRecordByEcosystem;
 
-    WatermarkManager(
-            final String sourceName,
-            final Collection<String> ecosystems,
-            final KeyValueStore kvStore) {
+    WatermarkManager(final String sourceName, final Collection<String> ecosystems, final KeyValueStore kvStore) {
         final var watermarkStore = new WatermarkStore(sourceName, kvStore);
-        final Map<String, WatermarkRecord> recordByEcosystem =
-                watermarkStore.getForEcosystems(ecosystems);
+        final Map<String, WatermarkRecord> recordByEcosystem = watermarkStore.getForEcosystems(ecosystems);
 
         this.store = watermarkStore;
         this.pendingRecordByEcosystem = new HashMap<>(recordByEcosystem);

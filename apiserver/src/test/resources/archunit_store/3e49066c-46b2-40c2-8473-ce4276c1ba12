@@ -1,7 +1,5 @@
 org.dependencytrack.resources.v1.ComponentResource.createComponent(java.lang.String, org.dependencytrack.model.Component) accepts JDO model class org.dependencytrack.model.Component as request body
 org.dependencytrack.resources.v1.ComponentResource.updateComponent(org.dependencytrack.model.Component) accepts JDO model class org.dependencytrack.model.Component as request body
-org.dependencytrack.resources.v1.OidcResource.createGroup(alpine.model.OidcGroup) accepts JDO model class alpine.model.OidcGroup as request body
-org.dependencytrack.resources.v1.OidcResource.updateGroup(alpine.model.OidcGroup) accepts JDO model class alpine.model.OidcGroup as request body
 org.dependencytrack.resources.v1.PolicyResource.createPolicy(org.dependencytrack.model.Policy) accepts JDO model class org.dependencytrack.model.Policy as request body
 org.dependencytrack.resources.v1.PolicyResource.updatePolicy(org.dependencytrack.model.Policy) accepts JDO model class org.dependencytrack.model.Policy as request body
 org.dependencytrack.resources.v1.ProjectResource.createProject(org.dependencytrack.model.Project) accepts JDO model class org.dependencytrack.model.Project as request body

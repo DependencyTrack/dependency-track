@@ -32,13 +32,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.UUID;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class OidcResourceAuthenticatedTest extends ResourceTest {
@@ -61,10 +61,14 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
                 .get();
 
         assertThat(response.getStatus()).isEqualTo(200);
-
-        final JsonArray jsonGroups = parseJsonArray(response);
-        assertThat(jsonGroups).hasSize(1);
-        assertThat(jsonGroups.getJsonObject(0).getString("name")).isEqualTo("groupName");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "uuid": "${json-unit.any-string}",
+                    "name": "groupName"
+                  }
+                ]
+                """);
     }
 
     @Test
@@ -95,11 +99,12 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
                 .put(Entity.entity(oidcGroup, MediaType.APPLICATION_JSON));
 
         assertThat(response.getStatus()).isEqualTo(201);
-
-        final JsonObject group = parseJsonObject(response);
-        assertThat(group.getJsonObject("id")).isNull();
-        assertThat(group.getString("uuid")).isNotEmpty();
-        assertThat(group.getString("name")).isEqualTo("groupName");
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "uuid": "${json-unit.any-string}",
+                  "name": "groupName"
+                }
+                """);
     }
 
     @Test
@@ -150,10 +155,13 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
                 .post(Entity.entity(jsonGroup, MediaType.APPLICATION_JSON));
 
         assertThat(response.getStatus()).isEqualTo(200);
-
-        final JsonObject groupObject = parseJsonObject(response);
-        assertThat(groupObject.getString("uuid")).isEqualTo(jsonGroup.getUuid().toString());
-        assertThat(groupObject.getString("name")).isEqualTo("newGroupName");
+        assertThatJson(getPlainTextBody(response))
+                .isEqualTo(/* language=JSON */ """
+                {
+                  "uuid": "%s",
+                  "name": "newGroupName"
+                }
+                """.formatted(existingGroup.getUuid()));
     }
 
     @Test
@@ -329,12 +337,15 @@ public class OidcResourceAuthenticatedTest extends ResourceTest {
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
 
         assertThat(response.getStatus()).isEqualTo(200);
-
-        final JsonObject mapping = parseJsonObject(response);
-        assertThat(mapping.getJsonObject("id")).isNull();
-        assertThat(mapping.getString("uuid")).isNotEmpty();
-        assertThat(mapping.getJsonObject("team")).isNull();
-        assertThat(mapping.getJsonObject("group")).isNotNull();
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "group": {
+                    "uuid": "%s",
+                    "name": "groupName"
+                  },
+                  "uuid": "${json-unit.any-string}"
+                }
+                """.formatted(group.getUuid()));
     }
 
     @Test

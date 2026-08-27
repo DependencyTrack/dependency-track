@@ -41,7 +41,5 @@ class NotificationTemplateTest {
                     .isThrownBy(() -> new NotificationTemplate("content", null))
                     .withMessage("mimeType must not be null");
         }
-
     }
-
 }

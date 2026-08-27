@@ -77,8 +77,7 @@ final class WatermarkStore {
                 continue;
             }
 
-            result.put(ecosystem, new WatermarkRecord(
-                    ecosystem, watermark, kvEntry.version()));
+            result.put(ecosystem, new WatermarkRecord(ecosystem, watermark, kvEntry.version()));
         }
 
         return result;
@@ -86,22 +85,18 @@ final class WatermarkStore {
 
     WatermarkRecord save(final WatermarkRecord watermark) {
         final CompareAndPutResult result = kvStore.compareAndPut(
-                getKey(watermark.ecosystem()),
-                String.valueOf(watermark.value().toEpochMilli()),
-                watermark.version());
+                getKey(watermark.ecosystem()), String.valueOf(watermark.value().toEpochMilli()), watermark.version());
 
         return switch (result) {
             case CompareAndPutResult.Success(long newVersion) ->
-                    new WatermarkRecord(watermark.ecosystem(), watermark.value(), newVersion);
+                new WatermarkRecord(watermark.ecosystem(), watermark.value(), newVersion);
             case CompareAndPutResult.Failure(CompareAndPutResult.Failure.Reason reason) ->
-                    throw new IllegalStateException(
-                            "Failed to save watermark %s to KV store: %s".formatted(
-                                    watermark, reason));
+                throw new IllegalStateException(
+                        "Failed to save watermark %s to KV store: %s".formatted(watermark, reason));
         };
     }
 
     private String getKey(final String ecosystem) {
         return "watermark/" + sourceName + "/" + ecosystem;
     }
-
 }

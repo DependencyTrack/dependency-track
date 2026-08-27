@@ -45,8 +45,7 @@ public interface ConfigPropertyDao extends SqlObject {
     Optional<ConfigProperty> getOptional(@Bind String group, @Bind String name);
 
     default Optional<String> getOptionalRawValue(@BindBean ConfigPropertyConstants property) {
-        return getOptional(property.getGroupName(), property.getPropertyName())
-                .map(ConfigProperty::getPropertyValue);
+        return getOptional(property.getGroupName(), property.getPropertyName()).map(ConfigProperty::getPropertyValue);
     }
 
     default Optional<String> getOptionalValue(final ConfigPropertyConstants property) {
@@ -94,5 +93,4 @@ public interface ConfigPropertyDao extends SqlObject {
     default void setValue(@BindBean ConfigPropertyConstants property, @Bind String value) {
         setValue(property.getGroupName(), property.getPropertyName(), value);
     }
-
 }

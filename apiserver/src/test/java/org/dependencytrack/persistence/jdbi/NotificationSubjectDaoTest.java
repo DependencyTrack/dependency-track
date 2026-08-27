@@ -62,31 +62,21 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
 
     @Test
     public void testGetSubscribedNotificationGroups() {
-        final NotificationPublisher publisher =
-                qm.createNotificationPublisher(
-                        "publisher",
-                        "description",
-                        "extensionName",
-                        "templateContent",
-                        "templateMimeType",
-                        /* isDefault */ false);
+        final NotificationPublisher publisher = qm.createNotificationPublisher(
+                "publisher",
+                "description",
+                "extensionName",
+                "templateContent",
+                "templateMimeType",
+                /* isDefault */ false);
 
-        final NotificationRule enabledRule =
-                qm.createNotificationRule(
-                        "enabled",
-                        NotificationScope.PORTFOLIO,
-                        NotificationLevel.INFORMATIONAL,
-                        publisher);
-        enabledRule.setNotifyOn(Set.of(
-                NotificationGroup.NEW_VULNERABILITY,
-                NotificationGroup.NEW_VULNERABLE_DEPENDENCY));
+        final NotificationRule enabledRule = qm.createNotificationRule(
+                "enabled", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
+        enabledRule.setNotifyOn(
+                Set.of(NotificationGroup.NEW_VULNERABILITY, NotificationGroup.NEW_VULNERABLE_DEPENDENCY));
 
-        final NotificationRule disabledRule =
-                qm.createNotificationRule(
-                        "disabled",
-                        NotificationScope.PORTFOLIO,
-                        NotificationLevel.INFORMATIONAL,
-                        publisher);
+        final NotificationRule disabledRule = qm.createNotificationRule(
+                "disabled", NotificationScope.PORTFOLIO, NotificationLevel.INFORMATIONAL, publisher);
         disabledRule.setNotifyOn(Set.of(NotificationGroup.POLICY_VIOLATION));
         disabledRule.setEnabled(false);
 
@@ -94,13 +84,11 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         qm.persist(disabledRule);
 
         final Set<String> subscribedGroups = withJdbiHandle(
-                handle -> handle
-                        .attach(NotificationSubjectDao.class)
-                        .getSubscribedNotificationGroups());
+                handle -> handle.attach(NotificationSubjectDao.class).getSubscribedNotificationGroups());
 
-        assertThat(subscribedGroups).containsExactlyInAnyOrder(
-                NotificationGroup.NEW_VULNERABILITY.name(),
-                NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name());
+        assertThat(subscribedGroups)
+                .containsExactlyInAnyOrder(
+                        NotificationGroup.NEW_VULNERABILITY.name(), NotificationGroup.NEW_VULNERABLE_DEPENDENCY.name());
     }
 
     @Test
@@ -111,10 +99,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         project.setDescription("projectDescription");
         project.setPurl("projectPurl");
         qm.persist(project);
-        qm.bind(project, List.of(
-                qm.createTag("projectTagA"),
-                qm.createTag("projectTagB")
-        ));
+        qm.bind(project, List.of(qm.createTag("projectTagA"), qm.createTag("projectTagB")));
 
         final var component = new Component();
         component.setProject(project);
@@ -158,36 +143,28 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                             "TEST",
                             new VulnerabilityKey("CVE-100", Vulnerability.Source.NVD),
                             Set.of(new VulnerabilityKey("GHSA-100", Vulnerability.Source.GITHUB)));
-            handle
-                    .attach(KevDao.class)
-                    .upsertBatch("cisa", List.of(
-                            new KevAssertion(
-                                    "NVD",
-                                    "CVE-100",
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null)));
+            handle.attach(KevDao.class)
+                    .upsertBatch("cisa", List.of(new KevAssertion("NVD", "CVE-100", null, null, null, null, null)));
         });
 
         qm.addVulnerability(vulnA, component, "internal");
         qm.addVulnerability(vulnB, component, "internal");
 
         // Suppress vulnB, it should not appear in the query results.
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vulnB)
-                        .withState(AnalysisState.FALSE_POSITIVE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnB)
+                .withState(AnalysisState.FALSE_POSITIVE)
+                .withSuppress(true));
 
-        final List<NewVulnerabilitySubject> subjects = withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
-                .getForNewVulnerabilities(
-                        List.of(component.getId(), component.getId()), List.of(vulnA.getId(), vulnB.getId())));
+        final List<NewVulnerabilitySubject> subjects =
+                withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
+                        .getForNewVulnerabilities(
+                                List.of(component.getId(), component.getId()), List.of(vulnA.getId(), vulnB.getId())));
 
-        assertThat(subjects).satisfiesExactly(subject ->
-                assertThatJson(JsonFormat.printer().print(subject))
+        assertThat(subjects)
+                .satisfiesExactly(subject -> assertThatJson(JsonFormat.printer().print(subject))
                         .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
-                        .withMatcher("componentUuid", equalTo(component.getUuid().toString()))
+                        .withMatcher(
+                                "componentUuid", equalTo(component.getUuid().toString()))
                         .withMatcher("vulnUuid", equalTo(vulnA.getUuid().toString()))
                         .isEqualTo(/* language=JSON */ """
                                 {
@@ -304,8 +281,9 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         analysis.setCvssV3Score(BigDecimal.valueOf(10.0));
         qm.persist(analysis);
 
-        final List<NewVulnerabilitySubject> subjects = withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
-                .getForNewVulnerabilities(List.of(component.getId()), List.of(vuln.getId())));
+        final List<NewVulnerabilitySubject> subjects =
+                withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
+                        .getForNewVulnerabilities(List.of(component.getId()), List.of(vuln.getId())));
 
         assertThat(subjects).hasSize(1);
         assertThatJson(JsonFormat.printer().print(subjects.getFirst()))
@@ -357,10 +335,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         project.setDescription("projectDescription");
         project.setPurl("projectPurl");
         qm.persist(project);
-        qm.bind(project, List.of(
-                qm.createTag("projectTagA"),
-                qm.createTag("projectTagB")
-        ));
+        qm.bind(project, List.of(qm.createTag("projectTagA"), qm.createTag("projectTagB")));
 
         final var component = new Component();
         component.setProject(project);
@@ -405,30 +380,21 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                             new VulnerabilityKey("CVE-100", Vulnerability.Source.NVD),
                             Set.of(new VulnerabilityKey("GHSA-100", Vulnerability.Source.GITHUB)));
 
-            handle
-                    .attach(KevDao.class)
-                    .upsertBatch("cisa", List.of(
-                            new KevAssertion(
-                                    "NVD",
-                                    "CVE-100",
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null)));
+            handle.attach(KevDao.class)
+                    .upsertBatch("cisa", List.of(new KevAssertion("NVD", "CVE-100", null, null, null, null, null)));
         });
 
         qm.addVulnerability(vulnA, component, "internal");
         qm.addVulnerability(vulnB, component, "internal");
 
         // Suppress vulnB, it should not appear in the query results.
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vulnB)
-                        .withState(AnalysisState.FALSE_POSITIVE)
-                        .withSuppress(true));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnB)
+                .withState(AnalysisState.FALSE_POSITIVE)
+                .withSuppress(true));
 
-        final List<NewVulnerableDependencySubject> subjects = withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
-                .getForNewVulnerableDependencies(List.of(component.getId())));
+        final List<NewVulnerableDependencySubject> subjects =
+                withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
+                        .getForNewVulnerableDependencies(List.of(component.getId())));
 
         assertThat(subjects).hasSize(1);
         assertThatJson(JsonFormat.printer().print(subjects.getFirst()))
@@ -538,8 +504,9 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         analysis.setCvssV3Score(BigDecimal.valueOf(10.0));
         qm.persist(analysis);
 
-        final List<NewVulnerableDependencySubject> subjects = withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
-                .getForNewVulnerableDependencies(List.of(component.getId())));
+        final List<NewVulnerableDependencySubject> subjects =
+                withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
+                        .getForNewVulnerableDependencies(List.of(component.getId())));
 
         assertThat(subjects).hasSize(1);
         assertThatJson(JsonFormat.printer().print(subjects.getFirst()))
@@ -586,10 +553,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         project.setDescription("projectDescription");
         project.setPurl("projectPurl");
         qm.persist(project);
-        qm.bind(project, List.of(
-                qm.createTag("projectTagA"),
-                qm.createTag("projectTagB")
-        ));
+        qm.bind(project, List.of(qm.createTag("projectTagA"), qm.createTag("projectTagB")));
 
         final var component = new Component();
         component.setProject(project);
@@ -629,39 +593,30 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                             new VulnerabilityKey("CVE-100", Vulnerability.Source.NVD),
                             Set.of(new VulnerabilityKey("GHSA-100", Vulnerability.Source.GITHUB)));
 
-            handle
-                    .attach(KevDao.class)
-                    .upsertBatch("cisa", List.of(
-                            new KevAssertion(
-                                    "NVD",
-                                    "CVE-100",
-                                    null,
-                                    null,
-                                    null,
-                                    null,
-                                    null)));
+            handle.attach(KevDao.class)
+                    .upsertBatch("cisa", List.of(new KevAssertion("NVD", "CVE-100", null, null, null, null, null)));
         });
 
         qm.addVulnerability(vulnA, component, "internal");
 
         // Suppress vulnB, it should not appear in the query results.
-        qm.makeAnalysis(
-                new MakeAnalysisCommand(component, vulnA)
-                        .withState(AnalysisState.NOT_AFFECTED));
+        qm.makeAnalysis(new MakeAnalysisCommand(component, vulnA).withState(AnalysisState.NOT_AFFECTED));
 
         var policyAnalysis = qm.getAnalysis(component, vulnA);
 
         final List<VulnerabilityAnalysisDecisionChangeSubject> subjects =
-                withJdbiHandle(handle -> handle
-                        .attach(NotificationSubjectDao.class)
-                        .getForProjectAuditChanges(List.of(
-                                new GetProjectAuditChangeNotificationSubjectQuery(
-                                        component.getId(), vulnA.getId(), policyAnalysis.getAnalysisState(), policyAnalysis.isSuppressed()))));
+                withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
+                        .getForProjectAuditChanges(List.of(new GetProjectAuditChangeNotificationSubjectQuery(
+                                component.getId(),
+                                vulnA.getId(),
+                                policyAnalysis.getAnalysisState(),
+                                policyAnalysis.isSuppressed()))));
 
-        assertThat(subjects).satisfiesExactly(subject ->
-                assertThatJson(JsonFormat.printer().print(subject))
+        assertThat(subjects)
+                .satisfiesExactly(subject -> assertThatJson(JsonFormat.printer().print(subject))
                         .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
-                        .withMatcher("componentUuid", equalTo(component.getUuid().toString()))
+                        .withMatcher(
+                                "componentUuid", equalTo(component.getUuid().toString()))
                         .withMatcher("vulnUuid", equalTo(vulnA.getUuid().toString()))
                         .isEqualTo(/* language=JSON */ """
                                 {
@@ -797,10 +752,7 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         project.setDescription("projectDescription");
         project.setPurl("projectPurl");
         qm.persist(project);
-        qm.bind(project, List.of(
-                qm.createTag("projectTagA"),
-                qm.createTag("projectTagB")
-        ));
+        qm.bind(project, List.of(qm.createTag("projectTagA"), qm.createTag("projectTagB")));
 
         final var component = new Component();
         component.setProject(project);
@@ -824,16 +776,18 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         violation.setTimestamp(new Date());
         qm.persist(violation);
 
-        final List<PolicyViolationSubject> subjects = withJdbiHandle(handle -> handle
-                .attach(NotificationSubjectDao.class)
-                .getForNewPolicyViolations(List.of(violation.getId())));
+        final List<PolicyViolationSubject> subjects = withJdbiHandle(handle ->
+                handle.attach(NotificationSubjectDao.class).getForNewPolicyViolations(List.of(violation.getId())));
 
-        assertThat(subjects).satisfiesExactly(subject ->
-                assertThatJson(JsonFormat.printer().print(subject))
+        assertThat(subjects)
+                .satisfiesExactly(subject -> assertThatJson(JsonFormat.printer().print(subject))
                         .withMatcher("projectUuid", equalTo(project.getUuid().toString()))
-                        .withMatcher("componentUuid", equalTo(component.getUuid().toString()))
-                        .withMatcher("violationUuid", equalTo(violation.getUuid().toString()))
-                        .withMatcher("conditionUuid", equalTo(condition.getUuid().toString()))
+                        .withMatcher(
+                                "componentUuid", equalTo(component.getUuid().toString()))
+                        .withMatcher(
+                                "violationUuid", equalTo(violation.getUuid().toString()))
+                        .withMatcher(
+                                "conditionUuid", equalTo(condition.getUuid().toString()))
                         .withMatcher("policyUuid", equalTo(policy.getUuid().toString()))
                         .isEqualTo(/* language=JSON */ """
                                 {
@@ -909,16 +863,16 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         violationB.setTimestamp(new Date());
         qm.persist(violationB);
 
-        qm.makeViolationAnalysis(
-                new MakeViolationAnalysisCommand(component, violationB)
-                        .withState(ViolationAnalysisState.REJECTED)
-                        .withSuppress(true));
+        qm.makeViolationAnalysis(new MakeViolationAnalysisCommand(component, violationB)
+                .withState(ViolationAnalysisState.REJECTED)
+                .withSuppress(true));
 
-        final List<PolicyViolationSubject> subjects = withJdbiHandle(handle -> handle
-                .attach(NotificationSubjectDao.class)
-                .getForNewPolicyViolations(List.of(violationA.getId(), violationB.getId())));
+        final List<PolicyViolationSubject> subjects =
+                withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
+                        .getForNewPolicyViolations(List.of(violationA.getId(), violationB.getId())));
 
-        assertThat(subjects).singleElement()
+        assertThat(subjects)
+                .singleElement()
                 .extracting(s -> s.getPolicyViolation().getUuid())
                 .isEqualTo(violationA.getUuid().toString());
     }
@@ -953,23 +907,22 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
         qm.persist(violationB);
 
         qm.makeViolationAnalysis(
-                new MakeViolationAnalysisCommand(component, violationB)
-                        .withState(ViolationAnalysisState.APPROVED));
+                new MakeViolationAnalysisCommand(component, violationB).withState(ViolationAnalysisState.APPROVED));
 
-        final List<PolicyViolationSubject> subjects = withJdbiHandle(handle -> handle
-                .attach(NotificationSubjectDao.class)
-                .getForNewPolicyViolations(List.of(violationA.getId(), violationB.getId())));
+        final List<PolicyViolationSubject> subjects =
+                withJdbiHandle(handle -> handle.attach(NotificationSubjectDao.class)
+                        .getForNewPolicyViolations(List.of(violationA.getId(), violationB.getId())));
 
-        assertThat(subjects).singleElement()
+        assertThat(subjects)
+                .singleElement()
                 .extracting(s -> s.getPolicyViolation().getUuid())
                 .isEqualTo(violationA.getUuid().toString());
     }
 
     @Test
     public void shouldReturnEmptyForNewPolicyViolationsWithEmptyInput() {
-        final List<PolicyViolationSubject> subjects = withJdbiHandle(handle -> handle
-                .attach(NotificationSubjectDao.class)
-                .getForNewPolicyViolations(List.of()));
+        final List<PolicyViolationSubject> subjects = withJdbiHandle(
+                handle -> handle.attach(NotificationSubjectDao.class).getForNewPolicyViolations(List.of()));
 
         assertThat(subjects).isEmpty();
     }

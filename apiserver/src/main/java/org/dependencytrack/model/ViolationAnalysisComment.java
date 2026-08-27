@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 
 import javax.jdo.annotations.Column;
@@ -52,7 +53,11 @@ public class ViolationAnalysisComment implements Serializable {
     private long id;
 
     @Persistent(defaultFetchGroup = "true", dependent = "true")
-    @ForeignKey(name = "VIOLATIONANALYSISCOMMENT_VIOLATIONANALYSIS_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "VIOLATIONANALYSISCOMMENT_VIOLATIONANALYSIS_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "VIOLATIONANALYSIS_ID", allowsNull = "false")
     @NotNull
     @JsonIgnore

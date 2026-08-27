@@ -29,12 +29,9 @@ import java.util.Set;
  */
 public final class NotificationTestUtil {
 
-    private NotificationTestUtil() {
-    }
+    private NotificationTestUtil() {}
 
-    public static NotificationRule createCatchAllNotificationRule(
-            QueryManager qm,
-            NotificationScope scope) {
+    public static NotificationRule createCatchAllNotificationRule(QueryManager qm, NotificationScope scope) {
         return qm.callInTransaction(() -> {
             final NotificationPublisher publisher = qm.createNotificationPublisher(
                     "catchAllPublisher",
@@ -44,15 +41,11 @@ public final class NotificationTestUtil {
                     "templateMimeType",
                     /* isDefault */ false);
 
-            final NotificationRule rule = qm.createNotificationRule(
-                    "catchAll",
-                    scope,
-                    NotificationLevel.INFORMATIONAL,
-                    publisher);
+            final NotificationRule rule =
+                    qm.createNotificationRule("catchAll", scope, NotificationLevel.INFORMATIONAL, publisher);
             rule.setNotifyOn(Set.of(NotificationGroup.values()));
 
             return rule;
         });
     }
-
 }

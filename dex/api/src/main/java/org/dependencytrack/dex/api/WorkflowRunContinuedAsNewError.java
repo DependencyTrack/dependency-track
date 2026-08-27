@@ -37,5 +37,4 @@ public final class WorkflowRunContinuedAsNewError extends WorkflowRunError {
     public @Nullable Payload getArgument() {
         return argument;
     }
-
 }

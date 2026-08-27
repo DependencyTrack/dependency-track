@@ -55,18 +55,16 @@ import static org.dependencytrack.common.MdcKeys.MDC_VULN_ANALYZER_NAME;
 @WorkflowSpec(name = "vuln-analysis")
 public final class VulnAnalysisWorkflow implements Workflow<VulnAnalysisWorkflowArg, Void> {
 
-    private static final RetryPolicy ANALYZER_RETRY_POLICY =
-            new RetryPolicy(
-                    /* initialDelay */ Duration.ofSeconds(5),
-                    /* delayMultiplier */ 2.0,
-                    /* randomizationFactor */ 0.3,
-                    /* maxDelay */ Duration.ofMinutes(1),
-                    /* maxAttempts */ 5);
+    private static final RetryPolicy ANALYZER_RETRY_POLICY = new RetryPolicy(
+            /* initialDelay */ Duration.ofSeconds(5),
+            /* delayMultiplier */ 2.0,
+            /* randomizationFactor */ 0.3,
+            /* maxDelay */ Duration.ofMinutes(1),
+            /* maxAttempts */ 5);
 
     @Override
-    public @Nullable Void execute(
-            WorkflowContext<VulnAnalysisWorkflowArg> ctx,
-            @Nullable VulnAnalysisWorkflowArg arg) throws Exception {
+    public @Nullable Void execute(WorkflowContext<VulnAnalysisWorkflowArg> ctx, @Nullable VulnAnalysisWorkflowArg arg)
+            throws Exception {
         if (arg == null) {
             throw new TerminalApplicationFailureException("No argument provided");
         }
@@ -84,19 +82,15 @@ public final class VulnAnalysisWorkflow implements Workflow<VulnAnalysisWorkflow
                 return null;
             }
 
-            final FileMetadata contextFileMetadata =
-                    arg.hasContextFileMetadata()
-                            ? arg.getContextFileMetadata()
-                            : null;
+            final FileMetadata contextFileMetadata = arg.hasContextFileMetadata() ? arg.getContextFileMetadata() : null;
 
             var analyzerResults = List.<AnalyzerResult>of();
             try {
-                final Map<String, Awaitable<InvokeVulnAnalyzerRes>> awaitableByAnalyzerName =
-                        invokeAnalyzers(
-                                ctx,
-                                arg.getProjectUuid(),
-                                preparationResult.getAnalyzersList(),
-                                preparationResult.getBomFileMetadata());
+                final Map<String, Awaitable<InvokeVulnAnalyzerRes>> awaitableByAnalyzerName = invokeAnalyzers(
+                        ctx,
+                        arg.getProjectUuid(),
+                        preparationResult.getAnalyzersList(),
+                        preparationResult.getBomFileMetadata());
 
                 analyzerResults = awaitAnalyzerResults(ctx, awaitableByAnalyzerName);
                 if (analyzerResults.stream().noneMatch(AnalyzerResult::getSuccessful)) {
@@ -117,8 +111,7 @@ public final class VulnAnalysisWorkflow implements Workflow<VulnAnalysisWorkflow
     }
 
     private PrepareVulnAnalysisRes prepare(WorkflowContext<?> ctx, String projectUuid) {
-        final PrepareVulnAnalysisRes result = ctx
-                .activity(PrepareVulnAnalysisActivity.class)
+        final PrepareVulnAnalysisRes result = ctx.activity(PrepareVulnAnalysisActivity.class)
                 .call(PrepareVulnAnalysisArg.newBuilder()
                         .setProjectUuid(projectUuid)
                         .build())
@@ -131,10 +124,7 @@ public final class VulnAnalysisWorkflow implements Workflow<VulnAnalysisWorkflow
     }
 
     private Map<String, Awaitable<InvokeVulnAnalyzerRes>> invokeAnalyzers(
-            WorkflowContext<?> ctx,
-            String projectUuid,
-            List<String> analyzerNames,
-            FileMetadata bomFileMetadata) {
+            WorkflowContext<?> ctx, String projectUuid, List<String> analyzerNames, FileMetadata bomFileMetadata) {
         final var awaitableByAnalyzerName = new LinkedHashMap<String, Awaitable<InvokeVulnAnalyzerRes>>();
 
         for (final String analyzerName : analyzerNames) {
@@ -151,25 +141,21 @@ public final class VulnAnalysisWorkflow implements Workflow<VulnAnalysisWorkflow
     }
 
     private Awaitable<@Nullable InvokeVulnAnalyzerRes> invokeAnalyzer(
-            WorkflowContext<?> ctx,
-            String projectUuid,
-            String analyzerName,
-            FileMetadata bomFileMetadata) {
+            WorkflowContext<?> ctx, String projectUuid, String analyzerName, FileMetadata bomFileMetadata) {
         final var arg = InvokeVulnAnalyzerArg.newBuilder()
                 .setProjectUuid(projectUuid)
                 .setAnalyzerName(analyzerName)
                 .setBomFileMetadata(bomFileMetadata)
                 .build();
 
-        return ctx.activity(InvokeVulnAnalyzerActivity.class).call(
-                new ActivityCallOptions<InvokeVulnAnalyzerArg>()
+        return ctx.activity(InvokeVulnAnalyzerActivity.class)
+                .call(new ActivityCallOptions<InvokeVulnAnalyzerArg>()
                         .withRetryPolicy(ANALYZER_RETRY_POLICY)
                         .withArgument(arg));
     }
 
     private List<AnalyzerResult> awaitAnalyzerResults(
-            WorkflowContext<?> ctx,
-            Map<String, Awaitable<InvokeVulnAnalyzerRes>> awaitableByAnalyzerName) {
+            WorkflowContext<?> ctx, Map<String, Awaitable<InvokeVulnAnalyzerRes>> awaitableByAnalyzerName) {
         final var results = new ArrayList<AnalyzerResult>(awaitableByAnalyzerName.size());
 
         for (final var entry : awaitableByAnalyzerName.entrySet()) {
@@ -250,5 +236,4 @@ public final class VulnAnalysisWorkflow implements Workflow<VulnAnalysisWorkflow
                         .build())
                 .await();
     }
-
 }

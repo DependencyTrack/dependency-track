@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
  * @since 5.0.0
  */
 public enum HashAlgorithm {
-
     MD5(Pattern.compile("[0-9a-f]{32}", Pattern.CASE_INSENSITIVE)),
     SHA1(Pattern.compile("[0-9a-f]{40}", Pattern.CASE_INSENSITIVE)),
     SHA256(Pattern.compile("[0-9a-f]{64}", Pattern.CASE_INSENSITIVE)),
@@ -39,5 +38,4 @@ public enum HashAlgorithm {
     public boolean isValid(String value) {
         return pattern.matcher(value).matches();
     }
-
 }

@@ -40,14 +40,20 @@ public final class ExtractPhase {
     private final long sampleRowsPerTable;
     private final int metricsRetentionDays;
 
-    public ExtractPhase(final GlobalOptions options, final SourceOptions source, final Jdbi target,
-                        final int metricsRetentionDays) {
+    public ExtractPhase(
+            final GlobalOptions options,
+            final SourceOptions source,
+            final Jdbi target,
+            final int metricsRetentionDays) {
         this(options, source, target, Long.MAX_VALUE, metricsRetentionDays);
     }
 
-    public ExtractPhase(final GlobalOptions options, final SourceOptions source,
-                        final Jdbi target, final long sampleRowsPerTable,
-                        final int metricsRetentionDays) {
+    public ExtractPhase(
+            final GlobalOptions options,
+            final SourceOptions source,
+            final Jdbi target,
+            final long sampleRowsPerTable,
+            final int metricsRetentionDays) {
         this.options = options;
         this.source = source;
         this.target = target;
@@ -89,7 +95,7 @@ public final class ExtractPhase {
     private void invalidateDownstream() {
         target.useHandle(h -> {
             h.execute("DELETE FROM \"%s\".migration_state WHERE phase IN ('TRANSFORM', 'LOAD')"
-                .formatted(options.stagingSchema));
+                    .formatted(options.stagingSchema));
             dropTablesMatching(h, "tgt\\_%", true);
             dropTablesMatching(h, "%\\_canonical_id_map", false);
             for (final String probe : org.dependencytrack.v4migrator.state.StagingSchema.PROBE_TABLES) {
@@ -98,21 +104,19 @@ public final class ExtractPhase {
         });
     }
 
-    private void dropTablesMatching(final org.jdbi.v3.core.Handle h, final String pattern,
-                                    final boolean escape) {
+    private void dropTablesMatching(final org.jdbi.v3.core.Handle h, final String pattern, final boolean escape) {
         final String escapeClause = escape ? " ESCAPE '\\'" : "";
         final java.util.List<String> tables = h.createQuery("""
                 SELECT table_name FROM information_schema.tables
                  WHERE table_schema = :s
                    AND table_name LIKE :p
                 """ + escapeClause)
-            .bind("s", options.stagingSchema)
-            .bind("p", pattern)
-            .mapTo(String.class)
-            .list();
+                .bind("s", options.stagingSchema)
+                .bind("p", pattern)
+                .mapTo(String.class)
+                .list();
         for (final String t : tables) {
-            h.execute("DROP TABLE IF EXISTS \"%s\".\"%s\""
-                .formatted(options.stagingSchema, t));
+            h.execute("DROP TABLE IF EXISTS \"%s\".\"%s\"".formatted(options.stagingSchema, t));
         }
     }
 
@@ -141,9 +145,9 @@ public final class ExtractPhase {
                         rows_processed = :r,
                         completed_at = CASE WHEN :s IN ('COMPLETED', 'FAILED') THEN NOW() END
                 """.formatted(options.stagingSchema))
-            .bind("t", table)
-            .bind("s", status)
-            .bind("r", rows)
-            .execute());
+                .bind("t", table)
+                .bind("s", status)
+                .bind("r", rows)
+                .execute());
     }
 }

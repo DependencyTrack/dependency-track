@@ -57,7 +57,8 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
     @BeforeEach
     void beforeEach() throws Exception {
         // host.docker.internal may not always be available, so use testcontainer's
-        // solution for host port exposure instead: https://www.testcontainers.org/features/networking/#exposing-host-ports-to-the-container
+        // solution for host port exposure instead:
+        // https://www.testcontainers.org/features/networking/#exposing-host-ports-to-the-container
         Testcontainers.exposeHostPorts(wireMock.getRuntimeInfo().getHttpPort());
 
         super.beforeEach();
@@ -74,31 +75,44 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
 
         // Find the webhook notification publisher.
         final NotificationPublisher webhookPublisher = publishers.stream()
-                .filter(publisher -> publisher.name().equals("Webhook"))
+                .filter(publisher -> publisher.extensionName().equals("webhook"))
                 .findAny()
                 .orElseThrow(() -> new AssertionError("Unable to find webhook notification publisher"));
 
         // Create a webhook alert for NEW_VULNERABILITY notifications and point it to WireMock.
         final NotificationRule webhookRule = apiClient.createNotificationRule(new CreateNotificationRuleRequest(
-                "foo", "PORTFOLIO", "INFORMATIONAL", new CreateNotificationRuleRequest.Publisher(webhookPublisher.uuid())));
-        apiClient.updateNotificationRule(new UpdateNotificationRuleRequest(webhookRule.uuid(), webhookRule.name(), true, "PORTFOLIO",
-                "INFORMATIONAL", Set.of("BOM_PROCESSED"), /* language=JSON */ """
+                "foo",
+                "PORTFOLIO",
+                "INFORMATIONAL",
+                new CreateNotificationRuleRequest.Publisher(webhookPublisher.uuid())));
+        apiClient.updateNotificationRule(new UpdateNotificationRuleRequest(
+                webhookRule.uuid(),
+                webhookRule.name(),
+                true,
+                "PORTFOLIO",
+                "INFORMATIONAL",
+                Set.of("BOM_PROCESSED"), /* language=JSON */
+                """
                 {
                   "destinationUrl": "http://host.testcontainers.internal:%d/notification"
                 }
                 """.formatted(wireMock.getPort())));
 
-        wireMock.stubFor(post(urlPathEqualTo("/notification"))
-                .willReturn(aResponse()
-                        .withStatus(201)));
+        wireMock.stubFor(
+                post(urlPathEqualTo("/notification")).willReturn(aResponse().withStatus(201)));
 
         // Create a new internal vulnerability for jackson-databind.
-        apiClient.createVulnerability(new CreateVulnerabilityRequest("INT-123", "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H", List.of(917, 502), List.of(
-                new CreateVulnerabilityRequest.AffectedComponent("PURL", "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.2.2", "EXACT")
-        )));
+        apiClient.createVulnerability(new CreateVulnerabilityRequest(
+                "INT-123",
+                "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
+                List.of(917, 502),
+                List.of(new CreateVulnerabilityRequest.AffectedComponent(
+                        "PURL", "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.2.2", "EXACT"))));
 
         // Parse and base64 encode a BOM.
-        final byte[] bomBytes = getClass().getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json").readAllBytes();
+        final byte[] bomBytes = getClass()
+                .getResourceAsStream("/dtrack-apiserver-4.5.0.bom.json")
+                .readAllBytes();
         final String bomBase64 = Base64.getEncoder().encodeToString(bomBytes);
 
         // Upload the BOM
@@ -112,8 +126,7 @@ class BomProcessedNotificationDelayedE2ET extends AbstractE2ET {
     }
 
     private void verifyBomProcessedWebhookNotification() {
-        wireMock.verify(1, postRequestedFor(urlPathEqualTo("/notification"))
-                .withRequestBody(equalToJson("""
+        wireMock.verify(1, postRequestedFor(urlPathEqualTo("/notification")).withRequestBody(equalToJson("""
                         {
                           "notification" : {
                             "id" : "${json-unit.any-string}",

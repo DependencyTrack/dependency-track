@@ -99,6 +99,7 @@ class DexEngineImplTest {
 
     @Container
     private static final PostgresTestContainer postgresContainer = new PostgresTestContainer();
+
     private static final String WORKFLOW_TASK_QUEUE = "default";
     private static final String ACTIVITY_TASK_QUEUE = "default";
 
@@ -156,12 +157,11 @@ class DexEngineImplTest {
         registerWorkflowWorker("workflow-worker", 1);
         engine.start();
 
-        final UUID runId = engine.createRun(
-                new CreateWorkflowRunRequest<>("test", 1)
-                        .withConcurrencyKey("someConcurrencyKey")
-                        .withPriority(6)
-                        .withLabels(Map.of("label-a", "123", "label-b", "321"))
-                        .withArgument("someArgument"));
+        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
+                .withConcurrencyKey("someConcurrencyKey")
+                .withPriority(6)
+                .withLabels(Map.of("label-a", "123", "label-b", "321"))
+                .withArgument("someArgument"));
 
         final WorkflowRunMetadata completedRun = awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
@@ -174,53 +174,68 @@ class DexEngineImplTest {
         assertThat(completedRun.startedAt()).isNotNull();
         assertThat(completedRun.completedAt()).isNotNull();
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                event -> {
-                    assertThat(event.getId()).isEqualTo(-1);
-                    assertThat(event.hasTimestamp()).isTrue();
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        event -> {
+                            assertThat(event.getId()).isEqualTo(-1);
+                            assertThat(event.hasTimestamp()).isTrue();
 
-                    assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED);
-                },
-                event -> {
-                    assertThat(event.getId()).isEqualTo(-1);
-                    assertThat(event.hasTimestamp()).isTrue();
+                            assertThat(event.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED);
+                        },
+                        event -> {
+                            assertThat(event.getId()).isEqualTo(-1);
+                            assertThat(event.hasTimestamp()).isTrue();
 
-                    assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED);
-                    assertThat(event.getRunCreated().getWorkflowName()).isEqualTo("test");
-                    assertThat(event.getRunCreated().getWorkflowVersion()).isEqualTo(1);
-                    assertThat(event.getRunCreated().getConcurrencyKey()).isEqualTo("someConcurrencyKey");
-                    assertThat(event.getRunCreated().getPriority()).isEqualTo(6);
-                    assertThat(event.getRunCreated().getLabelsMap()).containsOnlyKeys("label-a", "label-b");
-                    assertThat(event.getRunCreated().getArgument().hasBinaryContent()).isTrue();
-                    assertThat(event.getRunCreated().getArgument().getBinaryContent().getData().toStringUtf8()).isEqualTo("someArgument");
-                },
-                event -> {
-                    assertThat(event.getId()).isEqualTo(-1);
-                    assertThat(event.hasTimestamp()).isTrue();
+                            assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED);
+                            assertThat(event.getRunCreated().getWorkflowName()).isEqualTo("test");
+                            assertThat(event.getRunCreated().getWorkflowVersion())
+                                    .isEqualTo(1);
+                            assertThat(event.getRunCreated().getConcurrencyKey())
+                                    .isEqualTo("someConcurrencyKey");
+                            assertThat(event.getRunCreated().getPriority()).isEqualTo(6);
+                            assertThat(event.getRunCreated().getLabelsMap()).containsOnlyKeys("label-a", "label-b");
+                            assertThat(event.getRunCreated().getArgument().hasBinaryContent())
+                                    .isTrue();
+                            assertThat(event.getRunCreated()
+                                            .getArgument()
+                                            .getBinaryContent()
+                                            .getData()
+                                            .toStringUtf8())
+                                    .isEqualTo("someArgument");
+                        },
+                        event -> {
+                            assertThat(event.getId()).isEqualTo(-1);
+                            assertThat(event.hasTimestamp()).isTrue();
 
-                    assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED);
-                },
-                event -> {
-                    assertThat(event.getId()).isEqualTo(0);
-                    assertThat(event.hasTimestamp()).isTrue();
+                            assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED);
+                        },
+                        event -> {
+                            assertThat(event.getId()).isEqualTo(0);
+                            assertThat(event.hasTimestamp()).isTrue();
 
-                    assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                    assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_COMPLETED);
-                    assertThat(event.getRunCompleted().getResult().hasBinaryContent()).isTrue();
-                    assertThat(event.getRunCompleted().getResult().getBinaryContent().getData().toStringUtf8()).isEqualTo("someResult");
-                    assertThat(event.getRunCompleted().hasFailure()).isFalse();
-                },
-                event -> {
-                    assertThat(event.getId()).isEqualTo(-1);
-                    assertThat(event.hasTimestamp()).isTrue();
+                            assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                            assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_COMPLETED);
+                            assertThat(event.getRunCompleted().getResult().hasBinaryContent())
+                                    .isTrue();
+                            assertThat(event.getRunCompleted()
+                                            .getResult()
+                                            .getBinaryContent()
+                                            .getData()
+                                            .toStringUtf8())
+                                    .isEqualTo("someResult");
+                            assertThat(event.getRunCompleted().hasFailure()).isFalse();
+                        },
+                        event -> {
+                            assertThat(event.getId()).isEqualTo(-1);
+                            assertThat(event.hasTimestamp()).isTrue();
 
-                    assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED);
-                });
+                            assertThat(event.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED);
+                        });
     }
 
     @Test
@@ -244,22 +259,24 @@ class DexEngineImplTest {
         assertThat(failedRun.startedAt()).isNotNull();
         assertThat(failedRun.completedAt()).isNotNull();
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                event -> assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                event -> {
-                    assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                    assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
-                    assertThat(event.getRunCompleted().hasResult()).isFalse();
-                    assertThat(event.getRunCompleted().getFailure().getMessage()).isEqualTo("Ouch!");
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        event -> assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        event -> {
+                            assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                            assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                            assertThat(event.getRunCompleted().hasResult()).isFalse();
+                            assertThat(event.getRunCompleted().getFailure().getMessage())
+                                    .isEqualTo("Ouch!");
+                        },
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
@@ -268,9 +285,23 @@ class DexEngineImplTest {
 
         registerWorkflow("test", (ctx, _) -> {
             if (executionCounter.incrementAndGet() == 1) {
-                ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
+                ctx.callActivity(
+                                "abc",
+                                ACTIVITY_TASK_QUEUE,
+                                null,
+                                voidConverter(),
+                                stringConverter(),
+                                RetryPolicy.ofDefault())
+                        .await();
             } else {
-                ctx.callActivity("def", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
+                ctx.callActivity(
+                                "def",
+                                ACTIVITY_TASK_QUEUE,
+                                null,
+                                voidConverter(),
+                                stringConverter(),
+                                RetryPolicy.ofDefault())
+                        .await();
             }
             return null;
         });
@@ -285,26 +316,33 @@ class DexEngineImplTest {
 
         awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                event -> assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                event -> assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
-                event -> assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                event -> assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                event -> assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
-                event -> assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
-                event -> {
-                    assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                    assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
-                    assertThat(event.getRunCompleted().getFailure().getMessage()).startsWith("Detected non-deterministic workflow execution");
-                },
-                event -> assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        event -> assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        event -> assertThat(event.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                        event -> assertThat(event.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        event -> assertThat(event.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        event -> assertThat(event.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
+                        event -> assertThat(event.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                        event -> {
+                            assertThat(event.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                            assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                            assertThat(event.getRunCompleted().getFailure().getMessage())
+                                    .startsWith("Detected non-deterministic workflow execution");
+                        },
+                        event -> assertThat(event.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
@@ -334,26 +372,30 @@ class DexEngineImplTest {
         assertThat(canceledRun.startedAt()).isNotNull();
         assertThat(canceledRun.completedAt()).isNotNull();
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CANCELED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                    assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_CANCELLED);
-                    assertThat(entry.getRunCompleted().hasResult()).isFalse();
-                    assertThat(entry.getRunCompleted().getFailure().getMessage()).isEqualTo("Stop it!");
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CANCELED),
+                        entry -> {
+                            assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                            assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_CANCELLED);
+                            assertThat(entry.getRunCompleted().hasResult()).isFalse();
+                            assertThat(entry.getRunCompleted().getFailure().getMessage())
+                                    .isEqualTo("Stop it!");
+                        },
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
@@ -369,24 +411,27 @@ class DexEngineImplTest {
 
         awaitRunStatus(runId, WorkflowRunStatus.COMPLETED, Duration.ofSeconds(10));
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED);
-                    assertThat(entry.getTimerCreated().getName()).isEqualTo("Sleep");
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> {
+                            assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED);
+                            assertThat(entry.getTimerCreated().getName()).isEqualTo("Sleep");
+                        },
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
@@ -410,32 +455,43 @@ class DexEngineImplTest {
 
         awaitRunStatus(runId, WorkflowRunStatus.COMPLETED, Duration.ofSeconds(10));
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(15))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(15)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
     void shouldWaitForChildRun() {
         registerWorkflow("foo", (ctx, _) -> {
-            final String childWorkflowResult =
-                    ctx.callChildWorkflow("bar", 1, null, WORKFLOW_TASK_QUEUE, null, "inputValue", stringConverter(), stringConverter()).await();
+            final String childWorkflowResult = ctx.callChildWorkflow(
+                            "bar",
+                            1,
+                            null,
+                            WORKFLOW_TASK_QUEUE,
+                            null,
+                            "inputValue",
+                            stringConverter(),
+                            stringConverter())
+                    .await();
             assertThat(childWorkflowResult).contains("inputValue-outputValue");
             return null;
         });
@@ -447,27 +503,33 @@ class DexEngineImplTest {
 
         awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
     void shouldFailWhenChildRunFails() {
         registerWorkflow("foo", (ctx, _) -> {
-            ctx.callChildWorkflow("bar", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
+            ctx.callChildWorkflow("bar", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter())
+                    .await();
             return null;
         });
         registerWorkflow("bar", (_, _) -> {
@@ -480,29 +542,39 @@ class DexEngineImplTest {
 
         awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_FAILED);
-                    assertThat(entry.getChildRunFailed().getFailure().getMessage()).isEqualTo("Oh no!");
-                },
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                    assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
-                    assertThat(entry.getRunCompleted().getFailure().getMessage()).matches("Run .+ of child workflow bar v1 failed");
-                    assertThat(entry.getRunCompleted().getFailure().getCause().getMessage()).isEqualTo("Oh no!");
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> {
+                            assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_FAILED);
+                            assertThat(entry.getChildRunFailed().getFailure().getMessage())
+                                    .isEqualTo("Oh no!");
+                        },
+                        entry -> {
+                            assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                            assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                            assertThat(entry.getRunCompleted().getFailure().getMessage())
+                                    .matches("Run .+ of child workflow bar v1 failed");
+                            assertThat(entry.getRunCompleted()
+                                            .getFailure()
+                                            .getCause()
+                                            .getMessage())
+                                    .isEqualTo("Oh no!");
+                        },
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
@@ -511,12 +583,15 @@ class DexEngineImplTest {
         final var grandChildRunIdReference = new AtomicReference<UUID>();
 
         registerWorkflow("parent", (ctx, _) -> {
-            ctx.callChildWorkflow("child", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
+            ctx.callChildWorkflow("child", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter())
+                    .await();
             return null;
         });
         registerWorkflow("child", (ctx, _) -> {
             childRunIdReference.set(ctx.runId());
-            ctx.callChildWorkflow("grand-child", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
+            ctx.callChildWorkflow(
+                            "grand-child", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter())
+                    .await();
             return null;
         });
         registerWorkflow("grand-child", (ctx, _) -> {
@@ -559,7 +634,8 @@ class DexEngineImplTest {
     void shouldSuspendAndResumeRunWhenRequested() {
         registerWorkflow("test", (ctx, _) -> {
             // Block for a moment so we get an opportunity to suspend the run.
-            ctx.waitForExternalEvent("foo", voidConverter(), Duration.ofSeconds(3)).await();
+            ctx.waitForExternalEvent("foo", voidConverter(), Duration.ofSeconds(3))
+                    .await();
             return null;
         });
         registerWorkflowWorker("workflow-worker", 1);
@@ -675,21 +751,27 @@ class DexEngineImplTest {
         void shouldNotCreateRunWhenAnotherRunWithSameInstanceIdIsInProgress() {
             registerWorkflow("test", stringConverter(), voidConverter(), (_, _) -> null);
 
-            UUID runId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("test", 1)
-                            .withWorkflowInstanceId("instanceId"));
+            UUID runId =
+                    engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withWorkflowInstanceId("instanceId"));
             assertThat(runId).isNotNull();
 
-            runId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("test", 1)
-                            .withWorkflowInstanceId("instanceId"));
+            runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withWorkflowInstanceId("instanceId"));
             assertThat(runId).isNull();
         }
 
         @Test
         void shouldFailChildWorkflowWhenRunSameInstanceIdIsInProgress() {
             registerWorkflow("parent", (ctx, _) -> {
-                ctx.callChildWorkflow("child", 1, "instanceId", WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
+                ctx.callChildWorkflow(
+                                "child",
+                                1,
+                                "instanceId",
+                                WORKFLOW_TASK_QUEUE,
+                                null,
+                                null,
+                                voidConverter(),
+                                voidConverter())
+                        .await();
                 return null;
             });
             registerWorkflow("child", (ctx, _) -> {
@@ -699,35 +781,47 @@ class DexEngineImplTest {
             registerWorkflowWorker("workflow-worker", 2);
             engine.start();
 
-            final UUID childRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("child", 1)
-                            .withWorkflowInstanceId("instanceId"));
+            final UUID childRunId =
+                    engine.createRun(new CreateWorkflowRunRequest<>("child", 1).withWorkflowInstanceId("instanceId"));
             awaitRunStatus(childRunId, WorkflowRunStatus.RUNNING);
 
-            final UUID parentRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("parent", 1));
+            final UUID parentRunId = engine.createRun(new CreateWorkflowRunRequest<>("parent", 1));
             awaitRunStatus(parentRunId, WorkflowRunStatus.FAILED);
 
-            final Stream<WorkflowEvent> historyEvents = engine
-                    .listRunHistory(new ListWorkflowRunHistoryRequest(parentRunId))
-                    .items()
-                    .stream()
-                    .map(WorkflowRunHistoryEntry::event);
-            assertThat(historyEvents).satisfiesExactly(
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_CREATED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                    entry -> {
-                        assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_FAILED);
-                        assertThat(entry.getChildRunFailed().getFailure().hasInternalFailureDetails()).isTrue();
-                        assertThat(entry.getChildRunFailed().getFailure().getMessage()).isEqualTo(
-                                "Another run already exists in non-terminal state for instance ID: instanceId");
-                    },
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+            final Stream<WorkflowEvent> historyEvents =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(parentRunId)).items().stream()
+                            .map(WorkflowRunHistoryEntry::event);
+            assertThat(historyEvents)
+                    .satisfiesExactly(
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                            entry ->
+                                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                            entry ->
+                                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_CREATED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                            entry -> {
+                                assertThat(entry.getSubjectCase())
+                                        .isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_FAILED);
+                                assertThat(entry.getChildRunFailed()
+                                                .getFailure()
+                                                .hasInternalFailureDetails())
+                                        .isTrue();
+                                assertThat(entry.getChildRunFailed()
+                                                .getFailure()
+                                                .getMessage())
+                                        .isEqualTo(
+                                                "Another run already exists in non-terminal state for instance ID: instanceId");
+                            },
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
         }
 
         @Test
@@ -735,19 +829,17 @@ class DexEngineImplTest {
             registerWorkflow("test", stringConverter(), voidConverter(), (_, _) -> null);
 
             engine.createRuns(List.of(
-                    new CreateWorkflowRunRequest<>("test", 1)
-                            .withWorkflowInstanceId("instanceId"),
-                    new CreateWorkflowRunRequest<>("test", 1)
-                            .withWorkflowInstanceId("instanceId"),
-                    new CreateWorkflowRunRequest<>("test", 1)
-                            .withWorkflowInstanceId("instanceId")));
+                    new CreateWorkflowRunRequest<>("test", 1).withWorkflowInstanceId("instanceId"),
+                    new CreateWorkflowRunRequest<>("test", 1).withWorkflowInstanceId("instanceId"),
+                    new CreateWorkflowRunRequest<>("test", 1).withWorkflowInstanceId("instanceId")));
 
-            assertThat(meterRegistry.get("dt.dex.engine.runs.created")
-                    .tags("workflowName", "test", "workflowVersion", "1")
-                    .counter()
-                    .count()).isEqualTo(1);
+            assertThat(meterRegistry
+                            .get("dt.dex.engine.runs.created")
+                            .tags("workflowName", "test", "workflowVersion", "1")
+                            .counter()
+                            .count())
+                    .isEqualTo(1);
         }
-
     }
 
     @Nested
@@ -766,14 +858,12 @@ class DexEngineImplTest {
 
             final var concurrencyKey = "concurrencyKey";
 
-            final List<CreateWorkflowRunResponse> responses = engine.createRuns(
-                    Stream.of(1, 2, 3, 4, 5)
-                            .<CreateWorkflowRunRequest<?>>map(
-                                    number -> new CreateWorkflowRunRequest<>("test", 1)
-                                            .withConcurrencyKey(concurrencyKey)
-                                            .withPriority(number)
-                                            .withArgument(String.valueOf(number)))
-                            .toList());
+            final List<CreateWorkflowRunResponse> responses = engine.createRuns(Stream.of(1, 2, 3, 4, 5)
+                    .<CreateWorkflowRunRequest<?>>map(number -> new CreateWorkflowRunRequest<>("test", 1)
+                            .withConcurrencyKey(concurrencyKey)
+                            .withPriority(number)
+                            .withArgument(String.valueOf(number)))
+                    .toList());
 
             for (final var response : responses) {
                 awaitRunStatus(response.runId(), WorkflowRunStatus.COMPLETED, Duration.ofSeconds(5));
@@ -785,7 +875,8 @@ class DexEngineImplTest {
         @Test
         void shouldBlockContenderWhileConcurrencyKeyHolderIsExecuting() throws Exception {
             registerWorkflow("holder", (ctx, _) -> {
-                ctx.waitForExternalEvent("resume", voidConverter(), Duration.ofSeconds(30)).await();
+                ctx.waitForExternalEvent("resume", voidConverter(), Duration.ofSeconds(30))
+                        .await();
                 return null;
             });
             registerWorkflow("contender", (_, _) -> null);
@@ -793,24 +884,22 @@ class DexEngineImplTest {
             engine.start();
 
             final UUID holderRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("holder", 1)
-                            .withConcurrencyKey("someConcurrencyKey"));
+                    new CreateWorkflowRunRequest<>("holder", 1).withConcurrencyKey("someConcurrencyKey"));
             await("Holder to await the external event")
                     .atMost(Duration.ofSeconds(5))
-                    .untilAsserted(
-                            () -> assertThat(engine.getRunMetadataById(holderRunId).updatedAt())
-                                    .isNotNull());
+                    .untilAsserted(() -> assertThat(
+                                    engine.getRunMetadataById(holderRunId).updatedAt())
+                            .isNotNull());
 
             final UUID contenderRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("contender", 1)
-                            .withConcurrencyKey("someConcurrencyKey"));
+                    new CreateWorkflowRunRequest<>("contender", 1).withConcurrencyKey("someConcurrencyKey"));
 
             await("Contender to stay pending while holder is executing")
                     .during(Duration.ofMillis(750))
                     .atMost(Duration.ofSeconds(5))
-                    .untilAsserted(
-                            () -> assertThat(engine.getRunMetadataById(contenderRunId).status())
-                                    .isEqualTo(WorkflowRunStatus.CREATED));
+                    .untilAsserted(() -> assertThat(
+                                    engine.getRunMetadataById(contenderRunId).status())
+                            .isEqualTo(WorkflowRunStatus.CREATED));
 
             // The blocked key's wakeup must have been verified and consumed.
             // The holder's later completion is what re-creates it.
@@ -818,18 +907,17 @@ class DexEngineImplTest {
             await("Blocked key's wakeup to be consumed")
                     .atMost(Duration.ofSeconds(5))
                     .untilAsserted(() -> {
-                        final Integer wakeupCount = jdbi.withHandle(handle -> handle
-                                .createQuery("""
+                        final Integer wakeupCount = jdbi.withHandle(handle ->
+                                handle.createQuery("""
                                         select count(*)
                                           from dex_workflow_concurrency_key_wakeup
                                          where concurrency_key = 'someConcurrencyKey'
-                                        """)
-                                .mapTo(Integer.class)
-                                .one());
+                                        """).mapTo(Integer.class).one());
                         assertThat(wakeupCount).isZero();
                     });
 
-            engine.sendExternalEvent(new ExternalEvent(holderRunId, "resume", null)).get(1, TimeUnit.SECONDS);
+            engine.sendExternalEvent(new ExternalEvent(holderRunId, "resume", null))
+                    .get(1, TimeUnit.SECONDS);
             awaitRunStatus(holderRunId, WorkflowRunStatus.COMPLETED);
             awaitRunStatus(contenderRunId, WorkflowRunStatus.COMPLETED);
         }
@@ -837,7 +925,8 @@ class DexEngineImplTest {
         @Test
         void shouldBlockContenderWhileConcurrencyKeyHolderIsSuspended() throws Exception {
             registerWorkflow("holder", (ctx, _) -> {
-                ctx.waitForExternalEvent("resume", voidConverter(), Duration.ofSeconds(30)).await();
+                ctx.waitForExternalEvent("resume", voidConverter(), Duration.ofSeconds(30))
+                        .await();
                 return null;
             });
             registerWorkflow("contender", (_, _) -> null);
@@ -845,29 +934,28 @@ class DexEngineImplTest {
             engine.start();
 
             final UUID holderRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("holder", 1)
-                            .withConcurrencyKey("someConcurrencyKey"));
+                    new CreateWorkflowRunRequest<>("holder", 1).withConcurrencyKey("someConcurrencyKey"));
             await("Holder to await the external event")
                     .atMost(Duration.ofSeconds(5))
-                    .untilAsserted(
-                            () -> assertThat(engine.getRunMetadataById(holderRunId).updatedAt())
-                                    .isNotNull());
+                    .untilAsserted(() -> assertThat(
+                                    engine.getRunMetadataById(holderRunId).updatedAt())
+                            .isNotNull());
             engine.requestRunSuspension(holderRunId);
             awaitRunStatus(holderRunId, WorkflowRunStatus.SUSPENDED);
 
             final UUID contenderRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("contender", 1)
-                            .withConcurrencyKey("someConcurrencyKey"));
+                    new CreateWorkflowRunRequest<>("contender", 1).withConcurrencyKey("someConcurrencyKey"));
 
             await("Contender to stay pending while holder is suspended")
                     .during(Duration.ofMillis(750))
                     .atMost(Duration.ofSeconds(5))
-                    .untilAsserted(
-                            () -> assertThat(engine.getRunMetadataById(contenderRunId).status())
-                                    .isEqualTo(WorkflowRunStatus.CREATED));
+                    .untilAsserted(() -> assertThat(
+                                    engine.getRunMetadataById(contenderRunId).status())
+                            .isEqualTo(WorkflowRunStatus.CREATED));
 
             engine.requestRunResumption(holderRunId);
-            engine.sendExternalEvent(new ExternalEvent(holderRunId, "resume", null)).get(1, TimeUnit.SECONDS);
+            engine.sendExternalEvent(new ExternalEvent(holderRunId, "resume", null))
+                    .get(1, TimeUnit.SECONDS);
             awaitRunStatus(holderRunId, WorkflowRunStatus.COMPLETED);
             awaitRunStatus(contenderRunId, WorkflowRunStatus.COMPLETED);
         }
@@ -875,7 +963,8 @@ class DexEngineImplTest {
         @Test
         void shouldScheduleContenderWhenConcurrencyKeyHolderIsCancelled() {
             registerWorkflow("holder", (ctx, _) -> {
-                ctx.waitForExternalEvent("never", voidConverter(), Duration.ofSeconds(60)).await();
+                ctx.waitForExternalEvent("never", voidConverter(), Duration.ofSeconds(60))
+                        .await();
                 return null;
             });
             registerWorkflow("contender", (_, _) -> null);
@@ -883,17 +972,15 @@ class DexEngineImplTest {
             engine.start();
 
             final UUID holderRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("holder", 1)
-                            .withConcurrencyKey("someConcurrencyKey"));
+                    new CreateWorkflowRunRequest<>("holder", 1).withConcurrencyKey("someConcurrencyKey"));
             await("Holder to await the external event")
                     .atMost(Duration.ofSeconds(5))
-                    .untilAsserted(
-                            () -> assertThat(engine.getRunMetadataById(holderRunId).updatedAt())
-                                    .isNotNull());
+                    .untilAsserted(() -> assertThat(
+                                    engine.getRunMetadataById(holderRunId).updatedAt())
+                            .isNotNull());
 
             final UUID contenderRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("contender", 1)
-                            .withConcurrencyKey("someConcurrencyKey"));
+                    new CreateWorkflowRunRequest<>("contender", 1).withConcurrencyKey("someConcurrencyKey"));
 
             engine.requestRunCancellation(holderRunId, "someReason");
             awaitRunStatus(holderRunId, WorkflowRunStatus.CANCELLED);
@@ -905,28 +992,25 @@ class DexEngineImplTest {
             final var secondGenerationStarted = new CountDownLatch(1);
             registerWorkflow("holder", stringConverter(), voidConverter(), (ctx, arg) -> {
                 if ("first".equals(arg)) {
-                    ctx.continueAsNew(
-                            new ContinueAsNewOptions<String>()
-                                    .withArgument("second"));
+                    ctx.continueAsNew(new ContinueAsNewOptions<String>().withArgument("second"));
                     return null;
                 }
 
                 secondGenerationStarted.countDown();
-                ctx.waitForExternalEvent("resume", voidConverter(), Duration.ofSeconds(30)).await();
+                ctx.waitForExternalEvent("resume", voidConverter(), Duration.ofSeconds(30))
+                        .await();
                 return null;
             });
             registerWorkflow("contender", (_, _) -> null);
             registerWorkflowWorker("workflow-worker", 2);
             engine.start();
 
-            final UUID holderRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("holder", 1)
-                            .withConcurrencyKey("someConcurrencyKey")
-                            .withArgument("first"));
+            final UUID holderRunId = engine.createRun(new CreateWorkflowRunRequest<>("holder", 1)
+                    .withConcurrencyKey("someConcurrencyKey")
+                    .withArgument("first"));
 
             final UUID contenderRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("contender", 1)
-                            .withConcurrencyKey("someConcurrencyKey"));
+                    new CreateWorkflowRunRequest<>("contender", 1).withConcurrencyKey("someConcurrencyKey"));
 
             // The continued run keeps holding its key, so the contender must
             // stay blocked across the continue-as-new boundary.
@@ -934,11 +1018,12 @@ class DexEngineImplTest {
             await("Contender to stay pending while holder continues as new")
                     .during(Duration.ofMillis(750))
                     .atMost(Duration.ofSeconds(5))
-                    .untilAsserted(
-                            () -> assertThat(engine.getRunMetadataById(contenderRunId).status())
-                                    .isEqualTo(WorkflowRunStatus.CREATED));
+                    .untilAsserted(() -> assertThat(
+                                    engine.getRunMetadataById(contenderRunId).status())
+                            .isEqualTo(WorkflowRunStatus.CREATED));
 
-            engine.sendExternalEvent(new ExternalEvent(holderRunId, "resume", null)).get(1, TimeUnit.SECONDS);
+            engine.sendExternalEvent(new ExternalEvent(holderRunId, "resume", null))
+                    .get(1, TimeUnit.SECONDS);
             awaitRunStatus(holderRunId, WorkflowRunStatus.COMPLETED);
             awaitRunStatus(contenderRunId, WorkflowRunStatus.COMPLETED);
         }
@@ -947,8 +1032,15 @@ class DexEngineImplTest {
         void shouldExecuteChildWorkflowWithConcurrencyKey() {
             registerWorkflow("parent", (ctx, _) -> {
                 ctx.callChildWorkflow(
-                        "child", 1, null, WORKFLOW_TASK_QUEUE,
-                        "childConcurrencyKey", null, voidConverter(), voidConverter()).await();
+                                "child",
+                                1,
+                                null,
+                                WORKFLOW_TASK_QUEUE,
+                                "childConcurrencyKey",
+                                null,
+                                voidConverter(),
+                                voidConverter())
+                        .await();
                 return null;
             });
             registerWorkflow("child", (_, _) -> null);
@@ -978,29 +1070,26 @@ class DexEngineImplTest {
             engine.start();
 
             // While the queue is paused, the scheduler leaves the wakeup alone.
-            engine.updateTaskQueue(new UpdateTaskQueueRequest(
-                    TaskType.WORKFLOW, WORKFLOW_TASK_QUEUE, TaskQueueStatus.PAUSED, null));
+            engine.updateTaskQueue(
+                    new UpdateTaskQueueRequest(TaskType.WORKFLOW, WORKFLOW_TASK_QUEUE, TaskQueueStatus.PAUSED, null));
             final UUID runId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("test", 1)
-                            .withConcurrencyKey("someConcurrencyKey"));
+                    new CreateWorkflowRunRequest<>("test", 1).withConcurrencyKey("someConcurrencyKey"));
 
             final Jdbi jdbi = Jdbi.create(dataSource);
-            final Integer wakeupCount = jdbi.withHandle(handle -> handle
-                    .createQuery("""
+            final Integer wakeupCount = jdbi.withHandle(
+                    handle -> handle.createQuery("""
                             select count(*)
                               from dex_workflow_concurrency_key_wakeup
                              where concurrency_key = 'someConcurrencyKey'
-                            """)
-                    .mapTo(Integer.class)
-                    .one());
+                            """).mapTo(Integer.class).one());
             assertThat(wakeupCount).isEqualTo(1);
 
             // Simulate the wakeup loss of a crash (the table is unlogged).
             jdbi.useHandle(handle -> handle.execute("truncate table dex_workflow_concurrency_key_wakeup"));
 
             // No write path will leave another wakeup for this run. Only the repair pass can revive it.
-            engine.updateTaskQueue(new UpdateTaskQueueRequest(
-                    TaskType.WORKFLOW, WORKFLOW_TASK_QUEUE, TaskQueueStatus.ACTIVE, null));
+            engine.updateTaskQueue(
+                    new UpdateTaskQueueRequest(TaskType.WORKFLOW, WORKFLOW_TASK_QUEUE, TaskQueueStatus.ACTIVE, null));
             awaitRunStatus(runId, WorkflowRunStatus.COMPLETED, Duration.ofSeconds(10));
         }
     }
@@ -1008,7 +1097,8 @@ class DexEngineImplTest {
     @Test
     void shouldWaitForExternalEvent() throws Exception {
         registerWorkflow("test", (ctx, _) -> {
-            ctx.waitForExternalEvent("foo-123", voidConverter(), Duration.ofSeconds(30)).await();
+            ctx.waitForExternalEvent("foo-123", voidConverter(), Duration.ofSeconds(30))
+                    .await();
             return null;
         });
         registerWorkflowWorker("workflow-worker", 1);
@@ -1016,38 +1106,41 @@ class DexEngineImplTest {
 
         final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
-        await("Update")
-                .atMost(Duration.ofSeconds(5))
-                .untilAsserted(() -> {
-                    final WorkflowRunMetadata run = engine.getRunMetadataById(runId);
-                    assertThat(run.updatedAt()).isNotNull();
-                });
+        await("Update").atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            final WorkflowRunMetadata run = engine.getRunMetadataById(runId);
+            assertThat(run.updatedAt()).isNotNull();
+        });
 
         engine.sendExternalEvent(new ExternalEvent(runId, "foo-123", null)).get(1, TimeUnit.SECONDS);
 
         awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.EXTERNAL_EVENT_RECEIVED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.EXTERNAL_EVENT_RECEIVED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
     void shouldFailWhenWaitingForExternalEventTimesOut() {
         registerWorkflow("test", (ctx, _) -> {
-            ctx.waitForExternalEvent("foo-123", voidConverter(), Duration.ofMillis(5)).await();
+            ctx.waitForExternalEvent("foo-123", voidConverter(), Duration.ofMillis(5))
+                    .await();
             return null;
         });
         registerWorkflowWorker("workflow-worker", 1);
@@ -1057,25 +1150,29 @@ class DexEngineImplTest {
 
         awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                    assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
-                    assertThat(entry.getRunCompleted().getFailure().getMessage()).isEqualTo("Timed out while waiting for external event");
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
+                        entry -> {
+                            assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                            assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                            assertThat(entry.getRunCompleted().getFailure().getMessage())
+                                    .isEqualTo("Timed out while waiting for external event");
+                        },
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Nested
@@ -1086,7 +1183,8 @@ class DexEngineImplTest {
             final var sideEffectInvocationCounter = new AtomicInteger();
 
             registerWorkflow("test", (ctx, _) -> {
-                ctx.executeSideEffect("sideEffect", sideEffectInvocationCounter::incrementAndGet).await();
+                ctx.executeSideEffect("sideEffect", sideEffectInvocationCounter::incrementAndGet)
+                        .await();
 
                 ctx.createTimer("sleep", Duration.ofMillis(10)).await();
                 return null;
@@ -1100,32 +1198,45 @@ class DexEngineImplTest {
 
             assertThat(sideEffectInvocationCounter.get()).isEqualTo(1);
 
-            final Stream<WorkflowEvent> historyEvents = engine
-                    .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                    .items()
-                    .stream()
-                    .map(WorkflowRunHistoryEntry::event);
-            assertThat(historyEvents).satisfiesExactly(
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                    entry -> {
-                        assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.SIDE_EFFECT_EXECUTED);
-                        assertThat(entry.getSideEffectExecuted().getName()).isEqualTo("sideEffect");
-                    },
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+            final Stream<WorkflowEvent> historyEvents =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                            .map(WorkflowRunHistoryEntry::event);
+            assertThat(historyEvents)
+                    .satisfiesExactly(
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                            entry ->
+                                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                            entry ->
+                                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                            entry -> {
+                                assertThat(entry.getSubjectCase())
+                                        .isEqualTo(WorkflowEvent.SubjectCase.SIDE_EFFECT_EXECUTED);
+                                assertThat(entry.getSideEffectExecuted().getName())
+                                        .isEqualTo("sideEffect");
+                            },
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.TIMER_CREATED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.TIMER_ELAPSED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
         }
 
         @Test
         void shouldNotAllowNestedSideEffects() {
             registerWorkflow("test", (ctx, _) -> {
-                ctx.executeSideEffect("outerSideEffect", () -> ctx.executeSideEffect("nestedSideEffect", () -> {
-                }).await()).await();
+                ctx.executeSideEffect(
+                                "outerSideEffect",
+                                () -> ctx.executeSideEffect("nestedSideEffect", () -> {})
+                                        .await())
+                        .await();
                 return null;
             });
             registerWorkflowWorker("workflow-worker", 1);
@@ -1135,31 +1246,49 @@ class DexEngineImplTest {
 
             awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-            final Stream<WorkflowEvent> historyEvents = engine
-                    .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                    .items()
-                    .stream()
-                    .map(WorkflowRunHistoryEntry::event);
-            assertThat(historyEvents).satisfiesExactly(
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                    entry -> {
-                        assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                        assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
-                        assertThat(entry.getRunCompleted().getFailure().hasSideEffectFailureDetails()).isTrue();
-                        assertThat(entry.getRunCompleted().getFailure().getCause().hasApplicationFailureDetails()).isTrue();
-                        assertThat(entry.getRunCompleted().getFailure().getCause().getMessage()).isEqualTo("Nested side effects are not allowed");
-                    },
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+            final Stream<WorkflowEvent> historyEvents =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                            .map(WorkflowRunHistoryEntry::event);
+            assertThat(historyEvents)
+                    .satisfiesExactly(
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                            entry ->
+                                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                            entry ->
+                                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                            entry -> {
+                                assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                                assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                                assertThat(entry.getRunCompleted().getFailure().hasSideEffectFailureDetails())
+                                        .isTrue();
+                                assertThat(entry.getRunCompleted()
+                                                .getFailure()
+                                                .getCause()
+                                                .hasApplicationFailureDetails())
+                                        .isTrue();
+                                assertThat(entry.getRunCompleted()
+                                                .getFailure()
+                                                .getCause()
+                                                .getMessage())
+                                        .isEqualTo("Nested side effects are not allowed");
+                            },
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
         }
-
     }
 
     @Test
     void shouldCallActivity() {
         registerWorkflow("test", (ctx, _) -> {
-            ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
+            ctx.callActivity(
+                            "abc",
+                            ACTIVITY_TASK_QUEUE,
+                            null,
+                            voidConverter(),
+                            stringConverter(),
+                            RetryPolicy.ofDefault())
+                    .await();
             return null;
         });
         registerActivity("abc", voidConverter(), stringConverter(), (_, _) -> "123");
@@ -1171,33 +1300,48 @@ class DexEngineImplTest {
 
         awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
     void shouldCreateMultipleActivitiesConcurrently() {
         registerWorkflow("test", voidConverter(), stringConverter(), (ctx, _) -> {
             final List<Awaitable<String>> awaitables = List.of(
-                    ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, "first", stringConverter(), stringConverter(), RetryPolicy.ofDefault()),
-                    ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, "second", stringConverter(), stringConverter(), RetryPolicy.ofDefault()));
+                    ctx.callActivity(
+                            "abc",
+                            ACTIVITY_TASK_QUEUE,
+                            "first",
+                            stringConverter(),
+                            stringConverter(),
+                            RetryPolicy.ofDefault()),
+                    ctx.callActivity(
+                            "abc",
+                            ACTIVITY_TASK_QUEUE,
+                            "second",
+                            stringConverter(),
+                            stringConverter(),
+                            RetryPolicy.ofDefault()));
 
-            return awaitables.stream()
-                    .map(Awaitable::await)
-                    .collect(Collectors.joining(", "));
+            return awaitables.stream().map(Awaitable::await).collect(Collectors.joining(", "));
         });
         registerActivity("abc", stringConverter(), stringConverter(), (_, arg) -> arg);
         registerWorkflowWorker("workflow-worker", 1);
@@ -1211,34 +1355,35 @@ class DexEngineImplTest {
         // Workflow task events (WORKFLOW_TASK_STARTED, WORKFLOW_TASK_COMPLETED) are
         // non-deterministically interleaved with activity completions. Filter them out
         // to only assert the deterministic event ordering.
-        final List<WorkflowEvent> historyEvents = engine
-                .listRunHistory(
-                        new ListWorkflowRunHistoryRequest(runId)
-                                .withLimit(15))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event)
-                .filter(event -> event.getSubjectCase() != WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED
-                        && event.getSubjectCase() != WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED)
-                .toList();
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED));
+        final List<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(15)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event)
+                        .filter(event -> event.getSubjectCase() != WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED
+                                && event.getSubjectCase() != WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED)
+                        .toList();
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED));
     }
 
     @Test
     void shouldRetryFailingActivity() {
-        final var retryPolicy = RetryPolicy.ofDefault()
-                .withMaxDelay(Duration.ofMillis(10))
-                .withMaxAttempts(3);
+        final var retryPolicy =
+                RetryPolicy.ofDefault().withMaxDelay(Duration.ofMillis(10)).withMaxAttempts(3);
 
         registerWorkflow("test", (ctx, arg) -> {
-            ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), retryPolicy).await();
+            ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), retryPolicy)
+                    .await();
             return null;
         });
         registerActivity("abc", voidConverter(), stringConverter(), (_, _) -> {
@@ -1252,30 +1397,43 @@ class DexEngineImplTest {
 
         awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(20))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_FAILED);
-                    assertThat(entry.getActivityTaskFailed().getAttempts()).isEqualTo(3);
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(20)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> {
+                            assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_FAILED);
+                            assertThat(entry.getActivityTaskFailed().getAttempts())
+                                    .isEqualTo(3);
+                        },
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
     void shouldNotRetryActivityFailingWithTerminalException() {
         registerWorkflow("test", (ctx, _) -> {
-            ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
+            ctx.callActivity(
+                            "abc",
+                            ACTIVITY_TASK_QUEUE,
+                            null,
+                            voidConverter(),
+                            stringConverter(),
+                            RetryPolicy.ofDefault())
+                    .await();
             return null;
         });
         registerActivity("abc", voidConverter(), stringConverter(), (_, _) -> {
@@ -1289,26 +1447,31 @@ class DexEngineImplTest {
 
         awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_FAILED);
-                },
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                    assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> {
+                            assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_FAILED);
+                        },
+                        entry -> {
+                            assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                            assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                        },
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
@@ -1328,7 +1491,14 @@ class DexEngineImplTest {
         final var activityInvocations = new AtomicInteger(0);
 
         registerWorkflow("test", (ctx, _) -> {
-            ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, "input", stringConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
+            ctx.callActivity(
+                            "abc",
+                            ACTIVITY_TASK_QUEUE,
+                            "input",
+                            stringConverter(),
+                            stringConverter(),
+                            RetryPolicy.ofDefault())
+                    .await();
             return null;
         });
         registerActivity("abc", throwingArgumentConverter, stringConverter(), (_, arg) -> {
@@ -1345,28 +1515,34 @@ class DexEngineImplTest {
 
         assertThat(activityInvocations).hasValue(0);
 
-        final List<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(20))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event)
-                .toList();
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_FAILED);
-                    assertThat(entry.getActivityTaskFailed().getAttempts()).isEqualTo(1);
-                },
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                    assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final List<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(20)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event)
+                        .toList();
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> {
+                            assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_FAILED);
+                            assertThat(entry.getActivityTaskFailed().getAttempts())
+                                    .isEqualTo(1);
+                        },
+                        entry -> {
+                            assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                            assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                        },
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Test
@@ -1384,7 +1560,14 @@ class DexEngineImplTest {
         };
 
         registerWorkflow("test", (ctx, _) -> {
-            ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), stringConverter(), RetryPolicy.ofDefault()).await();
+            ctx.callActivity(
+                            "abc",
+                            ACTIVITY_TASK_QUEUE,
+                            null,
+                            voidConverter(),
+                            stringConverter(),
+                            RetryPolicy.ofDefault())
+                    .await();
             return null;
         });
         registerActivity("abc", voidConverter(), throwingResultConverter, (_, _) -> "result");
@@ -1396,28 +1579,34 @@ class DexEngineImplTest {
 
         awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-        final List<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(20))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event)
-                .toList();
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_FAILED);
-                    assertThat(entry.getActivityTaskFailed().getAttempts()).isEqualTo(1);
-                },
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                    assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final List<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(20)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event)
+                        .toList();
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> {
+                            assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_FAILED);
+                            assertThat(entry.getActivityTaskFailed().getAttempts())
+                                    .isEqualTo(1);
+                        },
+                        entry -> {
+                            assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                            assertThat(entry.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
+                        },
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Nested
@@ -1425,7 +1614,13 @@ class DexEngineImplTest {
 
         @Test
         void shouldRefuseToStartWhenActivityLockTimeoutIsTooShortForHeartbeatInterval() {
-            engine.registerActivityInternal("test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(1), (_, _) -> null);
+            engine.registerActivityInternal(
+                    "test",
+                    voidConverter(),
+                    voidConverter(),
+                    ACTIVITY_TASK_QUEUE,
+                    Duration.ofSeconds(1),
+                    (_, _) -> null);
 
             assertThatExceptionOfType(IllegalStateException.class)
                     .isThrownBy(engine::start)
@@ -1439,13 +1634,19 @@ class DexEngineImplTest {
             final var firstAttemptStarted = new CountDownLatch(1);
 
             registerWorkflow("test", (ctx, _) -> {
-                ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
+                ctx.callActivity(
+                                "test",
+                                ACTIVITY_TASK_QUEUE,
+                                null,
+                                voidConverter(),
+                                voidConverter(),
+                                RetryPolicy.ofDefault())
+                        .await();
                 return null;
             });
 
             engine.registerActivityInternal(
-                    "test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(3),
-                    (_, _) -> {
+                    "test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(3), (_, _) -> {
                         if (invocations.incrementAndGet() > 1) {
                             return null;
                         }
@@ -1472,14 +1673,13 @@ class DexEngineImplTest {
             assertThat(firstAttemptStarted.await(30, TimeUnit.SECONDS)).isTrue();
 
             // Steal the lock, as another worker taking over the task would.
-            final int updatedTasks = Jdbi.create(dataSource).withHandle(handle -> handle
-                    .createUpdate("""
+            final int updatedTasks = Jdbi.create(dataSource)
+                    .withHandle(handle ->
+                            handle.createUpdate("""
                             update dex_activity_task
                                set lock_version = lock_version + 1
                              where workflow_run_id = :runId
-                            """)
-                    .bind("runId", runId)
-                    .execute());
+                            """).bind("runId", runId).execute());
             assertThat(updatedTasks).isOne();
 
             awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
@@ -1495,11 +1695,19 @@ class DexEngineImplTest {
             final var firstAttemptStarted = new CountDownLatch(1);
             final var lockStolen = new CountDownLatch(1);
 
-            registerWorkflow("test", (ctx, _) -> ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await());
+            registerWorkflow(
+                    "test",
+                    (ctx, _) -> ctx.callActivity(
+                                    "test",
+                                    ACTIVITY_TASK_QUEUE,
+                                    null,
+                                    voidConverter(),
+                                    voidConverter(),
+                                    RetryPolicy.ofDefault())
+                            .await());
 
             engine.registerActivityInternal(
-                    "test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(3),
-                    (_, _) -> {
+                    "test", voidConverter(), voidConverter(), ACTIVITY_TASK_QUEUE, Duration.ofSeconds(3), (_, _) -> {
                         if (invocations.incrementAndGet() > 1) {
                             return null;
                         }
@@ -1525,14 +1733,13 @@ class DexEngineImplTest {
             final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
             assertThat(firstAttemptStarted.await(30, TimeUnit.SECONDS)).isTrue();
 
-            final int updatedTasks = Jdbi.create(dataSource).withHandle(handle -> handle
-                    .createUpdate("""
+            final int updatedTasks = Jdbi.create(dataSource)
+                    .withHandle(handle ->
+                            handle.createUpdate("""
                             update dex_activity_task
                                set lock_version = lock_version + 1
                              where workflow_run_id = :runId
-                            """)
-                    .bind("runId", runId)
-                    .execute());
+                            """).bind("runId", runId).execute());
             assertThat(updatedTasks).isOne();
             lockStolen.countDown();
 
@@ -1540,7 +1747,6 @@ class DexEngineImplTest {
             awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
             assertThat(invocations.get()).isGreaterThanOrEqualTo(2);
         }
-
     }
 
     @Test
@@ -1553,13 +1759,7 @@ class DexEngineImplTest {
                 .withMaxAttempts(2);
 
         registerWorkflow("test", (ctx, _) -> {
-            ctx.callActivity(
-                            "test",
-                            ACTIVITY_TASK_QUEUE,
-                            null,
-                            voidConverter(),
-                            voidConverter(),
-                            retryPolicy)
+            ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), retryPolicy)
                     .await();
             return null;
         });
@@ -1587,11 +1787,10 @@ class DexEngineImplTest {
         final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
         awaitRunStatus(runId, WorkflowRunStatus.FAILED);
-        await("Activity executions to be interrupted")
-                .untilAsserted(() -> {
-                    assertThat(invocations).hasValue(2);
-                    assertThat(interruptions).hasValue(2);
-                });
+        await("Activity executions to be interrupted").untilAsserted(() -> {
+            assertThat(invocations).hasValue(2);
+            assertThat(interruptions).hasValue(2);
+        });
     }
 
     @Test
@@ -1600,7 +1799,14 @@ class DexEngineImplTest {
         final var activityInterrupted = new AtomicBoolean(false);
 
         registerWorkflow("test", (ctx, _) -> {
-            ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
+            ctx.callActivity(
+                            "test",
+                            ACTIVITY_TASK_QUEUE,
+                            null,
+                            voidConverter(),
+                            voidConverter(),
+                            RetryPolicy.ofDefault())
+                    .await();
             return null;
         });
         registerActivity("test", (_, _) -> {
@@ -1619,9 +1825,7 @@ class DexEngineImplTest {
 
         engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
-        await("Activity start")
-                .atMost(Duration.ofSeconds(3))
-                .until(activityStarted::get);
+        await("Activity start").atMost(Duration.ofSeconds(3)).until(activityStarted::get);
 
         engine.close();
 
@@ -1634,7 +1838,14 @@ class DexEngineImplTest {
         final var activityBlockedLatch = new CountDownLatch(1);
 
         registerWorkflow("test", (ctx, _) -> {
-            ctx.callActivity("test", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
+            ctx.callActivity(
+                            "test",
+                            ACTIVITY_TASK_QUEUE,
+                            null,
+                            voidConverter(),
+                            voidConverter(),
+                            RetryPolicy.ofDefault())
+                    .await();
             return null;
         });
         registerActivity("test", (_, _) -> {
@@ -1652,17 +1863,16 @@ class DexEngineImplTest {
 
         final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
-        await("Activity start")
-                .atMost(Duration.ofSeconds(3))
-                .until(activityStarted::get);
+        await("Activity start").atMost(Duration.ofSeconds(3)).until(activityStarted::get);
 
         engine.close();
 
-        final Integer attempt = Jdbi.create(dataSource).withHandle(handle -> handle
-                .createQuery("SELECT attempt FROM dex_activity_task WHERE workflow_run_id = :runId")
-                .bind("runId", runId)
-                .mapTo(Integer.class)
-                .one());
+        final Integer attempt = Jdbi.create(dataSource)
+                .withHandle(handle -> handle.createQuery(
+                                "SELECT attempt FROM dex_activity_task WHERE workflow_run_id = :runId")
+                        .bind("runId", runId)
+                        .mapTo(Integer.class)
+                        .one());
         assertThat(attempt).isEqualTo(1);
     }
 
@@ -1672,7 +1882,8 @@ class DexEngineImplTest {
 
         registerWorkflow("foo", (ctx, _) -> {
             try {
-                ctx.callChildWorkflow("bar", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
+                ctx.callChildWorkflow("bar", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter())
+                        .await();
             } catch (FailureException e) {
                 exceptionReference.set(e);
                 throw e;
@@ -1681,11 +1892,14 @@ class DexEngineImplTest {
             return null;
         });
         registerWorkflow("bar", (ctx, _) -> {
-            ctx.callChildWorkflow("baz", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
+            ctx.callChildWorkflow("baz", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter())
+                    .await();
             return null;
         });
         registerWorkflow("baz", (ctx, _) -> {
-            ctx.callActivity("qux", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
+            ctx.callActivity(
+                            "qux", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault())
+                    .await();
             return null;
         });
         registerActivity("qux", (_, _) -> {
@@ -1695,8 +1909,7 @@ class DexEngineImplTest {
         registerTaskWorker("activity-worker", 1);
         engine.start();
 
-        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("foo", 1)
-                .withLabels(Map.of("oof", "rab")));
+        final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("foo", 1).withLabels(Map.of("oof", "rab")));
 
         awaitRunStatus(runId, WorkflowRunStatus.FAILED, Duration.ofSeconds(15));
 
@@ -1754,7 +1967,8 @@ class DexEngineImplTest {
     void shouldPropagateLabels() {
         registerWorkflow("foo", (ctx, _) -> {
             assertThat(ctx.labels()).containsOnlyKeys("oof", "rab");
-            ctx.callChildWorkflow("bar", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter()).await();
+            ctx.callChildWorkflow("bar", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter())
+                    .await();
             return null;
         });
         registerWorkflow("bar", (ctx, _) -> {
@@ -1765,32 +1979,36 @@ class DexEngineImplTest {
         engine.start();
 
         final UUID runId = engine.createRun(
-                new CreateWorkflowRunRequest<>("foo", 1)
-                        .withLabels(Map.of("oof", "123", "rab", "321")));
+                new CreateWorkflowRunRequest<>("foo", 1).withLabels(Map.of("oof", "123", "rab", "321")));
 
         awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-        final Stream<WorkflowEvent> historyEvents = engine
-                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                .items()
-                .stream()
-                .map(WorkflowRunHistoryEntry::event);
-        assertThat(historyEvents).satisfiesExactly(
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED);
-                    assertThat(entry.getRunCreated().getLabelsMap()).containsOnlyKeys("oof", "rab");
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                entry -> {
-                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_CREATED);
-                    assertThat(entry.getChildRunCreated().getLabelsMap()).containsOnlyKeys("oof", "rab");
-                },
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
-                entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+        final Stream<WorkflowEvent> historyEvents =
+                engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                        .map(WorkflowRunHistoryEntry::event);
+        assertThat(historyEvents)
+                .satisfiesExactly(
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> {
+                            assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED);
+                            assertThat(entry.getRunCreated().getLabelsMap()).containsOnlyKeys("oof", "rab");
+                        },
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                        entry -> {
+                            assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_CREATED);
+                            assertThat(entry.getChildRunCreated().getLabelsMap())
+                                    .containsOnlyKeys("oof", "rab");
+                        },
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.CHILD_RUN_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED),
+                        entry -> assertThat(entry.getSubjectCase())
+                                .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
     }
 
     @Nested
@@ -1800,11 +2018,16 @@ class DexEngineImplTest {
         void shouldContinueAsNew() {
             registerWorkflow("foo", stringConverter(), stringConverter(), (ctx, arg) -> {
                 final int iteration = Integer.parseInt(arg);
-                ctx.callActivity("abc", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault()).await();
+                ctx.callActivity(
+                                "abc",
+                                ACTIVITY_TASK_QUEUE,
+                                null,
+                                voidConverter(),
+                                voidConverter(),
+                                RetryPolicy.ofDefault())
+                        .await();
                 if (iteration < 3) {
-                    ctx.continueAsNew(
-                            new ContinueAsNewOptions<String>()
-                                    .withArgument(String.valueOf(iteration + 1)));
+                    ctx.continueAsNew(new ContinueAsNewOptions<String>().withArgument(String.valueOf(iteration + 1)));
                 }
                 return String.valueOf(iteration);
             });
@@ -1813,40 +2036,57 @@ class DexEngineImplTest {
             registerTaskWorker("activity-worker", 1);
             engine.start();
 
-            final UUID runId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("foo", 1)
-                            .withArgument("0"));
+            final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("foo", 1).withArgument("0"));
 
             awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-            final Stream<WorkflowEvent> historyEvents = engine
-                    .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                    .items()
-                    .stream()
-                    .map(WorkflowRunHistoryEntry::event);
-            assertThat(historyEvents).satisfiesExactly(
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                    entry -> {
-                        assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED);
-                        assertThat(stringConverter().convertFromPayload(entry.getRunCreated().getArgument())).isEqualTo("3");
-                    },
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
-                    entry -> {
-                        assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
-                        assertThat(stringConverter().convertFromPayload(entry.getRunCompleted().getResult())).isEqualTo("3");
-                    },
-                    entry -> assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
+            final Stream<WorkflowEvent> historyEvents =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                            .map(WorkflowRunHistoryEntry::event);
+            assertThat(historyEvents)
+                    .satisfiesExactly(
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                            entry -> {
+                                assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_CREATED);
+                                assertThat(stringConverter()
+                                                .convertFromPayload(
+                                                        entry.getRunCreated().getArgument()))
+                                        .isEqualTo("3");
+                            },
+                            entry ->
+                                    assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_STARTED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_STARTED),
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.ACTIVITY_TASK_COMPLETED),
+                            entry -> {
+                                assertThat(entry.getSubjectCase()).isEqualTo(WorkflowEvent.SubjectCase.RUN_COMPLETED);
+                                assertThat(stringConverter()
+                                                .convertFromPayload(
+                                                        entry.getRunCompleted().getResult()))
+                                        .isEqualTo("3");
+                            },
+                            entry -> assertThat(entry.getSubjectCase())
+                                    .isEqualTo(WorkflowEvent.SubjectCase.WORKFLOW_TASK_COMPLETED));
         }
 
         @Test
         void shouldFailContinueAsNewWhenActivityTaskPending() {
             registerWorkflow("foo", stringConverter(), stringConverter(), (ctx, _) -> {
-                ctx.callActivity("blocked", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault());
-                ctx.waitForExternalEvent("go", voidConverter(), Duration.ofMinutes(5)).await();
+                ctx.callActivity(
+                        "blocked",
+                        ACTIVITY_TASK_QUEUE,
+                        null,
+                        voidConverter(),
+                        voidConverter(),
+                        RetryPolicy.ofDefault());
+                ctx.waitForExternalEvent("go", voidConverter(), Duration.ofMinutes(5))
+                        .await();
                 ctx.continueAsNew(new ContinueAsNewOptions<String>().withArgument("next"));
                 return null;
             });
@@ -1855,37 +2095,31 @@ class DexEngineImplTest {
             // No activity worker registered, so the activity task remains persisted but unprocessed.
             engine.start();
 
-            final UUID runId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("foo", 1).withArgument("0"));
+            final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("foo", 1).withArgument("0"));
 
-            await("Activity task to be created")
-                    .atMost(Duration.ofSeconds(30))
-                    .untilAsserted(() -> {
-                        final Stream<WorkflowEvent> events = engine
-                                .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                                .items()
-                                .stream()
+            await("Activity task to be created").atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                final Stream<WorkflowEvent> events =
+                        engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
                                 .map(WorkflowRunHistoryEntry::event);
-                        assertThat(events).anyMatch(
-                                event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED);
-                    });
+                assertThat(events)
+                        .anyMatch(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.ACTIVITY_TASK_CREATED);
+            });
 
             engine.sendExternalEvent(new ExternalEvent(runId, "go", null)).join();
 
             awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-            final Stream<WorkflowEvent> historyEvents = engine
-                    .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                    .items()
-                    .stream()
-                    .map(WorkflowRunHistoryEntry::event);
+            final Stream<WorkflowEvent> historyEvents =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                            .map(WorkflowRunHistoryEntry::event);
             assertThat(historyEvents)
                     .filteredOn(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.RUN_COMPLETED)
                     .singleElement()
                     .satisfies(event -> {
                         assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
                         assertThat(event.getRunCompleted().getFailure().getMessage())
-                                .contains("continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
+                                .contains(
+                                        "continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
                     });
         }
 
@@ -1895,53 +2129,47 @@ class DexEngineImplTest {
             registerWorkflow("parent", stringConverter(), stringConverter(), (ctx, _) -> {
                 final Awaitable<Void> childAwaitable = ctx.callChildWorkflow(
                         "child", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter());
-                ctx.waitForExternalEvent("go", voidConverter(), Duration.ofMinutes(5)).await();
+                ctx.waitForExternalEvent("go", voidConverter(), Duration.ofMinutes(5))
+                        .await();
                 ctx.continueAsNew(new ContinueAsNewOptions<String>().withArgument("next"));
                 childAwaitable.await();
                 return null;
             });
             registerWorkflow("child", (ctx, _) -> {
                 childRunIdRef.compareAndSet(null, ctx.runId());
-                ctx.waitForExternalEvent("never", voidConverter(), Duration.ofMinutes(5)).await();
+                ctx.waitForExternalEvent("never", voidConverter(), Duration.ofMinutes(5))
+                        .await();
                 return null;
             });
             registerWorkflowWorker("workflow-worker", 2);
             engine.start();
 
-            final UUID parentRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("parent", 1).withArgument("0"));
+            final UUID parentRunId = engine.createRun(new CreateWorkflowRunRequest<>("parent", 1).withArgument("0"));
 
-            await("Child run to be created")
-                    .atMost(Duration.ofSeconds(30))
-                    .untilAsserted(() -> {
-                        final Stream<WorkflowEvent> events = engine
-                                .listRunHistory(new ListWorkflowRunHistoryRequest(parentRunId))
-                                .items()
-                                .stream()
+            await("Child run to be created").atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                final Stream<WorkflowEvent> events =
+                        engine.listRunHistory(new ListWorkflowRunHistoryRequest(parentRunId)).items().stream()
                                 .map(WorkflowRunHistoryEntry::event);
-                        assertThat(events).anyMatch(
-                                event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.CHILD_RUN_CREATED);
-                    });
-            await("Child run to start")
-                    .atMost(Duration.ofSeconds(30))
-                    .until(() -> childRunIdRef.get() != null);
+                assertThat(events)
+                        .anyMatch(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.CHILD_RUN_CREATED);
+            });
+            await("Child run to start").atMost(Duration.ofSeconds(30)).until(() -> childRunIdRef.get() != null);
 
             engine.sendExternalEvent(new ExternalEvent(parentRunId, "go", null)).join();
 
             awaitRunStatus(parentRunId, WorkflowRunStatus.FAILED);
 
-            final Stream<WorkflowEvent> historyEvents = engine
-                    .listRunHistory(new ListWorkflowRunHistoryRequest(parentRunId))
-                    .items()
-                    .stream()
-                    .map(WorkflowRunHistoryEntry::event);
+            final Stream<WorkflowEvent> historyEvents =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(parentRunId)).items().stream()
+                            .map(WorkflowRunHistoryEntry::event);
             assertThat(historyEvents)
                     .filteredOn(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.RUN_COMPLETED)
                     .singleElement()
                     .satisfies(event -> {
                         assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
                         assertThat(event.getRunCompleted().getFailure().getMessage())
-                                .contains("continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
+                                .contains(
+                                        "continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
                     });
 
             // Parent terminal-cleanup must propagate cancellation to the child.
@@ -1951,7 +2179,13 @@ class DexEngineImplTest {
         @Test
         void shouldFailContinueAsNewWhenActivityTaskScheduledWithoutAwait() {
             registerWorkflow("foo", stringConverter(), stringConverter(), (ctx, _) -> {
-                ctx.callActivity("blocked", ACTIVITY_TASK_QUEUE, null, voidConverter(), voidConverter(), RetryPolicy.ofDefault());
+                ctx.callActivity(
+                        "blocked",
+                        ACTIVITY_TASK_QUEUE,
+                        null,
+                        voidConverter(),
+                        voidConverter(),
+                        RetryPolicy.ofDefault());
                 ctx.continueAsNew(new ContinueAsNewOptions<String>().withArgument("next"));
                 return null;
             });
@@ -1959,23 +2193,21 @@ class DexEngineImplTest {
             registerWorkflowWorker("workflow-worker", 1);
             engine.start();
 
-            final UUID runId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("foo", 1).withArgument("0"));
+            final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("foo", 1).withArgument("0"));
 
             awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-            final Stream<WorkflowEvent> historyEvents = engine
-                    .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                    .items()
-                    .stream()
-                    .map(WorkflowRunHistoryEntry::event);
+            final Stream<WorkflowEvent> historyEvents =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                            .map(WorkflowRunHistoryEntry::event);
             assertThat(historyEvents)
                     .filteredOn(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.RUN_COMPLETED)
                     .singleElement()
                     .satisfies(event -> {
                         assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
                         assertThat(event.getRunCompleted().getFailure().getMessage())
-                                .contains("continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
+                                .contains(
+                                        "continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
                     });
         }
 
@@ -1989,60 +2221,57 @@ class DexEngineImplTest {
             registerWorkflowWorker("workflow-worker", 1);
             engine.start();
 
-            final UUID runId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("foo", 1).withArgument("0"));
+            final UUID runId = engine.createRun(new CreateWorkflowRunRequest<>("foo", 1).withArgument("0"));
 
             awaitRunStatus(runId, WorkflowRunStatus.FAILED);
 
-            final Stream<WorkflowEvent> historyEvents = engine
-                    .listRunHistory(new ListWorkflowRunHistoryRequest(runId))
-                    .items()
-                    .stream()
-                    .map(WorkflowRunHistoryEntry::event);
+            final Stream<WorkflowEvent> historyEvents =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)).items().stream()
+                            .map(WorkflowRunHistoryEntry::event);
             assertThat(historyEvents)
                     .filteredOn(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.RUN_COMPLETED)
                     .singleElement()
                     .satisfies(event -> {
                         assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
                         assertThat(event.getRunCompleted().getFailure().getMessage())
-                                .contains("continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
+                                .contains(
+                                        "continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
                     });
         }
 
         @Test
         void shouldFailContinueAsNewWhenChildRunScheduledWithoutAwait() {
             registerWorkflow("parent", stringConverter(), stringConverter(), (ctx, _) -> {
-                ctx.callChildWorkflow("child", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter());
+                ctx.callChildWorkflow(
+                        "child", 1, null, WORKFLOW_TASK_QUEUE, null, null, voidConverter(), voidConverter());
                 ctx.continueAsNew(new ContinueAsNewOptions<String>().withArgument("next"));
                 return null;
             });
             registerWorkflow("child", (ctx, _) -> {
-                ctx.waitForExternalEvent("never", voidConverter(), Duration.ofMinutes(5)).await();
+                ctx.waitForExternalEvent("never", voidConverter(), Duration.ofMinutes(5))
+                        .await();
                 return null;
             });
             registerWorkflowWorker("workflow-worker", 2);
             engine.start();
 
-            final UUID parentRunId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("parent", 1).withArgument("0"));
+            final UUID parentRunId = engine.createRun(new CreateWorkflowRunRequest<>("parent", 1).withArgument("0"));
 
             awaitRunStatus(parentRunId, WorkflowRunStatus.FAILED);
 
-            final Stream<WorkflowEvent> historyEvents = engine
-                    .listRunHistory(new ListWorkflowRunHistoryRequest(parentRunId))
-                    .items()
-                    .stream()
-                    .map(WorkflowRunHistoryEntry::event);
+            final Stream<WorkflowEvent> historyEvents =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(parentRunId)).items().stream()
+                            .map(WorkflowRunHistoryEntry::event);
             assertThat(historyEvents)
                     .filteredOn(event -> event.getSubjectCase() == WorkflowEvent.SubjectCase.RUN_COMPLETED)
                     .singleElement()
                     .satisfies(event -> {
                         assertThat(event.getRunCompleted().getStatus()).isEqualTo(WORKFLOW_RUN_STATUS_FAILED);
                         assertThat(event.getRunCompleted().getFailure().getMessage())
-                                .contains("continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
+                                .contains(
+                                        "continueAsNew is not allowed while activity tasks, child runs, or timers are still pending");
                     });
         }
-
     }
 
     @Test
@@ -2073,15 +2302,16 @@ class DexEngineImplTest {
                 .atMost(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(completedRuns).hasSize(2));
 
-        assertThat(completedRuns).satisfiesExactlyInAnyOrder(
-                run -> {
-                    assertThat(run.id()).isEqualTo(succeedingRunId);
-                    assertThat(run.status()).isEqualTo(WorkflowRunStatus.COMPLETED);
-                },
-                run -> {
-                    assertThat(run.id()).isEqualTo(failingRunId);
-                    assertThat(run.status()).isEqualTo(WorkflowRunStatus.FAILED);
-                });
+        assertThat(completedRuns)
+                .satisfiesExactlyInAnyOrder(
+                        run -> {
+                            assertThat(run.id()).isEqualTo(succeedingRunId);
+                            assertThat(run.status()).isEqualTo(WorkflowRunStatus.COMPLETED);
+                        },
+                        run -> {
+                            assertThat(run.id()).isEqualTo(failingRunId);
+                            assertThat(run.status()).isEqualTo(WorkflowRunStatus.FAILED);
+                        });
     }
 
     @Test
@@ -2097,16 +2327,13 @@ class DexEngineImplTest {
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
         }
 
-        Page<WorkflowRunMetadata> runsPage = engine.listRuns(
-                new ListWorkflowRunsRequest()
-                        .withLimit(5));
+        Page<WorkflowRunMetadata> runsPage = engine.listRuns(new ListWorkflowRunsRequest().withLimit(5));
         assertThat(runsPage.items()).hasSize(5);
         assertThat(runsPage.nextPageToken()).isNotNull();
 
-        runsPage = engine.listRuns(
-                new ListWorkflowRunsRequest()
-                        .withPageToken(runsPage.nextPageToken())
-                        .withLimit(5));
+        runsPage = engine.listRuns(new ListWorkflowRunsRequest()
+                .withPageToken(runsPage.nextPageToken())
+                .withLimit(5));
         assertThat(runsPage.items()).hasSize(5);
         assertThat(runsPage.nextPageToken()).isNull();
     }
@@ -2115,27 +2342,21 @@ class DexEngineImplTest {
     void shouldListRunsFilteredByLabels() {
         registerWorkflow("test", (_, _) -> null);
 
-        engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
-                .withLabels(Map.of("env", "prod", "team", "api")));
-        engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
-                .withLabels(Map.of("env", "prod", "team", "web")));
-        engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
-                .withLabels(Map.of("env", "dev", "team", "api")));
+        engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withLabels(Map.of("env", "prod", "team", "api")));
+        engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withLabels(Map.of("env", "prod", "team", "web")));
+        engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withLabels(Map.of("env", "dev", "team", "api")));
         engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
-        assertThat(engine.listRuns(
-                new ListWorkflowRunsRequest()
-                        .withLabels(Map.of("env", "prod"))).items())
+        assertThat(engine.listRuns(new ListWorkflowRunsRequest().withLabels(Map.of("env", "prod")))
+                        .items())
                 .hasSize(2);
 
-        assertThat(engine.listRuns(
-                new ListWorkflowRunsRequest()
-                        .withLabels(Map.of("env", "prod", "team", "api"))).items())
+        assertThat(engine.listRuns(new ListWorkflowRunsRequest().withLabels(Map.of("env", "prod", "team", "api")))
+                        .items())
                 .hasSize(1);
 
-        assertThat(engine.listRuns(
-                new ListWorkflowRunsRequest()
-                        .withLabels(Map.of("env", "staging"))).items())
+        assertThat(engine.listRuns(new ListWorkflowRunsRequest().withLabels(Map.of("env", "staging")))
+                        .items())
                 .isEmpty();
     }
 
@@ -2147,8 +2368,8 @@ class DexEngineImplTest {
             registerWorkflow("test", (_, _) -> null);
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
-            assertThat(engine.existsRun(new ExistsWorkflowRunRequest(
-                    Set.of(WorkflowRunStatus.CREATED), null))).isTrue();
+            assertThat(engine.existsRun(new ExistsWorkflowRunRequest(Set.of(WorkflowRunStatus.CREATED), null)))
+                    .isTrue();
         }
 
         @Test
@@ -2156,50 +2377,47 @@ class DexEngineImplTest {
             registerWorkflow("test", (_, _) -> null);
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
-            assertThat(engine.existsRun(new ExistsWorkflowRunRequest(
-                    Set.of(WorkflowRunStatus.COMPLETED), null))).isFalse();
+            assertThat(engine.existsRun(new ExistsWorkflowRunRequest(Set.of(WorkflowRunStatus.COMPLETED), null)))
+                    .isFalse();
         }
 
         @Test
         void shouldReturnTrueWhenRunExistsWithMatchingLabels() {
             registerWorkflow("test", (_, _) -> null);
-            engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
-                    .withLabels(Map.of("foo", "bar")));
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withLabels(Map.of("foo", "bar")));
 
-            assertThat(engine.existsRun(new ExistsWorkflowRunRequest(
-                    null, Map.of("foo", "bar")))).isTrue();
+            assertThat(engine.existsRun(new ExistsWorkflowRunRequest(null, Map.of("foo", "bar"))))
+                    .isTrue();
         }
 
         @Test
         void shouldReturnFalseWhenNoRunExistsWithMatchingLabels() {
             registerWorkflow("test", (_, _) -> null);
-            engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
-                    .withLabels(Map.of("foo", "bar")));
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withLabels(Map.of("foo", "bar")));
 
-            assertThat(engine.existsRun(new ExistsWorkflowRunRequest(
-                    null, Map.of("foo", "baz")))).isFalse();
+            assertThat(engine.existsRun(new ExistsWorkflowRunRequest(null, Map.of("foo", "baz"))))
+                    .isFalse();
         }
 
         @Test
         void shouldReturnTrueWhenRunExistsWithMatchingStatusAndLabels() {
             registerWorkflow("test", (_, _) -> null);
-            engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
-                    .withLabels(Map.of("foo", "bar")));
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withLabels(Map.of("foo", "bar")));
 
-            assertThat(engine.existsRun(new ExistsWorkflowRunRequest(
-                    Set.of(WorkflowRunStatus.CREATED), Map.of("foo", "bar")))).isTrue();
+            assertThat(engine.existsRun(
+                            new ExistsWorkflowRunRequest(Set.of(WorkflowRunStatus.CREATED), Map.of("foo", "bar"))))
+                    .isTrue();
         }
 
         @Test
         void shouldReturnFalseWhenRunExistsWithMatchingStatusButNotLabels() {
             registerWorkflow("test", (_, _) -> null);
-            engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
-                    .withLabels(Map.of("foo", "bar")));
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withLabels(Map.of("foo", "bar")));
 
-            assertThat(engine.existsRun(new ExistsWorkflowRunRequest(
-                    Set.of(WorkflowRunStatus.CREATED), Map.of("foo", "baz")))).isFalse();
+            assertThat(engine.existsRun(
+                            new ExistsWorkflowRunRequest(Set.of(WorkflowRunStatus.CREATED), Map.of("foo", "baz"))))
+                    .isFalse();
         }
-
     }
 
     @Nested
@@ -2213,20 +2431,18 @@ class DexEngineImplTest {
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
             engine.createRun(new CreateWorkflowRunRequest<>("other", 1));
 
-            assertThat(engine.countRuns(
-                    new CountWorkflowRunsRequest("test", null, 10))).isEqualTo(2);
+            assertThat(engine.countRuns(new CountWorkflowRunsRequest("test", null, 10)))
+                    .isEqualTo(2);
         }
 
         @Test
         void shouldCountRunsWithoutConcurrencyKey() {
             registerWorkflow("test", (_, _) -> null);
-            engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
-                    .withConcurrencyKey("test:a"));
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withConcurrencyKey("test:a"));
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
-            assertThat(engine.countRuns(
-                    new CountWorkflowRunsRequest(
-                            "test", null, 10))).isEqualTo(2);
+            assertThat(engine.countRuns(new CountWorkflowRunsRequest("test", null, 10)))
+                    .isEqualTo(2);
         }
 
         @Test
@@ -2235,25 +2451,21 @@ class DexEngineImplTest {
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
             assertThat(engine.countRuns(
-                    new CountWorkflowRunsRequest(
-                            "test", WorkflowRunStatus.NON_TERMINAL_STATUSES, 10))).isEqualTo(1);
-            assertThat(engine.countRuns(
-                    new CountWorkflowRunsRequest(
-                            "test", Set.of(WorkflowRunStatus.COMPLETED), 10))).isZero();
+                            new CountWorkflowRunsRequest("test", WorkflowRunStatus.NON_TERMINAL_STATUSES, 10)))
+                    .isEqualTo(1);
+            assertThat(engine.countRuns(new CountWorkflowRunsRequest("test", Set.of(WorkflowRunStatus.COMPLETED), 10)))
+                    .isZero();
         }
 
         @Test
         void shouldCountRunsMatchingLabels() {
             registerWorkflow("test", (_, _) -> null);
-            engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
-                    .withLabels(Map.of("trigger", "schedule")));
-            engine.createRun(new CreateWorkflowRunRequest<>("test", 1)
-                    .withLabels(Map.of("trigger", "upload")));
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withLabels(Map.of("trigger", "schedule")));
+            engine.createRun(new CreateWorkflowRunRequest<>("test", 1).withLabels(Map.of("trigger", "upload")));
             engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
 
-            assertThat(engine.countRuns(
-                    new CountWorkflowRunsRequest(
-                            "test", null, Map.of("trigger", "schedule"), 10))).isEqualTo(1);
+            assertThat(engine.countRuns(new CountWorkflowRunsRequest("test", null, Map.of("trigger", "schedule"), 10)))
+                    .isEqualTo(1);
         }
 
         @Test
@@ -2263,11 +2475,9 @@ class DexEngineImplTest {
                 engine.createRun(new CreateWorkflowRunRequest<>("test", 1));
             }
 
-            assertThat(engine.countRuns(
-                    new CountWorkflowRunsRequest(
-                            "test", null, 3))).isEqualTo(3);
+            assertThat(engine.countRuns(new CountWorkflowRunsRequest("test", null, 3)))
+                    .isEqualTo(3);
         }
-
     }
 
     @Nested
@@ -2276,10 +2486,8 @@ class DexEngineImplTest {
         @Test
         void shouldListRunHistory() {
             registerWorkflow("foo", (ctx, _) -> {
-                ctx.executeSideEffect("a", () -> {
-                }).await();
-                ctx.executeSideEffect("b", () -> {
-                }).await();
+                ctx.executeSideEffect("a", () -> {}).await();
+                ctx.executeSideEffect("b", () -> {}).await();
                 return null;
             });
             registerWorkflowWorker("workflow-worker", 1);
@@ -2289,32 +2497,33 @@ class DexEngineImplTest {
 
             awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-            Page<WorkflowRunHistoryEntry> historyPage = engine.listRunHistory(
-                    new ListWorkflowRunHistoryRequest(runId)
-                            .withLimit(3));
-            assertThat(historyPage.items()).satisfiesExactly(
-                    entry -> assertThat(entry.event().hasWorkflowTaskStarted()).isTrue(),
-                    entry -> assertThat(entry.event().hasRunCreated()).isTrue(),
-                    entry -> assertThat(entry.event().hasRunStarted()).isTrue());
+            Page<WorkflowRunHistoryEntry> historyPage =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(3));
+            assertThat(historyPage.items())
+                    .satisfiesExactly(
+                            entry -> assertThat(entry.event().hasWorkflowTaskStarted())
+                                    .isTrue(),
+                            entry -> assertThat(entry.event().hasRunCreated()).isTrue(),
+                            entry -> assertThat(entry.event().hasRunStarted()).isTrue());
             assertThat(historyPage.nextPageToken()).isNotNull();
 
-            historyPage = engine.listRunHistory(
-                    new ListWorkflowRunHistoryRequest(runId)
-                            .withPageToken(historyPage.nextPageToken())
-                            .withLimit(2));
-            assertThat(historyPage.items()).satisfiesExactly(
-                    entry -> assertThat(entry.event().hasSideEffectExecuted()).isTrue(),
-                    entry -> assertThat(entry.event().hasSideEffectExecuted()).isTrue());
+            historyPage = engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)
+                    .withPageToken(historyPage.nextPageToken())
+                    .withLimit(2));
+            assertThat(historyPage.items())
+                    .satisfiesExactly(
+                            entry -> assertThat(entry.event().hasSideEffectExecuted())
+                                    .isTrue(),
+                            entry -> assertThat(entry.event().hasSideEffectExecuted())
+                                    .isTrue());
             assertThat(historyPage.nextPageToken()).isNotNull();
         }
 
         @Test
         void shouldListRunHistoryInDescOrder() {
             registerWorkflow("foo", (ctx, _) -> {
-                ctx.executeSideEffect("a", () -> {
-                }).await();
-                ctx.executeSideEffect("b", () -> {
-                }).await();
+                ctx.executeSideEffect("a", () -> {}).await();
+                ctx.executeSideEffect("b", () -> {}).await();
                 return null;
             });
             registerWorkflowWorker("workflow-worker", 1);
@@ -2324,14 +2533,16 @@ class DexEngineImplTest {
 
             awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-            Page<WorkflowRunHistoryEntry> historyPage = engine.listRunHistory(
-                    new ListWorkflowRunHistoryRequest(runId)
-                            .withSortDirection(SortDirection.DESC)
-                            .withLimit(3));
-            assertThat(historyPage.items()).satisfiesExactly(
-                    entry -> assertThat(entry.event().hasWorkflowTaskCompleted()).isTrue(),
-                    entry -> assertThat(entry.event().hasRunCompleted()).isTrue(),
-                    entry -> assertThat(entry.event().hasSideEffectExecuted()).isTrue());
+            Page<WorkflowRunHistoryEntry> historyPage = engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)
+                    .withSortDirection(SortDirection.DESC)
+                    .withLimit(3));
+            assertThat(historyPage.items())
+                    .satisfiesExactly(
+                            entry -> assertThat(entry.event().hasWorkflowTaskCompleted())
+                                    .isTrue(),
+                            entry -> assertThat(entry.event().hasRunCompleted()).isTrue(),
+                            entry -> assertThat(entry.event().hasSideEffectExecuted())
+                                    .isTrue());
             assertThat(historyPage.items())
                     .extracting(WorkflowRunHistoryEntry::sequenceNumber)
                     .isSortedAccordingTo(Comparator.reverseOrder());
@@ -2339,13 +2550,14 @@ class DexEngineImplTest {
 
             final int lastSequenceNumberPage1 = historyPage.items().getLast().sequenceNumber();
 
-            historyPage = engine.listRunHistory(
-                    new ListWorkflowRunHistoryRequest(runId)
-                            .withPageToken(historyPage.nextPageToken())
-                            .withLimit(2));
-            assertThat(historyPage.items()).satisfiesExactly(
-                    entry -> assertThat(entry.event().hasSideEffectExecuted()).isTrue(),
-                    entry -> assertThat(entry.event().hasRunStarted()).isTrue());
+            historyPage = engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)
+                    .withPageToken(historyPage.nextPageToken())
+                    .withLimit(2));
+            assertThat(historyPage.items())
+                    .satisfiesExactly(
+                            entry -> assertThat(entry.event().hasSideEffectExecuted())
+                                    .isTrue(),
+                            entry -> assertThat(entry.event().hasRunStarted()).isTrue());
             assertThat(historyPage.items())
                     .extracting(WorkflowRunHistoryEntry::sequenceNumber)
                     .isSortedAccordingTo(Comparator.reverseOrder())
@@ -2356,10 +2568,8 @@ class DexEngineImplTest {
         @Test
         void shouldListRunHistoryFromSequenceNumber() {
             registerWorkflow("foo", (ctx, _) -> {
-                ctx.executeSideEffect("a", () -> {
-                }).await();
-                ctx.executeSideEffect("b", () -> {
-                }).await();
+                ctx.executeSideEffect("a", () -> {}).await();
+                ctx.executeSideEffect("b", () -> {}).await();
                 return null;
             });
             registerWorkflowWorker("workflow-worker", 1);
@@ -2369,33 +2579,34 @@ class DexEngineImplTest {
 
             awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-            Page<WorkflowRunHistoryEntry> historyPage = engine.listRunHistory(
-                    new ListWorkflowRunHistoryRequest(runId)
-                            .withLimit(3));
-            assertThat(historyPage.items()).satisfiesExactly(
-                    entry -> assertThat(entry.event().hasWorkflowTaskStarted()).isTrue(),
-                    entry -> assertThat(entry.event().hasRunCreated()).isTrue(),
-                    entry -> assertThat(entry.event().hasRunStarted()).isTrue());
+            Page<WorkflowRunHistoryEntry> historyPage =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(3));
+            assertThat(historyPage.items())
+                    .satisfiesExactly(
+                            entry -> assertThat(entry.event().hasWorkflowTaskStarted())
+                                    .isTrue(),
+                            entry -> assertThat(entry.event().hasRunCreated()).isTrue(),
+                            entry -> assertThat(entry.event().hasRunStarted()).isTrue());
 
             final int lastSeenSequenceNumber = historyPage.items().getLast().sequenceNumber();
 
-            historyPage = engine.listRunHistory(
-                    new ListWorkflowRunHistoryRequest(runId)
-                            .withFromSequenceNumber(lastSeenSequenceNumber)
-                            .withLimit(2));
-            assertThat(historyPage.items()).satisfiesExactly(
-                    entry -> assertThat(entry.event().hasSideEffectExecuted()).isTrue(),
-                    entry -> assertThat(entry.event().hasSideEffectExecuted()).isTrue());
+            historyPage = engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)
+                    .withFromSequenceNumber(lastSeenSequenceNumber)
+                    .withLimit(2));
+            assertThat(historyPage.items())
+                    .satisfiesExactly(
+                            entry -> assertThat(entry.event().hasSideEffectExecuted())
+                                    .isTrue(),
+                            entry -> assertThat(entry.event().hasSideEffectExecuted())
+                                    .isTrue());
             assertThat(historyPage.nextPageToken()).isNotNull();
         }
 
         @Test
         void shouldListRunHistoryFromSequenceNumberInDescOrder() {
             registerWorkflow("foo", (ctx, _) -> {
-                ctx.executeSideEffect("a", () -> {
-                }).await();
-                ctx.executeSideEffect("b", () -> {
-                }).await();
+                ctx.executeSideEffect("a", () -> {}).await();
+                ctx.executeSideEffect("b", () -> {}).await();
                 return null;
             });
             registerWorkflowWorker("workflow-worker", 1);
@@ -2406,22 +2617,22 @@ class DexEngineImplTest {
             awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
             // Get the first 3 events to establish a known sequence number.
-            Page<WorkflowRunHistoryEntry> historyPage = engine.listRunHistory(
-                    new ListWorkflowRunHistoryRequest(runId)
-                            .withLimit(3));
-            assertThat(historyPage.items()).satisfiesExactly(
-                    entry -> assertThat(entry.event().hasWorkflowTaskStarted()).isTrue(),
-                    entry -> assertThat(entry.event().hasRunCreated()).isTrue(),
-                    entry -> assertThat(entry.event().hasRunStarted()).isTrue());
+            Page<WorkflowRunHistoryEntry> historyPage =
+                    engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId).withLimit(3));
+            assertThat(historyPage.items())
+                    .satisfiesExactly(
+                            entry -> assertThat(entry.event().hasWorkflowTaskStarted())
+                                    .isTrue(),
+                            entry -> assertThat(entry.event().hasRunCreated()).isTrue(),
+                            entry -> assertThat(entry.event().hasRunStarted()).isTrue());
 
             final int lastSeenSequenceNumber = historyPage.items().getLast().sequenceNumber();
 
             // Use fromSequenceNumber + DESC to get newer events in reverse order (polling use case).
-            historyPage = engine.listRunHistory(
-                    new ListWorkflowRunHistoryRequest(runId)
-                            .withFromSequenceNumber(lastSeenSequenceNumber)
-                            .withSortDirection(SortDirection.DESC)
-                            .withLimit(2));
+            historyPage = engine.listRunHistory(new ListWorkflowRunHistoryRequest(runId)
+                    .withFromSequenceNumber(lastSeenSequenceNumber)
+                    .withSortDirection(SortDirection.DESC)
+                    .withLimit(2));
             assertThat(historyPage.items()).hasSize(2);
             assertThat(historyPage.items())
                     .extracting(WorkflowRunHistoryEntry::sequenceNumber)
@@ -2429,7 +2640,6 @@ class DexEngineImplTest {
                     .allSatisfy(seqNo -> assertThat(seqNo).isGreaterThan(lastSeenSequenceNumber));
             assertThat(historyPage.nextPageToken()).isNotNull();
         }
-
     }
 
     @Nested
@@ -2439,21 +2649,18 @@ class DexEngineImplTest {
         void shouldReturnMetadataWhenRunExistsWithNonTerminalState() {
             registerWorkflow("foo", (_, _) -> null);
 
-            final UUID runId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("foo", 1)
-                            .withWorkflowInstanceId("foo-instance"));
+            final UUID runId =
+                    engine.createRun(new CreateWorkflowRunRequest<>("foo", 1).withWorkflowInstanceId("foo-instance"));
             assertThat(runId).isNotNull();
 
-            final WorkflowRunMetadata runMetadata =
-                    engine.getRunMetadataByInstanceId("foo-instance");
+            final WorkflowRunMetadata runMetadata = engine.getRunMetadataByInstanceId("foo-instance");
             assertThat(runMetadata).isNotNull();
             assertThat(runMetadata.id()).isEqualTo(runId);
         }
 
         @Test
         void shouldReturnNullWhenRunDoesNotExist() {
-            final WorkflowRunMetadata runMetadata =
-                    engine.getRunMetadataByInstanceId("doesNotExist");
+            final WorkflowRunMetadata runMetadata = engine.getRunMetadataByInstanceId("doesNotExist");
             assertThat(runMetadata).isNull();
         }
 
@@ -2463,17 +2670,14 @@ class DexEngineImplTest {
             registerWorkflowWorker("workflow-worker", 1);
             engine.start();
 
-            final UUID runId = engine.createRun(
-                    new CreateWorkflowRunRequest<>("foo", 1)
-                            .withWorkflowInstanceId("foo-instance"));
+            final UUID runId =
+                    engine.createRun(new CreateWorkflowRunRequest<>("foo", 1).withWorkflowInstanceId("foo-instance"));
             assertThat(runId).isNotNull();
             awaitRunStatus(runId, WorkflowRunStatus.COMPLETED);
 
-            final WorkflowRunMetadata runMetadata =
-                    engine.getRunMetadataByInstanceId("foo-instance");
+            final WorkflowRunMetadata runMetadata = engine.getRunMetadataByInstanceId("foo-instance");
             assertThat(runMetadata).isNull();
         }
-
     }
 
     @Nested
@@ -2481,12 +2685,10 @@ class DexEngineImplTest {
 
         @Test
         void createShouldReturnTrueWhenCreatedAndFalseWhenNot() {
-            boolean created = engine.createTaskQueue(
-                    new CreateTaskQueueRequest(TaskType.WORKFLOW, "foo", 1));
+            boolean created = engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "foo", 1));
             assertThat(created).isTrue();
 
-            created = engine.createTaskQueue(
-                    new CreateTaskQueueRequest(TaskType.WORKFLOW, "foo", 2));
+            created = engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "foo", 2));
             assertThat(created).isFalse();
         }
 
@@ -2503,8 +2705,8 @@ class DexEngineImplTest {
         void updateShouldReturnFalseWhenUnchanged() {
             engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "foo", 1));
 
-            final boolean updated = engine.updateTaskQueue(
-                    new UpdateTaskQueueRequest(TaskType.WORKFLOW, "foo", null, null));
+            final boolean updated =
+                    engine.updateTaskQueue(new UpdateTaskQueueRequest(TaskType.WORKFLOW, "foo", null, null));
             assertThat(updated).isFalse();
         }
 
@@ -2520,25 +2722,26 @@ class DexEngineImplTest {
             engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "foo-1", 1));
             engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.WORKFLOW, "foo-2", 2));
 
-            Page<@NonNull TaskQueue> queuesPage = engine.listTaskQueues(
-                    new ListTaskQueuesRequest(TaskType.WORKFLOW).withLimit(2));
-            assertThat(queuesPage.items()).satisfiesExactly(
-                    queue -> {
-                        assertThat(queue.name()).isEqualTo("default");
-                        assertThat(queue.status()).isEqualTo(TaskQueueStatus.ACTIVE);
-                        assertThat(queue.capacity()).isEqualTo(10);
-                        assertThat(queue.depth()).isEqualTo(0);
-                        assertThat(queue.createdAt()).isNotNull();
-                        assertThat(queue.updatedAt()).isNull();
-                    },
-                    queue -> {
-                        assertThat(queue.name()).isEqualTo("foo-1");
-                        assertThat(queue.status()).isEqualTo(TaskQueueStatus.ACTIVE);
-                        assertThat(queue.capacity()).isEqualTo(1);
-                        assertThat(queue.depth()).isEqualTo(0);
-                        assertThat(queue.createdAt()).isNotNull();
-                        assertThat(queue.updatedAt()).isNull();
-                    });
+            Page<@NonNull TaskQueue> queuesPage =
+                    engine.listTaskQueues(new ListTaskQueuesRequest(TaskType.WORKFLOW).withLimit(2));
+            assertThat(queuesPage.items())
+                    .satisfiesExactly(
+                            queue -> {
+                                assertThat(queue.name()).isEqualTo("default");
+                                assertThat(queue.status()).isEqualTo(TaskQueueStatus.ACTIVE);
+                                assertThat(queue.capacity()).isEqualTo(10);
+                                assertThat(queue.depth()).isEqualTo(0);
+                                assertThat(queue.createdAt()).isNotNull();
+                                assertThat(queue.updatedAt()).isNull();
+                            },
+                            queue -> {
+                                assertThat(queue.name()).isEqualTo("foo-1");
+                                assertThat(queue.status()).isEqualTo(TaskQueueStatus.ACTIVE);
+                                assertThat(queue.capacity()).isEqualTo(1);
+                                assertThat(queue.depth()).isEqualTo(0);
+                                assertThat(queue.createdAt()).isNotNull();
+                                assertThat(queue.updatedAt()).isNull();
+                            });
             assertThat(queuesPage.nextPageToken()).isNotNull();
 
             queuesPage = engine.listTaskQueues(
@@ -2553,7 +2756,6 @@ class DexEngineImplTest {
             });
             assertThat(queuesPage.nextPageToken()).isNull();
         }
-
     }
 
     @Nested
@@ -2561,12 +2763,10 @@ class DexEngineImplTest {
 
         @Test
         void createShouldReturnTrueWhenCreatedAndFalseWhenNot() {
-            boolean created = engine.createTaskQueue(
-                    new CreateTaskQueueRequest(TaskType.ACTIVITY, "foo", 1));
+            boolean created = engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "foo", 1));
             assertThat(created).isTrue();
 
-            created = engine.createTaskQueue(
-                    new CreateTaskQueueRequest(TaskType.ACTIVITY, "foo", 2));
+            created = engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "foo", 2));
             assertThat(created).isFalse();
         }
 
@@ -2583,8 +2783,8 @@ class DexEngineImplTest {
         void updateShouldReturnFalseWhenUnchanged() {
             engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "foo", 1));
 
-            final boolean updated = engine.updateTaskQueue(
-                    new UpdateTaskQueueRequest(TaskType.ACTIVITY, "foo", null, null));
+            final boolean updated =
+                    engine.updateTaskQueue(new UpdateTaskQueueRequest(TaskType.ACTIVITY, "foo", null, null));
             assertThat(updated).isFalse();
         }
 
@@ -2600,25 +2800,26 @@ class DexEngineImplTest {
             engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "foo-1", 1));
             engine.createTaskQueue(new CreateTaskQueueRequest(TaskType.ACTIVITY, "foo-2", 2));
 
-            Page<@NonNull TaskQueue> queuesPage = engine.listTaskQueues(
-                    new ListTaskQueuesRequest(TaskType.ACTIVITY).withLimit(2));
-            assertThat(queuesPage.items()).satisfiesExactly(
-                    queue -> {
-                        assertThat(queue.name()).isEqualTo("default");
-                        assertThat(queue.status()).isEqualTo(TaskQueueStatus.ACTIVE);
-                        assertThat(queue.capacity()).isEqualTo(10);
-                        assertThat(queue.depth()).isEqualTo(0);
-                        assertThat(queue.createdAt()).isNotNull();
-                        assertThat(queue.updatedAt()).isNull();
-                    },
-                    queue -> {
-                        assertThat(queue.name()).isEqualTo("foo-1");
-                        assertThat(queue.status()).isEqualTo(TaskQueueStatus.ACTIVE);
-                        assertThat(queue.capacity()).isEqualTo(1);
-                        assertThat(queue.depth()).isEqualTo(0);
-                        assertThat(queue.createdAt()).isNotNull();
-                        assertThat(queue.updatedAt()).isNull();
-                    });
+            Page<@NonNull TaskQueue> queuesPage =
+                    engine.listTaskQueues(new ListTaskQueuesRequest(TaskType.ACTIVITY).withLimit(2));
+            assertThat(queuesPage.items())
+                    .satisfiesExactly(
+                            queue -> {
+                                assertThat(queue.name()).isEqualTo("default");
+                                assertThat(queue.status()).isEqualTo(TaskQueueStatus.ACTIVE);
+                                assertThat(queue.capacity()).isEqualTo(10);
+                                assertThat(queue.depth()).isEqualTo(0);
+                                assertThat(queue.createdAt()).isNotNull();
+                                assertThat(queue.updatedAt()).isNull();
+                            },
+                            queue -> {
+                                assertThat(queue.name()).isEqualTo("foo-1");
+                                assertThat(queue.status()).isEqualTo(TaskQueueStatus.ACTIVE);
+                                assertThat(queue.capacity()).isEqualTo(1);
+                                assertThat(queue.depth()).isEqualTo(0);
+                                assertThat(queue.createdAt()).isNotNull();
+                                assertThat(queue.updatedAt()).isNull();
+                            });
             assertThat(queuesPage.nextPageToken()).isNotNull();
 
             queuesPage = engine.listTaskQueues(
@@ -2633,7 +2834,6 @@ class DexEngineImplTest {
             });
             assertThat(queuesPage.nextPageToken()).isNull();
         }
-
     }
 
     @Nested
@@ -2649,8 +2849,8 @@ class DexEngineImplTest {
             assertThat(response.getName()).isEqualTo("dex-engine");
             assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.UP);
             assertThat(response.getData()).isPresent();
-            assertThat(response.getData().get()).containsExactlyInAnyOrderEntriesOf(
-                    Map.ofEntries(
+            assertThat(response.getData().get())
+                    .containsExactlyInAnyOrderEntriesOf(Map.ofEntries(
                             Map.entry("internalStatus", "RUNNING"),
                             Map.entry("buffer:activity-task-heartbeat", "RUNNING"),
                             Map.entry("buffer:external-event", "RUNNING"),
@@ -2665,7 +2865,8 @@ class DexEngineImplTest {
             assertThat(response.getName()).isEqualTo("dex-engine");
             assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.DOWN);
             assertThat(response.getData()).isPresent();
-            assertThat(response.getData().get()).containsExactlyInAnyOrderEntriesOf(Map.of("internalStatus", "CREATED"));
+            assertThat(response.getData().get())
+                    .containsExactlyInAnyOrderEntriesOf(Map.of("internalStatus", "CREATED"));
         }
 
         @Test
@@ -2679,9 +2880,9 @@ class DexEngineImplTest {
             assertThat(response.getName()).isEqualTo("dex-engine");
             assertThat(response.getStatus()).isEqualTo(HealthCheckResponse.Status.DOWN);
             assertThat(response.getData()).isPresent();
-            assertThat(response.getData().get()).containsExactlyInAnyOrderEntriesOf(Map.of("internalStatus", "STOPPED"));
+            assertThat(response.getData().get())
+                    .containsExactlyInAnyOrderEntriesOf(Map.of("internalStatus", "STOPPED"));
         }
-
     }
 
     private interface InternalWorkflow<A, R> extends Workflow<A, R> {
@@ -2692,7 +2893,6 @@ class DexEngineImplTest {
         default R execute(WorkflowContext<A> ctx, A argument) {
             return execute((WorkflowContextImpl<A, R>) ctx, argument);
         }
-
     }
 
     private <A, R> void registerWorkflow(
@@ -2700,7 +2900,8 @@ class DexEngineImplTest {
             final PayloadConverter<A> argumentConverter,
             final PayloadConverter<R> resultConverter,
             final InternalWorkflow<A, R> executor) {
-        engine.registerWorkflowInternal(name, 1, argumentConverter, resultConverter, WORKFLOW_TASK_QUEUE, Duration.ofSeconds(5), executor);
+        engine.registerWorkflowInternal(
+                name, 1, argumentConverter, resultConverter, WORKFLOW_TASK_QUEUE, Duration.ofSeconds(5), executor);
     }
 
     private void registerWorkflow(final String name, final InternalWorkflow<Void, Void> executor) {
@@ -2712,7 +2913,8 @@ class DexEngineImplTest {
             final PayloadConverter<A> argumentConverter,
             final PayloadConverter<R> resultConverter,
             final Activity<A, R> executor) {
-        engine.registerActivityInternal(name, argumentConverter, resultConverter, ACTIVITY_TASK_QUEUE, Duration.ofSeconds(5), executor);
+        engine.registerActivityInternal(
+                name, argumentConverter, resultConverter, ACTIVITY_TASK_QUEUE, Duration.ofSeconds(5), executor);
     }
 
     private void registerActivity(final String name, final Activity<Void, Void> executor) {
@@ -2720,34 +2922,29 @@ class DexEngineImplTest {
     }
 
     private void registerWorkflowWorker(final String name, final int maxConcurrency) {
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.WORKFLOW, name, WORKFLOW_TASK_QUEUE, maxConcurrency)
-                        .withMinPollInterval(Duration.ofMillis(10))
-                        .withPollBackoffFunction(IntervalFunction.of(10)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.WORKFLOW, name, WORKFLOW_TASK_QUEUE, maxConcurrency)
+                .withMinPollInterval(Duration.ofMillis(10))
+                .withPollBackoffFunction(IntervalFunction.of(10)));
     }
 
     private void registerTaskWorker(final String name, final int maxConcurrency) {
-        engine.registerTaskWorker(
-                new TaskWorkerOptions(TaskType.ACTIVITY, name, ACTIVITY_TASK_QUEUE, maxConcurrency)
-                        .withMinPollInterval(Duration.ofMillis(10))
-                        .withPollBackoffFunction(IntervalFunction.of(10)));
+        engine.registerTaskWorker(new TaskWorkerOptions(TaskType.ACTIVITY, name, ACTIVITY_TASK_QUEUE, maxConcurrency)
+                .withMinPollInterval(Duration.ofMillis(10))
+                .withPollBackoffFunction(IntervalFunction.of(10)));
     }
 
     private WorkflowRunMetadata awaitRunStatus(
-            final UUID runId,
-            final WorkflowRunStatus expectedStatus,
-            final Duration timeout) {
+            final UUID runId, final WorkflowRunStatus expectedStatus, final Duration timeout) {
         return await("Workflow Run Status to become " + expectedStatus)
                 .atMost(timeout)
                 .failFast(() -> {
-                    final WorkflowRunStatus currentStatus = engine.getRunMetadataById(runId).status();
+                    final WorkflowRunStatus currentStatus =
+                            engine.getRunMetadataById(runId).status();
                     if (currentStatus.isTerminal() && !expectedStatus.isTerminal()) {
                         return true;
                     }
 
-                    return currentStatus.isTerminal()
-                            && expectedStatus.isTerminal()
-                            && currentStatus != expectedStatus;
+                    return currentStatus.isTerminal() && expectedStatus.isTerminal() && currentStatus != expectedStatus;
                 })
                 .until(() -> engine.getRunMetadataById(runId), run -> run.status() == expectedStatus);
     }
@@ -2755,5 +2952,4 @@ class DexEngineImplTest {
     private WorkflowRunMetadata awaitRunStatus(final UUID runId, final WorkflowRunStatus expectedStatus) {
         return awaitRunStatus(runId, expectedStatus, Duration.ofSeconds(30));
     }
-
 }

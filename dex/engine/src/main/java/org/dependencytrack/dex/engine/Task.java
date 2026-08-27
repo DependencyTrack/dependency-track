@@ -21,5 +21,4 @@ package org.dependencytrack.dex.engine;
 public sealed interface Task permits ActivityTask, WorkflowTask {
 
     String queueName();
-
 }

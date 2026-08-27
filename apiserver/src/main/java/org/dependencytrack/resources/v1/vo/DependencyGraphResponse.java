@@ -30,10 +30,11 @@ import java.util.UUID;
  * @since 4.9.0
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record DependencyGraphResponse(UUID uuid, String name, String version, String purl, String directDependencies, String latestVersion) implements Serializable {
+public record DependencyGraphResponse(
+        UUID uuid, String name, String version, String purl, String directDependencies, String latestVersion)
+        implements Serializable {
 
     public DependencyGraphResponse(DependencyGraphResponse source, String latestVersion) {
         this(source.uuid(), source.name(), source.version(), source.purl(), source.directDependencies(), latestVersion);
     }
-
 }

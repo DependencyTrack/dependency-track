@@ -22,6 +22,7 @@ import org.dependencytrack.plugin.api.storage.KeyValueStore;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
@@ -51,7 +52,8 @@ final class WatermarkManager {
         this.committedRecordByEcosystem = new HashMap<>(recordByEcosystem);
     }
 
-    @Nullable Instant getWatermark(String ecosystem) {
+    @Nullable
+    Instant getWatermark(String ecosystem) {
         final WatermarkRecord record = committedRecordByEcosystem.get(ecosystem);
         return record != null ? record.value() : null;
     }
@@ -90,6 +92,4 @@ final class WatermarkManager {
             pendingRecordByEcosystem.put(ecosystem, committedRecord);
         }
     }
-
-
 }

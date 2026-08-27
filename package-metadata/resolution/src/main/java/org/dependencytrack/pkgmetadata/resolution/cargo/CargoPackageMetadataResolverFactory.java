@@ -45,6 +45,11 @@ public final class CargoPackageMetadataResolverFactory implements PackageMetadat
     }
 
     @Override
+    public String displayName() {
+        return "Cargo";
+    }
+
+    @Override
     public Class<? extends PackageMetadataResolver> extensionClass() {
         return CargoPackageMetadataResolver.class;
     }
@@ -76,8 +81,7 @@ public final class CargoPackageMetadataResolverFactory implements PackageMetadat
 
     @Override
     public void init(ServiceRegistry serviceRegistry) {
-        objectMapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         cachingHttpClient = new CachingHttpClient(
                 serviceRegistry.require(HttpClient.class),
                 serviceRegistry.require(CacheManager.class).getCache("responses"));
@@ -87,5 +91,4 @@ public final class CargoPackageMetadataResolverFactory implements PackageMetadat
     public PackageMetadataResolver create() {
         return new CargoPackageMetadataResolver(requireNonNull(objectMapper), requireNonNull(cachingHttpClient));
     }
-
 }

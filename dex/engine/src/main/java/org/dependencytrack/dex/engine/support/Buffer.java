@@ -49,11 +49,10 @@ import static io.github.resilience4j.circuitbreaker.CallNotPermittedException.cr
 public final class Buffer<T> implements Closeable {
 
     public enum Status {
-
         CREATED(1, 2), // 0
-        RUNNING(2),    // 1
-        STOPPING(3),   // 2
-        STOPPED;       // 3
+        RUNNING(2), // 1
+        STOPPING(3), // 2
+        STOPPED; // 3
 
         private final Set<Integer> allowedTransitions;
 
@@ -64,16 +63,11 @@ public final class Buffer<T> implements Closeable {
         private boolean canTransitionTo(final Status newStatus) {
             return allowedTransitions.contains(newStatus.ordinal());
         }
-
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Buffer.class);
 
-    private record BufferedItem<I>(
-            I item,
-            long addedAtNanos,
-            CompletableFuture<@Nullable Void> future) {
-    }
+    private record BufferedItem<I>(I item, long addedAtNanos, CompletableFuture<@Nullable Void> future) {}
 
     private final String name;
     private final Consumer<List<T>> batchConsumer;
@@ -100,8 +94,14 @@ public final class Buffer<T> implements Closeable {
             int maxBatchSize,
             MeterRegistry meterRegistry,
             CircuitBreakerRegistry circuitBreakerRegistry) {
-        this(name, batchConsumer, flushInterval, maxBatchSize, Duration.ofSeconds(5),
-                meterRegistry, circuitBreakerRegistry);
+        this(
+                name,
+                batchConsumer,
+                flushInterval,
+                maxBatchSize,
+                Duration.ofSeconds(5),
+                meterRegistry,
+                circuitBreakerRegistry);
     }
 
     Buffer(
@@ -134,25 +134,20 @@ public final class Buffer<T> implements Closeable {
         this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("dt.dex.engine.buffer." + name);
 
         final List<Tag> commonMeterTags = List.of(Tag.of("buffer", name));
-        this.batchSizeDistribution = DistributionSummary
-                .builder("dt.dex.engine.buffer.flush.batch.size")
+        this.batchSizeDistribution = DistributionSummary.builder("dt.dex.engine.buffer.flush.batch.size")
                 .publishPercentileHistogram()
                 .tags(commonMeterTags)
                 .register(meterRegistry);
-        this.itemWaitLatencyTimer = Timer
-                .builder("dt.dex.engine.buffer.item.wait.latency")
+        this.itemWaitLatencyTimer = Timer.builder("dt.dex.engine.buffer.item.wait.latency")
                 .tags(commonMeterTags)
                 .register(meterRegistry);
-        this.flushCounter = Counter
-                .builder("dt.dex.engine.buffer.flushes")
+        this.flushCounter = Counter.builder("dt.dex.engine.buffer.flushes")
                 .tags(commonMeterTags)
                 .register(meterRegistry);
-        this.flushLatencyTimer = Timer
-                .builder("dt.dex.engine.buffer.flush.latency")
+        this.flushLatencyTimer = Timer.builder("dt.dex.engine.buffer.flush.latency")
                 .tags(commonMeterTags)
                 .register(meterRegistry);
-        Gauge
-                .builder("dt.dex.engine.buffer.items.queued", itemsQueue::size)
+        Gauge.builder("dt.dex.engine.buffer.items.queued", itemsQueue::size)
                 .tags(commonMeterTags)
                 .register(meterRegistry);
     }
@@ -169,8 +164,7 @@ public final class Buffer<T> implements Closeable {
         // NB: In the future we might want to include itemsQueue depth here.
         // A queue at capacity won't accept new items, so calls to #add() may
         // time out.
-        return status == Status.RUNNING
-                && circuitBreaker.getState() != CircuitBreaker.State.OPEN;
+        return status == Status.RUNNING && circuitBreaker.getState() != CircuitBreaker.State.OPEN;
     }
 
     public void start() {
@@ -328,11 +322,8 @@ public final class Buffer<T> implements Closeable {
                 final long nowNanos = System.nanoTime();
 
                 for (final BufferedItem<T> item : currentBatch) {
-                    item.future().completeExceptionally(
-                            createCallNotPermittedException(circuitBreaker));
-                    itemWaitLatencyTimer.record(
-                            nowNanos - item.addedAtNanos(),
-                            TimeUnit.NANOSECONDS);
+                    item.future().completeExceptionally(createCallNotPermittedException(circuitBreaker));
+                    itemWaitLatencyTimer.record(nowNanos - item.addedAtNanos(), TimeUnit.NANOSECONDS);
                 }
 
                 currentBatch.clear();
@@ -344,16 +335,15 @@ public final class Buffer<T> implements Closeable {
             final Timer.Sample flushLatencySample = Timer.start();
             final long startNanos = System.nanoTime();
             try {
-                final List<T> batchItems = currentBatch.stream().map(BufferedItem::item).collect(Collectors.toList());
+                final List<T> batchItems =
+                        currentBatch.stream().map(BufferedItem::item).collect(Collectors.toList());
                 batchConsumer.accept(batchItems);
                 circuitBreaker.onSuccess(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
 
                 final long nowNanos = System.nanoTime();
                 for (final BufferedItem<T> item : currentBatch) {
                     item.future().complete(null);
-                    itemWaitLatencyTimer.record(
-                            nowNanos - item.addedAtNanos(),
-                            TimeUnit.NANOSECONDS);
+                    itemWaitLatencyTimer.record(nowNanos - item.addedAtNanos(), TimeUnit.NANOSECONDS);
                 }
             } catch (Throwable e) {
                 circuitBreaker.onError(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS, e);
@@ -361,9 +351,7 @@ public final class Buffer<T> implements Closeable {
                 final long nowNanos = System.nanoTime();
                 for (final BufferedItem<T> item : currentBatch) {
                     item.future().completeExceptionally(e);
-                    itemWaitLatencyTimer.record(
-                            nowNanos - item.addedAtNanos(),
-                            TimeUnit.NANOSECONDS);
+                    itemWaitLatencyTimer.record(nowNanos - item.addedAtNanos(), TimeUnit.NANOSECONDS);
                 }
             } finally {
                 flushCounter.increment();
@@ -399,5 +387,4 @@ public final class Buffer<T> implements Closeable {
             statusLock.unlock();
         }
     }
-
 }

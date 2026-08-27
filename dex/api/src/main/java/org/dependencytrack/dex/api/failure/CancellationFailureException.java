@@ -35,5 +35,4 @@ public final class CancellationFailureException extends FailureException {
     public String getReason() {
         return reason;
     }
-
 }

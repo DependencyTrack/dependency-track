@@ -21,6 +21,7 @@ package org.dependencytrack.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 
 import javax.jdo.annotations.Column;
@@ -41,7 +42,10 @@ import java.util.Date;
  * @since 4.0.0
  */
 @PersistenceCapable
-@Index(name = "FINDINGATTRIBUTION_COMPOUND_IDX", members = {"component", "vulnerability", "analyzerIdentity"}, unique = "true")
+@Index(
+        name = "FINDINGATTRIBUTION_COMPOUND_IDX",
+        members = {"component", "vulnerability", "analyzerIdentity"},
+        unique = "true")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FindingAttribution implements Serializable {
 
@@ -63,19 +67,31 @@ public class FindingAttribution implements Serializable {
     private String analyzerIdentity;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "FINDINGATTRIBUTION_COMPONENT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "FINDINGATTRIBUTION_COMPONENT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "COMPONENT_ID", allowsNull = "false")
     @NotNull
     private Component component;
 
     @Persistent(defaultFetchGroup = "false")
-    @ForeignKey(name = "FINDINGATTRIBUTION_PROJECT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "FINDINGATTRIBUTION_PROJECT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
     private Project project;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "FINDINGATTRIBUTION_VULNERABILITY_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "FINDINGATTRIBUTION_VULNERABILITY_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "VULNERABILITY_ID", allowsNull = "false")
     @NotNull
     private Vulnerability vulnerability;
@@ -189,5 +205,4 @@ public class FindingAttribution implements Serializable {
     public void setDeletedAt(Date deletedAt) {
         this.deletedAt = deletedAt;
     }
-
 }

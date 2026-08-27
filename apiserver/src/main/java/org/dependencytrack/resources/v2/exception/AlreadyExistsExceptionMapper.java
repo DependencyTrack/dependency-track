@@ -18,15 +18,17 @@
  */
 package org.dependencytrack.resources.v2.exception;
 
-import jakarta.ws.rs.ext.Provider;
 import org.dependencytrack.api.v2.model.ProblemDetails;
 import org.dependencytrack.exception.AlreadyExistsException;
+
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @since 5.0.0
  */
 @Provider
-public final class AlreadyExistsExceptionMapper extends ProblemDetailsExceptionMapper<AlreadyExistsException, ProblemDetails> {
+public final class AlreadyExistsExceptionMapper
+        extends ProblemDetailsExceptionMapper<AlreadyExistsException, ProblemDetails> {
 
     @Override
     ProblemDetails map(AlreadyExistsException exception) {
@@ -36,5 +38,4 @@ public final class AlreadyExistsExceptionMapper extends ProblemDetailsExceptionM
                 .detail(exception.getMessage())
                 .build();
     }
-
 }

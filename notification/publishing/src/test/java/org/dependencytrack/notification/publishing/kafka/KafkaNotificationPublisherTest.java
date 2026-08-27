@@ -80,9 +80,12 @@ class KafkaNotificationPublisherTest extends AbstractNotificationPublisherTest {
     protected void beforeEach() throws Exception {
         topicName = "dependencytrack-notifications-" + UUID.randomUUID();
 
-        try (final var adminClient = AdminClient.create(Map.of(
-                BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers()))) {
-            adminClient.createTopics(List.of(new NewTopic(topicName, 1, (short) 1))).all().get();
+        try (final var adminClient =
+                AdminClient.create(Map.of(BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers()))) {
+            adminClient
+                    .createTopics(List.of(new NewTopic(topicName, 1, (short) 1)))
+                    .all()
+                    .get();
         }
 
         super.beforeEach();
@@ -109,7 +112,8 @@ class KafkaNotificationPublisherTest extends AbstractNotificationPublisherTest {
                 assertThat(record.key()).isNull();
             }
         }
-        assertThat(record.headers()).containsExactly(new RecordHeader("content-type", "application/protobuf".getBytes()));
+        assertThat(record.headers())
+                .containsExactly(new RecordHeader("content-type", "application/protobuf".getBytes()));
         assertThat(Notification.parseFrom(record.value())).isEqualTo(notification);
     }
 
@@ -128,5 +132,4 @@ class KafkaNotificationPublisherTest extends AbstractNotificationPublisherTest {
             return records.iterator().next();
         }
     }
-
 }

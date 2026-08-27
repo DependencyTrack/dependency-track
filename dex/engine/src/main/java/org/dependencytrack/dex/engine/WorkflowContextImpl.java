@@ -19,6 +19,7 @@
 package org.dependencytrack.dex.engine;
 
 import com.google.protobuf.DebugFormat;
+import com.google.protobuf.Timestamp;
 import org.dependencytrack.dex.api.Activity;
 import org.dependencytrack.dex.api.ActivityHandle;
 import org.dependencytrack.dex.api.Awaitable;
@@ -105,13 +106,12 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
     private final Logger logger;
     private int currentEventIndex;
     private int currentEventId;
-    private @Nullable Instant currentTime;
+    private @Nullable Timestamp currentTime;
     private @Nullable A argument;
     private boolean isInSideEffect;
     private boolean isReplaying;
     private boolean isSuspended;
     private @Nullable String customStatus;
-    private int randomCounter;
 
     WorkflowContextImpl(
             final UUID runId,
@@ -173,7 +173,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
             throw new IllegalStateException("currentTime was not initialized");
         }
 
-        return currentTime;
+        return toInstant(currentTime);
     }
 
     @Override
@@ -188,8 +188,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
 
     @Override
     public <AA, AR> ActivityHandle<AA, AR> activity(final Class<? extends Activity<AA, AR>> activityClass) {
-        final ActivityMetadata<AA, AR> activityMetadata =
-                metadataRegistry.getActivityMetadata(activityClass);
+        final ActivityMetadata<AA, AR> activityMetadata = metadataRegistry.getActivityMetadata(activityClass);
         return new ActivityHandleImpl<>(
                 this,
                 activityMetadata.name(),
@@ -200,8 +199,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
 
     @Override
     public <WA, WR> WorkflowHandle<WA, WR> workflow(final Class<? extends Workflow<WA, WR>> workflowClass) {
-        final WorkflowMetadata<WA, WR> workflowMetadata =
-                metadataRegistry.getWorkflowMetadata(workflowClass);
+        final WorkflowMetadata<WA, WR> workflowMetadata = metadataRegistry.getWorkflowMetadata(workflowClass);
         return new WorkflowHandleImpl<>(
                 this,
                 workflowMetadata.name(),
@@ -221,7 +219,8 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
         requireNotInSideEffect("Activities can not be called from within a side effect");
 
         final int eventId = currentEventId++;
-        pendingCommandByEventId.put(eventId,
+        pendingCommandByEventId.put(
+                eventId,
                 new CreateActivityTaskCommand(
                         eventId,
                         name,
@@ -247,16 +246,18 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
         requireNotInSideEffect("Child workflows can not be called from within a side effect");
 
         final int eventId = currentEventId++;
-        pendingCommandByEventId.put(eventId, new CreateChildRunCommand(
+        pendingCommandByEventId.put(
                 eventId,
-                workflowName,
-                workflowVersion,
-                workflowInstanceId,
-                taskQueueName,
-                concurrencyKey,
-                this.priority,
-                this.labels,
-                argumentConverter.convertToPayload(argument)));
+                new CreateChildRunCommand(
+                        eventId,
+                        workflowName,
+                        workflowVersion,
+                        workflowInstanceId,
+                        taskQueueName,
+                        concurrencyKey,
+                        this.priority,
+                        this.labels,
+                        argumentConverter.convertToPayload(argument)));
 
         final var awaitable = new AwaitableImpl<>(this, resultConverter);
         pendingAwaitableByEventId.put(eventId, awaitable);
@@ -273,8 +274,10 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
 
         final int eventId = currentEventId++;
         final int elapsedEventId = currentEventId++;
-        pendingCommandByEventId.put(eventId, new CreateTimerCommand(
-                eventId, elapsedEventId, name, currentTime().plus(delay)));
+        pendingCommandByEventId.put(
+                eventId,
+                new CreateTimerCommand(
+                        eventId, elapsedEventId, name, currentTime().plus(delay)));
 
         final var awaitable = new AwaitableImpl<>(this, voidConverter());
         pendingAwaitableByEventId.put(elapsedEventId, awaitable);
@@ -307,8 +310,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
                 isInSideEffect = true;
                 final SR result = function.apply(argument);
                 final Payload resultPayload = resultConverter.convertToPayload(result);
-                pendingCommandByEventId.put(eventId, new RecordSideEffectResultCommand(
-                        name, eventId, resultPayload));
+                pendingCommandByEventId.put(eventId, new RecordSideEffectResultCommand(name, eventId, resultPayload));
                 awaitable.complete(resultPayload);
             } catch (RuntimeException e) {
                 awaitable.completeExceptionally(new SideEffectFailureException(name, e));
@@ -322,9 +324,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
 
     @Override
     public <ER> Awaitable<ER> waitForExternalEvent(
-            final String externalEventId,
-            final PayloadConverter<ER> resultConverter,
-            final Duration timeout) {
+            final String externalEventId, final PayloadConverter<ER> resultConverter, final Duration timeout) {
         requireNotInSideEffect("Waiting for external events is not allowed from within a side effect");
 
         final var awaitable = new AwaitableImpl<>(this, resultConverter);
@@ -332,9 +332,10 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
         final Queue<WorkflowEvent> bufferedEvents = bufferedExternalEvents.get(externalEventId);
         if (bufferedEvents != null && !bufferedEvents.isEmpty()) {
             final WorkflowEvent event = bufferedEvents.poll();
-            awaitable.complete(event.getExternalEventReceived().hasPayload()
-                    ? event.getExternalEventReceived().getPayload()
-                    : null);
+            awaitable.complete(
+                    event.getExternalEventReceived().hasPayload()
+                            ? event.getExternalEventReceived().getPayload()
+                            : null);
             return awaitable;
         }
 
@@ -352,18 +353,19 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
             return awaitables;
         });
 
-        createTimerInternal("External event %s wait timeout".formatted(externalEventId), timeout).onComplete(_ -> {
-            awaitable.cancel("Timed out while waiting for external event");
+        createTimerInternal("External event %s wait timeout".formatted(externalEventId), timeout)
+                .onComplete(_ -> {
+                    awaitable.cancel("Timed out while waiting for external event");
 
-            pendingAwaitablesByExternalEventId.computeIfPresent(externalEventId, (_, awaitables) -> {
-                awaitables.remove(awaitable);
-                if (awaitables.isEmpty()) {
-                    return null;
-                }
+                    pendingAwaitablesByExternalEventId.computeIfPresent(externalEventId, (_, awaitables) -> {
+                        awaitables.remove(awaitable);
+                        if (awaitables.isEmpty()) {
+                            return null;
+                        }
 
-                return awaitables;
-            });
-        });
+                        return awaitables;
+                    });
+                });
 
         return awaitable;
     }
@@ -372,18 +374,16 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
     public void continueAsNew(final ContinueAsNewOptions<A> options) {
         requireNotInSideEffect("continueAsNew is not allowed from within a side effect");
         requireNonNull(options, "options must not be null");
-        final boolean hasUnemittedCreateCommand =
-                pendingCommandByEventId.values().stream()
-                        .anyMatch(cmd -> cmd instanceof CreateActivityTaskCommand
-                                || cmd instanceof CreateChildRunCommand
-                                || cmd instanceof CreateTimerCommand);
+        final boolean hasUnemittedCreateCommand = pendingCommandByEventId.values().stream()
+                .anyMatch(cmd -> cmd instanceof CreateActivityTaskCommand
+                        || cmd instanceof CreateChildRunCommand
+                        || cmd instanceof CreateTimerCommand);
         if (hasPendingWorkSupplier.getAsBoolean() || hasUnemittedCreateCommand) {
             throw new IllegalStateException("""
                     continueAsNew is not allowed while activity tasks, child runs, or timers \
                     are still pending; await or cancel them first""");
         }
-        throw new WorkflowRunContinuedAsNewError(
-                argumentConverter.convertToPayload(options.argument()));
+        throw new WorkflowRunContinuedAsNewError(argumentConverter.convertToPayload(options.argument()));
     }
 
     WorkflowRunExecutionResult execute() {
@@ -406,9 +406,8 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
             fail(e);
         }
 
-        final List<WorkflowCommand> commands = !isSuspended
-                ? List.copyOf(pendingCommandByEventId.values())
-                : Collections.emptyList();
+        final List<WorkflowCommand> commands =
+                !isSuspended ? List.copyOf(pendingCommandByEventId.values()) : Collections.emptyList();
 
         return new WorkflowRunExecutionResult(commands, customStatus);
     }
@@ -474,7 +473,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
     }
 
     private void onWorkflowTaskStarted(final WorkflowEvent event) {
-        currentTime = toInstant(event.getTimestamp());
+        currentTime = event.getTimestamp();
     }
 
     private void onRunCreated(final WorkflowEvent event) {
@@ -536,31 +535,33 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
 
         final WorkflowCommand command = pendingCommandByEventId.get(event.getId());
         if (command == null) {
-            throw new WorkflowRunDeterminismError("""
+            throw new WorkflowRunDeterminismError(
+                    """
                     Encountered %s event for ID %d, but no corresponding \
-                    command was found for it""".formatted(
-                    ActivityTaskCreated.class.getSimpleName(),
-                    event.getId()));
+                    command was found for it""".formatted(ActivityTaskCreated.class.getSimpleName(), event.getId()));
         } else if (!(command instanceof final CreateActivityTaskCommand concreteCommand)) {
             throw new WorkflowRunDeterminismError("""
                     Encountered %s event for ID %d, but the corresponding \
                     command is of type %s (expected %s)""".formatted(
-                    ActivityTaskCreated.class.getSimpleName(),
-                    event.getId(),
-                    command.getClass().getSimpleName(),
-                    CreateActivityTaskCommand.class.getSimpleName()));
+                            ActivityTaskCreated.class.getSimpleName(),
+                            event.getId(),
+                            command.getClass().getSimpleName(),
+                            CreateActivityTaskCommand.class.getSimpleName()));
         } else if (!Objects.equals(eventSubject.getName(), concreteCommand.name())
                 || !Objects.equals(eventSubject.getPriority(), concreteCommand.priority())
-                || (eventSubject.hasArgument() && !Objects.equals(eventSubject.getArgument(), concreteCommand.argument()))
-                || !Objects.equals(eventSubject.getRetryPolicy(), concreteCommand.retryPolicy().toProto())) {
+                || (eventSubject.hasArgument()
+                        && !Objects.equals(eventSubject.getArgument(), concreteCommand.argument()))
+                || !Objects.equals(
+                        eventSubject.getRetryPolicy(),
+                        concreteCommand.retryPolicy().toProto())) {
             throw new WorkflowRunDeterminismError("""
                     Encountered %s event for ID %d, but it does not match \
                     the corresponding %s: event=%s, command=%s""".formatted(
-                    ActivityTaskCreated.class.getSimpleName(),
-                    event.getId(),
-                    CreateActivityTaskCommand.class.getSimpleName(),
-                    DebugFormat.singleLine().toString(eventSubject),
-                    concreteCommand));
+                            ActivityTaskCreated.class.getSimpleName(),
+                            event.getId(),
+                            CreateActivityTaskCommand.class.getSimpleName(),
+                            DebugFormat.singleLine().toString(eventSubject),
+                            concreteCommand));
         }
 
         pendingCommandByEventId.remove(event.getId());
@@ -573,22 +574,19 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
 
         final WorkflowEvent createdEvent = eventById.get(createdEventId);
         if (createdEvent == null || !createdEvent.hasActivityTaskCreated()) {
-            throw new WorkflowRunDeterminismError(
-                    "Expected event with ID %d to be of type %s, but was: %s".formatted(
+            throw new WorkflowRunDeterminismError("Expected event with ID %d to be of type %s, but was: %s"
+                    .formatted(
                             createdEventId,
                             ActivityTaskCreated.class.getSimpleName(),
-                            createdEvent != null ?
-                                    DebugFormat.singleLine().toString(createdEvent)
-                                    : null));
+                            createdEvent != null ? DebugFormat.singleLine().toString(createdEvent) : null));
         }
 
         final AwaitableImpl<?> awaitable = pendingAwaitableByEventId.get(createdEventId);
         if (awaitable == null) {
-            throw new WorkflowRunDeterminismError("""
+            throw new WorkflowRunDeterminismError(
+                    """
                     Encountered %s event for ID %d, but no corresponding \
-                    awaitable was found for it""".formatted(
-                    ActivityTaskCompleted.class.getSimpleName(),
-                    createdEventId));
+                    awaitable was found for it""".formatted(ActivityTaskCompleted.class.getSimpleName(), createdEventId));
         }
 
         awaitable.complete(eventSubject.hasResult() ? eventSubject.getResult() : null);
@@ -602,22 +600,19 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
 
         final WorkflowEvent createdEvent = eventById.get(createdEventId);
         if (createdEvent == null || !createdEvent.hasActivityTaskCreated()) {
-            throw new WorkflowRunDeterminismError(
-                    "Expected event with ID %d to be of type %s, but was: %s".formatted(
+            throw new WorkflowRunDeterminismError("Expected event with ID %d to be of type %s, but was: %s"
+                    .formatted(
                             createdEventId,
                             ActivityTaskCreated.class.getSimpleName(),
-                            createdEvent != null ?
-                                    DebugFormat.singleLine().toString(createdEvent)
-                                    : null));
+                            createdEvent != null ? DebugFormat.singleLine().toString(createdEvent) : null));
         }
 
         final AwaitableImpl<?> awaitable = pendingAwaitableByEventId.get(createdEventId);
         if (awaitable == null) {
-            throw new WorkflowRunDeterminismError("""
+            throw new WorkflowRunDeterminismError(
+                    """
                     Encountered %s event for ID %d, but no corresponding \
-                    awaitable was found for it""".formatted(
-                    ActivityTaskCompleted.class.getSimpleName(),
-                    createdEventId));
+                    awaitable was found for it""".formatted(ActivityTaskCompleted.class.getSimpleName(), createdEventId));
         }
 
         final var exception = new ActivityFailureException(
@@ -636,36 +631,34 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
         if (command == null) {
             throw new WorkflowRunDeterminismError("""
                     Encountered %s event for ID %d, but no corresponding \
-                    command was found for it""".formatted(
-                    ChildRunCreated.class.getSimpleName(),
-                    event.getId()));
+                    command was found for it""".formatted(ChildRunCreated.class.getSimpleName(), event.getId()));
         } else if (!(command instanceof final CreateChildRunCommand concreteCommand)) {
             throw new WorkflowRunDeterminismError("""
                     Encountered %s event for ID %d, but the corresponding \
                     command is of type %s (expected %s)""".formatted(
-                    ChildRunCreated.class.getSimpleName(),
-                    event.getId(),
-                    command.getClass().getSimpleName(),
-                    CreateChildRunCommand.class.getSimpleName()));
+                            ChildRunCreated.class.getSimpleName(),
+                            event.getId(),
+                            command.getClass().getSimpleName(),
+                            CreateChildRunCommand.class.getSimpleName()));
         } else if (!Objects.equals(eventSubject.getWorkflowName(), concreteCommand.workflowName())
                 || !Objects.equals(eventSubject.getWorkflowVersion(), concreteCommand.workflowVersion())
                 || (eventSubject.hasWorkflowInstanceId()
-                && !Objects.equals(eventSubject.getWorkflowInstanceId(), concreteCommand.workflowInstanceId()))
+                        && !Objects.equals(eventSubject.getWorkflowInstanceId(), concreteCommand.workflowInstanceId()))
                 || !Objects.equals(eventSubject.getPriority(), concreteCommand.priority())
                 || (eventSubject.hasConcurrencyKey()
-                && !Objects.equals(eventSubject.getConcurrencyKey(), concreteCommand.concurrencyKey()))
+                        && !Objects.equals(eventSubject.getConcurrencyKey(), concreteCommand.concurrencyKey()))
                 || (eventSubject.getLabelsCount() > 0
-                && !Objects.equals(eventSubject.getLabelsMap(), concreteCommand.labels()))
+                        && !Objects.equals(eventSubject.getLabelsMap(), concreteCommand.labels()))
                 || (eventSubject.hasArgument()
-                && !Objects.equals(eventSubject.getArgument(), concreteCommand.argument()))) {
+                        && !Objects.equals(eventSubject.getArgument(), concreteCommand.argument()))) {
             throw new WorkflowRunDeterminismError("""
                     Encountered %s event for ID %d, but it does not match \
                     the corresponding %s: event=%s, command=%s""".formatted(
-                    ChildRunCreated.class.getSimpleName(),
-                    event.getId(),
-                    CreateChildRunCommand.class.getSimpleName(),
-                    DebugFormat.singleLine().toString(eventSubject),
-                    concreteCommand));
+                            ChildRunCreated.class.getSimpleName(),
+                            event.getId(),
+                            CreateChildRunCommand.class.getSimpleName(),
+                            DebugFormat.singleLine().toString(eventSubject),
+                            concreteCommand));
         }
 
         pendingCommandByEventId.remove(event.getId());
@@ -678,22 +671,19 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
 
         final WorkflowEvent createdEvent = eventById.get(createdEventId);
         if (createdEvent == null || !createdEvent.hasChildRunCreated()) {
-            throw new WorkflowRunDeterminismError(
-                    "Expected event with ID %d to be of type %s, but was: %s".formatted(
+            throw new WorkflowRunDeterminismError("Expected event with ID %d to be of type %s, but was: %s"
+                    .formatted(
                             createdEventId,
                             ChildRunCreated.class.getSimpleName(),
-                            createdEvent != null ?
-                                    DebugFormat.singleLine().toString(createdEvent)
-                                    : null));
+                            createdEvent != null ? DebugFormat.singleLine().toString(createdEvent) : null));
         }
 
         final AwaitableImpl<?> awaitable = pendingAwaitableByEventId.get(createdEventId);
         if (awaitable == null) {
-            throw new WorkflowRunDeterminismError("""
+            throw new WorkflowRunDeterminismError(
+                    """
                     Encountered %s event for ID %d, but no corresponding \
-                    awaitable was found for it""".formatted(
-                    ChildRunCompleted.class.getSimpleName(),
-                    createdEventId));
+                    awaitable was found for it""".formatted(ChildRunCompleted.class.getSimpleName(), createdEventId));
         }
 
         awaitable.complete(eventSubject.hasResult() ? eventSubject.getResult() : null);
@@ -707,22 +697,18 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
 
         final WorkflowEvent createdEvent = eventById.get(createdEventId);
         if (createdEvent == null || !createdEvent.hasChildRunCreated()) {
-            throw new WorkflowRunDeterminismError(
-                    "Expected event with ID %d to be of type %s, but was: %s".formatted(
+            throw new WorkflowRunDeterminismError("Expected event with ID %d to be of type %s, but was: %s"
+                    .formatted(
                             createdEventId,
                             ChildRunCreated.class.getSimpleName(),
-                            createdEvent != null ?
-                                    DebugFormat.singleLine().toString(createdEvent)
-                                    : null));
+                            createdEvent != null ? DebugFormat.singleLine().toString(createdEvent) : null));
         }
 
         final AwaitableImpl<?> awaitable = pendingAwaitableByEventId.get(createdEventId);
         if (awaitable == null) {
             throw new WorkflowRunDeterminismError("""
                     Encountered %s event for ID %d, but no corresponding \
-                    awaitable was found for it""".formatted(
-                    ChildRunFailed.class.getSimpleName(),
-                    createdEventId));
+                    awaitable was found for it""".formatted(ChildRunFailed.class.getSimpleName(), createdEventId));
         }
 
         final var exception = new ChildWorkflowFailureException(
@@ -743,27 +729,25 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
         if (command == null) {
             throw new WorkflowRunDeterminismError("""
                     Encountered %s event for ID %d, but no corresponding \
-                    command was found for it""".formatted(
-                    TimerCreated.class.getSimpleName(),
-                    event.getId()));
+                    command was found for it""".formatted(TimerCreated.class.getSimpleName(), event.getId()));
         } else if (!(command instanceof final CreateTimerCommand concreteCommand)) {
             throw new WorkflowRunDeterminismError("""
                     Encountered %s event for ID %d, but the corresponding \
                     command is of type %s (expected %s)""".formatted(
-                    TimerCreated.class.getSimpleName(),
-                    event.getId(),
-                    command.getClass().getSimpleName(),
-                    CreateTimerCommand.class.getSimpleName()));
+                            TimerCreated.class.getSimpleName(),
+                            event.getId(),
+                            command.getClass().getSimpleName(),
+                            CreateTimerCommand.class.getSimpleName()));
         } else if (!Objects.equals(eventSubject.getName(), concreteCommand.name())
                 || !Objects.equals(eventSubject.getElapseAt(), toProtoTimestamp(concreteCommand.elapseAt()))) {
             throw new WorkflowRunDeterminismError("""
                     Encountered %s event for ID %d, but it does not match \
                     the corresponding %s: event=%s, command=%s""".formatted(
-                    TimerCreated.class.getSimpleName(),
-                    event.getId(),
-                    CreateTimerCommand.class.getSimpleName(),
-                    DebugFormat.singleLine().toString(eventSubject),
-                    concreteCommand));
+                            TimerCreated.class.getSimpleName(),
+                            event.getId(),
+                            CreateTimerCommand.class.getSimpleName(),
+                            DebugFormat.singleLine().toString(eventSubject),
+                            concreteCommand));
         }
 
         pendingCommandByEventId.remove(event.getId());
@@ -776,22 +760,18 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
 
         final WorkflowEvent createdEvent = eventById.get(createdEventId);
         if (createdEvent == null || !createdEvent.hasTimerCreated()) {
-            throw new WorkflowRunDeterminismError(
-                    "Expected event with ID %d to be of type %s, but was: %s".formatted(
+            throw new WorkflowRunDeterminismError("Expected event with ID %d to be of type %s, but was: %s"
+                    .formatted(
                             createdEventId,
                             TimerCreated.class.getSimpleName(),
-                            createdEvent != null ?
-                                    DebugFormat.singleLine().toString(createdEvent)
-                                    : null));
+                            createdEvent != null ? DebugFormat.singleLine().toString(createdEvent) : null));
         }
 
         final AwaitableImpl<?> awaitable = pendingAwaitableByEventId.get(event.getId());
         if (awaitable == null) {
             throw new WorkflowRunDeterminismError("""
                     Encountered %s event for ID %d, but no corresponding \
-                    awaitable was found for it""".formatted(
-                    TimerElapsed.class.getSimpleName(),
-                    event.getId()));
+                    awaitable was found for it""".formatted(TimerElapsed.class.getSimpleName(), event.getId()));
         }
 
         pendingAwaitableByEventId.remove(event.getId());
@@ -804,17 +784,14 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
 
         final AwaitableImpl<?> awaitable = pendingAwaitableByEventId.get(event.getId());
         if (awaitable == null) {
-            throw new WorkflowRunDeterminismError("""
+            throw new WorkflowRunDeterminismError(
+                    """
                     Encountered %s event for ID %d, but no corresponding \
-                    awaitable was found for it""".formatted(
-                    SideEffectExecuted.class.getSimpleName(),
-                    event.getId()));
+                    awaitable was found for it""".formatted(SideEffectExecuted.class.getSimpleName(), event.getId()));
         }
 
         pendingAwaitableByEventId.remove(event.getId());
-        awaitable.complete(eventSubject.hasResult()
-                ? eventSubject.getResult()
-                : null);
+        awaitable.complete(eventSubject.hasResult() ? eventSubject.getResult() : null);
     }
 
     private void onExternalEventReceived(final WorkflowEvent event) {
@@ -888,9 +865,7 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
         }
 
         final int eventId = currentEventId++;
-        pendingCommandByEventId.put(
-                eventId,
-                new ContinueRunAsNewCommand(eventId, argument));
+        pendingCommandByEventId.put(eventId, new ContinueRunAsNewCommand(eventId, argument));
     }
 
     private void fail(final Throwable exception) {
@@ -914,5 +889,4 @@ final class WorkflowContextImpl<A, R> implements WorkflowContext<A> {
             throw new IllegalStateException(message);
         }
     }
-
 }

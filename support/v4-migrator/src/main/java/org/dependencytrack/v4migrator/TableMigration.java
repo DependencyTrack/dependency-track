@@ -37,13 +37,12 @@ import java.util.List;
  * </ul>
  */
 public record TableMigration(
-    String name,
-    @Nullable String srcCreateDdl,
-    @Nullable String extractSelect,
-    @Nullable List<String> extractColumns,
-    @Nullable String transformSql,
-    @Nullable String loadSql
-) {
+        String name,
+        @Nullable String srcCreateDdl,
+        @Nullable String extractSelect,
+        @Nullable List<String> extractColumns,
+        @Nullable String transformSql,
+        @Nullable String loadSql) {
 
     public boolean hasExtract() {
         return srcCreateDdl != null && extractSelect != null && extractColumns != null;

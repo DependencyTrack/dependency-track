@@ -106,8 +106,8 @@ final class LoadProgressReporter implements AutoCloseable {
             final long ms = elapsedMs();
             final String elapsed = formatElapsed(ms);
             if (expectedRows >= 0) {
-                sink.accept(String.format("  .. %s: still loading after %s (expected %d rows)",
-                    tableName, elapsed, expectedRows));
+                sink.accept(String.format(
+                        "  .. %s: still loading after %s (expected %d rows)", tableName, elapsed, expectedRows));
             } else {
                 sink.accept(String.format("  .. %s: still loading after %s", tableName, elapsed));
             }

@@ -70,7 +70,8 @@ class SpdxExpressionParserTest {
     @Test
     void shouldRejectDanglingOperator() {
         assertThatExceptionOfType(SpdxExpressionParseException.class)
-                .isThrownBy(() -> SpdxExpressionParser.getInstance().parse("GPL-3.0-or-later AND GPL-2.0-or-later AND GPL-2.0-only AND"));
+                .isThrownBy(() -> SpdxExpressionParser.getInstance()
+                        .parse("GPL-3.0-or-later AND GPL-2.0-or-later AND GPL-2.0-only AND"));
     }
 
     @Test
@@ -100,8 +101,8 @@ class SpdxExpressionParserTest {
     @Test
     void shouldRejectCompoundExpressionAsWithLhs() {
         assertThatExceptionOfType(SpdxExpressionParseException.class)
-                .isThrownBy(() -> SpdxExpressionParser.getInstance().parse(
-                        "(MIT OR BSD-3-Clause) WITH Classpath-exception-2.0"));
+                .isThrownBy(() ->
+                        SpdxExpressionParser.getInstance().parse("(MIT OR BSD-3-Clause) WITH Classpath-exception-2.0"));
     }
 
     @Test
@@ -116,5 +117,4 @@ class SpdxExpressionParserTest {
         assertThat(SpdxExpressionParser.getInstance().tryParse(null)).isNull();
         assertThat(SpdxExpressionParser.getInstance().tryParse("")).isNull();
     }
-
 }

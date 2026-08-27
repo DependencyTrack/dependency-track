@@ -43,17 +43,15 @@ public final class TransientSqlErrors {
             "57P01", // admin_shutdown
             "57P02", // crash_shutdown
             "57P03" // cannot_connect_now
-    );
+            );
 
-    private TransientSqlErrors() {
-    }
+    private TransientSqlErrors() {}
 
     /// @param throwable The [Throwable] to inspect.
     /// @return `true` when `throwable` is, or was caused by, a transient SQL error.
     public static boolean isTransient(Throwable throwable) {
         for (Throwable cause = throwable; cause != null; cause = cause.getCause()) {
-            if (cause instanceof SQLRecoverableException
-                    || cause instanceof SQLTransientException) {
+            if (cause instanceof SQLRecoverableException || cause instanceof SQLTransientException) {
                 return true;
             }
 
@@ -67,5 +65,4 @@ public final class TransientSqlErrors {
 
         return false;
     }
-
 }

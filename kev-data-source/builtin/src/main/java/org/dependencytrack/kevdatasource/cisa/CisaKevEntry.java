@@ -26,11 +26,11 @@ import java.time.LocalDate;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 record CisaKevEntry(
-        @JsonProperty("cveID")
-        String cveId,
+        @JsonProperty("cveID") String cveId,
+
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
         LocalDate dateAdded,
+
         String shortDescription,
         String requiredAction,
-        String knownRansomwareCampaignUse) {
-}
+        String knownRansomwareCampaignUse) {}

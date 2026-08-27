@@ -95,7 +95,8 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
         new JdoNotificationEmitter(qm).emit(notification);
 
         doReturn(List.of(new NotificationRouter.Result(notification, Set.of(rule.getName()))))
-                .when(routerMock).route(anyCollection());
+                .when(routerMock)
+                .route(anyCollection());
 
         relay.start();
 
@@ -133,8 +134,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
 
         qm.delete(rule);
 
-        doReturn(Collections.emptyList())
-                .when(routerMock).route(anyCollection());
+        doReturn(Collections.emptyList()).when(routerMock).route(anyCollection());
 
         relay.start();
 
@@ -154,11 +154,13 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
         new JdoNotificationEmitter(qm).emit(notification);
 
         doReturn(List.of(new NotificationRouter.Result(notification, Set.of(rule.getName()))))
-                .when(routerMock).route(anyCollection());
+                .when(routerMock)
+                .route(anyCollection());
 
         doThrow(new IllegalStateException("Boom!"))
                 .doReturn(List.of(UUID.fromString("2777be5d-5a95-40b3-9226-311874a21bf6")))
-                .when(dexEngineMock).createRuns(anyCollection());
+                .when(dexEngineMock)
+                .createRuns(anyCollection());
 
         relay.start();
 
@@ -168,14 +170,12 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
                 .atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> Mockito.verify(dexEngineMock, times(2)).createRuns(requestsCaptor.capture()));
 
-        assertThat(requestsCaptor.getAllValues())
-                .hasSizeGreaterThanOrEqualTo(2)
-                .allSatisfy(requests -> {
-                    assertThat(requests).satisfiesExactly(request -> {
-                        assertThat(request.workflowName()).isEqualTo("publish-notification");
-                        assertThat(request.workflowVersion()).isEqualTo(1);
-                    });
-                });
+        assertThat(requestsCaptor.getAllValues()).hasSizeGreaterThanOrEqualTo(2).allSatisfy(requests -> {
+            assertThat(requests).satisfiesExactly(request -> {
+                assertThat(request.workflowName()).isEqualTo("publish-notification");
+                assertThat(request.workflowVersion()).isEqualTo(1);
+            });
+        });
 
         await("Outbox record removal")
                 .atMost(5, TimeUnit.SECONDS)
@@ -184,9 +184,7 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
 
     @Test
     void shouldOffloadLargeNotificationsToFileStorage() {
-        final Notification notification = TestNotificationFactory
-                .createBomConsumedTestNotification()
-                .toBuilder()
+        final Notification notification = TestNotificationFactory.createBomConsumedTestNotification().toBuilder()
                 .setContent("a".repeat(largeNotificationThresholdBytes))
                 .build();
 
@@ -195,7 +193,8 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
         new JdoNotificationEmitter(qm).emit(notification);
 
         doReturn(List.of(new NotificationRouter.Result(notification, Set.of(rule.getName()))))
-                .when(routerMock).route(anyCollection());
+                .when(routerMock)
+                .route(anyCollection());
 
         relay.start();
 
@@ -309,7 +308,6 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
                             /* batchSize */ 0,
                             /* largeNotificationThresholdBytes */ 128 * 1024));
         }
-
     }
 
     @Test
@@ -334,5 +332,4 @@ class NotificationOutboxRelayTest extends PersistenceCapableTest {
             return rule;
         });
     }
-
 }

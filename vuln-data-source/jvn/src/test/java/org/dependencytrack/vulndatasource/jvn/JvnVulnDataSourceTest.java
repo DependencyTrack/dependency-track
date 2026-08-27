@@ -46,18 +46,19 @@ class JvnVulnDataSourceTest {
     @Test
     void iteratesYearlyFeedToBov(final WireMockRuntimeInfo wm) throws Exception {
         final String detailXml = new String(
-                getClass().getResourceAsStream("/jvn-detail-with-range.xml").readAllBytes(),
-                StandardCharsets.UTF_8);
+                getClass().getResourceAsStream("/jvn-detail-with-range.xml").readAllBytes(), StandardCharsets.UTF_8);
         final String checksumJson = """
                 [{"url":"x","filename":"%s","sha256":"deadbeef","size":1,"lastModified":"2026/01/01 00:00:00"}]
                 """.formatted(FEED_FILENAME);
 
         stubFor(get(urlPathEqualTo("/checksum.txt"))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("Content-Type", "application/json")
                         .withBody(checksumJson)));
         stubFor(get(urlPathEqualTo("/detail/" + FEED_FILENAME))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("Content-Type", "application/xml")
                         .withBody(detailXml)));
 
@@ -76,7 +77,9 @@ class JvnVulnDataSourceTest {
         assertEquals(1, boms.size());
         final Bom bom = boms.getFirst();
         assertEquals(1, bom.getComponentsCount());
-        assertEquals("cpe:2.3:a:suse:rancher_fleet:*:*:*:*:*:*:*:*", bom.getComponents(0).getCpe());
+        assertEquals(
+                "cpe:2.3:a:suse:rancher_fleet:*:*:*:*:*:*:*:*",
+                bom.getComponents(0).getCpe());
         assertEquals(1, bom.getVulnerabilitiesCount());
         // Every JVN advisory is stored as-is under the JVN source, keyed by its JVNDB id
         // (no CVE->NVD routing), even when it carries a CVE.
@@ -88,8 +91,7 @@ class JvnVulnDataSourceTest {
     @Test
     void skipsTruncatedFeedWithoutCommittingItsDigest(final WireMockRuntimeInfo wm) throws Exception {
         final String detailXml = new String(
-                getClass().getResourceAsStream("/jvn-detail-with-range.xml").readAllBytes(),
-                StandardCharsets.UTF_8);
+                getClass().getResourceAsStream("/jvn-detail-with-range.xml").readAllBytes(), StandardCharsets.UTF_8);
         // Cut the feed off in the middle of its <Vulinfo>, after the JVNDB id.
         final String truncatedXml = detailXml.substring(0, detailXml.indexOf("</Vulinfo>"));
         final String checksumJson = """
@@ -97,11 +99,13 @@ class JvnVulnDataSourceTest {
                 """.formatted(FEED_FILENAME);
 
         stubFor(get(urlPathEqualTo("/checksum.txt"))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("Content-Type", "application/json")
                         .withBody(checksumJson)));
         stubFor(get(urlPathEqualTo("/detail/" + FEED_FILENAME))
-                .willReturn(aResponse().withStatus(200)
+                .willReturn(aResponse()
+                        .withStatus(200)
                         .withHeader("Content-Type", "application/xml")
                         .withBody(truncatedXml)));
 

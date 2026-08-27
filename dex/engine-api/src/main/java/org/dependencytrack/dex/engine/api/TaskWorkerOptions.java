@@ -52,22 +52,11 @@ public record TaskWorkerOptions(
 
     public TaskWorkerOptions withMinPollInterval(Duration minPollInterval) {
         return new TaskWorkerOptions(
-                this.type,
-                this.name,
-                this.queueName,
-                this.maxConcurrency,
-                minPollInterval,
-                this.pollBackoffFunction);
+                this.type, this.name, this.queueName, this.maxConcurrency, minPollInterval, this.pollBackoffFunction);
     }
 
     public TaskWorkerOptions withPollBackoffFunction(IntervalFunction pollBackoffFunction) {
         return new TaskWorkerOptions(
-                this.type,
-                this.name,
-                this.queueName,
-                this.maxConcurrency,
-                this.minPollInterval,
-                pollBackoffFunction);
+                this.type, this.name, this.queueName, this.maxConcurrency, this.minPollInterval, pollBackoffFunction);
     }
-
 }

@@ -64,7 +64,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     }
 
     private boolean isReimportConfigured(final Project project) {
-        final ProjectProperty reimport = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), REIMPORT_PROPERTY);
+        final ProjectProperty reimport =
+                qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), REIMPORT_PROPERTY);
         if (reimport != null) {
             return Boolean.parseBoolean(reimport.getPropertyValue());
         } else {
@@ -73,7 +74,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     }
 
     private boolean isDoNotReactivateConfigured(final Project project) {
-        final ProjectProperty reactivate = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), DO_NOT_REACTIVATE_PROPERTY);
+        final ProjectProperty reactivate =
+                qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), DO_NOT_REACTIVATE_PROPERTY);
         if (reactivate != null) {
             return Boolean.parseBoolean(reactivate.getPropertyValue());
         } else {
@@ -82,7 +84,8 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     }
 
     private boolean isVerifiedConfigured(final Project project) {
-        final ProjectProperty verified = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), VERIFIED_PROPERTY);
+        final ProjectProperty verified =
+                qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), VERIFIED_PROPERTY);
         if (verified != null) {
             return Boolean.parseBoolean(verified.getPropertyValue());
         } else {
@@ -92,15 +95,18 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
     }
 
     private @Nullable String getTestTitle(final Project project) {
-        final ProjectProperty testName = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), TEST_TITLE_PROPERTY);
+        final ProjectProperty testName =
+                qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), TEST_TITLE_PROPERTY);
         if (testName != null && testName.getPropertyValue() != null) {
             return testName.getPropertyValue();
         }
         return null;
     }
 
-    @Nullable String getGroupBy(final Project project) {
-        final ProjectProperty groupBy = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), GROUP_BY_PROPERTY);
+    @Nullable
+    String getGroupBy(final Project project) {
+        final ProjectProperty groupBy =
+                qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), GROUP_BY_PROPERTY);
         if (groupBy != null && groupBy.getPropertyValue() != null) {
             return groupBy.getPropertyValue();
         }
@@ -119,13 +125,15 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public boolean isEnabled() {
-        final ConfigProperty enabled = qm.getConfigProperty(DEFECTDOJO_ENABLED.getGroupName(), DEFECTDOJO_ENABLED.getPropertyName());
+        final ConfigProperty enabled =
+                qm.getConfigProperty(DEFECTDOJO_ENABLED.getGroupName(), DEFECTDOJO_ENABLED.getPropertyName());
         return enabled != null && Boolean.valueOf(enabled.getPropertyValue());
     }
 
     @Override
     public boolean isProjectConfigured(final Project project) {
-        final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
+        final ProjectProperty engagementId =
+                qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
         return engagementId != null && engagementId.getPropertyValue() != null;
     }
 
@@ -137,8 +145,10 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
 
     @Override
     public void upload(final Project project, final InputStream payload) {
-        final ConfigProperty defectDojoUrl = qm.getConfigProperty(DEFECTDOJO_URL.getGroupName(), DEFECTDOJO_URL.getPropertyName());
-        final ConfigProperty apiKeyProperty = qm.getConfigProperty(DEFECTDOJO_API_KEY.getGroupName(), DEFECTDOJO_API_KEY.getPropertyName());
+        final ConfigProperty defectDojoUrl =
+                qm.getConfigProperty(DEFECTDOJO_URL.getGroupName(), DEFECTDOJO_URL.getPropertyName());
+        final ConfigProperty apiKeyProperty =
+                qm.getConfigProperty(DEFECTDOJO_API_KEY.getGroupName(), DEFECTDOJO_API_KEY.getPropertyName());
         if (apiKeyProperty == null) {
             LOGGER.warn("DefectDojo API key not specified. Aborting");
             return;
@@ -149,29 +159,29 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
             return;
         }
         final boolean globalReimportEnabled = qm.isEnabled(DEFECTDOJO_REIMPORT_ENABLED);
-        final ProjectProperty engagementId = qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
+        final ProjectProperty engagementId =
+                qm.getProjectProperty(project, DEFECTDOJO_ENABLED.getGroupName(), ENGAGEMENTID_PROPERTY);
         final boolean verifyFindings = isVerifiedConfigured(project);
         final String testTitle = getTestTitle(project);
         final String groupBy = getGroupBy(project);
         try {
             final String apiKeyValue = secretManager.getSecretValue(apiKeySecretName);
             if (apiKeyValue == null) {
-                LOGGER.warn("DefectDojo API key secret '%s' could not be resolved. Aborting".formatted(apiKeySecretName));
+                LOGGER.warn(
+                        "DefectDojo API key secret '%s' could not be resolved. Aborting".formatted(apiKeySecretName));
                 return;
             }
-            final DefectDojoClient client = new DefectDojoClient(httpClient, this, URI.create(defectDojoUrl.getPropertyValue()).toURL());
+            final DefectDojoClient client = new DefectDojoClient(
+                    httpClient,
+                    this,
+                    URI.create(defectDojoUrl.getPropertyValue()).toURL());
             if (isReimportConfigured(project) || globalReimportEnabled) {
                 final ArrayList<String> testsIds = client.getDojoTestIds(apiKeyValue, engagementId.getPropertyValue());
                 final String testId = client.getDojoTestId(engagementId.getPropertyValue(), testsIds, testTitle);
                 LOGGER.debug("Found existing test Id: {}", testId);
                 if (testId.equals("")) {
                     client.uploadDependencyTrackFindings(
-                            apiKeyValue,
-                            engagementId.getPropertyValue(),
-                            payload,
-                            verifyFindings,
-                            testTitle,
-                            groupBy);
+                            apiKeyValue, engagementId.getPropertyValue(), payload, verifyFindings, testTitle, groupBy);
                 } else {
                     client.reimportDependencyTrackFindings(
                             apiKeyValue,
@@ -185,12 +195,7 @@ public class DefectDojoUploader extends AbstractIntegrationPoint implements Proj
                 }
             } else {
                 client.uploadDependencyTrackFindings(
-                        apiKeyValue,
-                        engagementId.getPropertyValue(),
-                        payload,
-                        verifyFindings,
-                        testTitle,
-                        groupBy);
+                        apiKeyValue, engagementId.getPropertyValue(), payload, verifyFindings, testTitle, groupBy);
             }
         } catch (Exception e) {
             LOGGER.error("An error occurred attempting to upload findings to DefectDojo", e);

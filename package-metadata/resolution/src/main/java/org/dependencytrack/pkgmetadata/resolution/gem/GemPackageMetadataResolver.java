@@ -59,9 +59,8 @@ final class GemPackageMetadataResolver implements PackageMetadataResolver {
 
     @Override
     public @Nullable PackageMetadata resolve(
-            PackageURL purl,
-            @Nullable PackageRepository repository,
-            @Nullable PackageArtifactMetadata prior) throws InterruptedException {
+            PackageURL purl, @Nullable PackageRepository repository, @Nullable PackageArtifactMetadata prior)
+            throws InterruptedException {
         requireNonNull(repository, "repository must not be null");
 
         final String url = UrlUtils.join(repository.url(), "api", "v1", "versions", purl.getName() + ".json");
@@ -119,17 +118,14 @@ final class GemPackageMetadataResolver implements PackageMetadataResolver {
             return new PackageMetadata(latestVersion, latestVersionPublishedAt, resolvedAt, null);
         }
 
-        Instant publishedAt = latestVersion.equals(requestedVersion)
-                ? latestVersionPublishedAt
-                : getCreatedAt(matchingEntry);
+        Instant publishedAt =
+                latestVersion.equals(requestedVersion) ? latestVersionPublishedAt : getCreatedAt(matchingEntry);
 
         return new PackageMetadata(
                 latestVersion,
                 latestVersionPublishedAt,
                 resolvedAt,
-                publishedAt != null
-                        ? new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of())
-                        : null);
+                publishedAt != null ? new PackageArtifactMetadata(resolvedAt, publishedAt, Map.of()) : null);
     }
 
     private @Nullable Instant getCreatedAt(JsonNode entry) {
@@ -154,8 +150,7 @@ final class GemPackageMetadataResolver implements PackageMetadataResolver {
         final String credentials = repository.username() + ":" + repository.password();
         builder.header(
                 "Authorization",
-                "Basic " + Base64.getEncoder().encodeToString(
-                        credentials.getBytes(StandardCharsets.UTF_8)));
+                "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8)));
     }
 
     private JsonNode parseJson(byte[] body) {
@@ -165,5 +160,4 @@ final class GemPackageMetadataResolver implements PackageMetadataResolver {
             throw new UncheckedIOException(e);
         }
     }
-
 }

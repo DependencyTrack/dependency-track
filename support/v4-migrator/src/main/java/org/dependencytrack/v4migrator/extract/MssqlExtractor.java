@@ -63,12 +63,12 @@ final class MssqlExtractor implements SourceExtractor {
     }
 
     @Override
-    public long extract(final TableMigration table, final String stagingSchema,
-                        final Jdbi target, final long sampleLimit) throws Exception {
+    public long extract(
+            final TableMigration table, final String stagingSchema, final Jdbi target, final long sampleLimit)
+            throws Exception {
         final String renderedSelect = table.extractSelect().formatted(sourceSchema);
-        final String selectSql = sampleLimit == Long.MAX_VALUE
-            ? renderedSelect
-            : applyMssqlTopLimit(renderedSelect, sampleLimit);
+        final String selectSql =
+                sampleLimit == Long.MAX_VALUE ? renderedSelect : applyMssqlTopLimit(renderedSelect, sampleLimit);
 
         try (Connection src = Connections.openSource(source)) {
             src.setAutoCommit(false);
@@ -81,15 +81,16 @@ final class MssqlExtractor implements SourceExtractor {
         }
     }
 
-    private long streamInsert(final TableMigration table, final String stagingSchema,
-                              final Jdbi target, final ResultSet rs) throws Exception {
+    private long streamInsert(
+            final TableMigration table, final String stagingSchema, final Jdbi target, final ResultSet rs)
+            throws Exception {
         final String quotedCols = table.extractColumns().stream()
-            .map(c -> "\"" + c + "\"")
-            .reduce((a, b) -> a + ", " + b)
-            .orElseThrow();
+                .map(c -> "\"" + c + "\"")
+                .reduce((a, b) -> a + ", " + b)
+                .orElseThrow();
         final String placeholders = "?, ".repeat(table.extractColumns().size() - 1) + "?";
         final String insertSql = "INSERT INTO \"%s\".src_%s (%s) VALUES (%s)"
-            .formatted(stagingSchema, table.name(), quotedCols, placeholders);
+                .formatted(stagingSchema, table.name(), quotedCols, placeholders);
         final ResultSetMetaData md = rs.getMetaData();
         final int colCount = md.getColumnCount();
 
@@ -123,8 +124,9 @@ final class MssqlExtractor implements SourceExtractor {
         return sum == 0 ? submitted : sum;
     }
 
-    private static void bindRow(final ResultSet rs, final ResultSetMetaData md,
-                                final PreparedStatement ps, final int colCount) throws java.sql.SQLException {
+    private static void bindRow(
+            final ResultSet rs, final ResultSetMetaData md, final PreparedStatement ps, final int colCount)
+            throws java.sql.SQLException {
         for (int i = 1; i <= colCount; i++) {
             final int type = md.getColumnType(i);
             switch (type) {

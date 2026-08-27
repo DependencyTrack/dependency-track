@@ -37,7 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-class VulnCheckKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@NonNull KevDataSource, @NonNull VulnCheckKevDataSourceFactory> {
+class VulnCheckKevDataSourceFactoryTest
+        extends AbstractExtensionFactoryTest<@NonNull KevDataSource, @NonNull VulnCheckKevDataSourceFactory> {
 
     protected VulnCheckKevDataSourceFactoryTest() {
         super(VulnCheckKevDataSourceFactory.class);
@@ -87,9 +88,8 @@ class VulnCheckKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@No
 
     @Test
     void validateShouldRejectEnabledConfigWithoutUrl() {
-        final var config = new VulncheckKevDataSourceConfigV1()
-                .withEnabled(true)
-                .withApiToken("vulncheck_abc123");
+        final var config =
+                new VulncheckKevDataSourceConfigV1().withEnabled(true).withApiToken("vulncheck_abc123");
 
         assertThatExceptionOfType(InvalidRuntimeConfigException.class)
                 .isThrownBy(() -> validate(config))
@@ -125,10 +125,9 @@ class VulnCheckKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@No
         config.setEnabled(isEnabled);
         config.setApiToken("vulncheck_abc123");
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
 
         assertThat(factory.isEnabled()).isEqualTo(isEnabled);
     }
@@ -138,13 +137,11 @@ class VulnCheckKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@No
         final VulncheckKevDataSourceConfigV1 config = defaultRuntimeConfig();
         config.setEnabled(false);
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
 
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(factory::create);
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(factory::create);
     }
 
     @Test
@@ -153,10 +150,9 @@ class VulnCheckKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@No
         config.setEnabled(true);
         config.setApiToken("vulncheck_abc123");
 
-        factory.init(
-                new MutableServiceRegistry()
-                        .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
-                        .register(HttpClient.class, HttpClient.newHttpClient()));
+        factory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, new MockConfigRegistry(factory.runtimeConfigSpec(), config))
+                .register(HttpClient.class, HttpClient.newHttpClient()));
 
         try (final KevDataSource dataSource = factory.create()) {
             assertThat(dataSource).isInstanceOf(VulnCheckKevDataSource.class);
@@ -170,7 +166,7 @@ class VulnCheckKevDataSourceFactoryTest extends AbstractExtensionFactoryTest<@No
     @SuppressWarnings("unchecked")
     private void validate(VulncheckKevDataSourceConfigV1 config) {
         ((RuntimeConfigValidator<VulncheckKevDataSourceConfigV1>)
-                factory.runtimeConfigSpec().validator()).validate(config);
+                        factory.runtimeConfigSpec().validator())
+                .validate(config);
     }
-
 }

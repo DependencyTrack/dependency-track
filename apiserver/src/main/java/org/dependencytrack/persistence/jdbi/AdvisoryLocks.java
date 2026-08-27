@@ -25,8 +25,7 @@ import org.jdbi.v3.core.Handle;
  */
 public final class AdvisoryLocks {
 
-    private AdvisoryLocks() {
-    }
+    private AdvisoryLocks() {}
 
     public static boolean tryAcquire(Handle handle, long lockId) {
         if (!handle.isInTransaction()) {
@@ -38,5 +37,4 @@ public final class AdvisoryLocks {
                 .mapTo(boolean.class)
                 .one();
     }
-
 }

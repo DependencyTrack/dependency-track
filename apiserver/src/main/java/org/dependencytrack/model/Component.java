@@ -29,15 +29,16 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import org.apache.commons.lang3.StringUtils;
 import org.dependencytrack.model.validation.ValidSpdxExpression;
 import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
 import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
 import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Convert;
@@ -73,7 +74,9 @@ import java.util.UUID;
  */
 @PersistenceCapable
 @FetchGroups({
-        @FetchGroup(name = "ALL", members = {
+    @FetchGroup(
+            name = "ALL",
+            members = {
                 @Persistent(name = "project"),
                 @Persistent(name = "resolvedLicense"),
                 @Persistent(name = "externalReferences"),
@@ -81,15 +84,13 @@ import java.util.UUID;
                 @Persistent(name = "children"),
                 @Persistent(name = "properties"),
                 @Persistent(name = "vulnerabilities"),
-        }),
-        @FetchGroup(name = "BOM_UPLOAD_PROCESSING", members = {
-                @Persistent(name = "occurrences"),
-                @Persistent(name = "properties")
-        }),
-        @FetchGroup(name = "IDENTITY", members = {
-                @Persistent(name = "id"),
-                @Persistent(name = "uuid")
-        })
+            }),
+    @FetchGroup(
+            name = "BOM_UPLOAD_PROCESSING",
+            members = {@Persistent(name = "occurrences"), @Persistent(name = "properties")}),
+    @FetchGroup(
+            name = "IDENTITY",
+            members = {@Persistent(name = "id"), @Persistent(name = "uuid")})
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Component implements Serializable {
@@ -119,7 +120,9 @@ public class Component implements Serializable {
     @Persistent
     @Column(name = "PUBLISHER", jdbcType = "VARCHAR")
     @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The publisher may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The publisher may only contain printable characters")
     @JsonView(JsonViews.MetadataTools.class)
     private String publisher;
 
@@ -133,7 +136,9 @@ public class Component implements Serializable {
     @Column(name = "GROUP", jdbcType = "VARCHAR")
     @Index(name = "COMPONENT_GROUP_IDX")
     @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The group may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The group may only contain printable characters")
     @JsonView(JsonViews.MetadataTools.class)
     private String group;
 
@@ -143,7 +148,9 @@ public class Component implements Serializable {
     @NotBlank
     @Size(min = 1, max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The name may only contain printable characters")
     @JsonView(JsonViews.MetadataTools.class)
     private String name;
 
@@ -151,12 +158,14 @@ public class Component implements Serializable {
     @Column(name = "VERSION", jdbcType = "VARCHAR")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The version may only contain printable characters")
     @JsonView(JsonViews.MetadataTools.class)
     private String version;
 
     @Persistent
-    @Column(name = "SCOPE", jdbcType = "VARCHAR",length = 255)
+    @Column(name = "SCOPE", jdbcType = "VARCHAR", length = 255)
     @Size(max = 255)
     @Index(name = "COMPONENT_SCOPE_IDX")
     private Scope scope;
@@ -173,14 +182,18 @@ public class Component implements Serializable {
     @Column(name = "FILENAME", jdbcType = "VARCHAR")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.FS_DIRECTORY_NAME, message = "The specified filename is not valid and cannot be used as a filename")
+    @Pattern(
+            regexp = RegexSequence.Definition.FS_DIRECTORY_NAME,
+            message = "The specified filename is not valid and cannot be used as a filename")
     private String filename;
 
     @Persistent
     @Column(name = "EXTENSION", jdbcType = "VARCHAR")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.FS_FILE_NAME, message = "The specified filename extension is not valid and cannot be used as a extension")
+    @Pattern(
+            regexp = RegexSequence.Definition.FS_FILE_NAME,
+            message = "The specified filename extension is not valid and cannot be used as a extension")
     private String extension;
 
     @Persistent
@@ -250,7 +263,9 @@ public class Component implements Serializable {
     @Persistent
     @Index(name = "COMPONENT_BLAKE2B_256_IDX")
     @Column(name = "BLAKE2B_256", jdbcType = "VARCHAR", length = 64)
-    @Pattern(regexp = RegexSequence.Definition.HASH_SHA256, message = "The BLAKE2b hash must be a valid 64 character HEX number")
+    @Pattern(
+            regexp = RegexSequence.Definition.HASH_SHA256,
+            message = "The BLAKE2b hash must be a valid 64 character HEX number")
     @JsonView(JsonViews.MetadataTools.class)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String blake2b_256;
@@ -258,7 +273,9 @@ public class Component implements Serializable {
     @Persistent
     @Index(name = "COMPONENT_BLAKE2B_384_IDX")
     @Column(name = "BLAKE2B_384", jdbcType = "VARCHAR", length = 96)
-    @Pattern(regexp = RegexSequence.Definition.HASH_SHA384, message = "The BLAKE2b hash must be a valid 96 character HEX number")
+    @Pattern(
+            regexp = RegexSequence.Definition.HASH_SHA384,
+            message = "The BLAKE2b hash must be a valid 96 character HEX number")
     @JsonView(JsonViews.MetadataTools.class)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String blake2b_384;
@@ -266,7 +283,9 @@ public class Component implements Serializable {
     @Persistent
     @Index(name = "COMPONENT_BLAKE2B_512_IDX")
     @Column(name = "BLAKE2B_512", jdbcType = "VARCHAR", length = 128)
-    @Pattern(regexp = RegexSequence.Definition.HASH_SHA512, message = "The BLAKE2b hash must be a valid 128 character HEX number")
+    @Pattern(
+            regexp = RegexSequence.Definition.HASH_SHA512,
+            message = "The BLAKE2b hash must be a valid 128 character HEX number")
     @JsonView(JsonViews.MetadataTools.class)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String blake2b_512;
@@ -299,8 +318,11 @@ public class Component implements Serializable {
     @Index(name = "COMPONENT_CPE_IDX")
     @Column(name = "CPE")
     @Size(max = 255)
-    //Patterns obtained from https://csrc.nist.gov/schema/cpe/2.3/cpe-naming_2.3.xsd
-    @Pattern(regexp = "(cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6})", message = "The CPE must conform to the CPE v2.2 or v2.3 specification defined by NIST")
+    // Patterns obtained from https://csrc.nist.gov/schema/cpe/2.3/cpe-naming_2.3.xsd
+    @Pattern(
+            regexp =
+                    "(cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6})",
+            message = "The CPE must conform to the CPE v2.2 or v2.3 specification defined by NIST")
     @JsonView(JsonViews.MetadataTools.class)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String cpe;
@@ -321,13 +343,17 @@ public class Component implements Serializable {
     @Size(max = 1024)
     @com.github.packageurl.validator.PackageURL
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    private String purlCoordinates; // Field should contain only type, namespace, name, and version. Everything up to the qualifiers
+    private String
+            purlCoordinates; // Field should contain only type, namespace, name, and version. Everything up to the
+    // qualifiers
 
     @Persistent
     @Column(name = "SWIDTAGID")
     @Index(name = "COMPONENT_SWID_TAGID_IDX")
     @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The SWID tagId may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The SWID tagId may only contain printable characters")
     @JsonView(JsonViews.MetadataTools.class)
     private String swidTagId;
 
@@ -340,26 +366,34 @@ public class Component implements Serializable {
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR", length = 1024)
     @Size(max = 1024)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The description may only contain printable characters")
     private String description;
 
     @Persistent
     @Column(name = "COPYRIGHT", jdbcType = "VARCHAR", length = 1024)
     @Size(max = 1024)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The copyright may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The copyright may only contain printable characters")
     private String copyright;
 
     @Persistent
     @Column(name = "LICENSE", jdbcType = "VARCHAR")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The license may only contain printable characters")
     private String license;
 
     @Persistent
     @Column(name = "LICENSE_EXPRESSION", jdbcType = "CLOB", allowsNull = "true")
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The license expression may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The license expression may only contain printable characters")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @ValidSpdxExpression
     private String licenseExpression;
@@ -377,10 +411,11 @@ public class Component implements Serializable {
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "DIRECT_DEPENDENCIES", jdbcType = "CLOB")
-    @Extensions(value = {
-            @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS JSONB)"),
-            @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS JSONB)")
-    })
+    @Extensions(
+            value = {
+                @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS JSONB)"),
+                @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS JSONB)")
+            })
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String directDependencies; // This will be a JSON string
 
@@ -391,7 +426,11 @@ public class Component implements Serializable {
     private List<ExternalReference> externalReferences;
 
     @Persistent
-    @ForeignKey(name = "COMPONENT_COMPONENT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "COMPONENT_COMPONENT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "PARENT_COMPONENT_ID")
     private Component parent;
 
@@ -404,17 +443,32 @@ public class Component implements Serializable {
     private Set<ComponentOccurrence> occurrences;
 
     @Persistent(mappedBy = "component", defaultFetchGroup = "false")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "groupName ASC, propertyName ASC, id ASC"))
+    @Order(
+            extensions =
+                    @Extension(
+                            vendorName = "datanucleus",
+                            key = "list-ordering",
+                            value = "groupName ASC, propertyName ASC, id ASC"))
     private List<ComponentProperty> properties;
 
     @Persistent(table = "COMPONENTS_VULNERABILITIES")
-    @Join(column = "COMPONENT_ID", foreignKey = "COMPONENTS_VULNERABILITIES_COMPONENT_FK", deleteAction = ForeignKeyAction.CASCADE)
-    @Element(column = "VULNERABILITY_ID", foreignKey = "COMPONENTS_VULNERABILITIES_VULNERABILITY_FK", deleteAction = ForeignKeyAction.CASCADE)
+    @Join(
+            column = "COMPONENT_ID",
+            foreignKey = "COMPONENTS_VULNERABILITIES_COMPONENT_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
+    @Element(
+            column = "VULNERABILITY_ID",
+            foreignKey = "COMPONENTS_VULNERABILITIES_VULNERABILITY_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
     @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "id ASC"))
     private List<Vulnerability> vulnerabilities;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "COMPONENT_PROJECT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "COMPONENT_PROJECT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Index(name = "COMPONENT_PROJECT_ID_IDX")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @NotNull
@@ -456,7 +510,7 @@ public class Component implements Serializable {
     //  This is only relevant when listing components.
     private transient Long occurrenceCount;
 
-    public Component(){}
+    public Component() {}
 
     public Component(final long id) {
         this.id = id;
@@ -971,12 +1025,12 @@ public class Component implements Serializable {
         this.expandDependencyGraph = expandDependencyGraph;
     }
 
-    public String getAuthor(){
+    public String getAuthor() {
         return author;
     }
 
-    public void setAuthor(String author){
-        this.author=author;
+    public void setAuthor(String author) {
+        this.author = author;
     }
 
     public Long getOccurrenceCount() {

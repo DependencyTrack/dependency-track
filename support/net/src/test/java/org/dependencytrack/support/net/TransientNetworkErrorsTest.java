@@ -38,29 +38,37 @@ class TransientNetworkErrorsTest {
 
     @Test
     void shouldClassifyConnectivityAndTimeoutFailuresAsTransient() {
-        assertThat(TransientNetworkErrors.isTransient(new ConnectException("refused"))).isTrue();
-        assertThat(TransientNetworkErrors.isTransient(new SocketException("reset"))).isTrue();
-        assertThat(TransientNetworkErrors.isTransient(new SocketTimeoutException("read timed out"))).isTrue();
-        assertThat(TransientNetworkErrors.isTransient(new HttpTimeoutException("timed out"))).isTrue();
+        assertThat(TransientNetworkErrors.isTransient(new ConnectException("refused")))
+                .isTrue();
+        assertThat(TransientNetworkErrors.isTransient(new SocketException("reset")))
+                .isTrue();
+        assertThat(TransientNetworkErrors.isTransient(new SocketTimeoutException("read timed out")))
+                .isTrue();
+        assertThat(TransientNetworkErrors.isTransient(new HttpTimeoutException("timed out")))
+                .isTrue();
         assertThat(TransientNetworkErrors.isTransient(new EOFException())).isTrue();
-        assertThat(TransientNetworkErrors.isTransient(new ClosedChannelException())).isTrue();
-        assertThat(TransientNetworkErrors.isTransient(new UnknownHostException("resolver blip"))).isTrue();
+        assertThat(TransientNetworkErrors.isTransient(new ClosedChannelException()))
+                .isTrue();
+        assertThat(TransientNetworkErrors.isTransient(new UnknownHostException("resolver blip")))
+                .isTrue();
     }
 
     @Test
     void shouldClassifyPermanentFailuresAsNotTransient() {
-        assertThat(TransientNetworkErrors.isTransient(new SSLHandshakeException("bad cert"))).isFalse();
-        assertThat(TransientNetworkErrors.isTransient(new ProtocolException("invalid response"))).isFalse();
-        assertThat(TransientNetworkErrors.isTransient(new InterruptedIOException("interrupted"))).isFalse();
-        assertThat(TransientNetworkErrors.isTransient(new IOException("malformed response"))).isFalse();
+        assertThat(TransientNetworkErrors.isTransient(new SSLHandshakeException("bad cert")))
+                .isFalse();
+        assertThat(TransientNetworkErrors.isTransient(new ProtocolException("invalid response")))
+                .isFalse();
+        assertThat(TransientNetworkErrors.isTransient(new InterruptedIOException("interrupted")))
+                .isFalse();
+        assertThat(TransientNetworkErrors.isTransient(new IOException("malformed response")))
+                .isFalse();
     }
 
     @Test
     void shouldWalkCauseChainForWrappedTransportFailure() {
-        final var wrapped = new IOException(
-                "HTTP/1.1 header parser received no bytes",
-                new SocketException("Connection reset"));
+        final var wrapped =
+                new IOException("HTTP/1.1 header parser received no bytes", new SocketException("Connection reset"));
         assertThat(TransientNetworkErrors.isTransient(wrapped)).isTrue();
     }
-
 }

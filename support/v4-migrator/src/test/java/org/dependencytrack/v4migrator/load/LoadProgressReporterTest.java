@@ -42,7 +42,8 @@ class LoadProgressReporterTest {
         final List<String> log = new CopyOnWriteArrayList<>();
         try (final LoadProgressReporter reporter = new LoadProgressReporter(Duration.ofMillis(50), log::add)) {
             reporter.start("PROJECT", 1234L);
-            awaitUntil(() -> log.stream().anyMatch(s -> s.contains("still loading") && s.contains("expected 1234 rows")));
+            awaitUntil(
+                    () -> log.stream().anyMatch(s -> s.contains("still loading") && s.contains("expected 1234 rows")));
             reporter.done(1230L);
         }
         assertThat(log).anyMatch(s -> s.contains("-> PROJECT: 1230 rows"));

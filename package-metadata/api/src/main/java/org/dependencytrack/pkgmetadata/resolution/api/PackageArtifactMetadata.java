@@ -29,14 +29,11 @@ import static java.util.Objects.requireNonNull;
  * @since 5.0.0
  */
 public record PackageArtifactMetadata(
-        Instant resolvedAt,
-        @Nullable Instant publishedAt,
-        Map<HashAlgorithm, String> hashes) {
+        Instant resolvedAt, @Nullable Instant publishedAt, Map<HashAlgorithm, String> hashes) {
 
     public PackageArtifactMetadata {
         requireNonNull(resolvedAt, "resolvedAt must not be null");
         requireNonNull(hashes, "hashes must not be null");
         hashes = Map.copyOf(hashes);
     }
-
 }

@@ -43,5 +43,4 @@ final class DelegatingDeploymentConfig implements DeploymentConfig {
     public <T> Optional<T> getOptionalValue(final String propertyName, final Class<T> propertyType) {
         return delegate.getOptionalValue(propertyName, propertyType);
     }
-
 }

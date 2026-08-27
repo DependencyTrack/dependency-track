@@ -21,7 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import alpine.server.resources.GlobalExceptionHandler;
-import jakarta.ws.rs.core.Response;
 import net.javacrumbs.jsonunit.core.Option;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
@@ -38,6 +37,8 @@ import org.glassfish.jersey.inject.hk2.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.ws.rs.core.Response;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -60,17 +61,16 @@ public class MetricsResourceTest extends ResourceTest {
     private static final DexEngine DEX_ENGINE_MOCK = mock(DexEngine.class);
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(MetricsResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class)
-                    .register(new AbstractBinder() {
-                        @Override
-                        protected void configure() {
-                            bind(DEX_ENGINE_MOCK).to(DexEngine.class);
-                        }
-                    })
-                    .register(GlobalExceptionHandler.class));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(MetricsResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class)
+            .register(new AbstractBinder() {
+                @Override
+                protected void configure() {
+                    bind(DEX_ENGINE_MOCK).to(DexEngine.class);
+                }
+            })
+            .register(GlobalExceptionHandler.class));
 
     @Test
     public void getProjectCurrentMetricsAclTest() {
@@ -81,11 +81,11 @@ public class MetricsResourceTest extends ResourceTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_METRICS + "/project/" + project.getUuid() + "/current")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_METRICS + "/project/" + project.getUuid() + "/current")
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -112,11 +112,11 @@ public class MetricsResourceTest extends ResourceTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_METRICS + "/project/" + project.getUuid() + "/since/20250101")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_METRICS + "/project/" + project.getUuid() + "/since/20250101")
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -143,11 +143,11 @@ public class MetricsResourceTest extends ResourceTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_METRICS + "/project/" + project.getUuid() + "/days/666")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_METRICS + "/project/" + project.getUuid() + "/days/666")
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -174,11 +174,11 @@ public class MetricsResourceTest extends ResourceTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_METRICS + "/project/" + project.getUuid() + "/refresh")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_METRICS + "/project/" + project.getUuid() + "/refresh")
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -210,11 +210,11 @@ public class MetricsResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_METRICS + "/component/" + component.getUuid() + "/current")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_METRICS + "/component/" + component.getUuid() + "/current")
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -246,11 +246,11 @@ public class MetricsResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_METRICS + "/component/" + component.getUuid() + "/since/20250101")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_METRICS + "/component/" + component.getUuid() + "/since/20250101")
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -282,11 +282,11 @@ public class MetricsResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_METRICS + "/component/" + component.getUuid() + "/days/666")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_METRICS + "/component/" + component.getUuid() + "/days/666")
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -318,11 +318,11 @@ public class MetricsResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_METRICS + "/component/" + component.getUuid() + "/refresh")
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_METRICS + "/component/" + component.getUuid() + "/refresh")
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -345,14 +345,12 @@ public class MetricsResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.VIEW_PORTFOLIO);
         enablePortfolioAccessControl();
 
-        final Response response = jersey
-                .target(V1_METRICS + "/portfolio/current")
+        final Response response = jersey.target(V1_METRICS + "/portfolio/current")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
         assertThat(response.getStatus()).isEqualTo(200);
-        assertThatJson(getPlainTextBody(response))
-                .isEqualTo(/* language=JSON */ """
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                         {
                           "components": 0,
                           "critical": 0,
@@ -455,7 +453,8 @@ public class MetricsResourceTest extends ResourceTest {
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
                 inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
-                inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
+                inactiveAccessibleProjectMetrics.setLastOccurrence(
+                        inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
                 // Metrics of inaccessible projects must not be considered.
@@ -468,8 +467,7 @@ public class MetricsResourceTest extends ResourceTest {
             }
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/portfolio/current")
+        final Response response = jersey.target(V1_METRICS + "/portfolio/current")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -548,7 +546,8 @@ public class MetricsResourceTest extends ResourceTest {
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
                 inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
-                inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
+                inactiveAccessibleProjectMetrics.setLastOccurrence(
+                        inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
                 // Metrics of "inaccessible" project must be considered because portfolio ACL is disabled.
@@ -563,8 +562,7 @@ public class MetricsResourceTest extends ResourceTest {
             handle.useTransaction(tx -> tx.attach(MetricsDao.class).refreshGlobalPortfolioMetrics());
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/portfolio/current")
+        final Response response = jersey.target(V1_METRICS + "/portfolio/current")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -697,7 +695,8 @@ public class MetricsResourceTest extends ResourceTest {
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
                 inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
-                inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
+                inactiveAccessibleProjectMetrics.setLastOccurrence(
+                        inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
                 // Metrics of inaccessible projects must not be considered.
@@ -710,8 +709,7 @@ public class MetricsResourceTest extends ResourceTest {
             }
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/portfolio/3/days")
+        final Response response = jersey.target(V1_METRICS + "/portfolio/3/days")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -948,7 +946,8 @@ public class MetricsResourceTest extends ResourceTest {
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
                 inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
-                inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
+                inactiveAccessibleProjectMetrics.setLastOccurrence(
+                        inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
                 // Metrics of "inaccessible" project must be considered because portfolio ACL is disabled.
@@ -963,8 +962,7 @@ public class MetricsResourceTest extends ResourceTest {
             handle.useTransaction(tx -> tx.attach(MetricsDao.class).refreshGlobalPortfolioMetrics());
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/portfolio/3/days")
+        final Response response = jersey.target(V1_METRICS + "/portfolio/3/days")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1201,7 +1199,8 @@ public class MetricsResourceTest extends ResourceTest {
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
                 inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
-                inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
+                inactiveAccessibleProjectMetrics.setLastOccurrence(
+                        inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
                 // Metrics of inaccessible projects must not be considered.
@@ -1214,8 +1213,8 @@ public class MetricsResourceTest extends ResourceTest {
             }
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/portfolio/since/" + today.minusDays(2).format(DateTimeFormatter.ofPattern("yyyyMMdd")))
+        final Response response = jersey.target(V1_METRICS + "/portfolio/since/"
+                        + today.minusDays(2).format(DateTimeFormatter.ofPattern("yyyyMMdd")))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1452,7 +1451,8 @@ public class MetricsResourceTest extends ResourceTest {
                 inactiveAccessibleProjectMetrics.setProjectId(inactiveAccessibleProject.getId());
                 inactiveAccessibleProjectMetrics.setComponents(111);
                 inactiveAccessibleProjectMetrics.setFirstOccurrence(Date.from(now));
-                inactiveAccessibleProjectMetrics.setLastOccurrence(inactiveAccessibleProjectMetrics.getFirstOccurrence());
+                inactiveAccessibleProjectMetrics.setLastOccurrence(
+                        inactiveAccessibleProjectMetrics.getFirstOccurrence());
                 dao.createProjectMetrics(inactiveAccessibleProjectMetrics);
 
                 // Metrics of "inaccessible" project must be considered because portfolio ACL is disabled.
@@ -1467,8 +1467,8 @@ public class MetricsResourceTest extends ResourceTest {
             handle.useTransaction(tx -> tx.attach(MetricsDao.class).refreshGlobalPortfolioMetrics());
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/portfolio/since/" + today.minusDays(2).format(DateTimeFormatter.ofPattern("yyyyMMdd")))
+        final Response response = jersey.target(V1_METRICS + "/portfolio/since/"
+                        + today.minusDays(2).format(DateTimeFormatter.ofPattern("yyyyMMdd")))
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1596,8 +1596,7 @@ public class MetricsResourceTest extends ResourceTest {
         parentProject.setCollectionLogic(ProjectCollectionLogic.AGGREGATE_DIRECT_CHILDREN);
         qm.createProject(parentProject, List.of(), false);
 
-        final Response response = jersey
-                .target(V1_METRICS + "/project/" + parentProject.getUuid() + "/current")
+        final Response response = jersey.target(V1_METRICS + "/project/" + parentProject.getUuid() + "/current")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1662,8 +1661,7 @@ public class MetricsResourceTest extends ResourceTest {
             testDao.createProjectMetrics(metricsB);
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/project/" + parentProject.getUuid() + "/current")
+        final Response response = jersey.target(V1_METRICS + "/project/" + parentProject.getUuid() + "/current")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1729,8 +1727,7 @@ public class MetricsResourceTest extends ResourceTest {
             testDao.createProjectMetrics(metricsUntagged);
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/project/" + parentProject.getUuid() + "/current")
+        final Response response = jersey.target(V1_METRICS + "/project/" + parentProject.getUuid() + "/current")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1788,8 +1785,7 @@ public class MetricsResourceTest extends ResourceTest {
         });
 
         // /days/1 goes back 1 day (yesterday through today = 2 entries).
-        final Response response = jersey
-                .target(V1_METRICS + "/project/" + parentProject.getUuid() + "/days/1")
+        final Response response = jersey.target(V1_METRICS + "/project/" + parentProject.getUuid() + "/days/1")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1856,8 +1852,8 @@ public class MetricsResourceTest extends ResourceTest {
 
         // /since/{today} covers only today.
         final String todayStr = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        final Response response = jersey
-                .target(V1_METRICS + "/project/" + parentProject.getUuid() + "/since/" + todayStr)
+        final Response response = jersey.target(
+                        V1_METRICS + "/project/" + parentProject.getUuid() + "/since/" + todayStr)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1877,8 +1873,8 @@ public class MetricsResourceTest extends ResourceTest {
 
         // /since/{yesterday} covers yesterday + today.
         final String yesterdayStr = yesterday.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        final Response response2 = jersey
-                .target(V1_METRICS + "/project/" + parentProject.getUuid() + "/since/" + yesterdayStr)
+        final Response response2 = jersey.target(
+                        V1_METRICS + "/project/" + parentProject.getUuid() + "/since/" + yesterdayStr)
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -1934,8 +1930,7 @@ public class MetricsResourceTest extends ResourceTest {
             testDao.createProjectMetrics(metricsOld);
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/project/" + parentProject.getUuid() + "/current")
+        final Response response = jersey.target(V1_METRICS + "/project/" + parentProject.getUuid() + "/current")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -2013,8 +2008,7 @@ public class MetricsResourceTest extends ResourceTest {
             testDao.createProjectMetrics(metricsGrandchildUntagged);
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/project/" + parent.getUuid() + "/current")
+        final Response response = jersey.target(V1_METRICS + "/project/" + parent.getUuid() + "/current")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -2073,8 +2067,7 @@ public class MetricsResourceTest extends ResourceTest {
             testDao.createProjectMetrics(metricsB);
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/project/" + parent.getUuid() + "/current")
+        final Response response = jersey.target(V1_METRICS + "/project/" + parent.getUuid() + "/current")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -2139,8 +2132,7 @@ public class MetricsResourceTest extends ResourceTest {
             testDao.createProjectMetrics(metricsB);
         });
 
-        final Response response = jersey
-                .target(V1_METRICS + "/project/" + parent.getUuid() + "/current")
+        final Response response = jersey.target(V1_METRICS + "/project/" + parent.getUuid() + "/current")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -2155,5 +2147,4 @@ public class MetricsResourceTest extends ResourceTest {
                         }
                         """);
     }
-
 }

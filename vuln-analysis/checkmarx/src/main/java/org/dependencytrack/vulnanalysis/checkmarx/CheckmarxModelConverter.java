@@ -56,10 +56,12 @@ final class CheckmarxModelConverter {
     private static final Source SOURCE_CX = Source.newBuilder().setName("CX").build();
     private static final Source SOURCE_NVD = Source.newBuilder().setName("NVD").build();
 
-    private CheckmarxModelConverter() {
-    }
+    private CheckmarxModelConverter() {}
 
-    static Vulnerability.Builder convert(CheckmarxDataObject.Vulnerability cxVuln, CheckmarxDataObject.@Nullable Remediation remediation, boolean aliasSyncEnabled) {
+    static Vulnerability.Builder convert(
+            CheckmarxDataObject.Vulnerability cxVuln,
+            CheckmarxDataObject.@Nullable Remediation remediation,
+            boolean aliasSyncEnabled) {
         final var vulnBuilder = Vulnerability.newBuilder();
 
         vulnBuilder.setId(cxVuln.cxId());
@@ -78,7 +80,8 @@ final class CheckmarxModelConverter {
         if (aliasSyncEnabled) {
             vulnBuilder.addReferences(VulnerabilityReference.newBuilder()
                     .setId(cxVuln.cve())
-                    .setSource(SOURCE_NVD).build());
+                    .setSource(SOURCE_NVD)
+                    .build());
         }
 
         final Integer cweId = convertToCwe(vulnDetails.cwe());
@@ -94,8 +97,11 @@ final class CheckmarxModelConverter {
 
         if (remediation != null) {
             final var recommendations = new ArrayList<String>();
-            recommendations.add("Smallest package upgrade that resolves the identified risks in the current package version: " + remediation.nearest().version());
-            recommendations.add("Latest version of the package: " + remediation.latest().version());
+            recommendations.add(
+                    "Smallest package upgrade that resolves the identified risks in the current package version: "
+                            + remediation.nearest().version());
+            recommendations.add(
+                    "Latest version of the package: " + remediation.latest().version());
             vulnBuilder.setRecommendation(String.join(System.lineSeparator(), recommendations));
         }
 

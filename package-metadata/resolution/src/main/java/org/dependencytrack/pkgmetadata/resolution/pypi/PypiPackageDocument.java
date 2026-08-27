@@ -24,19 +24,14 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-record PypiPackageDocument(
-        @Nullable Info info,
-        @Nullable Map<String, List<ReleaseFile>> releases) {
+record PypiPackageDocument(@Nullable Info info, @Nullable Map<String, List<ReleaseFile>> releases) {
 
-    record Info(@Nullable String version) {
-    }
+    record Info(@Nullable String version) {}
 
-    record ReleaseFile(@Nullable String filename,
-                       @JsonProperty("upload_time_iso_8601") @Nullable String uploadTime,
-                       @Nullable Digests digests) {
-    }
+    record ReleaseFile(
+            @Nullable String filename,
+            @JsonProperty("upload_time_iso_8601") @Nullable String uploadTime,
+            @Nullable Digests digests) {}
 
-    record Digests(@Nullable String md5, @Nullable String sha256) {
-    }
-
+    record Digests(@Nullable String md5, @Nullable String sha256) {}
 }

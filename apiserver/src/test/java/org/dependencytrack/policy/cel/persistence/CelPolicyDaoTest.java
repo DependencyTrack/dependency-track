@@ -24,7 +24,6 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.util.JsonFormat;
 import dev.cel.common.types.CelType;
 import net.javacrumbs.jsonunit.core.Option;
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
@@ -47,10 +46,15 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiTransaction;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.withJdbiHandle;
@@ -67,6 +71,27 @@ import static org.hamcrest.Matchers.equalTo;
 public class CelPolicyDaoTest extends PersistenceCapableTest {
 
     @Test
+    public void testLoadRequiredFieldsWithoutRequirements() {
+        final var project = new Project();
+        project.setName("projectName");
+        qm.persist(project);
+
+        final org.dependencytrack.proto.policy.v1.Project loadedProject =
+                withJdbiHandle(handle -> new CelPolicyDao(handle).loadRequiredFields(project.getId(), Map.of()));
+        assertThat(loadedProject).isEqualTo(org.dependencytrack.proto.policy.v1.Project.getDefaultInstance());
+
+        final Map<Long, org.dependencytrack.proto.policy.v1.Component> loadedComponents =
+                withJdbiHandle(handle -> new CelPolicyDao(handle).loadRequiredComponentFields(List.of(1L), Map.of()));
+        assertThat(loadedComponents)
+                .containsOnly(entry(1L, org.dependencytrack.proto.policy.v1.Component.getDefaultInstance()));
+
+        final Map<Long, org.dependencytrack.proto.policy.v1.Vulnerability> loadedVulns = withJdbiHandle(
+                handle -> new CelPolicyDao(handle).loadRequiredVulnerabilityFields(List.of(1L), Map.of()));
+        assertThat(loadedVulns)
+                .containsOnly(entry(1L, org.dependencytrack.proto.policy.v1.Vulnerability.getDefaultInstance()));
+    }
+
+    @Test
     public void testLoadRequiredFieldsForProject() throws Exception {
         final var project = new Project();
         project.setGroup("projectGroup");
@@ -81,10 +106,7 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
 
         qm.createProjectProperty(project, "propertyGroup", "propertyName", "propertyValue", PropertyType.STRING, null);
 
-        qm.bind(project, List.of(
-                qm.createTag("projectTagA"),
-                qm.createTag("projectTagB")
-        ));
+        qm.bind(project, List.of(qm.createTag("projectTagA"), qm.createTag("projectTagB")));
 
         var bom = new Bom();
         bom.setProject(project);
@@ -92,17 +114,23 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
         bom.setImported(new Date());
         qm.persist(bom);
 
-        final var requirements = new HashSetValuedHashMap<CelType, String>();
-        requirements.putAll(TYPE_PROJECT, org.dependencytrack.proto.policy.v1.Project.getDescriptor().getFields().stream()
-                .map(Descriptors.FieldDescriptor::getName)
-                .toList());
-        requirements.putAll(TYPE_PROJECT_PROPERTY, org.dependencytrack.proto.policy.v1.Project.Property.getDescriptor().getFields().stream()
-                .map(Descriptors.FieldDescriptor::getName)
-                .toList());
-        requirements.put(TYPE_PROJECT_METADATA, "bom_generated");
+        final var requirements = new HashMap<CelType, Set<String>>();
+        requirements
+                .computeIfAbsent(TYPE_PROJECT, _ -> new HashSet<>())
+                .addAll(org.dependencytrack.proto.policy.v1.Project.getDescriptor().getFields().stream()
+                        .map(Descriptors.FieldDescriptor::getName)
+                        .toList());
+        requirements
+                .computeIfAbsent(TYPE_PROJECT_PROPERTY, _ -> new HashSet<>())
+                .addAll(org.dependencytrack.proto.policy.v1.Project.Property.getDescriptor().getFields().stream()
+                        .map(Descriptors.FieldDescriptor::getName)
+                        .toList());
+        requirements
+                .computeIfAbsent(TYPE_PROJECT_METADATA, _ -> new HashSet<>())
+                .add("bom_generated");
 
-        final org.dependencytrack.proto.policy.v1.Project enrichedProject = withJdbiHandle(handle ->
-                new CelPolicyDao(handle).loadRequiredFields(project.getId(), requirements));
+        final org.dependencytrack.proto.policy.v1.Project enrichedProject =
+                withJdbiHandle(handle -> new CelPolicyDao(handle).loadRequiredFields(project.getId(), requirements));
 
         assertThatJson(JsonFormat.printer().print(enrichedProject))
                 .withMatcher("uuid", equalTo(project.getUuid().toString()))
@@ -186,8 +214,8 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
         component.setResolvedLicense(license);
         qm.persist(component);
 
-        useJdbiHandle(handle -> new PackageMetadataDao(handle).upsertAll(List.of(
-                new PackageMetadata(
+        useJdbiHandle(handle -> new PackageMetadataDao(handle)
+                .upsertAll(List.of(new PackageMetadata(
                         new PackageURL("pkg:maven/componentGroup/componentName"),
                         "1.0.0",
                         null,
@@ -195,8 +223,8 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                         null,
                         null))));
 
-        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle).upsertAll(List.of(
-                new PackageArtifactMetadata(
+        useJdbiHandle(handle -> new PackageArtifactMetadataDao(handle)
+                .upsertAll(List.of(new PackageArtifactMetadata(
                         new PackageURL("pkg:maven/componentGroup/componentName@componentVersion"),
                         new PackageURL("pkg:maven/componentGroup/componentName"),
                         null,
@@ -208,20 +236,25 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                         null,
                         Instant.now()))));
 
-
-        final var requirements = new HashSetValuedHashMap<CelType, String>();
-        requirements.putAll(TYPE_COMPONENT, org.dependencytrack.proto.policy.v1.Component.getDescriptor().getFields().stream()
-                .map(Descriptors.FieldDescriptor::getName)
-                .toList());
-        requirements.putAll(TYPE_LICENSE, org.dependencytrack.proto.policy.v1.License.getDescriptor().getFields().stream()
-                .map(Descriptors.FieldDescriptor::getName)
-                .toList());
-        requirements.putAll(TYPE_LICENSE_GROUP, org.dependencytrack.proto.policy.v1.License.Group.getDescriptor().getFields().stream()
-                .map(Descriptors.FieldDescriptor::getName)
-                .toList());
+        final var requirements = new HashMap<CelType, Set<String>>();
+        requirements
+                .computeIfAbsent(TYPE_COMPONENT, _ -> new HashSet<>())
+                .addAll(org.dependencytrack.proto.policy.v1.Component.getDescriptor().getFields().stream()
+                        .map(Descriptors.FieldDescriptor::getName)
+                        .toList());
+        requirements
+                .computeIfAbsent(TYPE_LICENSE, _ -> new HashSet<>())
+                .addAll(org.dependencytrack.proto.policy.v1.License.getDescriptor().getFields().stream()
+                        .map(Descriptors.FieldDescriptor::getName)
+                        .toList());
+        requirements
+                .computeIfAbsent(TYPE_LICENSE_GROUP, _ -> new HashSet<>())
+                .addAll(org.dependencytrack.proto.policy.v1.License.Group.getDescriptor().getFields().stream()
+                        .map(Descriptors.FieldDescriptor::getName)
+                        .toList());
 
         final org.dependencytrack.proto.policy.v1.Component enrichedComponent = withJdbiHandle(handle ->
-                new CelPolicyDao(handle).loadRequiredComponentFields(List.of(component.getId()), requirements))
+                        new CelPolicyDao(handle).loadRequiredComponentFields(List.of(component.getId()), requirements))
                 .get(component.getId());
 
         assertThatJson(JsonFormat.printer().print(enrichedComponent))
@@ -290,19 +323,22 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                         Set.of(new VulnerabilityKey("GHSA-001", Vulnerability.Source.GITHUB))));
 
         useJdbiHandle(handle -> handle.attach(EpssDao.class)
-                .createOrUpdateAll(List.of(new Epss(
-                        "CVE-001", BigDecimal.valueOf(0.6), BigDecimal.valueOf(0.2)))));
+                .createOrUpdateAll(List.of(new Epss("CVE-001", BigDecimal.valueOf(0.6), BigDecimal.valueOf(0.2)))));
 
-        final var requirements = new HashSetValuedHashMap<CelType, String>();
-        requirements.putAll(TYPE_VULNERABILITY, org.dependencytrack.proto.policy.v1.Vulnerability.getDescriptor().getFields().stream()
-                .map(Descriptors.FieldDescriptor::getName)
-                .toList());
-        requirements.putAll(TYPE_VULNERABILITY_ALIAS, org.dependencytrack.proto.policy.v1.Vulnerability.Alias.getDescriptor().getFields().stream()
-                .map(Descriptors.FieldDescriptor::getName)
-                .toList());
+        final var requirements = new HashMap<CelType, Set<String>>();
+        requirements
+                .computeIfAbsent(TYPE_VULNERABILITY, _ -> new HashSet<>())
+                .addAll(org.dependencytrack.proto.policy.v1.Vulnerability.getDescriptor().getFields().stream()
+                        .map(Descriptors.FieldDescriptor::getName)
+                        .toList());
+        requirements
+                .computeIfAbsent(TYPE_VULNERABILITY_ALIAS, _ -> new HashSet<>())
+                .addAll(org.dependencytrack.proto.policy.v1.Vulnerability.Alias.getDescriptor().getFields().stream()
+                        .map(Descriptors.FieldDescriptor::getName)
+                        .toList());
 
         final org.dependencytrack.proto.policy.v1.Vulnerability enrichedVuln = withJdbiHandle(handle ->
-                new CelPolicyDao(handle).loadRequiredVulnerabilityFields(List.of(vuln.getId()), requirements))
+                        new CelPolicyDao(handle).loadRequiredVulnerabilityFields(List.of(vuln.getId()), requirements))
                 .get(vuln.getId());
 
         assertThatJson(JsonFormat.printer().print(enrichedVuln))
@@ -344,5 +380,4 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                         }
                         """);
     }
-
 }

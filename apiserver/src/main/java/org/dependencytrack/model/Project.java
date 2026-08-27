@@ -32,13 +32,14 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
+import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
+import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.dependencytrack.persistence.converter.OrganizationalContactsJsonConverter;
-import org.dependencytrack.persistence.converter.OrganizationalEntityJsonConverter;
-import org.dependencytrack.resources.v1.serializers.CustomPackageURLSerializer;
 
 import javax.jdo.annotations.Column;
 import javax.jdo.annotations.Convert;
@@ -76,7 +77,9 @@ import java.util.UUID;
  */
 @PersistenceCapable
 @FetchGroups({
-        @FetchGroup(name = "ALL", members = {
+    @FetchGroup(
+            name = "ALL",
+            members = {
                 @Persistent(name = "name"),
                 @Persistent(name = "authors"),
                 @Persistent(name = "publisher"),
@@ -98,33 +101,39 @@ import java.util.UUID;
                 @Persistent(name = "isLatest"),
                 @Persistent(name = "collectionLogic"),
                 @Persistent(name = "collectionTag")
-        }),
-        @FetchGroup(name = "METADATA", members = {
-                @Persistent(name = "metadata")
-        }),
-        @FetchGroup(name = "IDENTIFIERS", members = {
+            }),
+    @FetchGroup(
+            name = "METADATA",
+            members = {@Persistent(name = "metadata")}),
+    @FetchGroup(
+            name = "IDENTIFIERS",
+            members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "uuid"),
                 @Persistent(name = "group"),
                 @Persistent(name = "name"),
                 @Persistent(name = "version")
-        }),
-        @FetchGroup(name = "METRICS_UPDATE", members = {
+            }),
+    @FetchGroup(
+            name = "METRICS_UPDATE",
+            members = {
                 @Persistent(name = "id"),
                 @Persistent(name = "lastInheritedRiskScore"),
                 @Persistent(name = "uuid")
-        }),
-        @FetchGroup(name = "NOTIFICATION", members = {
+            }),
+    @FetchGroup(
+            name = "NOTIFICATION",
+            members = {
                 @Persistent(name = "uuid"),
                 @Persistent(name = "name"),
                 @Persistent(name = "version"),
                 @Persistent(name = "description"),
                 @Persistent(name = "purl"),
                 @Persistent(name = "tags")
-        }),
-        @FetchGroup(name = "PARENT", members = {
-                @Persistent(name = "parent")
-        })
+            }),
+    @FetchGroup(
+            name = "PARENT",
+            members = {@Persistent(name = "parent")})
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Project implements Serializable {
@@ -158,7 +167,9 @@ public class Project implements Serializable {
     @Column(name = "PUBLISHER", jdbcType = "VARCHAR")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The publisher may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The publisher may only contain printable characters")
     private String publisher;
 
     @Persistent(defaultFetchGroup = "true")
@@ -176,7 +187,9 @@ public class Project implements Serializable {
     @Index(name = "PROJECT_GROUP_IDX")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The group may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The group may only contain printable characters")
     private String group;
 
     @Persistent
@@ -185,21 +198,27 @@ public class Project implements Serializable {
     @NotBlank
     @Size(min = 1, max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The name may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The name may only contain printable characters")
     private String name;
 
     @Persistent
     @Column(name = "DESCRIPTION", jdbcType = "VARCHAR")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     @Size(max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The description may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The description may only contain printable characters")
     private String description;
 
     @Persistent
     @Index(name = "PROJECT_VERSION_IDX")
     @Column(name = "VERSION", jdbcType = "VARCHAR")
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The version may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The version may only contain printable characters")
     private String version;
 
     @Persistent
@@ -213,8 +232,11 @@ public class Project implements Serializable {
     @Column(name = "CPE")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    //Patterns obtained from https://csrc.nist.gov/schema/cpe/2.3/cpe-naming_2.3.xsd
-    @Pattern(regexp = "(cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6})", message = "The CPE must conform to the CPE v2.2 or v2.3 specification defined by NIST")
+    // Patterns obtained from https://csrc.nist.gov/schema/cpe/2.3/cpe-naming_2.3.xsd
+    @Pattern(
+            regexp =
+                    "(cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#$$%&'\\(\\)\\+,/:;<=>@\\[\\]\\^`\\{\\|}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6})",
+            message = "The CPE must conform to the CPE v2.2 or v2.3 specification defined by NIST")
     private String cpe;
 
     @Persistent
@@ -231,15 +253,18 @@ public class Project implements Serializable {
     @Column(name = "SWIDTAGID")
     @Size(max = 255)
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The SWID tagId may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The SWID tagId may only contain printable characters")
     private String swidTagId;
 
     @Persistent(defaultFetchGroup = "true")
     @Column(name = "DIRECT_DEPENDENCIES", jdbcType = "CLOB")
-    @Extensions(value = {
-            @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS JSONB)"),
-            @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS JSONB)")
-    })
+    @Extensions(
+            value = {
+                @Extension(vendorName = "datanucleus", key = "insert-function", value = "CAST(? AS JSONB)"),
+                @Extension(vendorName = "datanucleus", key = "update-function", value = "CAST(? AS JSONB)")
+            })
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
     private String directDependencies; // This will be a JSON string
 
@@ -250,7 +275,11 @@ public class Project implements Serializable {
     private UUID uuid;
 
     @Persistent
-    @ForeignKey(name = "PROJECT_PROJECT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "PROJECT_PROJECT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "PARENT_PROJECT_ID")
     @JsonIncludeProperties(value = {"name", "version", "uuid"})
     private Project parent;
@@ -259,12 +288,21 @@ public class Project implements Serializable {
     private Collection<Project> children;
 
     @Persistent(mappedBy = "project")
-    @Order(extensions = @Extension(vendorName = "datanucleus", key = "list-ordering", value = "groupName ASC, propertyName ASC"))
+    @Order(
+            extensions =
+                    @Extension(
+                            vendorName = "datanucleus",
+                            key = "list-ordering",
+                            value = "groupName ASC, propertyName ASC"))
     @JsonIgnore
     private List<ProjectProperty> properties;
 
     @Persistent(table = "PROJECTS_TAGS", defaultFetchGroup = "true", mappedBy = "projects")
-    @Join(column = "PROJECT_ID", primaryKey = "PROJECTS_TAGS_PK", foreignKey = "PROJECTS_TAGS_PROJECT_FK", deleteAction = ForeignKeyAction.CASCADE)
+    @Join(
+            column = "PROJECT_ID",
+            primaryKey = "PROJECTS_TAGS_PK",
+            foreignKey = "PROJECTS_TAGS_PROJECT_FK",
+            deleteAction = ForeignKeyAction.CASCADE)
     @Element(column = "TAG_ID", foreignKey = "PROJECTS_TAGS_TAG_FK", deleteAction = ForeignKeyAction.CASCADE)
     private Set<Tag> tags;
 
@@ -322,7 +360,10 @@ public class Project implements Serializable {
     private ProjectCollectionLogic collectionLogic;
 
     @Persistent
-    @ForeignKey(name = "PROJECT_COLLECTION_TAG_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.RESTRICT)
+    @ForeignKey(
+            name = "PROJECT_COLLECTION_TAG_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.RESTRICT)
     @Column(name = "COLLECTION_TAG_ID")
     @JsonIncludeProperties(value = {"name"})
     private Tag collectionTag;
@@ -680,5 +721,4 @@ public class Project implements Serializable {
         }
         return sb.toString();
     }
-
 }

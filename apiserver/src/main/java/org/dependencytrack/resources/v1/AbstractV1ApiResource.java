@@ -18,9 +18,10 @@
  */
 package org.dependencytrack.resources.v1;
 
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.resources.AbstractApiResource;
+
+import jakarta.ws.rs.core.Response;
 
 /// @since 5.1.0
 abstract class AbstractV1ApiResource extends AbstractApiResource {
@@ -29,11 +30,9 @@ abstract class AbstractV1ApiResource extends AbstractApiResource {
     protected static final String TOTAL_COUNT_TYPE_HEADER_REF = "#/components/headers/TotalCountType";
 
     protected static Response.ResponseBuilder withTotalCountHeaders(
-            Response.ResponseBuilder responseBuilder,
-            Page.TotalCount totalCount) {
+            Response.ResponseBuilder responseBuilder, Page.TotalCount totalCount) {
         return responseBuilder
                 .header(TOTAL_COUNT_HEADER, totalCount.value())
                 .header(TOTAL_COUNT_TYPE_HEADER, totalCount.type().name());
     }
-
 }

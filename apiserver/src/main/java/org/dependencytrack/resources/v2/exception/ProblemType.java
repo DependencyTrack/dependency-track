@@ -18,16 +18,16 @@
  */
 package org.dependencytrack.resources.v2.exception;
 
-import jakarta.ws.rs.core.Response;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+
+import jakarta.ws.rs.core.Response;
 
 /**
  * @since 5.0.0
  */
 @NullMarked
 public enum ProblemType {
-
     INVALID_SORT_FIELD("invalid-sort-field", 400, "Invalid sort field"),
     KEV_DATA_SOURCE_MIRROR_ALREADY_RUNNING("kev-data-source-mirror-already-running", 409),
     KEV_DATA_SOURCE_NOT_ENABLED("kev-data-source-not-enabled", 400),
@@ -71,5 +71,4 @@ public enum ProblemType {
     public String title() {
         return title;
     }
-
 }

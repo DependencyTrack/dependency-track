@@ -133,8 +133,8 @@ class AnalysisChainIT {
 
         runPipeline();
 
-        final List<Map<String, Object>> analyses = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> analyses =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "DETAILS", "STATE", "COMPONENT_ID", "PROJECT_ID",
                            "VULNERABILITY_ID", "SUPPRESSED",
                            "CVSSV2VECTOR", "CVSSV2SCORE", "CVSSV3VECTOR", "CVSSV3SCORE",
@@ -145,64 +145,64 @@ class AnalysisChainIT {
                     """).mapToMap().list());
         assertThat(analyses).hasSize(1);
         assertThat(analyses.get(0))
-            .containsEntry("id", 700L)
-            .containsEntry("details", "details")
-            .containsEntry("state", "EXPLOITABLE")
-            .containsEntry("component_id", 10L)
-            .containsEntry("project_id", 1L)
-            .containsEntry("vulnerability_id", 100L)
-            .containsEntry("suppressed", false)
-            .containsEntry("cvssv2vector", null)
-            .containsEntry("cvssv2score", null)
-            .containsEntry("cvssv3vector", null)
-            .containsEntry("cvssv3score", null)
-            .containsEntry("cvssv4vector", null)
-            .containsEntry("cvssv4score", null)
-            .containsEntry("owaspvector", null)
-            .containsEntry("owaspscore", null)
-            .containsEntry("severity", null)
-            .containsEntry("vulnerability_policy_id", null);
+                .containsEntry("id", 700L)
+                .containsEntry("details", "details")
+                .containsEntry("state", "EXPLOITABLE")
+                .containsEntry("component_id", 10L)
+                .containsEntry("project_id", 1L)
+                .containsEntry("vulnerability_id", 100L)
+                .containsEntry("suppressed", false)
+                .containsEntry("cvssv2vector", null)
+                .containsEntry("cvssv2score", null)
+                .containsEntry("cvssv3vector", null)
+                .containsEntry("cvssv3score", null)
+                .containsEntry("cvssv4vector", null)
+                .containsEntry("cvssv4score", null)
+                .containsEntry("owaspvector", null)
+                .containsEntry("owaspscore", null)
+                .containsEntry("severity", null)
+                .containsEntry("vulnerability_policy_id", null);
 
-        final List<Map<String, Object>> analysisComments = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> analysisComments =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "ANALYSIS_ID", "COMMENT", "COMMENTER"
                       FROM "ANALYSISCOMMENT"
                      ORDER BY "ID"
                     """).mapToMap().list());
         assertThat(analysisComments).hasSize(1);
         assertThat(analysisComments.get(0))
-            .containsEntry("id", 701L)
-            .containsEntry("analysis_id", 700L)
-            .containsEntry("comment", "looking into it")
-            .containsEntry("commenter", "alice");
+                .containsEntry("id", 701L)
+                .containsEntry("analysis_id", 700L)
+                .containsEntry("comment", "looking into it")
+                .containsEntry("commenter", "alice");
 
-        final List<Map<String, Object>> violations = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> violations =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "STATE", "COMPONENT_ID", "POLICYVIOLATION_ID", "PROJECT_ID", "SUPPRESSED"
                       FROM "VIOLATIONANALYSIS"
                      ORDER BY "ID"
                     """).mapToMap().list());
         assertThat(violations).hasSize(1);
         assertThat(violations.get(0))
-            .containsEntry("id", 800L)
-            .containsEntry("state", "NOT_SET")
-            .containsEntry("component_id", 10L)
-            .containsEntry("policyviolation_id", 1000L)
-            .containsEntry("project_id", 1L)
-            .containsEntry("suppressed", false);
+                .containsEntry("id", 800L)
+                .containsEntry("state", "NOT_SET")
+                .containsEntry("component_id", 10L)
+                .containsEntry("policyviolation_id", 1000L)
+                .containsEntry("project_id", 1L)
+                .containsEntry("suppressed", false);
 
-        final List<Map<String, Object>> violationComments = target.jdbi().withHandle(h ->
-            h.createQuery("""
+        final List<Map<String, Object>> violationComments =
+                target.jdbi().withHandle(h -> h.createQuery("""
                     SELECT "ID", "COMMENT", "COMMENTER", "VIOLATIONANALYSIS_ID"
                       FROM "VIOLATIONANALYSISCOMMENT"
                      ORDER BY "ID"
                     """).mapToMap().list());
         assertThat(violationComments).hasSize(1);
         assertThat(violationComments.get(0))
-            .containsEntry("id", 801L)
-            .containsEntry("comment", "reviewing")
-            .containsEntry("commenter", "bob")
-            .containsEntry("violationanalysis_id", 800L);
+                .containsEntry("id", 801L)
+                .containsEntry("comment", "reviewing")
+                .containsEntry("commenter", "bob")
+                .containsEntry("violationanalysis_id", 800L);
     }
 
     private void runPipeline() throws Exception {

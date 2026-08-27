@@ -79,8 +79,7 @@ class OsvVulnDataSourceTest {
                 "http://localhost",
                 List.of("maven"),
                 mock(HttpClient.class),
-                false
-        );
+                false);
     }
 
     @Test
@@ -97,8 +96,7 @@ class OsvVulnDataSourceTest {
                 .build();
 
         vulnDataSource.markProcessed(bom);
-        verify(watermarkManagerMock)
-                .maybeAdvance(eq("maven"), eq(updatedAt));
+        verify(watermarkManagerMock).maybeAdvance(eq("maven"), eq(updatedAt));
     }
 
     @Test
@@ -106,10 +104,7 @@ class OsvVulnDataSourceTest {
         Vulnerability v1 = Vulnerability.newBuilder().build();
         Vulnerability v2 = Vulnerability.newBuilder().build();
 
-        Bom bom = Bom.newBuilder()
-                .addVulnerabilities(v1)
-                .addVulnerabilities(v2)
-                .build();
+        Bom bom = Bom.newBuilder().addVulnerabilities(v1).addVulnerabilities(v2).build();
 
         assertThatThrownBy(() -> vulnDataSource.markProcessed(bom))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -124,12 +119,9 @@ class OsvVulnDataSourceTest {
                 .setUpdated(Timestamps.fromMillis(updatedAt.toEpochMilli()))
                 .build();
 
-        Bom bom = Bom.newBuilder()
-                .addVulnerabilities(vuln)
-                .build();
+        Bom bom = Bom.newBuilder().addVulnerabilities(vuln).build();
 
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> vulnDataSource.markProcessed(bom));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> vulnDataSource.markProcessed(bom));
     }
 
     @Test
@@ -140,12 +132,9 @@ class OsvVulnDataSourceTest {
                         .setValue("maven"))
                 .build();
 
-        Bom bom = Bom.newBuilder()
-                .addVulnerabilities(vuln)
-                .build();
+        Bom bom = Bom.newBuilder().addVulnerabilities(vuln).build();
 
-        assertThatNoException()
-                .isThrownBy(() -> vulnDataSource.markProcessed(bom));
+        assertThatNoException().isThrownBy(() -> vulnDataSource.markProcessed(bom));
 
         verify(watermarkManagerMock, never()).maybeAdvance(eq("maven"), any(Instant.class));
     }
@@ -190,8 +179,7 @@ class OsvVulnDataSourceTest {
                 wmRuntimeInfo.getHttpBaseUrl(),
                 List.of(ecosystem),
                 HttpClient.newHttpClient(),
-                false
-        );
+                false);
 
         assertTrue(dataSource.hasNext());
         var bom = dataSource.next();
@@ -263,7 +251,8 @@ class OsvVulnDataSourceTest {
                 HttpClient.newHttpClient(),
                 false)) {
             assertTrue(dataSource.hasNext());
-            assertThat(dataSource.next().getVulnerabilitiesList().getFirst().getId()).isEqualTo("OSV-1");
+            assertThat(dataSource.next().getVulnerabilitiesList().getFirst().getId())
+                    .isEqualTo("OSV-1");
         }
 
         verify(getRequestedFor(urlEqualTo("/Red%20Hat/all.zip")));
@@ -487,7 +476,8 @@ class OsvVulnDataSourceTest {
     }
 
     @Test
-    void shouldFallBackToFullDownloadWhenIncrementalThresholdExceeded(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldFallBackToFullDownloadWhenIncrementalThresholdExceeded(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         when(watermarkManagerMock.getWatermark("maven")).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
 
         final var csvBody = new StringBuilder();
@@ -555,10 +545,10 @@ class OsvVulnDataSourceTest {
 
         var zipBytes = new ByteArrayOutputStream();
         try (var zos = new ZipOutputStream(zipBytes)) {
-            for (final String entryName : List.of("OSV-1.json", "nested/OSV-2.json", "OSV-250.json", "OSV-UNCHANGED.json")) {
-                final String advisoryId = entryName.substring(
-                        entryName.lastIndexOf('/') + 1,
-                        entryName.length() - ".json".length());
+            for (final String entryName :
+                    List.of("OSV-1.json", "nested/OSV-2.json", "OSV-250.json", "OSV-UNCHANGED.json")) {
+                final String advisoryId =
+                        entryName.substring(entryName.lastIndexOf('/') + 1, entryName.length() - ".json".length());
                 zos.putNextEntry(new ZipEntry(entryName));
                 zos.write(/* language=JSON */ """
                         {
@@ -597,8 +587,7 @@ class OsvVulnDataSourceTest {
     @Test
     void shouldContinueWithRemainingEcosystemsWhenEcosystemHasNoChanges(WireMockRuntimeInfo wmRuntimeInfo) {
         for (final String ecosystem : List.of("maven", "npm", "pypi")) {
-            when(watermarkManagerMock.getWatermark(ecosystem))
-                    .thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
+            when(watermarkManagerMock.getWatermark(ecosystem)).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
         }
 
         stubFor(get(urlEqualTo("/maven/modified_id.csv"))
@@ -663,8 +652,7 @@ class OsvVulnDataSourceTest {
     @Test
     void shouldContinueWithRemainingEcosystemsWhenFirstEcosystemHasNoChanges(WireMockRuntimeInfo wmRuntimeInfo) {
         for (final String ecosystem : List.of("maven", "npm")) {
-            when(watermarkManagerMock.getWatermark(ecosystem))
-                    .thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
+            when(watermarkManagerMock.getWatermark(ecosystem)).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
         }
 
         stubFor(get(urlEqualTo("/maven/modified_id.csv"))
@@ -708,7 +696,8 @@ class OsvVulnDataSourceTest {
     }
 
     @Test
-    void shouldPercentEncodeSpacesInEcosystemNameForIncrementalAdvisories(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+    void shouldPercentEncodeSpacesInEcosystemNameForIncrementalAdvisories(WireMockRuntimeInfo wmRuntimeInfo)
+            throws Exception {
         when(watermarkManagerMock.getWatermark("Red Hat")).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
         String csvBody = """
                 2025-01-01T00:00:00Z,OSV-1

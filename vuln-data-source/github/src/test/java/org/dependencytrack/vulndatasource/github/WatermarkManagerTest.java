@@ -115,7 +115,5 @@ class WatermarkManagerTest {
         public Instant instant() {
             return currentInstant;
         }
-
     }
-
 }

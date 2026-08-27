@@ -23,11 +23,12 @@ import alpine.server.json.TrimmedStringDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import org.dependencytrack.model.AnalysisJustification;
 import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
+
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * Defines a custom request object used when updating analysis decisions.
@@ -41,23 +42,33 @@ public class AnalysisRequest {
      * @deprecated The project is inferred from {@link #component}. This value is ignored.
      */
     @Deprecated(since = "5.0.0", forRemoval = true)
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The project must be a valid 36 character UUID")
+    @Pattern(
+            regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            message = "The project must be a valid 36 character UUID")
     private final String project;
 
     @NotNull
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The component must be a valid 36 character UUID")
+    @Pattern(
+            regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            message = "The component must be a valid 36 character UUID")
     private final String component;
 
     @NotNull
-    @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", message = "The vulnerability must be a valid 36 character UUID")
+    @Pattern(
+            regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            message = "The vulnerability must be a valid 36 character UUID")
     private final String vulnerability;
 
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The comment may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS,
+            message = "The comment may only contain printable characters")
     private final String comment;
 
     @JsonDeserialize(using = TrimmedStringDeserializer.class)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS, message = "The comment may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS_PLUS,
+            message = "The comment may only contain printable characters")
     private final String analysisDetails;
 
     private final AnalysisState analysisState;
@@ -66,18 +77,21 @@ public class AnalysisRequest {
 
     private final AnalysisResponse analysisResponse;
 
-    private final Boolean suppressed; // Optional. If not specified, we do not want to set value to false, thus using Boolean object rather than primitive.
+    // Optional. If not specified, we do not want to set value to false,
+    // thus using Boolean object rather than primitive.
+    private final Boolean suppressed;
 
     @JsonCreator
-    public AnalysisRequest(@JsonProperty(value = "project") String project,
-                           @JsonProperty(value = "component", required = true) String component,
-                           @JsonProperty(value = "vulnerability", required = true) String vulnerability,
-                           @JsonProperty(value = "analysisState") AnalysisState analysisState,
-                           @JsonProperty(value = "analysisJustification") AnalysisJustification analysisJustification,
-                           @JsonProperty(value = "analysisResponse") AnalysisResponse analysisResponse,
-                           @JsonProperty(value = "analysisDetails") String analysisDetails,
-                           @JsonProperty(value = "comment") String comment,
-                           @JsonProperty(value = "isSuppressed") Boolean suppressed) {
+    public AnalysisRequest(
+            @JsonProperty(value = "project") String project,
+            @JsonProperty(value = "component", required = true) String component,
+            @JsonProperty(value = "vulnerability", required = true) String vulnerability,
+            @JsonProperty(value = "analysisState") AnalysisState analysisState,
+            @JsonProperty(value = "analysisJustification") AnalysisJustification analysisJustification,
+            @JsonProperty(value = "analysisResponse") AnalysisResponse analysisResponse,
+            @JsonProperty(value = "analysisDetails") String analysisDetails,
+            @JsonProperty(value = "comment") String comment,
+            @JsonProperty(value = "isSuppressed") Boolean suppressed) {
         this.project = project;
         this.component = component;
         this.vulnerability = vulnerability;

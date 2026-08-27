@@ -27,7 +27,6 @@ import com.github.packageurl.PackageURL;
  * @since 3.1.0
  */
 public enum RepositoryType {
-
     MAVEN,
     NPM,
     GEM,
@@ -70,5 +69,4 @@ public enum RepositoryType {
             case null, default -> UNSUPPORTED;
         };
     }
-
 }

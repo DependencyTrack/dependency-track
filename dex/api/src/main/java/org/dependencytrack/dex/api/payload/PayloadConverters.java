@@ -22,8 +22,7 @@ import com.google.protobuf.Message;
 
 public final class PayloadConverters {
 
-    private PayloadConverters() {
-    }
+    private PayloadConverters() {}
 
     public static <T extends Message> PayloadConverter<T> protoConverter(final Class<T> clazz) {
         return new ProtobufPayloadConverter<>(clazz);
@@ -36,5 +35,4 @@ public final class PayloadConverters {
     public static PayloadConverter<Void> voidConverter() {
         return VoidPayloadConverter.INSTANCE;
     }
-
 }

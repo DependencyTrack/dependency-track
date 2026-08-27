@@ -23,5 +23,4 @@ package org.dependencytrack.plugin.api.config;
  *
  * @since 5.0.0
  */
-public interface RuntimeConfig {
-}
+public interface RuntimeConfig {}

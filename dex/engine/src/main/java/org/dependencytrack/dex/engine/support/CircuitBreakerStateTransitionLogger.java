@@ -27,36 +27,28 @@ public final class CircuitBreakerStateTransitionLogger {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CircuitBreakerStateTransitionLogger.class);
 
-    private CircuitBreakerStateTransitionLogger() {
-    }
+    private CircuitBreakerStateTransitionLogger() {}
 
     public static void attach(CircuitBreakerRegistry registry) {
-        registry.getEventPublisher().onEntryAdded(
-                entryEvent -> onBreakerAdded(entryEvent.getAddedEntry()));
-        registry.getEventPublisher().onEntryReplaced(
-                entryEvent -> onBreakerAdded(entryEvent.getNewEntry()));
+        registry.getEventPublisher().onEntryAdded(entryEvent -> onBreakerAdded(entryEvent.getAddedEntry()));
+        registry.getEventPublisher().onEntryReplaced(entryEvent -> onBreakerAdded(entryEvent.getNewEntry()));
     }
 
     private static void onBreakerAdded(CircuitBreaker breaker) {
         breaker.getEventPublisher().onStateTransition(transitionEvent -> {
             final CircuitBreaker.Metrics metrics = breaker.getMetrics();
             switch (transitionEvent.getStateTransition().getToState()) {
-                case OPEN -> LOGGER.warn(
-                        "Circuit breaker {} opened (failureRate={}%, slowCallRate={}%, calls={})",
-                        breaker.getName(),
-                        metrics.getFailureRate(),
-                        metrics.getSlowCallRate(),
-                        metrics.getNumberOfBufferedCalls());
-                case HALF_OPEN -> LOGGER.info(
-                        "Circuit breaker {} is half-open; probing recovery",
-                        breaker.getName());
-                case CLOSED -> LOGGER.info(
-                        "Circuit breaker {} closed; downstream healthy",
-                        breaker.getName());
-                default -> {
-                }
+                case OPEN ->
+                    LOGGER.warn(
+                            "Circuit breaker {} opened (failureRate={}%, slowCallRate={}%, calls={})",
+                            breaker.getName(),
+                            metrics.getFailureRate(),
+                            metrics.getSlowCallRate(),
+                            metrics.getNumberOfBufferedCalls());
+                case HALF_OPEN -> LOGGER.info("Circuit breaker {} is half-open; probing recovery", breaker.getName());
+                case CLOSED -> LOGGER.info("Circuit breaker {} closed; downstream healthy", breaker.getName());
+                default -> {}
             }
         });
     }
-
 }

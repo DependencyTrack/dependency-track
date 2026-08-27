@@ -47,9 +47,8 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 class EmailNotificationPublisherTlsTest {
 
     @RegisterExtension
-    private static final GreenMailExtension GREEN_MAIL =
-            new GreenMailExtension(ServerSetup.SMTPS.dynamicPort())
-                    .withConfiguration(aConfig().withUser("username", "password"));
+    private static final GreenMailExtension GREEN_MAIL = new GreenMailExtension(ServerSetup.SMTPS.dynamicPort())
+            .withConfiguration(aConfig().withUser("username", "password"));
 
     private EmailNotificationPublisherFactory publisherFactory;
     private NotificationPublisher publisher;
@@ -57,10 +56,8 @@ class EmailNotificationPublisherTlsTest {
 
     @BeforeEach
     void beforeEach() {
-        publisherFactory =
-                new EmailNotificationPublisherFactory(
-                        Map.of("mail.smtp.ssl.checkserveridentity", "false"),
-                        DummySSLSocketFactory.class);
+        publisherFactory = new EmailNotificationPublisherFactory(
+                Map.of("mail.smtp.ssl.checkserveridentity", "false"), DummySSLSocketFactory.class);
 
         final var emailGlobalConfig = (EmailNotificationPublisherGlobalConfigV1)
                 publisherFactory.runtimeConfigSpec().defaultConfig();
@@ -81,12 +78,10 @@ class EmailNotificationPublisherTlsTest {
         publisherFactory.init(new MutableServiceRegistry().register(ConfigRegistry.class, configRegistry));
         publisher = publisherFactory.create();
 
-        final var templateRendererFactory =
-                new PebbleNotificationTemplateRendererFactory(
-                        Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"));
+        final var templateRendererFactory = new PebbleNotificationTemplateRendererFactory(
+                Map.of(NotificationTemplateVariables.BASE_URL, () -> "https://example.com"));
         final NotificationTemplateRenderer templateRenderer =
-                templateRendererFactory.createRenderer(
-                        publisherFactory.defaultTemplate());
+                templateRendererFactory.createRenderer(publisherFactory.defaultTemplate());
 
         final var emailRuleConfig = (EmailNotificationPublisherRuleConfigV1)
                 publisherFactory.ruleConfigSpec().defaultConfig();
@@ -109,10 +104,8 @@ class EmailNotificationPublisherTlsTest {
     void test() {
         final Notification notification = TestNotificationFactory.createBomConsumedTestNotification();
 
-        assertThatNoException()
-                .isThrownBy(() -> publisher.publish(publishContext, notification));
+        assertThatNoException().isThrownBy(() -> publisher.publish(publishContext, notification));
 
         assertThat(GREEN_MAIL.getReceivedMessages()).hasSize(1);
     }
-
 }

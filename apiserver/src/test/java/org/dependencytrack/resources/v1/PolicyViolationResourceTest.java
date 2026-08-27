@@ -21,9 +21,6 @@ package org.dependencytrack.resources.v1;
 import alpine.model.ConfigProperty;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.ws.rs.core.Response;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
@@ -39,6 +36,10 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.core.Response;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
@@ -50,10 +51,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PolicyViolationResourceTest extends ResourceTest {
 
     @RegisterExtension
-    static JerseyTestExtension jersey = new JerseyTestExtension(
-            new ResourceConfig(PolicyViolationResource.class)
-                    .register(ApiFilter.class)
-                    .register(AuthFeature.class));
+    static JerseyTestExtension jersey = new JerseyTestExtension(new ResourceConfig(PolicyViolationResource.class)
+            .register(ApiFilter.class)
+            .register(AuthFeature.class));
 
     @Test
     public void getViolationsTest() {
@@ -68,7 +68,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         component = qm.createComponent(component, false);
 
         final Policy policy = qm.createPolicy("Blacklisted Version", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        final PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
 
         var violation = new PolicyViolation();
         violation.setType(PolicyViolation.Type.OPERATIONAL);
@@ -91,10 +92,18 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(jsonObject.getString("uuid")).isEqualTo(violation.getUuid().toString());
         assertThat(jsonObject.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
         assertThat(jsonObject.getJsonObject("policyCondition")).isNotNull();
-        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
-        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
-        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
-
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy"))
+                .isNotNull();
+        assertThat(jsonObject
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("name"))
+                .isEqualTo("Blacklisted Version");
+        assertThat(jsonObject
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("violationState"))
+                .isEqualTo("FAIL");
     }
 
     @Test
@@ -119,11 +128,15 @@ public class PolicyViolationResourceTest extends ResourceTest {
         component0.setVersion("1.0");
         component0 = qm.createComponent(component0, false);
 
-        final Policy policy0 = qm.createPolicy("Blacklisted Version 0", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        final PolicyCondition condition0 = qm.createPolicyCondition(policy0, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final Policy policy0 =
+                qm.createPolicy("Blacklisted Version 0", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition condition0 = qm.createPolicyCondition(
+                policy0, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
 
-        final Policy policy1 = qm.createPolicy("Blacklisted Version 1", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        final PolicyCondition condition1 = qm.createPolicyCondition(policy1, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final Policy policy1 =
+                qm.createPolicy("Blacklisted Version 1", Policy.Operator.ALL, Policy.ViolationState.FAIL);
+        final PolicyCondition condition1 = qm.createPolicyCondition(
+                policy1, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
 
         final var filteredPolicyViolations = new ArrayList<PolicyViolation>();
 
@@ -177,21 +190,41 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(jsonArray).hasSize(2);
 
         final JsonObject jsonObject0 = jsonArray.getJsonObject(0);
-        assertThat(jsonObject0.getString("uuid")).isEqualTo(filteredPolicyViolations.get(1).getUuid().toString());
+        assertThat(jsonObject0.getString("uuid"))
+                .isEqualTo(filteredPolicyViolations.get(1).getUuid().toString());
         assertThat(jsonObject0.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
         assertThat(jsonObject0.getJsonObject("policyCondition")).isNotNull();
-        assertThat(jsonObject0.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
-        assertThat(jsonObject0.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
-        assertThat(jsonObject0.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version 0");
+        assertThat(jsonObject0.getJsonObject("policyCondition").getJsonObject("policy"))
+                .isNotNull();
+        assertThat(jsonObject0
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("violationState"))
+                .isEqualTo("FAIL");
+        assertThat(jsonObject0
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("name"))
+                .isEqualTo("Blacklisted Version 0");
         assertThat(jsonObject0.getJsonObject("component").getString("name")).isEqualTo("Acme Component 1");
 
         final JsonObject jsonObject1 = jsonArray.getJsonObject(1);
-        assertThat(jsonObject1.getString("uuid")).isEqualTo(filteredPolicyViolations.get(0).getUuid().toString());
+        assertThat(jsonObject1.getString("uuid"))
+                .isEqualTo(filteredPolicyViolations.get(0).getUuid().toString());
         assertThat(jsonObject1.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
         assertThat(jsonObject1.getJsonObject("policyCondition")).isNotNull();
-        assertThat(jsonObject1.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
-        assertThat(jsonObject1.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
-        assertThat(jsonObject1.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version 1");
+        assertThat(jsonObject1.getJsonObject("policyCondition").getJsonObject("policy"))
+                .isNotNull();
+        assertThat(jsonObject1
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("violationState"))
+                .isEqualTo("FAIL");
+        assertThat(jsonObject1
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("name"))
+                .isEqualTo("Blacklisted Version 1");
         assertThat(jsonObject1.getJsonObject("component").getString("name")).isEqualTo("Acme Component 0");
     }
 
@@ -214,7 +247,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         qm.persist(componentB);
 
         final Policy policy = qm.createPolicy("policy", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        final PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0.1");
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0.1");
         final var violation = new PolicyViolation();
         violation.setPolicyCondition(condition);
         violation.setComponent(componentA);
@@ -269,11 +303,11 @@ public class PolicyViolationResourceTest extends ResourceTest {
         project.setName("acme-app");
         qm.persist(project);
 
-        final Supplier<Response> responseSupplier = () -> jersey
-                .target(V1_POLICY_VIOLATION + "/project/" + project.getUuid())
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_POLICY_VIOLATION + "/project/" + project.getUuid())
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -304,7 +338,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         component = qm.createComponent(component, false);
 
         final Policy policy = qm.createPolicy("Blacklisted Version", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        final PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
 
         var violation = new PolicyViolation();
         violation.setType(PolicyViolation.Type.OPERATIONAL);
@@ -328,9 +363,18 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(jsonObject.getString("uuid")).isEqualTo(violation.getUuid().toString());
         assertThat(jsonObject.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
         assertThat(jsonObject.getJsonObject("policyCondition")).isNotNull();
-        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
-        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
-        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
+        assertThat(jsonObject.getJsonObject("policyCondition").getJsonObject("policy"))
+                .isNotNull();
+        assertThat(jsonObject
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("name"))
+                .isEqualTo("Blacklisted Version");
+        assertThat(jsonObject
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("violationState"))
+                .isEqualTo("FAIL");
     }
 
     @Test
@@ -372,10 +416,11 @@ public class PolicyViolationResourceTest extends ResourceTest {
         component.setName("acme-lib");
         qm.persist(component);
 
-        final Supplier<Response> responseSupplier = () -> jersey.target(V1_POLICY_VIOLATION + "/component/" + component.getUuid())
-                .request()
-                .header(X_API_KEY, apiKey)
-                .get();
+        final Supplier<Response> responseSupplier =
+                () -> jersey.target(V1_POLICY_VIOLATION + "/component/" + component.getUuid())
+                        .request()
+                        .header(X_API_KEY, apiKey)
+                        .get();
 
         Response response = responseSupplier.get();
         assertThat(response.getStatus()).isEqualTo(403);
@@ -398,8 +443,10 @@ public class PolicyViolationResourceTest extends ResourceTest {
         initializeWithPermissions(Permissions.VIEW_POLICY_VIOLATION);
 
         final Project projectA = qm.createProject("Acme Example", null, "1.0", null, null, null, null, false);
-        final Project projectA_child = qm.createProject("Acme Example - Child", null, "1.0", null, projectA, null, null, false);
-        final Project projectB = qm.createProject("Acme Example - Grandchild", null, "1.0", null, null, null, null, false);
+        final Project projectA_child =
+                qm.createProject("Acme Example - Child", null, "1.0", null, projectA, null, null, false);
+        final Project projectB =
+                qm.createProject("Acme Example - Grandchild", null, "1.0", null, null, null, null, false);
 
         projectA.addAccessTeam(team);
 
@@ -428,7 +475,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         componentD = qm.createComponent(componentD, false);
 
         final Policy policy = qm.createPolicy("Blacklisted Version", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        final PolicyCondition condition = qm.createPolicyCondition(policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final PolicyCondition condition = qm.createPolicyCondition(
+                policy, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
 
         var violationA = new PolicyViolation();
         violationA.setType(PolicyViolation.Type.OPERATIONAL);
@@ -466,9 +514,16 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(responseA.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
         assertThat(parseJsonArray(responseA)).hasSize(4);
 
-        ConfigProperty aclToggle = qm.getConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
+        ConfigProperty aclToggle = qm.getConfigProperty(
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName());
         if (aclToggle == null) {
-            qm.createConfigProperty(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(), "true", ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(), ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
+            qm.createConfigProperty(
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
+                    "true",
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
+                    ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
         } else {
             aclToggle.setPropertyValue("true");
             qm.persist(aclToggle);
@@ -488,28 +543,58 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(jsonObjectA.getString("uuid")).isEqualTo(violationD.getUuid().toString());
         assertThat(jsonObjectA.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
         assertThat(jsonObjectA.getJsonObject("policyCondition")).isNotNull();
-        assertThat(jsonObjectA.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
-        assertThat(jsonObjectA.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
-        assertThat(jsonObjectA.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
-        assertThat(jsonObjectA.getJsonObject("project").getString("uuid")).isEqualTo(projectA.getUuid().toString());
+        assertThat(jsonObjectA.getJsonObject("policyCondition").getJsonObject("policy"))
+                .isNotNull();
+        assertThat(jsonObjectA
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("name"))
+                .isEqualTo("Blacklisted Version");
+        assertThat(jsonObjectA
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("violationState"))
+                .isEqualTo("FAIL");
+        assertThat(jsonObjectA.getJsonObject("project").getString("uuid"))
+                .isEqualTo(projectA.getUuid().toString());
 
         final JsonObject jsonObjectB = jsonArray.getJsonObject(1);
         assertThat(jsonObjectB.getString("uuid")).isEqualTo(violationB.getUuid().toString());
         assertThat(jsonObjectB.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
         assertThat(jsonObjectB.getJsonObject("policyCondition")).isNotNull();
-        assertThat(jsonObjectB.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
-        assertThat(jsonObjectB.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
-        assertThat(jsonObjectB.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
-        assertThat(jsonObjectB.getJsonObject("project").getString("uuid")).isEqualTo(projectA_child.getUuid().toString());
+        assertThat(jsonObjectB.getJsonObject("policyCondition").getJsonObject("policy"))
+                .isNotNull();
+        assertThat(jsonObjectB
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("name"))
+                .isEqualTo("Blacklisted Version");
+        assertThat(jsonObjectB
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("violationState"))
+                .isEqualTo("FAIL");
+        assertThat(jsonObjectB.getJsonObject("project").getString("uuid"))
+                .isEqualTo(projectA_child.getUuid().toString());
 
         final JsonObject jsonObjectC = jsonArray.getJsonObject(2);
         assertThat(jsonObjectC.getString("uuid")).isEqualTo(violationA.getUuid().toString());
         assertThat(jsonObjectC.getString("type")).isEqualTo(PolicyViolation.Type.OPERATIONAL.name());
         assertThat(jsonObjectC.getJsonObject("policyCondition")).isNotNull();
-        assertThat(jsonObjectC.getJsonObject("policyCondition").getJsonObject("policy")).isNotNull();
-        assertThat(jsonObjectC.getJsonObject("policyCondition").getJsonObject("policy").getString("name")).isEqualTo("Blacklisted Version");
-        assertThat(jsonObjectC.getJsonObject("policyCondition").getJsonObject("policy").getString("violationState")).isEqualTo("FAIL");
-        assertThat(jsonObjectC.getJsonObject("project").getString("uuid")).isEqualTo(projectA.getUuid().toString());
+        assertThat(jsonObjectC.getJsonObject("policyCondition").getJsonObject("policy"))
+                .isNotNull();
+        assertThat(jsonObjectC
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("name"))
+                .isEqualTo("Blacklisted Version");
+        assertThat(jsonObjectC
+                        .getJsonObject("policyCondition")
+                        .getJsonObject("policy")
+                        .getString("violationState"))
+                .isEqualTo("FAIL");
+        assertThat(jsonObjectC.getJsonObject("project").getString("uuid"))
+                .isEqualTo(projectA.getUuid().toString());
     }
 
     @Test
@@ -525,7 +610,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         component = qm.createComponent(component, false);
 
         final Policy policyA = qm.createPolicy("Policy A", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        final PolicyCondition conditionA = qm.createPolicyCondition(policyA, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final PolicyCondition conditionA = qm.createPolicyCondition(
+                policyA, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
         var violationA = new PolicyViolation();
         violationA.setType(PolicyViolation.Type.OPERATIONAL);
         violationA.setComponent(component);
@@ -534,7 +620,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violationA = qm.persist(violationA);
 
         final Policy policyB = qm.createPolicy("Policy B", Policy.Operator.ALL, Policy.ViolationState.INFO);
-        final PolicyCondition conditionB = qm.createPolicyCondition(policyB, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, "unresolved");
+        final PolicyCondition conditionB = qm.createPolicyCondition(
+                policyB, PolicyCondition.Subject.LICENSE, PolicyCondition.Operator.IS, "unresolved");
         var violationB = new PolicyViolation();
         violationB.setType(PolicyViolation.Type.LICENSE);
         violationB.setComponent(component);
@@ -543,7 +630,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violationB = qm.persist(violationB);
 
         final Policy policyC = qm.createPolicy("Policy C", Policy.Operator.ALL, Policy.ViolationState.INFO);
-        final PolicyCondition conditionC = qm.createPolicyCondition(policyC, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final PolicyCondition conditionC = qm.createPolicyCondition(
+                policyC, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
         ViolationAnalysis violationAnalysis = new ViolationAnalysis();
         violationAnalysis.setViolationAnalysisState(ViolationAnalysisState.REJECTED);
         var violationC = new PolicyViolation();
@@ -556,7 +644,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violationC = qm.persist(violationC);
 
         final Policy policyD = qm.createPolicy("Policy D", Policy.Operator.ALL, Policy.ViolationState.INFO);
-        final PolicyCondition conditionD = qm.createPolicyCondition(policyD, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final PolicyCondition conditionD = qm.createPolicyCondition(
+                policyD, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
         var violationD = new PolicyViolation();
         violationD.setType(PolicyViolation.Type.OPERATIONAL);
         violationD.setComponent(component);
@@ -572,7 +661,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(response.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("4");
         assertThat(parseJsonArray(response)).hasSize(4);
 
-        final Response responseA = jersey.target(V1_POLICY_VIOLATION).queryParam("violationState", "FAIL")
+        final Response responseA = jersey.target(V1_POLICY_VIOLATION)
+                .queryParam("violationState", "FAIL")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -580,9 +670,11 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(responseA.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         final JsonArray jsonArrayA = parseJsonArray(responseA);
         assertThat(jsonArrayA).hasSize(1);
-        assertThat(jsonArrayA.getJsonObject(0).getString("uuid")).isEqualTo(violationA.getUuid().toString());
+        assertThat(jsonArrayA.getJsonObject(0).getString("uuid"))
+                .isEqualTo(violationA.getUuid().toString());
 
-        final Response responseB = jersey.target(V1_POLICY_VIOLATION).queryParam("riskType", "LICENSE")
+        final Response responseB = jersey.target(V1_POLICY_VIOLATION)
+                .queryParam("riskType", "LICENSE")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -590,10 +682,13 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(responseB.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         final JsonArray jsonArrayB = parseJsonArray(responseB);
         assertThat(jsonArrayB).hasSize(1);
-        assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
-        assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
+        assertThat(jsonArrayB.getJsonObject(0).getString("uuid"))
+                .isEqualTo(violationB.getUuid().toString());
+        assertThat(jsonArrayB.getJsonObject(0).getString("uuid"))
+                .isEqualTo(violationB.getUuid().toString());
 
-        final Response responseC = jersey.target(V1_POLICY_VIOLATION).queryParam("analysisState", "REJECTED")
+        final Response responseC = jersey.target(V1_POLICY_VIOLATION)
+                .queryParam("analysisState", "REJECTED")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -601,10 +696,13 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(responseC.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         final JsonArray jsonArrayC = parseJsonArray(responseC);
         assertThat(jsonArrayC).hasSize(1);
-        assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
-        assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
+        assertThat(jsonArrayC.getJsonObject(0).getString("uuid"))
+                .isEqualTo(violationC.getUuid().toString());
+        assertThat(jsonArrayC.getJsonObject(0).getString("uuid"))
+                .isEqualTo(violationC.getUuid().toString());
 
-        final Response responseD = jersey.target(V1_POLICY_VIOLATION).queryParam("policy", policyD.getUuid().toString())
+        final Response responseD = jersey.target(V1_POLICY_VIOLATION)
+                .queryParam("policy", policyD.getUuid().toString())
                 .request()
                 .header(X_API_KEY, apiKey)
                 .get();
@@ -612,8 +710,10 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(responseD.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         final JsonArray jsonArrayD = parseJsonArray(responseD);
         assertThat(jsonArrayD).hasSize(1);
-        assertThat(jsonArrayD.getJsonObject(0).getString("uuid")).isEqualTo(violationD.getUuid().toString());
-        assertThat(jsonArrayD.getJsonObject(0).getString("uuid")).isEqualTo(violationD.getUuid().toString());
+        assertThat(jsonArrayD.getJsonObject(0).getString("uuid"))
+                .isEqualTo(violationD.getUuid().toString());
+        assertThat(jsonArrayD.getJsonObject(0).getString("uuid"))
+                .isEqualTo(violationD.getUuid().toString());
     }
 
     @Test
@@ -654,7 +754,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         componentD = qm.createComponent(componentD, false);
 
         final Policy policyA = qm.createPolicy("Policy A", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        final PolicyCondition conditionA = qm.createPolicyCondition(policyA, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final PolicyCondition conditionA = qm.createPolicyCondition(
+                policyA, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
         var violationA = new PolicyViolation();
         violationA.setType(PolicyViolation.Type.OPERATIONAL);
         violationA.setComponent(componentA);
@@ -663,7 +764,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violationA = qm.persist(violationA);
 
         final Policy policyB = qm.createPolicy("Policy B", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        final PolicyCondition conditionB = qm.createPolicyCondition(policyB, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final PolicyCondition conditionB = qm.createPolicyCondition(
+                policyB, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
         var violationB = new PolicyViolation();
         violationB.setType(PolicyViolation.Type.OPERATIONAL);
         violationB.setComponent(componentB);
@@ -672,7 +774,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violationB = qm.persist(violationB);
 
         final Policy policyC = qm.createPolicy("Policy C", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        final PolicyCondition conditionC = qm.createPolicyCondition(policyC, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final PolicyCondition conditionC = qm.createPolicyCondition(
+                policyC, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
         var violationC = new PolicyViolation();
         violationC.setType(PolicyViolation.Type.OPERATIONAL);
         violationC.setComponent(componentC);
@@ -681,7 +784,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         violationC = qm.persist(violationC);
 
         final Policy policyD = qm.createPolicy("Policy D", Policy.Operator.ALL, Policy.ViolationState.FAIL);
-        final PolicyCondition conditionD = qm.createPolicyCondition(policyD, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
+        final PolicyCondition conditionD = qm.createPolicyCondition(
+                policyD, PolicyCondition.Subject.VERSION, PolicyCondition.Operator.NUMERIC_EQUAL, "1.0");
         var violationD = new PolicyViolation();
         violationD.setType(PolicyViolation.Type.OPERATIONAL);
         violationD.setComponent(componentD);
@@ -707,7 +811,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(responseA.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         final JsonArray jsonArrayA = parseJsonArray(responseA);
         assertThat(jsonArrayA).hasSize(1);
-        assertThat(jsonArrayA.getJsonObject(0).getString("uuid")).isEqualTo(violationA.getUuid().toString());
+        assertThat(jsonArrayA.getJsonObject(0).getString("uuid"))
+                .isEqualTo(violationA.getUuid().toString());
 
         final Response responseB = jersey.target(V1_POLICY_VIOLATION)
                 .queryParam("textSearchField", "component")
@@ -719,7 +824,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(responseB.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         final JsonArray jsonArrayB = parseJsonArray(responseB);
         assertThat(jsonArrayB).hasSize(1);
-        assertThat(jsonArrayB.getJsonObject(0).getString("uuid")).isEqualTo(violationB.getUuid().toString());
+        assertThat(jsonArrayB.getJsonObject(0).getString("uuid"))
+                .isEqualTo(violationB.getUuid().toString());
 
         final Response responseC = jersey.target(V1_POLICY_VIOLATION)
                 .queryParam("textSearchField", "license")
@@ -731,7 +837,8 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(responseC.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         final JsonArray jsonArrayC = parseJsonArray(responseC);
         assertThat(jsonArrayC).hasSize(1);
-        assertThat(jsonArrayC.getJsonObject(0).getString("uuid")).isEqualTo(violationC.getUuid().toString());
+        assertThat(jsonArrayC.getJsonObject(0).getString("uuid"))
+                .isEqualTo(violationC.getUuid().toString());
 
         final Response responseD = jersey.target(V1_POLICY_VIOLATION)
                 .queryParam("textSearchField", "project_name")
@@ -743,6 +850,7 @@ public class PolicyViolationResourceTest extends ResourceTest {
         assertThat(responseD.getHeaderString(TOTAL_COUNT_HEADER)).isEqualTo("1");
         final JsonArray jsonArrayD = parseJsonArray(responseD);
         assertThat(jsonArrayD).hasSize(1);
-        assertThat(jsonArrayD.getJsonObject(0).getString("uuid")).isEqualTo(violationD.getUuid().toString());
+        assertThat(jsonArrayD.getJsonObject(0).getString("uuid"))
+                .isEqualTo(violationD.getUuid().toString());
     }
 }

@@ -51,7 +51,7 @@ public class CollectionIntegerConverter implements AttributeConverter<Collection
             return null;
         }
         final Collection<Integer> collection = new ArrayList<>();
-        for (String s: columnValue.split(",")) {
+        for (String s : columnValue.split(",")) {
             try {
                 collection.add(Integer.valueOf(s));
             } catch (NumberFormatException e) {

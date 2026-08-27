@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -49,7 +50,9 @@ import java.util.UUID;
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Index(members = {"component", "project", "policyCondition"}, unique = "true")
+@Index(
+        members = {"component", "project", "policyCondition"},
+        unique = "true")
 public class PolicyViolation implements Serializable {
 
     public enum Type {
@@ -68,18 +71,30 @@ public class PolicyViolation implements Serializable {
     private Type type;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "POLICYVIOLATION_PROJECT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "POLICYVIOLATION_PROJECT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "PROJECT_ID", allowsNull = "false")
     @Index(name = "POLICYVIOLATION_PROJECT_IDX")
     private Project project;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "POLICYVIOLATION_COMPONENT_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "POLICYVIOLATION_COMPONENT_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "COMPONENT_ID", allowsNull = "false")
     private Component component;
 
     @Persistent(defaultFetchGroup = "true")
-    @ForeignKey(name = "POLICYVIOLATION_POLICYCONDITION_FK", updateAction = ForeignKeyAction.NONE, deleteAction = ForeignKeyAction.CASCADE, deferred = "true")
+    @ForeignKey(
+            name = "POLICYVIOLATION_POLICYCONDITION_FK",
+            updateAction = ForeignKeyAction.NONE,
+            deleteAction = ForeignKeyAction.CASCADE,
+            deferred = "true")
     @Column(name = "POLICYCONDITION_ID", allowsNull = "false")
     @Index(name = "POLICYVIOLATION_POLICYCONDITION_ID_IDX")
     private PolicyCondition policyCondition;
@@ -92,11 +107,13 @@ public class PolicyViolation implements Serializable {
     @Persistent
     @Column(name = "TEXT")
     @Size(min = 1, max = 255)
-    @Pattern(regexp = RegexSequence.Definition.PRINTABLE_CHARS, message = "The text may only contain printable characters")
+    @Pattern(
+            regexp = RegexSequence.Definition.PRINTABLE_CHARS,
+            message = "The text may only contain printable characters")
     private String text;
 
-    @Persistent(mappedBy="policyViolation", defaultFetchGroup = "true")
-    private  ViolationAnalysis analysis;
+    @Persistent(mappedBy = "policyViolation", defaultFetchGroup = "true")
+    private ViolationAnalysis analysis;
 
     /**
      * The unique identifier of the object.
@@ -176,5 +193,3 @@ public class PolicyViolation implements Serializable {
         this.analysis = analysis;
     }
 }
-
-

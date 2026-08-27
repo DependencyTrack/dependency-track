@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.dependencytrack</groupId>
     <artifactId>dependency-track-parent</artifactId>
-    <version>5.1.0</version>
+    <version>5.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Dependency-Track</name>
     <description>Dependency-Track is an intelligent component analysis platform that allows organizations to identify
@@ -94,7 +94,7 @@
     <scm>
         <connection>${scm.connection}</connection>
         <developerConnection>${scm.developer.connection}</developerConnection>
-        <tag>5.1.0</tag>
+        <tag>HEAD</tag>
         <url>${scm.url}</url>
     </scm>
     <issueManagement>

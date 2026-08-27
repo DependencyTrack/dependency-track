@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.dependencytrack</groupId>
         <artifactId>dependency-track-parent</artifactId>
-        <version>5.1.0</version>
+        <version>5.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>api</artifactId>
     <packaging>jar</packaging>

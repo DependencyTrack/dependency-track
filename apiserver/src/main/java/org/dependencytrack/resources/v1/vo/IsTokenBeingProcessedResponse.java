@@ -18,10 +18,14 @@
  */
 package org.dependencytrack.resources.v1.vo;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serializable;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class IsTokenBeingProcessedResponse implements Serializable {
 
     private static final long serialVersionUID = -7592468766586686855L;
@@ -29,11 +33,43 @@ public class IsTokenBeingProcessedResponse implements Serializable {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Boolean processing;
 
+    @Schema(
+            nullable = true,
+            description = "The processing status associated with the token. "
+                    + "Null when no processing is associated with the token.")
+    @Nullable
+    private Status status;
+
     public void setProcessing(Boolean processing) {
         this.processing = processing;
     }
 
     public Boolean getProcessing() {
         return this.processing;
+    }
+
+    public void setStatus(@Nullable Status status) {
+        this.status = status;
+    }
+
+    @Nullable
+    public Status getStatus() {
+        return this.status;
+    }
+
+    public enum Status {
+        PENDING,
+        RUNNING,
+        COMPLETED,
+        FAILED;
+
+        public static Status of(final WorkflowRunStatus runStatus) {
+            return switch (runStatus) {
+                case CREATED, SUSPENDED -> PENDING;
+                case RUNNING -> RUNNING;
+                case COMPLETED -> COMPLETED;
+                case CANCELLED, FAILED -> FAILED;
+            };
+        }
     }
 }

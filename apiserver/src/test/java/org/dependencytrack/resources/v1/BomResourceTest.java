@@ -37,10 +37,11 @@ import org.cyclonedx.parsers.XmlParser;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.common.pagination.Page;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
 import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
-import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
+import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
 import org.dependencytrack.filestorage.api.FileStorage;
 import org.dependencytrack.filestorage.memory.MemoryFileStorage;
 import org.dependencytrack.model.AnalysisResponse;
@@ -2626,8 +2627,23 @@ class BomResourceTest extends ResourceTest {
     void shouldReportTokenBeingProcessedWhenDexRunExistsByLabel() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
-        doReturn(null).when(DEX_ENGINE_MOCK).getRunMetadataById(any());
-        doReturn(true).when(DEX_ENGINE_MOCK).existsRun(any(ExistsWorkflowRunRequest.class));
+        final var runMetadata = new WorkflowRunMetadata(
+                UUID.randomUUID(),
+                null,
+                "import-bom",
+                1,
+                null,
+                "default",
+                WorkflowRunStatus.RUNNING,
+                null,
+                0,
+                null,
+                null,
+                java.time.Instant.now(),
+                java.time.Instant.now(),
+                null,
+                null);
+        doReturn(new Page<>(List.of(runMetadata))).when(DEX_ENGINE_MOCK).listRuns(any(ListWorkflowRunsRequest.class));
 
         final Response response = jersey.target(V1_BOM + "/token/2ff20ad6-587c-4db6-8788-cca7a9b0dc1b")
                 .request()
@@ -2636,7 +2652,8 @@ class BomResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
-                  "processing": true
+                  "processing": true,
+                  "status": "RUNNING"
                 }
                 """);
     }
@@ -2662,7 +2679,7 @@ class BomResourceTest extends ResourceTest {
                 java.time.Instant.now(),
                 null,
                 null);
-        doReturn(false).when(DEX_ENGINE_MOCK).existsRun(any(ExistsWorkflowRunRequest.class));
+        doReturn(new Page<>(List.of())).when(DEX_ENGINE_MOCK).listRuns(any(ListWorkflowRunsRequest.class));
         doReturn(runMetadata).when(DEX_ENGINE_MOCK).getRunMetadataById(runId);
 
         final Response response = jersey.target(V1_BOM + "/token/" + runId)
@@ -2672,7 +2689,8 @@ class BomResourceTest extends ResourceTest {
         assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
         assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
                 {
-                  "processing": true
+                  "processing": true,
+                  "status": "RUNNING"
                 }
                 """);
     }
@@ -2681,8 +2699,8 @@ class BomResourceTest extends ResourceTest {
     void shouldReportTokenNotBeingProcessed() {
         initializeWithPermissions(Permissions.BOM_UPLOAD);
 
+        doReturn(new Page<>(List.of())).when(DEX_ENGINE_MOCK).listRuns(any(ListWorkflowRunsRequest.class));
         doReturn(null).when(DEX_ENGINE_MOCK).getRunMetadataById(any());
-        doReturn(false).when(DEX_ENGINE_MOCK).existsRun(any(ExistsWorkflowRunRequest.class));
 
         final Response response = jersey.target(V1_BOM + "/token/089dcdbe-31cf-489a-a8f3-0743ea7f3cc5")
                 .request()

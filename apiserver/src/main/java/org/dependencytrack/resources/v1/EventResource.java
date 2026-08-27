@@ -27,10 +27,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.dependencytrack.common.pagination.SortDirection;
 import org.dependencytrack.dex.engine.api.DexEngine;
 import org.dependencytrack.dex.engine.api.WorkflowRunMetadata;
-import org.dependencytrack.dex.engine.api.WorkflowRunStatus;
-import org.dependencytrack.dex.engine.api.request.ExistsWorkflowRunRequest;
+import org.dependencytrack.dex.engine.api.request.ListWorkflowRunsRequest;
 import org.dependencytrack.model.validation.ValidUuid;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.vo.IsTokenBeingProcessedResponse;
@@ -100,27 +100,27 @@ public class EventResource extends AbstractApiResource {
                     @ValidUuid
                     String uuid) {
         final UUID token = UUID.fromString(uuid);
-
-        final boolean isProcessing;
-        if (hasNonTerminalDexRun(token)) {
-            isProcessing = true;
-        } else {
-            isProcessing = false;
-        }
+        final WorkflowRunMetadata runMetadata = resolveRunByToken(token);
 
         final var response = new IsTokenBeingProcessedResponse();
-        response.setProcessing(isProcessing);
+        if (runMetadata != null) {
+            response.setProcessing(!runMetadata.status().isTerminal());
+            response.setStatus(IsTokenBeingProcessedResponse.Status.of(runMetadata.status()));
+        } else {
+            response.setProcessing(false);
+        }
         return Response.ok(response).build();
     }
 
-    private boolean hasNonTerminalDexRun(UUID token) {
-        final boolean hasNonTerminalByLabel = dexEngine.existsRun(new ExistsWorkflowRunRequest(
-                WorkflowRunStatus.NON_TERMINAL_STATUSES, Map.of(WF_LABEL_BOM_UPLOAD_TOKEN, token.toString())));
-        if (hasNonTerminalByLabel) {
-            return true;
+    private WorkflowRunMetadata resolveRunByToken(final UUID token) {
+        final var page = dexEngine.listRuns(new ListWorkflowRunsRequest()
+                .withLabels(Map.of(WF_LABEL_BOM_UPLOAD_TOKEN, token.toString()))
+                .withSortBy(ListWorkflowRunsRequest.SortBy.CREATED_AT)
+                .withSortDirection(SortDirection.DESC)
+                .withLimit(1));
+        if (!page.items().isEmpty()) {
+            return page.items().getFirst();
         }
-
-        final WorkflowRunMetadata runMetadata = dexEngine.getRunMetadataById(token);
-        return runMetadata != null && !runMetadata.status().isTerminal();
+        return dexEngine.getRunMetadataById(token);
     }
 }

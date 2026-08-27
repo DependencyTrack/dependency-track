@@ -19,6 +19,7 @@ BASE_REF ?= origin/main
 BUF_FORMAT_FLAGS := --exclude-path support/cyclonedx-proto/src/main/proto/org/cyclonedx/v1_7/cyclonedx.proto
 MIGRATION_DIR := migration/src/main/resources/org/dependencytrack/migration
 DEX_MIGRATION_DIR := dex/engine-migration/src/main/resources/org/dependencytrack/dex/engine/migration
+SPECTRAL_IMAGE := stoplight/spectral:6.16.3@sha256:a07aa4455367b9501b574423b684ab0ef3ee42556089013583318ec015249050
 SQUAWK_IMAGE := ghcr.io/sbdchd/squawk:2.58.0
 
 MVN := $(shell command -v mvn 2>/dev/null)
@@ -120,7 +121,7 @@ lint-openapi:
 	docker run --rm -i -w /work \
 		--platform linux/amd64 \
 		-v "$(CURDIR)/api:/work" \
-		stoplight/spectral lint \
+		$(SPECTRAL_IMAGE) lint \
 		--ruleset src/main/spectral/ruleset.yaml \
 		src/main/openapi/openapi.yaml
 .PHONY: lint-openapi

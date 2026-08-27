@@ -798,8 +798,8 @@
                         <pushChanges>true</pushChanges>
                         <localCheckout>true</localCheckout>
                         <releaseProfiles>quick</releaseProfiles>
-                        <preparationGoals>clean verify -Pquick</preparationGoals>
-                        <completionGoals>clean</completionGoals>
+                        <preparationGoals>clean verify spotless:apply -Pquick</preparationGoals>
+                        <completionGoals>clean spotless:apply</completionGoals>
                         <signTag>false</signTag>
                     </configuration>
                 </plugin>

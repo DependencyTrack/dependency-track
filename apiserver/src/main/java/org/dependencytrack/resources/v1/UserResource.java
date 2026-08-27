@@ -49,6 +49,7 @@ import org.dependencytrack.notification.NotificationModelConverter;
 import org.dependencytrack.persistence.QueryManager;
 import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
+import org.dependencytrack.resources.v1.vo.DeleteUserRequest;
 import org.dependencytrack.resources.v1.vo.TeamsSetRequest;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
@@ -564,16 +565,16 @@ public class UserResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "404", description = "The user could not be found")
             })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
-    public Response deleteLdapUser(LdapUser jsonUser) {
+    public Response deleteLdapUser(DeleteUserRequest request) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final LdapUser user = qm.getLdapUser(jsonUser.getUsername());
+                final LdapUser user = qm.getLdapUser(request.username());
                 if (user != null) {
                     new JdoNotificationEmitter(qm)
                             .emit(createUserDeletedNotification(NotificationModelConverter.convert(user)));
                     qm.delete(user);
                     super.logSecurityEvent(
-                            LOGGER, SecurityMarkers.SECURITY_AUDIT, "LDAP user deleted: " + jsonUser.getUsername());
+                            LOGGER, SecurityMarkers.SECURITY_AUDIT, "LDAP user deleted: " + request.username());
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
                     return Response.status(Response.Status.NOT_FOUND)
@@ -733,16 +734,16 @@ public class UserResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "404", description = "The user could not be found")
             })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
-    public Response deleteManagedUser(ManagedUser jsonUser) {
+    public Response deleteManagedUser(DeleteUserRequest request) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final ManagedUser user = qm.getManagedUser(jsonUser.getUsername());
+                final ManagedUser user = qm.getManagedUser(request.username());
                 if (user != null) {
                     new JdoNotificationEmitter(qm)
                             .emit(createUserDeletedNotification(NotificationModelConverter.convert(user)));
                     qm.delete(user);
                     super.logSecurityEvent(
-                            LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user deleted: " + jsonUser.getUsername());
+                            LOGGER, SecurityMarkers.SECURITY_AUDIT, "Managed user deleted: " + request.username());
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
                     return Response.status(Response.Status.NOT_FOUND)
@@ -816,10 +817,10 @@ public class UserResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "404", description = "The user could not be found")
             })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
-    public Response deleteOidcUser(final OidcUser jsonUser) {
+    public Response deleteOidcUser(final DeleteUserRequest request) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final OidcUser user = qm.getOidcUser(jsonUser.getUsername());
+                final OidcUser user = qm.getOidcUser(request.username());
                 if (user != null) {
                     new JdoNotificationEmitter(qm)
                             .emit(createUserDeletedNotification(NotificationModelConverter.convert(user)));
@@ -827,7 +828,7 @@ public class UserResource extends AbstractApiResource {
                     super.logSecurityEvent(
                             LOGGER,
                             SecurityMarkers.SECURITY_AUDIT,
-                            "OpenID Connect user deleted: " + jsonUser.getUsername());
+                            "OpenID Connect user deleted: " + request.username());
                     return Response.status(Response.Status.NO_CONTENT).build();
                 } else {
                     return Response.status(Response.Status.NOT_FOUND)

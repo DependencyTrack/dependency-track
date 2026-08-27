@@ -44,6 +44,7 @@ import org.dependencytrack.resources.AbstractApiResource;
 import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.problems.TeamAlreadyExistsProblemDetails;
+import org.dependencytrack.resources.v1.vo.DeleteTeamRequest;
 import org.dependencytrack.resources.v1.vo.TeamSelfResponse;
 import org.dependencytrack.resources.v1.vo.VisibleTeams;
 import org.owasp.security.logging.SecurityMarkers;
@@ -245,10 +246,10 @@ public class TeamResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "404", description = "The team could not be found")
             })
     @PermissionRequired({Permissions.Constants.ACCESS_MANAGEMENT, Permissions.Constants.ACCESS_MANAGEMENT_DELETE})
-    public Response deleteTeam(Team jsonTeam) {
+    public Response deleteTeam(DeleteTeamRequest request) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final Team team = qm.getObjectByUuid(Team.class, jsonTeam.getUuid(), Team.FetchGroup.ALL.name());
+                final Team team = qm.getObjectByUuid(Team.class, request.uuid(), Team.FetchGroup.ALL.name());
                 if (team != null) {
                     final String teamName = team.getName();
                     qm.delete(team);

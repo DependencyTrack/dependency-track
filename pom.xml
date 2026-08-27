@@ -172,7 +172,7 @@
         <lib.resilience4j.version>2.4.0</lib.resilience4j.version>
         <lib.s3mock.version>5.1.0</lib.s3mock.version>
         <lib.slf4j.version>2.0.18</lib.slf4j.version>
-        <lib.smallrye-config.version>3.18.1</lib.smallrye-config.version>
+        <lib.smallrye-config.version>3.18.2</lib.smallrye-config.version>
         <lib.swagger.version>2.2.54</lib.swagger.version>
         <lib.testcontainers.version>2.0.5</lib.testcontainers.version>
         <lib.tink.version>1.23.0</lib.tink.version>

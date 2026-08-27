@@ -30,13 +30,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.util.UUID;
+
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 
 public class LdapResourceTest extends ResourceTest {
 
@@ -71,12 +71,18 @@ public class LdapResourceTest extends ResourceTest {
                 .get(Response.class);
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonArray json = parseJsonArray(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals(2, json.size());
-        Assertions.assertEquals(
-                "CN=Developers,OU=R&D,O=Acme", json.getJsonObject(0).getString("dn"));
-        Assertions.assertEquals("CN=QA,OU=R&D,O=Acme", json.getJsonObject(1).getString("dn"));
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                [
+                  {
+                    "dn": "CN=Developers,OU=R&D,O=Acme",
+                    "uuid": "${json-unit.any-string}"
+                  },
+                  {
+                    "dn": "CN=QA,OU=R&D,O=Acme",
+                    "uuid": "${json-unit.any-string}"
+                  }
+                ]
+                """);
     }
 
     @Test
@@ -91,9 +97,12 @@ public class LdapResourceTest extends ResourceTest {
                 .put(Entity.entity(request, MediaType.APPLICATION_JSON));
         Assertions.assertEquals(200, response.getStatus(), 0);
         Assertions.assertNull(response.getHeaderString(TOTAL_COUNT_HEADER));
-        JsonObject json = parseJsonObject(response);
-        Assertions.assertNotNull(json);
-        Assertions.assertEquals("CN=Administrators,OU=R&D,O=Acme", json.getString("dn"));
+        assertThatJson(getPlainTextBody(response)).isEqualTo(/* language=JSON */ """
+                {
+                  "dn": "CN=Administrators,OU=R&D,O=Acme",
+                  "uuid": "${json-unit.any-string}"
+                }
+                """);
     }
 
     @Test

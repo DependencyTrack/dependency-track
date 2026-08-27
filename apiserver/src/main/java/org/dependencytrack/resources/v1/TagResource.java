@@ -40,6 +40,7 @@ import org.dependencytrack.resources.v1.openapi.PaginatedApi;
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.problems.TagOperationProblemDetails;
 import org.dependencytrack.resources.v1.vo.TagListResponseItem;
+import org.dependencytrack.resources.v1.vo.TagResponse;
 import org.dependencytrack.resources.v1.vo.TaggedCollectionProjectListResponseItem;
 import org.dependencytrack.resources.v1.vo.TaggedNotificationRuleListResponseItem;
 import org.dependencytrack.resources.v1.vo.TaggedPolicyListResponseItem;
@@ -473,7 +474,7 @@ public class TagResource extends AbstractApiResource {
                                         name = TOTAL_COUNT_HEADER,
                                         description = "The total number of tags",
                                         schema = @Schema(format = "integer")),
-                        content = @Content(array = @ArraySchema(schema = @Schema(implementation = Tag.class)))),
+                        content = @Content(array = @ArraySchema(schema = @Schema(implementation = TagResponse.class)))),
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)
@@ -487,7 +488,9 @@ public class TagResource extends AbstractApiResource {
                     final String uuid) {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             final PaginatedResult result = qm.getTagsForPolicy(uuid);
-            return Response.ok(result.getObjects())
+            final List<TagResponse> tags =
+                    result.getList(Tag.class).stream().map(TagResponse::of).toList();
+            return Response.ok(tags)
                     .header(TOTAL_COUNT_HEADER, result.getTotal())
                     .build();
         }

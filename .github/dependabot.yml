@@ -22,10 +22,10 @@ updates:
     cooldown:
       default-days: 7
   #
-  # 5.0.x maintenance branch
+  # 5.1.x maintenance branch
   #
   - package-ecosystem: maven
-    target-branch: 5.0.x
+    target-branch: 5.1.x
     directory: /
     schedule:
       interval: daily
@@ -36,7 +36,7 @@ updates:
         update-types:
           - version-update:semver-major
   - package-ecosystem: docker
-    target-branch: 5.0.x
+    target-branch: 5.1.x
     directory: /apiserver/src/main/docker
     schedule:
       interval: daily
@@ -47,7 +47,7 @@ updates:
         update-types:
           - version-update:semver-major
   - package-ecosystem: github-actions
-    target-branch: 5.0.x
+    target-branch: 5.1.x
     directory: /
     schedule:
       interval: weekly

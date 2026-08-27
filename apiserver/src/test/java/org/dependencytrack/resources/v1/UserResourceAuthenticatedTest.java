@@ -295,14 +295,16 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         createCatchAllNotificationRule(qm, NotificationScope.SYSTEM);
 
         qm.createLdapUser("blackbeard");
-        LdapUser user = new LdapUser();
-        user.setUsername("blackbeard");
         Response response = jersey.target(V1_USER + "/ldap")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
-                .method("DELETE", Entity.entity(user, MediaType.APPLICATION_JSON)); // HACK
-        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "username": "blackbeard"
+                        }
+                        """));
         Assertions.assertEquals(204, response.getStatus(), 0);
 
         assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
@@ -312,6 +314,23 @@ class UserResourceAuthenticatedTest extends ResourceTest {
             assertThat(notification.getTitle()).isEqualTo("User Deleted");
             assertThat(notification.getContent()).isEqualTo("User blackbeard was deleted");
         });
+    }
+
+    @Test
+    void deleteLdapUserWithUnknownUsernameTest() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
+
+        final Response response = jersey.target(V1_USER + "/ldap")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "username": "does-not-exist"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(getPlainTextBody(response)).isEqualTo("The user could not be found.");
     }
 
     @Test
@@ -590,6 +609,23 @@ class UserResourceAuthenticatedTest extends ResourceTest {
     }
 
     @Test
+    void deleteManagedUserWithUnknownUsernameTest() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
+
+        final Response response = jersey.target(V1_USER + "/managed")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "username": "does-not-exist"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(getPlainTextBody(response)).isEqualTo("The user could not be found.");
+    }
+
+    @Test
     void deleteManagedUserTest() {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
 
@@ -603,14 +639,16 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                 false,
                 false,
                 false);
-        ManagedUser user = new ManagedUser();
-        user.setUsername("blackbeard");
         Response response = jersey.target(V1_USER + "/managed")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
-                .method("DELETE", Entity.entity(user, MediaType.APPLICATION_JSON)); // HACK
-        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "username": "blackbeard"
+                        }
+                        """));
         Assertions.assertEquals(204, response.getStatus(), 0);
 
         assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
@@ -670,15 +708,34 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
 
         qm.createOidcUser("blackbeard");
-        OidcUser user = new OidcUser();
-        user.setUsername("blackbeard");
         Response response = jersey.target(V1_USER + "/oidc")
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
-                .method("DELETE", Entity.entity(user, MediaType.APPLICATION_JSON)); // HACK
-        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "username": "blackbeard"
+                        }
+                        """));
         Assertions.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
+    void deleteOidcUserWithUnknownUsernameTest() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
+
+        final Response response = jersey.target(V1_USER + "/oidc")
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "username": "does-not-exist"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(getPlainTextBody(response)).isEqualTo("The user could not be found.");
     }
 
     @Test

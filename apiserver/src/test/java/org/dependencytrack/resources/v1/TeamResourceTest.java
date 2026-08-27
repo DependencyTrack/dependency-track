@@ -344,8 +344,12 @@ public class TeamResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
-                .method("DELETE", Entity.entity(team, MediaType.APPLICATION_JSON)); // HACK
-        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s"
+                        }
+                        """.formatted(team.getUuid())));
         org.junit.jupiter.api.Assertions.assertEquals(204, response.getStatus(), 0);
     }
 
@@ -375,9 +379,30 @@ public class TeamResourceTest extends ResourceTest {
                 .request()
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
-                .method("DELETE", Entity.entity(team, MediaType.APPLICATION_JSON)); // HACK
-        // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "%s"
+                        }
+                        """.formatted(team.getUuid())));
         org.junit.jupiter.api.Assertions.assertEquals(204, response.getStatus(), 0);
+    }
+
+    @Test
+    public void deleteTeamWithUnknownUuidTest() {
+        initializeWithPermissions(Permissions.ACCESS_MANAGEMENT_DELETE);
+
+        final Response response = jersey.target(V1_TEAM)
+                .request()
+                .header(X_API_KEY, apiKey)
+                .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
+                .method("DELETE", Entity.json(/* language=JSON */ """
+                        {
+                          "uuid": "d6b6bb50-4d9f-4a56-a68a-1b2a2b7f8e5b"
+                        }
+                        """));
+        assertThat(response.getStatus()).isEqualTo(404);
+        assertThat(getPlainTextBody(response)).isEqualTo("The team could not be found.");
     }
 
     @Test

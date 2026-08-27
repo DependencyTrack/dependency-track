@@ -54,6 +54,7 @@ import org.dependencytrack.resources.v1.problems.InvalidNotificationFilterExpres
 import org.dependencytrack.resources.v1.problems.ProblemDetails;
 import org.dependencytrack.resources.v1.vo.CreateNotificationRuleRequest;
 import org.dependencytrack.resources.v1.vo.CreateScheduledNotificationRuleRequest;
+import org.dependencytrack.resources.v1.vo.DeleteNotificationRuleRequest;
 import org.dependencytrack.resources.v1.vo.UpdateNotificationRuleRequest;
 import org.owasp.security.logging.SecurityMarkers;
 import org.slf4j.Logger;
@@ -404,10 +405,10 @@ public class NotificationRuleResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "404", description = "The UUID of the notification rule could not be found")
             })
     @PermissionRequired({Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_DELETE})
-    public Response deleteNotificationRule(NotificationRule jsonRule) {
+    public Response deleteNotificationRule(DeleteNotificationRuleRequest request) {
         try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
-                final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, jsonRule.getUuid());
+                final NotificationRule rule = qm.getObjectByUuid(NotificationRule.class, request.uuid());
                 if (rule != null) {
                     qm.delete(rule);
                     return Response.status(Response.Status.NO_CONTENT).build();

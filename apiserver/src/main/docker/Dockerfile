@@ -24,7 +24,7 @@ ARG DATA_DIR=/data/
 ARG UID=1000
 ARG GID=1000
 
-FROM eclipse-temurin:25.0.4_7-jdk-alpine@sha256:09349d79941fd53bb3d487b393ca118d8853c08c09193f416fe6a8718df9e732 AS jre-build
+FROM eclipse-temurin:26.0.2_10-jdk-alpine@sha256:e5b0a876436e5d1c8ff84dfd091cb530b83a9ed4273317d24acb673695bb7e0c AS jre-build
 
 WORKDIR /work
 

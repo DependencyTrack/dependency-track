@@ -15,7 +15,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 
-BASE_REF ?= origin/main
+DEFAULT_BASE_REF := $(shell git rev-parse --verify --quiet upstream/main >/dev/null 2>&1 && echo upstream/main || echo origin/main)
+BASE_REF ?= $(DEFAULT_BASE_REF)
 BUF_FORMAT_FLAGS := --exclude-path support/cyclonedx-proto/src/main/proto/org/cyclonedx/v1_7/cyclonedx.proto
 MIGRATION_DIR := migration/src/main/resources/org/dependencytrack/migration
 DEX_MIGRATION_DIR := dex/engine-migration/src/main/resources/org/dependencytrack/dex/engine/migration
@@ -93,7 +94,7 @@ lint-migrations:
 			git ls-files --others --exclude-standard -- '$(MIGRATION_DIR)/*.sql'; \
 		} | sort -u); \
 	if [ -z "$$changed" ]; then \
-		echo "No migration changes to lint (BASE_REF=$(BASE_REF))."; \
+		echo "No migration changes to lint in $(MIGRATION_DIR) (BASE_REF=$(BASE_REF))."; \
 		exit 0; \
 	fi; \
 	echo "Linting migrations:"; \

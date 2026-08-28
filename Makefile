@@ -196,7 +196,7 @@ clean:
 .PHONY: clean
 
 clean-build-cache:
-	rm -r "$${HOME}/.m2/build-cache/v1.1/org.dependencytrack/"
+	rm -rf "$${HOME}"/.m2/build-cache/*/org.dependencytrack/
 .PHONY: clean-build-cache
 
 update-distro-info:

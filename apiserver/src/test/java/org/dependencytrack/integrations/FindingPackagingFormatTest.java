@@ -122,7 +122,6 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 Instant.now(),
                 null,
                 null,
-                null,
                 AnalysisState.NOT_AFFECTED,
                 true,
                 null, /* totalCount */
@@ -188,7 +187,6 @@ public class FindingPackagingFormatTest extends PersistenceCapableTest {
                 false,
                 "internal",
                 Instant.now(),
-                null,
                 null,
                 null,
                 AnalysisState.NOT_AFFECTED,

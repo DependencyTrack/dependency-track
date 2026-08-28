@@ -68,8 +68,6 @@ final class SnykModelConverter {
 
     private SnykModelConverter() {}
 
-    static final String MATCHING_PERCENTAGE_PROPERTY = "dependency-track:vuln:matching-percentage";
-
     static Vulnerability.Builder convert(SnykIssue issue, boolean includeAliases) {
         final var vulnBuilder = Vulnerability.newBuilder();
 
@@ -157,45 +155,6 @@ final class SnykModelConverter {
         }
 
         return vulnBuilder;
-    }
-
-    /**
-     * Maps Snyk {@link SnykMatchType} to a percentage stored on findings via
-     * {@link #MATCHING_PERCENTAGE_PROPERTY}. Snyk does not send a percentage; these
-     * values are a DT convention: full=100, partial=50, none=0.
-     */
-    static short matchingPercentage(SnykMatchType matchType) {
-        return switch (matchType) {
-            case FULL -> 100;
-            case PARTIAL -> 50;
-            case NONE -> 0;
-        };
-    }
-
-    /**
-     * Sets or lowers {@link #MATCHING_PERCENTAGE_PROPERTY} on the vulnerability builder.
-     * When the same advisory is reported for components with different match qualities,
-     * the lower percentage is retained (conservative).
-     */
-    static void applyMatchingPercentage(Vulnerability.Builder vulnBuilder, short percentage) {
-        for (int i = 0; i < vulnBuilder.getPropertiesCount(); i++) {
-            if (MATCHING_PERCENTAGE_PROPERTY.equals(vulnBuilder.getProperties(i).getName())) {
-                try {
-                    final short existing =
-                            Short.parseShort(vulnBuilder.getProperties(i).getValue());
-                    if (percentage < existing) {
-                        vulnBuilder.getPropertiesBuilder(i).setValue(Short.toString(percentage));
-                    }
-                } catch (NumberFormatException ignored) {
-                    vulnBuilder.getPropertiesBuilder(i).setValue(Short.toString(percentage));
-                }
-                return;
-            }
-        }
-        vulnBuilder.addProperties(Property.newBuilder()
-                .setName(MATCHING_PERCENTAGE_PROPERTY)
-                .setValue(Short.toString(percentage))
-                .build());
     }
 
     static @Nullable String getIssuePurl(SnykIssue issue) {

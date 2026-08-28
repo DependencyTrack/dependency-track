@@ -166,7 +166,6 @@ public class FindingTest extends PersistenceCapableTest {
                 Instant.now(),
                 null,
                 null,
-                null,
                 AnalysisState.NOT_AFFECTED,
                 true,
                 analysisDetail, /* totalCount */

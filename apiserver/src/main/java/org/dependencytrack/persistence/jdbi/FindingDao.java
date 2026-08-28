@@ -90,7 +90,6 @@ public interface FindingDao extends PaginationSupport {
             Instant attributed_on,
             String alt_id,
             String reference_url,
-            @Nullable Short matching_percentage,
             AnalysisState analysisState,
             boolean suppressed,
             @Nullable String analysisDetail,
@@ -206,7 +205,6 @@ public interface FindingDao extends PaginationSupport {
                  , fa."ATTRIBUTED_ON"
                  , fa."ALT_ID"
                  , fa."REFERENCE_URL"
-                 , fa."MATCHING_PERCENTAGE"
                  , a."STATE" AS "analysisState"
                  , a."SUPPRESSED"
                  , a."DETAILS" AS "analysisDetail"
@@ -694,7 +692,6 @@ public interface FindingDao extends PaginationSupport {
                  , fa."ATTRIBUTED_ON"
                  , fa."ALT_ID"
                  , fa."REFERENCE_URL"
-                 , fa."MATCHING_PERCENTAGE"
                  , a."STATE" AS "analysisState"
                  , a."SUPPRESSED"
                  , a."DETAILS" AS "analysisDetail"

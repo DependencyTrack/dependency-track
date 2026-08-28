@@ -98,7 +98,6 @@ public final class Finding implements Serializable {
         }
         optValue(attribution, "alternateIdentifier", findingRow.alt_id());
         optValue(attribution, "referenceUrl", findingRow.reference_url());
-        optValue(attribution, "matchingPercentage", findingRow.matching_percentage());
 
         optValue(analysis, "state", findingRow.analysisState());
         optValue(analysis, "isSuppressed", findingRow.suppressed(), false);

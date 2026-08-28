@@ -58,6 +58,10 @@ class SnykVulnAnalyzerChecksumMatchingTest {
             "pkg:maven/com.fasterxml.woodstox/woodstox-core@5.0.0?checksum=sha1:ad9503c3e994a4f611a4892f2e67ac82df727086";
     private static final String NONE_CHECKSUM_PURL =
             "pkg:maven/org.example/unknown@1.0.0?checksum=sha1:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    private static final String SAME_COORDS_CHECKSUM_A_PURL =
+            "pkg:maven/org.example/lib@1.0.0?checksum=sha1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    private static final String SAME_COORDS_CHECKSUM_B_PURL =
+            "pkg:maven/org.example/lib@1.0.0?checksum=sha1:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
     private CacheManager cacheManager;
     private SnykVulnAnalyzerFactory analyzerFactory;
@@ -143,17 +147,9 @@ class SnykVulnAnalyzerChecksumMatchingTest {
         assertThat(vdr.getVulnerabilitiesCount()).isEqualTo(1);
         assertThat(vdr.getVulnerabilities(0).getId()).isEqualTo("SNYK-JAVA-ORGJBOSSLOGGING-0000001");
         assertThat(vdr.getVulnerabilities(0).getAffects(0).getRef()).isEqualTo("1");
-        assertThat(vdr.getVulnerabilities(0).getPropertiesList()).anySatisfy(prop -> {
-            assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
-            assertThat(prop.getValue()).isEqualTo("100");
-        });
 
         final Bom cachedVdr = analyzer.analyze(bom);
         assertThat(cachedVdr.getVulnerabilitiesCount()).isEqualTo(1);
-        assertThat(cachedVdr.getVulnerabilities(0).getPropertiesList()).anySatisfy(prop -> {
-            assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
-            assertThat(prop.getValue()).isEqualTo("100");
-        });
 
         verify(1, postRequestedFor(anyUrl()));
     }
@@ -180,19 +176,9 @@ class SnykVulnAnalyzerChecksumMatchingTest {
                 .extracting(org.cyclonedx.proto.v1_7.Vulnerability::getId)
                 .containsExactlyInAnyOrder(
                         "SNYK-JAVA-COMFASTERXMLWOODSTOX-3091135", "SNYK-JAVA-COMFASTERXMLWOODSTOX-2928754");
-        assertThat(vdr.getVulnerabilitiesList())
-                .allSatisfy(vuln -> assertThat(vuln.getPropertiesList()).anySatisfy(prop -> {
-                    assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
-                    assertThat(prop.getValue()).isEqualTo("50");
-                }));
 
         final Bom cachedVdr = analyzer.analyze(bom);
         assertThat(cachedVdr.getVulnerabilitiesList()).hasSize(2);
-        assertThat(cachedVdr.getVulnerabilitiesList())
-                .allSatisfy(vuln -> assertThat(vuln.getPropertiesList()).anySatisfy(prop -> {
-                    assertThat(prop.getName()).isEqualTo("dependency-track:vuln:matching-percentage");
-                    assertThat(prop.getValue()).isEqualTo("50");
-                }));
 
         verify(1, postRequestedFor(anyUrl()));
     }
@@ -390,6 +376,35 @@ class SnykVulnAnalyzerChecksumMatchingTest {
                 postRequestedFor(anyUrl())
                         .withRequestBody(containing("checksum="))
                         .withRequestBody(containing("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")));
+    }
+
+    @Test
+    void shouldNotAttributeIssuesKeyedByADifferentChecksum() throws Exception {
+        stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/vnd.api+json")
+                        .withBodyFile("snyk-batch-same-coords-different-checksums.json")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("checksum-a")
+                        .setName("lib")
+                        .setPurl(SAME_COORDS_CHECKSUM_A_PURL)
+                        .build())
+                .addComponents(Component.newBuilder()
+                        .setBomRef("checksum-b")
+                        .setName("lib")
+                        .setPurl(SAME_COORDS_CHECKSUM_B_PURL)
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr.getVulnerabilitiesList()).hasSize(1);
+        assertThat(vdr.getVulnerabilities(0).getId()).isEqualTo("SNYK-JAVA-ORGEXAMPLE-0000001");
+        assertThat(vdr.getVulnerabilities(0).getAffectsList())
+                .extracting(org.cyclonedx.proto.v1_7.VulnerabilityAffects::getRef)
+                .containsExactly("checksum-a");
     }
 
     @Test

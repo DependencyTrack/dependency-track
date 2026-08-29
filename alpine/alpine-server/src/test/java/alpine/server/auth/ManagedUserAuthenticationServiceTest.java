@@ -35,7 +35,6 @@ class ManagedUserAuthenticationServiceTest {
     @RegisterExtension
     static final TestDatabaseExtension DATABASE = new TestDatabaseExtension();
 
-
     @Test
     @Disabled("Flaky")
     void shouldNotAllowForUserEnumerationViaTimingAttacks() {

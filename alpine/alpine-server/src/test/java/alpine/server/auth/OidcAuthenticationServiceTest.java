@@ -51,7 +51,6 @@ public class OidcAuthenticationServiceTest {
     @RegisterExtension
     static final TestDatabaseExtension DATABASE = new TestDatabaseExtension();
 
-
     private static final String USERNAME_CLAIM_NAME = "username";
     private static final String ID_TOKEN = "idToken";
     private static final String ACCESS_TOKEN = "accessToken";

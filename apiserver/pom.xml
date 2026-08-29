@@ -275,10 +275,6 @@
                     <groupId>org.yaml</groupId>
                     <artifactId>snakeyaml</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>com.h2database</groupId>
-                    <artifactId>h2</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <!-- Common Expression Language (CEL) -->

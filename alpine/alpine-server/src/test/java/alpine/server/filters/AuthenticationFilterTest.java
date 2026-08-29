@@ -57,7 +57,6 @@ class AuthenticationFilterTest extends JerseyTest {
     @RegisterExtension
     static final TestDatabaseExtension DATABASE = new TestDatabaseExtension();
 
-
     @Path("/")
     public static class TestResource extends AlpineResource {
 

@@ -74,7 +74,6 @@
 
         <!-- Dependency Versions -->
         <lib.bcrypt.version>0.4</lib.bcrypt.version>
-        <lib.h2.version>2.4.240</lib.h2.version>
         <lib.logstash-logback-encoder.version>8.1</lib.logstash-logback-encoder.version>
         <lib.nimbus-oauth2-oidc-sdk.version>11.38.2</lib.nimbus-oauth2-oidc-sdk.version>
         <lib.owasp.security-logging.version>1.1.7</lib.owasp.security-logging.version>
@@ -90,12 +89,6 @@
                 <groupId>org.eclipse.parsson</groupId>
                 <artifactId>jakarta.json</artifactId>
                 <version>${lib.parsson.version}</version>
-            </dependency>
-            <!-- Persistence -->
-            <dependency>
-                <groupId>com.h2database</groupId>
-                <artifactId>h2</artifactId>
-                <version>${lib.h2.version}</version>
             </dependency>
             <!-- Authentication and Authorization -->
             <dependency>

@@ -19,19 +19,19 @@
 package alpine.server.filters;
 
 import alpine.common.validation.RegexSequence;
+import alpine.model.auth.Principal;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.Pagination;
 import alpine.resources.AlpineRequest;
+import alpine.server.auth.PrincipalSecurityContext;
+import org.glassfish.jersey.server.ContainerRequest;
+
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.Provider;
-import org.glassfish.jersey.server.ContainerRequest;
-
-import java.security.Principal;
-import java.util.Set;
 
 @Provider
 @Priority(Priorities.USER)
@@ -39,9 +39,7 @@ public class ApiFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
-        if (requestContext instanceof ContainerRequest) {
-            final ContainerRequest request = (ContainerRequest) requestContext;
-
+        if (requestContext instanceof final ContainerRequest request) {
             final MultivaluedMap<String, String> queryParams = request.getUriInfo().getQueryParameters();
             final String offset = multiParam(queryParams, "offset");
             final String page = multiParam(queryParams, "page", "pageNumber");
@@ -72,7 +70,12 @@ public class ApiFilter implements ContainerRequestFilter {
                 pagination = new Pagination(Pagination.Strategy.OFFSET, 0, 100); // Always paginate queries from resources
             }
             final AlpineRequest alpineRequest = new AlpineRequest(
-                    getPrincipal(requestContext), pagination, filter, orderBy, orderDirection, getEffectivePermissions(requestContext));
+                    getPrincipal(requestContext),
+                    pagination,
+                    filter,
+                    orderBy,
+                    orderDirection,
+                    isPortfolioAccessControlEnabled(requestContext));
             requestContext.setProperty("AlpineRequest", alpineRequest);
         }
     }
@@ -94,24 +97,14 @@ public class ApiFilter implements ContainerRequestFilter {
         return null;
     }
 
-    /**
-     * Returns the principal for who initiated the request.
-     * @return a Principal object
-     * @see alpine.model.ApiKey
-     * @see alpine.model.LdapUser
-     */
     private Principal getPrincipal(ContainerRequestContext requestContext) {
-        final Object principal = requestContext.getProperty("Principal");
-        if (principal != null) {
-            return (Principal) principal;
-        } else {
-            return null;
-        }
+        return requestContext.getSecurityContext().getUserPrincipal() instanceof final Principal principal
+                ? principal
+                : null;
     }
 
-    @SuppressWarnings("unchecked")
-    private Set<String> getEffectivePermissions(final ContainerRequestContext requestContext) {
-        return (Set<String>) requestContext.getProperty(AuthorizationFilter.EFFECTIVE_PERMISSIONS_PROPERTY);
+    private boolean isPortfolioAccessControlEnabled(ContainerRequestContext requestContext) {
+        return requestContext.getSecurityContext() instanceof final PrincipalSecurityContext securityContext
+                && securityContext.portfolioAccessControlEnabled();
     }
-
 }

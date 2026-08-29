@@ -18,8 +18,10 @@
  */
 package alpine.server.filters;
 
-import alpine.model.ApiKey;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.Principal;
 import alpine.server.auth.ApiKeyAuthenticationService;
+import alpine.server.auth.PrincipalSecurityContext;
 import alpine.server.auth.SessionTokenAuthenticationService;
 import jakarta.annotation.Priority;
 import jakarta.ws.rs.HttpMethod;
@@ -38,7 +40,6 @@ import org.slf4j.MDC;
 
 import javax.naming.AuthenticationException;
 import java.io.IOException;
-import java.security.Principal;
 
 /**
  * A filter that ensures that all calls going through this filter are
@@ -56,22 +57,22 @@ public class AuthenticationFilter implements ContainerRequestFilter, ContainerRe
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
-        if (requestContext instanceof ContainerRequest) {
-            final ContainerRequest request = (ContainerRequest) requestContext;
+        if (requestContext instanceof final ContainerRequest request) {
             // Bypass authentication for CORS preflight
             if (HttpMethod.OPTIONS.equals(request.getMethod())) {
                 return;
             }
 
             Principal principal = null;
+            boolean portfolioAccessControlEnabled = false;
 
             final var apiKeyAuthService = new ApiKeyAuthenticationService(request);
             if (apiKeyAuthService.isSpecified()) {
                 try {
-                    principal = apiKeyAuthService.authenticate();
-                    if (principal instanceof final ApiKey apiKey) {
-                        ApiKeyUsageTracker.onApiKeyUsed(apiKey);
-                    }
+                    final ApiKeyPrincipal apiKey = apiKeyAuthService.authenticate();
+                    ApiKeyUsageTracker.onApiKeyUsed(apiKey);
+                    principal = apiKey;
+                    portfolioAccessControlEnabled = apiKeyAuthService.isPortfolioAccessControlEnabled();
                 } catch (AuthenticationException e) {
                     LOGGER.info(SecurityMarkers.SECURITY_FAILURE, "Invalid API key asserted");
                     throw new NotAuthorizedException(Response.status(Response.Status.UNAUTHORIZED).build());
@@ -82,8 +83,11 @@ public class AuthenticationFilter implements ContainerRequestFilter, ContainerRe
             if (sessionAuthService.isSpecified()) {
                 try {
                     principal = sessionAuthService.authenticate();
-                    if (principal != null && sessionAuthService.getTokenHash() != null) {
-                        SessionUsageTracker.onSessionUsed(sessionAuthService.getTokenHash());
+                    if (principal != null) {
+                        portfolioAccessControlEnabled = sessionAuthService.isPortfolioAccessControlEnabled();
+                        if (sessionAuthService.getTokenHash() != null) {
+                            SessionUsageTracker.onSessionUsed(sessionAuthService.getTokenHash());
+                        }
                     }
                 } catch (AuthenticationException e) {
                     LOGGER.info(SecurityMarkers.SECURITY_FAILURE, "Invalid session token asserted");
@@ -93,10 +97,11 @@ public class AuthenticationFilter implements ContainerRequestFilter, ContainerRe
 
             if (principal == null) {
                 throw new NotAuthorizedException(Response.status(Response.Status.UNAUTHORIZED).build());
-            } else {
-                requestContext.setProperty("Principal", principal);
-                MDC.put("principal", principal.getName());
             }
+
+            requestContext.setSecurityContext(new PrincipalSecurityContext(
+                    principal, requestContext.getSecurityContext().isSecure(), portfolioAccessControlEnabled));
+            MDC.put("principal", principal.displayName());
         }
     }
 

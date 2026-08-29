@@ -21,18 +21,17 @@ package alpine.resources;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.Pagination;
 
-import java.security.Principal;
-import java.util.Collections;
-import java.util.Set;
+import alpine.model.auth.Principal;
+import org.jspecify.annotations.Nullable;
 
 public class AlpineRequest {
 
-    private Principal principal;
+    private @Nullable Principal principal;
     private Pagination pagination;
     private String filter;
     private String orderBy;
     private OrderDirection orderDirection;
-    private Set<String> effectivePermissions;
+    private boolean portfolioAccessControlEnabled;
 
     /**
      * Default constructor
@@ -47,34 +46,33 @@ public class AlpineRequest {
      * @param orderBy the field to order by
      * @param orderDirection the sorting direction
      */
-    public AlpineRequest(final Principal principal, final Pagination pagination, final String filter,
+    public AlpineRequest(final @Nullable Principal principal, final Pagination pagination, final String filter,
                          final String orderBy, final OrderDirection orderDirection) {
-        this.principal = principal;
-        this.pagination = pagination;
-        this.filter = filter;
-        this.orderBy = orderBy;
-        this.orderDirection = orderDirection;
+        this(principal, pagination, filter, orderBy, orderDirection, /* portfolioAccessControlEnabled */ false);
     }
 
     /**
-     * @since 3.2.0
+     * Constructs a new AlpineRequest.
+     * @param principal a Principal, or null
+     * @param pagination a Pagination request, or null
+     * @param filter a String filter, or null
+     * @param orderBy the field to order by
+     * @param orderDirection the sorting direction
+     * @param portfolioAccessControlEnabled whether portfolio access control is enabled
+     * @since 5.2.0
      */
-    public AlpineRequest(
-            final Principal principal,
-            final Pagination pagination,
-            final String filter,
-            final String orderBy,
-            final OrderDirection orderDirection,
-            final Set<String> effectivePermissions) {
+    public AlpineRequest(final @Nullable Principal principal, final Pagination pagination, final String filter,
+                         final String orderBy, final OrderDirection orderDirection,
+                         final boolean portfolioAccessControlEnabled) {
         this.principal = principal;
         this.pagination = pagination;
         this.filter = filter;
         this.orderBy = orderBy;
         this.orderDirection = orderDirection;
-        this.effectivePermissions = effectivePermissions;
+        this.portfolioAccessControlEnabled = portfolioAccessControlEnabled;
     }
 
-    public Principal getPrincipal() {
+    public @Nullable Principal getPrincipal() {
         return principal;
     }
 
@@ -95,12 +93,14 @@ public class AlpineRequest {
     }
 
     /**
-     * @since 3.2.0
+     * Whether portfolio access control was enabled when the request was authenticated.
+     * This is deployment policy rather than an attribute of the principal, which is why
+     * it belongs to the request.
+     * @return true if portfolio access control is enabled
+     * @since 5.2.0
      */
-    public Set<String> getEffectivePermissions() {
-        return effectivePermissions == null
-                ? Collections.emptySet()
-                : effectivePermissions;
+    public boolean isPortfolioAccessControlEnabled() {
+        return portfolioAccessControlEnabled;
     }
 
 }

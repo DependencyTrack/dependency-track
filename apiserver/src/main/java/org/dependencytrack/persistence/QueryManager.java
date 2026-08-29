@@ -20,11 +20,11 @@ package org.dependencytrack.persistence;
 
 import alpine.common.util.BooleanUtil;
 import alpine.common.validation.RegexSequence;
-import alpine.model.ApiKey;
 import alpine.model.ConfigProperty;
 import alpine.model.IConfigProperty.PropertyType;
-import alpine.model.Team;
-import alpine.model.User;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.Principal;
+import alpine.model.auth.UserPrincipal;
 import alpine.persistence.AbstractAlpineQueryManager;
 import alpine.persistence.AlpineQueryManager;
 import alpine.persistence.OrderDirection;
@@ -72,6 +72,7 @@ import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.command.MakeViolationAnalysisCommand;
 import org.dependencytrack.resources.v1.vo.DependencyGraphResponse;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +81,6 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.metadata.MemberMetadata;
 import javax.jdo.metadata.TypeMetadata;
-import java.security.Principal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -90,8 +90,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-import static org.dependencytrack.model.ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED;
 
 /**
  * This QueryManager provides a concrete extension of {@link AlpineQueryManager} by
@@ -411,22 +409,6 @@ public class QueryManager extends AlpineQueryManager {
                     : new NotificationQueryManager(getPersistenceManager(), request);
         }
         return notificationQueryManager;
-    }
-
-    /**
-     * Get the IDs of the {@link Team}s a given {@link Principal} is a member of.
-     *
-     * @return A {@link Set} of {@link Team} IDs
-     */
-    protected Set<Long> getTeamIds(final Principal principal) {
-        List<Team> teams =
-                switch (principal) {
-                    case User user when user != null -> user.getTeams();
-                    case ApiKey apiKey when apiKey != null -> apiKey.getTeams();
-                    default -> Collections.emptyList();
-                };
-
-        return Set.copyOf(teams.stream().map(Team::getId).toList());
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1250,8 +1232,8 @@ public class QueryManager extends AlpineQueryManager {
         final String conditionTemplate;
 
         switch (principal) {
-            case User user -> {
-                params.put("projectAclUserId", user.getId());
+            case UserPrincipal user -> {
+                params.put("projectAclUserId", user.id());
                 conditionTemplate = /* language=SQL */ """
                         EXISTS(
                           SELECT 1
@@ -1263,8 +1245,8 @@ public class QueryManager extends AlpineQueryManager {
                         )
                         """;
             }
-            case ApiKey apiKey -> {
-                params.put("projectAclApiKeyId", apiKey.getId());
+            case ApiKeyPrincipal apiKey -> {
+                params.put("projectAclApiKeyId", apiKey.id());
                 conditionTemplate = /* language=SQL */ """
                         EXISTS(
                           SELECT 1
@@ -1278,7 +1260,7 @@ public class QueryManager extends AlpineQueryManager {
                         )
                         """;
             }
-            default -> {
+            case null -> {
                 return Map.entry("FALSE", Collections.emptyMap());
             }
         }
@@ -1298,12 +1280,15 @@ public class QueryManager extends AlpineQueryManager {
         return "OFFSET %d FETCH NEXT %d ROWS ONLY".formatted(pagination.getOffset(), pagination.getLimit());
     }
 
-    protected boolean isPortfolioAclBypassed(Principal principal) {
+    protected boolean isPortfolioAclBypassed(@Nullable Principal principal) {
         return principal == null
                 || ProjectAccess.isUnrestricted()
-                || !isEnabled(ACCESS_MANAGEMENT_ACL_ENABLED)
-                || (request != null
-                        && request.getEffectivePermissions()
-                                .contains(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS));
+                || request == null
+                || !request.isPortfolioAccessControlEnabled()
+                || principal.hasPermission(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS);
+    }
+
+    protected boolean hasAnyPermission(String... permissions) {
+        return principal != null && principal.hasAnyPermission(permissions);
     }
 }

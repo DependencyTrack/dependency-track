@@ -37,7 +37,6 @@ import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 import javax.jdo.annotations.Unique;
 import java.io.Serializable;
-import java.security.Principal;
 import java.util.Date;
 import java.util.List;
 
@@ -49,7 +48,7 @@ import java.util.List;
  */
 @PersistenceCapable
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ApiKey implements Serializable, Principal {
+public class ApiKey implements Serializable {
 
     private static final long serialVersionUID = 1582714693932260365L;
 
@@ -153,18 +152,6 @@ public class ApiKey implements Serializable, Principal {
      */
     public String getMaskedKey() {
         return PREFIX + publicId + "*".repeat(API_KEY_LENGTH);
-    }
-
-    /**
-     * Do not use - only here to satisfy Principal implementation requirement.
-     *
-     * @return a String presentation of the username
-     * @deprecated use {@link #getMaskedKey()}
-     */
-    @Deprecated
-    @JsonIgnore
-    public String getName() {
-        return getMaskedKey();
     }
 
     public String getComment() {

@@ -20,15 +20,15 @@ package alpine.server.auth;
 
 import jakarta.annotation.Nullable;
 import javax.naming.AuthenticationException;
-import java.security.Principal;
 
 /**
  * Interface that defines an authentication service.
  *
+ * @param <T> Type of the principal this service authenticates.
  * @author Steve Springett
  * @since 1.0.0
  */
-public interface AuthenticationService {
+public interface AuthenticationService<T> {
 
     /**
      * Defines a method which returns if the specified piece of
@@ -39,14 +39,14 @@ public interface AuthenticationService {
     boolean isSpecified();
 
     /**
-     * Defines an authentication method which returns a Principal
+     * Defines an authentication method which returns a principal
      * if authentication is successful or an AuthorizationException
      * if not.
-     * @return a Principal of the authenticated user
+     * @return the authenticated principal
      * @throws AuthenticationException an authentication failure
      * @since 1.0.0
      */
     @Nullable
-    Principal authenticate() throws AuthenticationException;
+    T authenticate() throws AuthenticationException;
 
 }

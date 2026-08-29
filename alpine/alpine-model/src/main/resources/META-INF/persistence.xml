@@ -32,7 +32,6 @@
         <class>alpine.model.Permission</class>
         <class>alpine.model.Team</class>
         <class>alpine.model.User</class>
-        <class>alpine.model.UserSession</class>
 
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
     </persistence-unit>

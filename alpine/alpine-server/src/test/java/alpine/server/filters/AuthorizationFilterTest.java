@@ -26,7 +26,6 @@ import alpine.model.Team;
 import alpine.persistence.AlpineQueryManager;
 import alpine.server.auth.PermissionRequired;
 import alpine.server.auth.SessionTokenService;
-import alpine.server.persistence.PersistenceManagerFactory;
 import alpine.server.resources.AlpineResource;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -39,7 +38,9 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
 import org.junit.jupiter.api.AfterEach;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.Map;
 
@@ -47,6 +48,10 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class AuthorizationFilterTest extends JerseyTest {
+
+    @RegisterExtension
+    static final TestDatabaseExtension DATABASE = new TestDatabaseExtension();
+
 
     @Path("/")
     public static class TestResource extends AlpineResource {
@@ -57,7 +62,7 @@ public class AuthorizationFilterTest extends JerseyTest {
         public Response get() {
             return Response.ok(Map.of(
                     "effectivePermissions",
-                    getAlpineRequest().getEffectivePermissions())).build();
+                    getEffectivePermissions())).build();
         }
 
         @GET
@@ -66,14 +71,13 @@ public class AuthorizationFilterTest extends JerseyTest {
         public Response getUnprotected() {
             return Response.ok(Map.of(
                     "effectivePermissions",
-                    getAlpineRequest().getEffectivePermissions())).build();
+                    getEffectivePermissions())).build();
         }
 
     }
 
     @AfterEach
     public void tearDown() throws Exception {
-        PersistenceManagerFactory.tearDown();
         super.tearDown();
     }
 

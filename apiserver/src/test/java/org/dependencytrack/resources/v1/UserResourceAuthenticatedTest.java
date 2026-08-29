@@ -23,15 +23,16 @@ import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
 import alpine.model.Team;
 import alpine.model.User;
-import alpine.model.UserSession;
 import alpine.server.auth.SessionTokenService;
 import alpine.server.filters.ApiFilter;
 import alpine.server.filters.AuthFeature;
 import org.dependencytrack.JerseyTestExtension;
 import org.dependencytrack.ResourceTest;
 import org.dependencytrack.auth.Permissions;
+import org.dependencytrack.common.datasource.DataSourceRegistry;
 import org.dependencytrack.model.IdentifiableObject;
 import org.dependencytrack.notification.NotificationScope;
+import org.dependencytrack.persistence.QueryManager;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.junit.jupiter.api.Assertions;
@@ -46,8 +47,11 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -150,6 +154,35 @@ class UserResourceAuthenticatedTest extends ResourceTest {
         Assertions.assertNotNull(json);
         Assertions.assertEquals("Captain BlackBeard", json.getString("fullname"));
         Assertions.assertEquals("blackbeard@example.com", json.getString("email"));
+    }
+
+    @Test
+    void updateSelfPreservesAccountFlagsTest() {
+        qm.runInTransaction(() -> {
+            final ManagedUser user = qm.getManagedUser("testuser");
+            user.setForcePasswordChange(true);
+            user.setNonExpiryPassword(true);
+        });
+
+        final var jsonUser = new ManagedUser();
+        jsonUser.setUsername(testUser.getUsername());
+        jsonUser.setFullname("Captain BlackBeard");
+        jsonUser.setEmail("blackbeard@example.com");
+
+        final Response response = jersey.target(V1_USER + "/self")
+                .request()
+                .header("Authorization", "Bearer " + sessionToken)
+                .post(Entity.entity(jsonUser, MediaType.APPLICATION_JSON));
+        Assertions.assertEquals(200, response.getStatus(), 0);
+
+        try (final var freshQm = new QueryManager()) {
+            final ManagedUser updatedUser = freshQm.getManagedUser("testuser");
+            assertThat(updatedUser.getFullname()).isEqualTo("Captain BlackBeard");
+            assertThat(updatedUser.isForcePasswordChange()).isTrue();
+            assertThat(updatedUser.isNonExpiryPassword()).isTrue();
+            assertThat(updatedUser.isSuspended()).isFalse();
+            assertThat(updatedUser.getPassword()).isEqualTo(TEST_USER_PASSWORD_HASH);
+        }
     }
 
     @Test
@@ -301,10 +334,10 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
                 .method("DELETE", Entity.json(/* language=JSON */ """
-                        {
-                          "username": "blackbeard"
-                        }
-                        """));
+                    {
+                      "username": "blackbeard"
+                    }
+                    """));
         Assertions.assertEquals(204, response.getStatus(), 0);
 
         assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
@@ -325,10 +358,10 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
                 .method("DELETE", Entity.json(/* language=JSON */ """
-                        {
-                          "username": "does-not-exist"
-                        }
-                        """));
+                    {
+                      "username": "does-not-exist"
+                    }
+                    """));
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(getPlainTextBody(response)).isEqualTo("The user could not be found.");
     }
@@ -617,10 +650,10 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
                 .method("DELETE", Entity.json(/* language=JSON */ """
-                        {
-                          "username": "does-not-exist"
-                        }
-                        """));
+                    {
+                      "username": "does-not-exist"
+                    }
+                    """));
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(getPlainTextBody(response)).isEqualTo("The user could not be found.");
     }
@@ -645,10 +678,10 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
                 .method("DELETE", Entity.json(/* language=JSON */ """
-                        {
-                          "username": "blackbeard"
-                        }
-                        """));
+                    {
+                      "username": "blackbeard"
+                    }
+                    """));
         Assertions.assertEquals(204, response.getStatus(), 0);
 
         assertThat(qm.getNotificationOutbox()).satisfiesExactly(notification -> {
@@ -714,10 +747,10 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true) // HACK
                 // Hack: Workaround to https://github.com/eclipse-ee4j/jersey/issues/3798
                 .method("DELETE", Entity.json(/* language=JSON */ """
-                        {
-                          "username": "blackbeard"
-                        }
-                        """));
+                    {
+                      "username": "blackbeard"
+                    }
+                    """));
         Assertions.assertEquals(204, response.getStatus(), 0);
     }
 
@@ -730,10 +763,10 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                 .header(X_API_KEY, apiKey)
                 .property(ClientProperties.SUPPRESS_HTTP_COMPLIANCE_VALIDATION, true)
                 .method("DELETE", Entity.json(/* language=JSON */ """
-                        {
-                          "username": "does-not-exist"
-                        }
-                        """));
+                    {
+                      "username": "does-not-exist"
+                    }
+                    """));
         assertThat(response.getStatus()).isEqualTo(404);
         assertThat(getPlainTextBody(response)).isEqualTo("The user could not be found.");
     }
@@ -1053,12 +1086,8 @@ class UserResourceAuthenticatedTest extends ResourceTest {
 
     @Test
     void shouldRejectExpiredSession() {
-        final List<UserSession> sessions = qm.getPersistenceManager()
-                .newQuery(UserSession.class, "user == :user")
-                .setParameters(testUser)
-                .executeList();
-        assertThat(sessions).hasSize(1);
-        sessions.getFirst().setExpiresAt(new Date(System.currentTimeMillis() - 3_600_000));
+        assertThat(countSessionsOf(testUser.getId())).isEqualTo(1);
+        expireAllSessions();
 
         final Response response = jersey.target(V1_USER + "/self")
                 .request()
@@ -1083,21 +1112,12 @@ class UserResourceAuthenticatedTest extends ResourceTest {
     void shouldDeleteExpiredSessions() {
         new SessionTokenService().createSession(testUser.getId());
 
-        final List<UserSession> sessions =
-                qm.getPersistenceManager().newQuery(UserSession.class).executeList();
-        for (final UserSession session : sessions) {
-            session.setExpiresAt(new Date(System.currentTimeMillis() - 3_600_000));
-        }
-        qm.getPersistenceManager().makePersistentAll(sessions);
+        expireAllSessions();
 
         final int deleted = new SessionTokenService().deleteExpiredSessions();
         assertThat(deleted).isEqualTo(2);
 
-        final List<UserSession> remaining = qm.getPersistenceManager()
-                .newQuery(UserSession.class, "user == :user")
-                .setParameters(testUser)
-                .executeList();
-        assertThat(remaining).isEmpty();
+        assertThat(countSessionsOf(testUser.getId())).isZero();
     }
 
     @Test
@@ -1120,5 +1140,37 @@ class UserResourceAuthenticatedTest extends ResourceTest {
                 .header("Authorization", "Bearer " + otherToken)
                 .get(Response.class);
         assertThat(afterResponse.getStatus()).isEqualTo(200);
+    }
+
+    private static long countSessionsOf(long userId) {
+        try (final Connection connection =
+                        DataSourceRegistry.getInstance().getDefault().getConnection();
+                final PreparedStatement ps = connection.prepareStatement(/* language=SQL */ """
+                    SELECT COUNT(*)
+                      FROM "USER_SESSION"
+                     WHERE "USER_ID" = ?
+                    """)) {
+            ps.setLong(1, userId);
+
+            try (final ResultSet rs = ps.executeQuery()) {
+                assertThat(rs.next()).isTrue();
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static void expireAllSessions() {
+        try (final Connection connection =
+                        DataSourceRegistry.getInstance().getDefault().getConnection();
+                final PreparedStatement ps = connection.prepareStatement(/* language=SQL */ """
+                    UPDATE "USER_SESSION"
+                       SET "EXPIRES_AT" = TIMESTAMP '2000-01-01 00:00:00'
+                    """)) {
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

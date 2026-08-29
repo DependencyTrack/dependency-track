@@ -262,19 +262,15 @@ public class TagQueryManager extends QueryManager {
                 hasVulnerabilityManagementUpdatePermission = true;
                 hasSystemConfigurationUpdatePermission = true;
             } else {
-                final Set<String> effectivePermissions = request.getEffectivePermissions();
-                hasPortfolioManagementUpdatePermission =
-                        effectivePermissions.contains(Permissions.Constants.PORTFOLIO_MANAGEMENT)
-                                || effectivePermissions.contains(Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE);
-                hasPolicyManagementUpdatePermission =
-                        effectivePermissions.contains(Permissions.Constants.POLICY_MANAGEMENT)
-                                || effectivePermissions.contains(Permissions.Constants.POLICY_MANAGEMENT_UPDATE);
-                hasSystemConfigurationUpdatePermission =
-                        effectivePermissions.contains(Permissions.Constants.SYSTEM_CONFIGURATION)
-                                || effectivePermissions.contains(Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE);
-                hasVulnerabilityManagementUpdatePermission =
-                        effectivePermissions.contains(Permissions.Constants.VULNERABILITY_MANAGEMENT)
-                                || effectivePermissions.contains(Permissions.Constants.VULNERABILITY_MANAGEMENT_UPDATE);
+                hasPortfolioManagementUpdatePermission = hasAnyPermission(
+                        Permissions.Constants.PORTFOLIO_MANAGEMENT, Permissions.Constants.PORTFOLIO_MANAGEMENT_UPDATE);
+                hasPolicyManagementUpdatePermission = hasAnyPermission(
+                        Permissions.Constants.POLICY_MANAGEMENT, Permissions.Constants.POLICY_MANAGEMENT_UPDATE);
+                hasSystemConfigurationUpdatePermission = hasAnyPermission(
+                        Permissions.Constants.SYSTEM_CONFIGURATION, Permissions.Constants.SYSTEM_CONFIGURATION_UPDATE);
+                hasVulnerabilityManagementUpdatePermission = hasAnyPermission(
+                        Permissions.Constants.VULNERABILITY_MANAGEMENT,
+                        Permissions.Constants.VULNERABILITY_MANAGEMENT_UPDATE);
             }
 
             for (final TagDeletionCandidateRow row : candidateRows) {

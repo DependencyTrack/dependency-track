@@ -18,13 +18,14 @@
  */
 package org.dependencytrack.persistence;
 
-import alpine.model.ApiKey;
 import alpine.model.Team;
-import alpine.model.User;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.Principal;
+import alpine.model.auth.TeamRef;
+import alpine.model.auth.UserPrincipal;
 import alpine.resources.AlpineRequest;
 import com.github.packageurl.PackageURL;
 import org.datanucleus.api.jdo.JDOQuery;
-import org.dependencytrack.model.ConfigPropertyConstants;
 import org.dependencytrack.model.Project;
 import org.dependencytrack.model.ProjectCollectionLogic;
 import org.dependencytrack.model.ProjectProperty;
@@ -38,7 +39,6 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.metadata.MemberMetadata;
 import javax.jdo.metadata.TypeMetadata;
-import java.security.Principal;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -463,7 +463,7 @@ final class ProjectQueryManager extends QueryManager {
 
         final Query<?> query;
         switch (principal) {
-            case User user -> {
+            case UserPrincipal user -> {
                 query = pm.newQuery(Query.SQL, /* language=SQL */ """
                                 SELECT EXISTS(
                                   SELECT 1
@@ -473,9 +473,9 @@ final class ProjectQueryManager extends QueryManager {
                                    WHERE ph."CHILD_PROJECT_ID" = ?
                                      AND pau."USER_ID" = ?
                                 )
-                                """).setParameters(project.getId(), user.getId());
+                                """).setParameters(project.getId(), user.id());
             }
-            case ApiKey apiKey -> {
+            case ApiKeyPrincipal apiKey -> {
                 query = pm.newQuery(Query.SQL, /* language=SQL */ """
                                 SELECT EXISTS(
                                   SELECT 1
@@ -487,9 +487,9 @@ final class ProjectQueryManager extends QueryManager {
                                    WHERE akt."APIKEY_ID" = ?
                                      AND ph."CHILD_PROJECT_ID" = ?
                                 )
-                                """).setParameters(apiKey.getId(), project.getId());
+                                """).setParameters(apiKey.id(), project.getId());
             }
-            default -> {
+            case null -> {
                 return false;
             }
         }
@@ -534,22 +534,24 @@ final class ProjectQueryManager extends QueryManager {
 
         final String aclCondition =
                 switch (principal) {
-                    case ApiKey apiKey -> {
-                        final Set<Long> teamIds = getTeamIds(apiKey);
-                        if (teamIds.isEmpty()) {
+                    case ApiKeyPrincipal apiKey -> {
+                        final List<TeamRef> teams = apiKey.teams();
+                        if (teams.isEmpty()) {
                             yield "false";
                         }
 
-                        params.put("projectAclTeamIds", teamIds.toArray(new Long[0]));
+                        params.put(
+                                "projectAclTeamIds",
+                                teams.stream().map(TeamRef::id).toArray(Long[]::new));
                         yield "%s.isAccessibleBy(:projectAclTeamIds)"
                                 .formatted(requireNonNullElse(projectMemberFieldName, "this"));
                     }
-                    case User user -> {
-                        params.put("projectAclUserId", user.getId());
+                    case UserPrincipal user -> {
+                        params.put("projectAclUserId", user.id());
                         yield "%s.isAccessibleBy(:projectAclUserId)"
                                 .formatted(requireNonNullElse(projectMemberFieldName, "this"));
                     }
-                    default -> "false";
+                    case null -> "false";
                 };
 
         if (inputFilter != null && !inputFilter.isBlank()) {
@@ -571,11 +573,12 @@ final class ProjectQueryManager extends QueryManager {
      */
     @Override
     public boolean updateNewProjectACL(Project project, Principal principal) {
-        if (isEnabled(ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED) && principal instanceof ApiKey apiKey) {
-            final var apiTeam = apiKey.getTeams().stream().findFirst();
+        if (principal instanceof final ApiKeyPrincipal apiKey
+                && (request != null && request.isPortfolioAccessControlEnabled())) {
+            final var apiTeam = apiKey.teams().stream().findFirst();
             if (apiTeam.isPresent()) {
                 LOGGER.debug("adding Team to ACL of newly created project");
-                final Team team = getObjectByUuid(Team.class, apiTeam.get().getUuid());
+                final Team team = getObjectByUuid(Team.class, apiTeam.get().uuid());
                 project.addAccessTeam(team);
                 persist(project);
                 return true;

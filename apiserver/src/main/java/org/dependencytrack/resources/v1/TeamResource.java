@@ -20,7 +20,9 @@ package org.dependencytrack.resources.v1;
 
 import alpine.model.ApiKey;
 import alpine.model.Team;
-import alpine.model.User;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.Principal;
+import alpine.model.auth.TeamRef;
 import alpine.persistence.PaginatedResult;
 import alpine.security.ApiKeyDecoder;
 import alpine.security.InvalidApiKeyFormatException;
@@ -63,7 +65,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -290,44 +291,39 @@ public class TeamResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
     public Response availableTeams() {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            boolean isAllTeams = super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
-                    || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
-            final List<Team> teams;
-            final long total;
-            if (isAllTeams) {
-                final PaginatedResult paginatedResult = qm.getTeams();
-                teams = paginatedResult.getList(Team.class);
-                total = paginatedResult.getTotal();
-            } else {
-                List<Team> visibleTeams = List.of();
-                if (getPrincipal() instanceof final User user && user.getTeams() != null) {
-                    visibleTeams = user.getTeams();
-                } else if (getPrincipal() instanceof final ApiKey apiKey && apiKey.getTeams() != null) {
-                    visibleTeams = apiKey.getTeams();
-                }
-                final String filter = getAlpineRequest().getFilter();
-                if (filter != null && !filter.isBlank()) {
-                    final String needle = filter.toLowerCase();
-                    visibleTeams = visibleTeams.stream()
-                            .filter(team -> team.getName() != null
-                                    && team.getName().toLowerCase().contains(needle))
-                            .toList();
-                }
-                total = visibleTeams.size();
-                teams = visibleTeams.stream()
-                        .sorted(Comparator.comparing(
-                                Team::getName, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
-                        .skip(getAlpineRequest().getPagination().getOffset())
-                        .limit(getAlpineRequest().getPagination().getLimit())
+        final boolean isAllTeams = super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
+                || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
+        if (!isAllTeams) {
+            List<TeamRef> visibleTeams =
+                    getPrincipal() instanceof final Principal principal ? principal.teams() : List.of();
+
+            final String filter = getAlpineRequest().getFilter();
+            if (filter != null && !filter.isBlank()) {
+                final String needle = filter.toLowerCase();
+                visibleTeams = visibleTeams.stream()
+                        .filter(team -> team.name().toLowerCase().contains(needle))
                         .toList();
             }
 
-            final List<VisibleTeams> response = new ArrayList<>(teams.size());
-            for (Team team : teams) {
-                response.add(new VisibleTeams(team.getName(), team.getUuid()));
-            }
-            return Response.ok(response).header(TOTAL_COUNT_HEADER, total).build();
+            final List<VisibleTeams> response = visibleTeams.stream()
+                    .sorted(Comparator.comparing(TeamRef::name, String.CASE_INSENSITIVE_ORDER))
+                    .skip(getAlpineRequest().getPagination().getOffset())
+                    .limit(getAlpineRequest().getPagination().getLimit())
+                    .map(team -> new VisibleTeams(team.name(), team.uuid()))
+                    .toList();
+            return Response.ok(response)
+                    .header(TOTAL_COUNT_HEADER, visibleTeams.size())
+                    .build();
+        }
+
+        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
+            final PaginatedResult paginatedResult = qm.getTeams();
+            final List<VisibleTeams> response = paginatedResult.getList(Team.class).stream()
+                    .map(team -> new VisibleTeams(team.getName(), team.getUuid()))
+                    .toList();
+            return Response.ok(response)
+                    .header(TOTAL_COUNT_HEADER, paginatedResult.getTotal())
+                    .build();
         }
     }
 
@@ -522,7 +518,7 @@ public class TeamResource extends AbstractApiResource {
     public Response getSelf() {
         try (var qm = new QueryManager(getAlpineRequest())) {
             if (isApiKey()) {
-                final var apiKey = qm.getApiKeyByPublicId(((ApiKey) getPrincipal()).getPublicId());
+                final var apiKey = qm.getApiKeyByPublicId(((ApiKeyPrincipal) getPrincipal()).publicId());
                 final var team = apiKey.getTeams().stream().findFirst();
                 if (team.isPresent()) {
                     return Response.ok(new TeamSelfResponse(team.get())).build();

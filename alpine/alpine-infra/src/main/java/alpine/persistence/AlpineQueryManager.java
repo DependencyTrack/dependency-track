@@ -29,7 +29,6 @@ import alpine.model.OidcUser;
 import alpine.model.Permission;
 import alpine.model.Team;
 import alpine.model.User;
-import alpine.model.UserSession;
 import alpine.resources.AlpineRequest;
 import alpine.security.ApiKeyGenerator;
 import org.datanucleus.store.rdbms.query.JDOQLQuery;
@@ -38,13 +37,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This QueryManager provides a concrete extension of {@link AbstractAlpineQueryManager} by
@@ -532,13 +528,6 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
         return executeAndCloseUnique(query);
     }
 
-    public UserSession getUserSessionByTokenHash(String tokenHash) {
-        final Query<UserSession> query = pm.newQuery(UserSession.class);
-        query.setFilter("tokenHash == :tokenHash && expiresAt > :now");
-        query.setParameters(tokenHash, new Date());
-        return executeAndCloseUnique(query);
-    }
-
     /**
      * Creates a new Team with the specified name.
      * @param name The name of the team
@@ -702,74 +691,6 @@ public class AlpineQueryManager extends AbstractAlpineQueryManager {
         final Query<Permission> query = pm.newQuery(Permission.class);
         query.setOrdering("name asc");
         return executeAndCloseList(query);
-    }
-
-    /**
-     * Retrieve the effective permissions of a {@link Principal}.
-     *
-     * @param principal The {@link Principal} to retrieve permissions for.
-     * @return Permissions of {@code principal}
-     * @since 3.2.0
-     */
-    public Set<String> getEffectivePermissions(final Principal principal) {
-        return switch (principal) {
-            case ApiKey apiKey -> getEffectivePermissions(apiKey);
-            case User user -> getEffectivePermissions(user);
-            default -> Collections.emptySet();
-        };
-    }
-
-    private Set<String> getEffectivePermissions(final ApiKey apiKey) {
-        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                SELECT "PERMISSION"."NAME"
-                  FROM "APIKEY"
-                 INNER JOIN "APIKEYS_TEAMS"
-                    ON "APIKEYS_TEAMS"."APIKEY_ID" = "APIKEY"."ID"
-                 INNER JOIN "TEAM"
-                    ON "TEAM"."ID" = "APIKEYS_TEAMS"."TEAM_ID"
-                 INNER JOIN "TEAMS_PERMISSIONS"
-                    ON "TEAMS_PERMISSIONS"."TEAM_ID" = "TEAM"."ID"
-                 INNER JOIN "PERMISSION"
-                    ON "PERMISSION"."ID" = "TEAMS_PERMISSIONS"."PERMISSION_ID"
-                 WHERE "APIKEY"."ID" = :apiKeyId
-                """);
-        query.setNamedParameters(Map.of("apiKeyId", apiKey.getId()));
-        return Set.copyOf(executeAndCloseResultList(query, String.class));
-    }
-
-    /**
-     * Determines the effective permissions for the specified user by collecting
-     * a List of all permissions assigned to the user either directly, or through
-     * team membership.
-     * @param user the {@link User} to retrieve permissions for
-     * @return Set of permission names
-     */
-    private Set<String> getEffectivePermissions(final User user) {
-        final Query<?> query = pm.newQuery(Query.SQL, /* language=SQL */ """
-                SELECT p."NAME"
-                  FROM "USER" u
-                 INNER JOIN "USERS_TEAMS" ut
-                    ON ut."USER_ID" = u."ID"
-                 INNER JOIN "TEAM" t
-                    ON t."ID" = ut."TEAM_ID"
-                 INNER JOIN "TEAMS_PERMISSIONS" tp
-                    ON tp."TEAM_ID" = t."ID"
-                 INNER JOIN "PERMISSION" p
-                    ON p."ID" = tp."PERMISSION_ID"
-                 WHERE u."ID" = :userId
-                 UNION ALL
-                SELECT p."NAME"
-                  FROM "USER" u
-                 INNER JOIN "USERS_PERMISSIONS" up
-                    ON up."USER_ID" = u."ID"
-                 INNER JOIN "PERMISSION" p
-                    ON p."ID" = up."PERMISSION_ID"
-                 WHERE u."ID" = :userId
-                """);
-
-        query.setNamedParameters(Map.of("userId", user.getId()));
-
-        return Set.copyOf(executeAndCloseResultList(query, String.class));
     }
 
     /**

@@ -22,11 +22,11 @@ import alpine.config.AlpineConfigKeys;
 import alpine.model.LdapUser;
 import alpine.model.Team;
 import alpine.persistence.AlpineQueryManager;
-import alpine.server.persistence.PersistenceManagerFactory;
 import io.smallrye.config.SmallRyeConfigBuilder;
 import org.eclipse.microprofile.config.Config;
-import org.junit.jupiter.api.AfterEach;
+import org.dependencytrack.testing.database.TestDatabaseExtension;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.ldap.LLdapContainer;
@@ -40,6 +40,10 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 @Testcontainers
 class LdapAuthenticationServiceTest {
 
+    @RegisterExtension
+    static final TestDatabaseExtension DATABASE = new TestDatabaseExtension();
+
+
     private static final String ADMIN_USERNAME = "admin";
     private static final String ADMIN_DN = "uid=admin,ou=people,dc=example,dc=com";
     private static final String ADMIN_PASSWORD = "password";
@@ -48,11 +52,6 @@ class LdapAuthenticationServiceTest {
     private static final LLdapContainer LDAP = new LLdapContainer("lldap/lldap:2026-03-04-alpine")
             .withUserPass(ADMIN_PASSWORD)
             .withEnv("LLDAP_JWT_SECRET", "0123456789abcdef0123456789abcdef");
-
-    @AfterEach
-    void tearDown() {
-        PersistenceManagerFactory.tearDown();
-    }
 
     @Test
     void shouldAuthenticateAndAutoProvisionUserWhenCredentialsAreValid() throws Exception {

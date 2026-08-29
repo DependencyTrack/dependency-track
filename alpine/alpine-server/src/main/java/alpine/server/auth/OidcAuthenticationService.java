@@ -29,7 +29,6 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Objects;
 import java.util.ServiceLoader;
@@ -37,7 +36,7 @@ import java.util.ServiceLoader;
 /**
  * @since 1.8.0
  */
-public class OidcAuthenticationService implements AuthenticationService {
+public class OidcAuthenticationService implements AuthenticationService<OidcUser> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OidcAuthenticationService.class);
 
@@ -124,7 +123,7 @@ public class OidcAuthenticationService implements AuthenticationService {
      */
     @Nonnull
     @Override
-    public Principal authenticate() throws AlpineAuthenticationException {
+    public OidcUser authenticate() throws AlpineAuthenticationException {
         final String usernameClaimName = config.getOptionalValue(AlpineConfigKeys.OIDC_USERNAME_CLAIM, String.class).orElse(null);
         if (usernameClaimName == null) {
             LOGGER.error("No username claim has been configured");

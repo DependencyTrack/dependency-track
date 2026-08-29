@@ -18,9 +18,9 @@
  */
 package org.dependencytrack.resources.v1;
 
-import alpine.model.ApiKey;
 import alpine.model.Team;
-import alpine.model.User;
+import alpine.model.auth.Principal;
+import alpine.model.auth.TeamRef;
 import alpine.server.auth.PermissionRequired;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -79,7 +79,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import javax.jdo.FetchGroup;
-import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -650,24 +649,14 @@ public class ProjectResource extends AbstractApiResource {
                 }
 
                 if (!chosenTeams.isEmpty()) {
-                    List<Team> userTeams;
-                    if (principal instanceof final User user) {
-                        userTeams = user.getTeams();
-                    } else if (principal instanceof final ApiKey apiKey) {
-                        userTeams = apiKey.getTeams();
-                    } else {
-                        userTeams = List.of();
-                    }
-                    if (userTeams == null) {
-                        userTeams = List.of();
-                    }
+                    final List<TeamRef> principalTeams = principal != null ? principal.teams() : List.of();
 
                     boolean canSeeAllTeams = super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT)
                             || super.hasPermission(Permissions.Constants.ACCESS_MANAGEMENT_READ);
                     final Set<UUID> memberTeamUuids = new HashSet<>();
                     if (!canSeeAllTeams) {
-                        for (final Team userTeam : userTeams) {
-                            memberTeamUuids.add(userTeam.getUuid());
+                        for (final TeamRef principalTeam : principalTeams) {
+                            memberTeamUuids.add(principalTeam.uuid());
                         }
                     }
 

@@ -23,6 +23,7 @@ import alpine.model.ManagedUser;
 import alpine.model.OidcUser;
 import alpine.model.Team;
 import alpine.model.User;
+import alpine.model.auth.UserPrincipal;
 import alpine.server.auth.AlpineAuthenticationException;
 import alpine.server.auth.AuthenticationNotRequired;
 import alpine.server.auth.Authenticator;
@@ -70,8 +71,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import javax.jdo.Query;
-import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -119,10 +120,10 @@ public class UserResource extends AbstractApiResource {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 try {
-                    final Principal principal = auth.authenticate();
+                    final User user = auth.authenticate();
                     super.logSecurityEvent(
                             LOGGER, SecurityMarkers.SECURITY_SUCCESS, "Successful user login / username: " + username);
-                    final String token = sessionTokenService.createSession(((User) principal).getId());
+                    final String token = sessionTokenService.createSession(user.getId());
                     return Response.ok(token).build();
                 } catch (AlpineAuthenticationException e) {
                     if (AlpineAuthenticationException.CauseType.SUSPENDED == e.getCauseType()
@@ -186,12 +187,12 @@ public class UserResource extends AbstractApiResource {
         try (final QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 try {
-                    final Principal principal = authService.authenticate();
+                    final OidcUser user = authService.authenticate();
                     super.logSecurityEvent(
                             LOGGER,
                             SecurityMarkers.SECURITY_SUCCESS,
-                            "Successful OpenID Connect login / username: " + principal.getName());
-                    final String token = sessionTokenService.createSession(((User) principal).getId());
+                            "Successful OpenID Connect login / username: " + user.getUsername());
+                    final String token = sessionTokenService.createSession(user.getId());
                     return Response.ok(token).build();
                 } catch (AlpineAuthenticationException e) {
                     super.logSecurityEvent(
@@ -232,7 +233,7 @@ public class UserResource extends AbstractApiResource {
             @FormParam("newPassword") String newPassword,
             @FormParam("confirmPassword") String confirmPassword) {
         final Authenticator auth = new Authenticator(username, password);
-        AtomicReference<Principal> principal = new AtomicReference<>();
+        AtomicReference<User> principal = new AtomicReference<>();
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 try {
@@ -416,8 +417,8 @@ public class UserResource extends AbstractApiResource {
             })
     public Response getSelf() {
         try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            if (getPrincipal() instanceof final User user) {
-                return Response.ok(qm.getUser(user.getUsername())).build();
+            if (getPrincipal() instanceof final UserPrincipal user) {
+                return Response.ok(qm.getUser(user.username())).build();
             }
 
             return Response.status(401).build();
@@ -441,44 +442,75 @@ public class UserResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
     public Response updateSelf(ManagedUser jsonUser) {
-        try (QueryManager qm = new QueryManager(getAlpineRequest())) {
-            if (super.isLdapUser()) {
-                final LdapUser user = qm.getLdapUser(getPrincipal().getName());
-                return Response.status(Response.Status.BAD_REQUEST).entity(user).build();
-            } else if (super.isOidcUser()) {
-                final OidcUser user = qm.getOidcUser(getPrincipal().getName());
-                return Response.status(Response.Status.BAD_REQUEST).entity(user).build();
-            } else if (super.isManagedUser()) {
-                final ManagedUser user = (ManagedUser) super.getPrincipal();
-                if (StringUtils.isBlank(jsonUser.getFullname())) {
-                    return Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Full name is required.")
+        if (!(getPrincipal() instanceof final UserPrincipal userPrincipal)) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
+        try (final var qm = new QueryManager(getAlpineRequest())) {
+            return switch (userPrincipal.type()) {
+                case LDAP -> {
+                    final LdapUser user = qm.getLdapUser(userPrincipal.username());
+                    yield Response.status(Response.Status.BAD_REQUEST)
+                            .entity(user)
                             .build();
                 }
-                if (StringUtils.isBlank(jsonUser.getEmail())) {
-                    return Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Email address is required.")
+                case OIDC -> {
+                    final OidcUser user = qm.getOidcUser(userPrincipal.username());
+                    yield Response.status(Response.Status.BAD_REQUEST)
+                            .entity(user)
                             .build();
                 }
-                user.setFullname(StringUtils.trimToNull(jsonUser.getFullname()));
-                user.setEmail(StringUtils.trimToNull(jsonUser.getEmail()));
-                if (StringUtils.isNotBlank(jsonUser.getNewPassword())
-                        && StringUtils.isNotBlank(jsonUser.getConfirmPassword())) {
-                    if (jsonUser.getNewPassword().equals(jsonUser.getConfirmPassword())) {
-                        user.setPassword(String.valueOf(PasswordService.createHash(
-                                jsonUser.getNewPassword().toCharArray())));
-                    } else {
-                        return Response.status(Response.Status.BAD_REQUEST)
-                                .entity("Passwords do not match.")
+                case MANAGED -> {
+                    if (StringUtils.isBlank(jsonUser.getFullname())) {
+                        yield Response.status(Response.Status.BAD_REQUEST)
+                                .entity("Full name is required.")
                                 .build();
                     }
+                    if (StringUtils.isBlank(jsonUser.getEmail())) {
+                        yield Response.status(Response.Status.BAD_REQUEST)
+                                .entity("Email address is required.")
+                                .build();
+                    }
+
+                    final String newPasswordHash;
+                    if (StringUtils.isNotBlank(jsonUser.getNewPassword())
+                            && StringUtils.isNotBlank(jsonUser.getConfirmPassword())) {
+                        if (!jsonUser.getNewPassword().equals(jsonUser.getConfirmPassword())) {
+                            yield Response.status(Response.Status.BAD_REQUEST)
+                                    .entity("Passwords do not match.")
+                                    .build();
+                        }
+                        newPasswordHash = String.valueOf(PasswordService.createHash(
+                                jsonUser.getNewPassword().toCharArray()));
+                    } else {
+                        newPasswordHash = null;
+                    }
+
+                    final String username = userPrincipal.username();
+                    final ManagedUser user = qm.callInTransaction(() -> {
+                        final ManagedUser managedUser = qm.getManagedUser(username);
+                        if (managedUser == null) {
+                            return null;
+                        }
+
+                        managedUser.setFullname(StringUtils.trimToNull(jsonUser.getFullname()));
+                        managedUser.setEmail(StringUtils.trimToNull(jsonUser.getEmail()));
+                        if (newPasswordHash != null) {
+                            managedUser.setLastPasswordChange(new Date());
+                            managedUser.setPassword(newPasswordHash);
+                        }
+                        return managedUser;
+                    });
+                    if (user == null) {
+                        // The user was deleted between authenticating this request and updating.
+                        yield Response.status(Response.Status.UNAUTHORIZED).build();
+                    }
+
+                    super.logSecurityEvent(
+                            LOGGER, SecurityMarkers.SECURITY_AUDIT, "User profile updated: " + user.getUsername());
+                    yield Response.ok(qm.detach(user)).build();
                 }
-                qm.updateManagedUser(user);
-                super.logSecurityEvent(
-                        LOGGER, SecurityMarkers.SECURITY_AUDIT, "User profile updated: " + user.getUsername());
-                return Response.ok(user).build();
-            }
-            return Response.status(Response.Status.UNAUTHORIZED).build();
+            };
         }
     }
 
@@ -497,7 +529,7 @@ public class UserResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
     public Response getSelfPermissions() {
-        if (getPrincipal() instanceof User) {
+        if (getPrincipal() instanceof UserPrincipal) {
             return Response.ok(getEffectivePermissions()).build();
         }
 
@@ -1042,12 +1074,12 @@ public class UserResource extends AbstractApiResource {
                 @ApiResponse(responseCode = "401", description = "Unauthorized")
             })
     public Response logout(@HeaderParam("Authorization") String authHeader) {
-        if (getPrincipal() instanceof final User user
+        if (getPrincipal() instanceof final UserPrincipal user
                 && authHeader != null
                 && authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
             final String rawToken = authHeader.substring(7);
 
-            final boolean deleted = sessionTokenService.deleteSession(rawToken, user.getId());
+            final boolean deleted = sessionTokenService.deleteSession(rawToken, user.id());
             if (deleted) {
                 LOGGER.info(SecurityMarkers.SECURITY_AUDIT, "Logged out successfully");
             } else {

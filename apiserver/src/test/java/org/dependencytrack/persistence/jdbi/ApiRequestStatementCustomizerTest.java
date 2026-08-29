@@ -19,11 +19,12 @@
 package org.dependencytrack.persistence.jdbi;
 
 import alpine.model.ApiKey;
-import alpine.model.LdapUser;
 import alpine.model.ManagedUser;
-import alpine.model.OidcUser;
 import alpine.model.Team;
 import alpine.model.User;
+import alpine.model.auth.ApiKeyPrincipal;
+import alpine.model.auth.UserPrincipal;
+import alpine.model.auth.UserType;
 import alpine.persistence.OrderDirection;
 import alpine.persistence.Pagination;
 import alpine.resources.AlpineRequest;
@@ -35,15 +36,17 @@ import org.dependencytrack.persistence.jdbi.ApiRequestConfig.OrderingColumn;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.core.statement.StatementCustomizer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.sql.PreparedStatement;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.dependencytrack.model.ConfigPropertyConstants.ACCESS_MANAGEMENT_ACL_ENABLED;
 import static org.dependencytrack.persistence.jdbi.JdbiFactory.useJdbiHandle;
 
 public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
@@ -360,21 +363,15 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
 
     @Test
     public void testWithPortfolioAclDisabled() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "false",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-
         final ManagedUser managedUser = qm.createManagedUser("username", "passwordHash");
 
         final var request = new AlpineRequest(
-                /* principal */ managedUser,
+                /* principal */ userPrincipal(managedUser, UserType.MANAGED),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
-                /* orderDirection */ null);
+                /* orderDirection */ null,
+                /* portfolioAccessControlEnabled */ false);
 
         useJdbiHandle(
                 request,
@@ -392,21 +389,15 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
 
     @Test
     public void testWithPortfolioAclEnabledWithNoTeams() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-
         final ManagedUser managedUser = qm.createManagedUser("username", "passwordHash");
 
         final var request = new AlpineRequest(
-                /* principal */ managedUser,
+                /* principal */ userPrincipal(managedUser, UserType.MANAGED),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
-                /* orderDirection */ null);
+                /* orderDirection */ null,
+                /* portfolioAccessControlEnabled */ true);
 
         useJdbiHandle(
                 request,
@@ -436,23 +427,16 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
 
     @Test
     public void testWithPortfolioAclEnabledWithApiKeyHavingPortfolioAccessControlBypassPermission() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-
         final Team team = qm.createTeam("team");
         final ApiKey apiKey = qm.createApiKey(team);
 
         final var request = new AlpineRequest(
-                /* principal */ apiKey,
+                /* principal */ apiKeyPrincipal(apiKey, Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
                 /* orderDirection */ null,
-                /* effectivePermissions */ Set.of(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS));
+                /* portfolioAccessControlEnabled */ true);
 
         useJdbiHandle(
                 request,
@@ -468,90 +452,18 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                         .findOne());
     }
 
-    @Test
-    public void testWithPortfolioAclEnabledWithManagedUserHavingPortfolioAccessControlBypassPermission() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-
-        final ManagedUser managedUser = qm.createManagedUser("username", "passwordHash");
+    @ParameterizedTest
+    @EnumSource(UserType.class)
+    public void testWithPortfolioAclEnabledWithUserHavingPortfolioAccessControlBypassPermission(final UserType type) {
+        final ManagedUser user = qm.createManagedUser("username", "passwordHash");
 
         final var request = new AlpineRequest(
-                /* principal */ managedUser,
+                /* principal */ userPrincipal(user, type, Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
                 /* orderDirection */ null,
-                /* effectivePermissions */ Set.of(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS));
-
-        useJdbiHandle(
-                request,
-                handle -> handle.addCustomizer(inspectStatement(ctx -> {
-                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
-                            SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
-                            """);
-
-                            assertThat(ctx.getBinding()).hasToString("{}");
-                        }))
-                        .createQuery(TEST_QUERY_TEMPLATE)
-                        .mapTo(Integer.class)
-                        .findOne());
-    }
-
-    @Test
-    public void testWithPortfolioAclEnabledWithLdapUserHavingPortfolioAccessControlBypassPermission() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-
-        final LdapUser ldapUser = qm.createLdapUser("username");
-
-        final var request = new AlpineRequest(
-                /* principal */ ldapUser,
-                /* pagination */ null,
-                /* filter */ null,
-                /* orderBy */ null,
-                /* orderDirection */ null,
-                /* effectivePermissions */ Set.of(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS));
-
-        useJdbiHandle(
-                request,
-                handle -> handle.addCustomizer(inspectStatement(ctx -> {
-                            assertThat(ctx.getRenderedSql()).isEqualToIgnoringWhitespace("""
-                            SELECT 1 AS "valueA", 2 AS "valueB" FROM "PROJECT" WHERE TRUE
-                            """);
-
-                            assertThat(ctx.getBinding()).hasToString("{}");
-                        }))
-                        .createQuery(TEST_QUERY_TEMPLATE)
-                        .mapTo(Integer.class)
-                        .findOne());
-    }
-
-    @Test
-    public void testWithPortfolioAclEnabledWithOidcUserHavingPortfolioAccessControlBypassPermission() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-
-        final OidcUser oidcUser = qm.createOidcUser("username");
-
-        final var request = new AlpineRequest(
-                /* principal */ oidcUser,
-                /* pagination */ null,
-                /* filter */ null,
-                /* orderBy */ null,
-                /* orderDirection */ null,
-                /* effectivePermissions */ Set.of(Permissions.Constants.PORTFOLIO_ACCESS_CONTROL_BYPASS));
+                /* portfolioAccessControlEnabled */ true);
 
         useJdbiHandle(
                 request,
@@ -569,22 +481,16 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
 
     @Test
     public void testWithPortfolioAclEnabledWithTeams() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-
         final Team team = qm.createTeam("team");
         final ApiKey apiKey = qm.createApiKey(team);
 
         final var request = new AlpineRequest(
-                /* principal */ apiKey,
+                /* principal */ apiKeyPrincipal(apiKey),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
-                /* orderDirection */ null);
+                /* orderDirection */ null,
+                /* portfolioAccessControlEnabled */ true);
 
         useJdbiHandle(
                 request,
@@ -615,22 +521,16 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
 
     @Test
     public void testWithPortfolioAclEnabledWithCustomizedAclStatement() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-
         final Team team = qm.createTeam("team");
         final ApiKey apiKey = qm.createApiKey(team);
 
         final var request = new AlpineRequest(
-                /* principal */ apiKey,
+                /* principal */ apiKeyPrincipal(apiKey),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
-                /* orderDirection */ null);
+                /* orderDirection */ null,
+                /* portfolioAccessControlEnabled */ true);
 
         useJdbiHandle(
                 request,
@@ -664,21 +564,15 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
 
     @Test
     public void testWithPortfolioAclEnabledWithUserPrincipalAndCustomizedAclStatement() {
-        qm.createConfigProperty(
-                ACCESS_MANAGEMENT_ACL_ENABLED.getGroupName(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyName(),
-                "true",
-                ACCESS_MANAGEMENT_ACL_ENABLED.getPropertyType(),
-                ACCESS_MANAGEMENT_ACL_ENABLED.getDescription());
-
         final User user = qm.createManagedUser("foo", "password");
 
         final var request = new AlpineRequest(
-                /* principal */ user,
+                /* principal */ userPrincipal(user, UserType.MANAGED),
                 /* pagination */ null,
                 /* filter */ null,
                 /* orderBy */ null,
-                /* orderDirection */ null);
+                /* orderDirection */ null,
+                /* portfolioAccessControlEnabled */ true);
 
         useJdbiHandle(
                 request,
@@ -706,6 +600,14 @@ public class ApiRequestStatementCustomizerTest extends PersistenceCapableTest {
                         .createQuery(TEST_QUERY_TEMPLATE)
                         .mapTo(Integer.class)
                         .findOne());
+    }
+
+    private static UserPrincipal userPrincipal(User user, UserType type, String... effectivePermissions) {
+        return new UserPrincipal(user.getId(), user.getUsername(), type, List.of(), Set.of(effectivePermissions));
+    }
+
+    private static ApiKeyPrincipal apiKeyPrincipal(ApiKey apiKey, String... effectivePermissions) {
+        return new ApiKeyPrincipal(apiKey.getId(), apiKey.getPublicId(), List.of(), Set.of(effectivePermissions));
     }
 
     private static StatementInspector inspectStatement(final Consumer<StatementContext> contextConsumer) {

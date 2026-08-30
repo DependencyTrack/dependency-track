@@ -22,6 +22,7 @@ import alpine.model.IConfigProperty;
 import com.github.packageurl.PackageURL;
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.kevdatasource.api.KevAssertion;
+import org.dependencytrack.model.AnalysisResponse;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
@@ -2879,5 +2880,154 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
 
         assertThat(qm.getAllPolicyViolations(componentUnsuppressed)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentSuppressed)).isEmpty();
+    }
+
+    @Test
+    void shouldEvaluateVulnerabilityAnalysisPerComponent() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                vulns.exists(v, has(v.analysis) && v.analysis.state == "EXPLOITABLE")
+                """,
+                PolicyViolation.Type.SECURITY);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentExploitable = new Component();
+        componentExploitable.setProject(project);
+        componentExploitable.setName("acme-lib-a");
+        qm.persist(componentExploitable);
+
+        final var componentUntriaged = new Component();
+        componentUntriaged.setProject(project);
+        componentUntriaged.setName("acme-lib-b");
+        qm.persist(componentUntriaged);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        // The same vulnerability on both components, analyzed on only one of them.
+        // Vulnerability protos are de-duplicated per project, so the analysis must not
+        // leak from one component to the other.
+        qm.addVulnerability(vuln, componentExploitable, "internal");
+        qm.addVulnerability(vuln, componentUntriaged, "internal");
+
+        qm.makeAnalysis(new MakeAnalysisCommand(componentExploitable, vuln)
+                .withState(AnalysisState.EXPLOITABLE)
+                .withResponse(AnalysisResponse.WILL_NOT_FIX)
+                .withDetails("accepted risk"));
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(componentExploitable)).hasSize(1);
+        assertThat(qm.getAllPolicyViolations(componentUntriaged)).isEmpty();
+    }
+
+    @Test
+    void shouldEvaluateUntriagedVulnerabilitiesViaAnalysis() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                vulns.exists(v, !has(v.analysis) || v.analysis.state in ["NOT_SET", "IN_TRIAGE"])
+                """,
+                PolicyViolation.Type.SECURITY);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentUntriaged = new Component();
+        componentUntriaged.setProject(project);
+        componentUntriaged.setName("acme-lib-a");
+        qm.persist(componentUntriaged);
+
+        final var componentInTriage = new Component();
+        componentInTriage.setProject(project);
+        componentInTriage.setName("acme-lib-b");
+        qm.persist(componentInTriage);
+
+        final var componentResolved = new Component();
+        componentResolved.setProject(project);
+        componentResolved.setName("acme-lib-c");
+        qm.persist(componentResolved);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, componentUntriaged, "internal");
+        qm.addVulnerability(vuln, componentInTriage, "internal");
+        qm.addVulnerability(vuln, componentResolved, "internal");
+
+        qm.makeAnalysis(new MakeAnalysisCommand(componentInTriage, vuln).withState(AnalysisState.IN_TRIAGE));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentResolved, vuln).withState(AnalysisState.RESOLVED));
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(componentUntriaged)).hasSize(1);
+        assertThat(qm.getAllPolicyViolations(componentInTriage)).hasSize(1);
+        assertThat(qm.getAllPolicyViolations(componentResolved)).isEmpty();
+    }
+
+    @Test
+    void shouldEvaluateAnalysisResponseAndDetails() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                vulns.exists(v, has(v.analysis) && v.analysis.state == "EXPLOITABLE"
+                    && (!has(v.analysis.response) || v.analysis.response == "NOT_SET"
+                        || size(v.analysis.details) == 0))
+                """,
+                PolicyViolation.Type.SECURITY);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentUndocumented = new Component();
+        componentUndocumented.setProject(project);
+        componentUndocumented.setName("acme-lib-a");
+        qm.persist(componentUndocumented);
+
+        final var componentDocumented = new Component();
+        componentDocumented.setProject(project);
+        componentDocumented.setName("acme-lib-b");
+        qm.persist(componentDocumented);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, componentUndocumented, "internal");
+        qm.addVulnerability(vuln, componentDocumented, "internal");
+
+        qm.makeAnalysis(new MakeAnalysisCommand(componentUndocumented, vuln).withState(AnalysisState.EXPLOITABLE));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentDocumented, vuln)
+                .withState(AnalysisState.EXPLOITABLE)
+                .withResponse(AnalysisResponse.WILL_NOT_FIX)
+                .withDetails("risk accepted by security board"));
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(componentUndocumented)).hasSize(1);
+        assertThat(qm.getAllPolicyViolations(componentDocumented)).isEmpty();
     }
 }

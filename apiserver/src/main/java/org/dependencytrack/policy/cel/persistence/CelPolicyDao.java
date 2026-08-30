@@ -55,6 +55,7 @@ import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRe
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.LICENSE_GROUP_FIELDS;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.PROJECT_FIELDS;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.PROJECT_PROPERTY_FIELDS;
+import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.VULNERABILITY_ANALYSIS_FIELDS;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.VULNERABILITY_FIELDS;
 import static org.dependencytrack.policy.cel.persistence.CelPolicyFieldMappingRegistry.selectColumns;
 
@@ -272,6 +273,44 @@ public final class CelPolicyDao {
                 .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
                     final long dbId = rs.getLong("db_id");
                     accumulator.put(dbId, licenseRowMapper.map(rs, ctx));
+                    return accumulator;
+                });
+    }
+
+    /**
+     * Fetches the {@link Vulnerability.Analysis} of each finding in the given project.
+     *
+     * <p>Analyses are keyed by component, then by vulnerability, because the same
+     * vulnerability can be analyzed differently on each component it affects.
+     *
+     * @param projectId ID of the project to fetch analyses for
+     * @param protoFieldNames Names of the {@link Vulnerability.Analysis} fields to fetch
+     * @return Analyses, grouped by component ID and vulnerability ID
+     */
+    public Map<Long, Map<Long, Vulnerability.Analysis>> fetchAllAnalyses(
+            long projectId, Collection<String> protoFieldNames) {
+        final List<String> fetchColumns = new ArrayList<>();
+        fetchColumns.add("a.\"COMPONENT_ID\" AS component_id");
+        fetchColumns.add("a.\"VULNERABILITY_ID\" AS vulnerability_id");
+        fetchColumns.addAll(selectColumns(VULNERABILITY_ANALYSIS_FIELDS, protoFieldNames));
+
+        final var analysisRowMapper = new CelPolicyVulnerabilityAnalysisRowMapper();
+        return jdbiHandle
+                .createQuery(/* language=InjectedFreeMarker */ """
+                        <#-- @ftlvariable name="fetchColumns" type="java.util.Collection<String>" -->
+                        SELECT ${fetchColumns?join(", ")}
+                          FROM "ANALYSIS" AS a
+                         WHERE a."PROJECT_ID" = :projectId
+                           AND a."COMPONENT_ID" IS NOT NULL
+                        """)
+                .define("fetchColumns", fetchColumns)
+                .bind("projectId", projectId)
+                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
+                    final long componentId = rs.getLong("component_id");
+                    final long vulnerabilityId = rs.getLong("vulnerability_id");
+                    accumulator
+                            .computeIfAbsent(componentId, k -> new HashMap<>())
+                            .put(vulnerabilityId, analysisRowMapper.map(rs, ctx));
                     return accumulator;
                 });
     }

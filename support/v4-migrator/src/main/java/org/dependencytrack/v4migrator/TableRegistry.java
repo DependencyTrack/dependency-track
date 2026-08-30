@@ -5073,6 +5073,12 @@ public final class TableRegistry {
      * {@code project_canonical_id_map}. Applies the ENCRYPTEDSTRING wipe and drops rows whose
      * {@code PROPERTYTYPE} is outside the v5 enum (schema-changes §5.9 / §7.8). v4 has no
      * UUID column on this table.
+     *
+     * <p>v5 enforces {@code UNIQUE (PROJECT_ID, GROUPNAME, PROPERTYNAME)}, but the project
+     * collapse can turn two rows that were distinct in v4 into the same triple (same group
+     * and property name on two same-named projects). {@code DISTINCT ON} keeps
+     * {@code MIN(ID)}, matching the canonical-ID convention and keeping reruns
+     * deterministic.
      */
     private static final TableMigration PROJECT_PROPERTY = new TableMigration(
             "PROJECT_PROPERTY",
@@ -5123,7 +5129,7 @@ public final class TableRegistry {
         )
         INSERT INTO "%1$s".tgt_project_property
             ("ID", "DESCRIPTION", "GROUPNAME", "PROJECT_ID", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE")
-        SELECT "ID"
+        SELECT DISTINCT ON ("PROJECT_ID", "GROUPNAME", "PROPERTYNAME") "ID"
              , "DESCRIPTION"
              , "GROUPNAME"
              , "PROJECT_ID"
@@ -5132,6 +5138,7 @@ public final class TableRegistry {
              , "PROPERTYVALUE"
           FROM rewritten
          WHERE "PROPERTYTYPE" IN ('BOOLEAN', 'INTEGER', 'NUMBER', 'STRING', 'TIMESTAMP', 'URL', 'UUID')
+         ORDER BY "PROJECT_ID", "GROUPNAME", "PROPERTYNAME", "ID"
         """,
             """
         INSERT INTO "PROJECT_PROPERTY"

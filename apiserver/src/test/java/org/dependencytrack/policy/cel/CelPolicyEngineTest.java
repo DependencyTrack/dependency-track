@@ -3030,4 +3030,47 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         assertThat(qm.getAllPolicyViolations(componentUndocumented)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentDocumented)).isEmpty();
     }
+
+    @Test
+    void shouldEvaluateAnalysisPresenceWithoutAccessingFields() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                vulns.exists(v, has(v.analysis))
+                """,
+                PolicyViolation.Type.SECURITY);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentAnalyzed = new Component();
+        componentAnalyzed.setProject(project);
+        componentAnalyzed.setName("acme-lib-a");
+        qm.persist(componentAnalyzed);
+
+        final var componentUnanalyzed = new Component();
+        componentUnanalyzed.setProject(project);
+        componentUnanalyzed.setName("acme-lib-b");
+        qm.persist(componentUnanalyzed);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, componentAnalyzed, "internal");
+        qm.addVulnerability(vuln, componentUnanalyzed, "internal");
+
+        qm.makeAnalysis(new MakeAnalysisCommand(componentAnalyzed, vuln).withState(AnalysisState.RESOLVED));
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(componentAnalyzed)).hasSize(1);
+        assertThat(qm.getAllPolicyViolations(componentUnanalyzed)).isEmpty();
+    }
 }

@@ -2880,4 +2880,47 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         assertThat(qm.getAllPolicyViolations(componentUnsuppressed)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentSuppressed)).isEmpty();
     }
+
+    @Test
+    void testEvaluateProjectWithPolicyAssignedToInvertedTag() throws Exception {
+        final Tag tag = qm.createTag("foo");
+
+        // Applies to every project that does NOT carry the tag.
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                component.name.startsWith("acme-lib")
+                """,
+                PolicyViolation.Type.OPERATIONAL);
+        policy.setInvertTagMatch(true);
+        qm.persist(policy);
+        qm.bind(policy, List.of(tag));
+
+        final var projectUntagged = new Project();
+        projectUntagged.setName("acme-app-a");
+        qm.persist(projectUntagged);
+        final var componentA = new Component();
+        componentA.setProject(projectUntagged);
+        componentA.setName("acme-lib");
+        qm.persist(componentA);
+
+        final var projectTagged = new Project();
+        projectTagged.setName("acme-app-b");
+        qm.persist(projectTagged);
+        final var componentB = new Component();
+        componentB.setProject(projectTagged);
+        componentB.setName("acme-lib");
+        qm.persist(componentB);
+
+        qm.bind(projectTagged, List.of(tag));
+
+        new CelPolicyEngine().evaluateProject(projectUntagged.getUuid());
+        new CelPolicyEngine().evaluateProject(projectTagged.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(projectUntagged)).hasSize(1);
+        assertThat(qm.getAllPolicyViolations(projectTagged)).isEmpty();
+    }
 }

@@ -35,6 +35,12 @@ public final class SuppressionExpiryMaintenanceTask extends AbstractBatchingMain
     private static final int BATCH_SIZE = 1000;
     private static final int MAX_ITERATIONS = 1000;
 
+    /**
+     * Commenter recorded for automatic un-suppressions, so they can be told apart
+     * from decisions made by a user.
+     */
+    private static final String COMMENTER = "[SuppressionExpiry]";
+
     public SuppressionExpiryMaintenanceTask() {
         super(MAX_ITERATIONS);
     }
@@ -52,7 +58,7 @@ public final class SuppressionExpiryMaintenanceTask extends AbstractBatchingMain
             // Record the un-suppression in the audit trail, so it is not mistaken
             // for a manual decision.
             analysisDao.createComments(analysisIds.stream()
-                    .map(analysisId -> new AnalysisDao.CreateCommentCommand(analysisId, null, "Unsuppressed"))
+                    .map(analysisId -> new AnalysisDao.CreateCommentCommand(analysisId, COMMENTER, "Unsuppressed"))
                     .toList());
 
             return analysisIds.size();

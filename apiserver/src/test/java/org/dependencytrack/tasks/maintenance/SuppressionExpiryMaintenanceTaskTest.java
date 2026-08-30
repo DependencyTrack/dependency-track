@@ -20,6 +20,7 @@ package org.dependencytrack.tasks.maintenance;
 
 import org.dependencytrack.PersistenceCapableTest;
 import org.dependencytrack.model.Analysis;
+import org.dependencytrack.model.AnalysisComment;
 import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Component;
 import org.dependencytrack.model.Project;
@@ -72,7 +73,12 @@ class SuppressionExpiryMaintenanceTaskTest extends PersistenceCapableTest {
         assertThat(expiredAnalysis.getSuppressionExpiresAt()).isNull();
         // The analysis state is deliberately left alone, matching manual unsuppression.
         assertThat(expiredAnalysis.getAnalysisState()).isEqualTo(AnalysisState.NOT_AFFECTED);
-        assertThat(expiredAnalysis.getAnalysisComments()).extracting("comment").contains("Unsuppressed");
+        assertThat(expiredAnalysis.getAnalysisComments())
+                .filteredOn(comment -> "Unsuppressed".equals(comment.getComment()))
+                .singleElement()
+                // Attributing it to the task keeps it distinguishable from a manual decision.
+                .extracting(AnalysisComment::getCommenter)
+                .isEqualTo("[SuppressionExpiry]");
 
         assertThat(qm.getAnalysis(notYetExpired, vuln).isSuppressed()).isTrue();
         assertThat(qm.getAnalysis(noExpiry, vuln).isSuppressed()).isTrue();

@@ -715,6 +715,19 @@
                         <configuration>
                             <outputDirectory>${project.build.directory}/lib</outputDirectory>
                             <includeScope>runtime</includeScope>
+                            <excludeGroupIds>org.dependencytrack</excludeGroupIds>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-internal-dependencies</id>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib-internal</outputDirectory>
+                            <includeScope>runtime</includeScope>
+                            <includeGroupIds>org.dependencytrack</includeGroupIds>
                         </configuration>
                     </execution>
                 </executions>

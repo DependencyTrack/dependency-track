@@ -29,7 +29,7 @@ FROM eclipse-temurin:25.0.4_7-jdk-alpine@sha256:09349d79941fd53bb3d487b393ca118d
 WORKDIR /work
 
 COPY --chmod=755 ./src/main/docker/create-jre.sh ./
-COPY ./target/lib/ ./lib/
+COPY ./target/lib/ ./target/lib-internal/ ./lib/
 COPY ./target/dependency-track-apiserver.jar ./
 
 RUN ./create-jre.sh -i ./dependency-track-apiserver.jar -o ./jre
@@ -80,6 +80,7 @@ USER ${UID}:0
 
 COPY --from=jre-build /work/jre ${JAVA_HOME}
 COPY ./target/lib/ ./lib/
+COPY ./target/lib-internal/ ./lib/
 COPY ./target/dependency-track-apiserver.jar ./src/main/docker/logback-json.xml ./
 
 ENTRYPOINT ["/sbin/tini", "--"]

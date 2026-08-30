@@ -28,6 +28,7 @@ MVND := $(shell command -v mvnd 2>/dev/null)
 ifeq ($(MVND),)
 	MVND := $(MVN)
 endif
+MVN_NO_BUILDCACHE := -Dmaven.build.cache.enabled=false
 
 ifdef CI
 	MVN_FLAGS := -B
@@ -74,11 +75,11 @@ install:
 .PHONY: install
 
 lint-java:
-	$(MVND) $(MVN_FLAGS) -q -Dmaven.build.cache.enabled=false validate
+	$(MVND) $(MVN_FLAGS) $(MVN_NO_BUILDCACHE) -q validate
 .PHONY: lint-java
 
 format-java:
-	$(MVND) $(MVN_FLAGS) -q -Dmaven.build.cache.enabled=false spotless:apply
+	$(MVND) $(MVN_FLAGS) $(MVN_NO_BUILDCACHE) -q spotless:apply
 .PHONY: format-java
 
 lint-migrations:
@@ -145,7 +146,7 @@ test:
 
 test-single:
 	$(MVND) $(MVN_FLAGS) test \
-		-Dmaven.build.cache.enabled=false \
+		$(MVN_NO_BUILDCACHE) \
 		-Dspotless.check.skip \
 		-Dcyclonedx.skip \
 		-pl "$(MODULE)" \
@@ -189,11 +190,11 @@ apiserver-dev-remove-containers:
 .PHONY: apiserver-dev-remove-containers
 
 test-e2e: build-image
-	$(MVND) $(MVN_FLAGS) -pl e2e -DskipE2E=false verify
+	$(MVND) $(MVN_FLAGS) $(MVN_NO_BUILDCACHE) -pl e2e -DskipE2E=false verify
 .PHONY: test-e2e
 
 clean:
-	$(MVND) $(MVN_FLAGS) -q -Dmaven.build.cache.enabled=false clean
+	$(MVND) $(MVN_FLAGS) $(MVN_NO_BUILDCACHE) -q clean
 .PHONY: clean
 
 clean-build-cache:

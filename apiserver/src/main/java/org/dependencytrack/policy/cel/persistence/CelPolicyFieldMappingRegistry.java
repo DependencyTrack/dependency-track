@@ -92,6 +92,7 @@ public final class CelPolicyFieldMappingRegistry {
             new FieldMapping("owasp_rr_vector", "v.\"OWASPRRVECTOR\""),
             new FieldMapping("cwes", "STRING_TO_ARRAY(v.\"CWES\", ',')"),
             new FieldMapping("aliases", "CAST(JSONB_VULN_ALIASES(v.\"SOURCE\", v.\"VULNID\") AS TEXT)"),
+            new FieldMapping("patched_versions", "v.\"PATCHEDVERSIONS\""),
             new FieldMapping("epss_score", "ep.\"SCORE\""),
             new FieldMapping("epss_percentile", "ep.\"PERCENTILE\""));
 

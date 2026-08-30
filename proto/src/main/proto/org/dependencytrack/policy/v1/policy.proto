@@ -195,6 +195,10 @@ message Vulnerability {
   // Whether the vulnerability is known to be exploited.
   bool is_kev = 37;
 
+  // Versions in which the vulnerability is fixed, as reported by the source.
+  // Empty when the source did not report a fixed version.
+  string patched_versions = 40;
+
   message Alias {
     string id = 1;
     string source = 2;

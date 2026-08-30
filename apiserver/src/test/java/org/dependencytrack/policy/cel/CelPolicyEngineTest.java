@@ -2880,4 +2880,53 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         assertThat(qm.getAllPolicyViolations(componentUnsuppressed)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentSuppressed)).isEmpty();
     }
+
+    @Test
+    void shouldEvaluateVulnerabilityPatchedVersions() throws Exception {
+        // Flag findings that can actually be remediated by upgrading.
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                vulns.exists(v, v.patched_versions != "")
+                """,
+                PolicyViolation.Type.SECURITY);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentPatchable = new Component();
+        componentPatchable.setProject(project);
+        componentPatchable.setName("acme-lib-a");
+        qm.persist(componentPatchable);
+
+        final var componentUnpatchable = new Component();
+        componentUnpatchable.setProject(project);
+        componentUnpatchable.setName("acme-lib-b");
+        qm.persist(componentUnpatchable);
+
+        final var vulnPatchable = new Vulnerability();
+        vulnPatchable.setVulnId("CVE-001");
+        vulnPatchable.setSource(Vulnerability.Source.NVD);
+        vulnPatchable.setSeverity(Severity.HIGH);
+        vulnPatchable.setPatchedVersions("1.2.3");
+        qm.persist(vulnPatchable);
+
+        final var vulnUnpatchable = new Vulnerability();
+        vulnUnpatchable.setVulnId("CVE-002");
+        vulnUnpatchable.setSource(Vulnerability.Source.NVD);
+        vulnUnpatchable.setSeverity(Severity.HIGH);
+        qm.persist(vulnUnpatchable);
+
+        qm.addVulnerability(vulnPatchable, componentPatchable, "internal");
+        qm.addVulnerability(vulnUnpatchable, componentUnpatchable, "internal");
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(componentPatchable)).hasSize(1);
+        assertThat(qm.getAllPolicyViolations(componentUnpatchable)).isEmpty();
+    }
 }

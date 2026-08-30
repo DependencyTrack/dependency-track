@@ -1,0 +1,2 @@
+ALTER TABLE "ANALYSIS"
+    ADD COLUMN "SUPPRESSION_EXPIRES_AT" timestamp with time zone;

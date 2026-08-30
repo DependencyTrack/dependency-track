@@ -33,6 +33,7 @@ public final class AnalysisCommentFormatter {
         RESPONSE("Vendor Response", AnalysisResponse.NOT_SET.name()),
         DETAILS("Details", "(None)"),
         SUPPRESSED(null, null),
+        SUPPRESSION_EXPIRES_AT("Suppression Expiry", "(None)"),
         SEVERITY("Severity", Severity.UNASSIGNED.name()),
         CVSSV2_VECTOR("CVSSv2 Vector", "(None)"),
         CVSSV2_SCORE("CVSSv2 Score", "(None)"),

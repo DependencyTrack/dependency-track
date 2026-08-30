@@ -212,6 +212,7 @@ public class AnalysisResource extends AbstractApiResource {
                         .withResponse(request.getAnalysisResponse())
                         .withDetails(request.getAnalysisDetails())
                         .withSuppress(request.isSuppressed())
+                        .withSuppressionExpiresAt(request.getSuppressionExpiresAt())
                         .withComment(request.getComment()));
 
                 return Response.ok(AnalysisTrailResponse.of(qm.getObjectById(Analysis.class, analysisId)))

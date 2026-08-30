@@ -130,6 +130,11 @@ public class VersionDistanceTest {
     @Test
     public void testGetVersionDistanceWithLetterSuffixedVersionParts() {
         assertEquals(new VersionDistance("0.0.0"), VersionDistance.getVersionDistance("1.2.3a", "1.2.3"));
+
+        // A part that is entirely non-numeric is skipped rather than ending the match,
+        // so the parts after it are still recognised. Previously everything from the
+        // non-numeric part onwards was ignored, and "1.abc.3" was read as "1.0.0".
+        assertEquals(new VersionDistance("0.0.3"), VersionDistance.getVersionDistance("1.abc.3", "1.0.0"));
     }
 
     @Test

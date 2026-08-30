@@ -84,6 +84,16 @@ jobs:
           path: |-
             apiserver/target/dependency-track-apiserver-dist.tar.gz
 
+      - name: Upload Container Image Context
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
+        with:
+          name: container-context
+          retention-days: 1
+          path: |-
+            apiserver/target/dependency-track-apiserver.jar
+            apiserver/target/lib/
+            apiserver/target/lib-internal/
+
       - name: Upload BOM
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # tag=v7.0.1
         with:
@@ -127,8 +137,8 @@ jobs:
         include:
           - name: apiserver
             context: apiserver
-            artifact: assembled-dist
-            prepare-cmd: tar xzf apiserver/target/dependency-track-apiserver-dist.tar.gz -C apiserver/target
+            artifact: container-context
+            prepare-cmd: ":" # no-op
           - name: v4-migrator
             context: support/v4-migrator
             artifact: v4-migrator-jar

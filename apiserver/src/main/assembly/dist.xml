@@ -35,5 +35,9 @@
             <directory>${project.build.directory}/lib</directory>
             <outputDirectory>lib</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/lib-internal</directory>
+            <outputDirectory>lib</outputDirectory>
+        </fileSet>
     </fileSets>
 </assembly>

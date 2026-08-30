@@ -67,8 +67,9 @@ ENV TZ=Etc/UTC \
 # ${DATA_DIR} is owned by the root group, with group permissions mirroring those of the owner,
 # such that arbitrary UIDs (as used by OpenShift) can write to it.
 # ${APP_DIR} deliberately stays owned by root and read-only for the runtime user,
-# so the application can not modify the JARs it runs from.
-RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
+# so the application can not modify the JARs it runs from. This includes lib-external,
+# which is left empty for users to mount their own JARs into, e.g. additional JDBC drivers.
+RUN mkdir -p ${APP_DIR}lib-external ${DATA_DIR} \
     && addgroup -S -g ${GID} dtrack \
     && adduser -S -D -G dtrack -H -h ${DATA_DIR} -g "dtrack user" -s /bin/false -u ${UID} dtrack \
     && chown -R dtrack:0 ${DATA_DIR} \
@@ -95,7 +96,7 @@ CMD [ \
         --enable-native-access=ALL-UNNAMED \
         --sun-misc-unsafe-memory-access=allow \
         -Djdk.http.auth.tunneling.disabledSchemes= \
-        -cp 'dependency-track-apiserver.jar:lib/*' \
+        -cp 'dependency-track-apiserver.jar:lib/*:lib-external/*' \
         org.dependencytrack.Application \
         -context ${CONTEXT}" \
 ]

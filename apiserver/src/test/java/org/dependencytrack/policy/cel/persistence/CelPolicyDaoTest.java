@@ -25,6 +25,7 @@ import com.google.protobuf.util.JsonFormat;
 import dev.cel.common.types.CelType;
 import net.javacrumbs.jsonunit.core.Option;
 import org.dependencytrack.PersistenceCapableTest;
+import org.dependencytrack.model.AnalysisState;
 import org.dependencytrack.model.Bom;
 import org.dependencytrack.model.Classifier;
 import org.dependencytrack.model.Component;
@@ -37,6 +38,7 @@ import org.dependencytrack.model.Project;
 import org.dependencytrack.model.Severity;
 import org.dependencytrack.model.Vulnerability;
 import org.dependencytrack.model.VulnerabilityKey;
+import org.dependencytrack.persistence.command.MakeAnalysisCommand;
 import org.dependencytrack.persistence.jdbi.EpssDao;
 import org.dependencytrack.persistence.jdbi.PackageArtifactMetadataDao;
 import org.dependencytrack.persistence.jdbi.PackageMetadataDao;
@@ -379,5 +381,45 @@ public class CelPolicyDaoTest extends PersistenceCapableTest {
                           "epssPercentile": 0.2
                         }
                         """);
+    }
+
+    @Test
+    public void testFetchAllAnalysesExcludesSuppressed() {
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentAnalyzed = new Component();
+        componentAnalyzed.setProject(project);
+        componentAnalyzed.setName("acme-lib-a");
+        qm.persist(componentAnalyzed);
+
+        final var componentSuppressed = new Component();
+        componentSuppressed.setProject(project);
+        componentSuppressed.setName("acme-lib-b");
+        qm.persist(componentSuppressed);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, componentAnalyzed, "internal");
+        qm.addVulnerability(vuln, componentSuppressed, "internal");
+
+        qm.makeAnalysis(new MakeAnalysisCommand(componentAnalyzed, vuln).withState(AnalysisState.EXPLOITABLE));
+        qm.makeAnalysis(new MakeAnalysisCommand(componentSuppressed, vuln)
+                .withState(AnalysisState.FALSE_POSITIVE)
+                .withSuppress(true));
+
+        final var analyses = withJdbiHandle(handle -> new CelPolicyDao(handle)
+                .fetchAllAnalyses(
+                        project.getId(),
+                        Set.of(componentAnalyzed.getId(), componentSuppressed.getId()),
+                        Set.of("state")));
+
+        // Suppressed findings are not evaluated, so their analyses are dead weight.
+        assertThat(analyses).containsOnlyKeys(componentAnalyzed.getId());
     }
 }

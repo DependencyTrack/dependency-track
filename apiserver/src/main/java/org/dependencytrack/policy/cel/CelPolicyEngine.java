@@ -244,7 +244,10 @@ public final class CelPolicyEngine {
         if (requirements.getOrDefault(TYPE_VULNERABILITY, Set.of()).contains("analysis")
                 && !vulnIdsByComponentId.isEmpty()) {
             analysesByComponentId = withJdbiHandle(handle -> new CelPolicyDao(handle)
-                    .fetchAllAnalyses(projectId, requirements.getOrDefault(TYPE_VULNERABILITY_ANALYSIS, Set.of())));
+                    .fetchAllAnalyses(
+                            projectId,
+                            vulnIdsByComponentId.keySet(),
+                            requirements.getOrDefault(TYPE_VULNERABILITY_ANALYSIS, Set.of())));
         } else {
             analysesByComponentId = Map.of();
         }

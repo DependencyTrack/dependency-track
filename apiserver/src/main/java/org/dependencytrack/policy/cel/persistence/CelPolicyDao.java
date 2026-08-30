@@ -283,12 +283,15 @@ public final class CelPolicyDao {
      * <p>Analyses are keyed by component, then by vulnerability, because the same
      * vulnerability can be analyzed differently on each component it affects.
      *
+     * <p>Suppressed findings are not evaluated, so their analyses are not fetched.
+     *
      * @param projectId ID of the project to fetch analyses for
+     * @param componentIds IDs of the components to fetch analyses for
      * @param protoFieldNames Names of the {@link Vulnerability.Analysis} fields to fetch
      * @return Analyses, grouped by component ID and vulnerability ID
      */
     public Map<Long, Map<Long, Vulnerability.Analysis>> fetchAllAnalyses(
-            long projectId, Collection<String> protoFieldNames) {
+            long projectId, Collection<Long> componentIds, Collection<String> protoFieldNames) {
         final List<String> fetchColumns = new ArrayList<>();
         fetchColumns.add("a.\"COMPONENT_ID\" AS component_id");
         fetchColumns.add("a.\"VULNERABILITY_ID\" AS vulnerability_id");
@@ -301,10 +304,12 @@ public final class CelPolicyDao {
                         SELECT ${fetchColumns?join(", ")}
                           FROM "ANALYSIS" AS a
                          WHERE a."PROJECT_ID" = :projectId
-                           AND a."COMPONENT_ID" IS NOT NULL
+                           AND a."COMPONENT_ID" = ANY(:componentIds)
+                           AND a."SUPPRESSED" IS NOT TRUE
                         """)
                 .define("fetchColumns", fetchColumns)
                 .bind("projectId", projectId)
+                .bindArray("componentIds", Long.class, componentIds)
                 .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
                     final long componentId = rs.getLong("component_id");
                     final long vulnerabilityId = rs.getLong("vulnerability_id");

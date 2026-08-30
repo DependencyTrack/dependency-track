@@ -107,9 +107,6 @@ final class TrivyVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConf
                     if (config.getApiUrl() == null) {
                         throw new InvalidRuntimeConfigException("No API URL provided");
                     }
-                    if (config.getApiToken() == null) {
-                        throw new InvalidRuntimeConfigException("No API token provided");
-                    }
                 });
     }
 }

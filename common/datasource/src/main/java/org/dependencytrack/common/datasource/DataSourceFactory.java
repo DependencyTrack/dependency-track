@@ -20,8 +20,8 @@ package org.dependencytrack.common.datasource;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.util.DriverDataSource;
 import io.micrometer.core.instrument.Metrics;
-import org.postgresql.ds.PGSimpleDataSource;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -29,6 +29,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,25 +74,20 @@ final class DataSourceFactory {
             return new HikariDataSource(hikariConfig);
         }
 
-        final var dataSource = new PGSimpleDataSource();
-
-        // NB: These properties must be set BEFORE setUrl is called,
-        // as the driver only then loops over all properties and applies
-        // them to the URL. Setting the URL first would cause these
-        // properties to no-op.
-        dataSource.setApplicationName(appName);
+        final var properties = new Properties();
+        properties.setProperty("ApplicationName", appName);
+        properties.setProperty("reWriteBatchedInserts", "true");
+        properties.setProperty("tcpKeepAlive", "true");
         config.getConnectionTimeoutMillis()
                 .map(TimeUnit.MILLISECONDS::toSeconds)
-                .map(Math::toIntExact)
-                .ifPresent(dataSource::setConnectTimeout);
-        dataSource.setReWriteBatchedInserts(true);
-        dataSource.setTcpKeepAlive(true);
+                .ifPresent(seconds -> properties.setProperty("connectTimeout", Long.toString(seconds)));
 
-        dataSource.setUrl(config.getUrl());
-        config.getUsername().ifPresent(dataSource::setUser);
-        getPassword(config).ifPresent(dataSource::setPassword);
-
-        return dataSource;
+        return new DriverDataSource(
+                config.getUrl(),
+                /* driverClassName */ null,
+                properties,
+                config.getUsername().orElse(null),
+                getPassword(config).orElse(null));
     }
 
     private static Optional<String> getPassword(DataSourceConfig config) {

@@ -45,7 +45,7 @@ ARG GID
 
 ENV TZ=Etc/UTC \
     # JVM Options that are passed at runtime by default
-    JAVA_OPTIONS="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -XX:MaxGCPauseMillis=250 -XX:MaxRAMPercentage=80.0" \
+    JAVA_OPTIONS="-XX:+UseG1GC -XX:+UseStringDeduplication -XX:+UseCompactObjectHeaders -XX:MaxGCPauseMillis=250 -XX:MaxRAMPercentage=80.0 -XX:+ExitOnOutOfMemoryError" \
     # JVM Options that can be passed at runtime, while maintaining also those set in JAVA_OPTIONS.
     # e.g. EXTRA_JAVA_OPTIONS="-Dlogback.configurationFile=logback-json.xml"
     EXTRA_JAVA_OPTIONS="" \
@@ -63,20 +63,24 @@ ENV TZ=Etc/UTC \
 
 # Create the directories where the JAR will be deployed to (${APP_DIR}) and Dependency-Track will store its data (${DATA_DIR})
 # Create a user and assign home directory to a ${DATA_DIR}
-# Ensure UID 1000 & GID 1000 own all the needed directories
+#
+# ${DATA_DIR} is owned by the root group, with group permissions mirroring those of the owner,
+# such that arbitrary UIDs (as used by OpenShift) can write to it.
+# ${APP_DIR} deliberately stays owned by root and read-only for the runtime user,
+# so the application can not modify the JARs it runs from.
 RUN mkdir -p ${APP_DIR} ${DATA_DIR} \
     && addgroup -S -g ${GID} dtrack \
     && adduser -S -D -G dtrack -H -h ${DATA_DIR} -g "dtrack user" -s /bin/false -u ${UID} dtrack \
-    && chown -R dtrack:0 ${DATA_DIR} ${APP_DIR} \
-    && chmod -R g=u ${DATA_DIR} ${APP_DIR} \
-    && apk add --no-cache curl gcompat tini tzdata
+    && chown -R dtrack:0 ${DATA_DIR} \
+    && chmod -R g=u ${DATA_DIR} \
+    && apk add --no-cache gcompat tini
 
 WORKDIR ${APP_DIR}
-USER ${UID}
+USER ${UID}:0
 
-COPY --from=jre-build --chown=${UID}:0 /work/jre ${JAVA_HOME}
-COPY --chown=${UID}:0 ./target/lib/ ./lib/
-COPY --chown=${UID}:0 ./target/dependency-track-apiserver.jar ./src/main/docker/logback-json.xml ./
+COPY --from=jre-build /work/jre ${JAVA_HOME}
+COPY ./target/lib/ ./lib/
+COPY ./target/dependency-track-apiserver.jar ./src/main/docker/logback-json.xml ./
 
 ENTRYPOINT ["/sbin/tini", "--"]
 
@@ -96,13 +100,12 @@ CMD [ \
 ]
 
 # Specify which ports Dependency-Track listens on
-EXPOSE 8080
-EXPOSE 9000
+EXPOSE 8080 9000
 
 # Health check against the management port
 HEALTHCHECK --interval=30s --start-period=60s --timeout=5s CMD [ \
     "/bin/sh", "-c", \
-    "curl -f -s --max-time 3 --noproxy '*' -o /dev/null http://127.0.0.1:9000/health" \
+    "wget -q -Y off -T 3 -O /dev/null http://127.0.0.1:9000/health" \
 ]
 
 # metadata labels
@@ -112,7 +115,8 @@ LABEL \
     org.opencontainers.image.description="Dependency-Track is an intelligent Component Analysis platform" \
     org.opencontainers.image.version="${APP_VERSION}" \
     org.opencontainers.image.url="https://dependencytrack.org/" \
+    org.opencontainers.image.documentation="https://docs.dependencytrack.org/" \
     org.opencontainers.image.source="https://github.com/DependencyTrack/dependency-track" \
     org.opencontainers.image.revision="${COMMIT_SHA}" \
     org.opencontainers.image.licenses="Apache-2.0" \
-    maintainer="steve.springett@owasp.org"
+    org.opencontainers.image.authors="The Dependency-Track Authors"

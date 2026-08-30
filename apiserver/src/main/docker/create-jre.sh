@@ -19,7 +19,7 @@
 
 set -eo pipefail
 
-function printHelp() {
+printHelp() {
   echo "Create a minimal Java Runtime Environment (JRE) using jlink."
   echo ""
   echo "Usage: ${0} [-i <INPUT_JAR_FILE>] [-o <OUTPUT_DIR>]"
@@ -69,11 +69,17 @@ jdeps \
   --class-path "lib/*" \
   --print-module-deps \
   --ignore-missing-deps \
-  --multi-release 21 \
+  --multi-release 25 \
   "${input_jar}" \
   > module-deps.txt
 
-module_deps="$(cat module-deps.txt),${static_module_deps}"
+# Modules that jdeps detects, but that are not needed at runtime.
+#   jdk.jdi: Referenced by Javassist's HotSwapper debugging utility, which is never used.
+#            It requires jdk.jdwp.agent, i.e. keeping it would ship a JDWP debugging
+#            agent in a production runtime. Javassist itself is required by jersey-hk2.
+excluded_module_deps='jdk.jdi'
+
+module_deps="$(tr ',' '\n' < module-deps.txt | grep -vxF "${excluded_module_deps}" | tr '\n' ',')${static_module_deps}"
 echo "[+] identified module dependencies: ${module_deps}"
 
 echo "[+] creating jre at ${output_dir}"

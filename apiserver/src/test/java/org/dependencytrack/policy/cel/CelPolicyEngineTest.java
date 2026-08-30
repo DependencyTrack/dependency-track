@@ -2880,4 +2880,55 @@ class CelPolicyEngineTest extends PersistenceCapableTest {
         assertThat(qm.getAllPolicyViolations(componentUnsuppressed)).hasSize(1);
         assertThat(qm.getAllPolicyViolations(componentSuppressed)).isEmpty();
     }
+
+    @Test
+    void shouldEvaluateVulnerabilityAttributedOn() throws Exception {
+        final var policy = qm.createPolicy("policy", Policy.Operator.ANY, Policy.ViolationState.FAIL);
+        qm.createPolicyCondition(
+                policy,
+                PolicyCondition.Subject.EXPRESSION,
+                PolicyCondition.Operator.MATCHES,
+                """
+                vulns.exists(v, v.attributed_on < timestamp("2020-01-01T00:00:00Z"))
+                """,
+                PolicyViolation.Type.SECURITY);
+
+        final var project = new Project();
+        project.setName("acme-app");
+        qm.persist(project);
+
+        final var componentOld = new Component();
+        componentOld.setProject(project);
+        componentOld.setName("acme-lib-a");
+        qm.persist(componentOld);
+
+        final var componentRecent = new Component();
+        componentRecent.setProject(project);
+        componentRecent.setName("acme-lib-b");
+        qm.persist(componentRecent);
+
+        final var vuln = new Vulnerability();
+        vuln.setVulnId("CVE-001");
+        vuln.setSource(Vulnerability.Source.NVD);
+        vuln.setSeverity(Severity.HIGH);
+        qm.persist(vuln);
+
+        qm.addVulnerability(vuln, componentOld, "internal");
+        qm.addVulnerability(vuln, componentRecent, "internal");
+
+        // Backdate the attribution of one component only. The same vulnerability is
+        // attributed to both, so the value must not leak between them.
+        useJdbiHandle(handle -> handle.createUpdate("""
+                        UPDATE "FINDINGATTRIBUTION"
+                           SET "ATTRIBUTED_ON" = TIMESTAMPTZ '2015-01-01T00:00:00Z'
+                         WHERE "COMPONENT_ID" = :componentId
+                        """)
+                .bind("componentId", componentOld.getId())
+                .execute());
+
+        new CelPolicyEngine().evaluateProject(project.getUuid());
+
+        assertThat(qm.getAllPolicyViolations(componentOld)).hasSize(1);
+        assertThat(qm.getAllPolicyViolations(componentRecent)).isEmpty();
+    }
 }

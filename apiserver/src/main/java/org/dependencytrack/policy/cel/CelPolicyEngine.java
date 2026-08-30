@@ -57,6 +57,7 @@ import org.dependencytrack.proto.policy.v1.Vulnerability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -236,6 +237,18 @@ public final class CelPolicyEngine {
             vulnIdsByComponentId = Map.of();
         }
 
+        // Attributions are per-finding, whereas vulnerability protos are de-duplicated per
+        // project. They are thus merged into per-component copies further below, and only
+        // when a policy actually accesses them.
+        final Map<Long, Map<Long, Instant>> attributionsByComponentId;
+        if (requirements.getOrDefault(TYPE_VULNERABILITY, Set.of()).contains("attributed_on")
+                && !vulnIdsByComponentId.isEmpty()) {
+            attributionsByComponentId = withJdbiHandle(
+                    handle -> new CelPolicyDao(handle).fetchAllAttributions(projectId, vulnIdsByComponentId.keySet()));
+        } else {
+            attributionsByComponentId = Map.of();
+        }
+
         final var violationsByComponentId = new HashMap<Long, List<PolicyViolation>>();
         final Timestamp protoNow = Timestamps.now();
 
@@ -249,8 +262,22 @@ public final class CelPolicyEngine {
 
             final List<Vulnerability> protoVulns;
             if (requirements.containsKey(TYPE_VULNERABILITY)) {
+                final Map<Long, Instant> attributionsByVulnId =
+                        attributionsByComponentId.getOrDefault(componentId, Map.of());
                 protoVulns = vulnIdsByComponentId.getOrDefault(componentId, Set.of()).stream()
-                        .map(protoVulnById::get)
+                        .map(vulnId -> {
+                            final Vulnerability protoVuln = protoVulnById.get(vulnId);
+                            if (protoVuln == null) {
+                                return null;
+                            }
+                            final Instant attributedOn = attributionsByVulnId.get(vulnId);
+                            if (attributedOn == null) {
+                                return protoVuln;
+                            }
+                            return protoVuln.toBuilder()
+                                    .setAttributedOn(Timestamps.fromMillis(attributedOn.toEpochMilli()))
+                                    .build();
+                        })
                         .filter(Objects::nonNull)
                         .toList();
             } else {

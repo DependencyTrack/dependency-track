@@ -31,6 +31,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -272,6 +273,42 @@ public final class CelPolicyDao {
                 .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
                     final long dbId = rs.getLong("db_id");
                     accumulator.put(dbId, licenseRowMapper.map(rs, ctx));
+                    return accumulator;
+                });
+    }
+
+    /**
+     * Fetches the attribution timestamp of each finding in the given project.
+     *
+     * <p>Like analyses, attributions are per-finding: the same vulnerability can have been
+     * attributed to different components at different times.
+     *
+     * @param projectId ID of the project to fetch attributions for
+     * @param componentIds IDs of the components to fetch attributions for
+     * @return Attribution timestamps, grouped by component ID and vulnerability ID
+     */
+    public Map<Long, Map<Long, Instant>> fetchAllAttributions(long projectId, Collection<Long> componentIds) {
+        return jdbiHandle
+                .createQuery("""
+                        SELECT "COMPONENT_ID" AS component_id
+                             , "VULNERABILITY_ID" AS vulnerability_id
+                             , "ATTRIBUTED_ON" AS attributed_on
+                          FROM "FINDINGATTRIBUTION"
+                         WHERE "PROJECT_ID" = :projectId
+                           AND "COMPONENT_ID" = ANY(:componentIds)
+                           AND "DELETED_AT" IS NULL
+                        """)
+                .bind("projectId", projectId)
+                .bindArray("componentIds", Long.class, componentIds)
+                .reduceResultSet(new HashMap<>(), (accumulator, rs, ctx) -> {
+                    final long componentId = rs.getLong("component_id");
+                    final long vulnerabilityId = rs.getLong("vulnerability_id");
+                    final Timestamp attributedOn = rs.getTimestamp("attributed_on");
+                    if (attributedOn != null) {
+                        accumulator
+                                .computeIfAbsent(componentId, k -> new HashMap<>())
+                                .put(vulnerabilityId, attributedOn.toInstant());
+                    }
                     return accumulator;
                 });
     }

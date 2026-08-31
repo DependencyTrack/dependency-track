@@ -16,7 +16,9 @@
 # Copyright (c) OWASP Foundation. All Rights Reserved.
 name: Report PR Test Coverage
 
-on:
+# NB: `workflow_run` is required to access secrets for coverage reporting of pull requests from forks.
+# No untrusted code is checked out or executed. Only the coverage report of the triggering run is consumed.
+on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows:
     - Tests CI

@@ -51,6 +51,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
         with:
           token: ${{ !inputs.dry-run && secrets.BOT_RELEASE_GITHUB_TOKEN || github.token }}
+          persist-credentials: true # Required for Maven release plugin.
           fetch-depth: 0
 
       - name: Set up JDK

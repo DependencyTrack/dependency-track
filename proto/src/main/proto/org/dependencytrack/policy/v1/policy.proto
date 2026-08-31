@@ -195,6 +195,10 @@ message Vulnerability {
   // Whether the vulnerability is known to be exploited.
   bool is_kev = 37;
 
+  // When this vulnerability was first attributed to the component being evaluated.
+  // Not set when the finding has no active attribution.
+  optional google.protobuf.Timestamp attributed_on = 39;
+
   message Alias {
     string id = 1;
     string source = 2;

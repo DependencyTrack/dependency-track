@@ -178,6 +178,12 @@ final class OssIndexVulnAnalyzer implements VulnAnalyzer {
             try {
                 final var purl = new PackageURL(component.getPurl());
                 if (!SUPPORTED_PURL_TYPES.contains(purl.getType())) {
+                    LOGGER.debug(
+                            "Type '{}' of PURL '{}' is not supported; Skipping", purl.getType(), component.getPurl());
+                    continue;
+                }
+                if (purl.getVersion() == null) {
+                    LOGGER.debug("PURL '{}' has no version; Skipping", component.getPurl());
                     continue;
                 }
 

@@ -264,6 +264,22 @@ class SnykVulnAnalyzerTest {
     }
 
     @Test
+    void shouldNotAnalyzeComponentWithVersionlessPurl() throws Exception {
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("acme-lib")
+                        .setPurl("pkg:maven/org.acme/acme-lib")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
+
+        verify(0, postRequestedFor(anyUrl()));
+    }
+
+    @Test
     void shouldNotAnalyzeComponentWithoutPurl() throws Exception {
         final var bom = Bom.newBuilder()
                 .addComponents(Component.newBuilder()

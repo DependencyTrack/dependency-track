@@ -119,6 +119,25 @@ class PropertyTablesIT {
                 VALUES (3, 'g', 1, 'k3', 'ENCRYPTED_BLOB', 'x')
                 """);
 
+            // A second project collapsing into project 1. Both carry the same property key,
+            // which is distinct in v4 only by PROJECT_ID, and becomes a duplicate of the v5
+            // UNIQUE (PROJECT_ID, GROUPNAME, PROPERTYNAME) once rewritten.
+            h.execute("""
+                INSERT INTO "PROJECT" ("ID", "NAME", "VERSION", "UUID", "LAST_BOM_IMPORTED")
+                VALUES (2, 'P', '1.0', '00000000-0000-0000-0000-000000000002',
+                        '2023-01-01T00:00:00Z')
+                """);
+            h.execute("""
+                INSERT INTO "PROJECT_PROPERTY"
+                    ("ID", "GROUPNAME", "PROJECT_ID", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE")
+                VALUES (10, 'g', 2, 'dup', 'STRING', 'from-discarded')
+                """);
+            h.execute("""
+                INSERT INTO "PROJECT_PROPERTY"
+                    ("ID", "GROUPNAME", "PROJECT_ID", "PROPERTYNAME", "PROPERTYTYPE", "PROPERTYVALUE")
+                VALUES (11, 'g', 1, 'dup', 'STRING', 'from-survivor')
+                """);
+
             // COMPONENT_PROPERTY row (single happy path; pattern identical to PROJECT_PROPERTY).
             h.execute("""
                 INSERT INTO "COMPONENT_PROPERTY"
@@ -153,7 +172,12 @@ class PropertyTablesIT {
                     """).mapToMap().list());
         assertThat(pp)
                 .extracting("id", "project_id", "propertyname", "propertytype", "propertyvalue")
-                .containsExactly(tuple(1L, 1L, "k1", "STRING", "v"), tuple(2L, 1L, "k2", "STRING", null));
+                .containsExactly(
+                        tuple(1L, 1L, "k1", "STRING", "v"),
+                        tuple(2L, 1L, "k2", "STRING", null),
+                        // The surviving project's own value is kept, not the one belonging to
+                        // the project the collapse discarded.
+                        tuple(11L, 1L, "dup", "STRING", "from-survivor"));
 
         final List<Map<String, Object>> cp =
                 target.jdbi().withHandle(h -> h.createQuery("""

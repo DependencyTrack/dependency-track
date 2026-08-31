@@ -64,13 +64,6 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
     private static final Logger LOGGER = LoggerFactory.getLogger(SnykVulnAnalyzer.class);
     private static final int REQUEST_BATCH_SIZE = 100;
 
-    /**
-     * The batch endpoint is not available to all Snyk organizations, and answers 403 for
-     * those it is not available to. Such organizations can still use the per-package
-     * endpoint, so fall back to it for the remainder of the analysis once that happens.
-     */
-    private boolean usePerPackageEndpoint = false;
-
     private static final int CACHE_BATCH_SIZE = 500;
     private static final Set<String> SUPPORTED_PURL_TYPES = Set.of(
             "cargo",
@@ -94,6 +87,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
     private final String apiToken;
     private final String apiVersion;
     private final boolean aliasSyncEnabled;
+    private final boolean batchRequestsEnabled;
 
     SnykVulnAnalyzer(
             Cache resultsCache,
@@ -103,7 +97,8 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             String orgId,
             String apiToken,
             String apiVersion,
-            boolean aliasSyncEnabled) {
+            boolean aliasSyncEnabled,
+            boolean batchRequestsEnabled) {
         this.resultsCache = resultsCache;
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
@@ -112,6 +107,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         this.apiToken = apiToken;
         this.apiVersion = apiVersion;
         this.aliasSyncEnabled = aliasSyncEnabled;
+        this.batchRequestsEnabled = batchRequestsEnabled;
     }
 
     @Override
@@ -223,7 +219,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
         final Map<String, List<SnykIssue>> issuesByPurl;
         try {
-            issuesByPurl = fetchIssuesWithFallback(purlBatch, bomRefsByPurl);
+            issuesByPurl = fetchIssuesForBatch(purlBatch, bomRefsByPurl);
         } catch (IOException e) {
             final var message = "Failed to fetch Snyk issues";
             RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, message);
@@ -250,24 +246,14 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         return issuesByPurl;
     }
 
-    private Map<String, List<SnykIssue>> fetchIssuesWithFallback(
+    private Map<String, List<SnykIssue>> fetchIssuesForBatch(
             Collection<String> purlBatch, Map<String, Set<String>> bomRefsByPurl)
             throws InterruptedException, IOException {
-        if (usePerPackageEndpoint) {
+        if (!batchRequestsEnabled) {
             return fetchIssuesPerPackage(purlBatch);
         }
 
-        try {
-            return correlateIssues(fetchIssues(purlBatch), bomRefsByPurl);
-        } catch (BatchEndpointUnavailableException e) {
-            LOGGER.warn(
-                    "The Snyk batch endpoint is not available for this organization; "
-                            + "Falling back to the per-package endpoint for the remainder of this analysis. "
-                            + "Note that this issues one request per package, instead of one per {} packages.",
-                    REQUEST_BATCH_SIZE);
-            usePerPackageEndpoint = true;
-            return fetchIssuesPerPackage(purlBatch);
-        }
+        return correlateIssues(fetchIssues(purlBatch), bomRefsByPurl);
     }
 
     /**
@@ -305,15 +291,6 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
     }
 
     /**
-     * Signals that the batch endpoint is not available to the configured organization.
-     */
-    private static final class BatchEndpointUnavailableException extends IOException {
-        private BatchEndpointUnavailableException() {
-            super("Snyk API request failed with status 403");
-        }
-    }
-
-    /**
      * Fetches issues one package at a time, using the endpoint Dependency-Track 4.x used.
      *
      * <p>Only used when the batch endpoint is not available to the organization.
@@ -345,7 +322,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
                         .formatted(apiBaseUrl, orgId, encodedPurl, apiVersion)))
                 .header("Authorization", "token " + apiToken)
                 .header("Accept", "application/vnd.api+json")
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(10))
                 .GET()
                 .build();
 
@@ -409,9 +386,6 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             }
 
             RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
-            if (response.statusCode() == 403) {
-                throw new BatchEndpointUnavailableException();
-            }
             throw new IOException("Snyk API request failed with status " + response.statusCode());
         }
     }

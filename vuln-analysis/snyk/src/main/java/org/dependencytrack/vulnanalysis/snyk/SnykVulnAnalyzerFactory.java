@@ -97,7 +97,8 @@ final class SnykVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfi
                 config.getOrgId(),
                 config.getApiToken(),
                 apiVersion,
-                config.isAliasSyncEnabled());
+                config.isAliasSyncEnabled(),
+                config.isBatchRequestsEnabled());
     }
 
     @Override
@@ -114,7 +115,10 @@ final class SnykVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfi
     @Override
     public RuntimeConfigSpec runtimeConfigSpec() {
         return RuntimeConfigSpec.of(
-                new SnykVulnAnalyzerConfigV1().withEnabled(false).withApiBaseUrl(URI.create("https://api.snyk.io")),
+                new SnykVulnAnalyzerConfigV1()
+                        .withEnabled(false)
+                        .withApiBaseUrl(URI.create("https://api.snyk.io"))
+                        .withBatchRequestsEnabled(true),
                 config -> {
                     if (!config.isEnabled()) {
                         return;

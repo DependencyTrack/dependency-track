@@ -77,7 +77,27 @@ class SnykVulnAnalyzerTest {
                         .withAliasSyncEnabled(true)
                         .withApiBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
                         .withOrgId("test-org-id")
-                        .withApiToken("test-api-token"));
+                        .withApiToken("test-api-token")
+                        .withBatchRequestsEnabled(true));
+
+        analyzerFactory.init(new MutableServiceRegistry()
+                .register(ConfigRegistry.class, configRegistry)
+                .register(CacheManager.class, cacheManager)
+                .register(HttpClient.class, HttpClient.newHttpClient()));
+
+        analyzer = analyzerFactory.create();
+    }
+
+    private void useAnalyzerWithBatchRequestsDisabled(WireMockRuntimeInfo wmRuntimeInfo) {
+        final var configRegistry = new MockConfigRegistry(
+                analyzerFactory.runtimeConfigSpec(),
+                new SnykVulnAnalyzerConfigV1()
+                        .withEnabled(true)
+                        .withAliasSyncEnabled(true)
+                        .withApiBaseUrl(URI.create(wmRuntimeInfo.getHttpBaseUrl()))
+                        .withOrgId("test-org-id")
+                        .withApiToken("test-api-token")
+                        .withBatchRequestsEnabled(false));
 
         analyzerFactory.init(new MutableServiceRegistry()
                 .register(ConfigRegistry.class, configRegistry)
@@ -428,11 +448,8 @@ class SnykVulnAnalyzerTest {
     }
 
     @Test
-    void shouldFallBackToPerPackageEndpointOnForbidden() throws Exception {
-        // The batch endpoint is not available to all Snyk orgs and answers 403 for them,
-        // while the per-package endpoint used by v4 still works with the same token.
-        stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
-                .willReturn(aResponse().withStatus(403)));
+    void shouldUsePerPackageEndpointWhenBatchRequestsAreDisabled(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        useAnalyzerWithBatchRequestsDisabled(wmRuntimeInfo);
         // The per-package response need not repeat the package coordinates, since the
         // package is implied by the request URL. Issues must still be attributed to it.
         stubFor(get(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues"))
@@ -456,7 +473,7 @@ class SnykVulnAnalyzerTest {
     }
 
     @Test
-    void shouldNotUsePerPackageEndpointWhenBatchSucceeds() throws Exception {
+    void shouldNotUsePerPackageEndpointWhenBatchRequestsAreEnabled() throws Exception {
         stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -477,9 +494,8 @@ class SnykVulnAnalyzerTest {
     }
 
     @Test
-    void shouldTreatUnknownPackageAsHavingNoIssuesWhenFallingBack() throws Exception {
-        stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
-                .willReturn(aResponse().withStatus(403)));
+    void shouldTreatUnknownPackageAsHavingNoIssues(WireMockRuntimeInfo wmRuntimeInfo) throws Exception {
+        useAnalyzerWithBatchRequestsDisabled(wmRuntimeInfo);
         // Snyk answers 404 for packages it does not know. The batch endpoint just omits
         // them, so one unknown package must not fail the whole analysis.
         stubFor(get(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues"))

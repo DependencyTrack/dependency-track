@@ -433,11 +433,13 @@ class SnykVulnAnalyzerTest {
         // while the per-package endpoint used by v4 still works with the same token.
         stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
                 .willReturn(aResponse().withStatus(403)));
+        // The per-package response need not repeat the package coordinates, since the
+        // package is implied by the request URL. Issues must still be attributed to it.
         stubFor(get(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/vnd.api+json")
-                        .withBodyFile("snyk-one-issue-response.json")));
+                        .withBodyFile("snyk-per-package-one-issue-response.json")));
 
         final var bom = Bom.newBuilder()
                 .addComponents(Component.newBuilder()
@@ -472,5 +474,26 @@ class SnykVulnAnalyzerTest {
         analyzer.analyze(bom);
 
         verify(0, getRequestedFor(anyUrl()));
+    }
+
+    @Test
+    void shouldTreatUnknownPackageAsHavingNoIssuesWhenFallingBack() throws Exception {
+        stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
+                .willReturn(aResponse().withStatus(403)));
+        // Snyk answers 404 for packages it does not know. The batch endpoint just omits
+        // them, so one unknown package must not fail the whole analysis.
+        stubFor(get(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues"))
+                .willReturn(aResponse().withStatus(404)));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr).isEqualTo(Bom.getDefaultInstance());
     }
 }

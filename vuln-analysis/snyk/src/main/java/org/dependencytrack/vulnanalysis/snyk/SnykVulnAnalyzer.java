@@ -37,11 +37,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,6 +63,14 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SnykVulnAnalyzer.class);
     private static final int REQUEST_BATCH_SIZE = 100;
+
+    /**
+     * The batch endpoint is not available to all Snyk organizations, and answers 403 for
+     * those it is not available to. Such organizations can still use the per-package
+     * endpoint, so fall back to it for the remainder of the analysis once that happens.
+     */
+    private boolean usePerPackageEndpoint = false;
+
     private static final int CACHE_BATCH_SIZE = 500;
     private static final Set<String> SUPPORTED_PURL_TYPES = Set.of(
             "cargo",
@@ -213,7 +223,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
         final SnykIssuesResponse response;
         try {
-            response = fetchIssues(purlBatch);
+            response = fetchIssuesWithFallback(purlBatch);
         } catch (IOException e) {
             final var message = "Failed to fetch Snyk issues";
             RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, message);
@@ -264,6 +274,87 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         return issuesByPurl;
     }
 
+    private SnykIssuesResponse fetchIssuesWithFallback(Collection<String> purlBatch)
+            throws InterruptedException, IOException {
+        if (usePerPackageEndpoint) {
+            return fetchIssuesPerPackage(purlBatch);
+        }
+
+        try {
+            return fetchIssues(purlBatch);
+        } catch (BatchEndpointUnavailableException e) {
+            LOGGER.warn(
+                    "The Snyk batch endpoint is not available for this organization; "
+                            + "Falling back to the per-package endpoint for the remainder of this analysis. "
+                            + "Note that this issues one request per package, instead of one per {} packages.",
+                    REQUEST_BATCH_SIZE);
+            usePerPackageEndpoint = true;
+            return fetchIssuesPerPackage(purlBatch);
+        }
+    }
+
+    /**
+     * Signals that the batch endpoint is not available to the configured organization.
+     */
+    private static final class BatchEndpointUnavailableException extends IOException {
+        private BatchEndpointUnavailableException() {
+            super("Snyk API request failed with status 403");
+        }
+    }
+
+    /**
+     * Fetches issues one package at a time, using the endpoint Dependency-Track 4.x used.
+     *
+     * <p>Only used when the batch endpoint is not available to the organization.
+     */
+    private SnykIssuesResponse fetchIssuesPerPackage(Collection<String> purls)
+            throws InterruptedException, IOException {
+        final var issues = new ArrayList<SnykIssue>();
+        for (final String purl : purls) {
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Interrupted before all packages could be analyzed");
+            }
+
+            final SnykIssuesResponse response = fetchIssuesForPackage(purl);
+            if (response.data() != null) {
+                issues.addAll(response.data());
+            }
+        }
+
+        return new SnykIssuesResponse(issues);
+    }
+
+    private SnykIssuesResponse fetchIssuesForPackage(String purl) throws InterruptedException, IOException {
+        final String encodedPurl = URLEncoder.encode(purl, StandardCharsets.UTF_8);
+
+        final var request = HttpRequest.newBuilder()
+                .uri(URI.create("%s/rest/orgs/%s/packages/%s/issues?version=%s"
+                        .formatted(apiBaseUrl, orgId, encodedPurl, apiVersion)))
+                .header("Authorization", "token " + apiToken)
+                .header("Accept", "application/vnd.api+json")
+                .timeout(Duration.ofSeconds(30))
+                .GET()
+                .build();
+
+        final HttpResponse<InputStream> response;
+        try {
+            response = httpClient.send(request, BodyHandlers.ofInputStream());
+        } catch (IOException e) {
+            final var message = "Snyk API request failed";
+            RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, message);
+            throw new UncheckedIOException(message, e);
+        }
+
+        try (final InputStream bodyInputStream = response.body()) {
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(bodyInputStream, SnykIssuesResponse.class);
+            }
+
+            RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
+            throw new IOException("Snyk API request failed with status " + response.statusCode());
+        }
+    }
+
     private SnykIssuesResponse fetchIssues(Collection<String> purls) throws InterruptedException, IOException {
         if (purls.isEmpty()) {
             return new SnykIssuesResponse(List.of());
@@ -296,6 +387,9 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             }
 
             RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
+            if (response.statusCode() == 403) {
+                throw new BatchEndpointUnavailableException();
+            }
             throw new IOException("Snyk API request failed with status " + response.statusCode());
         }
     }

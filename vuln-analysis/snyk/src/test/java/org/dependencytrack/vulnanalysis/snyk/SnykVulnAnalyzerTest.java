@@ -43,10 +43,13 @@ import java.util.ArrayList;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.http.Fault.CONNECTION_RESET_BY_PEER;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -422,5 +425,52 @@ class SnykVulnAnalyzerTest {
                         .withHeader("Authorization", equalTo("token test-api-token"))
                         .withHeader("Content-Type", equalTo("application/vnd.api+json"))
                         .withHeader("Accept", equalTo("application/vnd.api+json")));
+    }
+
+    @Test
+    void shouldFallBackToPerPackageEndpointOnForbidden() throws Exception {
+        // The batch endpoint is not available to all Snyk orgs and answers 403 for them,
+        // while the per-package endpoint used by v4 still works with the same token.
+        stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
+                .willReturn(aResponse().withStatus(403)));
+        stubFor(get(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/vnd.api+json")
+                        .withBodyFile("snyk-one-issue-response.json")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
+                        .build())
+                .build();
+
+        final Bom vdr = analyzer.analyze(bom);
+        assertThat(vdr.getVulnerabilitiesList()).isNotEmpty();
+
+        verify(1, getRequestedFor(urlPathMatching("/rest/orgs/test-org-id/packages/.+/issues")));
+    }
+
+    @Test
+    void shouldNotUsePerPackageEndpointWhenBatchSucceeds() throws Exception {
+        stubFor(post(urlPathEqualTo("/rest/orgs/test-org-id/packages/issues"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/vnd.api+json")
+                        .withBodyFile("snyk-one-issue-response.json")));
+
+        final var bom = Bom.newBuilder()
+                .addComponents(Component.newBuilder()
+                        .setBomRef("1")
+                        .setName("jackson-databind")
+                        .setPurl("pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.4")
+                        .build())
+                .build();
+
+        analyzer.analyze(bom);
+
+        verify(0, getRequestedFor(anyUrl()));
     }
 }

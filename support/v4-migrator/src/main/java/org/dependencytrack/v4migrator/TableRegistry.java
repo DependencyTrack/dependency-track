@@ -5086,6 +5086,13 @@ public final class TableRegistry {
      * {@code project_canonical_id_map}. Applies the ENCRYPTEDSTRING wipe and drops rows whose
      * {@code PROPERTYTYPE} is outside the v5 enum (schema-changes §5.9 / §7.8). v4 has no
      * UUID column on this table.
+     *
+     * <p>v5 enforces {@code UNIQUE (PROJECT_ID, GROUPNAME, PROPERTYNAME)}, but the project
+     * collapse can turn two rows that were distinct in v4 into the same triple (same group
+     * and property name on two same-named projects). {@code DISTINCT ON} keeps the row that
+     * belonged to the surviving project, so the collapse does not hand it a value from a
+     * project that was just discarded. Where only discarded projects carried the property,
+     * the lowest {@code ID} wins, to keep reruns deterministic.
      */
     private static final TableMigration PROJECT_PROPERTY = new TableMigration(
             "PROJECT_PROPERTY",
@@ -5128,6 +5135,7 @@ public final class TableRegistry {
                  , p."DESCRIPTION"
                  , p."GROUPNAME"
                  , pm.canonical_id AS "PROJECT_ID"
+                 , p."PROJECT_ID" AS orig_project_id
                  , p."PROPERTYNAME"
                  , CASE WHEN p."PROPERTYTYPE" = 'ENCRYPTEDSTRING' THEN 'STRING' ELSE p."PROPERTYTYPE" END AS "PROPERTYTYPE"
                  , CASE WHEN p."PROPERTYTYPE" = 'ENCRYPTEDSTRING' THEN NULL ELSE p."PROPERTYVALUE" END AS "PROPERTYVALUE"
@@ -5143,8 +5151,16 @@ public final class TableRegistry {
              , "PROPERTYNAME"
              , "PROPERTYTYPE"
              , "PROPERTYVALUE"
-          FROM rewritten
-         WHERE "PROPERTYTYPE" IN ('BOOLEAN', 'INTEGER', 'NUMBER', 'STRING', 'TIMESTAMP', 'URL', 'UUID')
+          FROM (
+            SELECT DISTINCT ON ("PROJECT_ID", "GROUPNAME", "PROPERTYNAME") *
+              FROM rewritten
+             WHERE "PROPERTYTYPE" IN ('BOOLEAN', 'INTEGER', 'NUMBER', 'STRING', 'TIMESTAMP', 'URL', 'UUID')
+             ORDER BY "PROJECT_ID"
+                    , "GROUPNAME"
+                    , "PROPERTYNAME"
+                    , (orig_project_id = "PROJECT_ID") DESC
+                    , "ID"
+          ) AS deduped
         """,
             """
         INSERT INTO "PROJECT_PROPERTY"

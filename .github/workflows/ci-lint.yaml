@@ -116,6 +116,8 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    env:
+      BASE_REF: origin/${{ github.base_ref }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # tag=v7.0.1
@@ -123,14 +125,10 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Fetch base ref
-        run: git fetch --no-tags origin "${{ github.base_ref }}"
+        run: git fetch --no-tags origin "${GITHUB_BASE_REF}"
       - name: Lint changed migrations
-        env:
-          BASE_REF: origin/${{ github.base_ref }}
         run: make lint-migrations
       - name: Lint changed dex migrations
-        env:
-          BASE_REF: origin/${{ github.base_ref }}
         run: make lint-dex-migration
 
   openapi-breaking-changes:

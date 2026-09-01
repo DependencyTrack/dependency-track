@@ -22,6 +22,7 @@
       "type": "boolean",
       "title": "Batch Requests Enabled",
       "description": "Whether to request issues for multiple packages at once. The batch endpoint is not available to all Snyk organizations; disable this to request issues one package at a time instead.",
+      "default": true,
       "existingJavaType": "boolean"
     },
     "apiBaseUrl": {

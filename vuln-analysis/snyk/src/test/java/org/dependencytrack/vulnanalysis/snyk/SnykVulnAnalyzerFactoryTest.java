@@ -18,12 +18,27 @@
  */
 package org.dependencytrack.vulnanalysis.snyk;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dependencytrack.plugin.testing.AbstractExtensionFactoryTest;
 import org.dependencytrack.vulnanalysis.api.VulnAnalyzer;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class SnykVulnAnalyzerFactoryTest extends AbstractExtensionFactoryTest<VulnAnalyzer, SnykVulnAnalyzerFactory> {
 
     SnykVulnAnalyzerFactoryTest() {
         super(SnykVulnAnalyzerFactory.class);
+    }
+
+    @Test
+    void shouldEnableBatchRequestsWhenNotConfigured() throws Exception {
+        // Configs stored before this option existed do not have the field, and must keep
+        // using the batch endpoint rather than silently switching to per-package requests.
+        final var config = new ObjectMapper().readValue("""
+                        {"enabled":true,"apiBaseUrl":"https://api.snyk.io","orgId":"org","apiToken":"token"}
+                        """, SnykVulnAnalyzerConfigV1.class);
+
+        assertThat(config.isBatchRequestsEnabled()).isTrue();
     }
 }

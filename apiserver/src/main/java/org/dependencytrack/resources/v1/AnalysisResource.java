@@ -54,6 +54,8 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.time.Instant;
+
 /**
  * JAX-RS resources for processing analysis decisions.
  *
@@ -188,6 +190,16 @@ public class AnalysisResource extends AbstractApiResource {
                 validator.validateProperty(request, "analysisResponse"),
                 validator.validateProperty(request, "analysisDetails"),
                 validator.validateProperty(request, "comment"));
+
+        // An expiry in the past would suppress the finding only until the expiry task
+        // next runs, which is not what anyone setting one intends.
+        if (request.getSuppressionExpiresAt() != null
+                && !request.getSuppressionExpiresAt().isAfter(Instant.now())) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("suppressionExpiresAt must be in the future.")
+                    .build();
+        }
+
         try (final var qm = new QueryManager(getAlpineRequest())) {
             return qm.callInTransaction(() -> {
                 final var component = qm.getObjectByUuid(Component.class, request.getComponent());
@@ -212,6 +224,7 @@ public class AnalysisResource extends AbstractApiResource {
                         .withResponse(request.getAnalysisResponse())
                         .withDetails(request.getAnalysisDetails())
                         .withSuppress(request.isSuppressed())
+                        .withSuppressionExpiresAt(request.getSuppressionExpiresAt())
                         .withComment(request.getComment()));
 
                 return Response.ok(AnalysisTrailResponse.of(qm.getObjectById(Analysis.class, analysisId)))

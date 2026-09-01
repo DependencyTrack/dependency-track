@@ -18,7 +18,10 @@
  */
 package org.dependencytrack.support.net;
 
+import org.jspecify.annotations.Nullable;
+
 import java.io.EOFException;
+import java.io.IOException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -42,8 +45,19 @@ public final class TransientNetworkErrors {
                     || cause instanceof UnknownHostException) {
                 return true;
             }
+
+            // A connection reset does not always surface as a SocketException. Depending
+            // on where in the exchange it lands, the JDK HTTP client reports a plain
+            // IOException instead, which is just as retryable.
+            if (cause instanceof IOException && isConnectionReset(cause.getMessage())) {
+                return true;
+            }
         }
 
         return false;
+    }
+
+    private static boolean isConnectionReset(@Nullable String message) {
+        return message != null && message.toLowerCase().contains("connection reset");
     }
 }

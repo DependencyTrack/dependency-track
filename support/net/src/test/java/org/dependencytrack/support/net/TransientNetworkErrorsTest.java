@@ -54,6 +54,17 @@ class TransientNetworkErrorsTest {
     }
 
     @Test
+    void shouldClassifyConnectionResetAsTransientRegardlessOfExceptionType() {
+        // A connection reset does not always surface as a SocketException. Depending on
+        // where in the exchange it lands, the JDK HTTP client reports a plain IOException
+        // instead, and that is just as retryable.
+        assertThat(TransientNetworkErrors.isTransient(new IOException("Connection reset by peer")))
+                .isTrue();
+        assertThat(TransientNetworkErrors.isTransient(new IOException("connection reset")))
+                .isTrue();
+    }
+
+    @Test
     void shouldClassifyPermanentFailuresAsNotTransient() {
         assertThat(TransientNetworkErrors.isTransient(new SSLHandshakeException("bad cert")))
                 .isFalse();

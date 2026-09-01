@@ -97,7 +97,8 @@ final class SnykVulnAnalyzerFactory implements VulnAnalyzerFactory, RuntimeConfi
                 config.getOrgId(),
                 config.getApiToken(),
                 apiVersion,
-                config.isAliasSyncEnabled());
+                config.isAliasSyncEnabled(),
+                config.isChecksumMatchingEnabled());
     }
 
     @Override

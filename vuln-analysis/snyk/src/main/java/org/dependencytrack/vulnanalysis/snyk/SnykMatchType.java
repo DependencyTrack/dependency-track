@@ -18,19 +18,35 @@
  */
 package org.dependencytrack.vulnanalysis.snyk;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-
 /**
- * Response envelope for Snyk's batch packages/issues API.
+ * Match quality reported by Snyk's {@code meta.packages[].match.type} for checksum-qualified PURLs.
  *
- * @since 5.0.0
+ * @since 5.1.0
  */
-record SnykIssuesResponse(
-        @Nullable List<SnykIssue> data, @Nullable SnykIssuesMeta meta) {
+enum SnykMatchType {
+    FULL,
+    PARTIAL,
+    NONE;
 
-    SnykIssuesResponse(@Nullable List<SnykIssue> data) {
-        this(data, null);
+    @JsonValue
+    String jsonValue() {
+        return name().toLowerCase();
+    }
+
+    @JsonCreator
+    static @Nullable SnykMatchType fromJson(@Nullable String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return switch (value.toLowerCase()) {
+            case "full" -> FULL;
+            case "partial" -> PARTIAL;
+            case "none" -> NONE;
+            default -> null;
+        };
     }
 }

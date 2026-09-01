@@ -32,8 +32,8 @@ including a Dependency-Track audience. That is broader than reusing the existing
 
 An OIDC ID token has the client identifier in its audience. Dependency-Track already validates
 the ID token issuer, signature, expiration, and audience. The OAuth2 Proxy client identifier can
-therefore be configured as the Dependency-Track OIDC client identifier and used as a
-cryptographic boundary between clients of the same identity provider.
+therefore be configured as the expected audience and used as a cryptographic boundary between
+clients of the same identity provider.
 
 The frontend and REST API use a Dependency-Track bearer session after login. OAuth2 Proxy's
 stable direct-upstream option puts the ID token in the `Authorization` header. This conflicts
@@ -79,9 +79,9 @@ tracked separately.
 #### Validate an ID token forwarded by OAuth2 Proxy
 
 The API server can validate a forwarded ID token with the existing OIDC issuer, audience,
-signature, and expiration checks. The audience binds the token to the configured OAuth2 Proxy
-client instead of only trusting the network path. The resulting identity can reuse the normal
-OIDC user, provisioning, team synchronization, and session behavior.
+signature, and expiration checks. The audience binds the token to the separately configured
+OAuth2 Proxy client instead of only trusting the network path. The resulting identity can reuse
+the normal OIDC user, provisioning, team synchronization, and session behavior.
 
 The ID token must use a separate header so it does not replace the Dependency-Track session in
 `Authorization`. Direct-upstream deployments need OAuth2 Proxy's structured header injection.
@@ -128,14 +128,22 @@ request body. It will pass the token to the existing OIDC ID token validation pa
 same short-lived bearer session used by other login methods.
 
 The ID token must pass the standard checks defined by [OpenID Connect Core] and already performed
-by Dependency-Track. These include issuer, signature, expiration, and audience validation. The
-configured `dt.oidc.client-id` must match the client identifier used by OAuth2 Proxy. A token
-issued to a different client of the same identity provider will be rejected.
+by Dependency-Track. These include issuer, signature, expiration, and audience validation. A new
+`dt.oauth2-proxy.client-id` setting must match the client identifier used by OAuth2 Proxy. It is
+the expected audience for the forwarded ID token. A token issued to a different client of the
+same identity provider will be rejected.
+
+Native Dependency-Track OIDC continues to use `dt.oidc.client-id`. The two login paths can be
+enabled together and can use different client registrations, but both registrations must use the
+provider configured by `dt.oidc.issuer`. This avoids requiring a public browser client and the
+OAuth2 Proxy client to share a registration.
 
 The first version will not authenticate from a forwarded access token and will not call UserInfo
 during the exchange. The ID token must contain the subject, configured username claim, and the
-configured teams claim when team synchronization is enabled. Supporting providers that only
-return required claims from UserInfo is outside the first version.
+configured teams claim when team synchronization is enabled. If a required claim is absent, the
+exchange will fail rather than construct an incomplete profile or synchronize an empty team list.
+An explicitly present empty teams claim remains valid and removes mapped team memberships.
+Supporting providers that only return required claims from UserInfo is outside the first version.
 
 Users authenticated through the exchange will be normal OIDC users. Existing user provisioning,
 default team, team synchronization, and session settings will apply. No proxy-specific user type,
@@ -175,10 +183,11 @@ for machine traffic need native resource server support. That work remains separ
   sessions. No new user type or database migration is required.
 * Dependency-Track validates the ID token issuer, signature, expiration, and audience. A plain
   forwarded identity header or an access token for another client is not sufficient to log in.
-* The configured Dependency-Track OIDC client identifier must match the OAuth2 Proxy client
-  identifier. The same client registration can be reused.
+* OAuth2 Proxy and native Dependency-Track OIDC have separate client identifier settings and may
+  use different client registrations with the same issuer.
 * Every claim required for the Dependency-Track OIDC profile must be present in the ID token.
-  Providers that only expose those claims through UserInfo are not supported by the first version.
+  A missing required claim fails the exchange. Providers that only expose those claims through
+  UserInfo are not supported by the first version.
 * The API server needs network access to OIDC discovery and signing keys. It does not need to call
   UserInfo during a proxy session exchange.
 * Direct-upstream deployments depend on OAuth2 Proxy's alpha structured header configuration.

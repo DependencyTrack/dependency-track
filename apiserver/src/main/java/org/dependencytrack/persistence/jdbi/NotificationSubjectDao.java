@@ -167,9 +167,16 @@ public interface NotificationSubjectDao extends SqlObject {
                 ON p."ID" = c."PROJECT_ID"
              INNER JOIN "VULNERABILITY" AS v
                 ON v."ID" = req.vulnerability_id
-             INNER JOIN "FINDINGATTRIBUTION" AS fa
-                ON fa."COMPONENT_ID" = req.component_id
-               AND fa."VULNERABILITY_ID" = req.vulnerability_id
+             INNER JOIN LATERAL (
+               SELECT *
+                 FROM "FINDINGATTRIBUTION" AS fa
+                WHERE c."ID" = fa."COMPONENT_ID"
+                  AND v."ID" = fa."VULNERABILITY_ID"
+                  AND fa."DELETED_AT" IS NULL
+                ORDER BY fa."DELETED_AT" DESC NULLS FIRST
+                       , fa."ID"
+                LIMIT 1
+             ) AS fa ON TRUE
               LEFT JOIN "ANALYSIS" AS a
                 ON a."COMPONENT_ID" = req.component_id
                AND a."VULNERABILITY_ID" = req.vulnerability_id

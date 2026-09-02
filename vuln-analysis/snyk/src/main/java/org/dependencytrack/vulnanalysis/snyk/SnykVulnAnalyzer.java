@@ -37,11 +37,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,6 +63,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SnykVulnAnalyzer.class);
     private static final int REQUEST_BATCH_SIZE = 100;
+
     private static final int CACHE_BATCH_SIZE = 500;
     private static final Set<String> SUPPORTED_PURL_TYPES = Set.of(
             "cargo",
@@ -84,6 +87,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
     private final String apiToken;
     private final String apiVersion;
     private final boolean aliasSyncEnabled;
+    private final boolean batchRequestsEnabled;
 
     SnykVulnAnalyzer(
             Cache resultsCache,
@@ -93,7 +97,8 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
             String orgId,
             String apiToken,
             String apiVersion,
-            boolean aliasSyncEnabled) {
+            boolean aliasSyncEnabled,
+            boolean batchRequestsEnabled) {
         this.resultsCache = resultsCache;
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
@@ -102,6 +107,7 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
         this.apiToken = apiToken;
         this.apiVersion = apiVersion;
         this.aliasSyncEnabled = aliasSyncEnabled;
+        this.batchRequestsEnabled = batchRequestsEnabled;
     }
 
     @Override
@@ -217,40 +223,16 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
         LOGGER.debug("Fetching Snyk issues for {} PURLs", purlBatch.size());
 
-        final SnykIssuesResponse response;
+        final Map<String, List<SnykIssue>> issuesByPurl;
         try {
-            response = fetchIssues(purlBatch);
+            issuesByPurl = fetchIssuesForBatch(purlBatch, bomRefsByPurl);
         } catch (IOException e) {
             final var message = "Failed to fetch Snyk issues";
             RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, message);
             throw new UncheckedIOException(message, e);
         }
 
-        final var issuesByPurl = new HashMap<String, List<SnykIssue>>(purlBatch.size());
         final var entriesToCache = new HashMap<String, byte @Nullable []>(purlBatch.size());
-
-        if (response.data() != null) {
-            for (final SnykIssue issue : response.data()) {
-                final String issuePurl = SnykModelConverter.getIssuePurl(issue);
-                if (issuePurl == null) {
-                    LOGGER.warn("Unable to extract PURL from issue {}; Skipping", issue.id());
-                    continue;
-                }
-
-                final String issuePurlLower = issuePurl.toLowerCase();
-                if (!bomRefsByPurl.containsKey(issuePurlLower)) {
-                    LOGGER.warn(
-                            "Received issue {} for PURL '{}', but no component with this PURL was submitted",
-                            issue.id(),
-                            issuePurl);
-                    continue;
-                }
-
-                issuesByPurl
-                        .computeIfAbsent(issuePurlLower, k -> new ArrayList<>())
-                        .add(issue);
-            }
-        }
 
         for (final var entry : issuesByPurl.entrySet()) {
             try {
@@ -268,6 +250,114 @@ final class SnykVulnAnalyzer implements VulnAnalyzer {
 
         resultsCache.putMany(entriesToCache);
         return issuesByPurl;
+    }
+
+    private Map<String, List<SnykIssue>> fetchIssuesForBatch(
+            Collection<String> purlBatch, Map<String, Set<String>> bomRefsByPurl)
+            throws InterruptedException, IOException {
+        if (!batchRequestsEnabled) {
+            return fetchIssuesPerPackage(purlBatch);
+        }
+
+        return correlateIssues(fetchIssues(purlBatch), bomRefsByPurl);
+    }
+
+    /**
+     * Correlates issues of a batch response back to the PURLs they belong to.
+     *
+     * <p>Only needed for the batch endpoint, where a single response covers many packages.
+     */
+    private Map<String, List<SnykIssue>> correlateIssues(
+            SnykIssuesResponse response, Map<String, Set<String>> bomRefsByPurl) {
+        if (response.data() == null) {
+            return Map.of();
+        }
+
+        final var issuesByPurl = new HashMap<String, List<SnykIssue>>();
+        for (final SnykIssue issue : response.data()) {
+            final String issuePurl = SnykModelConverter.getIssuePurl(issue);
+            if (issuePurl == null) {
+                LOGGER.warn("Unable to extract PURL from issue {}; Skipping", issue.id());
+                continue;
+            }
+
+            final String issuePurlLower = issuePurl.toLowerCase();
+            if (!bomRefsByPurl.containsKey(issuePurlLower)) {
+                LOGGER.warn(
+                        "Received issue {} for PURL '{}', but no component with this PURL was submitted",
+                        issue.id(),
+                        issuePurl);
+                continue;
+            }
+
+            issuesByPurl.computeIfAbsent(issuePurlLower, k -> new ArrayList<>()).add(issue);
+        }
+
+        return issuesByPurl;
+    }
+
+    /**
+     * Fetches issues one package at a time, using the endpoint Dependency-Track 4.x used.
+     *
+     * <p>Only used when the batch endpoint is not available to the organization.
+     */
+    private Map<String, List<SnykIssue>> fetchIssuesPerPackage(Collection<String> purls)
+            throws InterruptedException, IOException {
+        final var issuesByPurl = new HashMap<String, List<SnykIssue>>(purls.size());
+        for (final String purl : purls) {
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Interrupted before all packages could be analyzed");
+            }
+
+            // The PURL is known from the request, so unlike the batch response the issues
+            // do not have to be correlated back through their coordinates.
+            final SnykIssuesResponse response = fetchIssuesForPackage(purl);
+            if (response.data() != null && !response.data().isEmpty()) {
+                issuesByPurl.put(purl.toLowerCase(), new ArrayList<>(response.data()));
+            }
+        }
+
+        return issuesByPurl;
+    }
+
+    private SnykIssuesResponse fetchIssuesForPackage(String purl) throws InterruptedException, IOException {
+        final String encodedPurl = URLEncoder.encode(purl, StandardCharsets.UTF_8);
+
+        final var request = HttpRequest.newBuilder()
+                .uri(URI.create("%s/rest/orgs/%s/packages/%s/issues?version=%s"
+                        .formatted(apiBaseUrl, orgId, encodedPurl, apiVersion)))
+                .header("Authorization", "token " + apiToken)
+                .header("Accept", "application/vnd.api+json")
+                .timeout(Duration.ofSeconds(10))
+                .GET()
+                .build();
+
+        final HttpResponse<InputStream> response;
+        try {
+            response = httpClient.send(request, BodyHandlers.ofInputStream());
+        } catch (IOException e) {
+            final var message = "Snyk API request failed";
+            RetryableVulnAnalysisException.throwIfRetryableNetworkError(e, message);
+            throw new UncheckedIOException(message, e);
+        }
+
+        try (final InputStream bodyInputStream = response.body()) {
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(bodyInputStream, SnykIssuesResponse.class);
+            }
+
+            // Snyk answers 404 for packages it does not know. The batch endpoint simply
+            // omits them, so treat them as having no issues rather than failing the
+            // analysis over a single unknown package.
+            if (response.statusCode() == 404) {
+                LOGGER.debug("Snyk does not know package '{}'", purl);
+                return new SnykIssuesResponse(List.of());
+            }
+
+            RetryableVulnAnalysisException.throwIfRetryableHttpError(response);
+            throw new IOException(
+                    "Snyk API request for package '%s' failed with status %d".formatted(purl, response.statusCode()));
+        }
     }
 
     private SnykIssuesResponse fetchIssues(Collection<String> purls) throws InterruptedException, IOException {

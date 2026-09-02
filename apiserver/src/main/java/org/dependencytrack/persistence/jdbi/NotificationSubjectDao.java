@@ -172,9 +172,7 @@ public interface NotificationSubjectDao extends SqlObject {
                  FROM "FINDINGATTRIBUTION" AS fa
                 WHERE c."ID" = fa."COMPONENT_ID"
                   AND v."ID" = fa."VULNERABILITY_ID"
-                  AND fa."DELETED_AT" IS NULL
-                ORDER BY fa."DELETED_AT" DESC NULLS FIRST
-                       , fa."ID"
+                ORDER BY fa."ID"
                 LIMIT 1
              ) AS fa ON TRUE
               LEFT JOIN "ANALYSIS" AS a

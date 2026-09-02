@@ -112,6 +112,11 @@ public class Bom implements Serializable {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private Date generated;
 
+    @Persistent(defaultFetchGroup = "false")
+    @Column(name = "ORIGINAL_FILE_METADATA", jdbcType = "LONGVARBINARY")
+    @JsonIgnore
+    private byte[] originalFileMetadata;
+
     public long getId() {
         return id;
     }
@@ -182,5 +187,13 @@ public class Bom implements Serializable {
 
     public void setGenerated(Date generated) {
         this.generated = generated;
+    }
+
+    public byte[] getOriginalFileMetadata() {
+        return originalFileMetadata;
+    }
+
+    public void setOriginalFileMetadata(byte[] originalFileMetadata) {
+        this.originalFileMetadata = originalFileMetadata;
     }
 }

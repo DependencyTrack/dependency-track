@@ -129,9 +129,15 @@ same short-lived bearer session used by other login methods.
 
 The ID token must pass the standard checks defined by [OpenID Connect Core] and already performed
 by Dependency-Track. These include issuer, signature, expiration, and audience validation. A new
-`dt.oauth2-proxy.client-id` setting must match the client identifier used by OAuth2 Proxy. It is
-the expected audience for the forwarded ID token. A token issued to a different client of the
-same identity provider will be rejected.
+`dt.auth-proxy.client-id` setting must match the client identifier used by the reverse proxy that
+forwards the ID token. It is the expected audience for the forwarded ID token. A token issued to
+a different client of the same identity provider will be rejected.
+
+The setting is named generically because the exchange validates a forwarded ID token and does not
+depend on which reverse proxy provides it. OAuth2 Proxy is the reference implementation for the
+first version: other reverse proxies that can inject a bearer ID token into
+`X-Forwarded-ID-Token` should work with the same validation path, but only the OAuth2 Proxy
+configuration is documented and validated.
 
 Native Dependency-Track OIDC continues to use `dt.oidc.client-id`. The two login paths can be
 enabled together and can use different client registrations, but both registrations must use the

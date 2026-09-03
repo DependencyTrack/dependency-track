@@ -1004,6 +1004,10 @@ public class QueryManager extends AlpineQueryManager {
         return getComponentQueryManager().getAllComponents(project);
     }
 
+    public List<Component> getCandidateComponentsForVulnerableSoftware(final List<VulnerableSoftware> vsList) {
+        return getComponentQueryManager().getCandidateComponentsForVulnerableSoftware(vsList);
+    }
+
     public PaginatedResult getComponents(final Project project, final boolean includeMetrics) {
         return getComponentQueryManager().getComponents(project, includeMetrics);
     }

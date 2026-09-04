@@ -235,7 +235,8 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                                     "cvssV2Vector": "(AV:N/AC:M/Au:S/C:P/I:P/A:P)",
                                     "cvssV3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
                                     "owaspRRVector": "(SL:5/M:5/O:2/S:9/ED:4/EE:2/A:7/ID:2/LC:2/LI:2/LAV:7/LAC:9/FD:3/RD:5/NC:0/PV:7)",
-                                    "isKev": true
+                                    "isKev": true,
+                                    "analyzerIdentity": "internal"
                                   }
                                 }
                                 """));
@@ -314,7 +315,8 @@ public class NotificationSubjectDaoTest extends PersistenceCapableTest {
                             "cvssV2Vector": "",
                             "cvssV3Vector": "cvssV3VectorOverwrite",
                             "owaspRRVector": "owaspRrVector",
-                            "isKev": false
+                            "isKev": false,
+                            "analyzerIdentity": "internal"
                           },
                           "affectedProjects": [
                             {

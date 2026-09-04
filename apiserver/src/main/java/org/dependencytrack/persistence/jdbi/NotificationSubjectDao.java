@@ -155,6 +155,7 @@ public interface NotificationSubjectDao extends SqlObject {
                  , STRING_TO_ARRAY(v."CWES", ',') AS "vulnCwes"
                  , JSONB_VULN_ALIASES(v."SOURCE", v."VULNID") AS "vulnAliasesJson"
                  , <@sql.isKevColumn vulnSource='v."SOURCE"' vulnId='v."VULNID"'/> AS "vulnIsKev"
+                 , fa."ANALYZERIDENTITY" AS "vulnAnalyzerIdentity"
               FROM UNNEST(:componentIds, :vulnerabilityIds)
                 AS req(component_id, vulnerability_id)
              INNER JOIN "COMPONENTS_VULNERABILITIES" AS cv
@@ -166,6 +167,14 @@ public interface NotificationSubjectDao extends SqlObject {
                 ON p."ID" = c."PROJECT_ID"
              INNER JOIN "VULNERABILITY" AS v
                 ON v."ID" = req.vulnerability_id
+             INNER JOIN LATERAL (
+               SELECT *
+                 FROM "FINDINGATTRIBUTION" AS fa
+                WHERE c."ID" = fa."COMPONENT_ID"
+                  AND v."ID" = fa."VULNERABILITY_ID"
+                ORDER BY fa."ID"
+                LIMIT 1
+             ) AS fa ON TRUE
               LEFT JOIN "ANALYSIS" AS a
                 ON a."COMPONENT_ID" = req.component_id
                AND a."VULNERABILITY_ID" = req.vulnerability_id
